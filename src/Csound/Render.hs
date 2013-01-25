@@ -21,30 +21,37 @@ import Csound.Exp.Numeric
 
 import Csound.Opcode(clip, zeroDbfs)
 
-csd :: (Out a, Out b) => CsdOptions -> (a -> b) -> [SigOut a] -> String
+out :: Sig -> SE [Sig]
+out = return . return
+
+mixing :: [[Sig]] -> SE [Sig]
+mixing = return . fmap sum . transpose
+
+mixingBy :: ([Sig] -> SE [Sig]) -> ([[Sig]] -> SE [Sig])
+mixingBy f = (f =<<) . mixing 
+
+csd :: CsdOptions -> ([[Sig]] -> SE [Sig]) -> [SigOut] -> String
 csd opt globalEffect as = show $ csdFile 
     (renderFlags opt)
-    (renderInstr0 nchn (massignTable ids as) opt)
-    (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith renderInstr' ids instrs)
+    (renderInstr0 (nchnls lastInstrExp) (massignTable ids as) opt)
+    (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith (renderInstr fts) ids instrs)
     (vcat $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
     (renderStringTable strs)
     (renderTotalDur $$ renderFtables fts)
     where scos   = map (scoSigOut' . sigOutContent) as          
-          instrs = map (orcSigOut  . sigOutContent) as    
+          (instrs, effects, initOuts) = unzip3 $ zipWith runExpReader as ids    
           fts    = ftableMap $ lastInstrExp : instrs
           strs   = stringMap $ concat scos
           ids    = take nInstr [2 .. ]
-          nchn   = getNchnls lastInstrExp
+          
           nInstr = length as
           firstInstrId = 1
-          lastInstrId  = nInstr + 2
-          
-          renderInstr' instrId instr = renderInstr (OutInstrPort instrId) fts instrId instr
+          lastInstrId  = nInstr + 2          
            
-          firstInstr = clearInstr 1 nchn ids
-          lastInstr = mixingInstr fts lastInstrId lastInstrExp
+          firstInstr = renderInstr fts firstInstrId $ execSE $ sequence_ initOuts
+          lastInstr  = renderInstr fts lastInstrId lastInstrExp
           
-          lastInstrExp = mixingInstrExp globalEffect ids as
+          lastInstrExp = mixingInstrExp globalEffect effects
            
           scoSigOut' x = case x of
               PlainSigOut _ _ -> scoSigOut x
@@ -65,7 +72,7 @@ csdFile flags instr0 instrs scores strTable ftables =
             ftables, scores]]        
 
 
-massignTable :: Out a => [Int] -> [SigOut a] -> [Massign]
+massignTable :: [Int] -> [SigOut] -> [Massign]
 massignTable ids instrs = catMaybes $ zipWith mk ids instrs
     where mk n instr = case sigOutContent $ instr of
             Midi chn _ -> Just $ Massign chn n
@@ -96,38 +103,11 @@ tag name content = vcat $ punctuate newline [
 newline = char '\n'
 
 
-mixingInstr :: FtableMap -> Int -> E -> Doc
-mixingInstr fts = renderInstr OutPlain fts
-
-mixingInstrExp :: (Out a, Out b) => (a -> b) -> [Int] -> [SigOut a] -> E
-mixingInstrExp globalEffect ids as = 
-    sigOut $ globalEffect $ evalState toTuple $ fmap clipSig $ sumSigs $ zipWith applyEffect ids as
-    where applyEffect :: Int -> SigOut a -> [E]
-          applyEffect instrId a = sigOutEffect a $ globalOuts
-            where globalOuts = fmap (gOutVar instrId) [1 ..]
-            
-          sumSigs :: [[E]] -> [E]  
-          sumSigs = fmap sum . transpose   
+mixingInstrExp :: ([[Sig]] -> SE [Sig]) -> [SE [Sig]] -> E
+mixingInstrExp globalEffect effects = execSE $ outs . fmap clip' =<< globalEffect =<< sequence effects
+    where clip' x = clip x 0 zeroDbfs
           
-          clipSig :: E -> E
-          clipSig x = unSig $ clip (Sig x) 0 zeroDbfs
-          
-getNchnls :: E -> Int
-getNchnls x = case unFix x of
-    RatedExp _ (Outs xs) -> length xs
-            
-        
-    
-
-clearInstr :: Int -> Nchnls -> [Int] -> Doc
-clearInstr instrId nchnls ids = instrHeader instrId $ vcat $ fmap (clearOuts nchnls) ids
-    where clearOuts :: Nchnls -> Int -> Doc
-          clearOuts n id = vcat $ fmap (clearStmt . gOut id) [1 .. n]
-
-          clearStmt :: Doc -> Doc  
-          clearStmt name = name <+> equals <+> int 0
-
-totalDur :: [SigOut a] -> Maybe Double
+totalDur :: [SigOut] -> Maybe Double
 totalDur as 
     | null as'  = Nothing
     | otherwise = Just $ maximum $ map eventEnd . scoSigOut =<< as' 

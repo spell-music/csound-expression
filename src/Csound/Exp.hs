@@ -9,6 +9,7 @@ import Data.Map(Map)
 import Data.Fix
 
 import Csound.Exp.BoolExp
+import Csound.Exp.Inline
 
 un = undefined
 
@@ -16,18 +17,17 @@ type E = Fix RatedExp
 
 type Name = String
 
-data RatedExp a = RatedExp (Maybe Rate) (Exp a)
-    deriving (Show, Eq, Ord)
+data RatedExp a = RatedExp 
+    { ratedExpRate      :: Maybe Rate
+    , ratedExpDepends   :: Maybe a
+    , ratedExpExp       :: Exp a
+    } deriving (Show, Eq, Ord)
+
+onExp :: (Exp a -> Exp a) -> RatedExp a -> RatedExp a
+onExp f a = a{ ratedExpExp = f (ratedExpExp a) }
 
 data VarType = LocalVar | GlobalVar
     deriving (Show, Eq, Ord)
-
-data OutType = OutInstrPort Int | OutPlain | OutFile String
-    deriving (Show, Eq, Ord)
-
-onExp :: (Exp a -> Exp a) -> (RatedExp a -> RatedExp a)
-onExp f (RatedExp r a) = RatedExp r (f a)
-
 
 data Exp a 
     = ExpPrim Prim
@@ -36,12 +36,17 @@ data Exp a
     | Select Int a
     | If (CondInfo a) a a    
     | ExpBool (BoolExp a)
-    | Outs [a]
-    | ExpBuf BufOp [a] a    
-    | Depends [a] a
-    | Var VarType Rate Name
+    | ReadVar Var
+    | WriteVar Var a    
     deriving (Show, Eq, Ord)
     
+type NumExp a = Inline Info a
+
+data Var = Var
+    { varType :: VarType
+    , varRate :: Rate
+    , varName :: Name
+    } deriving (Show, Eq, Ord)
 
 data Info = Info 
     { infoName          :: Name     
@@ -50,16 +55,17 @@ data Info = Info
     , infoNextSE        :: Maybe Int
     } deriving (Show, Eq, Ord)           
   
-isPrefix, isInfix :: Info -> Bool
+isPrefix, isInfix, isProcedure :: Info -> Bool
 
 isPrefix = (Prefix ==) . infoOpcType
 isInfix  = (Infix  ==) . infoOpcType
+isProcedure = (Procedure ==) . infoOpcType
   
-data OpcType = Prefix | Infix
+data OpcType = Prefix | Infix | Procedure
     deriving (Show, Eq, Ord)
 
 data Rate = Xr | Ar | Kr | Ir | Sr 
-    deriving (Show, Eq, Ord, Enum)
+    deriving (Show, Eq, Ord, Enum, Bounded)
     
 data Signature 
     = SingleRate (Map Rate [Rate])
@@ -68,11 +74,6 @@ data Signature
         , inMultiRate  :: [Rate] } 
     deriving (Show, Eq, Ord)
  
-type DesiredRate = Maybe Rate
-
-data BufOp = Delayr | Deltap | Delayw
-    deriving (Show, Eq, Ord)
-
 data Prim 
     = P Int 
     | PrimInt Int 
@@ -87,18 +88,17 @@ data Ftable = Ftable
     , ftableArgs    :: [Double]
     } deriving (Show, Eq, Ord)
 
-
 -------------------------------------------------------
 -- instances for cse
 
 instance Functor RatedExp where
-    fmap f (RatedExp r a) = RatedExp r $ fmap f a
+    fmap f (RatedExp r d a) = RatedExp r (fmap f d) (fmap f a)
 
 instance Foldable RatedExp where
-    foldMap f (RatedExp _ a) = foldMap f a
+    foldMap f (RatedExp _ d a) = foldMap f d <> foldMap f a
     
 instance Traversable RatedExp where
-    traverse f (RatedExp r a) = RatedExp r <$> traverse f a
+    traverse f (RatedExp r d a) = RatedExp r <$> traverse f d <*> traverse f a
 
 instance Functor Exp where
     fmap f x = case x of
@@ -108,10 +108,9 @@ instance Functor Exp where
         Select n a -> Select n $ f a
         If info a b -> If (fmap f info) (f a) (f b)
         ExpBool a -> ExpBool $ fmap f a
-        Outs as -> Outs $ fmap f as
-        ExpBuf op deps a -> ExpBuf op (fmap f deps) $ f a        
-        Depends deps a -> Depends (fmap f deps) $ f a
-        Var ty r name -> Var ty r name
+        ReadVar v -> ReadVar v
+        WriteVar v a -> WriteVar v (f a)        
+
 
 instance Foldable Exp where
     foldMap f x = case x of
@@ -121,10 +120,8 @@ instance Foldable Exp where
         Select n a -> f a
         If info a b -> foldMap f info <> f a <> f b
         ExpBool a -> foldMap f a
-        Outs as -> foldMap f as
-        ExpBuf op deps a -> foldMap f deps <> f a
-        Depends deps a -> foldMap f deps <> f a
-        Var ty r name -> mempty
+        ReadVar v -> mempty
+        WriteVar v a -> f a
         
 instance Traversable Exp where
     traverse f x = case x of
@@ -134,9 +131,7 @@ instance Traversable Exp where
         Select n a -> Select n <$> f a
         If info a b -> If <$> traverse f info <*> f a <*> f b
         ExpBool a -> ExpBool <$> traverse f a
-        Outs as -> Outs <$> traverse f as
-        ExpBuf op deps a -> ExpBuf op <$> traverse f deps <*> f a
-        Depends deps a -> Depends <$> traverse f deps <*> f a
-        Var ty r name -> pure $ Var ty r name
+        ReadVar v -> pure $ ReadVar v
+        WriteVar v a -> WriteVar v <$> f a
 
 

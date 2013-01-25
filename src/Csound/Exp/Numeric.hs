@@ -7,6 +7,8 @@ import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons 
 
+--------------------------------------------
+-- numeric instances
 
 instance Num E where    
     (+) = bi "+"

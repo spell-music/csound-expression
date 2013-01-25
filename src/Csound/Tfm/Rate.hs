@@ -27,7 +27,7 @@ defaultKrateSet = S.fromList ["linseg", "expseg"]
 
 rate :: KrateSet -> Rate -> E -> E
 rate krateSet rootRate a = case unFix a of
-    RatedExp r exp -> case exp of
+    RatedExp r d exp -> case exp of
         ExpPrim prim -> ratePrim rootRate prim
         Tfm info as  ->    
             let desiredRate = maybe (defaultRate rootRate krateSet $ infoName info) id r             
@@ -35,21 +35,9 @@ rate krateSet rootRate a = case unFix a of
                 rateTfm krateSet (possibleRate desiredRate $ infoSignature info) info as
         Select n a -> ratedExp r $ Select n $ rate krateSet (fromJust r) a
         If info a b -> withRate rootRate $ If info (rateRoot a) (rateRoot b)
-        Outs a -> withRate rootRate $ Outs $ map rateRoot a
-        ExpBuf op deps a -> convert rootRate Ar $ withRate Ar $ ExpBuf op (fmap (rateRec $ bufOpDepRate op) deps) (rateRec (bufOpArgRate op) a)
-        Depends deps a -> withRate rootRate $ Depends (fmap rateRoot deps) (rateRoot a)
-        Var ty varRate name -> convert rootRate varRate $ withRate varRate $ Var ty varRate name  
     where rateRec   = rate krateSet  
           rateRoot  = rateRec rootRate         
    
-
-bufOpArgRate x = case x of
-    Delayr -> Ir
-    Delayw -> Ar
-    Deltap -> Kr
-
-bufOpDepRate x = Ar
-    
 
 ratePrim :: Rate -> Prim -> E
 ratePrim rootRate p
@@ -117,7 +105,7 @@ convertNotCoherent to from =
     foldr (.) id $ map (uncurry insertConverter) $ adjacentPairs $ range to from
     where insertConverter :: Rate -> Rate -> E -> E
           insertConverter to from =
-            Fix . RatedExp (Just to) . ConvertRate to from
+            withRate to . ConvertRate to from
     
 adjacentPairs :: [a] -> [(a, a)]
 adjacentPairs xs = case xs of

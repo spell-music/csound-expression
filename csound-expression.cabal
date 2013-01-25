@@ -16,24 +16,24 @@ Extra-Source-Files :
 
 Library
   Build-Depends:
-        base >= 4, base < 5, containers, transformers, pretty, hashable,
+        base >= 4, base < 5, containers, array, transformers, pretty, hashable,
         data-default, Boolean, data-fix, temporal-media, temporal-music-notation  
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound
   Other-Modules:
-        Csound.Exp
+        Csound.Exp        
         Csound.Exp.Wrapper
         Csound.Exp.Cons
         Csound.Exp.Logic
+        Csound.Exp.Inline
         Csound.Exp.Numeric       
         Csound.Exp.BoolExp
-        Csound.Exp.Buf
-        Csound.Exp.Random
         
         Csound.Tfm.DAG
         Csound.Tfm.BiMap
-        Csound.Tfm.Rate
+       -- Csound.Tfm.Rate
+        Csound.Tfm.RateGraph
         Csound.Tfm.TfmTree
         
         Csound.Render

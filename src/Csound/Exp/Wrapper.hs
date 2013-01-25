@@ -4,6 +4,9 @@
 module Csound.Exp.Wrapper where
 
 import Control.Applicative
+import Control.Monad(ap)
+import Control.Monad.Trans.State
+
 import Data.String
 import Data.Fix
 import Control.Monad.Trans.State
@@ -20,9 +23,30 @@ newtype Double' = Double' { unDouble' :: E }
 
 newtype String' = String' { unString' :: E }
 
-newtype SE a = SE { unSE :: E }
-
 newtype BoolSig = BoolSig { unBoolSig :: E }
+
+------------------------------------------------
+-- side effects
+
+newtype SE a = SE { unSE :: State E a }
+
+instance Functor SE where
+    fmap f = SE . fmap f . unSE
+
+instance Applicative SE where
+    pure = return
+    (<*>) = ap
+
+instance Monad SE where
+    return = SE . return
+    ma >>= mf = SE $ unSE ma >>= unSE . mf
+
+runSE :: SE a -> (a, E)
+runSE a = runState (unSE a) (unDouble' (p 3 :: Double'))
+
+execSE :: SE a -> E
+execSE = snd . runSE
+
 
 ------------------------------------------------
 -- shortcuts
@@ -42,7 +66,7 @@ withRate :: Val a => Rate -> Exp E -> a
 withRate r = ratedExp (Just r)
 
 ratedExp :: Val a => Maybe Rate -> Exp E -> a
-ratedExp r = wrap . RatedExp r
+ratedExp r = wrap . RatedExp r Nothing
 
 prim :: Val a => Prim -> a
 prim = wrap . noRate . ExpPrim 
@@ -69,7 +93,7 @@ var  = mkVar LocalVar
 gvar = mkVar GlobalVar
 
 mkVar :: Val a => VarType -> Rate -> String -> a
-mkVar ty rate name = wrap $ noRate $ Var ty rate name
+mkVar ty rate name = wrap $ noRate $ ReadVar (Var ty rate name)
 
 p :: Init a => Int -> a
 p = prim . P
@@ -83,12 +107,40 @@ double = prim . PrimDouble
 str :: String -> String' 
 str = prim . PrimString
 
+writeVar :: (Val a) => Var -> a -> SE ()
+writeVar v x = se_ $ noRate $ WriteVar v $ Fix $ unwrap x 
+
+readVar :: (Val a) => Var -> a
+readVar v = noRate $ ReadVar v
+
+gOutVar :: Int -> Int -> Var
+gOutVar instrId portId = Var GlobalVar Ar (gOutName instrId portId)
+    where gOutName instrId portId = "Out" ++ show instrId ++ "_" ++ show portId
+
+-------------------------------
+-- side effects
+
+se :: (Val a) => E -> SE a
+se a = SE $ state $ \s -> 
+    let x = (unwrap a) { ratedExpDepends = Just s }
+    in  (wrap x, Fix $ x)
+
+se_ :: E -> SE ()
+se_ = fmap (const ()) . SE . withState setProcedure . unSE . (se :: E -> SE E)
+
+setProcedure :: E -> E
+setProcedure x = x {- Fix $ case unFix x of 
+    a -> a{ ratedExpExp = phi $ ratedExpExp a } 
+    where phi (Tfm i xs) = Tfm i{ infoOpcType = Procedure } xs
+          phi x = x  
+  -}          
+
 ------------------------------------------------
 -- basic destructors
 
 getPrimUnsafe :: Val a => a -> Prim
-getPrimUnsafe a = case unwrap a of
-    RatedExp _ (ExpPrim p) -> p
+getPrimUnsafe a = case ratedExpExp $ unwrap a of
+    ExpPrim p -> p
 
 
 
@@ -117,8 +169,7 @@ instance ToSig Double where
 -- rate conversion 
 
 setRate :: (Val a, Val b) => Rate -> a -> b
-setRate r a = wrap $ phi $ unwrap a
-    where phi (RatedExp _ exp) = RatedExp (Just r) exp
+setRate r a = wrap $ (\x -> x { ratedExpRate = Just r }) $ unwrap a
 
 ar :: ToSig a => a -> Sig
 ar = setRate Ar . sig
@@ -175,10 +226,6 @@ instance Val String' where
 instance Val Ftable where
     wrap = un
     unwrap = prim . PrimFtable
-
-instance Val a => Val (SE a) where
-    wrap = SE . Fix
-    unwrap = unFix . unSE
 
 instance Val BoolSig where
     wrap = BoolSig . Fix
@@ -244,8 +291,7 @@ instance MultiOut (Sig, Sig, Sig, Sig) where
 
 multiOutsSection :: Int -> E -> [Sig]
 multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
-    where rates = take n $ getRates exp
-          RatedExp _ exp = unFix e 
+    where rates = take n $ getRates $ ratedExpExp $ unFix e          
           e' = Fix $ onExp (setMultiRate rates) $ unFix e
           
           setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
@@ -261,32 +307,4 @@ isMultiOutSignature :: Signature -> Bool
 isMultiOutSignature x = case x of
     MultiRate _ _ -> True
     _ -> False
-
-------------------------------------------------
--- CsdTuple
-
-mapCsdTuple :: CsdTuple a => (E -> E) -> a -> a
-mapCsdTuple f x = evalState toTuple $ fmap f $ fromTuple x
-
-class CsdTuple a where
-    toTuple :: State [E] a
-    fromTuple :: a -> [E]
-
-instance CsdTuple Sig where
-    toTuple   = state $ \as -> (Sig $ head as, tail as)
-    fromTuple = return . unSig
-
-instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
-    toTuple = (,) <$> toTuple <*> toTuple
-    fromTuple (a, b) = fromTuple a ++ fromTuple b
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c) => CsdTuple (a, b, c) where
-    toTuple = (,,) <$> toTuple <*> toTuple <*> toTuple
-    fromTuple (a, b, c) = fromTuple a ++ fromTuple b ++ fromTuple c
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, d) where
-    toTuple = (,,,) <$> toTuple <*> toTuple <*> toTuple <*> toTuple
-    fromTuple (a, b, c, d) = fromTuple a ++ fromTuple b ++ fromTuple c ++ fromTuple d
-
-
 
