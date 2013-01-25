@@ -24,6 +24,7 @@ zeroDbfs = opc0 "0dbfs" [(i, [])]
 --------------------------------------------
 -- handful of opcodes
 
+
 -- oscillators
 
 oscil :: Sig -> Sig -> Tab -> Sig
@@ -167,20 +168,38 @@ comb :: Sig -> Sig -> D -> Sig
 comb = opc3 "comb" [(a, [a, k, i, i, i])]
 
 ----------------------------------------------------
+-- 
+
+xtratim :: D -> SE ()
+xtratim a1 = se_ $ opc1 "xtratim" [(x, [i])] a1
+
+----------------------------------------------------
+-- delay lines
+
+delayr :: D -> SE Sig
+delayr a1 = se $ opc1 "delayr" [(a, [i])] a1
+
+delayw :: Sig -> SE ()
+delayw a1 = se_ $ opc1 "delayw" [(x, [a])] a1
+
+deltap :: Sig -> SE Sig
+deltap a1 = se $ opc1 "deltap" [(a, [k])] a1
+
+----------------------------------------------------
 -- random opcodes
 
 -- ares rand xamp [, iseed] [, isel] [, ioffset]
 -- kres rand xamp [, iseed] [, isel] [, ioffset]
 rand :: Sig -> SE Sig
-rand = opc1 "rand" [
+rand sig = se $ opc1 "rand" [
     (a, x:rest),
-    (k, k:rest)]
+    (k, k:rest)] sig
     where rest = replicate 3 i
 
 
 -- ares noise xamp, kbeta
 noise :: Sig -> Sig -> SE Sig
-noise = opc2 "noise" [(a, [x, k])]
+noise a1 a2 = se $ opc2 "noise" [(a, [x, k])] a1 a2
 
 -- ares pinkish xin [, imethod] [, inumbands] [, iseed] [, iskip]
 pinkish :: Sig -> Sig 
@@ -241,7 +260,12 @@ constOpc name = opc0 name [(i, [])]
 constDiap :: Val a => Name -> a
 constDiap name = opc0 name [(k, [i, i])]
 
+-------------------------------------------------
+-- io
 
+fout :: [Sig] -> SE ()
+fout as = se_ $ opcs "fout" [(x, repeat a)] as
+ 
 
 
 

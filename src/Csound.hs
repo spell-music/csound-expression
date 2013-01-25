@@ -1,22 +1,17 @@
 module Csound(
     -- * Types
-    Sig, D, S, I, Tab,
-    MultiOut, CsdTuple,
+    Sig, D, S, I, Tab, MultiOut, SE,
 
     -- * Converters
     ToSig(sig), ar, kr,
-    int, double, str,
-
-    -- * Random
-    SE, se, ses, se2,
+    int, double, str,      
 
     -- * Logic
     BoolSig, 
     module Data.Boolean,
 
     -- * Delay and feedback
-    Buf, delayr, delayw, deltap, buf,
-
+    
     -- * Midi
     Msg, midi, cpsmidi, ampmidi, pchbend, aftouch, ctrl7,
 
@@ -31,7 +26,8 @@ module Csound(
     -- ** Panning
     pan2,
 
-    -- ** Delay and feedback    
+    -- ** Delay and feedback   
+    delayr, delayw, deltap, 
 
     -- ** Reverberation
     freeverb, reverbsc,
@@ -53,12 +49,18 @@ module Csound(
     buthp, butlp, butbp, butbr, 
     moogladder, bqrez, vcomb,
     
+    -- ** io
+    fout,
+
+    -- ** Other 
+    xtratim,
+
     -- * Ftables
     gen,
 
     -- * Scores
     module Temporal.Music.Score,
-    sco, Out, SigOut, Arg(..),
+    sco, SigOut, Arg(..), out, mixing, mixingBy,
 
     -- * Rendering
     csd,
@@ -82,11 +84,9 @@ import Csound.Exp.Wrapper
 import Csound.Opcode
 import Csound.Exp.Numeric
 import Csound.Exp.Logic
-import Csound.Exp.Random
-import Csound.Exp.Buf
 
 import Csound.Render.Sco
-import Csound.Render(csd)
+import Csound.Render
 
 
 

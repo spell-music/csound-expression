@@ -11,6 +11,7 @@ import Data.Boolean
 import Csound.Exp.Wrapper
 import Csound.Exp
 import Csound.Exp.BoolExp
+import Csound.Exp.Inline
 
 instance Boolean BoolSig where
     true = boolOp0 TrueOp
@@ -37,6 +38,8 @@ instance OrdB Sig where
 --------------------------------------------
 -- if-then-else
 
+boolExp = PreInline
+
 cond' :: BoolSig -> Sig -> Sig -> Sig
 cond' p t e = wrap $ mkCond (condInfo $ Fix $ unwrap p) (unwrap t) (unwrap e)
     where mkCond :: CondInfo E -> RatedExp E -> RatedExp E -> RatedExp E
@@ -46,21 +49,21 @@ cond' p t e = wrap $ mkCond (condInfo $ Fix $ unwrap p) (unwrap t) (unwrap e)
             | otherwise = noRate $ If p (Fix t) (Fix e)            
 
 condInfo :: E -> CondInfo E
-condInfo exp = (\(a, b) -> CondInfo a (IM.fromList b)) $ evalState (condInfo' exp) 0
-    where condInfo' :: E -> State Int (Cond, [(Int, E)])
+condInfo exp = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' exp) 0
+    where condInfo' :: E -> State Int (InlineExp CondOp, [(Int, E)])
           condInfo' e = maybe (onLeaf e) (onExp e) $ parseNode e
-          onLeaf e = state $ \n -> ((CondPrim n, [(n, e)]), n+1)  
+          onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
           onExp  e (op, args) = mkNode <$> mapM condInfo' args
-              where mkNode as = (CondExp op (map fst as), concat $ map snd as) 
+              where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
 
           parseNode :: E -> Maybe (CondOp, [E])
-          parseNode x = case unFix x of
-              RatedExp _ (ExpBool (BoolExp op args)) -> Just (op, args)
+          parseNode x = case ratedExpExp $ unFix x of
+              ExpBool (PreInline op args) -> Just (op, args)
               _ -> Nothing    
 
 
 boolOps :: (Val a) => CondOp -> [E] -> a
-boolOps op as = noRate $ ExpBool $ BoolExp op as
+boolOps op as = noRate $ ExpBool $ boolExp op as
 
 boolOp0 :: Val a => CondOp -> a
 boolOp0 op = boolOps op []
@@ -73,17 +76,17 @@ boolOp2 op a b = boolOps op $ map (Fix . setRate Kr) [unwrap a, unwrap b]
 
 -- no support for not in csound so we perform not-elimination
 notE :: E -> E
-notE x = case unFix x of
-    RatedExp r (ExpBool (BoolExp op args)) -> Fix $ RatedExp r $ ExpBool $ case op of
-        TrueOp            -> BoolExp FalseOp        []                
-        FalseOp           -> BoolExp TrueOp         []
-        And               -> BoolExp Or             $ map notE args
-        Or                -> BoolExp And            $ map notE args
-        Equals            -> BoolExp NotEquals      args
-        NotEquals         -> BoolExp Equals         args
-        Less              -> BoolExp GreaterEquals  args
-        Greater           -> BoolExp LessEquals     args
-        LessEquals        -> BoolExp Greater        args
-        GreaterEquals     -> BoolExp Less           args
+notE x = Fix $ onExp phi $ unFix x
+    where phi (ExpBool (PreInline op args)) = ExpBool $ case op of
+            TrueOp            -> boolExp FalseOp        []
+            FalseOp           -> boolExp TrueOp         []
+            And               -> boolExp Or             $ map notE args
+            Or                -> boolExp And            $ map notE args
+            Equals            -> boolExp NotEquals      args
+            NotEquals         -> boolExp Equals         args
+            Less              -> boolExp GreaterEquals  args
+            Greater           -> boolExp LessEquals     args
+            LessEquals        -> boolExp Greater        args
+            GreaterEquals     -> boolExp Less           args
            
 

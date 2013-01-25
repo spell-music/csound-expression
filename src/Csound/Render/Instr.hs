@@ -1,3 +1,4 @@
+{-# Language TupleSections #-}
 module Csound.Render.Instr where
 
 import qualified Data.IntMap as IM
@@ -6,6 +7,7 @@ import Data.Char(toLower)
 import Data.List(partition, sortBy)
 import Control.Arrow(second)
 import Data.Ord(comparing)
+import Data.Maybe(fromJust)
 
 import Text.PrettyPrint hiding ((<>), render)
 import qualified Text.PrettyPrint as P
@@ -15,21 +17,22 @@ import Csound.Tfm.BiMap
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (double, int, var)
 
-import Csound.Tfm.Rate
+import Csound.Tfm.RateGraph
 import Csound.Tfm.TfmTree
 import Csound.Exp.BoolExp(renderCondInfo)
 
 
+
 instance Show Sig where
-    show a = show $ renderInstrBody OutPlain (ftableMap [exp]) exp
+    show a = show $ renderInstrBody (ftableMap [exp]) exp
         where exp = unSig a
 
 
 type InstrId = Int
 
 
-renderInstr :: OutType -> FtableMap -> InstrId -> E -> Doc
-renderInstr outType ft instrId exp = instrHeader instrId $ renderInstrBody outType ft exp
+renderInstr :: FtableMap -> InstrId -> E -> Doc
+renderInstr ft instrId exp = instrHeader instrId $ renderInstrBody ft exp
 
 instrHeader :: InstrId -> Doc -> Doc
 instrHeader instrId body = vcat [
@@ -55,84 +58,74 @@ getRenderState a = (RenderState moLinks moRates, rest)
 
           (selectInfo, rest) = partition (isSelect . snd) a
     
-          isSelect x = case x of
-            RatedExp _ (Select _ _) -> True
-            _ -> False
+          isSelect x = case ratedExpExp x of
+                Select _ _ -> True
+                _ -> False
             
-          extract (n, (RatedExp _ (Select order parent))) = (parent, [MultiOutPort n order])
+          extract (n, x) = case ratedExpExp x of
+                Select order parent -> (parent, [MultiOutPort n order])
 
 
 toDag :: FtableMap -> E -> Dag RatedExp 
-toDag ft exp = dag $ substFtables ft $ rate defaultKrateSet Ar $ exp
+toDag ft exp = dag $ substFtables ft exp
 
 
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
-clearEmptyResults x@(res, exp)
-    | isProcedure exp = ([], exp)
-    | otherwise = x
-    where isProcedure x = case x of
-              Outs _            -> True
-              ExpBuf Delayw _ _ -> True
-              _                 -> False  
+clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-renderInstrBody :: OutType -> FtableMap -> E -> Doc
-renderInstrBody outType ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates st g1
+renderInstrBody :: FtableMap -> E -> Doc
+renderInstrBody ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates st g1
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = args res <+> renderExp outType exp
+          stmt (res, exp) = args res <+> renderExp exp
           
           (st, g1) = getRenderState g0
           g0 = toDag ft sig
-    
-            
-
-data RatedVar = RatedVar Rate String 
-    deriving (Show)
-
+ 
 collectRates :: RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates st a = map substRate a
-    where rateMap = IM.fromList $ multiOutsRates st ++ fmap (second getRate) a
-          substRate (n, exp) 
-            | isMultiOutExp e = (getMultiOutVars n (multiOutsLinks st IM.! n) e, fmap makeVar e)
-            | otherwise = ([makeVar n], fmap makeVar e)
-            where e = getExp exp
-                  r = getRate exp
+collectRates st dag = evalState res lastFreshId  
+    where res = tfmMultiRates st dag1
+          (dag1, lastFreshId) = grate defaultKrateSet dag
 
-          makeVar n = RatedVar (rateMap IM.! n) (show n)
-          
-isMultiOutExp :: Exp a -> Bool
-isMultiOutExp x = case x of
-    Tfm i _ -> isMultiOutSignature (infoSignature i)
-    _ -> False
-    
-getMultiOutVars :: Int -> [MultiOutPort] -> Exp Int -> [RatedVar]
-getMultiOutVars parent ports exp = zipWith RatedVar (getRates exp) (getPorts parent ports)
-    where getPorts parentId ps = concat $ names ++ [map (missingPortName parent) [lastId .. ]]
-            where ps' = sortBy (comparing orderMultiOutPort) ps
-                  (names, lastId) = runState (mapM (fillMissingPorts parentId) ps') 0
+
+tfmMultiRates :: RenderState -> [(RatedVar, Exp RatedVar)] -> State Int [([RatedVar], Exp RatedVar)]
+tfmMultiRates st as = mapM substRate as
+    where substRate (n, exp) 
+            | isMultiOutExp exp = fmap (,exp) $ getMultiOutVars (multiOutsLinks st IM.! ratedVarId n) exp
+            | otherwise = return ([n], exp)
+
+          isMultiOutExp x = case x of
+              Tfm i _ -> isMultiOutSignature (infoSignature i)
+              _ -> False
+  
+getMultiOutVars :: [MultiOutPort] -> Exp RatedVar -> State Int [RatedVar]
+getMultiOutVars ports exp = fmap (zipWith RatedVar (getRates exp)) (getPorts ports)
+    where getPorts ps = state $ \lastFreshId -> 
+            let ps' = sortBy (comparing orderMultiOutPort) ps
+                (ids, lastPortOrder) = runState (mapM (fillMissingPorts lastFreshId) ps') 0
+                ids' = ids ++ [map (+ lastFreshId) [lastPortOrder + 1 .. portsSize - 1]]                
+            in  (concat ids', lastFreshId + portsSize - inUsePortsSize)             
+                  
+                  
+          rates = getRates exp
+          portsSize = length rates    
+          inUsePortsSize = length ports  
                     
-
-          missingPortName parentId n = show parentId ++ "_" ++ show n
             
-          fillMissingPorts :: Int -> MultiOutPort -> State Int [String]
-          fillMissingPorts parentId port = state $ \s ->
+          fillMissingPorts :: Int -> MultiOutPort -> State Int [Int]
+          fillMissingPorts lastFreshId port = state $ \s ->
                 if s == order
                 then ([e], next) 
-                else (map (missingPortName parentId) [s .. order - 1] ++ [e], next)
-            where e = show $ idMultiOutPort port
+                else (fmap (+ lastFreshId) [s .. order - 1] ++ [e], next)
+            where e = idMultiOutPort port
                   order = orderMultiOutPort port                  
                   next = order + 1
-            
+             
 
 getRate :: RatedExp a -> Rate
-getRate (RatedExp (Just r) _) = r
-getRate _ = error "getRate: rate is undefined"
+getRate = fromJust . ratedExpRate
 
-getExp :: RatedExp a -> Exp a
-getExp (RatedExp _ exp) = exp
-
-          
 var :: RatedVar -> Doc
-var (RatedVar r x) = renderRate r P.<> text x
+var (RatedVar r x) = renderRate r P.<> int x
 
 args :: [RatedVar] -> Doc
 args xs = hsep $ punctuate comma $ map var xs
@@ -146,49 +139,25 @@ renderRate x = case x of
 assign :: Doc -> Doc
 assign x = char '=' <+> x
 
-renderExp :: OutType -> Exp RatedVar -> Doc
-renderExp outType x = case x of
+renderExp :: Exp RatedVar -> Doc
+renderExp x = case x of
     ExpPrim p -> assign $ renderPrim p
-    Tfm info xs     | isPrefix info -> text (infoName info) <+> args xs
     Tfm info [a, b] | isInfix  info -> assign $ var a <+> text (infoName info) <+> var b
+    Tfm info xs     -> text (infoName info) <+> args xs
     ConvertRate a b x -> assign $ var x
     If info t e -> equals <+> renderCondInfo var info <+> char '?' <+> var t <+> char ':' <+> var e
-    Outs xs -> renderOuts outType xs     
-    ExpBuf op _ a -> (renderBufOp op) <+> var a         
-    Depends _ a -> equals <+> var a
-    Var ty rate name -> equals <+> renderVarType ty P.<> renderRate rate P.<> text "var_" P.<> text name
+    WriteVar v a -> renderVar v <+> equals <+> var a
+    ReadVar v -> equals <+> renderVar v
     x -> error $ "unknown expression: " ++ show x
+       
 
-
-renderOuts :: OutType -> [RatedVar] -> Doc
-renderOuts ty xs = case ty of
-    OutPlain -> outPlain xs
-    OutInstrPort n -> vcat $ zipWith portUpdate (fmap (gOut n) [1 .. length xs]) xs
-    OutFile fileName -> fout fileName xs $$ outPlain xs    
-    where outPlain xs = outName xs <+> args xs 
-          outName xs = text $ if (length xs == 1) then "out" else "outs"
-          portUpdate port x = port <+> equals <+> port <+> char '+' <+> var x
-          fout fileName xs = text "fout" <+> text fileName P.<> text ", 15," <+> args xs             
-           
-
-gOut :: Int -> Int -> Doc
-gOut instrId portId = text "gaOut" P.<> int instrId P.<> char '_' P.<> int portId
-
-gOutVar :: Val a => Int -> Int -> a
-gOutVar instrId portId = gvar Ar $ gOutName instrId portId
-
-gOutName :: Int -> Int -> String
-gOutName instrId portId = show $ gOut instrId portId 
+renderVar :: Var -> Doc
+renderVar v = renderVarType (varType v) P.<> renderRate (varRate v) P.<> text (varName v)
 
 renderVarType :: VarType -> Doc
 renderVarType x = case x of
     LocalVar -> P.empty
     GlobalVar -> char 'g'
-
-renderBufOp x = text $ case x of
-    Delayr -> "delayr"
-    Delayw -> "delayw"
-    Deltap -> "deltap"
 
 renderPrim :: Prim -> Doc
 renderPrim x = case x of

@@ -108,7 +108,7 @@ type Specs = ([Rate], [Rate])
 specs :: Specs -> Signature
 specs = uncurry MultiRate 
 
-mo :: MultiOut a => E -> a
+mo :: (MultiOut a) => E -> a
 mo = multiOuts
 
 mopcs :: (Val a, MultiOut b) => Name -> Specs -> [a] -> b
