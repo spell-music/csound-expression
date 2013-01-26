@@ -6,6 +6,7 @@ import qualified Data.Map as M
 import Data.Foldable(foldMap)
 
 import Csound.Exp
+import Csound.Exp.Inline
 
 type FtableMap = M.Map Ftable Int
 
@@ -26,6 +27,7 @@ getFtables = cata $ \(RatedExp _ _ x) -> case x of
     ExpPrim _ -> []
     Tfm _ as -> concat as
     ConvertRate _ _ a -> a
+    ExpNum a -> foldMap id a
     Select _ a -> a
     If info a b -> foldMap id info ++ a ++ b
     ReadVar _ -> []

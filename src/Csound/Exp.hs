@@ -10,6 +10,7 @@ import Data.Fix
 
 import Csound.Exp.BoolExp
 import Csound.Exp.Inline
+import Csound.Exp.NumExp
 
 un = undefined
 
@@ -36,11 +37,10 @@ data Exp a
     | Select Int a
     | If (CondInfo a) a a    
     | ExpBool (BoolExp a)
+    | ExpNum (NumExp a)
     | ReadVar Var
     | WriteVar Var a    
-    deriving (Show, Eq, Ord)
-    
-type NumExp a = Inline Info a
+    deriving (Show, Eq, Ord)  
 
 data Var = Var
     { varType :: VarType
@@ -88,6 +88,7 @@ data Ftable = Ftable
     , ftableArgs    :: [Double]
     } deriving (Show, Eq, Ord)
 
+
 -------------------------------------------------------
 -- instances for cse
 
@@ -108,6 +109,7 @@ instance Functor Exp where
         Select n a -> Select n $ f a
         If info a b -> If (fmap f info) (f a) (f b)
         ExpBool a -> ExpBool $ fmap f a
+        ExpNum  a -> ExpNum  $ fmap f a
         ReadVar v -> ReadVar v
         WriteVar v a -> WriteVar v (f a)        
 
@@ -120,6 +122,7 @@ instance Foldable Exp where
         Select n a -> f a
         If info a b -> foldMap f info <> f a <> f b
         ExpBool a -> foldMap f a
+        ExpNum  a -> foldMap f a
         ReadVar v -> mempty
         WriteVar v a -> f a
         
@@ -131,6 +134,7 @@ instance Traversable Exp where
         Select n a -> Select n <$> f a
         If info a b -> If <$> traverse f info <*> f a <*> f b
         ExpBool a -> ExpBool <$> traverse f a
+        ExpNum  a -> ExpNum  <$> traverse f a
         ReadVar v -> pure $ ReadVar v
         WriteVar v a -> WriteVar v <$> f a
 

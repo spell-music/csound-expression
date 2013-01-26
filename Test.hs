@@ -1,4 +1,4 @@
-module Test where
+module Main where
 
 import Data.List(transpose)
 import Csound
@@ -41,3 +41,6 @@ res msg = do
 
 
 q = csd def mixing [midi 4 res, sco instr1 sco1, sco instr2 sco2]
+
+main :: IO ()
+main = putStrLn q

@@ -20,6 +20,7 @@ import Csound.Exp.Wrapper hiding (double, int, var)
 import Csound.Tfm.RateGraph
 import Csound.Tfm.TfmTree
 import Csound.Exp.BoolExp(renderCondInfo)
+import Csound.Exp.NumExp(renderNumExp)
 
 
 
@@ -146,6 +147,7 @@ renderExp x = case x of
     Tfm info xs     -> text (infoName info) <+> args xs
     ConvertRate a b x -> assign $ var x
     If info t e -> equals <+> renderCondInfo var info <+> char '?' <+> var t <+> char ':' <+> var e
+    ExpNum a -> equals <+> renderNumExp var a
     WriteVar v a -> renderVar v <+> equals <+> var a
     ReadVar v -> equals <+> renderVar v
     x -> error $ "unknown expression: " ++ show x

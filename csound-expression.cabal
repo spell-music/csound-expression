@@ -29,6 +29,7 @@ Library
         Csound.Exp.Inline
         Csound.Exp.Numeric       
         Csound.Exp.BoolExp
+        Csound.Exp.NumExp
         
         Csound.Tfm.DAG
         Csound.Tfm.BiMap

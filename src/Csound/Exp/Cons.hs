@@ -11,6 +11,13 @@ import Data.Fix
 import Csound.Exp
 import Csound.Exp.Wrapper
 
+
+(!) :: Val a => Sig -> a -> Sig
+(!) a b = wrap $ onExp phi $ unwrap a 
+    where phi x = case x of
+            Tfm t xs -> Tfm t (xs ++ [Fix $ unwrap b])
+            x        -> x
+
 ------------------------------------------------
 -- helper constructors
 
