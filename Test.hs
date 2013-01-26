@@ -24,7 +24,10 @@ instr2 (amp, phs, fileName) = out $ a * b
 
 
 sco1 = line $ map temp [(1, 440), (0.5, 220), (1, 440)]            
-sco2 = delay 0.5 $ stretch 10 $ temp (0.25, 1000, str "moo.wav")
+sco2 = chord [
+    delay 0.5 $ stretch 10 $ temp (0.25, 1000, str "moo.wav"),
+    temp (0.1, 220, str "boo.wav"),
+    temp (1, 440, str "boo.wav")]
     
 res :: Msg -> SE [Sig]
 res msg = do

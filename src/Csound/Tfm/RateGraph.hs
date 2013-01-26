@@ -178,11 +178,13 @@ getConversions pid curRate convTable = uncurry phi =<< M.toList convTable
 
 processLine :: MsgBox s -> (Int, RatedExp Int) -> ST s [(RatedVar, Exp RatedVar)]
 processLine box (pid, exp) = fmap phi $ loadAgent pid box     
-    where phi a = agentConversions a ++ return (RatedVar (agentRate a) pid, rateExp (agentResponses a) (ratedExpExp exp)) 
+    where phi a = agentConversions a 
+            ++ return (RatedVar (agentRate a) pid, rateExp (agentRate a) (agentResponses a) (ratedExpExp exp)) 
 
 
-rateExp :: [Response] -> Exp Int -> Exp RatedVar 
-rateExp rs exp = case exp of
+rateExp :: Rate -> [Response] -> Exp Int -> Exp RatedVar 
+rateExp curRate rs exp = case exp of
+    ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
     ExpPrim p -> ExpPrim p
     Tfm i _ -> Tfm i vs   
     Select pid a -> Select pid (RatedVar Xr a)    

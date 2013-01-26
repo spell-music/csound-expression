@@ -145,14 +145,15 @@ assign x = char '=' <+> x
 
 renderExp :: Exp RatedVar -> Doc
 renderExp x = case x of
+    ExpPrim (PString n) -> text "strget" <+> char 'p' P.<> int n
     ExpPrim p -> assign $ renderPrim p
     Tfm info [a, b] | isInfix  info -> assign $ var a <+> text (infoName info) <+> var b
     Tfm info xs     -> text (infoName info) <+> args xs
     ConvertRate a b x -> assign $ var x
-    If info t e -> equals <+> renderCondInfo var info <+> char '?' <+> var t <+> char ':' <+> var e
-    ExpNum a -> equals <+> renderNumExp var a
+    If info t e -> assign $ renderCondInfo var info <+> char '?' <+> var t <+> char ':' <+> var e
+    ExpNum a -> assign $ renderNumExp var a
     WriteVar v a -> renderVar v <+> equals <+> var a
-    ReadVar v -> equals <+> renderVar v
+    ReadVar v -> assign $ renderVar v
     x -> error $ "unknown expression: " ++ show x
        
 

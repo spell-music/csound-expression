@@ -76,6 +76,7 @@ data Signature
  
 data Prim 
     = P Int 
+    | PString Int       -- >> p-string: 
     | PrimInt Int 
     | PrimDouble Double 
     | PrimFtable Ftable 
@@ -138,4 +139,12 @@ instance Traversable Exp where
         ReadVar v -> pure $ ReadVar v
         WriteVar v a -> WriteVar v <$> f a
 
+
+-- comments
+-- 
+-- p-string 
+--
+--    separate p-param for strings (we need it to read strings from global table) 
+--    Csound doesn't permits us to use more than four string params so we need to
+--    keep strings in the global table and use `strget` to read them
 
