@@ -19,8 +19,8 @@ instr1 (amp, phs) = do
           
           
 instr2 :: (D, D, S) -> SE [Sig]
-instr2 (amp, phs, fileName) = out $ q * sig amp * osc sinWave (sig phs)
-    where q = soundin fileName
+instr2 (amp, phs, fileName) = out $ a * b
+    where (a, b) = soundin2 fileName
 
 
 sco1 = line $ map temp [(1, 440), (0.5, 220), (1, 440)]            

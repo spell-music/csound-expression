@@ -21,7 +21,7 @@ import Csound.Tfm.RateGraph
 import Csound.Tfm.TfmTree
 import Csound.Exp.BoolExp(renderCondInfo)
 import Csound.Exp.NumExp(renderNumExp)
-
+import Csound.Exp.Inline
 
 
 instance Show Sig where
@@ -52,19 +52,22 @@ data MultiOutPort = MultiOutPort
     , orderMultiOutPort :: Int
     } 
 
-getRenderState :: Dag RatedExp -> (RenderState, Dag RatedExp)
-getRenderState a = (RenderState moLinks moRates, rest)
+getRenderState :: Dag RatedExp -> RenderState
+getRenderState a = RenderState moLinks moRates
     where moLinks = IM.fromListWith (++) $ map extract selectInfo
           moRates = fmap (second getRate) selectInfo           
 
-          (selectInfo, rest) = partition (isSelect . snd) a
-    
-          isSelect x = case ratedExpExp x of
-                Select _ _ -> True
-                _ -> False
+          selectInfo = filter (isSelect . ratedExpExp . snd) a    
             
           extract (n, x) = case ratedExpExp x of
                 Select order parent -> (parent, [MultiOutPort n order])
+
+filterMultiOutHelpers :: [(RatedVar, Exp RatedVar)] -> [(RatedVar, Exp RatedVar)]
+filterMultiOutHelpers = filter (not . isSelect . snd) 
+
+isSelect x = case x of
+    Select _ _ -> True
+    _ -> False
 
 
 toDag :: FtableMap -> E -> Dag RatedExp 
@@ -75,16 +78,16 @@ clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
 renderInstrBody :: FtableMap -> E -> Doc
-renderInstrBody ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates st g1
+renderInstrBody ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates st g
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
           stmt (res, exp) = args res <+> renderExp exp
           
-          (st, g1) = getRenderState g0
-          g0 = toDag ft sig
+          st = getRenderState g
+          g  = toDag ft sig
  
 collectRates :: RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
 collectRates st dag = evalState res lastFreshId  
-    where res = tfmMultiRates st dag1
+    where res = tfmMultiRates st $ filterMultiOutHelpers dag1
           (dag1, lastFreshId) = grate defaultKrateSet dag
 
 

@@ -49,15 +49,19 @@ instance Default Agent where
 
 data Addr = Addr
     { addrLine :: Int
-    , addrArg  :: Int }
+    , addrArg  :: Int 
+    } deriving (Show)
 
 data Query = Query
     { queryAddr :: Addr
-    , queryRate :: Rate }
+    , queryRate :: Rate 
+    } deriving (Show)
 
 data Response  = Response
     { responseAddr      :: Addr    
-    , responseRatedVar  :: RatedVar }
+    , responseRatedVar  :: RatedVar 
+    } deriving (Show)
+     
 
 newtype MsgBox s = MsgBox { unMsgBox :: STArray s Int Agent }
 
@@ -65,7 +69,7 @@ modifyArray :: Ix i => STArray s i a -> i -> (a -> a) -> ST s ()
 modifyArray arr i f = writeArray arr i . f =<< readArray arr i
 
 msgBox :: Int -> ST s (MsgBox s)
-msgBox size = fmap MsgBox $ newArray (0, size) def
+msgBox size = fmap MsgBox $ newArray (0, size - 1) def
 
 sendQuery :: AgentId -> Query -> MsgBox s -> ST s ()
 sendQuery pid q box = modifyArray (unMsgBox box) pid $ 
@@ -127,7 +131,7 @@ notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query b
     Tfm info xs -> notifyTfm curRate (infoSignature info) xs
     WriteVar v a -> [(a, mkQuery 0 $ varRate v)]
     If info a b -> (a, mkQuery (-2) curRate) : (b, mkQuery (-1) curRate) : encodeIfEnv (min Kr curRate) (inlineEnv info)
-    ExpNum (PreInline _ xs) -> queryList xs (repeat curRate)
+    ExpNum (PreInline op xs) -> queryList xs (repeat curRate)
     _ -> []
     where notifyTfm r signature xs = case signature of
             SingleRate table -> queryList xs $ table M.! r
