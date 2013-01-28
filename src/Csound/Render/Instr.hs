@@ -149,13 +149,27 @@ renderExp x = case x of
     ExpPrim p -> assign $ renderPrim p
     Tfm info [a, b] | isInfix  info -> assign $ var a <+> text (infoName info) <+> var b
     Tfm info xs     -> text (infoName info) <+> args xs
-    ConvertRate a b x -> assign $ var x
+    ConvertRate to from x -> renderConvertRate to from $ var x
     If info t e -> assign $ renderCondInfo var info <+> char '?' <+> var t <+> char ':' <+> var e
     ExpNum a -> assign $ renderNumExp var a
     WriteVar v a -> renderVar v <+> equals <+> var a
     ReadVar v -> assign $ renderVar v
     x -> error $ "unknown expression: " ++ show x
        
+
+renderConvertRate :: Rate -> Rate -> Doc -> Doc
+renderConvertRate to from var = case (to, from) of
+    (Ar, Kr) -> upsamp var 
+    (Ar, Ir) -> upsamp $ k var
+    (Kr, Ar) -> downsamp var
+    (Kr, Ir) -> equals <+> k var
+    (Ir, Ar) -> downsamp var
+    (Ir, Kr) -> equals <+> i var
+    where upsamp x = text "upsamp" <+> x
+          downsamp x = text "downsamp" <+> x
+          k x = char 'k' P.<> parens x
+          i x = char 'i' P.<> parens x
+
 
 renderVar :: Var -> Doc
 renderVar v = renderVarType (varType v) P.<> renderRate (varRate v) P.<> text (varName v)
