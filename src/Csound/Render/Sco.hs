@@ -49,9 +49,12 @@ data PlainSigOut
       { orcSigOut :: ExpReader
       , scoSigOut :: [Event Dur Note] }
     | Midi 
-      { midiChn   :: Channel
+      { midiType  :: MidiType
+      , midiChn   :: Channel
       , orcSigOut :: ExpReader }
         
+data MidiType = Massign | Pgmassign (Maybe Int)
+
 
 outs :: [Sig] -> SE ()
 outs as = se_ $ opcs (name as) [(Xr, repeat Ar)] as
@@ -83,8 +86,16 @@ nchnls x = case ratedExpExp $ unFix x of
 fromScore :: Arg a => Score a -> [Event Dur Note]
 fromScore a = alignByZero $ render $ fmap toNote a
 
-midi :: Channel -> (Msg -> SE [Sig]) -> SigOut 
-midi n = SigOut return . Midi n . expReader . ($ Msg)
+
+massign :: Channel -> (Msg -> SE [Sig]) -> SigOut 
+massign = midiAssign Massign
+
+pgmassign :: Maybe Channel -> Int -> (Msg -> SE [Sig]) -> SigOut 
+pgmassign chn = midiAssign (Pgmassign chn)
+
+midiAssign :: MidiType -> Channel -> (Msg -> SE [Sig]) -> SigOut
+midiAssign ty n = SigOut return . Midi ty n . expReader . ($ Msg)
+
 
 
 -----------------------------------------------------------------

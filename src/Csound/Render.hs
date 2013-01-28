@@ -33,7 +33,7 @@ mixingBy f = (f =<<) . mixing
 csd :: CsdOptions -> ([[Sig]] -> SE [Sig]) -> [SigOut] -> String
 csd opt globalEffect as = show $ csdFile 
     (renderFlags opt)
-    (renderInstr0 (nchnls lastInstrExp) (massignTable ids as) opt)
+    (renderInstr0 (nchnls lastInstrExp) (midiAssignTable ids as) opt)
     (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith (renderInstr fts) ids instrs)
     (vcat $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
     (renderStringTable strs)
@@ -72,10 +72,10 @@ csdFile flags instr0 instrs scores strTable ftables =
             ftables, scores]]        
 
 
-massignTable :: [Int] -> [SigOut] -> [Massign]
-massignTable ids instrs = catMaybes $ zipWith mk ids instrs
+midiAssignTable :: [Int] -> [SigOut] -> [MidiAssign]
+midiAssignTable ids instrs = catMaybes $ zipWith mk ids instrs
     where mk n instr = case sigOutContent $ instr of
-            Midi chn _ -> Just $ Massign chn n
+            Midi ty chn _ -> Just $ MidiAssign ty chn n
             _ -> Nothing
 
 renderFtables = renderMapTable renderFtableEntry
@@ -113,7 +113,7 @@ totalDur as
     | otherwise = Just $ maximum $ map eventEnd . scoSigOut =<< as' 
     where as' = filter isNotMidi $ map sigOutContent as
           isNotMidi x = case x of
-            Midi _ _ -> False
+            Midi _ _ _ -> False
             _ -> True
   
 

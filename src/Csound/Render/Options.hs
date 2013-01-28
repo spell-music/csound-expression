@@ -4,6 +4,7 @@ import Data.Default
 import Text.PrettyPrint
 
 import Csound.Exp.Wrapper(Channel)
+import Csound.Render.Sco
 
 type CtrlId = Int
 
@@ -26,21 +27,21 @@ renderFlags = text . csdFlags
 
 type Nchnls = Int
 
-data Massign = Massign 
-    { massignChannel :: Channel
-    , massignInstr   :: Int
-    }
+data MidiAssign = MidiAssign 
+    { midiAssignType    :: MidiType
+    , midiAssignChannel :: Channel
+    , midiAssignInstr   :: Int }
 
 type InstrId = Int
 
-renderInstr0 :: Nchnls -> [Massign] -> CsdOptions -> Doc
+renderInstr0 :: Nchnls -> [MidiAssign] -> CsdOptions -> Doc
 renderInstr0 nchnls massignTable opt = vcat [
     stmt "sr"    $ csdRate opt,
     stmt "ksmps" $ csdBlockSize opt,
     stmt "nchnls" nchnls,   
     maybe empty seed $ csdSeed opt,    
     vcat $ map initc7 $ csdInitc7 opt,    
-    vcat $ fmap renderMassign massignTable]
+    vcat $ fmap renderMidiAssign massignTable]
     where stmt a b = text a <+> equals <+> int b
           seed n = text "seed" <+> int n
           initc7 (chn, ctl, val) = text "initc7" <+> 
@@ -48,8 +49,14 @@ renderInstr0 nchnls massignTable opt = vcat [
             
           newline = char '\n'
   
-renderMassign :: Massign -> Doc
-renderMassign a = text "massign" 
-    <+> (int $ massignChannel a) <> comma <+> (int $ massignInstr a)
+renderMidiAssign :: MidiAssign -> Doc
+renderMidiAssign a = opcode <+> (int $ midiAssignChannel a) <> comma <+> (int $ midiAssignInstr a) <> auxParams
+    where opcode = text $ case midiAssignType a of
+              Massign     -> "massign"
+              Pgmassign _ -> "pgmassign"
+          auxParams = case midiAssignType a of 
+              Pgmassign (Just n) -> comma <+> int n
+              _ -> empty  
+
 
 

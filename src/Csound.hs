@@ -13,7 +13,7 @@ module Csound(
     -- * Delay and feedback
     
     -- * Midi
-    Msg, midi, cpsmidi, ampmidi, pchbend, aftouch, ctrl7,
+    Msg, massign, pgmassign, cpsmidi, ampmidi, pchbend, aftouch, ctrl7,
 
     -- * Opcodes
 

@@ -43,7 +43,7 @@ res msg = do
     where q = osc sinWave $ sig $ cpsmidi msg    
 
 
-q = csd def mixing [midi 4 res, sco instr1 sco1, sco instr2 sco2]
+q = csd def mixing [pgmassign Nothing 4 res, sco instr1 sco1, sco instr2 sco2]
 
 main :: IO ()
 main = putStrLn q
