@@ -42,11 +42,16 @@ data Exp a
     | WriteVar Var a    
     deriving (Show, Eq, Ord)  
 
-data Var = Var
-    { varType :: VarType
-    , varRate :: Rate
-    , varName :: Name
-    } deriving (Show, Eq, Ord)
+data Var 
+    = Var
+        { varType :: VarType
+        , varRate :: Rate
+        , varName :: Name } 
+    | VarVerbatim 
+        { varRate :: Rate
+        , varName :: Name        
+        } deriving (Show, Eq, Ord)       
+        
 
 data Info = Info 
     { infoName          :: Name     

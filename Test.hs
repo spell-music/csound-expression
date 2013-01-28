@@ -46,4 +46,4 @@ res msg = do
 q = csd def mixing [pgmassign Nothing 4 res, sco instr1 sco1, sco instr2 sco2]
 
 main :: IO ()
-main = putStrLn q
+main = writeFile "tmp.csd" q

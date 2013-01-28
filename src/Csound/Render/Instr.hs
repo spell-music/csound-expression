@@ -172,7 +172,9 @@ renderConvertRate to from var = case (to, from) of
 
 
 renderVar :: Var -> Doc
-renderVar v = renderVarType (varType v) P.<> renderRate (varRate v) P.<> text (varName v)
+renderVar v = case v of
+    Var ty rate name -> renderVarType ty P.<> renderRate rate P.<> text name
+    VarVerbatim _ name -> text name
 
 renderVarType :: VarType -> Doc
 renderVarType x = case x of

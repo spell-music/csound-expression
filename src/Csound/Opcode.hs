@@ -19,7 +19,7 @@ clip :: Sig -> I -> D -> Sig
 clip = opc3 "clip" [(a, [a, i, i, i])]   
                   
 zeroDbfs :: D
-zeroDbfs = opc0 "0dbfs" [(i, [])]
+zeroDbfs = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "0dbfs")
 
 --------------------------------------------
 -- handful of opcodes
