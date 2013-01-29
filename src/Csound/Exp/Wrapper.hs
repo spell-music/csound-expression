@@ -297,7 +297,7 @@ multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
           setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
             where MultiRate _ ins = infoSignature info
             
-          select n r e = withRate r $ Select n e
+          select n r e = withRate r $ Select r n e
 
 getRates :: Exp a -> [Rate]
 getRates (Tfm info _) = case infoSignature info of

@@ -34,7 +34,7 @@ data Exp a
     = ExpPrim Prim
     | Tfm Info [a]
     | ConvertRate Rate Rate a
-    | Select Int a
+    | Select Rate Int a
     | If (CondInfo a) a a    
     | ExpBool (BoolExp a)
     | ExpNum (NumExp a)
@@ -112,7 +112,7 @@ instance Functor Exp where
         ExpPrim p -> ExpPrim p
         Tfm t xs -> Tfm t $ map f xs
         ConvertRate ra rb a -> ConvertRate ra rb $ f a
-        Select n a -> Select n $ f a
+        Select r n a -> Select r n $ f a
         If info a b -> If (fmap f info) (f a) (f b)
         ExpBool a -> ExpBool $ fmap f a
         ExpNum  a -> ExpNum  $ fmap f a
@@ -125,7 +125,7 @@ instance Foldable Exp where
         ExpPrim p -> mempty
         Tfm t xs -> foldMap f xs
         ConvertRate ra rb a -> f a
-        Select n a -> f a
+        Select r n a -> f a
         If info a b -> foldMap f info <> f a <> f b
         ExpBool a -> foldMap f a
         ExpNum  a -> foldMap f a
@@ -137,7 +137,7 @@ instance Traversable Exp where
         ExpPrim p -> pure $ ExpPrim p
         Tfm t xs -> Tfm t <$> traverse f xs
         ConvertRate ra rb a -> ConvertRate ra rb <$> f a
-        Select n a -> Select n <$> f a
+        Select r n a -> Select r n <$> f a
         If info a b -> If <$> traverse f info <*> f a <*> f b
         ExpBool a -> ExpBool <$> traverse f a
         ExpNum  a -> ExpNum  <$> traverse f a

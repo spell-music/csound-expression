@@ -14,20 +14,19 @@ instr1 :: (D, D) -> SE [Sig]
 instr1 (amp, phs) = do
     r1 <- rand 440
     r2 <- rand 440    
-    out $ k r1 r2 * osc sinWave (sig phs)
+    out $ k r1 r2 * kr (osc sinWave (sig phs))
     where k r1 r2 = sig amp * ifB (notB $ ((1 :: Sig) <* 2) ||* ((1 :: Sig) >* 2)) r1 r2
           
           
-instr2 :: (D, D, S) -> SE [Sig]
-instr2 (amp, phs, fileName) = out $ a * b
+instr2 :: (S, D, D) -> SE [Sig]
+instr2 (fileName, amp, phs) = out $ ifB (a <* b) (sig amp) (sig phs)
     where (a, b) = soundin2 fileName
 
 
 sco1 = line $ map temp [(1, 440), (0.5, 220), (1, 440)]            
-sco2 = chord [
-    delay 0.5 $ stretch 10 $ temp (0.25, 1000, str "moo.wav"),
-    temp (0.1, 220, str "boo.wav"),
-    temp (1, 440, str "boo.wav")]
+sco2 = chord [    
+    temp (str "boo.wav", 0, 1),
+    temp (str "boo.wav", 1, 2)]
     
 res :: Msg -> SE [Sig]
 res msg = do
@@ -43,7 +42,7 @@ res msg = do
     where q = osc sinWave $ sig $ cpsmidi msg    
 
 
-q = csd def mixing [pgmassign Nothing 4 res, sco instr1 sco1, sco instr2 sco2]
+q = csd def mixing [sco instr2 sco2]
 
 main :: IO ()
 main = writeFile "tmp.csd" q

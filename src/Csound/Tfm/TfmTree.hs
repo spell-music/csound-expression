@@ -28,7 +28,7 @@ getFtables = cata $ \(RatedExp _ _ x) -> case x of
     Tfm _ as -> concat as
     ConvertRate _ _ a -> a
     ExpNum a -> foldMap id a
-    Select _ a -> a
+    Select _ _ a -> a
     If info a b -> foldMap id info ++ a ++ b
     ReadVar _ -> []
     WriteVar _ a -> a

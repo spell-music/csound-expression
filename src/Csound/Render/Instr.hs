@@ -60,13 +60,13 @@ getRenderState a = RenderState moLinks moRates
           selectInfo = filter (isSelect . ratedExpExp . snd) a    
             
           extract (n, x) = case ratedExpExp x of
-                Select order parent -> (parent, [MultiOutPort n order])
+                Select rate order parent -> (parent, [MultiOutPort n order])
 
 filterMultiOutHelpers :: [(RatedVar, Exp RatedVar)] -> [(RatedVar, Exp RatedVar)]
 filterMultiOutHelpers = filter (not . isSelect . snd) 
 
 isSelect x = case x of
-    Select _ _ -> True
+    Select _ _ _ -> True
     _ -> False
 
 

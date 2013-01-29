@@ -42,7 +42,7 @@ type Conversion = (RatedVar, Exp RatedVar)
 type KrateSet = S.Set Name
 
 defaultKrateSet :: KrateSet
-defaultKrateSet = S.fromList ["linseg", "expseg"]
+defaultKrateSet = S.fromList ["linseg", "expseg", "linsegr", "expsegr"]
 
 instance Default Agent where
     def = Agent [] [] Xr []
@@ -115,7 +115,7 @@ deduceRate krateSet desiredRates exp = case ratedExpExp exp of
         Xr -> Ar
         r -> r
     
-    Select _ _ -> fromJust $ ratedExpRate exp
+    Select rate _ _ -> rate
     If info a b -> head $ filter (/= Xr) $ sort desiredRates   
     ReadVar v -> varRate v
     WriteVar _ _ -> Xr    
@@ -130,7 +130,7 @@ notifyChildren :: AgentId -> Rate -> Exp Int -> MsgBox s -> ST s ()
 notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query box) $ case exp of
     Tfm info xs -> notifyTfm curRate (infoSignature info) xs
     WriteVar v a -> [(a, mkQuery 0 $ varRate v)]
-    If info a b -> (a, mkQuery (-2) curRate) : (b, mkQuery (-1) curRate) : encodeIfEnv (min Kr curRate) (inlineEnv info)
+    If info a b -> (a, mkQuery (-2) curRate) : (b, mkQuery (-1) curRate) : encodeIfEnv (max Kr curRate) (inlineEnv info)
     ExpNum (PreInline op xs) -> queryList xs (repeat curRate)
     _ -> []
     where notifyTfm r signature xs = case signature of
@@ -187,7 +187,7 @@ rateExp curRate rs exp = case exp of
     ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
     ExpPrim p -> ExpPrim p
     Tfm i _ -> Tfm i vs   
-    Select pid a -> Select pid (RatedVar Xr a)    
+    Select rate pid a -> Select rate pid (RatedVar Xr a)    
     If condInfo _ _ -> case vs of
         a:b:rest -> If (decodeIfEnv condInfo rest) a b
     ExpNum (PreInline op _) -> ExpNum (PreInline op vs)
@@ -202,8 +202,8 @@ findRate [x] = x
 findRate xs = case sort $ nub xs of
     [a] -> a
     [] -> Xr
-    Xr:as -> maximum as
-    as -> maximum as
+    Xr:as -> minimum as
+    as -> minimum as
         
 
 grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
