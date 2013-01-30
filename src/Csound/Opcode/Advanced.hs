@@ -11,26 +11,33 @@ module Csound.Opcode.Advanced (
     distort, distort1, powershape, polynomial, chebyshevpoly,  
 
     -- ** Flanging, Phasing, Phase Shaping
-    flanger, harmon, phaser1, phaser2, pdclip, pdhalf, pdhalfy 
+    flanger, harmon, phaser1, phaser2, pdclip, pdhalf, pdhalfy,
 
     -- ** Doppler Shift
-
+    dopler,
+    
     -----------------------------------------------------
     -- * Granular Synthesis
 
     -----------------------------------------------------
     -- * Convolution
+    pconvolve, convolve, ftconv, dconv,  
 
     -----------------------------------------------------
     -- * FFT and Spectral Processing
 
     -- ** Realtime Analysis And Resynthesis
+    pvsanal, pvstanal, pvsynth, pvsadsyn,
 
     -- ** Writing FFT Data To A File And Reading From It
-
+    pvswrite, pvsfread, pvsdiskin,
+    
     -- ** FFT Info
+    pvsinfo, pvsbin, pvscent,  
 
     -- ** Manipulating FFT Signals
+    pvscale, pvshift, pvsbandp, pvsbandr, pvsmix, pvscross, pvsfilter,
+    pvsvoc, pvsmorph, pvsfreeze, pvsmaska, pvsblur, pvstencil, pvsarp, pvsmooth,
    
     -----------------------------------------------------
     -- * Physical Models and FM Instruments
@@ -39,6 +46,20 @@ module Csound.Opcode.Advanced (
 
     -- ** FM Instrument Models
 ) where
+
+import Csound.Exp
+import Csound.Exp.Wrapper
+import Csound.Exp.Cons
+
+i = Ir
+k = Kr
+a = Ar
+x = Xr
+s = Sr
+f = Fr
+is n = replicate n i
+ks n = replicate n k
+as n = replicate n a 
 
 
 -----------------------------------------------------
@@ -142,20 +163,139 @@ dopler = opc3 "dopler" [(a, [a, k, k, i, i])]
 -----------------------------------------------------
 -- * Convolution
 
+-- ar1 [, ar2] [, ar3] [, ar4] pconvolve ain, ifilcod [, ipartitionsize, ichannel]
+pconvolve :: MultiOuts a => Sig -> S -> a
+pconvolve = mopc2 "pconvolve" [a,a,a,a] [a,s,i,i]
+
+-- ar1 [, ar2] [, ar3] [, ar4] convolve ain, ifilcod [, ichannel]
+convolve :: MultiOut a => Sig -> D -> a
+convolve = mopc2 "convolve" ([a, a, a, a], [a, i, i])
+
+-- a1[, a2[, a3[, ... a8]]] ftconv ain, ift, iplen[, iskipsamples \
+--      [, iirlen[, iskipinit]]]
+ftconv :: MultiOuts a => Sig -> Tab -> D -> a
+ftconv = mopc3 "ftconv" (as 8) [a,i,i,i,i,i]
+
+-- ares dconv asig, isize, ifn
+dconv :: Sig -> I -> Tab -> Sig
+dconv = opc3 "dconv" [(a, [a,i,i])]
+
 -----------------------------------------------------
 -- * FFT and Spectral Processing
 
 -----------------------------------------------------
 -- ** Realtime Analysis And Resynthesis
 
+-- fsig pvsanal ain, ifftsize, ioverlap, iwinsize, iwintype [, iformat] [, iinit]
+pvsanal :: Sig -> I -> I -> I -> I -> Spec
+pvsanal = opc5 "pvsanal" [(f, a:is 6)]
+
+-- fsig pvstanal ktimescal, kamp, kpitch, ktab, [kdetect, kwrap, ioffset,ifftsize, ihop, idbthresh]
+pvstanal :: Sig -> Sig -> Sig -> Sig -> Spec
+pvstanal = opc4 "pvstanal" [(f, ks 6 ++ is 4)]
+
+-- ares pvsynth fsrc, [iinit]
+pvsynth :: Spec -> Sig
+pvsynth = opc1 "pvsynth" [(a, [f,i])]
+
+-- ares pvsadsyn fsrc, inoscs, kfmod [, ibinoffset] [, ibinincr] [, iinit]
+pvsadsyn :: Spec -> I -> Sig -> Sig
+pvsadsyn = opc3 "pvsadsyn" [(a, [f,i,k,i,i,i])]
+
 -----------------------------------------------------
 -- ** Writing FFT Data To A File And Reading From It
+
+-- pvsfwrite fsig, ifile
+pvswrite :: Spec -> S -> SE ()
+pvswrite a1 a2 = se_ $ opc2 "pvswrite" [(x, [f,s])] a1 a2
+
+-- fsig pvsfread ktimpt, ifn [, ichan]
+pvsfread :: Sig -> S -> Spec
+pvsfread = opc2 "pvsfread" [(f, [k,s,i])]
+
+-- fsig pvsdiskin SFname,ktscal,kgain[,ioffset, ichan]
+pvsdiskin :: S -> Sig -> Sig -> Spec
+pvsdiskin = opc3 "pvsdiskin" [(f, [s,k,k,i,i])]
 
 -----------------------------------------------------
 -- ** FFT Info
 
+-- ioverlap, inumbins, iwinsize, iformat pvsinfo fsrc
+pvsinfo :: Spec -> (I, I, I, I)
+pvsinfo = mopc1 "pvsinfo" [i,i,i,i] [f]
+
+-- kamp, kfr pvsbin fsig, kbin
+pvsbin :: Spec -> Sig -> (Sig, Sig)
+pvsbin = mopc2 "pvsbin"
+
+-- kcent pvscent fsig
+pvscent :: Spec -> Sig
+pvscent = opc1 "pvscent" [(k, [f])]
+
 -----------------------------------------------------
 -- ** Manipulating FFT Signals
+
+-- fsig pvscale fsigin, kscal[, kkeepform, kgain, kcoefs]
+pvscale :: Spec -> Sig -> Spec
+pvscale = opc2 "pvscale" [(f, [f,k,k,k,k])]
+
+-- fsig pvshift fsigin, kshift, klowest[, kkeepform, igain, kcoefs]
+pvshift :: Spec -> Sig -> Sig -> Spec
+pvshift = opc3 "pvshift" [(f, [f,k,k,k,i,k])]
+
+-- fsig pvsbandp fsigin, xlowcut, xlowfull, \
+--       xhighfull, xhighcut[, ktype]
+pvsbandp :: Spec -> Sig -> Sig -> Sig -> Sig -> Spec 
+pvsbandp = opc4 "pvsbandp" [(f, [f,x,x,x,x,k])]
+
+-- fsig pvsbandr fsigin, xlowcut, xlowfull, \
+--       xhighfull, xhighcut[, ktype]
+pvsbandr :: Spec -> Sig -> Sig -> Sig -> Sig -> Spec 
+pvsbandr = opc4 "pvsbandr" [(f, [f,x,x,x,x,k])]
+
+-- fsig pvsmix fsigin1, fsigin2
+pvsmix :: Spec -> Spec -> Spec
+pvsmix = opc2 "pvsmix" [(f, [f,f])]
+
+-- fsig pvscross fsrc, fdest, kamp1, kamp2
+pvscross :: Spec -> Spec -> Sig -> Sig -> Spec
+pvscross = opc4 "pvscross" [(f, [f,f,k,k])]
+
+-- fsig pvsfilter fsigin, fsigfil, kdepth[, igain]
+pvsfilter :: Spec -> Spec -> Sig -> Spec
+pvsfilter = opc3 "pvsfilter" [(f, [f,f,k,i])]
+
+-- fsig pvsvoc famp, fexc, kdepth, kgain [,kcoefs]
+pvsvoc :: Spec -> Spec -> Sig -> Sig -> Spec
+pvsvoc = opc4 "pvsvoc" [(f, [f,f,k,k,k])]
+
+-- fsig pvsmorph fsrc, fdest, kamp1, kamp2
+pvsmorph :: Spec -> Spec -> Sig -> Sig -> Spec
+pvsmorph = opc4 "pvsmorph" [(f, [f,f,k,k])]
+
+-- fsig pvsfreeze fsigin, kfreeza, kfreezf
+pvsfreeze :: Spec -> Sig -> Sig -> Sig
+pvsfreeze = opc3 "pvsfreeze" [(f, [f,k,k])]
+
+-- fsig pvsmaska fsrc, ifn, kdepth
+pvsmaska :: Spec -> Tab -> Sig -> Spec
+pvsmaska = opc3 "pvsmaska" [(f, [f,i,k])]
+
+-- fsig pvsblur fsigin, kblurtime, imaxdel
+pvsblur :: Spec -> Sig -> D -> Spec
+pvsblur = opc3 "pvsblur" [(f, [f,k,i])]
+
+-- fsig pvstencil fsigin, kgain, klevel, iftable
+pvstencil :: Spec -> Sig -> Sig -> Tab -> Sig
+pvstencil = opc4 "pvstencil" [(f, [f,k,k,i])]
+
+-- fsig pvsarp fsigin, kbin, kdepth, kgain
+pvsarp :: Spec -> Sig -> Sig -> Sig -> Spec
+pvsarp = opc4 "pvsarp" [(f, [f,k,k,k])]
+
+-- fsig pvsmooth fsigin, kacf, kfcf
+pvsmooth :: Spec -> Sig -> Sig -> Spec
+pvsmooth = opc3 "pvsmooth" [(f, [f,k,k])]
 
 -----------------------------------------------------
 -- * Physical Models and FM Instruments
