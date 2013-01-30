@@ -47,6 +47,8 @@ module Csound.Opcode.Advanced (
 
     -- ** FM Instrument Models
     fmb3, fmbell, fmmetal, fmpercfl, fmrhode, fmvoice, fmwurlie 
+    
+    -- ** Other Models
 ) where
 
 import Csound.Exp
@@ -309,6 +311,32 @@ pvsmooth = opc3 "pvsmooth" [(f, [f,k,k])]
 streson :: Sig -> Sig -> D -> Sig
 streson = opc3 "streson" [(a, [a,k,i])]
 
+-- ares pluck kamp, kcps, icps, ifn, imeth [, iparm1] [, iparm2]     
+
+-- ares repluck iplk, kamp, icps, kpick, krefl, axcite
+   
+-- ares wgbow kamp, kfreq, kpres, krat, kvibf, kvamp, ifn [, iminfreq]
+  
+-- ares wgbowedbar kamp, kfreq, kpos, kbowpres, kgain [, iconst] [, itvel] \
+--      [, ibowpos] [, ilow]
+
+-- ares wgbrass kamp, kfreq, ktens, iatt, kvibf, kvamp, ifn [, iminfreq]   
+
+-- ares wgclar kamp, kfreq, kstiff, iatt, idetk, kngain, kvibf, kvamp, ifn \
+--       [, iminfreq]
+
+-- ares wgflute kamp, kfreq, kjet, iatt, idetk, kngain, kvibf, kvamp, ifn \
+--      [, iminfreq] [, ijetrf] [, iendrf]
+
+
+-- ares wgpluck icps, iamp, kpick, iplk, idamp, ifilt, axcite
+wgpluck :: D -> D -> Sig -> D -> D -> D -> Sig -> Sig
+wgpluck = opc7 "wgplusk" [(a, [i,i,k,i,i,i,a])]
+
+-- ares wgpluck2 iplk, kamp, icps, kpick, krefl
+wgpluck2 :: D -> Sig -> D -> Sig -> Sig -> Sig
+wgpluck2 = opc5 "wgpluck2" [(a, [i,k,i,k,k])]
+
 -- ares wguide1 asig, xfreq, kcutoff, kfeedback
 wguide1 :: Sig -> Sig -> Sig -> Sig -> Sig
 wguide1 = opc4 "wguide1" [(a, [a,x,k,k])]
@@ -317,7 +345,9 @@ wguide1 = opc4 "wguide1" [(a, [a,x,k,k])]
 --       kfeedback1, kfeedback2
 wguide2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 wguide2 = opc7 "wguide2" [(a, [a,x,x,k,k,k,k])]
-      
+     
+
+
 -----------------------------------------------------
 -- ** FM Instrument Models
 
