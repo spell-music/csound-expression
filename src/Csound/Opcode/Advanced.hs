@@ -43,8 +43,10 @@ module Csound.Opcode.Advanced (
     -- * Physical Models and FM Instruments
 
     -- ** Waveguide Physical Modelling
+    streson, wguide1, wguide2,
 
     -- ** FM Instrument Models
+    fmb3, fmbell, fmmetal, fmpercfl, fmrhode, fmvoice, fmwurlie 
 ) where
 
 import Csound.Exp
@@ -303,6 +305,37 @@ pvsmooth = opc3 "pvsmooth" [(f, [f,k,k])]
 -----------------------------------------------------
 -- ** Waveguide Physical Modelling
 
+-- ares streson asig, kfr, ifdbgain
+streson :: Sig -> Sig -> D -> Sig
+streson = opc3 "streson" [(a, [a,k,i])]
+
+-- ares wguide1 asig, xfreq, kcutoff, kfeedback
+wguide1 :: Sig -> Sig -> Sig -> Sig -> Sig
+wguide1 = opc4 "wguide1" [(a, [a,x,k,k])]
+
+-- ares wguide2 asig, xfreq1, xfreq2, kcutoff1, kcutoff2, \
+--       kfeedback1, kfeedback2
+wguide2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+wguide2 = opc7 "wguide2" [(a, [a,x,x,k,k,k,k])]
+      
 -----------------------------------------------------
 -- ** FM Instrument Models
+
+-- ares fmvoice kamp, kfreq, kvowel, ktilt, kvibamt, kvibrate, ifn1, \
+--      ifn2, ifn3, ifn4, ivibfn
+
+fmGen :: Name -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmGen name = opc11 name [(a, ks 6 ++ is 6)]
+
+fmb3, fmbell, fmmetal, fmpercfl, fmrhode, 
+    fmvoice, fmwurlie :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+      
+fmb3 = fmGen "fmb3"
+fmbell = fmGen "fmbell"
+fmmetal = fmGen "fmmetal"
+fmpercfl = fmGen "fmpercfl"
+fmrhode = fmGen "fmrhode"
+fmvoice = fmGen "fmvoice"
+fmwurlie = fmGen "fmwurlie"
+      
 
