@@ -15,6 +15,7 @@ data NumOp
     | Pow | Mod 
     | Sin | Cos | Sinh | Cosh | Tan | Tanh | Sininv | Cosinv | Taninv
     | Abs | Ceil | ExpOp | Floor | Frac| IntOp | Log | Log10 | Logbtwo | Round | Sqrt    
+    | Ampdb | Ampdbfs | Dbamp | Dbfsamp 
     deriving (Show, Eq, Ord)
 
 renderNumExp leaf (PreInline op as) = renderNumOp op $ fmap leaf as
@@ -50,6 +51,11 @@ renderNumOp op args = case  op of
     Logbtwo -> fun "logbtwo" 
     Round -> fun "round"
     Sqrt -> fun "sqrt"    
+
+    Ampdb -> fun "ampdb" 
+    Ampdbfs -> fun "ampdbfs" 
+    Dbamp -> fun "dbamp"
+    Dbfsamp -> fun "dbfsamp"    
     where bi  op = parens $ args !! 0 <+> text op <+> args !! 1
           uno op = parens $ text op <> args !! 0
           fun op = text op <> parens (args !! 0)  
@@ -167,6 +173,29 @@ log10'  = funOpt (flip logBase 10) Log10
 logbtwo' = funOpt (flip logBase 2) Logbtwo 
 sqrt'   = funOpt sqrt Sqrt
     
+-- amplitude conversions
+
+class Val a => Nums a 
+instance Nums Sig
+instance Nums D
+
+conv :: Nums a => NumOp -> a -> a
+conv op a = noRate $ ExpNum $ PreInline op [Fix $ unwrap a]
+
+ampdb :: Nums a => a -> a
+ampdb = conv Ampdb 
+
+ampdbfs :: Nums a => a -> a
+ampdbfs = conv Ampdbfs
+
+dbamp :: Nums a => a -> a
+dbamp = conv Dbamp
+
+dbfsamp :: Nums a => a -> a 
+dbfsamp = conv Dbfsamp 
+
+
+
     
 
 
