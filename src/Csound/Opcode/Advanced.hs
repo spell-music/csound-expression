@@ -359,10 +359,8 @@ wguide1 = opc4 "wguide1" [(a, [a,x,k,k])]
 --       kfeedback1, kfeedback2
 wguide2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 wguide2 = opc7 "wguide2" [(a, [a,x,x,k,k,k,k])]
-     
-
-
------------------------------------------------------
+  
+----------------------------------------------------
 -- ** FM Instrument Models
 
 -- ares fmvoice kamp, kfreq, kvowel, ktilt, kvibamt, kvibrate, ifn1, \
