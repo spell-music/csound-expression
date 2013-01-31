@@ -43,7 +43,8 @@ module Csound.Opcode.Advanced (
     -- * Physical Models and FM Instruments
 
     -- ** Waveguide Physical Modelling
-    streson, wguide1, wguide2,
+    streson, pluck, repluck, wgbow, wgbowedbar, wgbrass
+    wgclar, wgflute, wgpluck, wgpluck2, wguide1, wguide2,
 
     -- ** FM Instrument Models
     fmb3, fmbell, fmmetal, fmpercfl, fmrhode, fmvoice, fmwurlie 
@@ -312,22 +313,35 @@ streson :: Sig -> Sig -> D -> Sig
 streson = opc3 "streson" [(a, [a,k,i])]
 
 -- ares pluck kamp, kcps, icps, ifn, imeth [, iparm1] [, iparm2]     
+pluck :: Sig -> Sig -> D -> Tab -> I -> Sig
+pluck = opc5 "pluck" [(a, [k,k,i,i,i,i,i])]
 
 -- ares repluck iplk, kamp, icps, kpick, krefl, axcite
-   
+repluck :: D -> Sig -> D -> Sig -> Sig -> Sig -> Sig
+repluck = opc6 "repluck" [(a, [i,k,i,k,k,a])]
+
 -- ares wgbow kamp, kfreq, kpres, krat, kvibf, kvamp, ifn [, iminfreq]
-  
+wgbow :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+wgbow = opc7 "wgbow" [(a, ks 6 ++ is 2)]
+
 -- ares wgbowedbar kamp, kfreq, kpos, kbowpres, kgain [, iconst] [, itvel] \
 --      [, ibowpos] [, ilow]
+wgbowedbar :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+wgbowedbar = opc5 "wgbowedbar" [(a, ks 5 ++ is 2)]
 
 -- ares wgbrass kamp, kfreq, ktens, iatt, kvibf, kvamp, ifn [, iminfreq]   
+wgbrass :: Sig -> Sig -> Sig -> D -> Sig -> Sig -> Tab -> Sig 
+wgbrass = opc7 "wgbrass" [(a, [k,k,k,i,k,k,i,i])]
 
 -- ares wgclar kamp, kfreq, kstiff, iatt, idetk, kngain, kvibf, kvamp, ifn \
 --       [, iminfreq]
+wgclar :: Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Tab -> Sig
+wgclar = opc9 "wgclar" [(a, [k,k,k,i,i,k,k,k,i,i])]
 
 -- ares wgflute kamp, kfreq, kjet, iatt, idetk, kngain, kvibf, kvamp, ifn \
 --      [, iminfreq] [, ijetrf] [, iendrf]
-
+wgflute :: Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Tab -> Sig
+wgflute = opc9 "wgflute" [(a, [k,k,k,i,i,k,k,k,i,i,i,i])]
 
 -- ares wgpluck icps, iamp, kpick, iplk, idamp, ifilt, axcite
 wgpluck :: D -> D -> Sig -> D -> D -> D -> Sig -> Sig
