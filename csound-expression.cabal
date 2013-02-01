@@ -33,7 +33,6 @@ Library
         
         Csound.Tfm.DAG
         Csound.Tfm.BiMap
-       -- Csound.Tfm.Rate
         Csound.Tfm.RateGraph
         Csound.Tfm.TfmTree
         
@@ -46,4 +45,4 @@ Library
         Csound.Opcode.Basic
         Csound.Opcode.Advanced
         Csound.Opcode.Data
-                   
+        Csound.Opcode.Interaction           

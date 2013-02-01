@@ -31,6 +31,19 @@ module Csound.Opcode.Interaction (
     xyin    
 ) where
 
+import Csound.Exp
+import Csound.Exp.Wrapper
+import Csound.Exp.Cons
+
+import Csound.Render.Sco(Msg)
+
+i = Ir
+k = Kr
+a = Ar
+x = Xr
+s = Sr
+f = Fr
+is n = replicate n i 
 
 -----------------------------------------------------
 -- * MIDI
@@ -83,13 +96,13 @@ constDiap name = opc0 name [(k, [i, i])]
 
 -- kres[, kkeydown] sensekey
 sensekey :: (Sig, Sig)
-sensekey = mopc0 "sensekey" [k,k] []
+sensekey = mopc0 "sensekey" ([k,k], [])
 
 -- ** Mouse
 
 -- kx, ky xyin iprd, ixmin, ixmax, iymin, iymax [, ixinit] [, iyinit]
 xyin :: D -> D -> D -> D -> D -> (Sig, Sig)
-xyin = mopc5 "xyin" [k,k] (is 7)
+xyin = mopc5 "xyin" ([k,k], is 7)
 
 -- ** WII
 
