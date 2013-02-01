@@ -36,7 +36,7 @@ module Csound.Opcode.Data (
     -- ** Sound File Queries
 
     -- ** Sound File Output
-    fout
+    fout,
 
     -- ** Non-Soundfile Input And Output
 
@@ -59,6 +59,21 @@ module Csound.Opcode.Data (
     -- ** String Manipulation And Conversion
 
 ) where
+
+import Data.Fix
+
+import Csound.Exp
+import Csound.Exp.Wrapper
+import Csound.Exp.Cons
+
+i = Ir
+k = Kr
+a = Ar
+x = Xr
+s = Sr
+f = Fr
+is n = replicate n i
+ks n = replicate n k
 
 -----------------------------------------------------
 -- * Buffer and Function tables
@@ -86,7 +101,7 @@ tabw a1 a2 a3 = se_ $ opc3 "tabw" (map sign [a, k]) a1 a2 a3
 
 -- tabw_i isig, indx, ifn [,ixmode]
 tabw_i :: D -> D -> Tab -> SE ()
-tabw_i a1 a2 a3 = se_ $ opc3 [(x, is 4)] a1 a2 a3
+tabw_i a1 a2 a3 = se_ $ opc3 "tabw_i" [(x, is 4)] a1 a2 a3
 
 -- ** Reading From Tables
 
@@ -141,8 +156,8 @@ ftsavek a1 a2 a3 a4 = opcs "ftsavek" [(x, repeat i)] (phi a1 : phi a2 : phi a3 :
 -- ** Signal Input And Output
 
 -- ain1[, ...] inch kchan1[,...]
-inch :: MultiOuts a => [Sig] -> a
-inch = mopcs "inch" (repeat a) (repeat k)
+inch :: MultiOut a => [Sig] -> a
+inch = mopcs "inch" (repeat a, repeat k)
 
 outch :: [(Sig, Sig)] -> SE ()
 outch ts = se_ $ opcs "outch" [(x, cycle [a,k])] $ (\(a, b) -> [a, b]) =<< ts
@@ -156,7 +171,7 @@ flooper2 = opc6 "flooper2" [(a, ks 5 ++ is 5)]
 
 -- asig, krec sndloop ain, kpitch, ktrig, idur, ifad
 sndloop :: Sig -> Sig -> Sig -> D -> D -> (Sig, Sig)
-sndloop = mopc5 "sndloop" [a, k] [a,k,k,i,i]
+sndloop = mopc5 "sndloop" ([a, k], [a,k,k,i,i])
 
 -- ** Soundfonts And Fluid Opcodes
 
@@ -167,17 +182,17 @@ sndloop = mopc5 "sndloop" [a, k] [a,k,k,i,i]
 
 -- ar1[, ar2[, ar3[, ... a24]]] soundin ifilcod [, iskptim] [, iformat] \
 --      [, iskipinit] [, ibufsize]
-soundin :: MultiOuts a => S -> a
-soundin = mopc1 "soundin" (repeat a) (s:is 4)
+soundin :: MultiOut a => S -> a
+soundin = mopc1 "soundin" (repeat a, s:is 4)
 
 -- a1[, a2[, ... aN]] diskin2 ifilcod, kpitch[, iskiptim \
 --       [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]
-diskin2 :: MultiOuts a => S -> Sig -> a
-diskin2 = mopc2 "diskin2" (repeat a) (s:k:is 6)
+diskin2 :: MultiOut a => S -> Sig -> a
+diskin2 = mopc2 "diskin2" (repeat a, s:k:is 6)
 
 -- ar1, ar2 mp3in ifilcod[, iskptim, iformat, iskipinit, ibufsize]
 mp3in :: S -> (Sig, Sig)
-mp3in = mopc1 [a,a] (s:is 4)
+mp3in = mopc1 "mp3in" ([a,a], s:is 4)
 
 -- ** Sound File Queries
 
@@ -228,12 +243,14 @@ printk a1 a2 = se_ $ opc2 "printk" [(x, [i,k,i])] a1 a2
 -- Sdst sprintf Sfmt, xarg1[, xarg2[, ... ]]
 sprintf :: S -> [D] -> S
 sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (phi a1 : map phi a2)
-    where phi = Fix . unwrap
+    where phi :: Val a => a -> E
+          phi = Fix . unwrap
 
 -- Sdst sprintfk Sfmt, xarg1[, xarg2[, ... ]]
 sprintfk :: S -> [Sig] -> S
 sprintfk a1 a2 = opcs "sprintfk" [(s, s:repeat k)] (phi a1 : map phi a2)
-    where phi = Fix . unwrap
+    where phi :: Val a => a -> E
+          phi = Fix . unwrap
 
 -- ** String Manipulation And Conversion
 

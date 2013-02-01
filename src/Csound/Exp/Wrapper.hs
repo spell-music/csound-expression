@@ -285,6 +285,14 @@ instance MultiOut Sig where
     multiOuts x = case multiOutsSection 1 x of
         [a1] -> fromE a1
 
+instance MultiOut Double' where
+    multiOuts x = case multiOutsSection 1 x of
+        [a1] -> fromE a1
+
+instance MultiOut Int' where
+    multiOuts x = case multiOutsSection 1 x of
+        [a1] -> fromE a1
+
 instance (Val a1, Val a2) => MultiOut (a1, a2) where
     multiOuts x = case multiOutsSection 2 x of
         [a1, a2] -> (fromE a1, fromE a2)
