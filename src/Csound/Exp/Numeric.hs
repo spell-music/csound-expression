@@ -7,8 +7,30 @@ import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons 
 import Csound.Exp.NumExp
+import Csound.Exp.Inline
 
 import qualified Csound.Exp.NumExp as NumExp
+
+-- amplitude conversions
+
+class Val a => Nums a 
+instance Nums Sig
+instance Nums D
+
+conv :: Nums a => NumOp -> a -> a
+conv op a = noRate $ ExpNum $ PreInline op [Fix $ unwrap a]
+
+ampdb :: Nums a => a -> a
+ampdb = conv Ampdb 
+
+ampdbfs :: Nums a => a -> a
+ampdbfs = conv Ampdbfs
+
+dbamp :: Nums a => a -> a
+dbamp = conv Dbamp
+
+dbfsamp :: Nums a => a -> a 
+dbfsamp = conv Dbfsamp 
 
 -------------------------------------------------------
 -- instances for numerical expressions

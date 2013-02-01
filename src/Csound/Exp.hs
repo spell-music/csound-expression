@@ -69,7 +69,7 @@ isProcedure = (Procedure ==) . infoOpcType
 data OpcType = Prefix | Infix | Procedure
     deriving (Show, Eq, Ord)
 
-data Rate = Xr | Ar | Kr | Ir | Sr 
+data Rate = Xr | Ar | Kr | Ir | Sr | Fr
     deriving (Show, Eq, Ord, Enum, Bounded)
     
 data Signature 

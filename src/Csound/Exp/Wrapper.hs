@@ -25,6 +25,8 @@ newtype String' = String' { unString' :: E }
 
 newtype BoolSig = BoolSig { unBoolSig :: E }
 
+newtype Spec = Spec { unSpec :: E }
+
 ------------------------------------------------
 -- side effects
 
@@ -230,6 +232,10 @@ instance Val Ftable where
 instance Val BoolSig where
     wrap = BoolSig . Fix
     unwrap = unFix . unBoolSig 
+
+instance Val Spec where
+    wrap = Spec . Fix
+    unwrap = unFix . unSpec
 
 ------------------------------------------------
 -- arguments

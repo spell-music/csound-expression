@@ -173,26 +173,6 @@ log10'  = funOpt (flip logBase 10) Log10
 logbtwo' = funOpt (flip logBase 2) Logbtwo 
 sqrt'   = funOpt sqrt Sqrt
     
--- amplitude conversions
-
-class Val a => Nums a 
-instance Nums Sig
-instance Nums D
-
-conv :: Nums a => NumOp -> a -> a
-conv op a = noRate $ ExpNum $ PreInline op [Fix $ unwrap a]
-
-ampdb :: Nums a => a -> a
-ampdb = conv Ampdb 
-
-ampdbfs :: Nums a => a -> a
-ampdbfs = conv Ampdbfs
-
-dbamp :: Nums a => a -> a
-dbamp = conv Dbamp
-
-dbfsamp :: Nums a => a -> a 
-dbfsamp = conv Dbfsamp 
 
 
 
