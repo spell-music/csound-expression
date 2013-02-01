@@ -19,7 +19,7 @@ module Csound.Opcode.Basic(
     -----------------------------------------------------
     -- * Envelopes
     linseg, expseg, linsegr, expsegr,
-    lpshold, loopseg, looptseg    
+    lpshold, loopseg, looptseg,    
 
     -----------------------------------------------------
     -- * Delays
@@ -65,7 +65,6 @@ module Csound.Opcode.Basic(
     ptrack, pitch, pitchamdf, pvscent,  
 
     -- ** Tempo Estimation
-    tempset,
 
     -- ** Dynamic Processing
     compress, dam, clip, 
@@ -77,7 +76,7 @@ module Csound.Opcode.Basic(
     -- * Spatialization
 
     -- ** Panning
-    pan, pan2
+    pan, pan2,
 
     -- ** VBAP
 
@@ -124,10 +123,10 @@ oscil3 :: Sig -> Sig -> Tab -> Sig
 oscil3 = oscGen "oscil3"
 
 poscil :: Sig -> Sig -> Tab -> Sig
-poscil = pscGen "psocil"
+poscil = oscGen "psocil"
 
 poscil3 :: Sig -> Sig -> Tab -> Sig
-poscil3 = pscGen "psocil"
+poscil3 = oscGen "psocil"
 
 -----------------------------------------------------
 -- Dynamic Sprectrum Oscillators
@@ -217,15 +216,15 @@ random a1 a2 = se $ opc2 "random" [
 
 -- ares randomi kmin, kmax, xcps [,imode] [,ifirstval]
 -- kres randomi kmin, kmax, kcps [,imode] [,ifirstval]
-randomi :: Sig Sig -> Sig -> SE Sig
-randomi a1 a2 a3 = se $ opc2 "randomi" [
+randomi :: Sig -> Sig -> Sig -> SE Sig
+randomi a1 a2 a3 = se $ opc3 "randomi" [
     (a, [k, k, x, i, i]),
     (k, [k, k, k, i, i])] a1 a2 a3
 
 -- ares randomh kmin, kmax, xcps [,imode] [,ifirstval]
 -- kres randomh kmin, kmax, kcps [,imode] [,ifirstval]
-randomh :: Sig Sig -> Sig -> SE Sig
-randomh a1 a2 a3 = se $ opc2 "randomh" [
+randomh :: Sig -> Sig -> Sig -> SE Sig
+randomh a1 a2 a3 = se $ opc3 "randomh" [
     (a, [k, k, x, i, i]),
     (k, [k, k, k, i, i])] a1 a2 a3
 
@@ -312,8 +311,8 @@ deltapx :: Sig -> D -> SE Sig
 deltapx a1 a2 = se $ opc2 "deltapx" [(a, [a, i])] a1 a2
 
 -- deltapxw ain, adel, iwsize
-delayxw :: Sig -> Sig -> D -> SE ()
-delayxw a1 a2 a3 = se_ $ opc1 "delayxw" [(x, [a, a, i])] a1 a2 a3
+deltapxw :: Sig -> Sig -> D -> SE ()
+deltapxw a1 a2 a3 = se_ $ opc3 "deltapxw" [(x, [a, a, i])] a1 a2 a3
 
 ---------------------------------------------------
 -- filters
@@ -415,21 +414,21 @@ max_k = opc3 "max_k" [(k, [a, k, i])]
 
 -- kcps, kamp ptrack asig, ihopsize[,ipeaks]
 ptrack :: Sig -> D -> (Sig, Sig)
-ptrack = mopc2 "ptrack" [k, k] [a, i, i]
+ptrack = mopc2 "ptrack" ([k, k], [a, i, i])
 
 -- koct, kamp pitch asig, iupdte, ilo, ihi, idbthresh [, ifrqs] [, iconf] \
 --       [, istrt] [, iocts] [, iq] [, inptls] [, irolloff] [, iskip]
 pitch :: Sig -> D -> D -> D -> D -> (Sig, Sig) 
-pitch = mopc5 "pitch" [k, k] (a:is 12)
+pitch = mopc5 "pitch" ([k, k], a:is 12)
 
 -- kcps, krms pitchamdf asig, imincps, imaxcps [, icps] [, imedi] \
 --       [, idowns] [, iexcps] [, irmsmedi]
 pitchamdf :: Sig -> D -> D -> (Sig, Sig)
-pitchamdf = mopc3 "pitchamdf" [k, k] (a:is 8)
+pitchamdf = mopc3 "pitchamdf" ([k, k], a:is 8)
 
 -- kcent pvscent fsig
 pvscent :: Spec -> Sig
-pvscent = opc1 "pvscent" [(k, f)]
+pvscent = opc1 "pvscent" [(k, [f])]
 
 -- ktemp tempest kin, iprd, imindur, imemdur, ihp, ithresh, ihtim, ixfdbak, \
 --       istartempo, ifn [, idisprd] [, itweek]
@@ -483,7 +482,7 @@ vaset a1 a2 a3 = se_ $ opc3 "vaset" [(x, [k, k, a])] a1 a2 a3
 
 -- a1, a2, a3, a4 pan asig, kx, ky, ifn [, imode] [, ioffset]
 pan :: Sig -> Sig -> Sig -> Tab -> (Sig, Sig, Sig, Sig)
-pan = mopc4 "pan" [a, a, a, a] [a, k, k, i, i, i]
+pan = mopc4 "pan" ([a, a, a, a], [a, k, k, i, i, i])
 
 -- a1, a2 pan2 asig, xp [, imode]
 pan2 :: Sig -> Sig -> (Sig, Sig)
@@ -494,14 +493,14 @@ pan2 = mopc2 "pan2" ([a, a], [a, x, i])
 
 -- aleft, aright hrtfstat asrc, iAz, iElev, ifilel, ifiler [,iradius, isr]
 hrtfstat :: Sig -> D -> D -> S -> S -> (Sig, Sig)
-hrtfstat = mopc5 "hrtfstat" [a, a] (a:s:i:i:s:is 2)
+hrtfstat = mopc5 "hrtfstat" ([a, a], a:s:i:i:s:is 2)
 
 -- aleft, aright hrtfmove asrc, kAz, kElev, ifilel, ifiler [, imode, ifade, isr]
 hrtfmove :: Sig -> Sig -> Sig -> S -> S -> (Sig, Sig)
-hrtfmove = mopc5 "hrtfmove" [a, a] (a:k:k:s:s:is 3)
+hrtfmove = mopc5 "hrtfmove" ([a, a], a:k:k:s:s:is 3)
 
 -- aleft, aright hrtfmove2 asrc, kAz, kElev, ifilel, ifiler [,ioverlap, iradius, isr]
 hrtfmove2 :: Sig -> Sig -> Sig -> S -> S -> (Sig, Sig)
-hrtfmove2 = mopc5 "hrtfmove2" [a, a] (a:k:k:s:s:is 3)
+hrtfmove2 = mopc5 "hrtfmove2" ([a, a], a:k:k:s:s:is 3)
 
 

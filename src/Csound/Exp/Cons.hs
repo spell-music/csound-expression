@@ -72,6 +72,18 @@ tfm6 t a1 a2 a3 a4 a5 a6 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, un
 tfm7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
 tfm7 t a1 a2 a3 a4 a5 a6 a7 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7]
 
+tfm8 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> b
+tfm8 t a1 a2 a3 a4 a5 a6 a7 a8 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8]
+
+tfm9 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> b
+tfm9 t a1 a2 a3 a4 a5 a6 a7 a8 a9 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9]
+
+tfm10 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> b
+tfm10 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10]
+
+tfm11 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> b
+tfm11 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10, unwrap a11]
+
 -------------------------------
 -- single out
 
@@ -106,6 +118,18 @@ opc6 name signature = tfm6 (pref name $ spec1 signature)
 
 opc7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
 opc7 name signature = tfm7 (pref name $ spec1 signature)
+
+opc8 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> b
+opc8 name signature = tfm8 (pref name $ spec1 signature)
+
+opc9 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> b
+opc9 name signature = tfm9 (pref name $ spec1 signature)
+
+opc10 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> b
+opc10 name signature = tfm10 (pref name $ spec1 signature)
+
+opc11 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> b
+opc11 name signature = tfm11 (pref name $ spec1 signature)
 
 -------------------------------
 -- multiple outs

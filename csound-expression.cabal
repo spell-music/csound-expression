@@ -43,4 +43,5 @@ Library
         Csound.Render.Sco
         
         Csound.Opcode
+        Csound.Opcode.Basic
                    
