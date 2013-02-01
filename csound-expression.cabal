@@ -21,6 +21,11 @@ Library
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound
+        Csound.Opcode
+        Csound.Opcode.Basic
+        Csound.Opcode.Advanced
+        Csound.Opcode.Data
+        Csound.Opcode.Interaction           
   Other-Modules:
         Csound.Exp        
         Csound.Exp.Wrapper
@@ -39,10 +44,5 @@ Library
         Csound.Render
         Csound.Render.Options
         Csound.Render.Instr
-        Csound.Render.Sco
-        
-        Csound.Opcode
-        Csound.Opcode.Basic
-        Csound.Opcode.Advanced
-        Csound.Opcode.Data
-        Csound.Opcode.Interaction           
+        Csound.Render.Sco     
+
