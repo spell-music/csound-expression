@@ -62,7 +62,7 @@ module Csound.Opcode.Basic(
     rms, balance, follow, follow2, peak, max_k,
 
     -- ** Pitch Estimation
-    ptrack, pitch, pitchamdf, pvscent,  
+    ptrack, pitch, pitchamdf,
 
     -- ** Tempo Estimation
 
@@ -425,10 +425,6 @@ pitch = mopc5 "pitch" ([k, k], a:is 12)
 --       [, idowns] [, iexcps] [, irmsmedi]
 pitchamdf :: Sig -> D -> D -> (Sig, Sig)
 pitchamdf = mopc3 "pitchamdf" ([k, k], a:is 8)
-
--- kcent pvscent fsig
-pvscent :: Spec -> Sig
-pvscent = opc1 "pvscent" [(k, [f])]
 
 -- ktemp tempest kin, iprd, imindur, imemdur, ihp, ithresh, ihtim, ixfdbak, \
 --       istartempo, ifn [, idisprd] [, itweek]

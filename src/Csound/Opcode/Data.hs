@@ -5,6 +5,7 @@ module Csound.Opcode.Data (
     -- * Buffer and Function tables
 
     -- ** Creating Function Tables (Buffers)
+    gen,
 
     -- ** Writing To Tables
     tableiw, tablew, tabw_i, tabw, 
@@ -43,7 +44,7 @@ module Csound.Opcode.Data (
     -----------------------------------------------------
     -- * Converters of Data Types
 
-    downsamp, upsamp, max_k, interp,
+    downsamp, upsamp, interp,
 
     -----------------------------------------------------
     -- * Printing and Strings
@@ -79,6 +80,8 @@ ks n = replicate n k
 -- * Buffer and Function tables
 
 -- ** Creating Function Tables (Buffers)
+gen :: Int -> Int -> [Double] -> Tab
+gen = Ftable 
 
 -- ** Writing To Tables
 
@@ -210,10 +213,6 @@ fout as = se_ $ opcs "fout" [(x, repeat a)] as
 -- kres downsamp asig [, iwlen]
 downsamp :: Sig -> Sig 
 downsamp = opc1 "downsamp" [(k, [a,i])]
-
--- knumkout max_k asig, ktrig, itype
-max_k :: Sig -> Sig -> I -> Sig
-max_k = opc3 "max_k" [(k, [a,k,i])]
 
 -- ares upsamp ksig
 upsamp :: Sig -> Sig

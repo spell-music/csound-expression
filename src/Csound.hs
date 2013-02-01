@@ -13,50 +13,10 @@ module Csound(
     -- * Delay and feedback
     
     -- * Midi
-    Msg, massign, pgmassign, cpsmidi, ampmidi, pchbend, aftouch, ctrl7,
+    Msg, massign, pgmassign,
 
     -- * Opcodes
-
-    -- ** Oscillators
-    oscil, poscil, vco2,
-
-    -- ** Envelops 
-    linseg, linsegr, expseg, expsegr, lpshold, loopseg, looptseg,
-
-    -- ** Panning
-    pan2,
-
-    -- ** Delay and feedback   
-    delayr, delayw, deltap, 
-
-    -- ** Reverberation
-    freeverb, reverbsc,
-
-    -- ** Waveshaping
-    table, tablei, distort,
-
-    -- ** Convolution
-    pconvolve, convolve, ftconv,
-
-    -- ** Sound input
-    diskin, diskin1, diskin2, diskin4, soundin, soundin2, 
-
-    -- ** Random signals
-    rand, noise, pinkish,
-
-    -- ** Filters
-    tone, atone, reson, comb,
-    buthp, butlp, butbp, butbr, 
-    moogladder, bqrez, vcomb,
-    
-    -- ** io
-    fout,
-
-    -- ** Other 
-    xtratim,
-
-    -- * Ftables
-    gen,
+    module Csound.Opcode,
 
     -- * Scores
     module Temporal.Music.Score,
@@ -76,7 +36,7 @@ module Csound(
 import Data.Default
 import Data.Boolean
 
-import Temporal.Music.Score hiding(linseg, (!))
+import Temporal.Music.Score hiding(clip, linseg, (!))
 
 import Csound.Exp
 import Csound.Exp.Cons
