@@ -43,7 +43,7 @@ module Csound.Opcode.Advanced (
     -- * Physical Models and FM Instruments
 
     -- ** Waveguide Physical Modelling
-    streson, pluck, repluck, wgbow, wgbowedbar, wgbrass
+    streson, pluck, repluck, wgbow, wgbowedbar, wgbrass,
     wgclar, wgflute, wgpluck, wgpluck2, wguide1, wguide2,
 
     -- ** FM Instrument Models
@@ -89,7 +89,7 @@ foscili = opc6 "foscili" [(a, [x, k, x, x, k, i, i])]
 -- a1, a2 crossfmpmi xfrq1, xfrq2, xndx1, xndx2, kcps, ifn1, ifn2 [, iphs1] [, iphs2]
 
 crossfmGen :: Name -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig, Sig)
-crossfmGen name = mopc7 name [a, a] [x, x, x, x, k, i, i, i, i]
+crossfmGen name = mopc7 name ([a, a], [x, x, x, x, k, i, i, i, i])
 
 crossfm, crossfmi, crosspm, crosspmi, crossfmpm, crossfmpmi :: Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig, Sig)
 
@@ -169,8 +169,8 @@ dopler = opc3 "dopler" [(a, [a, k, k, i, i])]
 -- * Convolution
 
 -- ar1 [, ar2] [, ar3] [, ar4] pconvolve ain, ifilcod [, ipartitionsize, ichannel]
-pconvolve :: MultiOuts a => Sig -> S -> a
-pconvolve = mopc2 "pconvolve" [a,a,a,a] [a,s,i,i]
+pconvolve :: MultiOut a => Sig -> S -> a
+pconvolve = mopc2 "pconvolve" ([a,a,a,a], [a,s,i,i])
 
 -- ar1 [, ar2] [, ar3] [, ar4] convolve ain, ifilcod [, ichannel]
 convolve :: MultiOut a => Sig -> D -> a
@@ -178,8 +178,8 @@ convolve = mopc2 "convolve" ([a, a, a, a], [a, i, i])
 
 -- a1[, a2[, a3[, ... a8]]] ftconv ain, ift, iplen[, iskipsamples \
 --      [, iirlen[, iskipinit]]]
-ftconv :: MultiOuts a => Sig -> Tab -> D -> a
-ftconv = mopc3 "ftconv" (as 8) [a,i,i,i,i,i]
+ftconv :: MultiOut a => Sig -> Tab -> D -> a
+ftconv = mopc3 "ftconv" (as 8, [a,i,i,i,i,i])
 
 -- ares dconv asig, isize, ifn
 dconv :: Sig -> I -> Tab -> Sig
@@ -227,11 +227,11 @@ pvsdiskin = opc3 "pvsdiskin" [(f, [s,k,k,i,i])]
 
 -- ioverlap, inumbins, iwinsize, iformat pvsinfo fsrc
 pvsinfo :: Spec -> (I, I, I, I)
-pvsinfo = mopc1 "pvsinfo" [i,i,i,i] [f]
+pvsinfo = mopc1 "pvsinfo" ([i,i,i,i], [f])
 
 -- kamp, kfr pvsbin fsig, kbin
 pvsbin :: Spec -> Sig -> (Sig, Sig)
-pvsbin = mopc2 "pvsbin"
+pvsbin = mopc2 "pvsbin" ([k,k], [f,k])
 
 -- kcent pvscent fsig
 pvscent :: Spec -> Sig
@@ -251,12 +251,12 @@ pvshift = opc3 "pvshift" [(f, [f,k,k,k,i,k])]
 -- fsig pvsbandp fsigin, xlowcut, xlowfull, \
 --       xhighfull, xhighcut[, ktype]
 pvsbandp :: Spec -> Sig -> Sig -> Sig -> Sig -> Spec 
-pvsbandp = opc4 "pvsbandp" [(f, [f,x,x,x,x,k])]
+pvsbandp = opc5 "pvsbandp" [(f, [f,x,x,x,x,k])]
 
 -- fsig pvsbandr fsigin, xlowcut, xlowfull, \
 --       xhighfull, xhighcut[, ktype]
 pvsbandr :: Spec -> Sig -> Sig -> Sig -> Sig -> Spec 
-pvsbandr = opc4 "pvsbandr" [(f, [f,x,x,x,x,k])]
+pvsbandr = opc5 "pvsbandr" [(f, [f,x,x,x,x,k])]
 
 -- fsig pvsmix fsigin1, fsigin2
 pvsmix :: Spec -> Spec -> Spec

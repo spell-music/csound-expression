@@ -275,27 +275,30 @@ instance (Init a, Init b, Init c, Init d, Arg a, Arg b, Arg c, Arg d) => Arg (a,
 ------------------------------------------------
 -- multiple outs
 
+fromE :: Val a => E -> a
+fromE = wrap . unFix 
+
 class MultiOut a where
     multiOuts :: E -> a
 
 instance MultiOut Sig where
     multiOuts x = case multiOutsSection 1 x of
-        [a1] -> a1
+        [a1] -> fromE a1
 
-instance MultiOut (Sig, Sig) where
+instance (Val a1, Val a2) => MultiOut (a1, a2) where
     multiOuts x = case multiOutsSection 2 x of
-        [a1, a2] -> (a1, a2)
+        [a1, a2] -> (fromE a1, fromE a2)
     
-instance MultiOut (Sig, Sig, Sig) where
+instance (Val a1, Val a2, Val a3) => MultiOut (a1, a2, a3) where
     multiOuts x = case multiOutsSection 3 x of
-        [a1, a2, a3] -> (a1, a2, a3)
+        [a1, a2, a3] -> (fromE a1, fromE a2, fromE a3)
 
-instance MultiOut (Sig, Sig, Sig, Sig) where
+instance (Val a1, Val a2, Val a3, Val a4) => MultiOut (a1, a2, a3, a4) where
     multiOuts x = case multiOutsSection 4 x of
-        [a1, a2, a3, a4] -> (a1, a2, a3, a4)
+        [a1, a2, a3, a4] -> (fromE a1, fromE a2, fromE a3, fromE a4)
         
 
-multiOutsSection :: Int -> E -> [Sig]
+multiOutsSection :: Int -> E -> [E]
 multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
     where rates = take n $ getRates $ ratedExpExp $ unFix e          
           e' = Fix $ onExp (setMultiRate rates) $ unFix e

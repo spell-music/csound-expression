@@ -119,8 +119,8 @@ onE1 f = wrap . unFix . f . Fix . unwrap
 onE2 :: (Val a, Val b, Val c) => (E -> E -> E) -> (a -> b -> c)
 onE2 f a b = wrap $ unFix $ f (Fix $ unwrap a) (Fix $ unwrap b)
 
-fromE :: Val b => (a -> E) -> (a -> b)
-fromE f = wrap . unFix . f 
+onConst :: Val b => (a -> E) -> (a -> b)
+onConst f = wrap . unFix . f 
 
 -------------------------------------------
 -- wrappers
@@ -130,7 +130,7 @@ instance Num Sig where
     (*) = onE2 (*)
     (-) = onE2 (-)
     negate = onE1 negate
-    fromInteger = fromE fromInteger
+    fromInteger = onConst fromInteger
     abs = onE1 abs
     signum = onE1 signum
 
@@ -139,7 +139,7 @@ instance Num Int' where
     (*) = onE2 (*)
     (-) = onE2 (-)
     negate = onE1 negate
-    fromInteger = fromE fromInteger
+    fromInteger = onConst fromInteger
     abs = onE1 abs
     signum = onE1 signum
 
@@ -148,17 +148,17 @@ instance Num Double' where
     (*) = onE2 (*)
     (-) = onE2 (-)
     negate = onE1 negate
-    fromInteger = fromE fromInteger
+    fromInteger = onConst fromInteger
     abs = onE1 abs
     signum = onE1 signum
 
 instance Fractional Sig where
     (/) = onE2 (/)
-    fromRational = fromE fromRational
+    fromRational = onConst fromRational
 
 instance Fractional Double' where
     (/) = onE2 (/)
-    fromRational = fromE fromRational
+    fromRational = onConst fromRational
 
 instance Floating Sig where
     pi = wrap $ unFix pi

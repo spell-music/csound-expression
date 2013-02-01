@@ -44,4 +44,5 @@ Library
         
         Csound.Opcode
         Csound.Opcode.Basic
+        Csound.Opcode.Advanced
                    
