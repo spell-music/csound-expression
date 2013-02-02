@@ -24,13 +24,10 @@ module Csound(
 
     -- * Rendering
     csd,
-
-    -- * Arithmetic and Logic instances
-    module Csound.Exp.Numeric,        
-    module Csound.Exp.Logic,
-    
+   
     -- * Utils
-    module Data.Default 
+    module Data.Default, 
+    module Data.Boolean
 ) where
 
 import Data.Default

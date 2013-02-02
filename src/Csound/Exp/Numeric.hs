@@ -1,5 +1,5 @@
 {-# Language TypeSynonymInstances, FlexibleInstances #-}
-module Csound.Exp.Numeric where
+module Csound.Exp.Numeric() where
 
 import Data.Fix
 
