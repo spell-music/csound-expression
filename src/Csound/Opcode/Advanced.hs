@@ -47,9 +47,18 @@ module Csound.Opcode.Advanced (
     wgclar, wgflute, wgpluck, wgpluck2, wguide1, wguide2,
 
     -- ** FM Instrument Models
-    fmb3, fmbell, fmmetal, fmpercfl, fmrhode, fmvoice, fmwurlie 
+    fmb3, fmbell, fmmetal, fmpercfl, fmrhode, fmvoice, fmwurlie,
     
-    -- ** Other Models
+    -- ** PhISEM opcodes
+    -- | PhISEM (Physically Informed Stochastic Event Modeling) is an algorithmic approach for simulating collisions of multiple independent sound producing objects. 
+    bamboo, cabasa, crunch, dripwater, guiro, sandpaper, sekere, sleighbells, stix, tambourine,
+    
+    -- ** Some Perry Cook's instruments
+    -- | The method is a physically inspired model developed from Perry Cook, but re-coded for Csound.  
+    gogobel, marimba, shaker, vibes,
+    
+    -- ** Other Models      
+    barmodel, mandol, moog, voice
 ) where
 
 import Csound.Exp
@@ -740,5 +749,184 @@ fmpercfl = fmGen "fmpercfl"
 fmrhode = fmGen "fmrhode"
 fmvoice = fmGen "fmvoice"
 fmwurlie = fmGen "fmwurlie"
+
+--------------------------------------------------------------------
+-- PhISEM percussion opcodes. 
+
+-- | bamboo is a semi-physical model of a bamboo sound.
+-- 
+-- > ares bamboo kamp, idettack [, inum] [, idamp] [, imaxshake] [, ifreq] \
+-- >      [, ifreq1] [, ifreq2]
+--
+-- doc: <http://www.csounds.com/manual/html/bamboo.html> 
+
+bamboo :: Sig -> D -> Sig
+bamboo = opc2 "bamboo" [(a, k:is 7)]
+
+-- | cabasa is a semi-physical model of a cabasa sound.
+--
+-- > ares cabasa iamp, idettack [, inum] [, idamp] [, imaxshake]
+--
+-- doc: <http://www.csounds.com/manual/html/cabasa.html> 
+cabasa :: D -> D -> Sig
+cabasa = opc2 "cabasa" [(a, is 5)]
+
+-- | crunch is a semi-physical model of a crunch sound.
+--
+-- > ares crunch iamp, idettack [, inum] [, idamp] [, imaxshake]
+--
+-- doc: <http://www.csounds.com/manual/html/crunch.html> 
+
+crunch :: D -> D -> Sig
+crunch = opc2 "crunch" [(a, is 5)]
+
+-- | dripwater is a semi-physical model of a water drop.
+--
+-- > ares dripwater kamp, idettack [, inum] [, idamp] [, imaxshake] [, ifreq] \
+-- >       [, ifreq1] [, ifreq2]
+--
+-- doc: <http://www.csounds.com/manual/html/dripwater.html> 
+
+dripwater :: Sig -> D -> Sig
+dripwater = opc2 "dripwater" [(a, k:is 7)]
+
+-- | guiro is a semi-physical model of a guiro sound.
+--
+-- > ares guiro kamp, idettack [, inum] [, idamp] [, imaxshake] [, ifreq] [, ifreq1]
+--
+-- doc: <http://www.csounds.com/manual/html/guiro.html> 
+
+guiro :: Sig -> D -> Sig
+guiro = opc2 "guiro" [(a, k:is 7)]
+
+-- | sandpaper is a semi-physical model of a sandpaper sound.
+--
+-- > ares sandpaper iamp, idettack [, inum] [, idamp] [, imaxshake]
+--
+-- doc: <http://www.csounds.com/manual/html/sandpaper.html> 
+
+sandpaper :: D -> D -> Sig
+sandpaper = opc2 "sandpaper" [(a, is 5)]
+
+-- | sekere is a semi-physical model of a sekere sound.
+--
+-- > ares sekere iamp, idettack [, inum] [, idamp] [, imaxshake]
+--
+-- doc: <http://www.csounds.com/manual/html/sekere.html> 
+
+sekere :: D -> D -> Sig
+sekere = opc2 "sekere" [(a, is 5)]
+
+-- | sleighbells is a semi-physical model of a sleighbell sound.
+--
+-- > ares sleighbells kamp, idettack [, inum] [, idamp] [, imaxshake] [, ifreq] \
+-- >      [, ifreq1] [, ifreq2]
+--
+-- doc: <http://www.csounds.com/manual/html/sleighbells.html> 
+
+sleighbells :: Sig -> D -> Sig
+sleighbells = opc2 "sleighbells" [(a, k:is 7)]
+
+-- | stix is a semi-physical model of a stick sound.
+--
+-- > ares stix iamp, idettack [, inum] [, idamp] [, imaxshake]
+--
+-- doc: <http://www.csounds.com/manual/html/stix.html> 
+
+stix :: D -> D -> Sig
+stix = opc2 "stix" [(a, is 5)]
+
+-- | tambourine is a semi-physical model of a tambourine sound.
+--
+-- > ares tambourine kamp, idettack [, inum] [, idamp] [, imaxshake] [, ifreq] \
+-- >      [, ifreq1] [, ifreq2]
+--
+-- doc: <http://www.csounds.com/manual/html/tambourine.html> 
+tambourine :: Sig -> D -> Sig
+tambourine = opc2 "tambourine" [(a, k:is 7)]
+
+-------------------------------------------------------------
+-- by Perry Cook
+
+-- | Audio output is a tone related to the striking of a cow bell or similar. 
+--
+-- > ares gogobel kamp, kfreq, ihrd, ipos, imp, kvibf, kvamp, ivfn
+--
+-- doc: <http://www.csounds.com/manual/html/gogobel.html> 
+
+gogobel :: Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Tab -> Sig
+gogobel = opc8 "gogobel" [(a, [k,k,i,i,i,k,k,i])]
+
+
+-- | Audio output is a tone related to the striking of a wooden block as found in a marimba.
+--
+-- > ares marimba kamp, kfreq, ihrd, ipos, imp, kvibf, kvamp, ivibfn, idec \
+-- >      [, idoubles] [, itriples]
+--
+-- doc: <http://www.csounds.com/manual/html/marimba.html> 
+
+marimba :: Sig -> Sig -> D -> D -> Tab -> Sig -> Sig -> Tab -> D -> Sig
+marimba = opc9 "marimba" [(a, [k,k,i,i,i,k,k,i,i,i,i])]
+
+-- | Audio output is a tone related to the shaking of a maraca or similar gourd instrument.
+--
+-- > ares shaker kamp, kfreq, kbeans, kdamp, ktimes [, idecay]
+--
+-- doc: <http://www.csounds.com/manual/html/shaker.html> 
+
+shaker :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+shaker = opc5 "shaker" [(a, ks 5 ++ [i])]
+
+
+-- | Audio output is a tone related to the striking of a metal block as found in a vibraphone.
+--
+-- > ares vibes kamp, kfreq, ihrd, ipos, imp, kvibf, kvamp, ivibfn, idec
+--
+-- doc: <http://www.csounds.com/manual/html/vibes.html> 
+
+vibes :: Sig -> Sig -> D -> D -> Tab -> Sig -> Sig -> Tab -> D -> Sig
+vibes = opc9 "vibes" [(a, [k,k,i,i,i,k,k,i,i])]
+
+---------------------------------------------------------------
+-- other models
+
+
+-- | Audio output is a tone similar to a struck metal bar, using a physical model developed from solving the partial
+-- differential equation. There are controls over the boundary conditions as well as the bar characteristics. 
+--
+-- > ares barmodel kbcL, kbcR, iK, ib, kscan, iT30, ipos, ivel, iwid
+--
+-- doc: <http://www.csounds.com/manual/html/barmodel.html> 
+barmodel :: Sig -> Sig -> D -> D -> Sig -> D -> D -> D -> D -> Sig
+barmodel = opc9 "barmodel" [(a, [k,k,i,i,k,i,i,i,i])]
+
+-- | An emulation of a mandolin. 
+--
+-- > ares mandol kamp, kfreq, kpluck, kdetune, kgain, ksize, ifn [, iminfreq]
+--
+-- doc: <http://www.csounds.com/manual/html/mandol.html> 
+
+mandol :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+mandol = opc7 "mandol" [(a, ks 6 ++ is 2)]
+
+
+-- | An emulation of a mini-Moog synthesizer. 
+--
+-- > ares moog kamp, kfreq, kfiltq, kfiltrate, kvibf, kvamp, iafn, iwfn, ivfn
+--
+-- doc: <http://www.csounds.com/manual/html/moog.html> 
+
+moog :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Sig
+moog = opc9 "moog" [(a, ks 6 ++ is 3)]
+ 
+
+-- | An emulation of a human voice. 
+--
+-- > ares voice kamp, kfreq, kphoneme, kform, kvibf, kvamp, ifn, ivfn
+--
+-- doc: <http://www.csounds.com/manual/html/voice.html> 
+
+voice :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Sig
+voice = opc9 "voice" [(a, [k,k,k,k,k,k,k,i,i])]
       
 
