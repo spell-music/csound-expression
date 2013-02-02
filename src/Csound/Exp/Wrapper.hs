@@ -18,21 +18,33 @@ import qualified Csound.Exp.NumExp as NumExp
 
 type Channel = Int
 
+-- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
 
+-- | Integers.
 newtype I = I { unI :: E }
 
+-- | Doubles.
 newtype D = D { unD :: E }
 
+-- | Strings.
 newtype S = S { unS :: E }
 
+-- | Boolean signals. Use functions from the module "Data.Boolean" to make boolean signals
+-- out of simple signals.
 newtype BoolSig = BoolSig { unBoolSig :: E }
 
+-- | Spectrum of the signal (see "FFT and Spectral Processing" in the "Csound.Opcode.Advanced"). 
 newtype Spec = Spec { unSpec :: E }
 
 ------------------------------------------------
 -- side effects
 
+-- | Csound's synonym for 'IO'-monad. 'SE' means Side Effect. 
+-- You will bump into 'SE' trying to read and write to delay lines,
+-- making random signals or trying to save your audio to file. 
+-- Instrument is expected to return a value of @SE [Sig]@. 
+-- So it's okay to do some side effects when playing a note.
 newtype SE a = SE { unSE :: State E a }
 
 instance Functor SE where
@@ -94,12 +106,15 @@ mkVar ty rate name = wrap $ noRate $ ReadVar (Var ty rate name)
 p :: Init a => Int -> a
 p = prim . P
 
+-- | Converts Haskell's integers to Csound's integers
 int :: Int -> I
 int = prim . PrimInt
 
+-- | Converts Haskell's doubles to Csound's doubles
 double :: Double -> D
 double = prim . PrimDouble
 
+-- | Converts Haskell's strings to Csound's strings
 str :: String -> S
 str = prim . PrimString
 
@@ -143,6 +158,7 @@ getPrimUnsafe a = case ratedExpExp $ unwrap a of
 --------------------------------------------
 -- signals from primitive types
 
+-- | Values that can be converted to signals. 
 class ToSig a where
     sig :: a -> Sig
     
@@ -167,12 +183,15 @@ instance ToSig Double where
 setRate :: (Val a, Val b) => Rate -> a -> b
 setRate r a = wrap $ (\x -> x { ratedExpRate = Just r }) $ unwrap a
 
+-- | Forces signal to audio rate. 
 ar :: ToSig a => a -> Sig
 ar = setRate Ar . sig
 
+-- | Forces signal to control rate.
 kr :: ToSig a => a -> Sig
 kr = setRate Kr . sig
 
+-- | Converts signal to double.
 ir :: Sig -> D
 ir = setRate Ir
 

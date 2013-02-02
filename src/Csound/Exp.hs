@@ -88,6 +88,7 @@ data Prim
     | PrimString String 
     deriving (Show, Eq, Ord)
     
+-- | Csound f-tables. You can make a value of 'Tab' with the function 'gen'.
 data Tab = Tab 
     { tabSize    :: Int
     , tabGen     :: Int
