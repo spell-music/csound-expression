@@ -21,7 +21,7 @@ import Csound.Exp.Wrapper
 ------------------------------------------------
 -- helper constructors
 
-instance IsString String' where
+instance IsString S where
     fromString = str
 
 ------------------------------------------------

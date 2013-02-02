@@ -15,7 +15,7 @@ import Temporal.Music.Score(Score, Event(..), Dur, render, alignByZero)
 
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (int, double)
-import Csound.Tfm.TfmTree(FtableMap)
+import Csound.Tfm.TfmTree(TabMap)
 import Csound.Exp.Cons(opcs)
 import Csound.Exp.Numeric
 
@@ -101,11 +101,11 @@ midiAssign ty n = SigOut return . Midi ty n . expReader . ($ Msg)
 -----------------------------------------------------------------
 -- render
 
-renderScores :: StringMap -> FtableMap -> InstrId -> [Event Dur Note] -> Doc
+renderScores :: StringMap -> TabMap -> InstrId -> [Event Dur Note] -> Doc
 renderScores strs fts instrId as = vcat $ map (renderNote strs fts instrId) as
 
 
-renderNote :: StringMap -> FtableMap -> InstrId -> Event Dur Note -> Doc
+renderNote :: StringMap -> TabMap -> InstrId -> Event Dur Note -> Doc
 renderNote strs fts instrId event = char 'i' <> int instrId <+> time <+> dur <+> args
     where time = double $ eventStart event
           dur  = double $ eventDur event
@@ -113,7 +113,7 @@ renderNote strs fts instrId event = char 'i' <> int instrId <+> time <+> dur <+>
           prim x = case x of
               PrimInt n -> int n
               PrimDouble d -> double d
-              PrimFtable f -> int $ fts M.! f
+              PrimTab f -> int $ fts M.! f
               PrimString s -> int $ strs M.! s
               
 

@@ -8,22 +8,22 @@ import Data.Foldable(foldMap)
 import Csound.Exp
 import Csound.Exp.Inline
 
-type FtableMap = M.Map Ftable Int
+type TabMap = M.Map Tab Int
 
 -- substitute ftables for ids 
 
-substFtables :: FtableMap -> E -> E
-substFtables m = cata $ \(RatedExp r d x) -> Fix $ RatedExp r d $ case x of
-    ExpPrim (PrimFtable t) -> ExpPrim (PrimInt $ m M.! t)
+substTabs :: TabMap -> E -> E
+substTabs m = cata $ \(RatedExp r d x) -> Fix $ RatedExp r d $ case x of
+    ExpPrim (PrimTab t) -> ExpPrim (PrimInt $ m M.! t)
     _ -> x
 
 
-ftableMap :: [E] -> FtableMap
-ftableMap es = M.fromList $ zip (nub $ getFtables =<< es) [1 ..]
+tabMap :: [E] -> TabMap
+tabMap es = M.fromList $ zip (nub $ getFtables =<< es) [1 ..]
 
-getFtables :: E -> [Ftable]
+getFtables :: E -> [Tab]
 getFtables = cata $ \(RatedExp _ _ x) -> case x of
-    ExpPrim (PrimFtable t) -> [t]
+    ExpPrim (PrimTab t) -> [t]
     ExpPrim _ -> []
     Tfm _ as -> concat as
     ConvertRate _ _ a -> a

@@ -25,14 +25,14 @@ import Csound.Exp.Inline
 
 
 instance Show Sig where
-    show a = show $ renderInstrBody (ftableMap [exp]) exp
+    show a = show $ renderInstrBody (tabMap [exp]) exp
         where exp = unSig a
 
 
 type InstrId = Int
 
 
-renderInstr :: FtableMap -> InstrId -> E -> Doc
+renderInstr :: TabMap -> InstrId -> E -> Doc
 renderInstr ft instrId exp = instrHeader instrId $ renderInstrBody ft exp
 
 instrHeader :: InstrId -> Doc -> Doc
@@ -70,14 +70,14 @@ isSelect x = case x of
     _ -> False
 
 
-toDag :: FtableMap -> E -> Dag RatedExp 
-toDag ft exp = dag $ substFtables ft exp
+toDag :: TabMap -> E -> Dag RatedExp 
+toDag ft exp = dag $ substTabs ft exp
 
 
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-renderInstrBody :: FtableMap -> E -> Doc
+renderInstrBody :: TabMap -> E -> Doc
 renderInstrBody ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates st g
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
           stmt (res, exp) = args res <+> renderExp exp
@@ -187,9 +187,9 @@ renderPrim x = case x of
     PrimInt n -> int n
     PrimDouble d -> double d
     PrimString s -> text s
-    PrimFtable f -> renderFtable f
+    PrimTab f -> renderTab f
     
-renderFtable :: Ftable -> Doc
-renderFtable (Ftable size n xs) = text "gen" P.<> int n <+> int size <+> (hsep $ map double xs)
+renderTab :: Tab -> Doc
+renderTab (Tab size n xs) = text "gen" P.<> int n <+> int size <+> (hsep $ map double xs)
  
     

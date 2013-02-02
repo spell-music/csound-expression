@@ -20,11 +20,11 @@ type Channel = Int
 
 newtype Sig = Sig { unSig :: E }
 
-newtype Int' = Int' { unInt' :: E }
+newtype I = I { unI :: E }
 
-newtype Double' = Double' { unDouble' :: E }
+newtype D = D { unD :: E }
 
-newtype String' = String' { unString' :: E }
+newtype S = S { unS :: E }
 
 newtype BoolSig = BoolSig { unBoolSig :: E }
 
@@ -47,19 +47,10 @@ instance Monad SE where
     ma >>= mf = SE $ unSE ma >>= unSE . mf
 
 runSE :: SE a -> (a, E)
-runSE a = runState (unSE a) (unDouble' (p 3 :: Double'))
+runSE a = runState (unSE a) (unD (p 3 :: D))
 
 execSE :: SE a -> E
 execSE = snd . runSE
-
-
-------------------------------------------------
--- shortcuts
-
-type D = Double'
-type I = Int'
-type S = String'
-type Tab = Ftable
 
 ------------------------------------------------
 -- basic constructors
@@ -103,13 +94,13 @@ mkVar ty rate name = wrap $ noRate $ ReadVar (Var ty rate name)
 p :: Init a => Int -> a
 p = prim . P
 
-int :: Int -> Int'
+int :: Int -> I
 int = prim . PrimInt
 
-double :: Double -> Double'
+double :: Double -> D
 double = prim . PrimDouble
 
-str :: String -> String' 
+str :: String -> S
 str = prim . PrimString
 
 writeVar :: (Val a) => Var -> a -> SE ()
@@ -155,10 +146,10 @@ getPrimUnsafe a = case ratedExpExp $ unwrap a of
 class ToSig a where
     sig :: a -> Sig
     
-instance ToSig Int' where
+instance ToSig I where
     sig = wrap . unwrap
 
-instance ToSig Double' where
+instance ToSig D where
     sig = wrap . unwrap
 
 instance ToSig Sig where
@@ -182,7 +173,7 @@ ar = setRate Ar . sig
 kr :: ToSig a => a -> Sig
 kr = setRate Kr . sig
 
-ir :: Sig -> Double'
+ir :: Sig -> D
 ir = setRate Ir
 
 ------------------------------------------------------
@@ -192,10 +183,10 @@ ir = setRate Ir
 
 class Val a => Init a where
 
-instance Init Int' where
-instance Init Double' where
-instance Init String' where
-instance Init Ftable where
+instance Init I where
+instance Init D where
+instance Init S where
+instance Init Tab where
 
 ------------------------------------------------------
 -- values
@@ -216,21 +207,21 @@ instance Val Sig where
     wrap = Sig . Fix
     unwrap = unFix . unSig
 
-instance Val Int' where
-    wrap = Int' . Fix
-    unwrap = unFix . unInt'
+instance Val I where
+    wrap = I . Fix
+    unwrap = unFix . unI
 
-instance Val Double' where
-    wrap = Double' . Fix
-    unwrap = unFix . unDouble'
+instance Val D where
+    wrap = D . Fix
+    unwrap = unFix . unD
 
-instance Val String' where
-    wrap = String' . Fix
-    unwrap = unFix . unString'
+instance Val S where
+    wrap = S . Fix
+    unwrap = unFix . unS
 
-instance Val Ftable where
+instance Val Tab where
     wrap = un
-    unwrap = prim . PrimFtable
+    unwrap = prim . PrimTab
 
 instance Val BoolSig where
     wrap = BoolSig . Fix
@@ -247,19 +238,19 @@ class Arg a where
     arg :: a  
     toNote :: a -> [Prim]
 
-instance Arg Int' where
+instance Arg I where
     arg = p 4
     toNote = pure . getPrimUnsafe 
          
-instance Arg Double' where
+instance Arg D where
     arg = p 4
     toNote = pure . getPrimUnsafe
 
-instance Arg String' where
+instance Arg S where
     arg = p 4
     toNote = pure . getPrimUnsafe
 
-instance Arg Ftable where
+instance Arg Tab where
     arg = p 4
     toNote = pure . getPrimUnsafe
 
@@ -288,11 +279,11 @@ instance MultiOut Sig where
     multiOuts x = case multiOutsSection 1 x of
         [a1] -> fromE a1
 
-instance MultiOut Double' where
+instance MultiOut D where
     multiOuts x = case multiOutsSection 1 x of
         [a1] -> fromE a1
 
-instance MultiOut Int' where
+instance MultiOut I where
     multiOuts x = case multiOutsSection 1 x of
         [a1] -> fromE a1
 

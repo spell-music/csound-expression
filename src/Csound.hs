@@ -26,8 +26,7 @@ module Csound(
     csd,
    
     -- * Utils
-    module Data.Default, 
-    module Data.Boolean
+    module Data.Default
 ) where
 
 import Data.Default

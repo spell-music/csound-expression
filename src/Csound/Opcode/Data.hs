@@ -90,7 +90,7 @@ ks n = replicate n k
 
 -- ** Creating Function Tables (Buffers)
 gen :: Int -> Int -> [Double] -> Tab
-gen = Ftable 
+gen = Tab 
 
 {-
 -- ** Writing To Tables
@@ -391,7 +391,7 @@ interp = opc1 "interp" [(a, [k,i,i])]
 -- | Floating number types: 'Sig' or 'D'.
 class Val a => Nums a 
 instance Nums Sig
-instance Nums Double'
+instance Nums D
 
 conv :: Nums a => NumOp -> a -> a
 conv op a = noRate $ ExpNum $ PreInline op [Fix $ unwrap a]

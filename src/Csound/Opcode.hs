@@ -10,7 +10,7 @@ import qualified Data.Map as M
 
 import Csound.Exp.Cons
 import Csound.Render.Sco(Msg)
-import Csound.Exp.Wrapper hiding (Double', Int', String')
+import Csound.Exp.Wrapper
 import Csound.Exp
 
 import Csound.Opcode.Basic

@@ -113,7 +113,7 @@ instance Num Sig where
     abs = onE1 abs
     signum = onE1 signum
 
-instance Num Int' where
+instance Num I where
     (+) = onE2 (+)
     (*) = onE2 (*)
     (-) = onE2 (-)
@@ -122,7 +122,7 @@ instance Num Int' where
     abs = onE1 abs
     signum = onE1 signum
 
-instance Num Double' where
+instance Num D where
     (+) = onE2 (+)
     (*) = onE2 (*)
     (-) = onE2 (-)
@@ -135,7 +135,7 @@ instance Fractional Sig where
     (/) = onE2 (/)
     fromRational = onConst fromRational
 
-instance Fractional Double' where
+instance Fractional D where
     (/) = onE2 (/)
     fromRational = onConst fromRational
 
@@ -159,7 +159,7 @@ instance Floating Sig where
     acosh = onE1 acosh
     atanh = onE1 atanh
    
-instance Floating Double' where
+instance Floating D where
     pi = wrap $ unFix pi
     exp = onE1 exp
     sqrt = onE1 sqrt

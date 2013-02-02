@@ -84,14 +84,14 @@ data Prim
     | PString Int       -- >> p-string: 
     | PrimInt Int 
     | PrimDouble Double 
-    | PrimFtable Ftable 
+    | PrimTab Tab 
     | PrimString String 
     deriving (Show, Eq, Ord)
     
-data Ftable = Ftable 
-    { ftableSize    :: Int
-    , ftableGen     :: Int
-    , ftableArgs    :: [Double]
+data Tab = Tab 
+    { tabSize    :: Int
+    , tabGen     :: Int
+    , tabArgs    :: [Double]
     } deriving (Show, Eq, Ord)
 
 

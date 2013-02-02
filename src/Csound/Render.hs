@@ -12,11 +12,11 @@ import Data.Fix
 
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (double, int)
-import Csound.Tfm.TfmTree(ftableMap)
+import Csound.Tfm.TfmTree(tabMap)
 import Csound.Render.Sco
 import Csound.Render.Instr
 import Csound.Render.Options
-import Csound.Tfm.TfmTree(FtableMap)
+import Csound.Tfm.TfmTree(TabMap)
 import Csound.Exp.Numeric
 
 import Csound.Opcode(clip, zeroDbfs)
@@ -37,10 +37,10 @@ csd opt globalEffect as = show $ csdFile
     (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith (renderInstr fts) ids instrs)
     (vcat $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
     (renderStringTable strs)
-    (renderTotalDur $$ renderFtables fts)
+    (renderTotalDur $$ renderTabs fts)
     where scos   = map (scoSigOut' . sigOutContent) as          
           (instrs, effects, initOuts) = unzip3 $ zipWith runExpReader as ids    
-          fts    = ftableMap $ lastInstrExp : instrs
+          fts    = tabMap $ lastInstrExp : instrs
           strs   = stringMap $ concat scos
           ids    = take nInstr [2 .. ]
           
@@ -63,13 +63,13 @@ csd opt globalEffect as = show $ csdFile
           lastInstrNote  = alwayson lastInstrId dur
           alwayson instrId time = char 'i' <> int instrId <+> double 0 <+> double dur
 
-csdFile flags instr0 instrs scores strTable ftables = 
+csdFile flags instr0 instrs scores strTable tabs = 
     tag "CsoundSynthesizer" [
         tag "CsOptions" [flags],
         tag "CsInstruments" [
             instr0, strTable, instrs],
         tag "CsScore" [
-            ftables, scores]]        
+            tabs, scores]]        
 
 
 midiAssignTable :: [Int] -> [SigOut] -> [MidiAssign]
@@ -78,15 +78,15 @@ midiAssignTable ids instrs = catMaybes $ zipWith mk ids instrs
             Midi ty chn _ -> Just $ MidiAssign ty chn n
             _ -> Nothing
 
-renderFtables = renderMapTable renderFtableEntry
+renderTabs = renderMapTable renderTabEntry
 renderStringTable = renderMapTable renderStringEntry
 
-renderFtableEntry ft id = char 'f' 
+renderTabEntry ft id = char 'f' 
     <>  int id 
     <+> int 0 
-    <+> (int $ ftableSize ft)
-    <+> (int $ ftableGen ft) 
-    <+> (hsep $ map double $ ftableArgs ft)
+    <+> (int $ tabSize ft)
+    <+> (int $ tabGen ft) 
+    <+> (hsep $ map double $ tabArgs ft)
  
 renderStringEntry str id = text "strset" <+> int id <> comma <+> (doubleQuotes $ text str)
 
