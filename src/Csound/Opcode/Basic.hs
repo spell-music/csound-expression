@@ -78,10 +78,6 @@ module Csound.Opcode.Basic(
     -- ** Panning
     pan, pan2,
 
-    -- ** VBAP
-
-    -- ** Ambisonics
-
     -- ** Binaural / HTRF
     hrtfstat, hrtfmove, hrtfmove2
 

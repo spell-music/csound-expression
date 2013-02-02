@@ -16,6 +16,7 @@ data NumOp
     | Sin | Cos | Sinh | Cosh | Tan | Tanh | Sininv | Cosinv | Taninv
     | Abs | Ceil | ExpOp | Floor | Frac| IntOp | Log | Log10 | Logbtwo | Round | Sqrt    
     | Ampdb | Ampdbfs | Dbamp | Dbfsamp 
+    | Cpspch
     deriving (Show, Eq, Ord)
 
 renderNumExp leaf (PreInline op as) = renderNumOp op $ fmap leaf as
@@ -56,6 +57,7 @@ renderNumOp op args = case  op of
     Ampdbfs -> fun "ampdbfs" 
     Dbamp -> fun "dbamp"
     Dbfsamp -> fun "dbfsamp"    
+    Cpspch -> fun "cpspch"
     where bi  op = parens $ args !! 0 <+> text op <+> args !! 1
           uno op = parens $ text op <> args !! 0
           fun op = text op <> parens (args !! 0)  

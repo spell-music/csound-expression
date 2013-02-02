@@ -17,9 +17,6 @@ module Csound.Opcode.Advanced (
     doppler,
     
     -----------------------------------------------------
-    -- * Granular Synthesis
-
-    -----------------------------------------------------
     -- * Convolution
     pconvolve, convolve, ftconv, dconv,  
 

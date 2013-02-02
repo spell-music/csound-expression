@@ -11,18 +11,7 @@ module Csound.Opcode.Interaction (
     ctrl7,
 
     -----------------------------------------------------
-    -- * Open Sound Control and Network
-
-    -- ** Open Sound Control
-
-    -- ** Remote Instruments
-
-    -- ** Network Audio
-
-    -----------------------------------------------------
     -- * Human Interfaces
-
-    -- ** Widgets
 
     -- ** Keys
     sensekey,
