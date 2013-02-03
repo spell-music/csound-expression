@@ -5,8 +5,8 @@
 --
 -- > $ csound file.csd
 --
--- And we can here our result. 
-module Csound(
+-- And we can hear the sound. 
+module Csound.Base(
     -- * Main goals 
     
     -- ** Present
@@ -47,6 +47,8 @@ module Csound(
     -- other instruments. 
     --
     -- * Timing of events. User can set the beat rate and align events by beat events.
+    --
+    -- * Set Csound flags with meaningful (well-typed) values. Derive as much as you can from the context.
 
     -- * Types
     

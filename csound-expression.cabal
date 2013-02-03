@@ -20,7 +20,7 @@ Library
         data-default, Boolean, data-fix
   Hs-Source-Dirs:      src/
   Exposed-Modules:
-        Csound
+        Csound.Base
         Csound.Opcode
         Csound.Opcode.Basic
         Csound.Opcode.Advanced
