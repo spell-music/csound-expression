@@ -23,17 +23,10 @@ import Csound.Exp.BoolExp(renderCondInfo)
 import Csound.Exp.NumExp(renderNumExp)
 import Csound.Exp.Inline
 
-
-instance Show Sig where
-    show a = show $ renderInstrBody (tabMap [exp]) exp
-        where exp = unSig a
-
-
 type InstrId = Int
 
-
-renderInstr :: TabMap -> InstrId -> E -> Doc
-renderInstr ft instrId exp = instrHeader instrId $ renderInstrBody ft exp
+renderInstr :: KrateSet -> TabMap -> InstrId -> E -> Doc
+renderInstr krateSet ft instrId exp = instrHeader instrId $ renderInstrBody krateSet ft exp
 
 instrHeader :: InstrId -> Doc -> Doc
 instrHeader instrId body = vcat [
@@ -77,18 +70,18 @@ toDag ft exp = dag $ substTabs ft exp
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-renderInstrBody :: TabMap -> E -> Doc
-renderInstrBody ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates st g
+renderInstrBody :: KrateSet -> TabMap -> E -> Doc
+renderInstrBody krateSet ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates krateSet st g
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
           stmt (res, exp) = args res <+> renderExp exp
           
           st = getRenderState g
           g  = toDag ft sig
  
-collectRates :: RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates st dag = evalState res lastFreshId  
+collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
+collectRates krateSet st dag = evalState res lastFreshId  
     where res = tfmMultiRates st $ filterMultiOutHelpers dag1
-          (dag1, lastFreshId) = grate defaultKrateSet dag
+          (dag1, lastFreshId) = grate krateSet dag
 
 
 tfmMultiRates :: RenderState -> [(RatedVar, Exp RatedVar)] -> State Int [([RatedVar], Exp RatedVar)]

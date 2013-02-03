@@ -1,19 +1,32 @@
 module Csound.Render.Options where
 
+import Data.List(transpose)
 import Data.Default
 import Text.PrettyPrint
 
-import Csound.Exp.Wrapper(Channel)
+import Csound.Exp.Wrapper(Channel, Sig, SE)
 import Csound.Render.Sco
 
 type CtrlId = Int
+
+type Out = SE [Sig]
+
+mixing :: [[Sig]] -> Out
+mixing = return . fmap sum . transpose
+
+mixingBy :: ([Sig] -> Out) -> ([[Sig]] -> Out)
+mixingBy f = (f =<<) . mixing 
+
 
 data CsdOptions = CsdOptions 
     { csdFlags      :: String
     , csdRate       :: Int
     , csdBlockSize  :: Int
     , csdSeed       :: Maybe Int
-    , csdInitc7     :: [(Channel, CtrlId, Double)] }
+    , csdInitc7     :: [(Channel, CtrlId, Double)]
+    , csdEffect     :: [[Sig]] -> SE [Sig] 
+    , csdKrate      :: [String]     
+    }
 
 instance Default CsdOptions where
     def = CsdOptions 
@@ -21,7 +34,9 @@ instance Default CsdOptions where
             , csdRate  = 44100
             , csdBlockSize = 64
             , csdSeed = Nothing
-            , csdInitc7 = [] }
+            , csdInitc7 = []
+            , csdEffect = mixing
+            , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr"] }
 
 renderFlags = text . csdFlags
 

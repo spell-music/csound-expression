@@ -41,9 +41,6 @@ type Conversion = (RatedVar, Exp RatedVar)
 
 type KrateSet = S.Set Name
 
-defaultKrateSet :: KrateSet
-defaultKrateSet = S.fromList ["linseg", "expseg", "linsegr", "expsegr"]
-
 instance Default Agent where
     def = Agent [] [] Xr []
 

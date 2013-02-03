@@ -1,8 +1,9 @@
 module Csound.Render where
 
-import Data.List(transpose)
+import Data.Default
 import Data.Maybe(catMaybes)
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 import Control.Monad.Trans.State(evalState)
 
@@ -20,20 +21,17 @@ import Csound.Exp.Numeric
 
 import Csound.Opcode(clip, zeroDbfs)
 
-out :: Sig -> SE [Sig]
+out :: Sig -> Out
 out = return . return
 
-mixing :: [[Sig]] -> SE [Sig]
-mixing = return . fmap sum . transpose
+renderCsd :: [SigOut] -> String
+renderCsd = renderCsdBy def
 
-mixingBy :: ([Sig] -> SE [Sig]) -> ([[Sig]] -> SE [Sig])
-mixingBy f = (f =<<) . mixing 
-
-csd :: CsdOptions -> ([[Sig]] -> SE [Sig]) -> [SigOut] -> String
-csd opt globalEffect as = show $ csdFile 
+renderCsdBy :: CsdOptions -> [SigOut] -> String
+renderCsdBy opt as = show $ csdFile 
     (renderFlags opt)
     (renderInstr0 (nchnls lastInstrExp) (midiAssignTable ids as) opt)
-    (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith (renderInstr fts) ids instrs)
+    (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith (renderInstr krateSet fts) ids instrs)
     (vcat $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
     (renderStringTable strs)
     (renderTotalDur $$ renderTabs fts)
@@ -47,8 +45,8 @@ csd opt globalEffect as = show $ csdFile
           firstInstrId = 1
           lastInstrId  = nInstr + 2          
            
-          firstInstr = renderInstr fts firstInstrId $ execSE $ sequence_ initOuts
-          lastInstr  = renderInstr fts lastInstrId lastInstrExp
+          firstInstr = renderInstr krateSet fts firstInstrId $ execSE $ sequence_ initOuts
+          lastInstr  = renderInstr krateSet fts lastInstrId lastInstrExp
           
           lastInstrExp = mixingInstrExp globalEffect effects
            
@@ -61,6 +59,8 @@ csd opt globalEffect as = show $ csdFile
           firstInstrNote = alwayson firstInstrId dur
           lastInstrNote  = alwayson lastInstrId dur
           alwayson instrId time = char 'i' <> int instrId <+> double 0 <+> double dur
+          krateSet = S.fromList $ csdKrate opt
+          globalEffect = csdEffect opt
 
 csdFile flags instr0 instrs scores strTable tabs = 
     tag "CsoundSynthesizer" [

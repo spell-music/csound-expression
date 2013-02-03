@@ -48,7 +48,7 @@ module Csound(
     -- * Types
     
     -- ** Constants     
-    -- | Constants stay the same while instrument is playing a note.
+    -- | A constant value doesn't change while instrument is playing a note.
     -- Only constants can be passed as arguments to the instruments.
     D, I, Tab, S,
     
@@ -76,7 +76,7 @@ module Csound(
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
-    score, SigOut, Arg(..), out, mixing, mixingBy,
+    score, SigOut, Arg(..), out, outs, effect,
 
     -- ** Midi
     -- | Or we can define a midi-instrument. The we can trigger the instrument with midi-keyboard.
@@ -86,7 +86,7 @@ module Csound(
     -- | Now we are ready to create a csound-file. The function 'csd' creates a 'String' thjat
     -- contains the description of our instrument. We can save it to file and show it to our @csound@
     -- wizard. 
-    csd,
+    renderCsd,
    
     -- ** Opcodes    
     -- | Some colors to paint our soundscapes.
@@ -94,7 +94,8 @@ module Csound(
 
     -- ** Options
     -- | We can set some csound options.
-    CsdOptions(..), module Data.Default
+    renderCsdBy,    
+    CsdOptions(..), module Data.Default, mixing, mixingBy
 ) where
 
 import Data.Default
