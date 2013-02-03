@@ -31,9 +31,12 @@ module Csound(
     --
     -- * Make it independent from any Score-generation library. Let user choose his favorite library.
     -- By the way, my favourite is the package 'temporal-music-notation' (but i'm biased as an author). You can
-    -- find it on hackage alongside with 'temporal-csound-expression'. It brings 'csound-expression' and 'temporal-music-notation'
+    -- find it on hackage alongside with 'temporal-csound'. It brings 'csound-expression' and 'temporal-music-notation'
     -- together. 
     --
+    -- * Ensure that output signal is limited by amplitude. Csound can produce signals with HUGE amplitudes. Little typo can damage your ears 
+    -- and your speakers. In generated code all signals are clipped by 0dbfs value. 0dbfs is set to 1. Just as in Pure Data. So 1 is absolute maximum value
+    -- for amplitude. 
     
     -- ** Future
         
