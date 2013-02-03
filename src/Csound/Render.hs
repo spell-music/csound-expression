@@ -4,7 +4,6 @@ import Data.List(transpose)
 import Data.Maybe(catMaybes)
 import qualified Data.Map as M
 
-import Temporal.Media(eventEnd)
 import Control.Monad.Trans.State(evalState)
 
 import Text.PrettyPrint

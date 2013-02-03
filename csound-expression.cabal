@@ -17,7 +17,7 @@ Extra-Source-Files :
 Library
   Build-Depends:
         base >= 4, base < 5, containers, array, transformers, pretty, hashable,
-        data-default, Boolean, data-fix, temporal-media, temporal-music-notation  
+        data-default, Boolean, data-fix
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound

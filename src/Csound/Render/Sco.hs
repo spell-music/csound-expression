@@ -11,8 +11,6 @@ import Control.Monad.Trans.State
 import Control.Monad((<=<), zipWithM)
 import Data.Fix
 
-import Temporal.Music.Score(Score, Event(..), Dur, render, alignByZero)
-
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (int, double)
 import Csound.Tfm.TfmTree(TabMap)
@@ -28,6 +26,16 @@ type StringMap = M.Map String Int
 
 type Note = [Prim]
 data Msg = Msg
+
+data Event a = Event 
+    { eventStart :: Double
+    , eventDur   :: Double
+    , eventContent :: a }
+    
+eventEnd e = eventStart e + eventDur e
+
+instance Functor Event where
+    fmap f a = a{ eventContent = f $ eventContent a }
 
 effect :: ([Sig] -> SE [Sig]) -> SigOut -> SigOut
 effect f a = a{ sigOutEffect = f <=< sigOutEffect a }
@@ -47,7 +55,7 @@ runExpReader a n = (exp, sigOutEffect a $ fmap readVar vars, mapM_ (flip writeVa
 data PlainSigOut 
     = PlainSigOut 
       { orcSigOut :: ExpReader
-      , scoSigOut :: [Event Dur Note] }
+      , scoSigOut :: [Event Note] }
     | Midi 
       { midiType  :: MidiType
       , midiChn   :: Channel
@@ -63,8 +71,9 @@ outs as = se_ $ opcs (name as) [(Xr, repeat Ar)] as
             | otherwise      = "outs"
 
 
-sco :: (Arg a) => (a -> SE [Sig]) -> Score a -> SigOut
-sco instr scores = SigOut return $ PlainSigOut (expReader $ instr arg) (fromScore scores)
+score :: (Arg a) => (a -> SE [Sig]) -> [(Double, Double, a)] -> SigOut
+score instr scores = SigOut return $ 
+    PlainSigOut (expReader $ instr arg) (fmap (\(a, b, c) -> Event a b (toNote c)) scores)
 
 
 expReader :: SE [Sig] -> ExpReader
@@ -83,10 +92,6 @@ nchnls :: E -> Int
 nchnls x = case ratedExpExp $ unFix x of
     Tfm _ as -> length as
 
-fromScore :: Arg a => Score a -> [Event Dur Note]
-fromScore a = alignByZero $ render $ fmap toNote a
-
-
 massign :: Channel -> (Msg -> SE [Sig]) -> SigOut 
 massign = midiAssign Massign
 
@@ -101,11 +106,11 @@ midiAssign ty n = SigOut return . Midi ty n . expReader . ($ Msg)
 -----------------------------------------------------------------
 -- render
 
-renderScores :: StringMap -> TabMap -> InstrId -> [Event Dur Note] -> Doc
+renderScores :: StringMap -> TabMap -> InstrId -> [Event Note] -> Doc
 renderScores strs fts instrId as = vcat $ map (renderNote strs fts instrId) as
 
 
-renderNote :: StringMap -> TabMap -> InstrId -> Event Dur Note -> Doc
+renderNote :: StringMap -> TabMap -> InstrId -> Event Note -> Doc
 renderNote strs fts instrId event = char 'i' <> int instrId <+> time <+> dur <+> args
     where time = double $ eventStart event
           dur  = double $ eventDur event
@@ -117,7 +122,7 @@ renderNote strs fts instrId event = char 'i' <> int instrId <+> time <+> dur <+>
               PrimString s -> int $ strs M.! s
               
 
-stringMap :: [Event Dur Note] -> StringMap
+stringMap :: [Event Note] -> StringMap
 stringMap as = M.fromList $ zip (nub $ allStrings =<< as) [1 .. ]
     where allStrings evt = primStrings =<< eventContent evt
           primStrings x = case x of

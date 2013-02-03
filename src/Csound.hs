@@ -76,8 +76,7 @@ module Csound(
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
-    module Temporal.Music.Score,
-    sco, SigOut, Arg(..), out, mixing, mixingBy,
+    score, SigOut, Arg(..), out, mixing, mixingBy,
 
     -- ** Midi
     -- | Or we can define a midi-instrument. The we can trigger the instrument with midi-keyboard.
@@ -100,8 +99,6 @@ module Csound(
 
 import Data.Default
 import Data.Boolean
-
-import Temporal.Music.Score hiding(clip, linseg, (!))
 
 import Csound.Exp
 import Csound.Exp.Cons
