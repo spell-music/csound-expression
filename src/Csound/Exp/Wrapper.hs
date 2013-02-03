@@ -18,6 +18,10 @@ import qualified Csound.Exp.NumExp as NumExp
 
 type Channel = Int
 
+-- | Outupt of the instrument.
+type Out = SE [Sig]
+
+
 -- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
 

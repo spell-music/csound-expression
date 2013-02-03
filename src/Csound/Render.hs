@@ -21,12 +21,19 @@ import Csound.Exp.Numeric
 
 import Csound.Opcode(clip, zeroDbfs)
 
+-- | Synonym for @return . return@.
 out :: Sig -> Out
 out = return . return
 
+-- | Synonym for @return@.
+outs :: [Sig] -> Out
+outs = return
+
+-- | Renders Csound file.
 renderCsd :: [SigOut] -> String
 renderCsd = renderCsdBy def
 
+-- | Renders Csound file with options.
 renderCsdBy :: CsdOptions -> [SigOut] -> String
 renderCsdBy opt as = show $ csdFile 
     (renderFlags opt)
@@ -103,7 +110,7 @@ newline = char '\n'
 
 
 mixingInstrExp :: ([[Sig]] -> SE [Sig]) -> [SE [Sig]] -> E
-mixingInstrExp globalEffect effects = execSE $ outs . fmap clip' =<< globalEffect =<< sequence effects
+mixingInstrExp globalEffect effects = execSE $ outs' . fmap clip' =<< globalEffect =<< sequence effects
     where clip' x = clip x 0 zeroDbfs
           
 totalDur :: [SigOut] -> Maybe Double

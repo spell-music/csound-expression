@@ -4,28 +4,39 @@ import Data.List(transpose)
 import Data.Default
 import Text.PrettyPrint
 
-import Csound.Exp.Wrapper(Channel, Sig, SE)
+import Csound.Exp.Wrapper(Channel, Sig, SE, Out)
 import Csound.Render.Sco
 
 type CtrlId = Int
 
-type Out = SE [Sig]
-
+-- | Sums signals for every channel.
 mixing :: [[Sig]] -> Out
 mixing = return . fmap sum . transpose
 
+-- | Sums signals for every channel and the processes the output with the given function.
 mixingBy :: ([Sig] -> Out) -> ([[Sig]] -> Out)
 mixingBy f = (f =<<) . mixing 
 
+-- | Csound options. The default value is
+--
+-- > instance Default CsdOptions where
+-- >     def = CsdOptions 
+-- >             { csdFlags = ""
+-- >             , csdRate  = 44100
+-- >             , csdBlockSize = 64
+-- >             , csdSeed = Nothing
+-- >             , csdInitc7 = []
+-- >             , csdEffect = mixing
+-- >             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr"] }
 
 data CsdOptions = CsdOptions 
-    { csdFlags      :: String
-    , csdRate       :: Int
-    , csdBlockSize  :: Int
-    , csdSeed       :: Maybe Int
+    { csdFlags      :: String       
+    , csdRate       :: Int          
+    , csdBlockSize  :: Int          
+    , csdSeed       :: Maybe Int    
     , csdInitc7     :: [(Channel, CtrlId, Double)]
-    , csdEffect     :: [[Sig]] -> SE [Sig] 
-    , csdKrate      :: [String]     
+    , csdEffect     :: [[Sig]] -> SE [Sig]
+    , csdKrate      :: [String]
     }
 
 instance Default CsdOptions where
