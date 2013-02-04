@@ -307,102 +307,37 @@ instance (Arg a, Arg b) => Arg (a, b) where
               toNote' (a, b) = toNote argMethods a ++ toNote argMethods b
               arity' (a, b) = arity argMethods a + arity argMethods b    
 
+
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b, c)
-                  where a = arg argMethods n
-                        nb = n + arity argMethods a
-                        b = arg argMethods nb
-                        nc = nb + arity argMethods b
-                        c = arg argMethods nc
-              toNote' (a, b, c) = toNote argMethods a ++ toNote argMethods b ++ toNote argMethods c
-              arity' (a, b, c) = arity argMethods a + arity argMethods b + arity argMethods c
+    argMethods = makeArgMethods to from
+        where to (a, (b, c)) = (a, b, c)
+              from (a, b, c) = (a, (b, c))
 
 instance (Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b, c, d)
-                  where a = arg argMethods n
-                        nb = n + arity argMethods a
-                        b = arg argMethods nb
-                        nc = nb + arity argMethods b
-                        c = arg argMethods nc
-                        nd = nc + arity argMethods c
-                        d = arg argMethods nd
-              toNote' (a, b, c, d) = toNote argMethods a ++ toNote argMethods b ++ toNote argMethods c ++ toNote argMethods d
-              arity' (a, b, c, d) = arity argMethods a + arity argMethods b + arity argMethods c + arity argMethods d
+    argMethods = makeArgMethods to from
+        where to (a, (b, c, d)) = (a, b, c, d)
+              from (a, b, c, d) = (a, (b, c, d))
 
 instance (Arg a, Arg b, Arg c, Arg d, Arg e) => Arg (a, b, c, d, e) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b, c, d, e)
-                  where a = arg argMethods n
-                        nb = n + arity argMethods a
-                        b = arg argMethods nb
-                        nc = nb + arity argMethods b
-                        c = arg argMethods nc
-                        nd = nc + arity argMethods c
-                        d = arg argMethods nd
-                        ne = nd + arity argMethods d
-                        e = arg argMethods ne
-              toNote' (a, b, c, d, e) = toNote argMethods a ++ toNote argMethods b ++ toNote argMethods c ++ toNote argMethods d ++ toNote argMethods e
-              arity' (a, b, c, d, e) = arity argMethods a + arity argMethods b + arity argMethods c + arity argMethods d + arity argMethods e
+    argMethods = makeArgMethods to from
+        where to (a, (b, c, d, e)) = (a, b, c, d, e)
+              from (a, b, c, d, e) = (a, (b, c, d, e))
 
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b, c, d, e, f)
-                  where a = arg argMethods n
-                        nb = n + arity argMethods a
-                        b = arg argMethods nb
-                        nc = nb + arity argMethods b
-                        c = arg argMethods nc
-                        nd = nc + arity argMethods c
-                        d = arg argMethods nd
-                        ne = nd + arity argMethods d
-                        e = arg argMethods ne
-                        nf = ne + arity argMethods e
-                        f = arg argMethods nf
-              toNote' (a, b, c, d, e, f) = toNote argMethods a ++ toNote argMethods b ++ toNote argMethods c ++ toNote argMethods d ++ toNote argMethods e ++ toNote argMethods f
-              arity' (a, b, c, d, e, f) = arity argMethods a + arity argMethods b + arity argMethods c + arity argMethods d + arity argMethods e + arity argMethods f
-
+    argMethods = makeArgMethods to from
+        where to (a, (b, c, d, e, f)) = (a, b, c, d, e, f)
+              from (a, b, c, d, e, f) = (a, (b, c, d, e, f))
 
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g) => Arg (a, b, c, d, e, f, g) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b, c, d, e, f, g)
-                  where a = arg argMethods n
-                        nb = n + arity argMethods a
-                        b = arg argMethods nb
-                        nc = nb + arity argMethods b
-                        c = arg argMethods nc
-                        nd = nc + arity argMethods c
-                        d = arg argMethods nd
-                        ne = nd + arity argMethods d
-                        e = arg argMethods ne
-                        nf = ne + arity argMethods e
-                        f = arg argMethods nf
-                        ng = nf + arity argMethods f
-                        g = arg argMethods ng
-              toNote' (a, b, c, d, e, f, g) = toNote argMethods a ++ toNote argMethods b ++ toNote argMethods c ++ toNote argMethods d ++ toNote argMethods e ++ toNote argMethods f ++ toNote argMethods g
-              arity' (a, b, c, d, e, f, g) = arity argMethods a + arity argMethods b + arity argMethods c + arity argMethods d + arity argMethods e + arity argMethods f + arity argMethods g
+    argMethods = makeArgMethods to from
+        where to (a, (b, c, d, e, f, g)) = (a, b, c, d, e, f, g)
+              from (a, b, c, d, e, f, g) = (a, (b, c, d, e, f, g))
+
 
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, c, d, e, f, g, h) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b, c, d, e, f, g, h)
-                  where a = arg argMethods n
-                        nb = n + arity argMethods a
-                        b = arg argMethods nb
-                        nc = nb + arity argMethods b
-                        c = arg argMethods nc
-                        nd = nc + arity argMethods c
-                        d = arg argMethods nd
-                        ne = nd + arity argMethods d
-                        e = arg argMethods ne
-                        nf = ne + arity argMethods e
-                        f = arg argMethods nf
-                        ng = nf + arity argMethods f
-                        g = arg argMethods ng
-                        nh = ng + arity argMethods g
-                        h = arg argMethods nh
-              toNote' (a, b, c, d, e, f, g, h) = toNote argMethods a ++ toNote argMethods b ++ toNote argMethods c ++ toNote argMethods d ++ toNote argMethods e ++ toNote argMethods f ++ toNote argMethods g ++ toNote argMethods h
-              arity' (a, b, c, d, e, f, g, h) = arity argMethods a + arity argMethods b + arity argMethods c + arity argMethods d + arity argMethods e + arity argMethods f + arity argMethods g + arity argMethods h
+    argMethods = makeArgMethods to from
+        where to (a, (b, c, d, e, f, g, h)) = (a, b, c, d, e, f, g, h)
+              from (a, b, c, d, e, f, g, h) = (a, (b, c, d, e, f, g, h))
 
 
 ------------------------------------------------
