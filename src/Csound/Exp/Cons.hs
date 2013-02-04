@@ -139,34 +139,34 @@ type Specs = ([Rate], [Rate])
 specs :: Specs -> Signature
 specs = uncurry MultiRate 
 
-mo :: (MultiOut a) => E -> a
+mo :: (CsdTuple a) => E -> a
 mo = multiOuts
 
-mopcs :: (Val a, MultiOut b) => Name -> Specs -> [a] -> b
+mopcs :: (Val a, CsdTuple b) => Name -> Specs -> [a] -> b
 mopcs name signature as = mo $ tfms (pref name $ specs signature) as
 
-mopc0 :: (MultiOut a) => Name -> Specs -> a
+mopc0 :: (CsdTuple a) => Name -> Specs -> a
 mopc0 name signature = mo $ tfm0 (pref name $ specs signature)
 
-mopc1 :: (Val a, MultiOut b) => Name -> Specs -> a -> b
+mopc1 :: (Val a, CsdTuple b) => Name -> Specs -> a -> b
 mopc1 name signature a1 = mo $ tfm1 (pref name $ specs signature) a1
 
-mopc2 :: (Val a1, Val a2, MultiOut b) => Name -> Specs -> a1 -> a2 -> b
+mopc2 :: (Val a1, Val a2, CsdTuple b) => Name -> Specs -> a1 -> a2 -> b
 mopc2 name signature a1 a2 = mo $ tfm2 (pref name $ specs signature) a1 a2
 
-mopc3 :: (Val a1, Val a2, Val a3, MultiOut b) => Name -> Specs -> a1 -> a2 -> a3 -> b
+mopc3 :: (Val a1, Val a2, Val a3, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> b
 mopc3 name signature a1 a2 a3 = mo $ tfm3 (pref name $ specs signature) a1 a2 a3
 
-mopc4 :: (Val a1, Val a2, Val a3, Val a4, MultiOut b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> b
+mopc4 :: (Val a1, Val a2, Val a3, Val a4, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> b
 mopc4 name signature a1 a2 a3 a4 = mo $ tfm4 (pref name $ specs signature) a1 a2 a3 a4
 
-mopc5 :: (Val a1, Val a2, Val a3, Val a4, Val a5, MultiOut b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> b
+mopc5 :: (Val a1, Val a2, Val a3, Val a4, Val a5, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> b
 mopc5 name signature a1 a2 a3 a4 a5 = mo $ tfm5 (pref name $ specs signature) a1 a2 a3 a4 a5
 
-mopc6 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, MultiOut b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> b
+mopc6 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> b
 mopc6 name signature a1 a2 a3 a4 a5 a6 = mo $ tfm6 (pref name $ specs signature) a1 a2 a3 a4 a5 a6
 
-mopc7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, MultiOut b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
+mopc7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
 mopc7 name signature a1 a2 a3 a4 a5 a6 a7 = mo $ tfm7 (pref name $ specs signature) a1 a2 a3 a4 a5 a6 a7
 
 

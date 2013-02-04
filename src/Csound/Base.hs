@@ -20,7 +20,7 @@ module Csound.Base(
     SE,    
 
     -- ** Tuples
-    MultiOut,
+    CsdTuple,
     
     -- ** Converters
     ToSig(sig), ar, kr,

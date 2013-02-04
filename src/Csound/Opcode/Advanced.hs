@@ -282,7 +282,7 @@ doppler = opc3 "doppler" [(a, [a, k, k, i, i])]
 -- > ar1 [, ar2] [, ar3] [, ar4] pconvolve ain, ifilcod [, ipartitionsize, ichannel]
 --
 -- doc: <http://www.csounds.com/manual/html/pconvolve.html>
-pconvolve :: MultiOut a => Sig -> S -> a
+pconvolve :: CsdTuple a => Sig -> S -> a
 pconvolve = mopc2 "pconvolve" ([a,a,a,a], [a,s,i,i])
 
 -- | Output is the convolution of signal ain and the impulse response contained in ifilcod. If more than one 
@@ -292,7 +292,7 @@ pconvolve = mopc2 "pconvolve" ([a,a,a,a], [a,s,i,i])
 -- > ar1 [, ar2] [, ar3] [, ar4] convolve ain, ifilcod [, ichannel]
 --
 -- doc: <http://www.csounds.com/manual/html/convolve.html>
-convolve :: MultiOut a => Sig -> D -> a
+convolve :: CsdTuple a => Sig -> D -> a
 convolve = mopc2 "convolve" ([a, a, a, a], [a, i, i])
 
 -- | Low latency multichannel convolution, using a function table as impulse response source. The algorithm is to split the 
@@ -304,7 +304,7 @@ convolve = mopc2 "convolve" ([a, a, a, a], [a, i, i])
 -- >      [, iirlen[, iskipinit]]]
 --
 -- doc: <http://www.csounds.com/manual/html/ftconv.html>
-ftconv :: MultiOut a => Sig -> Tab -> D -> a
+ftconv :: CsdTuple a => Sig -> Tab -> D -> a
 ftconv = mopc3 "ftconv" (as 8, [a,i,i,i,i,i])
 
 -- | A direct convolution opcode. 

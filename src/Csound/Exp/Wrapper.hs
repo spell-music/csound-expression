@@ -289,12 +289,82 @@ instance (Init a, Init b, Init c, Init d, Arg a, Arg b, Arg c, Arg d) => Arg (a,
     arg = (p 4, p 5, p 6, p 7)
     toNote (a, b, c, d) = concat [toNote a, toNote b, toNote c, toNote d]
 
+
+
+------------------------------------------------
+-- tuples
+
+class CsdTuple a where
+    fromCsdTuple :: a -> [E]
+    toCsdTuple :: [E] -> a
+    arityCsdTuple :: a -> Int
+
+instance CsdTuple Sig where
+    fromCsdTuple = return . Fix . unwrap
+    toCsdTuple = wrap . unFix . head
+    arityCsdTuple = const 1
+
+instance CsdTuple I where
+    fromCsdTuple = return . Fix . unwrap
+    toCsdTuple = wrap . unFix . head
+    arityCsdTuple = const 1
+
+instance CsdTuple D where
+    fromCsdTuple = return . Fix . unwrap
+    toCsdTuple = wrap . unFix . head
+    arityCsdTuple = const 1
+
+instance CsdTuple S where
+    fromCsdTuple = return . Fix . unwrap
+    toCsdTuple = wrap . unFix . head
+    arityCsdTuple = const 1
+
+instance CsdTuple Spec where
+    fromCsdTuple = return . Fix . unwrap
+    toCsdTuple = wrap . unFix . head
+    arityCsdTuple = const 1
+
+instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
+    fromCsdTuple (a, b) = fromCsdTuple a ++ fromCsdTuple b
+    arityCsdTuple (a, b) = arityCsdTuple a + arityCsdTuple b
+    toCsdTuple xs = (a, b)
+        where a = toCsdTuple $ take (arityCsdTuple a) xs
+              xsb = drop (arityCsdTuple a) xs  
+              b = toCsdTuple (take (arityCsdTuple b) xsb)
+
+instance (CsdTuple a, CsdTuple b, CsdTuple c) => CsdTuple (a, b, c) where
+    fromCsdTuple (a, b, c) = fromCsdTuple a ++ fromCsdTuple b ++ fromCsdTuple c
+    arityCsdTuple (a, b, c) = arityCsdTuple a + arityCsdTuple b + arityCsdTuple c
+    toCsdTuple xs = (a, b, c)
+        where a = toCsdTuple $ take (arityCsdTuple a) xs
+              xsb = drop (arityCsdTuple a) xs  
+              b = toCsdTuple (take (arityCsdTuple b) xsb)
+              xsc = drop (arityCsdTuple b) xsb
+              c = toCsdTuple (take (arityCsdTuple c) xsc)
+
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, d) where
+    fromCsdTuple (a, b, c, d) = fromCsdTuple a ++ fromCsdTuple b ++ fromCsdTuple c ++ fromCsdTuple d
+    arityCsdTuple (a, b, c, d) = arityCsdTuple a + arityCsdTuple b + arityCsdTuple c + arityCsdTuple d
+    toCsdTuple xs = (a, b, c, d)
+        where a = toCsdTuple $ take (arityCsdTuple a) xs
+              xsb = drop (arityCsdTuple a) xs  
+              b = toCsdTuple (take (arityCsdTuple b) xsb)
+              xsc = drop (arityCsdTuple b) xsb
+              c = toCsdTuple (take (arityCsdTuple c) xsc)
+              xsd = drop (arityCsdTuple c) xsc
+              d = toCsdTuple (take (arityCsdTuple d) xsd)            
+
 ------------------------------------------------
 -- multiple outs
 
 fromE :: Val a => E -> a
 fromE = wrap . unFix 
 
+multiOuts :: CsdTuple a => E -> a
+multiOuts exp = res
+    where res = toCsdTuple $ multiOutsSection (arityCsdTuple res) exp
+
+{-
 class MultiOut a where
     multiOuts :: E -> a
 
@@ -321,7 +391,7 @@ instance (Val a1, Val a2, Val a3) => MultiOut (a1, a2, a3) where
 instance (Val a1, Val a2, Val a3, Val a4) => MultiOut (a1, a2, a3, a4) where
     multiOuts x = case multiOutsSection 4 x of
         [a1, a2, a3, a4] -> (fromE a1, fromE a2, fromE a3, fromE a4)
-        
+-}        
 
 multiOutsSection :: Int -> E -> [E]
 multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates

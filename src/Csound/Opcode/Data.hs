@@ -234,7 +234,7 @@ ftsavek a1 a2 a3 a4 = opcs "ftsavek" [(x, repeat i)] (phi a1 : phi a2 : phi a3 :
 -- > ain1[, ...] inch kchan1[,...]
 --
 -- doc: <http://www.csounds.com/manual/html/inch.html>
-inch :: MultiOut a => [Sig] -> a
+inch :: CsdTuple a => [Sig] -> a
 inch = mopcs "inch" (repeat a, repeat k)
 
 -- | Writes multi-channel audio data, with user-controllable channels, to an external device or stream. 
@@ -280,7 +280,7 @@ sndloop = mopc5 "sndloop" ([a, k], [a,k,k,i,i])
 -- >      [, iskipinit] [, ibufsize]
 --
 -- doc: <http://www.csounds.com/manual/html/soundin.html>
-soundin :: MultiOut a => S -> a
+soundin :: CsdTuple a => S -> a
 soundin = mopc1 "soundin" (repeat a, s:is 4)
 
 -- | Reads audio data from a file, and can alter its pitch using one of several available interpolation 
@@ -292,7 +292,7 @@ soundin = mopc1 "soundin" (repeat a, s:is 4)
 -- >       [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]
 --
 -- doc: <http://www.csounds.com/manual/html/diskin2.html>
-diskin2 :: MultiOut a => S -> Sig -> a
+diskin2 :: CsdTuple a => S -> Sig -> a
 diskin2 = mopc2 "diskin2" (repeat a, s:k:is 6)
 
 -- | Reads stereo audio data from an external MP3 file. 
