@@ -76,7 +76,7 @@ outs' as = se_ $ opcs (name as) [(Xr, repeat Ar)] as
 
 score :: (Arg a) => (a -> Out) -> [(Double, Double, a)] -> SigOut
 score instr scores = SigOut return $ 
-    PlainSigOut (expReader $ instr arg) (fmap (\(a, b, c) -> Event a b (toNote c)) scores)
+    PlainSigOut (expReader $ instr toArg) (fmap (\(a, b, c) -> Event a b (toNote argMethods c)) scores)
 
 
 expReader :: SE [Sig] -> ExpReader
