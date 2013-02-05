@@ -5,7 +5,6 @@ module Csound.Render.Options(
 
 import Data.List(transpose)
 import Data.Default
-import Text.PrettyPrint
 
 import Csound.Exp.Wrapper(Channel, Sig, SE, Out)
 import Csound.Render.Sco
@@ -65,20 +64,20 @@ data MidiAssign = MidiAssign
 type InstrId = Int
 
 renderInstr0 :: Nchnls -> [MidiAssign] -> CsdOptions -> Doc
-renderInstr0 nchnls massignTable opt = vcat [
+renderInstr0 nchnls massignTable opt = ppInstr0 $ [
     stmt "sr"    $ csdRate opt,
     stmt "ksmps" $ csdBlockSize opt,
     stmt "nchnls" nchnls,   
-    maybe empty seed $ csdSeed opt,    
-    vcat $ map initc7 $ csdInitc7 opt,    
-    vcat $ fmap renderMidiAssign massignTable]
-    where stmt a b = assignTo (text a) (int b)
-          seed n = ppOpc "seed" [int n]
-          initc7 (chn, ctl, val) = ppOpc "initc7" [int chn, int ctl, double val]
+    maybe empty seed $ csdSeed opt] 
+    ++ map initc7 (csdInitc7 opt)
+    ++ fmap renderMidiAssign massignTable
+    where stmt a b = text a $= int b
+          seed n = ppProc "seed" [int n]
+          initc7 (chn, ctl, val) = ppProc "initc7" [int chn, int ctl, double val]
             
   
 renderMidiAssign :: MidiAssign -> Doc
-renderMidiAssign a = ppOpc opcode $ [int $ midiAssignChannel a, int $ midiAssignInstr a] ++ auxParams
+renderMidiAssign a = ppProc opcode $ [int $ midiAssignChannel a, int $ midiAssignInstr a] ++ auxParams
     where opcode = case midiAssignType a of
               Massign     -> "massign"
               Pgmassign _ -> "pgmassign"

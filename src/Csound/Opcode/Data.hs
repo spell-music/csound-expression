@@ -69,9 +69,6 @@ module Csound.Opcode.Data (
 
 import Data.Fix
 
-import Csound.Exp.Inline
-import Csound.Exp.NumExp
-
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons

@@ -19,7 +19,6 @@ import Data.Array.ST
 import Data.Array.MArray
 
 import Csound.Exp
-import Csound.Exp.Inline
 
 import Debug.Trace
 

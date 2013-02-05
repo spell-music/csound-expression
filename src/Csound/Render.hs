@@ -8,8 +8,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 
 import Control.Monad.Trans.State(evalState)
-
-import Text.PrettyPrint
 import Data.Fix
 
 import Csound.Exp
@@ -20,6 +18,8 @@ import Csound.Render.Instr
 import Csound.Render.Options
 import Csound.Tfm.TfmTree(TabMap)
 import Csound.Exp.Numeric
+
+import Csound.Render.Pretty
 
 import Csound.Opcode(clip, zeroDbfs)
 
@@ -37,11 +37,11 @@ renderCsd = renderCsdBy def
 
 -- | Renders Csound file with options.
 renderCsdBy :: CsdOptions -> [SigOut] -> String
-renderCsdBy opt as = show $ csdFile 
+renderCsdBy opt as = show $ ppCsdFile 
     (renderFlags opt)
     (renderInstr0 (nchnls lastInstrExp) (midiAssignTable ids as) opt)
-    (vcat $ punctuate newline $ firstInstr : lastInstr : zipWith (renderInstr krateSet fts) ids instrs)
-    (vcat $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
+    (ppOrc $ firstInstr : lastInstr : zipWith (renderInstr krateSet fts) ids instrs)
+    (ppSco $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
     (renderStringTable strs)
     (renderTotalDur $$ renderTabs fts)
     where scos   = map (scoSigOut' . sigOutContent) as          
@@ -53,7 +53,7 @@ renderCsdBy opt as = show $ csdFile
           nInstr = length as
           firstInstrId = 1
           lastInstrId  = nInstr + 2          
-           
+        
           firstInstr = renderInstr krateSet fts firstInstrId $ execSE $ sequence_ initOuts
           lastInstr  = renderInstr krateSet fts lastInstrId lastInstrExp
           
@@ -64,20 +64,12 @@ renderCsdBy opt as = show $ csdFile
               _ -> []            
 
           dur = maybe 64000000 id $ totalDur as
-          renderTotalDur = text "f0" <+> double dur
+          renderTotalDur = ppTotalDur dur
           firstInstrNote = alwayson firstInstrId dur
           lastInstrNote  = alwayson lastInstrId dur
-          alwayson instrId time = char 'i' <> int instrId <+> double 0 <+> double dur
+          alwayson instrId time = ppNote instrId 0 time []
           krateSet = S.fromList $ csdKrate opt
           globalEffect = csdEffect opt
-
-csdFile flags instr0 instrs scores strTable tabs = 
-    tag "CsoundSynthesizer" [
-        tag "CsOptions" [flags],
-        tag "CsInstruments" [
-            instr0, strTable, instrs],
-        tag "CsScore" [
-            tabs, scores]]        
 
 
 midiAssignTable :: [Int] -> [SigOut] -> [MidiAssign]
@@ -86,30 +78,8 @@ midiAssignTable ids instrs = catMaybes $ zipWith mk ids instrs
             Midi ty chn _ -> Just $ MidiAssign ty chn n
             _ -> Nothing
 
-renderTabs = renderMapTable renderTabEntry
-renderStringTable = renderMapTable renderStringEntry
-
-renderTabEntry ft id = char 'f' 
-    <>  int id 
-    <+> int 0 
-    <+> (int $ tabSize ft)
-    <+> (int $ tabGen ft) 
-    <+> (hsep $ map double $ tabArgs ft)
- 
-renderStringEntry str id = text "strset" <+> int id <> comma <+> (doubleQuotes $ text str)
-
-renderMapTable :: (a -> Int -> Doc) -> M.Map a Int -> Doc
-renderMapTable phi = vcat . map (uncurry phi) . M.toList
-
-
-tag :: String -> [Doc] -> Doc
-tag name content = vcat $ punctuate newline [
-    char '<' <> text name <> char '>', 
-    vcat $ punctuate newline content, 
-    text "</" <> text name <> char '>']  
-
-newline = char '\n'
-
+renderTabs = ppMapTable ppTabDef
+renderStringTable = ppMapTable ppStrset
 
 mixingInstrExp :: ([[Sig]] -> SE [Sig]) -> [SE [Sig]] -> E
 mixingInstrExp globalEffect effects = execSE $ outs' . fmap clip' =<< globalEffect =<< sequence effects

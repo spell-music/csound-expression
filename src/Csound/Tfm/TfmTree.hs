@@ -8,7 +8,6 @@ import qualified Data.Map as M
 import Data.Foldable(foldMap)
 
 import Csound.Exp
-import Csound.Exp.Inline
 
 type TabMap = M.Map Tab Int
 

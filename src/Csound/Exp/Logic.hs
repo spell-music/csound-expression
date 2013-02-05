@@ -10,8 +10,6 @@ import Data.Boolean
 
 import Csound.Exp.Wrapper
 import Csound.Exp
-import Csound.Exp.BoolExp
-import Csound.Exp.Inline
 
 instance Boolean BoolSig where
     true = boolOp0 TrueOp
@@ -87,6 +85,6 @@ notE x = Fix $ onExp phi $ unFix x
             Less              -> boolExp GreaterEquals  args
             Greater           -> boolExp LessEquals     args
             LessEquals        -> boolExp Greater        args
-            GreaterEquals     -> boolExp Less           args
-           
+            GreaterEquals     -> boolExp Less           args     
+   
 

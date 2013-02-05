@@ -1,9 +1,40 @@
-module Csound.Render.Pretty where
+module Csound.Render.Pretty (
+    Doc, int, double, text, empty, ($$),
+
+    binaries, unaries, funcs,
+    binary, unary, func,
+    ppMapTable,
+    ($=), ppRatedVar, ppOuts, ppOpc, ppProc, ppVar,
+    ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
+    ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
+    ppInline, ppCondOp, ppNumOp
+) where
 
 import Data.Char(toLower)
+import qualified Data.Map as M
+import qualified Data.IntMap as IM
 import Text.PrettyPrint
 
 import Csound.Exp
+
+binaries, unaries, funcs :: String -> [Doc] -> Doc
+
+binaries op as = binary op (as !! 0) (as !! 1)
+unaries  op as = unary  op (as !! 0)
+funcs    op as = func   op (as !! 0)
+
+binary :: String -> Doc -> Doc -> Doc
+binary op a b = parens $ a <+> text op <+> b
+
+unary :: String -> Doc -> Doc
+unary op a = parens $ text op <> a
+
+func :: String -> Doc -> Doc
+func op a = text op <> parens a
+
+ppMapTable :: (a -> Int -> Doc) -> M.Map a Int -> Doc
+ppMapTable phi = vcat . map (uncurry phi) . M.toList
+
 
 ppRate :: Rate -> Doc
 ppRate x = case x of
@@ -11,20 +42,21 @@ ppRate x = case x of
     _  -> phi x
     where phi = text . map toLower . show 
 
+
 ppRatedVar :: RatedVar -> Doc
 ppRatedVar (RatedVar r x) = ppRate r <> int x
 
 ppOuts :: [RatedVar] -> Doc
 ppOuts xs = hsep $ punctuate comma $ map ppRatedVar xs
 
-assign :: Doc -> Doc
-assign x = char '=' <+> x
+($=) :: Doc -> Doc -> Doc
+($=) a b = a <+> equals <+> b
 
-assignTo :: Doc -> Doc -> Doc
-assignTo a b = a <+> assign b
+ppOpc :: Doc -> String -> [Doc] -> Doc
+ppOpc out name xs = out <+> ppProc name xs
 
-ppOpc :: String -> [Doc] -> Doc
-ppOpc name xs = text name <+> (hsep $ punctuate comma xs)
+ppProc :: String -> [Doc] -> Doc
+ppProc name xs = text name <+> (hsep $ punctuate comma xs)
 
 ppVar :: Var -> Doc
 ppVar v = case v of
@@ -47,36 +79,46 @@ ppPrim x = case x of
 ppTab :: Tab -> Doc
 ppTab (Tab size n xs) = text "gen" <> int n <+> int size <+> (hsep $ map double xs)
  
-
 ppIf :: Doc -> Doc -> Doc -> Doc
 ppIf p t e = p <+> char '?' <+> t <+> char ':' <+> e
 
-ppStrget :: Int -> Doc
-ppStrget n = ppOpc "strget" [char 'p' <> int n]
+ppStrget :: Doc -> Int -> Doc
+ppStrget out n = ppOpc out "strget" [char 'p' <> int n]
 
-ppConvertRate :: Rate -> Rate -> Doc -> Doc
-ppConvertRate to from var = case (to, from) of
+ppConvertRate :: Doc -> Rate -> Rate -> Doc -> Doc
+ppConvertRate out to from var = case (to, from) of
     (Ar, Kr) -> upsamp var 
     (Ar, Ir) -> upsamp $ k var
     (Kr, Ar) -> downsamp var
-    (Kr, Ir) -> equals <+> k var
+    (Kr, Ir) -> out $= k var
     (Ir, Ar) -> downsamp var
-    (Ir, Kr) -> equals <+> i var
-    where upsamp x = text "upsamp" <+> x
-          downsamp x = text "downsamp" <+> x
-          k x = char 'k' <> parens x
-          i x = char 'i' <> parens x
+    (Ir, Kr) -> out $= i var
+    where upsamp x = ppOpc out "upsamp" [x]
+          downsamp x = ppOpc out "downsamp" [x]
+          k = func "k"
+          i = func "i"
 
+ppTabDef ft id = char 'f' 
+    <>  int id 
+    <+> int 0 
+    <+> (int $ tabSize ft)
+    <+> (int $ tabGen ft) 
+    <+> (hsep $ map double $ tabArgs ft)
+
+ppStrset str id = text "strset" <+> int id <> comma <+> (doubleQuotes $ text str)
 
 -- file
 
 newline = char '\n'
 
-ppCsdFile flags instr0 instrs scores = 
+       
+ppCsdFile flags instr0 instrs scores strTable tabs = 
     tag "CsoundSynthesizer" [
         tag "CsOptions" [flags],
-        tag "CsInstruments" [instr0],
-        tag "CsScore" [scores]]        
+        tag "CsInstruments" [
+            instr0, strTable, instrs],
+        tag "CsScore" [
+            tabs, scores]]    
 
 tag :: String -> [Doc] -> Doc
 tag name content = vcat $ punctuate newline [
@@ -86,11 +128,92 @@ tag name content = vcat $ punctuate newline [
 
 -- instrument
 
-ppInstr :: Int -> Doc -> Doc
+ppInstr :: Int -> [Doc] -> Doc
 ppInstr instrId body = vcat [
     text "instr" <+> int instrId,
-    body ,
+    vcat body,
     text "endin"]
 
+ppInstr0 = vcat
+
+ppOrc :: [Doc] -> Doc
+ppOrc = vcat . punctuate newline
+
+-- score
+
+ppSco = vcat
+
+ppScore = vcat
+
+ppNote instrId time dur args = char 'i' <> int instrId <+> double time <+> double dur <+> hsep args
+
+ppTotalDur d = text "f0" <+> double d
+
+-- expressions
+
+ppInline :: (a -> [Doc] -> Doc) -> Inline a Doc -> Doc
+ppInline ppNode a = ppExp $ inlineExp a    
+    where ppExp x = case x of
+              InlinePrim n        -> inlineEnv a IM.! n
+              InlineExp op args   -> ppNode op $ fmap ppExp args  
+
+-- booleans
+
+ppCondOp :: CondOp -> [Doc] -> Doc  
+ppCondOp op = case op of
+    TrueOp            -> const $ text "(1 == 1)"                
+    FalseOp           -> const $ text "(0 == 1)"
+    Not               -> uno "~" 
+    And               -> bi "&&"
+    Or                -> bi "||"
+    Equals            -> bi "=="
+    NotEquals         -> bi "!="
+    Less              -> bi "<"
+    Greater           -> bi ">"
+    LessEquals        -> bi "<="    
+    GreaterEquals     -> bi ">="                         
+    where bi  = binaries 
+          uno = unaries
+          
+-- numeric
+
+ppNumOp :: NumOp -> [Doc] -> Doc
+ppNumOp op = case  op of
+    Add -> bi "+"
+    Sub -> bi "-"
+    Mul -> bi "*"
+    Div -> bi "/"
+    Neg -> uno "-"    
+    Pow -> bi "^"
+    Mod -> bi "%"
+    Sin -> fun "sin"
+    Cos -> fun "cos"
+    Sinh -> fun "sinh"    
+    Cosh -> fun "cosh"
+    Tan -> fun "tan"
+    Tanh -> fun "tanh"    
+    Sininv -> fun "sininv"
+    Cosinv -> fun "cosinv"
+    Taninv -> fun "taninv"        
+    Abs -> fun "abs"    
+    Ceil -> fun "ceil" 
+    ExpOp -> fun "exp"
+    Floor -> fun "floor" 
+    Frac -> fun "frac"
+    IntOp -> fun "int" 
+    Log -> fun "log" 
+    Log10 -> fun "log10" 
+    Logbtwo -> fun "logbtwo" 
+    Round -> fun "round"
+    Sqrt -> fun "sqrt"    
+
+    Ampdb -> fun "ampdb" 
+    Ampdbfs -> fun "ampdbfs" 
+    Dbamp -> fun "dbamp"
+    Dbfsamp -> fun "dbfsamp"    
+    Cpspch -> fun "cpspch"
+    where bi  = binaries
+          uno = unaries
+          fun = funcs
 
 

@@ -79,10 +79,7 @@ Library
         Csound.Exp.Wrapper
         Csound.Exp.Cons
         Csound.Exp.Logic
-        Csound.Exp.Inline
         Csound.Exp.Numeric       
-        Csound.Exp.BoolExp
-        Csound.Exp.NumExp
         
         Csound.Tfm.DAG
         Csound.Tfm.BiMap
@@ -91,7 +88,6 @@ Library
         
         Csound.Render
         Csound.Render.Pretty
-        Csound.Render.PrettyOp
         Csound.Render.Options
         Csound.Render.Instr
         Csound.Render.Sco     

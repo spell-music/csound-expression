@@ -24,9 +24,6 @@ import Data.Fix
 import Control.Monad.Trans.State
 
 import Csound.Exp
-import Csound.Exp.NumExp
-import Csound.Exp.Inline
-import qualified Csound.Exp.NumExp as NumExp
 
 type Channel = Int
 

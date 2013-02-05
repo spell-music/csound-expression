@@ -11,30 +11,24 @@ import Control.Arrow(second)
 import Data.Ord(comparing)
 import Data.Maybe(fromJust)
 
-import Text.PrettyPrint 
-
 import Csound.Tfm.DAG 
 import Csound.Tfm.BiMap
 import Csound.Exp
-import Csound.Exp.Wrapper hiding (double, int, var)
+import Csound.Exp.Wrapper hiding (double, int)
 
 import Csound.Tfm.RateGraph
 import Csound.Tfm.TfmTree
-import Csound.Exp.BoolExp(renderCondInfo)
-import Csound.Exp.NumExp(renderNumExp)
-import Csound.Exp.Inline
 import Csound.Render.Pretty
-import Csound.Render.PrettyOp
 
 type InstrId = Int
 
 renderInstr :: KrateSet -> TabMap -> InstrId -> E -> Doc
 renderInstr krateSet ft instrId exp = ppInstr instrId $ renderInstrBody krateSet ft exp
 
-renderInstrBody :: KrateSet -> TabMap -> E -> Doc
-renderInstrBody krateSet ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates krateSet st g
+renderInstrBody :: KrateSet -> TabMap -> E -> [Doc]
+renderInstrBody krateSet ft sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = ppOuts res <+> renderExp exp
+          stmt (res, exp) = renderExp (ppOuts res) exp
           
           st = getRenderState g
           g  = toDag ft sig
@@ -118,17 +112,17 @@ getMultiOutVars ports exp = fmap (zipWith RatedVar (getRates exp)) (getPorts por
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
 
-renderExp :: Exp RatedVar -> Doc
-renderExp x = case fmap ppRatedVar x of
-    ExpPrim (PString n) -> ppStrget n
-    ExpPrim p -> assign $ ppPrim p
-    Tfm info [a, b] | isInfix  info -> assign $ binary (infoName info) a b
-    Tfm info xs     -> ppOpc (infoName info) xs
-    ConvertRate to from x -> ppConvertRate to from x
-    If info t e -> assign $ ppIf (renderCondInfo id info) t e
-    ExpNum a -> assign $ renderNumExp id a
-    WriteVar v a -> ppVar v <+> equals <+> a
-    ReadVar v -> assign $ ppVar v
+renderExp :: Doc -> Exp RatedVar -> Doc
+renderExp res exp = case fmap ppRatedVar exp of
+    ExpPrim (PString n) -> ppStrget res n
+    ExpPrim p -> res $= ppPrim p
+    Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
+    Tfm info xs -> ppOpc res (infoName info) xs
+    ConvertRate to from x -> ppConvertRate res to from x
+    If info t e -> res $= ppIf (ppInline ppCondOp info) t e
+    ExpNum (PreInline op as) -> res $= ppNumOp op as
+    WriteVar v a -> ppVar v $= a
+    ReadVar v -> res $= ppVar v
     x -> error $ "unknown expression: " ++ show x
 
  

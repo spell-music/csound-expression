@@ -1,6 +1,3 @@
-{-# Language 
-        TypeSynonymInstances,
-        FlexibleInstances #-}
 module Csound.Render.Sco(
     score, SigOut(..), effect, 
     Msg, massign , pgmassign, MidiType(..),
@@ -12,7 +9,6 @@ module Csound.Render.Sco(
 import Data.List(nub)
 import Data.Tuple(swap)
 import qualified Data.Map as M
-import Text.PrettyPrint
 import Control.Monad.Trans.State
 import Control.Monad((<=<), zipWithM)
 import Data.Fix
@@ -22,6 +18,8 @@ import Csound.Exp.Wrapper hiding (int, double)
 import Csound.Tfm.TfmTree(TabMap)
 import Csound.Exp.Cons(opcs)
 import Csound.Exp.Numeric
+
+import Csound.Render.Pretty
 
 type InstrId = Int
 
@@ -110,21 +108,15 @@ pgmassign chn = midiAssign (Pgmassign chn)
 midiAssign :: MidiType -> Channel -> (Msg -> SE [Sig]) -> SigOut
 midiAssign ty n = SigOut return . Midi ty n . expReader . ($ Msg)
 
-
-
 -----------------------------------------------------------------
 -- render
 
 renderScores :: StringMap -> TabMap -> InstrId -> [Event Note] -> Doc
-renderScores strs fts instrId as = vcat $ map (renderNote strs fts instrId) as
-
+renderScores strs fts instrId as = ppScore $ map (renderNote strs fts instrId) as
 
 renderNote :: StringMap -> TabMap -> InstrId -> Event Note -> Doc
-renderNote strs fts instrId event = char 'i' <> int instrId <+> time <+> dur <+> args
-    where time = double $ eventStart event
-          dur  = double $ eventDur event
-          args = hsep $ map prim $ eventContent event
-          prim x = case x of
+renderNote strs fts instrId e = ppNote instrId (eventStart e) (eventDur e) (map prim $ eventContent e)
+    where prim x = case x of
               PrimInt n -> int n
               PrimDouble d -> double d
               PrimTab f -> int $ fts M.! f

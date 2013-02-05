@@ -1,9 +1,11 @@
 module Csound.Exp(
     E, RatedExp(..), RatedVar(..), onExp, Exp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
-    Signature(..), isProcedure, isInfix, isPrefix,
-    Prim(..), Tab(..)
-    
+    Signature(..), isProcedure, isInfix, isPrefix,    
+    Prim(..), Tab(..),
+    Inline(..), InlineExp(..), PreInline(..),
+    BoolExp, CondInfo, CondOp(..), isTrue, isFalse,    
+    NumExp, NumOp(..)    
 ) where
 
 import Control.Applicative
@@ -12,13 +14,8 @@ import Data.Traversable
 import Data.Foldable hiding (concat)
 
 import Data.Map(Map)
+import qualified Data.IntMap as IM
 import Data.Fix
-
-import Csound.Exp.BoolExp
-import Csound.Exp.Inline
-import Csound.Exp.NumExp
-
-un = undefined
 
 type E = Fix RatedExp
 
@@ -106,6 +103,56 @@ data Tab = Tab
     , tabArgs    :: [Double]
     } deriving (Show, Eq, Ord)
 
+------------------------------------------------------------
+-- types for arithmetic and boolean expressions
+
+data Inline a b = Inline 
+    { inlineExp :: InlineExp a
+    , inlineEnv :: IM.IntMap b    
+    } deriving (Show, Eq, Ord)
+
+data InlineExp a
+    = InlinePrim Int
+    | InlineExp a [InlineExp a]
+    deriving (Show, Eq, Ord)
+
+data PreInline a b = PreInline a [b]
+    deriving (Show, Eq, Ord)
+
+-- booleans
+
+type BoolExp a = PreInline CondOp a
+type CondInfo a = Inline CondOp a
+
+data CondOp  
+    = TrueOp | FalseOp | Not | And | Or
+    | Equals | NotEquals | Less | Greater | LessEquals | GreaterEquals
+    deriving (Show, Eq, Ord)    
+
+isTrue, isFalse :: CondInfo a -> Bool
+
+isTrue  = isCondOp TrueOp
+isFalse = isCondOp FalseOp
+
+isCondOp op = maybe False (op == ) . getCondInfoOp
+
+getCondInfoOp :: CondInfo a -> Maybe CondOp
+getCondInfoOp x = case inlineExp x of
+    InlineExp op _ -> Just op
+    _ -> Nothing
+
+-- numbers
+
+type NumExp a = PreInline NumOp a
+
+data NumOp 
+    = Add | Sub | Neg | Mul | Div
+    | Pow | Mod 
+    | Sin | Cos | Sinh | Cosh | Tan | Tanh | Sininv | Cosinv | Taninv
+    | Abs | Ceil | ExpOp | Floor | Frac| IntOp | Log | Log10 | Logbtwo | Round | Sqrt    
+    | Ampdb | Ampdbfs | Dbamp | Dbfsamp 
+    | Cpspch
+    deriving (Show, Eq, Ord)
 
 -------------------------------------------------------
 -- instances for cse
@@ -155,6 +202,26 @@ instance Traversable Exp where
         ExpNum  a -> ExpNum  <$> traverse f a
         ReadVar v -> pure $ ReadVar v
         WriteVar v a -> WriteVar v <$> f a
+
+
+instance Functor (Inline a) where
+    fmap f a = a{ inlineEnv = fmap f $ inlineEnv a }
+
+instance Foldable (Inline a) where
+    foldMap f a = foldMap f $ inlineEnv a
+
+instance Traversable (Inline a) where
+    traverse f (Inline a b) = Inline a <$> traverse f b
+
+instance Functor (PreInline a) where
+    fmap f (PreInline op as) = PreInline op $ fmap f as
+
+instance Foldable (PreInline a) where
+    foldMap f (PreInline _ as) = foldMap f as
+
+instance Traversable (PreInline a) where
+    traverse f (PreInline op as) = PreInline op <$> traverse f as
+
 
 
 -- comments
