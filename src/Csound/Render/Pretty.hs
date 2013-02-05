@@ -20,6 +20,9 @@ ppOuts xs = hsep $ punctuate comma $ map ppRatedVar xs
 assign :: Doc -> Doc
 assign x = char '=' <+> x
 
+assignTo :: Doc -> Doc -> Doc
+assignTo a b = a <+> assign b
+
 ppOpc :: String -> [Doc] -> Doc
 ppOpc name xs = text name <+> (hsep $ punctuate comma xs)
 
@@ -50,6 +53,20 @@ ppIf p t e = p <+> char '?' <+> t <+> char ':' <+> e
 
 ppStrget :: Int -> Doc
 ppStrget n = ppOpc "strget" [char 'p' <> int n]
+
+ppConvertRate :: Rate -> Rate -> Doc -> Doc
+ppConvertRate to from var = case (to, from) of
+    (Ar, Kr) -> upsamp var 
+    (Ar, Ir) -> upsamp $ k var
+    (Kr, Ar) -> downsamp var
+    (Kr, Ir) -> equals <+> k var
+    (Ir, Ar) -> downsamp var
+    (Ir, Kr) -> equals <+> i var
+    where upsamp x = text "upsamp" <+> x
+          downsamp x = text "downsamp" <+> x
+          k x = char 'k' <> parens x
+          i x = char 'i' <> parens x
+
 
 -- file
 

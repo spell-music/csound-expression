@@ -11,8 +11,7 @@ import Control.Arrow(second)
 import Data.Ord(comparing)
 import Data.Maybe(fromJust)
 
-import Text.PrettyPrint hiding ((<>), render)
-import qualified Text.PrettyPrint as P
+import Text.PrettyPrint 
 
 import Csound.Tfm.DAG 
 import Csound.Tfm.BiMap
@@ -125,25 +124,12 @@ renderExp x = case fmap ppRatedVar x of
     ExpPrim p -> assign $ ppPrim p
     Tfm info [a, b] | isInfix  info -> assign $ binary (infoName info) a b
     Tfm info xs     -> ppOpc (infoName info) xs
-    ConvertRate to from x -> renderConvertRate to from x
+    ConvertRate to from x -> ppConvertRate to from x
     If info t e -> assign $ ppIf (renderCondInfo id info) t e
     ExpNum a -> assign $ renderNumExp id a
     WriteVar v a -> ppVar v <+> equals <+> a
     ReadVar v -> assign $ ppVar v
     x -> error $ "unknown expression: " ++ show x
-       
 
-renderConvertRate :: Rate -> Rate -> Doc -> Doc
-renderConvertRate to from var = case (to, from) of
-    (Ar, Kr) -> upsamp var 
-    (Ar, Ir) -> upsamp $ k var
-    (Kr, Ar) -> downsamp var
-    (Kr, Ir) -> equals <+> k var
-    (Ir, Ar) -> downsamp var
-    (Ir, Kr) -> equals <+> i var
-    where upsamp x = text "upsamp" <+> x
-          downsamp x = text "downsamp" <+> x
-          k x = char 'k' P.<> parens x
-          i x = char 'i' P.<> parens x
  
     

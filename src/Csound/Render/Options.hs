@@ -9,6 +9,7 @@ import Text.PrettyPrint
 
 import Csound.Exp.Wrapper(Channel, Sig, SE, Out)
 import Csound.Render.Sco
+import Csound.Render.Pretty
 
 type CtrlId = Int
 
@@ -71,21 +72,19 @@ renderInstr0 nchnls massignTable opt = vcat [
     maybe empty seed $ csdSeed opt,    
     vcat $ map initc7 $ csdInitc7 opt,    
     vcat $ fmap renderMidiAssign massignTable]
-    where stmt a b = text a <+> equals <+> int b
-          seed n = text "seed" <+> int n
-          initc7 (chn, ctl, val) = text "initc7" <+> 
-              (hsep $ punctuate comma [int chn, int ctl, double val])
+    where stmt a b = assignTo (text a) (int b)
+          seed n = ppOpc "seed" [int n]
+          initc7 (chn, ctl, val) = ppOpc "initc7" [int chn, int ctl, double val]
             
-          newline = char '\n'
   
 renderMidiAssign :: MidiAssign -> Doc
-renderMidiAssign a = opcode <+> (int $ midiAssignChannel a) <> comma <+> (int $ midiAssignInstr a) <> auxParams
-    where opcode = text $ case midiAssignType a of
+renderMidiAssign a = ppOpc opcode $ [int $ midiAssignChannel a, int $ midiAssignInstr a] ++ auxParams
+    where opcode = case midiAssignType a of
               Massign     -> "massign"
               Pgmassign _ -> "pgmassign"
           auxParams = case midiAssignType a of 
-              Pgmassign (Just n) -> comma <+> int n
-              _ -> empty  
+              Pgmassign (Just n) -> [int n]
+              _ -> []  
 
 
 

@@ -12,7 +12,7 @@ module Csound.Render.Sco(
 import Data.List(nub)
 import Data.Tuple(swap)
 import qualified Data.Map as M
-import Text.PrettyPrint hiding (render)
+import Text.PrettyPrint
 import Control.Monad.Trans.State
 import Control.Monad((<=<), zipWithM)
 import Data.Fix
