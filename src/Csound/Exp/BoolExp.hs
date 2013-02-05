@@ -11,6 +11,7 @@ import qualified Data.IntMap as IM
 import Text.PrettyPrint
 
 import Csound.Exp.Inline
+import Csound.Render.PrettyOp
 
 type BoolExp a = PreInline CondOp a
 type CondInfo a = Inline CondOp a
@@ -57,9 +58,9 @@ renderCondInfo :: (a -> Doc) -> CondInfo a -> Doc
 renderCondInfo = renderInline renderOp 
 
 renderOp :: CondOp -> [Doc] -> Doc  
-renderOp op args = case op of
-    TrueOp            -> text "(1 == 1)"                
-    FalseOp           -> text "(0 == 1)"
+renderOp op = case op of
+    TrueOp            -> const $ text "(1 == 1)"                
+    FalseOp           -> const $ text "(0 == 1)"
     Not               -> uno "~" 
     And               -> bi "&&"
     Or                -> bi "||"
@@ -69,8 +70,8 @@ renderOp op args = case op of
     Greater           -> bi ">"
     LessEquals        -> bi "<="    
     GreaterEquals     -> bi ">="                         
-    where bi  op = parens $ args !! 0 <+> text op <+> args !! 1
-          uno op = parens $ text op <> args !! 0
+    where bi  = binaries 
+          uno = unaries
           
 
 

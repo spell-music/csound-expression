@@ -90,6 +90,8 @@ Library
         Csound.Tfm.TfmTree
         
         Csound.Render
+        Csound.Render.Pretty
+        Csound.Render.PrettyOp
         Csound.Render.Options
         Csound.Render.Instr
         Csound.Render.Sco     

@@ -1,5 +1,5 @@
 module Csound.Tfm.RateGraph(
-    grate, RatedVar(..), KrateSet
+    grate, KrateSet
 ) where
 
 import Data.List(sort, sortBy, nub, find)
@@ -25,11 +25,6 @@ import Debug.Trace
 
 echo :: Show a => String -> a -> a
 echo msg a = trace (msg ++ ": " ++ show a) a
-
-data RatedVar = RatedVar 
-    { ratedVarRate :: Rate 
-    , ratedVarId   :: Int 
-    } deriving (Show)
 
 type AgentId = Int
 

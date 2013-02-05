@@ -1,5 +1,5 @@
 module Csound.Exp(
-    E, RatedExp(..), onExp, Exp(..), Name,
+    E, RatedExp(..), RatedVar(..), onExp, Exp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,
     Prim(..), Tab(..)
@@ -29,6 +29,11 @@ data RatedExp a = RatedExp
     , ratedExpDepends   :: Maybe a
     , ratedExpExp       :: Exp a
     } deriving (Show, Eq, Ord)
+
+data RatedVar = RatedVar 
+    { ratedVarRate :: Rate 
+    , ratedVarId   :: Int 
+    } deriving (Show)
 
 onExp :: (Exp a -> Exp a) -> RatedExp a -> RatedExp a
 onExp f a = a{ ratedExpExp = f (ratedExpExp a) }

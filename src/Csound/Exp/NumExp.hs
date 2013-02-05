@@ -16,6 +16,7 @@ import Data.Maybe(fromJust)
 import Text.PrettyPrint
 
 import Csound.Exp.Inline
+import Csound.Render.PrettyOp
 
 type NumExp a = PreInline NumOp a
 
@@ -33,7 +34,7 @@ renderNumExp leaf (PreInline op as) = renderNumOp op $ fmap leaf as
 renderNumExp :: (a -> Doc) -> NumExp a -> Doc
 
 renderNumOp :: NumOp -> [Doc] -> Doc
-renderNumOp op args = case  op of
+renderNumOp op = case  op of
     Add -> bi "+"
     Sub -> bi "-"
     Mul -> bi "*"
@@ -67,9 +68,9 @@ renderNumOp op args = case  op of
     Dbamp -> fun "dbamp"
     Dbfsamp -> fun "dbfsamp"    
     Cpspch -> fun "cpspch"
-    where bi  op = parens $ args !! 0 <+> text op <+> args !! 1
-          uno op = parens $ text op <> args !! 0
-          fun op = text op <> parens (args !! 0)  
+    where bi  = binaries
+          uno = unaries
+          fun = funcs
             
 
 class NumOpt a where

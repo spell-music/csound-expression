@@ -24,18 +24,22 @@ import Csound.Tfm.TfmTree
 import Csound.Exp.BoolExp(renderCondInfo)
 import Csound.Exp.NumExp(renderNumExp)
 import Csound.Exp.Inline
+import Csound.Render.Pretty
+import Csound.Render.PrettyOp
 
 type InstrId = Int
 
 renderInstr :: KrateSet -> TabMap -> InstrId -> E -> Doc
-renderInstr krateSet ft instrId exp = instrHeader instrId $ renderInstrBody krateSet ft exp
+renderInstr krateSet ft instrId exp = ppInstr instrId $ renderInstrBody krateSet ft exp
 
-instrHeader :: InstrId -> Doc -> Doc
-instrHeader instrId body = vcat [
-    text "instr" <+> int instrId,
-    body ,
-    text "endin"]
-    
+renderInstrBody :: KrateSet -> TabMap -> E -> Doc
+renderInstrBody krateSet ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates krateSet st g
+    where stmt :: ([RatedVar], Exp RatedVar) -> Doc
+          stmt (res, exp) = ppOuts res <+> renderExp exp
+          
+          st = getRenderState g
+          g  = toDag ft sig
+
 
 data RenderState = RenderState 
     { multiOutsLinks :: IM.IntMap [MultiOutPort]
@@ -72,14 +76,6 @@ toDag ft exp = dag $ substTabs ft exp
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-renderInstrBody :: KrateSet -> TabMap -> E -> Doc
-renderInstrBody krateSet ft sig = vcat $ map (stmt . clearEmptyResults) $ collectRates krateSet st g
-    where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = args res <+> renderExp exp
-          
-          st = getRenderState g
-          g  = toDag ft sig
- 
 collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
 collectRates krateSet st dag = evalState res lastFreshId  
     where res = tfmMultiRates st $ filterMultiOutHelpers dag1
@@ -123,32 +119,17 @@ getMultiOutVars ports exp = fmap (zipWith RatedVar (getRates exp)) (getPorts por
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
 
-var :: RatedVar -> Doc
-var (RatedVar r x) = renderRate r P.<> int x
-
-args :: [RatedVar] -> Doc
-args xs = hsep $ punctuate comma $ map var xs
-
-renderRate :: Rate -> Doc
-renderRate x = case x of
-    Sr -> char 'S'
-    _  -> phi x
-    where phi = text . map toLower . show 
-
-assign :: Doc -> Doc
-assign x = char '=' <+> x
-
 renderExp :: Exp RatedVar -> Doc
-renderExp x = case x of
-    ExpPrim (PString n) -> text "strget" <+> char 'p' P.<> int n
-    ExpPrim p -> assign $ renderPrim p
-    Tfm info [a, b] | isInfix  info -> assign $ var a <+> text (infoName info) <+> var b
-    Tfm info xs     -> text (infoName info) <+> args xs
-    ConvertRate to from x -> renderConvertRate to from $ var x
-    If info t e -> assign $ renderCondInfo var info <+> char '?' <+> var t <+> char ':' <+> var e
-    ExpNum a -> assign $ renderNumExp var a
-    WriteVar v a -> renderVar v <+> equals <+> var a
-    ReadVar v -> assign $ renderVar v
+renderExp x = case fmap ppRatedVar x of
+    ExpPrim (PString n) -> ppStrget n
+    ExpPrim p -> assign $ ppPrim p
+    Tfm info [a, b] | isInfix  info -> assign $ binary (infoName info) a b
+    Tfm info xs     -> ppOpc (infoName info) xs
+    ConvertRate to from x -> renderConvertRate to from x
+    If info t e -> assign $ ppIf (renderCondInfo id info) t e
+    ExpNum a -> assign $ renderNumExp id a
+    WriteVar v a -> ppVar v <+> equals <+> a
+    ReadVar v -> assign $ ppVar v
     x -> error $ "unknown expression: " ++ show x
        
 
@@ -164,27 +145,5 @@ renderConvertRate to from var = case (to, from) of
           downsamp x = text "downsamp" <+> x
           k x = char 'k' P.<> parens x
           i x = char 'i' P.<> parens x
-
-
-renderVar :: Var -> Doc
-renderVar v = case v of
-    Var ty rate name -> renderVarType ty P.<> renderRate rate P.<> text name
-    VarVerbatim _ name -> text name
-
-renderVarType :: VarType -> Doc
-renderVarType x = case x of
-    LocalVar -> P.empty
-    GlobalVar -> char 'g'
-
-renderPrim :: Prim -> Doc
-renderPrim x = case x of
-    P n -> char 'p' P.<> int n
-    PrimInt n -> int n
-    PrimDouble d -> double d
-    PrimString s -> text s
-    PrimTab f -> renderTab f
-    
-renderTab :: Tab -> Doc
-renderTab (Tab size n xs) = text "gen" P.<> int n <+> int size <+> (hsep $ map double xs)
  
     
