@@ -1,4 +1,6 @@
-module Csound.Tfm.TfmTree where
+module Csound.Tfm.TfmTree(
+    TabMap, tabMap, substTabs
+) where
 
 import Data.List(nub)
 import Data.Fix

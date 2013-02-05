@@ -1,4 +1,7 @@
-module Csound.Render.Options where
+module Csound.Render.Options(
+    CsdOptions(..), mixing, mixingBy,
+    renderInstr0, renderFlags, MidiAssign(..), CtrlId
+) where
 
 import Data.List(transpose)
 import Data.Default

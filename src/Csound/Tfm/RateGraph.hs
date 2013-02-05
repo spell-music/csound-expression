@@ -1,4 +1,6 @@
-module Csound.Tfm.RateGraph where
+module Csound.Tfm.RateGraph(
+    grate, RatedVar(..), KrateSet
+) where
 
 import Data.List(sort, sortBy, nub, find)
 import qualified Data.Map as M

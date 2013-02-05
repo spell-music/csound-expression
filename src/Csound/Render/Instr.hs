@@ -1,5 +1,7 @@
 {-# Language TupleSections #-}
-module Csound.Render.Instr where
+module Csound.Render.Instr(
+    renderInstr
+) where
 
 import qualified Data.IntMap as IM
 -- import Control.Monad.State

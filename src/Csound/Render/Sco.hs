@@ -1,7 +1,13 @@
 {-# Language 
         TypeSynonymInstances,
         FlexibleInstances #-}
-module Csound.Render.Sco where
+module Csound.Render.Sco(
+    score, SigOut(..), effect, 
+    Msg, massign , pgmassign, MidiType(..),
+
+    Event(..), eventEnd, PlainSigOut(..), renderScores,
+    runExpReader, nchnls, stringMap, outs'
+) where
 
 import Data.List(nub)
 import Data.Tuple(swap)

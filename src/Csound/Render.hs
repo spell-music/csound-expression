@@ -1,4 +1,6 @@
-module Csound.Render where
+module Csound.Render(
+    renderCsd, renderCsdBy, out, outs
+) where
 
 import Data.Default
 import Data.Maybe(catMaybes)
