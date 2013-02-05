@@ -1,7 +1,19 @@
 {-# Language 
         TypeSynonymInstances,
         FlexibleInstances #-}
-module Csound.Exp.Wrapper where
+module Csound.Exp.Wrapper(
+    Out, Sig, I, D, S, BoolSig(..), Spec, ToSig(..),
+    SE, se, se_, runSE, execSE,
+    Arg(..), ArgMethods(..), toArg, makeArgMethods,
+    CsdTuple(..), multiOuts,
+    Val(..),
+    str, double, int, ar, kr, ir,
+    tfm, pref, prim, p,
+    isMultiOutSignature,
+    noRate, setRate, getRates,
+    readVar, writeVar, gOutVar,
+    Channel
+) where
 
 import Control.Applicative
 import Control.Monad(ap)
@@ -243,7 +255,7 @@ instance Val S where
     unwrap = unFix . unS
 
 instance Val Tab where
-    wrap = un
+    wrap = undefined
     unwrap = prim . PrimTab
 
 instance Val BoolSig where

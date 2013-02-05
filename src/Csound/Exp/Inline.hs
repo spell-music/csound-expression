@@ -1,4 +1,7 @@
-module Csound.Exp.Inline where
+module Csound.Exp.Inline(
+    Inline(..), InlineExp(..), PreInline(..),
+    renderInline
+) where
 
 import Control.Applicative
 import Data.Traversable

@@ -37,7 +37,7 @@ instance Num E where
     negate = neg
     fromInteger = fromInt . fromInteger
     abs = abs'
-    signum = un
+    signum = undefined
 
 instance Fractional E where
     (/) = NumExp.div

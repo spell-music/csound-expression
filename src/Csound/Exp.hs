@@ -1,4 +1,10 @@
-module Csound.Exp where
+module Csound.Exp(
+    E, RatedExp(..), onExp, Exp(..), Name,
+    VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
+    Signature(..), isProcedure, isInfix, isPrefix,
+    Prim(..), Tab(..)
+    
+) where
 
 import Control.Applicative
 import Data.Monoid

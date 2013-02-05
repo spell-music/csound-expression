@@ -1,4 +1,13 @@
-module Csound.Exp.NumExp where
+module Csound.Exp.NumExp(
+    NumExp, NumOp(..), renderNumExp,
+    NumOpt(..),
+    add, sub, mul, div, neg,
+    exp', sin', cos', sinh', cosh', tan', tanh', sininv', cosinv', taninv',
+    abs', ceil', floor', frac', int', log', log10', logbtwo', round', sqrt',
+    pow'
+) where
+
+import Prelude hiding (div)
 
 import Control.Applicative
 

@@ -1,4 +1,7 @@
-module Csound.Exp.BoolExp where
+module Csound.Exp.BoolExp (
+    BoolExp, CondInfo, CondOp(..), renderCondInfo,
+    isTrue, isFalse, isCondOp, getCondInfoOp, negateCondOp
+) where
 
 import Control.Applicative
 import Data.Traversable

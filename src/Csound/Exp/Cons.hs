@@ -1,4 +1,9 @@
-module Csound.Exp.Cons where
+module Csound.Exp.Cons (
+    (!), 
+    bi,
+    opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11,
+    mopcs, mopc0, mopc1, mopc2, mopc3, mopc4, mopc5, mopc6, mopc7
+) where
 
 import Data.String
 import Control.Applicative
