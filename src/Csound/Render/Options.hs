@@ -68,6 +68,7 @@ renderInstr0 nchnls massignTable opt = ppInstr0 $ [
     stmt "sr"    $ csdRate opt,
     stmt "ksmps" $ csdBlockSize opt,
     stmt "nchnls" nchnls,   
+    stmt "0dbfs" 1,
     maybe empty seed $ csdSeed opt] 
     ++ map initc7 (csdInitc7 opt)
     ++ fmap renderMidiAssign massignTable
