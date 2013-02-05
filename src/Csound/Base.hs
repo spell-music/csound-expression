@@ -33,7 +33,7 @@ module Csound.Base(
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
-    score, Arg(..), makeArgMethods,
+    score, Arg(..), ArgMethods, makeArgMethods,
 
     -- ** Midi
     -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.

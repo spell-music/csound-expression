@@ -257,6 +257,7 @@ instance Val Spec where
 ------------------------------------------------
 -- arguments
 
+-- | The abstract type of methods for the class "Arg".
 data ArgMethods a = ArgMethods 
     { arg :: Int -> a
     , toNote :: a -> [Prim]
@@ -266,11 +267,35 @@ data ArgMethods a = ArgMethods
 toArg :: Arg a => a
 toArg = arg argMethods 4
 
+-- | Defines instance of type class "Arg" for a new type in terms of an old one.
 makeArgMethods :: (Arg a) => (a -> b) -> (b -> a) -> ArgMethods b
 makeArgMethods to from = ArgMethods {
     arg = to . arg argMethods,
     toNote = toNote argMethods . from,
     arity = arity argMethods . from }
+
+-- | Describes all Csound values that can be used in the score section. 
+-- Instruments are triggered with the values from this type class.
+-- Actual methods are hidden, but tou can easily make instances for your own types
+-- with function "makeArgMethods". You need to describe the new instance in  terms 
+-- of some existing one. For example:
+--
+-- > data Note = Note 
+-- >     { noteAmplitude :: D
+-- >     , notePitch :: D
+-- >     , noteVibrato :: D
+-- >     , noteSample :: S
+-- >     }
+-- > 
+-- > instance Arg Note where
+-- >     argMethods = makeArgMethods to from
+-- >         where to (amp, pch, vibr, sample) = Note amp pch vibr sample
+-- >               from (Note amp pch vibr sample) = (amp, pch, vibr, sample)
+-- 
+-- Then you can use this type in an instrument definition.
+-- 
+-- > instr :: Note -> Out
+-- > instr x = ...
 
 class Arg a where
     argMethods :: ArgMethods a
@@ -343,6 +368,8 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, 
 ------------------------------------------------
 -- tuples
 
+-- | Describes tuples of Csound values. It's used for functions that can return 
+-- several results (such as soundin or diskin2). Tuples can be nested. 
 class CsdTuple a where
     fromCsdTuple :: a -> [E]
     toCsdTuple :: [E] -> a
@@ -382,26 +409,14 @@ instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
               b = toCsdTuple (take (arityCsdTuple b) xsb)
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c) => CsdTuple (a, b, c) where
-    fromCsdTuple (a, b, c) = fromCsdTuple a ++ fromCsdTuple b ++ fromCsdTuple c
-    arityCsdTuple (a, b, c) = arityCsdTuple a + arityCsdTuple b + arityCsdTuple c
-    toCsdTuple xs = (a, b, c)
-        where a = toCsdTuple $ take (arityCsdTuple a) xs
-              xsb = drop (arityCsdTuple a) xs  
-              b = toCsdTuple (take (arityCsdTuple b) xsb)
-              xsc = drop (arityCsdTuple b) xsb
-              c = toCsdTuple (take (arityCsdTuple c) xsc)
+    fromCsdTuple (a, b, c) = fromCsdTuple (a, (b, c))
+    arityCsdTuple (a, b, c) = arityCsdTuple (a, (b, c))
+    toCsdTuple = (\(a, (b, c)) -> (a, b, c)) . toCsdTuple 
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, d) where
-    fromCsdTuple (a, b, c, d) = fromCsdTuple a ++ fromCsdTuple b ++ fromCsdTuple c ++ fromCsdTuple d
-    arityCsdTuple (a, b, c, d) = arityCsdTuple a + arityCsdTuple b + arityCsdTuple c + arityCsdTuple d
-    toCsdTuple xs = (a, b, c, d)
-        where a = toCsdTuple $ take (arityCsdTuple a) xs
-              xsb = drop (arityCsdTuple a) xs  
-              b = toCsdTuple (take (arityCsdTuple b) xsb)
-              xsc = drop (arityCsdTuple b) xsb
-              c = toCsdTuple (take (arityCsdTuple c) xsc)
-              xsd = drop (arityCsdTuple c) xsc
-              d = toCsdTuple (take (arityCsdTuple d) xsd)            
+    fromCsdTuple (a, b, c, d) = fromCsdTuple (a, (b, c, d))
+    arityCsdTuple (a, b, c, d) = arityCsdTuple (a, (b, c, d))
+    toCsdTuple = (\(a, (b, c, d)) -> (a, b, c, d)) . toCsdTuple
 
 ------------------------------------------------
 -- multiple outs
