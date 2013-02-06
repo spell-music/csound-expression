@@ -1,4 +1,6 @@
 module Csound.Exp.Cons (
+    Spec1, Specs,
+    toE, fromE,
     (!), 
     bi,
     opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11,
@@ -16,6 +18,13 @@ import Data.Fix
 import Csound.Exp
 import Csound.Exp.Wrapper
 
+-- | Converts a value to the private representation.
+toE :: Val a => a -> E
+toE = Fix . unwrap
+
+-- | Constructs a value from the private representation.
+fromE :: Val a => E -> a
+fromE = wrap . unFix
 
 (!) :: Val a => Sig -> a -> Sig
 (!) a b = wrap $ onExp phi $ unwrap a 
