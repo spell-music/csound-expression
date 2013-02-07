@@ -27,7 +27,7 @@ import Csound.Exp
 
 type Channel = Int
 
--- | Outupt of the instrument.
+-- | Output of the instrument.
 type Out = SE [Sig]
 
 
@@ -197,12 +197,12 @@ setRate :: (Val a, Val b) => Rate -> a -> b
 setRate r a = wrap $ (\x -> x { ratedExpRate = Just r }) $ unwrap a
 
 -- | Forces signal to audio rate. 
-ar :: ToSig a => a -> Sig
-ar = setRate Ar . sig
+ar :: Sig -> Sig
+ar = setRate Ar
 
 -- | Forces signal to control rate.
-kr :: ToSig a => a -> Sig
-kr = setRate Kr . sig
+kr :: Sig -> Sig
+kr = setRate Kr
 
 -- | Converts signal to double.
 ir :: Sig -> D
@@ -266,7 +266,7 @@ instance Val Spec where
 ------------------------------------------------
 -- arguments
 
--- | The abstract type of methods for the class "Arg".
+-- | The abstract type of methods for the class 'Arg'.
 data ArgMethods a = ArgMethods 
     { arg :: Int -> a
     , toNote :: a -> [Prim]
@@ -276,7 +276,7 @@ data ArgMethods a = ArgMethods
 toArg :: Arg a => a
 toArg = arg argMethods 4
 
--- | Defines instance of type class "Arg" for a new type in terms of an old one.
+-- | Defines instance of type class 'Arg' for a new type in terms of an old one.
 makeArgMethods :: (Arg a) => (a -> b) -> (b -> a) -> ArgMethods b
 makeArgMethods to from = ArgMethods {
     arg = to . arg argMethods,
@@ -285,8 +285,8 @@ makeArgMethods to from = ArgMethods {
 
 -- | Describes all Csound values that can be used in the score section. 
 -- Instruments are triggered with the values from this type class.
--- Actual methods are hidden, but tou can easily make instances for your own types
--- with function "makeArgMethods". You need to describe the new instance in  terms 
+-- Actual methods are hidden, but you can easily make instances for your own types
+-- with function 'makeArgMethods'. You need to describe the new instance in  terms 
 -- of some existing one. For example:
 --
 -- > data Note = Note 
@@ -378,7 +378,7 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, 
 -- tuples
 
 -- | Describes tuples of Csound values. It's used for functions that can return 
--- several results (such as soundin or diskin2). Tuples can be nested. 
+-- several results (such as 'soundin' or 'diskin2'). Tuples can be nested. 
 class CsdTuple a where
     fromCsdTuple :: a -> [E]
     toCsdTuple :: [E] -> a

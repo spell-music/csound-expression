@@ -15,10 +15,10 @@ Description:
     Let's make music with text! We can use Csound to describe our music. Csound has so many fantastic sound generators.
     It's very efficient. But sometimes Csound is too low level. So many details: integer identifiers for instruments 
     and arrays, should I use control rate or audio rate signals, lack of abstractions, no nested expressions and it has limited set of types. 
-    This library embeddes Csound in Haskell. It's Csound code generator. We can use powerful Csound's primitives and glue them
+    This library embeds Csound in Haskell. It's Csound code generator. We can use powerful Csound's primitives and glue them
     together with Haskell abstractions. Start with the module "Csound.Base". It contains basic types and functions. 
     .
-    Key aspects
+    Key principles
     .
     * Keep it simple and compact.
     .
@@ -38,7 +38,7 @@ Description:
     * Make low level opcode definitions simple. Let user define his own opcodes (if they are missing).
     .
     * Make it independent from any Score-generation library. Let user choose his favorite library.
-    By the way, my favourite is the package 'temporal-music-notation' (but i'm biased as an author). You can
+    By the way, my favorite is the package 'temporal-music-notation' (but i'm biased as an author). You can
     find it on hackage alongside with 'temporal-csound'. It brings 'csound-expression' and 'temporal-music-notation'
     together. 
     .

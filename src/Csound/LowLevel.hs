@@ -46,13 +46,13 @@ module Csound.LowLevel(
     -- > delayw :: Sig -> SE ()
     -- > delayw a1 = se_ $ opc1 "delayw" [(x, [a])] a1
     --
-    -- Functions that produce no values (procedures) should return value of the type "Xr".
+    -- Functions that produce no values (procedures) should return value of the type 'Xr'.
 
     -- * When standard functions are not enough
     
     -- | Sometimes Csound opcodes take too many parameters. If you want to 
-    -- use them, you can always use functions that are defined on lists ("opcs" or "mopcs").
-    -- But in this case you have to convert all arguments to the same type "E":
+    -- use them, you can always use functions that are defined on lists ('opcs' or 'mopcs').
+    -- But in this case you have to convert all arguments to the same type 'E':
     --
     -- For example:
     --

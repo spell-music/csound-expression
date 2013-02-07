@@ -1,6 +1,10 @@
 -- | Basic signal processing
 module Csound.Opcode.Basic(
     -----------------------------------------------------
+    -- * Global constants
+    idur, zeroDbfs, sampleRate, blockSize,
+
+    -----------------------------------------------------
     -- * Oscillators and phasors
 
     -- ** Standard Oscillators
@@ -79,11 +83,34 @@ module Csound.Opcode.Basic(
     pan, pan2,
 
     -- ** Binaural / HTRF
-    hrtfstat, hrtfmove, hrtfmove2
+    hrtfstat, hrtfmove, hrtfmove2,
 
+    -----------------------------------------------------
+    -- * Other 
+    xtratim
 ) where
 
 import Csound.LowLevel
+
+import Csound.Exp(Var(..))
+import Csound.Exp.Wrapper(p, setRate, readVar)
+
+
+-- | Reads @p3@-argument for the current instrument.
+idur :: D
+idur = p 3
+        
+-- | Reads @0dbfs@ value.
+zeroDbfs :: D
+zeroDbfs = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "0dbfs")
+
+-- | Reads @sr@ value.
+sampleRate :: I
+sampleRate = (setRate Ir :: E -> I) $ readVar (VarVerbatim Ir "sr")
+
+-- | Reads @ksmps@ value.
+blockSize :: I
+blockSize = (setRate Ir :: E -> I) $ readVar (VarVerbatim Ir "ksmps")
 
 -----------------------------------------------------
 -- Standard Oscillators
@@ -954,4 +981,9 @@ hrtfmove = mopc5 "hrtfmove" ([a, a], a:k:k:s:s:is 3)
 hrtfmove2 :: Sig -> Sig -> Sig -> S -> S -> (Sig, Sig)
 hrtfmove2 = mopc5 "hrtfmove2" ([a, a], a:k:k:s:s:is 3)
 
+--------------------------------------------------------------------------
+-- Other opcodes
+
+xtratim :: D -> SE ()
+xtratim a1 = se_ $ opc1 "xtratim" [(x, [i])] a1
 

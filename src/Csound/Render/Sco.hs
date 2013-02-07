@@ -29,6 +29,8 @@ type StringMap = M.Map String Int
 -- scores
 
 type Note = [Prim]
+
+-- | Midi messages.
 data Msg = Msg
 
 data Event a = Event 
