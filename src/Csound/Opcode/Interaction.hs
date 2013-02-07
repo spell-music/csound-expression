@@ -20,19 +20,7 @@ module Csound.Opcode.Interaction (
     xyin    
 ) where
 
-import Csound.Exp
-import Csound.Exp.Wrapper
-import Csound.Exp.Cons
-
-import Csound.Render.Sco(Msg)
-
-i = Ir
-k = Kr
-a = Ar
-x = Xr
-s = Sr
-f = Fr
-is n = replicate n i 
+import Csound.LowLevel
 
 -----------------------------------------------------
 -- * MIDI

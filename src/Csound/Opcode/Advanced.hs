@@ -58,20 +58,7 @@ module Csound.Opcode.Advanced (
     barmodel, mandol, moog, voice
 ) where
 
-import Csound.Exp
-import Csound.Exp.Wrapper
-import Csound.Exp.Cons
-
-i = Ir
-k = Kr
-a = Ar
-x = Xr
-s = Sr
-f = Fr
-is n = replicate n i
-ks n = replicate n k
-as n = replicate n a 
-
+import Csound.LowLevel
 
 -----------------------------------------------------
 -- * Modulation and Distortion

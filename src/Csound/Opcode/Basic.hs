@@ -83,17 +83,7 @@ module Csound.Opcode.Basic(
 
 ) where
 
-import Csound.Exp
-import Csound.Exp.Wrapper
-import Csound.Exp.Cons
-
-i = Ir
-k = Kr
-a = Ar
-x = Xr
-s = Sr
-f = Fr
-is n = replicate n i 
+import Csound.LowLevel
 
 -----------------------------------------------------
 -- Standard Oscillators

@@ -67,20 +67,9 @@ module Csound.Opcode.Data (
 
 ) where
 
-import Data.Fix
-
 import Csound.Exp
-import Csound.Exp.Wrapper
-import Csound.Exp.Cons
-
-i = Ir
-k = Kr
-a = Ar
-x = Xr
-s = Sr
-f = Fr
-is n = replicate n i
-ks n = replicate n k
+import Csound.Exp.Wrapper(noRate)
+import Csound.LowLevel
 
 -----------------------------------------------------
 -- * Buffer and Function tables
@@ -391,7 +380,7 @@ instance Nums Sig
 instance Nums D
 
 conv :: Nums a => NumOp -> a -> a
-conv op a = noRate $ ExpNum $ PreInline op [Fix $ unwrap a]
+conv op a = noRate $ ExpNum $ PreInline op [toE a]
 
 
 -- | Returns the amplitude equivalent of the decibel value x. Thus:
@@ -485,9 +474,7 @@ printk a1 a2 = se_ $ opc2 "printk" [(x, [i,k,i])] a1 a2
 --
 -- doc: <http://www.csounds.com/manual/html/sprintf.html>
 sprintf :: S -> [D] -> S
-sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (phi a1 : map phi a2)
-    where phi :: Val a => a -> E
-          phi = Fix . unwrap
+sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (toE a1 : map toE a2)
 
 -- | sprintfk writes printf-style formatted output to a string variable, similarly to the C function sprintf(). sprintfk runs both at initialization and performance time. 
 --
@@ -495,9 +482,7 @@ sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (phi a1 : map phi a2)
 --
 -- doc: <http://www.csounds.com/manual/html/sprintfk.html>
 sprintfk :: S -> [Sig] -> S
-sprintfk a1 a2 = opcs "sprintfk" [(s, s:repeat k)] (phi a1 : map phi a2)
-    where phi :: Val a => a -> E
-          phi = Fix . unwrap
+sprintfk a1 a2 = opcs "sprintfk" [(s, s:repeat k)] (toE a1 : map toE a2)
 
 -- ** String Manipulation And Conversion
 

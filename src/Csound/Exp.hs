@@ -17,6 +17,7 @@ import Data.Map(Map)
 import qualified Data.IntMap as IM
 import Data.Fix
 
+-- | The inner representation of csound expressions.
 type E = Fix RatedExp
 
 type Name = String
@@ -77,6 +78,7 @@ isProcedure = (Procedure ==) . infoOpcType
 data OpcType = Prefix | Infix | Procedure
     deriving (Show, Eq, Ord)
 
+-- | The Csound rates.
 data Rate = Xr | Ar | Kr | Ir | Sr | Fr
     deriving (Show, Eq, Ord, Enum, Bounded)
     

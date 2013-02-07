@@ -1,7 +1,14 @@
--- | Functions to make your own opcodes. 
+-- | Functions to make your own opcodes.
+-- You can find a lot of examples in source code (see directory @Csound/Opcode@)
 module Csound.LowLevel(
     -- * Types    
     Val, Rate(..), Name, E, toE,
+
+    -- * Types
+    Sig, D, I, S, Tab, Spec, CsdTuple, SE, Msg,
+
+    -- * Handy shortcuts
+    i, k, a, x, s, f, is, ks, as,
 
     -- * Standard opcodes
 
@@ -46,4 +53,17 @@ import Data.Fix
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons
+import Csound.Render.Sco(Msg)
+
+i = Ir
+k = Kr
+a = Ar
+x = Xr
+s = Sr
+f = Fr
+
+is n = replicate n i
+ks n = replicate n k 
+as n = replicate n a  
+
 
