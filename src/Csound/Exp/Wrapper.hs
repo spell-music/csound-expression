@@ -290,10 +290,10 @@ makeArgMethods to from = ArgMethods {
 -- of some existing one. For example:
 --
 -- > data Note = Note 
--- >     { noteAmplitude :: D
--- >     , notePitch :: D
--- >     , noteVibrato :: D
--- >     , noteSample :: S
+-- >     { noteAmplitude    :: D
+-- >     , notePitch        :: D
+-- >     , noteVibrato      :: D
+-- >     , noteSample       :: S
 -- >     }
 -- > 
 -- > instance Arg Note where
