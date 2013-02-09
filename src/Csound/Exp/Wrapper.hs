@@ -91,7 +91,6 @@ ratedExp r = wrap . RatedExp r Nothing
 
 prim :: Val a => Prim -> a
 prim = wrap . noRate . ExpPrim 
- 
 
 pref :: Name -> Signature -> Info
 pref name signature = Info name signature Prefix Nothing
@@ -101,12 +100,6 @@ inf name signature = Info name signature Infix Nothing
   
 tfm :: Val a => Info -> [RatedExp E] -> a
 tfm info args = wrap $ noRate $ Tfm info $ map Fix args
-
-opc :: Val a => Name -> Signature -> [RatedExp E] -> a
-opc name signature = tfm (pref name signature)
-
-opr :: Val a => Name -> Signature -> [RatedExp E] -> a
-opr name signature = tfm (inf name signature)
 
 gvar, var :: Val a => Rate -> Name -> a
 
@@ -150,14 +143,7 @@ se a = SE $ state $ \s ->
     in  (wrap x, Fix $ x)
 
 se_ :: E -> SE ()
-se_ = fmap (const ()) . SE . withState setProcedure . unSE . (se :: E -> SE E)
-
-setProcedure :: E -> E
-setProcedure x = x {- Fix $ case unFix x of 
-    a -> a{ ratedExpExp = phi $ ratedExpExp a } 
-    where phi (Tfm i xs) = Tfm i{ infoOpcType = Procedure } xs
-          phi x = x  
-  -}          
+se_ = fmap (const ()) . (se :: E -> SE E)
 
 ------------------------------------------------
 -- basic destructors
@@ -165,8 +151,6 @@ setProcedure x = x {- Fix $ case unFix x of
 getPrimUnsafe :: Val a => a -> Prim
 getPrimUnsafe a = case ratedExpExp $ unwrap a of
     ExpPrim p -> p
-
-
 
 --------------------------------------------
 -- signals from primitive types
@@ -417,9 +401,6 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, 
 
 ------------------------------------------------
 -- multiple outs
-
-fromE :: Val a => E -> a
-fromE = wrap . unFix 
 
 multiOuts :: CsdTuple a => E -> a
 multiOuts exp = res
