@@ -56,14 +56,20 @@ Description:
     * Timing of events. User can set the beat rate and align events by beat events.
     .
     * Set Csound flags with meaningful (well-typed) values. Derive as much as you can from the context.
-
-    
-    
+   
 Extra-Source-Files : 
+
+Homepage:        https://github.com/anton-k/csound-expression
+Bug-Reports:     https://github.com/anton-k/csound-expression/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression
+
 
 Library
   Build-Depends:
-        base >= 4, base < 5, containers, array, transformers, wl-pprint, hashable,
+        base >= 4, base < 5, containers, array, transformers, wl-pprint,
         data-default, Boolean, data-fix, data-fix-cse
   Hs-Source-Dirs:      src/
   Exposed-Modules:

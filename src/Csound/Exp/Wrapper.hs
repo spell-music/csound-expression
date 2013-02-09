@@ -399,6 +399,26 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, 
     arityCsdTuple (a, b, c, d) = arityCsdTuple (a, (b, c, d))
     toCsdTuple = (\(a, (b, c, d)) -> (a, b, c, d)) . toCsdTuple
 
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e) => CsdTuple (a, b, c, d, e) where
+    fromCsdTuple (a, b, c, d, e) = fromCsdTuple (a, (b, c, d, e))
+    arityCsdTuple (a, b, c, d, e) = arityCsdTuple (a, (b, c, d, e))
+    toCsdTuple = (\(a, (b, c, d, e)) -> (a, b, c, d, e)) . toCsdTuple
+
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f) => CsdTuple (a, b, c, d, e, f) where
+    fromCsdTuple (a, b, c, d, e, f) = fromCsdTuple (a, (b, c, d, e, f))
+    arityCsdTuple (a, b, c, d, e, f) = arityCsdTuple (a, (b, c, d, e, f))
+    toCsdTuple = (\(a, (b, c, d, e, f)) -> (a, b, c, d, e, f)) . toCsdTuple
+
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g) => CsdTuple (a, b, c, d, e, f, g) where
+    fromCsdTuple (a, b, c, d, e, f, g) = fromCsdTuple (a, (b, c, d, e, f, g))
+    arityCsdTuple (a, b, c, d, e, f, g) = arityCsdTuple (a, (b, c, d, e, f, g))
+    toCsdTuple = (\(a, (b, c, d, e, f, g)) -> (a, b, c, d, e, f, g)) . toCsdTuple
+
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h) => CsdTuple (a, b, c, d, e, f, g, h) where
+    fromCsdTuple (a, b, c, d, e, f, g, h) = fromCsdTuple (a, (b, c, d, e, f, g, h))
+    arityCsdTuple (a, b, c, d, e, f, g, h) = arityCsdTuple (a, (b, c, d, e, f, g, h))
+    toCsdTuple = (\(a, (b, c, d, e, f, g, h)) -> (a, b, c, d, e, f, g, h)) . toCsdTuple
+
 ------------------------------------------------
 -- multiple outs
 

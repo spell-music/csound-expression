@@ -1,7 +1,7 @@
 module Csound.Exp.Cons (
     Spec1, Specs,
     toE, fromE,
-    (!), 
+    withInits,
     bi,
     opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11,
     mopcs, mopc0, mopc1, mopc2, mopc3, mopc4, mopc5, mopc6, mopc7
@@ -26,10 +26,13 @@ toE = Fix . unwrap
 fromE :: Val a => E -> a
 fromE = wrap . unFix
 
-(!) :: Val a => Sig -> a -> Sig
-(!) a b = wrap $ onExp phi $ unwrap a 
+-- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
+--
+-- > oscil 0.5 440 sinWave `withInits` (0.5 :: D)
+withInits :: (Val a, CsdTuple inits) => a -> inits -> Sig
+withInits a b = wrap $ onExp phi $ unwrap a
     where phi x = case x of
-            Tfm t xs -> Tfm t (xs ++ [Fix $ unwrap b])
+            Tfm t xs -> Tfm t (xs ++ fromCsdTuple b)
             x        -> x
 
 ------------------------------------------------
