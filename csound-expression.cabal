@@ -64,7 +64,7 @@ Extra-Source-Files :
 Library
   Build-Depends:
         base >= 4, base < 5, containers, array, transformers, wl-pprint, hashable,
-        data-default, Boolean, data-fix
+        data-default, Boolean, data-fix, data-fix-cse
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
@@ -81,8 +81,6 @@ Library
         Csound.Exp.Logic
         Csound.Exp.Numeric       
         
-        Csound.Tfm.DAG
-        Csound.Tfm.BiMap
         Csound.Tfm.RateGraph
         Csound.Tfm.TfmTree
         

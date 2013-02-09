@@ -4,15 +4,15 @@ module Csound.Render.Instr(
 ) where
 
 import qualified Data.IntMap as IM
--- import Control.Monad.State
+import Control.Monad.Trans.State.Strict
 import Data.Char(toLower)
 import Data.List(partition, sortBy)
 import Control.Arrow(second)
 import Data.Ord(comparing)
 import Data.Maybe(fromJust)
 
-import Csound.Tfm.DAG 
-import Csound.Tfm.BiMap
+import Data.Fix.Cse(fromDag, cse)
+
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (double, int)
 
@@ -21,6 +21,7 @@ import Csound.Tfm.TfmTree
 import Csound.Render.Pretty
 
 type InstrId = Int
+type Dag f = [(Int, f Int)]
 
 renderInstr :: KrateSet -> TabMap -> InstrId -> E -> Doc
 renderInstr krateSet ft instrId exp = ppInstr instrId $ renderInstrBody krateSet ft exp
@@ -63,7 +64,7 @@ isSelect x = case x of
 
 
 toDag :: TabMap -> E -> Dag RatedExp 
-toDag ft exp = dag $ substTabs ft exp
+toDag ft exp = fromDag $ cse $ substTabs ft exp
 
 
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)

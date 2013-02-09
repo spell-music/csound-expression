@@ -984,6 +984,11 @@ hrtfmove2 = mopc5 "hrtfmove2" ([a, a], a:k:k:s:s:is 3)
 --------------------------------------------------------------------------
 -- Other opcodes
 
+-- | Extend the duration of real-time generated events and handle their extra life (Usually for usage along with release instead of linenr, linsegr, etc). 
+--
+-- > xtratim iextradur
+--
+-- doc: <http://www.csounds.com/manual/html/xtratim.html>
 xtratim :: D -> SE ()
 xtratim a1 = se_ $ opc1 "xtratim" [(x, [i])] a1
 
