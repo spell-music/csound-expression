@@ -116,7 +116,7 @@ gvar = mkVar GlobalVar
 mkVar :: Val a => VarType -> Rate -> String -> a
 mkVar ty rate name = wrap $ noRate $ ReadVar (Var ty rate name)
 
-p :: Init a => Int -> a
+p :: Val a => Int -> a
 p = prim . P
 
 -- | Converts Haskell's integers to Csound's integers
@@ -207,18 +207,6 @@ kr = setRate Kr
 -- | Converts signal to double.
 ir :: Sig -> D
 ir = setRate Ir
-
-------------------------------------------------------
--- inits
-
--- types that can be used in score
-
-class Val a => Init a where
-
-instance Init I where
-instance Init D where
-instance Init Str where
-instance Init Tab where
 
 ------------------------------------------------------
 -- values
