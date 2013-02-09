@@ -63,7 +63,7 @@ Extra-Source-Files :
 
 Library
   Build-Depends:
-        base >= 4, base < 5, containers, array, transformers, pretty, hashable,
+        base >= 4, base < 5, containers, array, transformers, wl-pprint, hashable,
         data-default, Boolean, data-fix
   Hs-Source-Dirs:      src/
   Exposed-Modules:

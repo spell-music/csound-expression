@@ -13,9 +13,11 @@ module Csound.Render.Pretty (
 import Data.Char(toLower)
 import qualified Data.Map as M
 import qualified Data.IntMap as IM
-import Text.PrettyPrint
+import Text.PrettyPrint.Leijen
 
 import Csound.Exp
+
+($$) = (<$$>)
 
 binaries, unaries, funcs :: String -> [Doc] -> Doc
 
@@ -105,7 +107,7 @@ ppTabDef ft id = char 'f'
     <+> (int $ tabGen ft) 
     <+> (hsep $ map double $ tabArgs ft)
 
-ppStrset str id = text "strset" <+> int id <> comma <+> (doubleQuotes $ text str)
+ppStrset str id = text "strset" <+> int id <> comma <+> (dquotes $ text str)
 
 -- file
 
