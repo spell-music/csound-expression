@@ -2,10 +2,7 @@
 -- You can find a lot of examples in source code (see directory @Csound/Opcode@)
 module Csound.LowLevel(
     -- * Types    
-    Val, Rate(..), Name, E, 
-
-    -- * Types
-    Sig, D, I, Str, Tab, Spec, CsdTuple, SE, Msg,
+    Rate(..), Name, E, 
 
     -- * Handy shortcuts
     i, k, a, x, s, f, is, ks, as,

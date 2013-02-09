@@ -58,6 +58,8 @@ module Csound.Opcode.Advanced (
     barmodel, mandol, moog, voice
 ) where
 
+import Csound.Exp
+import Csound.Exp.Wrapper
 import Csound.LowLevel
 
 -----------------------------------------------------

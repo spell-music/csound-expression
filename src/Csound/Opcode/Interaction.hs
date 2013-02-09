@@ -20,6 +20,8 @@ module Csound.Opcode.Interaction (
     xyin    
 ) where
 
+import Csound.Render.Sco(Msg)
+import Csound.Exp.Wrapper
 import Csound.LowLevel
 
 -----------------------------------------------------

@@ -68,7 +68,7 @@ module Csound.Opcode.Data (
 ) where
 
 import Csound.Exp
-import Csound.Exp.Wrapper(noRate)
+import Csound.Exp.Wrapper
 import Csound.LowLevel
 
 -----------------------------------------------------

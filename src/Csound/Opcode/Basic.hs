@@ -90,11 +90,9 @@ module Csound.Opcode.Basic(
     xtratim
 ) where
 
+import Csound.Exp
+import Csound.Exp.Wrapper
 import Csound.LowLevel
-
-import Csound.Exp(Var(..))
-import Csound.Exp.Wrapper(p, setRate, readVar)
-
 
 -- | Reads @p3@-argument for the current instrument.
 idur :: D
