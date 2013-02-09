@@ -2,7 +2,7 @@
         TypeSynonymInstances,
         FlexibleInstances #-}
 module Csound.Exp.Wrapper(
-    Out, Sig, I, D, S, BoolSig(..), Spec, ToSig(..),
+    Out, Sig, I, D, Str, BoolSig(..), Spec, ToSig(..),
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
@@ -41,7 +41,7 @@ newtype I = I { unI :: E }
 newtype D = D { unD :: E }
 
 -- | Strings.
-newtype S = S { unS :: E }
+newtype Str = Str { unStr :: E }
 
 -- | Boolean signals. Use functions from the module "Data.Boolean" to make boolean signals
 -- out of simple signals.
@@ -128,7 +128,7 @@ double :: Double -> D
 double = prim . PrimDouble
 
 -- | Converts Haskell's strings to Csound's strings
-str :: String -> S
+str :: String -> Str
 str = prim . PrimString
 
 writeVar :: (Val a) => Var -> a -> SE ()
@@ -217,7 +217,7 @@ class Val a => Init a where
 
 instance Init I where
 instance Init D where
-instance Init S where
+instance Init Str where
 instance Init Tab where
 
 ------------------------------------------------------
@@ -247,9 +247,9 @@ instance Val D where
     wrap = D . Fix
     unwrap = unFix . unD
 
-instance Val S where
-    wrap = S . Fix
-    unwrap = unFix . unS
+instance Val Str where
+    wrap = Str . Fix
+    unwrap = unFix . unStr
 
 instance Val Tab where
     wrap = undefined
@@ -321,7 +321,7 @@ instance Arg D where
         toNote = pure . getPrimUnsafe,
         arity = const 1 }
 
-instance Arg S where
+instance Arg Str where
     argMethods = ArgMethods {
         arg = p,
         toNote = pure . getPrimUnsafe,
@@ -399,7 +399,7 @@ instance CsdTuple D where
     toCsdTuple = wrap . unFix . head
     arityCsdTuple = const 1
 
-instance CsdTuple S where
+instance CsdTuple Str where
     fromCsdTuple = return . Fix . unwrap
     toCsdTuple = wrap . unFix . head
     arityCsdTuple = const 1

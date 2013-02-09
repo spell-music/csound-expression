@@ -35,7 +35,7 @@ fromE = wrap . unFix
 ------------------------------------------------
 -- helper constructors
 
-instance IsString S where
+instance IsString Str where
     fromString = str
 
 ------------------------------------------------

@@ -269,7 +269,7 @@ doppler = opc3 "doppler" [(a, [a, k, k, i, i])]
 -- > ar1 [, ar2] [, ar3] [, ar4] pconvolve ain, ifilcod [, ipartitionsize, ichannel]
 --
 -- doc: <http://www.csounds.com/manual/html/pconvolve.html>
-pconvolve :: CsdTuple a => Sig -> S -> a
+pconvolve :: CsdTuple a => Sig -> Str -> a
 pconvolve = mopc2 "pconvolve" ([a,a,a,a], [a,s,i,i])
 
 -- | Output is the convolution of signal ain and the impulse response contained in ifilcod. If more than one 
@@ -353,7 +353,7 @@ pvsadsyn = opc3 "pvsadsyn" [(a, [f,i,k,i,i,i])]
 -- > pvsfwrite fsig, ifile
 --
 -- doc: <http://www.csounds.com/manual/html/pvsfwrite.html>
-pvswrite :: Spec -> S -> SE ()
+pvswrite :: Spec -> Str -> SE ()
 pvswrite a1 a2 = se_ $ opc2 "pvswrite" [(x, [f,s])] a1 a2
 
 -- | Create an fsig stream by reading a selected channel from a PVOC-EX analysis file loaded into memory, with frame 
@@ -363,7 +363,7 @@ pvswrite a1 a2 = se_ $ opc2 "pvswrite" [(x, [f,s])] a1 a2
 -- > fsig pvsfread ktimpt, ifn [, ichan]
 --
 -- doc: <http://www.csounds.com/manual/html/pvsfread.html>
-pvsfread :: Sig -> S -> Spec
+pvsfread :: Sig -> Str -> Spec
 pvsfread = opc2 "pvsfread" [(f, [k,s,i])]
 
 -- | Create an fsig stream by reading a selected channel from a PVOC-EX analysis file, with frame interpolation. 
@@ -371,7 +371,7 @@ pvsfread = opc2 "pvsfread" [(f, [k,s,i])]
 -- > fsig pvsdiskin SFname,ktscal,kgain[,ioffset, ichan]
 --
 -- doc: <http://www.csounds.com/manual/html/pvsdiskin.html>
-pvsdiskin :: S -> Sig -> Sig -> Spec
+pvsdiskin :: Str -> Sig -> Sig -> Spec
 pvsdiskin = opc3 "pvsdiskin" [(f, [s,k,k,i,i])]
 
 -----------------------------------------------------

@@ -6,7 +6,7 @@ module Csound.Base(
     -- ** Constants     
     -- | A constant value doesn't change while instrument is playing a note.
     -- Only constants can be passed as arguments to the instruments.
-    D, I, Tab, S,
+    D, I, Tab, Str,
     
     -- ** Signals
     -- | Signals can be audio or control rate. Rate is derived from the code.

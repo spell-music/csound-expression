@@ -962,7 +962,7 @@ pan2 = mopc2 "pan2" ([a, a], [a, x, i])
 -- > aleft, aright hrtfstat asrc, iAz, iElev, ifilel, ifiler [,iradius, isr]
 --
 -- doc: <http://www.csounds.com/manual/html/hrtfstat.html>
-hrtfstat :: Sig -> D -> D -> S -> S -> (Sig, Sig)
+hrtfstat :: Sig -> D -> D -> Str -> Str -> (Sig, Sig)
 hrtfstat = mopc5 "hrtfstat" ([a, a], a:s:i:i:s:is 2)
 
 -- | This opcode takes a source signal and spatialises it in the 3 dimensional space around a listener by convolving the source with stored head related transfer function (HRTF) based filters. 
@@ -970,7 +970,7 @@ hrtfstat = mopc5 "hrtfstat" ([a, a], a:s:i:i:s:is 2)
 -- > aleft, aright hrtfmove asrc, kAz, kElev, ifilel, ifiler [, imode, ifade, isr]
 --
 -- doc: <http://www.csounds.com/manual/html/hrtfmove.html>
-hrtfmove :: Sig -> Sig -> Sig -> S -> S -> (Sig, Sig)
+hrtfmove :: Sig -> Sig -> Sig -> Str -> Str -> (Sig, Sig)
 hrtfmove = mopc5 "hrtfmove" ([a, a], a:k:k:s:s:is 3)
 
 -- | This opcode takes a source signal and spatialises it in the 3 dimensional space around a listener using head related transfer function (HRTF) based filters. 
@@ -978,7 +978,7 @@ hrtfmove = mopc5 "hrtfmove" ([a, a], a:k:k:s:s:is 3)
 -- > aleft, aright hrtfmove2 asrc, kAz, kElev, ifilel, ifiler [,ioverlap, iradius, isr]
 --
 -- doc: <http://www.csounds.com/manual/html/hrtfmove2.html>
-hrtfmove2 :: Sig -> Sig -> Sig -> S -> S -> (Sig, Sig)
+hrtfmove2 :: Sig -> Sig -> Sig -> Str -> Str -> (Sig, Sig)
 hrtfmove2 = mopc5 "hrtfmove2" ([a, a], a:k:k:s:s:is 3)
 
 --------------------------------------------------------------------------

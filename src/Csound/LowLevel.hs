@@ -5,7 +5,7 @@ module Csound.LowLevel(
     Val, Rate(..), Name, E, 
 
     -- * Types
-    Sig, D, I, S, Tab, Spec, CsdTuple, SE, Msg,
+    Sig, D, I, Str, Tab, Spec, CsdTuple, SE, Msg,
 
     -- * Handy shortcuts
     i, k, a, x, s, f, is, ks, as,

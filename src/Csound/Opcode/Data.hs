@@ -266,7 +266,7 @@ sndloop = mopc5 "sndloop" ([a, k], [a,k,k,i,i])
 -- >      [, iskipinit] [, ibufsize]
 --
 -- doc: <http://www.csounds.com/manual/html/soundin.html>
-soundin :: CsdTuple a => S -> a
+soundin :: CsdTuple a => Str -> a
 soundin = mopc1 "soundin" (repeat a, s:is 4)
 
 -- | Reads audio data from a file, and can alter its pitch using one of several available interpolation 
@@ -278,7 +278,7 @@ soundin = mopc1 "soundin" (repeat a, s:is 4)
 -- >       [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]
 --
 -- doc: <http://www.csounds.com/manual/html/diskin2.html>
-diskin2 :: CsdTuple a => S -> Sig -> a
+diskin2 :: CsdTuple a => Str -> Sig -> a
 diskin2 = mopc2 "diskin2" (repeat a, s:k:is 6)
 
 -- | Reads stereo audio data from an external MP3 file. 
@@ -286,7 +286,7 @@ diskin2 = mopc2 "diskin2" (repeat a, s:k:is 6)
 -- > ar1, ar2 mp3in ifilcod[, iskptim, iformat, iskipinit, ibufsize]
 --
 -- doc: <http://www.csounds.com/manual/html/mp3in.html>
-mp3in :: S -> (Sig, Sig)
+mp3in :: Str -> (Sig, Sig)
 mp3in = mopc1 "mp3in" ([a,a], s:is 4)
 
 
@@ -297,7 +297,7 @@ mp3in = mopc1 "mp3in" ([a,a], s:is 4)
 -- > ir filelen ifilcod, [iallowraw]
 --
 -- doc: <http://www.csounds.com/manual/html/filelen.html>
-filelen :: S -> D
+filelen :: Str -> D
 filelen = opc1 "filelen" [(i, [i,i])]
 
 -- | Returns the sample rate of a sound file. 
@@ -305,7 +305,7 @@ filelen = opc1 "filelen" [(i, [i,i])]
 -- > ir filesr ifilcod [, iallowraw]
 --
 -- doc: <http://www.csounds.com/manual/html/filesr.html>
-filesr :: S -> D
+filesr :: Str -> D
 filesr = opc1 "filesr" [(i, [i,i])]
 
 -- | Returns the number of channels in a sound file.
@@ -313,7 +313,7 @@ filesr = opc1 "filesr" [(i, [i,i])]
 -- > ir filenchnls ifilcod [, iallowraw]
 --
 -- doc: <http://www.csounds.com/manual/html/filechnls.html>
-filenchnls :: S -> D
+filenchnls :: Str -> D
 filenchnls = opc1 "filenchnls" [(i, [i,i])]
 
 -- | Returns the peak absolute value of a sound file. 
@@ -321,7 +321,7 @@ filenchnls = opc1 "filenchnls" [(i, [i,i])]
 -- > ir filepeak ifilcod [, ichnl]
 --
 -- doc: <http://www.csounds.com/manual/html/filepeak.html>
-filepeak :: S -> D
+filepeak :: Str -> D
 filepeak = opc1 "filepeak" [(i, [i,i])]
 
 -- | Returns the number of bits in each sample in a sound file.
@@ -329,7 +329,7 @@ filepeak = opc1 "filepeak" [(i, [i,i])]
 -- > ir filebit ifilcod [, iallowraw]
 --
 -- doc: <http://www.csounds.com/manual/html/filebit.html>
-filebit :: S -> D
+filebit :: Str -> D
 filebit = opc1 "filebit" [(i, [i,i])] 
 
 -- ** Sound File Output
@@ -473,7 +473,7 @@ printk a1 a2 = se_ $ opc2 "printk" [(x, [i,k,i])] a1 a2
 -- > Sdst sprintf Sfmt, xarg1[, xarg2[, ... ]]
 --
 -- doc: <http://www.csounds.com/manual/html/sprintf.html>
-sprintf :: S -> [D] -> S
+sprintf :: Str -> [D] -> Str
 sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (toE a1 : map toE a2)
 
 -- | sprintfk writes printf-style formatted output to a string variable, similarly to the C function sprintf(). sprintfk runs both at initialization and performance time. 
@@ -481,7 +481,7 @@ sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (toE a1 : map toE a2)
 -- > Sdst sprintfk Sfmt, xarg1[, xarg2[, ... ]]
 --
 -- doc: <http://www.csounds.com/manual/html/sprintfk.html>
-sprintfk :: S -> [Sig] -> S
+sprintfk :: Str -> [Sig] -> Str
 sprintfk a1 a2 = opcs "sprintfk" [(s, s:repeat k)] (toE a1 : map toE a2)
 
 -- ** String Manipulation And Conversion
@@ -491,7 +491,7 @@ sprintfk a1 a2 = opcs "sprintfk" [(s, s:repeat k)] (toE a1 : map toE a2)
 -- > Sdst strcat Ssrc1, Ssrc2
 --
 -- doc: <http://www.csounds.com/manual/html/strcat.html>
-strcat :: S -> S -> S
+strcat :: Str -> Str -> Str
 strcat = opc2 "strcat" [(s, [s,s])]
 
 -- |  Concatenate two strings and store the result in a variable. strcatk does the 
@@ -500,7 +500,7 @@ strcat = opc2 "strcat" [(s, [s,s])]
 -- > Sdst strcatk Ssrc1, Ssrc2
 --
 -- doc: <http://www.csounds.com/manual/html/strcatk.html>
-strcatk :: S -> S -> S
+strcatk :: Str -> Str -> Str
 strcatk = opc2 "strcatk" [(s, [s,s])]
 
 
