@@ -111,7 +111,7 @@ ppStrset str id = text "strset" <+> int id <> comma <+> (dquotes $ text str)
 
 -- file
 
-newline = char '\n'
+newline = line
 
        
 ppCsdFile flags instr0 instrs scores strTable tabs = 
