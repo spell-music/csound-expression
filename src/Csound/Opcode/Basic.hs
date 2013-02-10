@@ -104,11 +104,11 @@ zeroDbfs = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "0dbfs")
 
 -- | Reads @sr@ value.
 sampleRate :: D
-sampleRate = (setRate Ir :: E -> I) $ readVar (VarVerbatim Ir "sr")
+sampleRate = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "sr")
 
 -- | Reads @ksmps@ value.
 blockSize :: D
-blockSize = (setRate Ir :: E -> I) $ readVar (VarVerbatim Ir "ksmps")
+blockSize = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "ksmps")
 
 -----------------------------------------------------
 -- Standard Oscillators

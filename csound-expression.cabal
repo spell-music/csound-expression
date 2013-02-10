@@ -1,6 +1,6 @@
 Name:          csound-expression
 Version:       1.0.0
-Cabal-Version: >= 1.2
+Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
