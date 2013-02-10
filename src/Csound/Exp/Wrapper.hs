@@ -7,7 +7,7 @@ module Csound.Exp.Wrapper(
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
     Val(..),
-    str, double, int, ar, kr, ir,
+    str, double, int, ir,
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, getRates,
@@ -157,36 +157,34 @@ getPrimUnsafe a = case ratedExpExp $ unwrap a of
 
 -- | Values that can be converted to signals. 
 class ToSig a where
-    sig :: a -> Sig
+    ar :: a -> Sig  -- ^ Forces signal to audio rate. 
+    kr :: a -> Sig  -- ^ Forces signal to control rate. 
     
 instance ToSig I where
-    sig = wrap . unwrap
+    ar = setRate Ar
+    kr = setRate Kr        
 
 instance ToSig D where
-    sig = wrap . unwrap
+    ar = setRate Ar
+    kr = setRate Kr        
 
 instance ToSig Sig where
-    sig = id
+    ar = setRate Ar
+    kr = setRate Kr        
     
 instance ToSig Int where
-    sig = sig . int
+    ar = ar . int
+    kr = kr . int
     
 instance ToSig Double where
-    sig = sig . double
-
+    ar = ar . double
+    kr = kr . double
+    
 --------------------------------------------
 -- rate conversion 
 
 setRate :: (Val a, Val b) => Rate -> a -> b
 setRate r a = wrap $ (\x -> x { ratedExpRate = Just r }) $ unwrap a
-
--- | Forces signal to audio rate. 
-ar :: Sig -> Sig
-ar = setRate Ar
-
--- | Forces signal to control rate.
-kr :: Sig -> Sig
-kr = setRate Kr
 
 -- | Converts signal to double.
 ir :: Sig -> D
@@ -280,6 +278,12 @@ makeArgMethods to from = ArgMethods {
 
 class Arg a where
     argMethods :: ArgMethods a
+
+instance Arg () where
+    argMethods = ArgMethods 
+        { arg = const ()
+        , toNote = const []
+        , arity = const 0 }
 
 instance Arg I where
     argMethods = ArgMethods {

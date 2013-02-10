@@ -5,7 +5,20 @@ module Csound.Opcode.Data (
     -- * Buffer and Function tables
 
     -- ** Creating Function Tables (Buffers)
-    gen,
+    gen, skipNorm,
+    
+    -- ** Handy shortcuts
+    
+    -- | The table size is set to:
+    --
+    -- > low = 4096
+    -- > mid = 8192
+    -- > high = 16384
+    -- > higher = 65536
+    --
+    -- genXxx1 means that the size is set to @Xxx + 1@.
+    genLow, genMid, genHigh, genHigher,
+    genLow1, genMid1, genHigh1, genHigher1,
 
     {-
     -- ** Writing To Tables
@@ -75,8 +88,40 @@ import Csound.LowLevel
 -- * Buffer and Function tables
 
 -- ** Creating Function Tables (Buffers)
+
+-- | Creates a table of doubles (It's f-table in Csound).
+-- Arguments are:
+--
+-- * table size
+--
+-- * identificator of the GEN routine
+--
+-- * GEN routine arguments
+--
+-- All tables are created at 0 and memory is never released.
 gen :: Int -> Int -> [Double] -> Tab
 gen = Tab 
+
+low = 4096
+mid = 8192
+high = 16384
+higher = 65536
+
+genLow, genMid, genHigh, genHigher, genLow1, genMid1, genHigh1, genHigher1 :: Int -> [Double] -> Tab
+
+genLow = gen low
+genMid = gen mid
+genHigh = gen high
+genHigher = gen higher
+
+genLow1 = gen (low + 1)
+genMid1 = gen (mid + 1)
+genHigh1 = gen (high + 1)
+genHigher1 = gen (higher + 1)
+
+-- | Skips normalization (sets table size to negative value)
+skipNorm :: Tab -> Tab
+skipNorm (Tab size name args) = Tab (negate $ abs size) name args
 
 {-
 -- ** Writing To Tables

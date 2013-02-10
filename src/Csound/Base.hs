@@ -1,4 +1,25 @@
 -- | Basic types and functions.
+--
+-- Example (a concert A)
+--
+-- > module Main where
+-- > 
+-- > import Csound.Base
+-- > 
+-- > osc :: Sig -> Sig
+-- > osc phs = oscil1 1 phs (genHigh 10 [1])
+-- > 
+-- > instr :: D -> Out
+-- > instr pch = out $ 0.5 * (osc $ kr pch)
+-- > 
+-- > res = score instr [(0, 1, 440)]
+-- > 
+-- > main :: IO ()
+-- > main = writeFile "tmp.csd" $ renderCsd [res]
+--
+-- Now you can invoke Csound on tmp.csd and listen to the result with your favourite player.
+--
+-- > csound tmp.csd -o a.wav
 module Csound.Base(
 
     -- * Types
@@ -25,8 +46,7 @@ module Csound.Base(
     CsdTuple,
     
     -- ** Converters
-    ToSig(sig), ar, kr,
-    int, double, str,          
+    ToSig(..), ir, int, double, str,          
         
     -- * Making a sound
     

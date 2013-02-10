@@ -103,11 +103,11 @@ zeroDbfs :: D
 zeroDbfs = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "0dbfs")
 
 -- | Reads @sr@ value.
-sampleRate :: I
+sampleRate :: D
 sampleRate = (setRate Ir :: E -> I) $ readVar (VarVerbatim Ir "sr")
 
 -- | Reads @ksmps@ value.
-blockSize :: I
+blockSize :: D
 blockSize = (setRate Ir :: E -> I) $ readVar (VarVerbatim Ir "ksmps")
 
 -----------------------------------------------------
@@ -163,7 +163,7 @@ oscil3 = oscGen "oscil3"
 -- doc: <http://www.csounds.com/manual/html/poscil.html>
 
 poscil :: Sig -> Sig -> Tab -> Sig
-poscil = oscGen "psocil"
+poscil = oscGen "poscil"
 
 -- | High precision oscillator with cubic interpolation. 
 --
@@ -173,7 +173,7 @@ poscil = oscGen "psocil"
 -- doc: <http://www.csounds.com/manual/html/poscil3.html>
 
 poscil3 :: Sig -> Sig -> Tab -> Sig
-poscil3 = oscGen "psocil"
+poscil3 = oscGen "poscil3"
 
 -----------------------------------------------------
 -- Dynamic Sprectrum Oscillators
