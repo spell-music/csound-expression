@@ -39,29 +39,29 @@ instance OrdB Sig where
 boolExp = PreInline
 
 cond' :: BoolSig -> Sig -> Sig -> Sig
-cond' p t e = wrap $ mkCond (condInfo $ Fix $ unwrap p) (unwrap t) (unwrap e)
-    where mkCond :: CondInfo E -> RatedExp E -> RatedExp E -> RatedExp E
+cond' p t e = wrap $ mkCond (condInfo $ toPrimOr $ Fix $ unwrap p) (unwrap t) (unwrap e)
+    where mkCond :: CondInfo (PrimOr E) -> RatedExp E -> RatedExp E -> RatedExp E
           mkCond p t e 
             | isTrue p = t
             | isFalse p = e
-            | otherwise = noRate $ If p (Fix t) (Fix e)            
+            | otherwise = noRate $ If p (toPrimOr $ Fix t) (toPrimOr $ Fix e)            
 
-condInfo :: E -> CondInfo E
+condInfo :: PrimOr E -> CondInfo (PrimOr E)
 condInfo exp = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' exp) 0
-    where condInfo' :: E -> State Int (InlineExp CondOp, [(Int, E)])
+    where condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
           condInfo' e = maybe (onLeaf e) (onExp e) $ parseNode e
           onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
           onExp  e (op, args) = mkNode <$> mapM condInfo' args
               where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
 
-          parseNode :: E -> Maybe (CondOp, [E])
-          parseNode x = case ratedExpExp $ unFix x of
-              ExpBool (PreInline op args) -> Just (op, args)
+          parseNode :: PrimOr E -> Maybe (CondOp, [PrimOr E])
+          parseNode x = case unPrimOr $ fmap (ratedExpExp . unFix) x of
+              Right (ExpBool (PreInline op args)) -> Just (op, args)
               _ -> Nothing    
 
 
 boolOps :: (Val a) => CondOp -> [E] -> a
-boolOps op as = noRate $ ExpBool $ boolExp op as
+boolOps op as = noRate $ ExpBool $ boolExp op $ fmap toPrimOr as
 
 boolOp0 :: Val a => CondOp -> a
 boolOp0 op = boolOps op []
@@ -78,13 +78,14 @@ notE x = Fix $ onExp phi $ unFix x
     where phi (ExpBool (PreInline op args)) = ExpBool $ case op of
             TrueOp            -> boolExp FalseOp        []
             FalseOp           -> boolExp TrueOp         []
-            And               -> boolExp Or             $ map notE args
-            Or                -> boolExp And            $ map notE args
+            And               -> boolExp Or             $ fmap (fmap notE) args
+            Or                -> boolExp And            $ fmap (fmap notE) args
             Equals            -> boolExp NotEquals      args
             NotEquals         -> boolExp Equals         args
             Less              -> boolExp GreaterEquals  args
             Greater           -> boolExp LessEquals     args
             LessEquals        -> boolExp Greater        args
             GreaterEquals     -> boolExp Less           args     
+
    
 

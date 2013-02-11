@@ -1,5 +1,5 @@
 module Csound.Exp(
-    E, RatedExp(..), RatedVar(..), onExp, Exp(..), Name,
+    E, RatedExp(..), RatedVar(..), onExp, ExpOr, toPrimOr, PrimOr(..), Exp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
     Prim(..), Tab(..),
@@ -25,7 +25,7 @@ type Name = String
 data RatedExp a = RatedExp 
     { ratedExpRate      :: Maybe Rate
     , ratedExpDepends   :: Maybe a
-    , ratedExpExp       :: Exp a
+    , ratedExpExp       :: ExpOr a
     } deriving (Show, Eq, Ord)
 
 data RatedVar = RatedVar 
@@ -33,10 +33,21 @@ data RatedVar = RatedVar
     , ratedVarId   :: Int 
     } deriving (Show)
 
-onExp :: (Exp a -> Exp a) -> RatedExp a -> RatedExp a
+onExp :: (Exp (PrimOr a) -> Exp (PrimOr a)) -> RatedExp a -> RatedExp a
 onExp f a = a{ ratedExpExp = f (ratedExpExp a) }
 
 data VarType = LocalVar | GlobalVar
+    deriving (Show, Eq, Ord)
+
+type ExpOr a = Exp (PrimOr a)
+
+toPrimOr :: E -> PrimOr E
+toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
+    ExpPrim (PString _) -> Right a
+    ExpPrim p -> Left p
+    _         -> Right a
+
+newtype PrimOr a = PrimOr { unPrimOr :: Either Prim a }
     deriving (Show, Eq, Ord)
 
 data Exp a 
@@ -160,13 +171,26 @@ data NumOp
 -- instances for cse
 
 instance Functor RatedExp where
-    fmap f (RatedExp r d a) = RatedExp r (fmap f d) (fmap f a)
+    fmap f (RatedExp r d a) = RatedExp r (fmap f d) (fmap (fmap f) a)
 
 instance Foldable RatedExp where
-    foldMap f (RatedExp _ d a) = foldMap f d <> foldMap f a
+    foldMap f (RatedExp _ d a) = foldMap f d <> foldMap (foldMap f) a
     
 instance Traversable RatedExp where
-    traverse f (RatedExp r d a) = RatedExp r <$> traverse f d <*> traverse f a
+    traverse f (RatedExp r d a) = RatedExp r <$> traverse f d <*> traverse (traverse f) a
+
+instance Functor PrimOr where
+    fmap f (PrimOr a) = PrimOr (fmap f a)
+
+instance Foldable PrimOr where
+    foldMap f x = case unPrimOr x of
+        Left _  -> mempty
+        Right a -> f a
+
+instance Traversable PrimOr where
+    traverse f x = case unPrimOr x of
+        Left  p -> pure $ PrimOr $ Left p
+        Right a -> PrimOr . Right <$> f a
 
 instance Functor Exp where
     fmap f x = case x of
@@ -204,7 +228,6 @@ instance Traversable Exp where
         ExpNum  a -> ExpNum  <$> traverse f a
         ReadVar v -> pure $ ReadVar v
         WriteVar v a -> WriteVar v <$> f a
-
 
 instance Functor (Inline a) where
     fmap f a = a{ inlineEnv = fmap f $ inlineEnv a }

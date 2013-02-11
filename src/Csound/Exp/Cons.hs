@@ -32,7 +32,7 @@ fromE = wrap . unFix
 withInits :: (Val a, CsdTuple inits) => a -> inits -> Sig
 withInits a b = wrap $ onExp phi $ unwrap a
     where phi x = case x of
-            Tfm t xs -> Tfm t (xs ++ fromCsdTuple b)
+            Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr $ fromCsdTuple b))
             x        -> x
 
 ------------------------------------------------

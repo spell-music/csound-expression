@@ -119,7 +119,7 @@ deduceRate krateSet desiredRates exp = case ratedExpExp exp of
               as -> fromJust $ find (flip M.member tab) (as ++ [minBound .. maxBound])         
    
 
-notifyChildren :: AgentId -> Rate -> Exp Int -> MsgBox s -> ST s ()
+notifyChildren :: AgentId -> Rate -> ExpOr Int -> MsgBox s -> ST s ()
 notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query box) $ case exp of
     Tfm info xs -> notifyTfm curRate (infoSignature info) xs
     WriteVar v a -> [(a, mkQuery 0 $ varRate v)]

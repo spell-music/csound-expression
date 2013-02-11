@@ -12,6 +12,13 @@ import Csound.Exp.Cons
 -------------------------------------------------------
 -- instances for numerical expressions
 
+class NumOpt a where
+    maybeInt    :: a -> Maybe Int
+    maybeDouble :: a -> Maybe Double
+    fromInt     :: Int -> a
+    fromDouble  :: Double -> a
+    fromNum     :: NumExp a -> a
+
 instance NumOpt E where
     maybeInt x = case ratedExpExp $ unFix x of
         ExpPrim (PrimInt n) -> Just n
@@ -23,7 +30,7 @@ instance NumOpt E where
     
     fromInt = prim . PrimInt
     fromDouble = prim . PrimDouble
-    fromNum = noRate . ExpNum        
+    fromNum = noRate . ExpNum . fmap toPrimOr   
 
 --------------------------------------------
 -- numeric instances
@@ -196,13 +203,6 @@ instance Floating D where
 
 ------------------------------------------------------------
 
-class NumOpt a where
-    maybeInt    :: a -> Maybe Int
-    maybeDouble :: a -> Maybe Double
-    fromInt     :: Int -> a
-    fromDouble  :: Double -> a
-    fromNum     :: NumExp a -> a
-    
 isZero :: NumOpt a => a -> Bool
 isZero a = maybe False id $ liftA2 (||) ((== 0) <$> maybeInt a) ((==0) <$> maybeDouble a)
 

@@ -80,13 +80,13 @@ execSE = snd . runSE
 ------------------------------------------------
 -- basic constructors
   
-noRate :: Val a => Exp E -> a
+noRate :: Val a => ExpOr E -> a
 noRate = ratedExp Nothing
   
-withRate :: Val a => Rate -> Exp E -> a
+withRate :: Val a => Rate -> ExpOr E -> a
 withRate r = ratedExp (Just r)
 
-ratedExp :: Val a => Maybe Rate -> Exp E -> a
+ratedExp :: Val a => Maybe Rate -> ExpOr E -> a
 ratedExp r = wrap . RatedExp r Nothing
 
 prim :: Val a => Prim -> a
@@ -99,7 +99,7 @@ inf :: Name -> Signature -> Info
 inf name signature = Info name signature Infix Nothing
   
 tfm :: Val a => Info -> [RatedExp E] -> a
-tfm info args = wrap $ noRate $ Tfm info $ map Fix args
+tfm info args = wrap $ noRate $ Tfm info $ map (toPrimOr . Fix) args
 
 gvar, var :: Val a => Rate -> Name -> a
 
@@ -125,7 +125,7 @@ str :: String -> Str
 str = prim . PrimString
 
 writeVar :: (Val a) => Var -> a -> SE ()
-writeVar v x = se_ $ noRate $ WriteVar v $ Fix $ unwrap x 
+writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ Fix $ unwrap x 
 
 readVar :: (Val a) => Var -> a
 readVar v = noRate $ ReadVar v
@@ -433,7 +433,7 @@ multiOuts exp = res
 multiOutsSection :: Int -> E -> [E]
 multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
     where rates = take n $ getRates $ ratedExpExp $ unFix e          
-          e' = Fix $ onExp (setMultiRate rates) $ unFix e
+          e' = undefined -- Fix $ onExp (setMultiRate rates) $ unFix e
           
           setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
             where MultiRate _ ins = infoSignature info
