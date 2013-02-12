@@ -425,7 +425,7 @@ instance Nums Sig
 instance Nums D
 
 conv :: Nums a => NumOp -> a -> a
-conv op a = noRate $ ExpNum $ PreInline op [toE a]
+conv op a = noRate $ ExpNum $ PreInline op [toPrimOr $ toE a]
 
 
 -- | Returns the amplitude equivalent of the decibel value x. Thus:

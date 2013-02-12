@@ -23,9 +23,8 @@ tabMap :: [E] -> TabMap
 tabMap es = M.fromList $ zip (nub $ getFtables =<< es) [1 ..]
 
 getFtables :: E -> [Tab]
-getFtables = cata $ \(RatedExp _ _ x) -> case x of
-    ExpPrim (PrimTab t) -> [t]
-    ExpPrim _ -> []
+getFtables = cata $ \re -> case fmap fromPrimOr $ ratedExpExp re of    
+    ExpPrim p -> fromPrim p
     Tfm _ as -> concat as
     ConvertRate _ _ a -> a
     ExpNum a -> foldMap id a
@@ -33,3 +32,10 @@ getFtables = cata $ \(RatedExp _ _ x) -> case x of
     If info a b -> foldMap id info ++ a ++ b
     ReadVar _ -> []
     WriteVar _ a -> a
+    where fromPrim x = case x of
+            PrimTab t -> [t]
+            _ -> []
+          fromPrimOr x = case unPrimOr x of
+            Left  p -> fromPrim p
+            Right a -> a
+

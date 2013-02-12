@@ -7,7 +7,8 @@ import qualified Data.Map as M
 import qualified Data.IntMap as IM
 import qualified Data.Set as S
 import Data.Ord(comparing)
-import Data.Maybe(fromJust)
+import Data.Maybe(fromJust, catMaybes)
+import Data.Either
 
 import Data.Default
 
@@ -22,6 +23,7 @@ import Csound.Exp
 
 import Debug.Trace
 
+
 echo :: Show a => String -> a -> a
 echo msg a = trace (msg ++ ": " ++ show a) a
 
@@ -33,7 +35,7 @@ data Agent = Agent
     , agentRate :: Rate
     , agentConversions :: [Conversion] }
 
-type Conversion = (RatedVar, Exp RatedVar)
+type Conversion = (RatedVar, ExpOr RatedVar)
 
 type KrateSet = S.Set Name
 
@@ -120,7 +122,7 @@ deduceRate krateSet desiredRates exp = case ratedExpExp exp of
    
 
 notifyChildren :: AgentId -> Rate -> ExpOr Int -> MsgBox s -> ST s ()
-notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query box) $ case exp of
+notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query box) $ catMaybes $ fmap wrapFromEither $ case exp of
     Tfm info xs -> notifyTfm curRate (infoSignature info) xs
     WriteVar v a -> [(a, mkQuery 0 $ varRate v)]
     If info a b -> (a, mkQuery (-2) curRate) : (b, mkQuery (-1) curRate) : encodeIfEnv (max Kr curRate) (inlineEnv info)
@@ -135,6 +137,9 @@ notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query b
           mkQuery n r = Query (Addr pid n) r
 
           encodeIfEnv rate info = map (\(port, arg) -> (arg, mkQuery port rate)) $ IM.toList info 
+
+          wrapFromEither (to, query) = either (const Nothing) (Just . \x -> (x, query)) (unPrimOr to)
+
 
 notifyParents :: MsgBox s -> M.Map Rate RatedVar -> [Query] -> ST s ()
 notifyParents box convTab qs = mapM_ (notifyParent box convTab) qs
@@ -166,29 +171,38 @@ getConversions :: AgentId -> Rate -> M.Map Rate RatedVar -> [Conversion]
 getConversions pid curRate convTable = uncurry phi =<< M.toList convTable
     where phi rate var@(RatedVar r n)
             | n == pid  = []
-            | otherwise = [(var, ConvertRate r curRate $ RatedVar curRate pid)] 
+            | otherwise = [(var, ConvertRate r curRate $ PrimOr $ Right $ RatedVar curRate pid)] 
 
 
-processLine :: MsgBox s -> (Int, RatedExp Int) -> ST s [(RatedVar, Exp RatedVar)]
+processLine :: MsgBox s -> (Int, RatedExp Int) -> ST s [(RatedVar, ExpOr RatedVar)]
 processLine box (pid, exp) = fmap phi $ loadAgent pid box     
     where phi a = agentConversions a 
             ++ return (RatedVar (agentRate a) pid, rateExp (agentRate a) (agentResponses a) (ratedExpExp exp)) 
 
 
-rateExp :: Rate -> [Response] -> Exp Int -> Exp RatedVar 
+rateExp :: Rate -> [Response] -> ExpOr Int -> ExpOr RatedVar 
 rateExp curRate rs exp = case exp of
     ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
     ExpPrim p -> ExpPrim p
-    Tfm i _ -> Tfm i vs   
-    Select rate pid a -> Select rate pid (RatedVar Xr a)    
-    If condInfo _ _ -> case vs of
+    Tfm i vsOld -> Tfm i $ mergeWithPrimOr vsOld vs
+    Select rate pid a -> Select rate pid (fmap (RatedVar Xr) a)    
+    If condInfo a' b' -> case mergeWithPrimOr (encodeIfEnv condInfo a' b') vs of
         a:b:rest -> If (decodeIfEnv condInfo rest) a b
-    ExpNum (PreInline op _) -> ExpNum (PreInline op vs)
+    ExpNum (PreInline op vsOld) -> ExpNum (PreInline op $ mergeWithPrimOr vsOld vs)
     ReadVar v -> ReadVar v
-    WriteVar v _ -> WriteVar v (head vs)
+    WriteVar v vsOld -> WriteVar v (substPrimOr vsOld $ head vs)
     where vs = map responseRatedVar $ sortBy (comparing $ addrArg . responseAddr) rs
-          decodeIfEnv info xs = info{ inlineEnv = IM.fromList $ zip [0..] xs }
+          decodeIfEnv info xs = info{ inlineEnv = IM.fromList $ zip [0..] xs }      
+          encodeIfEnv info a b = a:b:(IM.elems $ inlineEnv info)  
 
+
+substPrimOr :: PrimOr a -> b -> PrimOr b
+substPrimOr p val = PrimOr $ case unPrimOr p of
+    Left  a -> Left a
+    Right _ -> Right val
+
+mergeWithPrimOr :: [PrimOr a] -> [b] -> [PrimOr b]
+mergeWithPrimOr xs ys = zipWith substPrimOr xs ys
 
 findRate :: [Rate] -> Rate
 findRate [x] = x
@@ -199,7 +213,7 @@ findRate xs = case sort $ nub xs of
     as -> minimum as
         
 
-grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
+grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, ExpOr RatedVar)], Int)
 grate krateSet as = runST $ do
     freshIds <- newSTRef n
     box <- msgBox n    
