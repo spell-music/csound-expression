@@ -28,8 +28,8 @@ renderInstr krateSet ft instrId exp = ppInstr instrId $ renderInstrBody krateSet
 
 renderInstrBody :: KrateSet -> TabMap -> E -> [Doc]
 renderInstrBody krateSet ft sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
-    where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = renderExp (ppOuts res) exp
+    where stmt :: ([RatedVar], ExpOr RatedVar) -> Doc
+          stmt (res, exp) = renderExp ft (ppOuts res) exp
           
           st = getRenderState g
           g  = toDag ft sig
@@ -53,9 +53,9 @@ getRenderState a = RenderState moLinks moRates
           selectInfo = filter (isSelect . ratedExpExp . snd) a    
             
           extract (n, x) = case ratedExpExp x of
-                Select rate order parent -> (parent, [MultiOutPort n order])
+                Select rate order (PrimOr (Right parent)) -> (parent, [MultiOutPort n order])
 
-filterMultiOutHelpers :: [(RatedVar, Exp RatedVar)] -> [(RatedVar, Exp RatedVar)]
+filterMultiOutHelpers :: [(RatedVar, ExpOr RatedVar)] -> [(RatedVar, ExpOr RatedVar)]
 filterMultiOutHelpers = filter (not . isSelect . snd) 
 
 isSelect x = case x of
@@ -64,38 +64,36 @@ isSelect x = case x of
 
 
 toDag :: TabMap -> E -> Dag RatedExp 
-toDag ft exp = fromDag $ cse $ substTabs ft exp
+toDag ft exp = fromDag $ cse exp
 
 
-clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
+clearEmptyResults :: ([RatedVar], ExpOr RatedVar) -> ([RatedVar], ExpOr RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
+collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], ExpOr RatedVar)]
 collectRates krateSet st dag = evalState res lastFreshId  
     where res = tfmMultiRates st $ filterMultiOutHelpers dag1
           (dag1, lastFreshId) = grate krateSet dag
 
 
-tfmMultiRates :: RenderState -> [(RatedVar, Exp RatedVar)] -> State Int [([RatedVar], Exp RatedVar)]
+tfmMultiRates :: RenderState -> [(RatedVar, ExpOr RatedVar)] -> State Int [([RatedVar], ExpOr RatedVar)]
 tfmMultiRates st as = mapM substRate as
     where substRate (n, exp) 
-            | isMultiOutExp exp = fmap (,exp) $ getMultiOutVars (multiOutsLinks st IM.! ratedVarId n) exp
+            | isMultiOutExp exp = fmap (,exp) $ getMultiOutVars (multiOutsLinks st IM.! ratedVarId n) (getRates exp)
             | otherwise = return ([n], exp)
 
           isMultiOutExp x = case x of
               Tfm i _ -> isMultiOutSignature (infoSignature i)
               _ -> False
   
-getMultiOutVars :: [MultiOutPort] -> Exp RatedVar -> State Int [RatedVar]
-getMultiOutVars ports exp = fmap (zipWith RatedVar (getRates exp)) (getPorts ports)
+getMultiOutVars :: [MultiOutPort] -> [Rate] -> State Int [RatedVar]
+getMultiOutVars ports rates = fmap (zipWith RatedVar rates) (getPorts ports)
     where getPorts ps = state $ \lastFreshId -> 
             let ps' = sortBy (comparing orderMultiOutPort) ps
                 (ids, lastPortOrder) = runState (mapM (fillMissingPorts lastFreshId) ps') 0
                 ids' = ids ++ [map (+ lastFreshId) [lastPortOrder + 1 .. portsSize - 1]]                
-            in  (concat ids', lastFreshId + portsSize - inUsePortsSize)             
-                  
-                  
-          rates = getRates exp
+            in  (concat ids', lastFreshId + portsSize - inUsePortsSize)                             
+
           portsSize = length rates    
           inUsePortsSize = length ports  
                     
@@ -113,10 +111,10 @@ getMultiOutVars ports exp = fmap (zipWith RatedVar (getRates exp)) (getPorts por
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
 
-renderExp :: Doc -> Exp RatedVar -> Doc
-renderExp res exp = case fmap ppRatedVar exp of
+renderExp :: TabMap -> Doc -> ExpOr RatedVar -> Doc
+renderExp m res exp = case fmap (ppPrimOrVar m) exp of
     ExpPrim (PString n) -> ppStrget res n
-    ExpPrim p -> res $= ppPrim p
+    ExpPrim p -> res $= ppPrim m p
     Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
     Tfm info xs -> ppOpc res (infoName info) xs
     ConvertRate to from x -> ppConvertRate res to from x

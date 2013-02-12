@@ -2,7 +2,7 @@ module Csound.Exp(
     E, RatedExp(..), RatedVar(..), onExp, ExpOr, toPrimOr, PrimOr(..), Exp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
-    Prim(..), Tab(..),
+    Prim(..), Tab(..), TabMap,
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,    
     NumExp, NumOp(..)    
@@ -15,6 +15,7 @@ import Data.Foldable hiding (concat)
 
 import Data.Map(Map)
 import qualified Data.IntMap as IM
+import qualified Data.Map    as M
 import Data.Fix
 
 -- | The inner representation of csound expressions.
@@ -108,7 +109,9 @@ data Prim
     | PrimTab Tab 
     | PrimString String 
     deriving (Show, Eq, Ord)
-    
+   
+type TabMap = M.Map Tab Int
+ 
 -- | Csound f-tables. You can make a value of 'Tab' with the function 'gen'.
 data Tab = Tab 
     { tabSize    :: Int

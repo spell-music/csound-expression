@@ -15,7 +15,6 @@ import Data.Fix
 
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (int, double)
-import Csound.Tfm.TfmTree(TabMap)
 import Csound.Exp.Cons(opcs)
 import Csound.Exp.Numeric
 

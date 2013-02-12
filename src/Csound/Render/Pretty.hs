@@ -4,7 +4,7 @@ module Csound.Render.Pretty (
     binaries, unaries, funcs,
     binary, unary, func,
     ppMapTable,
-    ($=), ppRatedVar, ppOuts, ppOpc, ppProc, ppVar,
+    ($=), ppPrimOrVar, ppRatedVar, ppOuts, ppOpc, ppProc, ppVar,
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
     ppInline, ppCondOp, ppNumOp
@@ -44,6 +44,8 @@ ppRate x = case x of
     _  -> phi x
     where phi = text . map toLower . show 
 
+ppPrimOrVar :: TabMap -> PrimOr RatedVar -> Doc
+ppPrimOrVar m x = either (ppPrim m) ppRatedVar $ unPrimOr x
 
 ppRatedVar :: RatedVar -> Doc
 ppRatedVar (RatedVar r x) = ppRate r <> int x
@@ -70,13 +72,13 @@ ppVarType x = case x of
     LocalVar -> empty
     GlobalVar -> char 'g'
 
-ppPrim :: Prim -> Doc
-ppPrim x = case x of
+ppPrim :: TabMap -> Prim -> Doc
+ppPrim m x = case x of
     P n -> char 'p' <> int n
     PrimInt n -> int n
     PrimDouble d -> double d
     PrimString s -> text s
-    PrimTab f -> ppTab f
+    PrimTab f -> int $ m M.! f
     
 ppTab :: Tab -> Doc
 ppTab (Tab size n xs) = text "gen" <> int n <+> int size <+> (hsep $ map double xs)

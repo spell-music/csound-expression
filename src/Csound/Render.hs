@@ -16,7 +16,6 @@ import Csound.Tfm.TfmTree(tabMap)
 import Csound.Render.Sco
 import Csound.Render.Instr
 import Csound.Render.Options
-import Csound.Tfm.TfmTree(TabMap)
 import Csound.Exp.Numeric
 
 import Csound.Render.Pretty

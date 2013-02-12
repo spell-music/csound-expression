@@ -202,7 +202,10 @@ substPrimOr p val = PrimOr $ case unPrimOr p of
     Right _ -> Right val
 
 mergeWithPrimOr :: [PrimOr a] -> [b] -> [PrimOr b]
-mergeWithPrimOr xs ys = zipWith substPrimOr xs ys
+mergeWithPrimOr xs ys = case (xs, ys) of
+    ([], _) -> []
+    (PrimOr (Left a):as, bs) -> PrimOr (Left a) : mergeWithPrimOr as bs
+    (PrimOr (Right _):as, b:bs) -> PrimOr (Right b) : mergeWithPrimOr as bs
 
 findRate :: [Rate] -> Rate
 findRate [x] = x
