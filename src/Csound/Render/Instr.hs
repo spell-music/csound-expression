@@ -17,7 +17,6 @@ import Csound.Exp
 import Csound.Exp.Wrapper hiding (double, int)
 
 import Csound.Tfm.RateGraph
-import Csound.Tfm.TfmTree
 import Csound.Render.Pretty
 
 type InstrId = Int
@@ -28,7 +27,7 @@ renderInstr krateSet ft instrId exp = ppInstr instrId $ renderInstrBody krateSet
 
 renderInstrBody :: KrateSet -> TabMap -> E -> [Doc]
 renderInstrBody krateSet ft sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
-    where stmt :: ([RatedVar], ExpOr RatedVar) -> Doc
+    where stmt :: ([RatedVar], Exp RatedVar) -> Doc
           stmt (res, exp) = renderExp ft (ppOuts res) exp
           
           st = getRenderState g
@@ -55,7 +54,7 @@ getRenderState a = RenderState moLinks moRates
           extract (n, x) = case ratedExpExp x of
                 Select rate order (PrimOr (Right parent)) -> (parent, [MultiOutPort n order])
 
-filterMultiOutHelpers :: [(RatedVar, ExpOr RatedVar)] -> [(RatedVar, ExpOr RatedVar)]
+filterMultiOutHelpers :: [(RatedVar, Exp RatedVar)] -> [(RatedVar, Exp RatedVar)]
 filterMultiOutHelpers = filter (not . isSelect . snd) 
 
 isSelect x = case x of
@@ -67,16 +66,16 @@ toDag :: TabMap -> E -> Dag RatedExp
 toDag ft exp = fromDag $ cse exp
 
 
-clearEmptyResults :: ([RatedVar], ExpOr RatedVar) -> ([RatedVar], ExpOr RatedVar)
+clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], ExpOr RatedVar)]
+collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
 collectRates krateSet st dag = evalState res lastFreshId  
     where res = tfmMultiRates st $ filterMultiOutHelpers dag1
           (dag1, lastFreshId) = grate krateSet dag
 
 
-tfmMultiRates :: RenderState -> [(RatedVar, ExpOr RatedVar)] -> State Int [([RatedVar], ExpOr RatedVar)]
+tfmMultiRates :: RenderState -> [(RatedVar, Exp RatedVar)] -> State Int [([RatedVar], Exp RatedVar)]
 tfmMultiRates st as = mapM substRate as
     where substRate (n, exp) 
             | isMultiOutExp exp = fmap (,exp) $ getMultiOutVars (multiOutsLinks st IM.! ratedVarId n) (getRates exp)
@@ -111,7 +110,7 @@ getMultiOutVars ports rates = fmap (zipWith RatedVar rates) (getPorts ports)
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
 
-renderExp :: TabMap -> Doc -> ExpOr RatedVar -> Doc
+renderExp :: TabMap -> Doc -> Exp RatedVar -> Doc
 renderExp m res exp = case fmap (ppPrimOrVar m) exp of
     ExpPrim (PString n) -> ppStrget res n
     ExpPrim p -> res $= ppPrim m p

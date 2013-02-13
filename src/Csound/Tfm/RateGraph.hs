@@ -35,7 +35,7 @@ data Agent = Agent
     , agentRate :: Rate
     , agentConversions :: [Conversion] }
 
-type Conversion = (RatedVar, ExpOr RatedVar)
+type Conversion = (RatedVar, Exp RatedVar)
 
 type KrateSet = S.Set Name
 
@@ -121,7 +121,7 @@ deduceRate krateSet desiredRates exp = case ratedExpExp exp of
               as -> fromJust $ find (flip M.member tab) (as ++ [minBound .. maxBound])         
    
 
-notifyChildren :: AgentId -> Rate -> ExpOr Int -> MsgBox s -> ST s ()
+notifyChildren :: AgentId -> Rate -> Exp Int -> MsgBox s -> ST s ()
 notifyChildren pid curRate exp box = mapM_ (\(to, query) -> sendQuery to query box) $ catMaybes $ fmap wrapFromEither $ case exp of
     Tfm info xs -> notifyTfm curRate (infoSignature info) xs
     WriteVar v a -> [(a, mkQuery 0 $ varRate v)]
@@ -174,13 +174,13 @@ getConversions pid curRate convTable = uncurry phi =<< M.toList convTable
             | otherwise = [(var, ConvertRate r curRate $ PrimOr $ Right $ RatedVar curRate pid)] 
 
 
-processLine :: MsgBox s -> (Int, RatedExp Int) -> ST s [(RatedVar, ExpOr RatedVar)]
+processLine :: MsgBox s -> (Int, RatedExp Int) -> ST s [(RatedVar, Exp RatedVar)]
 processLine box (pid, exp) = fmap phi $ loadAgent pid box     
     where phi a = agentConversions a 
             ++ return (RatedVar (agentRate a) pid, rateExp (agentRate a) (agentResponses a) (ratedExpExp exp)) 
 
 
-rateExp :: Rate -> [Response] -> ExpOr Int -> ExpOr RatedVar 
+rateExp :: Rate -> [Response] -> Exp Int -> Exp RatedVar 
 rateExp curRate rs exp = case exp of
     ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
     ExpPrim p -> ExpPrim p
@@ -216,7 +216,7 @@ findRate xs = case sort $ nub xs of
     as -> minimum as
         
 
-grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, ExpOr RatedVar)], Int)
+grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
 grate krateSet as = runST $ do
     freshIds <- newSTRef n
     box <- msgBox n    

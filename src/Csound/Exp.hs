@@ -1,5 +1,5 @@
 module Csound.Exp(
-    E, RatedExp(..), RatedVar(..), onExp, ExpOr, toPrimOr, PrimOr(..), Exp(..), Name,
+    E, RatedExp(..), RatedVar(..), onExp, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
     Prim(..), Tab(..), TabMap,
@@ -26,7 +26,7 @@ type Name = String
 data RatedExp a = RatedExp 
     { ratedExpRate      :: Maybe Rate
     , ratedExpDepends   :: Maybe a
-    , ratedExpExp       :: ExpOr a
+    , ratedExpExp       :: Exp a
     } deriving (Show, Eq, Ord)
 
 data RatedVar = RatedVar 
@@ -34,13 +34,13 @@ data RatedVar = RatedVar
     , ratedVarId   :: Int 
     } deriving (Show)
 
-onExp :: (Exp (PrimOr a) -> Exp (PrimOr a)) -> RatedExp a -> RatedExp a
+onExp :: (Exp a -> Exp a) -> RatedExp a -> RatedExp a
 onExp f a = a{ ratedExpExp = f (ratedExpExp a) }
 
 data VarType = LocalVar | GlobalVar
     deriving (Show, Eq, Ord)
 
-type ExpOr a = Exp (PrimOr a)
+type Exp a = MainExp (PrimOr a)
 
 toPrimOr :: E -> PrimOr E
 toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
@@ -51,7 +51,7 @@ toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
 newtype PrimOr a = PrimOr { unPrimOr :: Either Prim a }
     deriving (Show, Eq, Ord)
 
-data Exp a 
+data MainExp a 
     = ExpPrim Prim
     | Tfm Info [a]
     | ConvertRate Rate Rate a
@@ -195,7 +195,7 @@ instance Traversable PrimOr where
         Left  p -> pure $ PrimOr $ Left p
         Right a -> PrimOr . Right <$> f a
 
-instance Functor Exp where
+instance Functor MainExp where
     fmap f x = case x of
         ExpPrim p -> ExpPrim p
         Tfm t xs -> Tfm t $ map f xs
@@ -208,7 +208,7 @@ instance Functor Exp where
         WriteVar v a -> WriteVar v (f a)        
 
 
-instance Foldable Exp where
+instance Foldable MainExp where
     foldMap f x = case x of
         ExpPrim p -> mempty
         Tfm t xs -> foldMap f xs
@@ -220,7 +220,7 @@ instance Foldable Exp where
         ReadVar v -> mempty
         WriteVar v a -> f a
         
-instance Traversable Exp where
+instance Traversable MainExp where
     traverse f x = case x of
         ExpPrim p -> pure $ ExpPrim p
         Tfm t xs -> Tfm t <$> traverse f xs

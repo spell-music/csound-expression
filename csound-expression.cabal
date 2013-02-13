@@ -88,7 +88,6 @@ Library
         Csound.Exp.Numeric       
         
         Csound.Tfm.RateGraph
-        Csound.Tfm.TfmTree
         
         Csound.Render
         Csound.Render.Pretty

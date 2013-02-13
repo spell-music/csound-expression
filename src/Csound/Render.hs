@@ -12,7 +12,6 @@ import Data.Fix
 
 import Csound.Exp
 import Csound.Exp.Wrapper hiding (double, int)
-import Csound.Tfm.TfmTree(tabMap)
 import Csound.Render.Sco
 import Csound.Render.Instr
 import Csound.Render.Options

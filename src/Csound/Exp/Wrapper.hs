@@ -10,7 +10,8 @@ module Csound.Exp.Wrapper(
     str, double, int, ir,
     tfm, pref, prim, p,
     isMultiOutSignature,
-    noRate, setRate, getRates,
+    noRate, setRate, 
+    getRates, tabMap,
     readVar, writeVar, gOutVar,
     Channel
 ) where
@@ -19,9 +20,12 @@ import Control.Applicative
 import Control.Monad(ap)
 import Control.Monad.Trans.State
 
+import Data.List(nub)
 import Data.String
 import Data.Fix
 import Control.Monad.Trans.State
+import qualified Data.Map as M
+import Data.Foldable(foldMap)
 
 import Csound.Exp
 
@@ -29,7 +33,6 @@ type Channel = Int
 
 -- | Output of the instrument.
 type Out = SE [Sig]
-
 
 -- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
@@ -80,13 +83,13 @@ execSE = snd . runSE
 ------------------------------------------------
 -- basic constructors
   
-noRate :: Val a => ExpOr E -> a
+noRate :: Val a => Exp E -> a
 noRate = ratedExp Nothing
   
-withRate :: Val a => Rate -> ExpOr E -> a
+withRate :: Val a => Rate -> Exp E -> a
 withRate r = ratedExp (Just r)
 
-ratedExp :: Val a => Maybe Rate -> ExpOr E -> a
+ratedExp :: Val a => Maybe Rate -> Exp E -> a
 ratedExp r = wrap . RatedExp r Nothing
 
 prim :: Val a => Prim -> a
@@ -146,11 +149,31 @@ se_ :: E -> SE ()
 se_ = fmap (const ()) . (se :: E -> SE E)
 
 ------------------------------------------------
--- basic destructors
+-- basic extractors
 
 getPrimUnsafe :: Val a => a -> Prim
 getPrimUnsafe a = case ratedExpExp $ unwrap a of
     ExpPrim p -> p
+
+tabMap :: [E] -> TabMap
+tabMap es = M.fromList $ zip (nub $ getFtables =<< es) [1 ..]
+    where 
+        getFtables :: E -> [Tab]
+        getFtables = cata $ \re -> case fmap fromPrimOr $ ratedExpExp re of    
+            ExpPrim p -> fromPrim p
+            Tfm _ as -> concat as
+            ConvertRate _ _ a -> a
+            ExpNum a -> foldMap id a
+            Select _ _ a -> a
+            If info a b -> foldMap id info ++ a ++ b
+            ReadVar _ -> []
+            WriteVar _ a -> a
+            where fromPrim x = case x of
+                    PrimTab t -> [t]
+                    _ -> []
+                  fromPrimOr x = case unPrimOr x of
+                    Left  p -> fromPrim p
+                    Right a -> a
 
 --------------------------------------------
 -- signals from primitive types
@@ -440,7 +463,7 @@ multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
             
           select n r e = withRate r $ Select r n e
 
-getRates :: Exp a -> [Rate]
+getRates :: MainExp a -> [Rate]
 getRates (Tfm info _) = case infoSignature info of
     MultiRate outs _ -> outs
     
