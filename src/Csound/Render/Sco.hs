@@ -88,7 +88,7 @@ expReader :: SE [Sig] -> ExpReader
 expReader instr instrId = swap $ runSE $ do             
     as <- instr
     let vars = instrPorts instrId as    
-    zipWithM writeVar vars as
+    zipWithM (\v a -> writeVar v $ readVar v + a) vars as
     return vars
             
 

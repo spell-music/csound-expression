@@ -77,7 +77,7 @@ ppPrim m x = case x of
     P n -> char 'p' <> int n
     PrimInt n -> int n
     PrimDouble d -> double d
-    PrimString s -> text s
+    PrimString s -> dquotes $ text s
     PrimTab f -> int $ m M.! f
     
 ppTab :: Tab -> Doc

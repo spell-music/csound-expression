@@ -456,12 +456,12 @@ multiOuts exp = res
 multiOutsSection :: Int -> E -> [E]
 multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
     where rates = take n $ getRates $ ratedExpExp $ unFix e          
-          e' = undefined -- Fix $ onExp (setMultiRate rates) $ unFix e
+          e' = Fix $ onExp (setMultiRate rates) $ unFix e
           
           setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
-            where MultiRate _ ins = infoSignature info
+              where MultiRate _ ins = infoSignature info
             
-          select n r e = withRate r $ Select r n e
+          select n r e = withRate r $ Select r n (PrimOr $ Right e)
 
 getRates :: MainExp a -> [Rate]
 getRates (Tfm info _) = case infoSignature info of

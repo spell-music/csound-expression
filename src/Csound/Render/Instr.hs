@@ -90,7 +90,7 @@ getMultiOutVars ports rates = fmap (zipWith RatedVar rates) (getPorts ports)
     where getPorts ps = state $ \lastFreshId -> 
             let ps' = sortBy (comparing orderMultiOutPort) ps
                 (ids, lastPortOrder) = runState (mapM (fillMissingPorts lastFreshId) ps') 0
-                ids' = ids ++ [map (+ lastFreshId) [lastPortOrder + 1 .. portsSize - 1]]                
+                ids' = ids ++ [map (+ lastFreshId) [0 .. portsSize - 1 - lastPortOrder]]                
             in  (concat ids', lastFreshId + portsSize - inUsePortsSize)                             
 
           portsSize = length rates    
