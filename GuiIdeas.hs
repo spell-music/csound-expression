@@ -69,3 +69,25 @@ osc = un
 linseg :: [Double'] -> Sig
 linseg = un
 
+
+---------------------
+
+class View a where
+
+instance View Slider
+instance View Button
+instance View Text
+
+view :: View a => a -> View
+
+hcat :: [View] -> View
+vcat :: [View] -> View
+
+mcat :: Int -> [View] -> View
+
+scale :: Double -> View -> View
+
+
+
+
+

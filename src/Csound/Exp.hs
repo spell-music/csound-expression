@@ -173,52 +173,22 @@ data NumOp
 -------------------------------------------------------
 -- instances for cse
 
-instance Functor RatedExp where
-    fmap f (RatedExp r d a) = RatedExp r (fmap f d) (fmap (fmap f) a)
-
-instance Foldable RatedExp where
-    foldMap f (RatedExp _ d a) = foldMap f d <> foldMap (foldMap f) a
+instance Functor  RatedExp where fmap    = fmapDefault
+instance Foldable RatedExp where foldMap = foldMapDefault
     
 instance Traversable RatedExp where
     traverse f (RatedExp r d a) = RatedExp r <$> traverse f d <*> traverse (traverse f) a
 
-instance Functor PrimOr where
-    fmap f (PrimOr a) = PrimOr (fmap f a)
-
-instance Foldable PrimOr where
-    foldMap f x = case unPrimOr x of
-        Left _  -> mempty
-        Right a -> f a
+instance Functor  PrimOr where fmap     = fmapDefault
+instance Foldable PrimOr where foldMap  = foldMapDefault
 
 instance Traversable PrimOr where
     traverse f x = case unPrimOr x of
         Left  p -> pure $ PrimOr $ Left p
         Right a -> PrimOr . Right <$> f a
 
-instance Functor MainExp where
-    fmap f x = case x of
-        ExpPrim p -> ExpPrim p
-        Tfm t xs -> Tfm t $ map f xs
-        ConvertRate ra rb a -> ConvertRate ra rb $ f a
-        Select r n a -> Select r n $ f a
-        If info a b -> If (fmap f info) (f a) (f b)
-        ExpBool a -> ExpBool $ fmap f a
-        ExpNum  a -> ExpNum  $ fmap f a
-        ReadVar v -> ReadVar v
-        WriteVar v a -> WriteVar v (f a)        
-
-
-instance Foldable MainExp where
-    foldMap f x = case x of
-        ExpPrim p -> mempty
-        Tfm t xs -> foldMap f xs
-        ConvertRate ra rb a -> f a
-        Select r n a -> f a
-        If info a b -> foldMap f info <> f a <> f b
-        ExpBool a -> foldMap f a
-        ExpNum  a -> foldMap f a
-        ReadVar v -> mempty
-        WriteVar v a -> f a
+instance Functor  MainExp where fmap    = fmapDefault
+instance Foldable MainExp where foldMap = foldMapDefault
         
 instance Traversable MainExp where
     traverse f x = case x of
@@ -232,25 +202,17 @@ instance Traversable MainExp where
         ReadVar v -> pure $ ReadVar v
         WriteVar v a -> WriteVar v <$> f a
 
-instance Functor (Inline a) where
-    fmap f a = a{ inlineEnv = fmap f $ inlineEnv a }
-
-instance Foldable (Inline a) where
-    foldMap f a = foldMap f $ inlineEnv a
+instance Functor  (Inline a) where fmap    = fmapDefault
+instance Foldable (Inline a) where foldMap = foldMapDefault
 
 instance Traversable (Inline a) where
     traverse f (Inline a b) = Inline a <$> traverse f b
 
-instance Functor (PreInline a) where
-    fmap f (PreInline op as) = PreInline op $ fmap f as
-
-instance Foldable (PreInline a) where
-    foldMap f (PreInline _ as) = foldMap f as
+instance Functor  (PreInline a) where fmap    = fmapDefault
+instance Foldable (PreInline a) where foldMap = foldMapDefault
 
 instance Traversable (PreInline a) where
     traverse f (PreInline op as) = PreInline op <$> traverse f as
-
-
 
 -- comments
 -- 
