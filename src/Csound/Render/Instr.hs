@@ -11,6 +11,7 @@ import Control.Arrow(second)
 import Data.Ord(comparing)
 import Data.Maybe(fromJust)
 
+import Data.Fix(Fix(..), cata)
 import Data.Fix.Cse(fromDag, cse)
 
 import Csound.Exp
@@ -63,8 +64,19 @@ isSelect x = case x of
 
 
 toDag :: TabMap -> E -> Dag RatedExp 
-toDag ft exp = fromDag $ cse exp
+toDag ft exp = fromDag $ cse $ trimByArgLength exp
 
+
+trimByArgLength :: E -> E
+trimByArgLength = cata $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
+    where phi x = case x of
+            Tfm info xs -> Tfm (info{infoSignature = trimInfo (infoSignature info) xs}) xs
+            _ -> x
+          trimInfo signature args = case signature of
+            SingleRate tab -> SingleRate $ fmap trim tab
+            MultiRate outs ins -> MultiRate outs (trim ins)        
+            where trim = take (length args)    
+                  
 
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
