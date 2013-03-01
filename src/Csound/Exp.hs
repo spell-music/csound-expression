@@ -1,3 +1,4 @@
+{-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp(
     E, RatedExp(..), RatedVar(..), onExp, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
@@ -27,7 +28,7 @@ data RatedExp a = RatedExp
     { ratedExpRate      :: Maybe Rate
     , ratedExpDepends   :: Maybe a
     , ratedExpExp       :: Exp a
-    } deriving (Show, Eq, Ord)
+    } deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 data RatedVar = RatedVar 
     { ratedVarRate :: Rate 
@@ -49,7 +50,7 @@ toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
     _         -> Right a
 
 newtype PrimOr a = PrimOr { unPrimOr :: Either Prim a }
-    deriving (Show, Eq, Ord)
+    deriving (Show, Eq, Ord, Functor)
 
 data MainExp a 
     = ExpPrim Prim
@@ -61,7 +62,7 @@ data MainExp a
     | ExpNum (NumExp a)
     | ReadVar Var
     | WriteVar Var a    
-    deriving (Show, Eq, Ord)  
+    deriving (Show, Eq, Ord, Functor, Foldable, Traversable)  
 
 data Var 
     = Var
@@ -125,7 +126,7 @@ data Tab = Tab
 data Inline a b = Inline 
     { inlineExp :: InlineExp a
     , inlineEnv :: IM.IntMap b    
-    } deriving (Show, Eq, Ord)
+    } deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 data InlineExp a
     = InlinePrim Int
@@ -133,7 +134,7 @@ data InlineExp a
     deriving (Show, Eq, Ord)
 
 data PreInline a b = PreInline a [b]
-    deriving (Show, Eq, Ord)
+    deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 -- booleans
 
@@ -171,86 +172,14 @@ data NumOp
     deriving (Show, Eq, Ord)
 
 -------------------------------------------------------
--- instances for cse
+-- instances for cse that ghc was not able to derive for me
 
-instance Functor RatedExp where
-    fmap f (RatedExp r d a) = RatedExp r (fmap f d) (fmap (fmap f) a)
-
-instance Foldable RatedExp where
-    foldMap f (RatedExp _ d a) = foldMap f d <> foldMap (foldMap f) a
-    
-instance Traversable RatedExp where
-    traverse f (RatedExp r d a) = RatedExp r <$> traverse f d <*> traverse (traverse f) a
-
-instance Functor PrimOr where
-    fmap f (PrimOr a) = PrimOr (fmap f a)
-
-instance Foldable PrimOr where
-    foldMap f x = case unPrimOr x of
-        Left _  -> mempty
-        Right a -> f a
+instance Foldable PrimOr where foldMap = foldMapDefault
 
 instance Traversable PrimOr where
     traverse f x = case unPrimOr x of
         Left  p -> pure $ PrimOr $ Left p
         Right a -> PrimOr . Right <$> f a
-
-instance Functor MainExp where
-    fmap f x = case x of
-        ExpPrim p -> ExpPrim p
-        Tfm t xs -> Tfm t $ map f xs
-        ConvertRate ra rb a -> ConvertRate ra rb $ f a
-        Select r n a -> Select r n $ f a
-        If info a b -> If (fmap f info) (f a) (f b)
-        ExpBool a -> ExpBool $ fmap f a
-        ExpNum  a -> ExpNum  $ fmap f a
-        ReadVar v -> ReadVar v
-        WriteVar v a -> WriteVar v (f a)        
-
-
-instance Foldable MainExp where
-    foldMap f x = case x of
-        ExpPrim p -> mempty
-        Tfm t xs -> foldMap f xs
-        ConvertRate ra rb a -> f a
-        Select r n a -> f a
-        If info a b -> foldMap f info <> f a <> f b
-        ExpBool a -> foldMap f a
-        ExpNum  a -> foldMap f a
-        ReadVar v -> mempty
-        WriteVar v a -> f a
-        
-instance Traversable MainExp where
-    traverse f x = case x of
-        ExpPrim p -> pure $ ExpPrim p
-        Tfm t xs -> Tfm t <$> traverse f xs
-        ConvertRate ra rb a -> ConvertRate ra rb <$> f a
-        Select r n a -> Select r n <$> f a
-        If info a b -> If <$> traverse f info <*> f a <*> f b
-        ExpBool a -> ExpBool <$> traverse f a
-        ExpNum  a -> ExpNum  <$> traverse f a
-        ReadVar v -> pure $ ReadVar v
-        WriteVar v a -> WriteVar v <$> f a
-
-instance Functor (Inline a) where
-    fmap f a = a{ inlineEnv = fmap f $ inlineEnv a }
-
-instance Foldable (Inline a) where
-    foldMap f a = foldMap f $ inlineEnv a
-
-instance Traversable (Inline a) where
-    traverse f (Inline a b) = Inline a <$> traverse f b
-
-instance Functor (PreInline a) where
-    fmap f (PreInline op as) = PreInline op $ fmap f as
-
-instance Foldable (PreInline a) where
-    foldMap f (PreInline _ as) = foldMap f as
-
-instance Traversable (PreInline a) where
-    traverse f (PreInline op as) = PreInline op <$> traverse f as
-
-
 
 -- comments
 -- 
