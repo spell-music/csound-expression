@@ -17,7 +17,7 @@ module Csound.LowLevel(
     -- >     (k, [k, k, i, i])]
 
     Spec1, 
-    opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11,
+    opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11, opc12,
 
     -- * Multiple outputs
     -- | Examples:

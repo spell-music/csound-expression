@@ -3,7 +3,7 @@ module Csound.Exp.Cons (
     toE, fromE,
     withInits,
     bi,
-    opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11,
+    opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11, opc12,
     mopcs, mopc0, mopc1, mopc2, mopc3, mopc4, mopc5, mopc6, mopc7
 ) where
 
@@ -101,6 +101,9 @@ tfm10 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = tfm t [unwrap a1, unwrap a2, unwrap a3,
 tfm11 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> b
 tfm11 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10, unwrap a11]
 
+tfm12 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val a12, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12 -> b
+tfm12 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10, unwrap a11, unwrap a12]
+
 -------------------------------
 -- single out
 
@@ -147,6 +150,10 @@ opc10 name signature = tfm10 (pref name $ spec1 signature)
 
 opc11 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> b
 opc11 name signature = tfm11 (pref name $ spec1 signature)
+
+opc12 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val a12, Val b) => Name -> Spec1 -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12 -> b
+opc12 name signature = tfm12 (pref name $ spec1 signature)
+
 
 -------------------------------
 -- multiple outs

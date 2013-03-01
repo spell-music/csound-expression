@@ -30,7 +30,7 @@ mixingBy f = (f =<<) . mixing
 -- >             , csdSeed = Nothing
 -- >             , csdInitc7 = []
 -- >             , csdEffect = mixing
--- >             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr"] }
+-- >             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"] }
 
 data CsdOptions = CsdOptions 
     { csdFlags      :: String       
@@ -50,7 +50,7 @@ instance Default CsdOptions where
             , csdSeed = Nothing
             , csdInitc7 = []
             , csdEffect = mixing
-            , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr"] }
+            , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"] }
 
 renderFlags = text . csdFlags
 

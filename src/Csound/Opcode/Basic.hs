@@ -24,7 +24,8 @@ module Csound.Opcode.Basic(
     -- * Envelopes
     linseg, expseg, linsegr, expsegr,
     lpshold, loopseg, looptseg,    
-
+    linen, linenr, envlpx, 
+    
     -----------------------------------------------------
     -- * Delays
 
@@ -57,7 +58,7 @@ module Csound.Opcode.Basic(
 
     -----------------------------------------------------
     -- * Reverb
-    freeverb, reverbsc, reverb, nreverb, babo, 
+    freeverb, reverbsc, reverb, reverb2, nreverb, babo, 
 
     -----------------------------------------------------
     -- * Signal Measurement, Dynamic Processing, Sample Level Operations
@@ -472,6 +473,45 @@ mkLps :: Name -> Sig -> Sig -> [Sig] -> Sig
 mkLps name kfreq ktrig kvals = opcs name signature $ kfreq:ktrig:kvals
     where signature = [(k, repeat k)]
 
+-- | Apply a stright line rise and decay pattern to an imput amp signal.
+--
+-- > kr linen kamp, iris, idur, idec
+-- > ar linen xamp, iris, idur, idec
+--
+-- doc: <http://www.csounds.com/manual/html/linen.html>
+linen :: Sig -> D -> D -> D -> Sig
+linen = opc4 "linen" [
+    (k, k:is 3),
+    (a, x:is 3)]
+    
+-- | Apply a stright line rise then an exponential decay decay while the note is extended in time.
+--
+-- > kr linenr kamp, iris, idur, iatdec
+-- > ar linenr xamp, iris, idur, iatdec
+--
+-- doc: <http://www.csounds.com/manual/html/linenr.html>
+linenr :: Sig -> D -> D -> D -> Sig
+linenr = opc4 "linenr" [
+    (k, k:is 3),
+    (a, x:is 3)]
+
+-- | Apply an envelope consisting of 3 segments:
+--
+-- * stored function rise shape
+--
+-- * modified exponential \"pseudo steady state\" 
+--
+-- * exponential decay
+--
+-- > kr envlpx kamp, irise, idur, idec, ifn, iatss, iatdec, [ixmod]
+-- > ar envlpx xamp, irise, idur, idec, ifn, iatss, iatdec, [ixmod]
+--
+-- doc: <http://www.csounds.com/manual/html/envlpx.html>
+envlpx :: Sig -> D -> D -> D -> Tab -> D -> D -> Sig
+envlpx = opc7 "envlpx" [
+    (k, k:is 8),
+    (a, x:is 8)]
+
 ----------------------------------------------------
 -- audio delays
 
@@ -731,6 +771,15 @@ reverbsc = mopc4 "reverbsc" ([a, a], [a, a, k, k, i, i, i])
 -- doc: <http://www.csounds.com/manual/html/reverb.html>
 reverb :: Sig -> Sig -> Sig
 reverb = opc2 "reverb" [(a, [a, k, i])]
+
+-- | This is a reverberator consisting of 6 parallel comb-lowpass filters
+-- being fed into series of 5 allpass filters.
+--
+-- > ares reverb2 asig, ktime, khdif
+--
+-- doc: <http://www.csounds.com/manual/html/reverb2.html>
+reverb2 :: Sig -> Sig -> Sig -> Sig
+reverb2 = opc3 "reverb2" [(a, [a, k, k])]
 
 -- | This is a reverberator consisting of 6 parallel comb-lowpass filters being fed into a series 
 -- of 5 allpass filters. nreverb replaces reverb2 (version 3.48) and so both opcodes are identical. 

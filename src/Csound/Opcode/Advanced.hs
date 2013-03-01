@@ -16,6 +16,11 @@ module Csound.Opcode.Advanced (
     -- ** Doppler Shift
     doppler,
     
+
+    -----------------------------------------------------
+    -- * Granular Synthesis
+    fof,
+    
     -----------------------------------------------------
     -- * Convolution
     pconvolve, convolve, ftconv, dconv,  
@@ -253,6 +258,17 @@ doppler = opc3 "doppler" [(a, [a, k, k, i, i])]
 
 -----------------------------------------------------
 -- * Granular Synthesis
+
+-- | Audio output is a succession of sinusoid bursts initiated at frequency
+-- xfund with a spectral peak at xform. For xfund above 25 Hz these burts produce 
+-- a speech-like formant with spectral characteristics determined by the k-input parameters.
+-- For lower fundamentals this generator provides a special form of granular synthesis.
+--
+-- > ar fof xamp, xfund, xform, koct, kband, kris, kdur, kdec, iolaps, ifna, ifnb, itotdur, [iphs, ifmode]
+--
+-- doc: <http://www.csounds.com/manual/html/fof.html>
+fof :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> D -> Sig
+fof = opc12 "fof" [(a, [x, x, x, k, k, k, k, k, i, i, i, i, i, i, i])]   
 
 -----------------------------------------------------
 -- * Convolution
