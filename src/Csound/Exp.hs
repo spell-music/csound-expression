@@ -3,16 +3,18 @@ module Csound.Exp(
     E, RatedExp(..), RatedVar(..), onExp, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
-    Prim(..), Tab(..), TabMap,
+    Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap,
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,    
-    NumExp, NumOp(..)    
+    NumExp, NumOp(..), Msg(..), Note, Event(..), eventEnd,   
 ) where
 
 import Control.Applicative
 import Data.Monoid
 import Data.Traversable
 import Data.Foldable hiding (concat)
+
+import Data.Default
 
 import Data.Map(Map)
 import qualified Data.IntMap as IM
@@ -107,18 +109,59 @@ data Prim
     | PString Int       -- >> p-string: 
     | PrimInt Int 
     | PrimDouble Double 
-    | PrimTab Tab 
+    | PrimTab (Either Tab LowTab)
     | PrimString String 
     deriving (Show, Eq, Ord)
    
-type TabMap = M.Map Tab Int
- 
--- | Csound f-tables. You can make a value of 'Tab' with the function 'gen'.
-data Tab = Tab 
-    { tabSize    :: Int
-    , tabGen     :: Int
-    , tabArgs    :: [Double]
+type TabMap = M.Map LowTab Int
+
+data LowTab = LowTab 
+    { lowTabSize    :: Int
+    , lowTabGen     :: Int
+    , lowTabArgs    :: [Double]
     } deriving (Show, Eq, Ord)
+
+-- | Csound f-tables. You can make a value of 'Tab' with the function 'Csound.Tab.gen' or
+-- use more higher level functions.
+data Tab = Tab 
+    { tabSize :: TabSize
+    , tabGen  :: Int
+    , tabArgs :: TabArgs
+    } deriving (Show, Eq, Ord)
+
+instance Default TabSize where
+    def = SizeDegree
+        { hasGuardPoint = False
+        , isNormalized = True
+        , sizeDegree = 0 }
+
+data TabSize 
+    = SizePlain Int
+    | SizeDegree 
+    { hasGuardPoint :: Bool
+    , isNormalized  :: Bool
+    , sizeDegree    :: Int 
+    } deriving (Show, Eq, Ord)
+    
+data TabArgs 
+    = ArgsPlain [Double]
+    | ArgsRelative [Double]
+    deriving (Show, Eq, Ord)
+
+-- | Midi messages.
+data Msg = Msg
+
+type Note = [Prim]
+
+data Event a = Event 
+    { eventStart :: Double
+    , eventDur   :: Double
+    , eventContent :: a }
+    
+eventEnd e = eventStart e + eventDur e
+
+instance Functor Event where
+    fmap f a = a{ eventContent = f $ eventContent a }
 
 ------------------------------------------------------------
 -- types for arithmetic and boolean expressions

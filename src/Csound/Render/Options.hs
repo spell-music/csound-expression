@@ -30,7 +30,8 @@ mixingBy f = (f =<<) . mixing
 -- >             , csdSeed = Nothing
 -- >             , csdInitc7 = []
 -- >             , csdEffect = mixing
--- >             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"] }
+-- >             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"],
+-- >             , tabResolution = 8192 }  -- should be power of 2
 
 data CsdOptions = CsdOptions 
     { csdFlags      :: String       
@@ -40,6 +41,7 @@ data CsdOptions = CsdOptions
     , csdInitc7     :: [(Channel, CtrlId, Double)]
     , csdEffect     :: [[Sig]] -> SE [Sig]
     , csdKrate      :: [String]
+    , tabResolution :: Int
     }
 
 instance Default CsdOptions where
@@ -50,7 +52,8 @@ instance Default CsdOptions where
             , csdSeed = Nothing
             , csdInitc7 = []
             , csdEffect = mixing
-            , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"] }
+            , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"]
+            , tabResolution = 8192 }
 
 renderFlags = text . csdFlags
 

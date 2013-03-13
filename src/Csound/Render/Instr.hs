@@ -23,16 +23,16 @@ import Csound.Render.Pretty
 type InstrId = Int
 type Dag f = [(Int, f Int)]
 
-renderInstr :: KrateSet -> TabMap -> InstrId -> E -> Doc
-renderInstr krateSet ft instrId exp = ppInstr instrId $ renderInstrBody krateSet ft exp
+renderInstr :: KrateSet -> InstrId -> E -> Doc
+renderInstr krateSet instrId exp = ppInstr instrId $ renderInstrBody krateSet exp
 
-renderInstrBody :: KrateSet -> TabMap -> E -> [Doc]
-renderInstrBody krateSet ft sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
+renderInstrBody :: KrateSet -> E -> [Doc]
+renderInstrBody krateSet sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = renderExp ft (ppOuts res) exp
+          stmt (res, exp) = renderExp (ppOuts res) exp
           
           st = getRenderState g
-          g  = toDag ft sig
+          g  = toDag sig
 
 
 data RenderState = RenderState 
@@ -63,8 +63,8 @@ isSelect x = case x of
     _ -> False
 
 
-toDag :: TabMap -> E -> Dag RatedExp 
-toDag ft exp = fromDag $ cse $ trimByArgLength exp
+toDag :: E -> Dag RatedExp 
+toDag exp = fromDag $ cse $ trimByArgLength exp
 
 
 trimByArgLength :: E -> E
@@ -122,10 +122,10 @@ getMultiOutVars ports rates = fmap (zipWith RatedVar rates) (getPorts ports)
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
 
-renderExp :: TabMap -> Doc -> Exp RatedVar -> Doc
-renderExp m res exp = case fmap (ppPrimOrVar m) exp of
+renderExp :: Doc -> Exp RatedVar -> Doc
+renderExp res exp = case fmap ppPrimOrVar exp of
     ExpPrim (PString n) -> ppStrget res n
-    ExpPrim p -> res $= ppPrim m p
+    ExpPrim p -> res $= ppPrim p
     Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
     Tfm info xs -> ppOpc res (infoName info) xs
     ConvertRate to from x -> ppConvertRate res to from x

@@ -69,7 +69,6 @@ import Data.Fix
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons
-import Csound.Render.Sco(Msg)
 
 i = Ir
 k = Kr

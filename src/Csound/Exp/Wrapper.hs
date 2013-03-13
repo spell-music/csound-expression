@@ -11,7 +11,7 @@ module Csound.Exp.Wrapper(
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, 
-    getRates, tabMap,
+    getRates, tabMap, updateTabSize, defineInstrTabs, defineScoreTabs, substInstrTabs, substScoreTabs,
     readVar, writeVar, gOutVar,
     Channel
 ) where
@@ -155,25 +155,104 @@ getPrimUnsafe :: Val a => a -> Prim
 getPrimUnsafe a = case ratedExpExp $ unwrap a of
     ExpPrim p -> p
 
-tabMap :: [E] -> TabMap
-tabMap es = M.fromList $ zip (nub $ getFtables =<< es) [1 ..]
-    where 
-        getFtables :: E -> [Tab]
-        getFtables = cata $ \re -> case fmap fromPrimOr $ ratedExpExp re of    
-            ExpPrim p -> fromPrim p
-            Tfm _ as -> concat as
-            ConvertRate _ _ a -> a
-            ExpNum a -> foldMap id a
-            Select _ _ a -> a
-            If info a b -> foldMap id info ++ a ++ b
-            ReadVar _ -> []
-            WriteVar _ a -> a
-            where fromPrim x = case x of
-                    PrimTab t -> [t]
-                    _ -> []
-                  fromPrimOr x = case unPrimOr x of
-                    Left  p -> fromPrim p
-                    Right a -> a
+tabMap :: [E] -> [[Event Note]] -> TabMap
+tabMap es ps = M.fromList $ zip (nub $ (concat $ mapM (getScoreTabs =<< ) ps) ++ (getInstrTabs =<< es)) [1 ..]
+    
+getInstrTabs :: E -> [LowTab]
+getInstrTabs = cata $ \re -> case fmap fromPrimOr $ ratedExpExp re of    
+    ExpPrim p -> getPrimTabs p
+    Tfm _ as -> concat as
+    ConvertRate _ _ a -> a
+    ExpNum a -> foldMap id a
+    Select _ _ a -> a
+    If info a b -> foldMap id info ++ a ++ b
+    ReadVar _ -> []
+    WriteVar _ a -> a
+    where fromPrimOr x = case unPrimOr x of
+            Left  p -> getPrimTabs p
+            Right a -> a
+
+getScoreTabs :: Event Note -> [LowTab]
+getScoreTabs = (getPrimTabs =<< ) . eventContent
+
+getPrimTabs :: Prim -> [LowTab]
+getPrimTabs x = case x of
+    PrimTab (Right t) -> [t]
+    _ -> []
+
+substPrimTab :: TabMap -> Prim -> Prim
+substPrimTab m x = case x of 
+    PrimTab (Right tab) -> PrimInt (m M.! tab)
+    _ -> x
+
+substInstrTabs :: TabMap -> E -> E
+substInstrTabs m = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp re }
+    where phi x = case unPrimOr x of
+            Left p -> PrimOr $ Left $ substPrimTab m p
+            _ -> x 
+
+substScoreTabs :: TabMap -> [Event Note] -> [Event Note]
+substScoreTabs m = fmap (fmap (fmap (substPrimTab m)))
+
+defineScoreTabs :: Int -> [Event Note] -> [Event Note]
+defineScoreTabs n = fmap (fmap (fmap (definePrimTab n)))
+
+defineInstrTabs :: Int -> E -> E
+defineInstrTabs n = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp re }
+    where phi x = case unPrimOr x of
+            Left p -> PrimOr $ Left $ definePrimTab n p
+            _ -> x 
+
+definePrimTab :: Int -> Prim -> Prim
+definePrimTab n x = case x of
+    PrimTab (Left tab) -> PrimTab (Right $ defineTab n tab)
+
+defineTab :: Int -> Tab -> LowTab
+defineTab midSize tab = LowTab size (tabGen tab) args
+    where size = defineTabSize midSize (tabSize tab)
+          args = defineTabArgs size (tabArgs tab)
+
+defineTabArgs :: Int -> TabArgs -> [Double] 
+defineTabArgs size args = case args of
+    ArgsPlain as -> as 
+    ArgsRelative as -> fromRelative size as
+    where fromRelative n as = substEvens (mkRelative n $ getEvens as) as
+          getEvens xs = case xs of
+            [] -> []
+            a:[] -> []
+            a:b:as -> b : getEvens as
+            
+          substEvens evens xs = case (evens, xs) of
+            ([], xs) -> xs
+            (es, []) -> []
+            (e:es, a:b:as) -> a : e : substEvens es as
+            
+          mkRelative n as = fmap (fromIntegral . round . (s * )) as
+            where s = fromIntegral n / sum as
+            
+
+defineTabSize :: Int -> TabSize -> Int
+defineTabSize base x = case x of
+       SizePlain n -> n
+       SizeDegree guardPoint normalized degree -> 
+                byNormalization normalized $
+                byGuardPoint guardPoint $
+                byDegree base degree
+    where byNormalization norm 
+            | norm      = id
+            | otherwise = negate
+            
+          byGuardPoint guardPoint 
+            | guardPoint = (+ 1)
+            | otherwise  = id
+            
+          byDegree base n 
+            | n == 0 = base
+            | n > 0  = base * (2 ^ n)
+            | n < 0  = base `div` (2 ^ abs n)    
+
+updateTabSize :: (TabSize -> TabSize) -> Tab -> Tab
+updateTabSize phi tab = tab{ tabSize = phi $ tabSize tab }
 
 --------------------------------------------
 -- signals from primitive types
@@ -246,7 +325,7 @@ instance Val Str where
 
 instance Val Tab where
     wrap = undefined
-    unwrap = prim . PrimTab
+    unwrap = prim . PrimTab . Left
 
 instance Val BoolSig where
     wrap = BoolSig . Fix

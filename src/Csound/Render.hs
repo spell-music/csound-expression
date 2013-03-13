@@ -37,28 +37,29 @@ renderCsd = renderCsdBy def
 renderCsdBy :: CsdOptions -> [SigOut] -> String
 renderCsdBy opt as = show $ ppCsdFile 
     (renderFlags opt)
-    (renderInstr0 (nchnls lastInstrExp) (midiAssignTable ids as) opt)
-    (ppOrc $ firstInstr : lastInstr : zipWith (renderInstr krateSet fts) ids instrs)
-    (ppSco $ firstInstrNote : lastInstrNote : zipWith (renderScores strs fts) ids scos)
+    (renderInstr0 (nchnls lastInstr) (midiAssignTable ids as) opt)
+    (ppOrc $ zipWith (renderInstr krateSet) allIds (fmap (substInstrTabs fts) allInstrs))
+    (ppSco $ firstInstrNote : lastInstrNote : zipWith (renderScores strs) ids (fmap (substScoreTabs fts) $ scos))
     (renderStringTable strs)
     (renderTotalDur $$ renderTabs fts)
-    where scos   = map (scoSigOut' . sigOutContent) as          
+    where scos   = fmap (scoSigOut' . sigOutContent) as          
           (instrs, effects, initOuts) = unzip3 $ zipWith runExpReader as ids    
-          fts    = tabMap $ lastInstrExp : instrs
+          fts    = tabMap allInstrs scos
           strs   = stringMap $ concat scos
           ids    = take nInstr [2 .. ]
+          
+          allInstrs = fmap (defineInstrTabs (tabResolution opt)) $ firstInstr : lastInstr : instrs
+          allIds    = firstInstrId : lastInstrId : ids
           
           nInstr = length as
           firstInstrId = 1
           lastInstrId  = nInstr + 2          
         
-          firstInstr = renderInstr krateSet fts firstInstrId $ execSE $ sequence_ initOuts
-          lastInstr  = renderInstr krateSet fts lastInstrId lastInstrExp
-          
-          lastInstrExp = mixingInstrExp globalEffect effects
+          firstInstr = execSE $ sequence_ initOuts
+          lastInstr  = mixingInstrExp globalEffect effects
            
           scoSigOut' x = case x of
-              PlainSigOut _ _ -> scoSigOut x
+              PlainSigOut _ _ -> defineScoreTabs (tabResolution opt) $ scoSigOut x
               _ -> []            
 
           dur = maybe 64000000 id $ totalDur as

@@ -44,8 +44,8 @@ ppRate x = case x of
     _  -> phi x
     where phi = text . map toLower . show 
 
-ppPrimOrVar :: TabMap -> PrimOr RatedVar -> Doc
-ppPrimOrVar m x = either (ppPrim m) ppRatedVar $ unPrimOr x
+ppPrimOrVar :: PrimOr RatedVar -> Doc
+ppPrimOrVar x = either ppPrim ppRatedVar $ unPrimOr x
 
 ppRatedVar :: RatedVar -> Doc
 ppRatedVar (RatedVar r x) = ppRate r <> int x
@@ -72,16 +72,16 @@ ppVarType x = case x of
     LocalVar -> empty
     GlobalVar -> char 'g'
 
-ppPrim :: TabMap -> Prim -> Doc
-ppPrim m x = case x of
+ppPrim :: Prim -> Doc
+ppPrim x = case x of
     P n -> char 'p' <> int n
     PrimInt n -> int n
     PrimDouble d -> double d
     PrimString s -> dquotes $ text s
-    PrimTab f -> int $ m M.! f
+    PrimTab f -> error $ "i'm lost table, please substitute me (" ++ (show f) ++ ")" 
     
-ppTab :: Tab -> Doc
-ppTab (Tab size n xs) = text "gen" <> int n <+> int size <+> (hsep $ map double xs)
+ppTab :: LowTab -> Doc
+ppTab (LowTab size n xs) = text "gen" <> int n <+> int size <+> (hsep $ map double xs)
  
 ppIf :: Doc -> Doc -> Doc -> Doc
 ppIf p t e = p <+> char '?' <+> t <+> char ':' <+> e
@@ -105,9 +105,9 @@ ppConvertRate out to from var = case (to, from) of
 ppTabDef ft id = char 'f' 
     <>  int id 
     <+> int 0 
-    <+> (int $ tabSize ft)
-    <+> (int $ tabGen ft) 
-    <+> (hsep $ map double $ tabArgs ft)
+    <+> (int $ lowTabSize ft)
+    <+> (int $ lowTabGen ft) 
+    <+> (hsep $ map double $ lowTabArgs ft)
 
 ppStrset str id = text "strset" <+> int id <> comma <+> (dquotes $ text str)
 

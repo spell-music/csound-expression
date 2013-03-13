@@ -1,8 +1,7 @@
 module Csound.Render.Sco(
     score, SigOut(..), effect, 
-    Msg, massign , pgmassign, MidiType(..),
-
-    Event(..), eventEnd, PlainSigOut(..), renderScores,
+    massign , pgmassign, MidiType(..),
+    eventEnd, PlainSigOut(..), renderScores,
     runExpReader, nchnls, stringMap, outs'
 ) where
 
@@ -26,21 +25,6 @@ type StringMap = M.Map String Int
 
 -------------------------------------------------------
 -- scores
-
-type Note = [Prim]
-
--- | Midi messages.
-data Msg = Msg
-
-data Event a = Event 
-    { eventStart :: Double
-    , eventDur   :: Double
-    , eventContent :: a }
-    
-eventEnd e = eventStart e + eventDur e
-
-instance Functor Event where
-    fmap f a = a{ eventContent = f $ eventContent a }
 
 -- | Applies a global effect function to the signal. With this function we can add reverb or panning to the mixed signal.
 -- The argument function takes a list of signals. Each cell of the list contains a signal on the given channel.
@@ -112,16 +96,16 @@ midiAssign ty n = SigOut return . Midi ty n . expReader . ($ Msg)
 -----------------------------------------------------------------
 -- render
 
-renderScores :: StringMap -> TabMap -> InstrId -> [Event Note] -> Doc
-renderScores strs fts instrId as = ppScore $ map (renderNote strs fts instrId) as
+renderScores :: StringMap -> InstrId -> [Event Note] -> Doc
+renderScores strs instrId as = ppScore $ map (renderNote strs instrId) as
 
-renderNote :: StringMap -> TabMap -> InstrId -> Event Note -> Doc
-renderNote strs fts instrId e = ppNote instrId (eventStart e) (eventDur e) (map prim $ eventContent e)
+renderNote :: StringMap -> InstrId -> Event Note -> Doc
+renderNote strs instrId e = ppNote instrId (eventStart e) (eventDur e) (map prim $ eventContent e)
     where prim x = case x of
               PrimInt n -> int n
-              PrimDouble d -> double d
-              PrimTab f -> int $ fts M.! f
+              PrimDouble d -> double d              
               PrimString s -> int $ strs M.! s
+              PrimTab f -> error $ "i'm lost in the scores, substitute me (" ++ show f ++ ")"
               
 
 stringMap :: [Event Note] -> StringMap
