@@ -74,6 +74,7 @@ Library
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
+        Csound.Air
         Csound.Tab
         Csound.LowLevel
         Csound.Opcode

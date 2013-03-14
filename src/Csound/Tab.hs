@@ -53,7 +53,7 @@ module Csound.Tab (
     gen,
     
     -- * Modify tables
-    skipNorm, setSize, setDegree,
+    skipNorm, setSize, setDegree, guardPoint, gp,
     
     -- ** Handy shortcuts        
     -- | handy shortcuts for the function 'setDegree'.
@@ -227,7 +227,7 @@ sines3 xs = plains 9 [a | (pn, str, phs) <- xs, a <- [pn, str, phs]]
 sines4 :: [(PartialNumber, PartialStrength, PartialPhase, PartialDC)] -> Tab
 sines4 xs = plains 19 [a | (pn, str, phs, dc) <- xs, a <- [pn, str, phs, dc]]
 
--- | Generates values similar to the opcode @buzz@. 
+-- | Generates values similar to the opcode 'Csound.Opcode.Basic.buzz'. 
 --
 -- > buzzes numberOfHarmonics [lowestHarmonic, coefficientOfAttenuation]
 --
@@ -300,6 +300,10 @@ guardPoint :: Tab -> Tab
 guardPoint = updateTabSize $ \x -> case x of
     SizePlain n -> SizePlain (n + 1)
     a -> a{ hasGuardPoint = True }    
+
+-- | Shortcut for 'Csound.Tab.guardPoint'.
+gp :: Tab -> Tab
+gp = guardPoint
 
 -- | Sets an absolute size value. As you can do it in the Csound files.
 setSize :: Int -> Tab -> Tab
