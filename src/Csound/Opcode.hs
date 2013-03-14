@@ -1,8 +1,9 @@
 -- | Here you will find all opcodes from the Csound floss manual (<http://en.flossmanuals.net/csound/overview/>). 
--- If you are missing some opcodes feel free to use "Csound.LowLevel". It's easy. 
+-- If you are missing some opcodes feel free to use "Csound.LowLevel". It's easy. If it's some opcode you like a lot you can send
+-- it to me by email and I will include it here.
 --
 -- All opcodes are defined without initialisation arguments. If you want to supply the auxiliary arguments
--- use the function 'withInits'.
+-- use the function 'Csound.Base.withInits'.
 module Csound.Opcode (
     module Csound.Opcode.Basic,
     module Csound.Opcode.Advanced,
