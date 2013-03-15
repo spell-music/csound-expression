@@ -2,7 +2,7 @@
         TypeSynonymInstances,
         FlexibleInstances #-}
 module Csound.Exp.Wrapper(
-    Out, Sig, I, D, Str, BoolSig(..), Spec, ToSig(..),
+    Out(..), Outs, Sig, I, D, Str, BoolSig(..), Spec, ToSig(..),
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
@@ -17,7 +17,7 @@ module Csound.Exp.Wrapper(
 ) where
 
 import Control.Applicative
-import Control.Monad(ap)
+import Control.Monad(ap, join)
 import Control.Monad.Trans.State
 
 import Data.List(nub)
@@ -31,8 +31,11 @@ import Csound.Exp
 
 type Channel = Int
 
+type Outs = SE [Sig]
+
 -- | Output of the instrument.
-type Out = SE [Sig]
+class Out a where
+    toOut :: a -> SE [Sig]
 
 -- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
@@ -550,4 +553,43 @@ isMultiOutSignature :: Signature -> Bool
 isMultiOutSignature x = case x of
     MultiRate _ _ -> True
     _ -> False
+
+------------------------------------------------
+-- instrument outs
+
+instance Out Sig where
+    toOut = return . return
+    
+instance Out a => Out [a] where
+    toOut = fmap concat . mapM toOut 
+
+instance Out a => Out (SE a) where
+    toOut = join . fmap toOut
+
+instance (Out a, Out b) => Out (a, b) where
+    toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
+    
+instance (Out a, Out b, Out c) => Out (a, b, c) where
+    toOut (a, b, c) = toOut (a, (b, c))
+    
+instance (Out a, Out b, Out c, Out d) => Out (a, b, c, d) where
+    toOut (a, b, c, d) = toOut (a, (b, c, d))
+ 
+instance (Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
+    toOut (a, b, c, d, e) = toOut (a, (b, c, d, e))
+
+instance (Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
+    toOut (a, b, c, d, e, f) = toOut (a, (b, c, d, e, f))
+
+instance (Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e, f, g) where
+    toOut (a, b, c, d, e, f, g) = toOut (a, (b, c, d, e, f, g))
+
+instance (Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
+    toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
+
+
+       
+ 
+
+
 

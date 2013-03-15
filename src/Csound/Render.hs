@@ -1,5 +1,5 @@
 module Csound.Render(
-    renderCsd, renderCsdBy, out, outs
+    renderCsd, renderCsdBy
 ) where
 
 import Data.Default
@@ -20,14 +20,6 @@ import Csound.Exp.Numeric
 import Csound.Render.Pretty
 
 import Csound.Opcode(clip, zeroDbfs)
-
--- | Synonym for @return . return@.
-out :: Sig -> Out
-out = return . return
-
--- | Synonym for @return@.
-outs :: [Sig] -> Out
-outs = return
 
 -- | Renders Csound file.
 renderCsd :: [SigOut] -> String

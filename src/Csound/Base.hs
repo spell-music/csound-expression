@@ -73,7 +73,7 @@ module Csound.Base(
     -- * Making a sound
     
     -- | Let's make some noise. Sound is build from list of tracks ('SigOut').
-    Out, SigOut, effect, out, outs,  
+    Out, SigOut, effect, Outs,
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.

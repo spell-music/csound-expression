@@ -6,18 +6,18 @@ module Csound.Render.Options(
 import Data.List(transpose)
 import Data.Default
 
-import Csound.Exp.Wrapper(Channel, Sig, SE, Out)
+import Csound.Exp.Wrapper(Channel, Sig, SE, Out, Outs)
 import Csound.Render.Sco
 import Csound.Render.Pretty
 
 type CtrlId = Int
 
 -- | Sums signals for every channel.
-mixing :: [[Sig]] -> Out
+mixing :: [[Sig]] -> Outs
 mixing = return . fmap sum . transpose
 
 -- | Sums signals for every channel and the processes the output with the given function.
-mixingBy :: ([Sig] -> Out) -> ([[Sig]] -> Out)
+mixingBy :: ([Sig] -> Outs) -> ([[Sig]] -> Outs)
 mixingBy f = (f =<<) . mixing 
 
 -- | Csound options. The default value is
@@ -39,7 +39,7 @@ data CsdOptions = CsdOptions
     , csdBlockSize  :: Int          
     , csdSeed       :: Maybe Int    
     , csdInitc7     :: [(Channel, CtrlId, Double)]
-    , csdEffect     :: [[Sig]] -> SE [Sig]
+    , csdEffect     :: [[Sig]] -> Outs
     , csdKrate      :: [String]
     , tabResolution :: Int
     }

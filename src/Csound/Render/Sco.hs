@@ -28,7 +28,7 @@ type StringMap = M.Map String Int
 
 -- | Applies a global effect function to the signal. With this function we can add reverb or panning to the mixed signal.
 -- The argument function takes a list of signals. Each cell of the list contains a signal on the given channel.
-effect :: ([Sig] -> Out) -> SigOut -> SigOut
+effect :: ([Sig] -> SE [Sig]) -> SigOut -> SigOut
 effect f a = a{ sigOutEffect = f <=< sigOutEffect a }
 
 -- | The abstract type of musical tracks. 
@@ -63,9 +63,9 @@ outs' as = se_ $ opcs (name as) [(Xr, repeat Ar)] as
             | otherwise      = "outs"
 
 
-score :: (Arg a) => (a -> Out) -> [(Double, Double, a)] -> SigOut
+score :: (Arg a, Out b) => (a -> b) -> [(Double, Double, a)] -> SigOut
 score instr scores = SigOut return $ 
-    PlainSigOut (expReader $ instr toArg) (fmap (\(a, b, c) -> Event a b (toNote argMethods c)) scores)
+    PlainSigOut (expReader $  (toOut . instr) toArg) (fmap (\(a, b, c) -> Event a b (toNote argMethods c)) scores)
 
 
 expReader :: SE [Sig] -> ExpReader
@@ -84,14 +84,14 @@ nchnls :: E -> Int
 nchnls x = case ratedExpExp $ unFix x of
     Tfm _ as -> length as
 
-massign :: Channel -> (Msg -> Out) -> SigOut 
+massign :: (Out a) => Channel -> (Msg -> a) -> SigOut 
 massign = midiAssign Massign
 
-pgmassign :: Maybe Channel -> Int -> (Msg -> Out) -> SigOut 
+pgmassign :: (Out a) => Maybe Channel -> Int -> (Msg -> a) -> SigOut 
 pgmassign chn = midiAssign (Pgmassign chn)
 
-midiAssign :: MidiType -> Channel -> (Msg -> SE [Sig]) -> SigOut
-midiAssign ty n = SigOut return . Midi ty n . expReader . ($ Msg)
+midiAssign :: (Out a) => MidiType -> Channel -> (Msg -> a) -> SigOut
+midiAssign ty n = SigOut return . Midi ty n . expReader . toOut . ($ Msg)
 
 -----------------------------------------------------------------
 -- render
