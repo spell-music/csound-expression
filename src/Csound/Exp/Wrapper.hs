@@ -53,7 +53,7 @@ newtype Str = Str { unStr :: E }
 -- out of simple signals.
 newtype BoolSig = BoolSig { unBoolSig :: E }
 
--- | Spectrum of the signal (see "FFT and Spectral Processing" in the "Csound.Opcode.Advanced"). 
+-- | Spectrum of the signal (see FFT and Spectral Processing at "Csound.Opcode.Advanced"). 
 newtype Spec = Spec { unSpec :: E }
 
 ------------------------------------------------
