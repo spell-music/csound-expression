@@ -2,12 +2,12 @@
         TypeSynonymInstances,
         FlexibleInstances #-}
 module Csound.Exp.Wrapper(
-    Out(..), Outs, Sig, I, D, Str, BoolSig(..), Spec, ToSig(..),
+    Out(..), Outs, Sig, D, Str, BoolSig(..), Spec, ToSig(..),
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
     Val(..),
-    str, double, int, ir,
+    str, double, ir,
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, 
@@ -39,9 +39,6 @@ class Out a where
 
 -- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
-
--- | Integers.
-newtype I = I { unI :: E }
 
 -- | Doubles.
 newtype D = D { unD :: E }
@@ -117,10 +114,6 @@ mkVar ty rate name = wrap $ noRate $ ReadVar (Var ty rate name)
 
 p :: Val a => Int -> a
 p = prim . P
-
--- | Converts Haskell's integers to Csound's integers
-int :: Int -> I
-int = prim . PrimInt
 
 -- | Converts Haskell's doubles to Csound's doubles
 double :: Double -> D
@@ -265,10 +258,6 @@ class ToSig a where
     ar :: a -> Sig  -- ^ Forces signal to audio rate. 
     kr :: a -> Sig  -- ^ Forces signal to control rate. 
     
-instance ToSig I where
-    ar = setRate Ar
-    kr = setRate Kr        
-
 instance ToSig D where
     ar = setRate Ar
     kr = setRate Kr        
@@ -278,8 +267,8 @@ instance ToSig Sig where
     kr = setRate Kr        
     
 instance ToSig Int where
-    ar = ar . int
-    kr = kr . int
+    ar = ar . double . fromIntegral
+    kr = kr . double . fromIntegral
     
 instance ToSig Double where
     ar = ar . double
@@ -313,10 +302,6 @@ instance Val E where
 instance Val Sig where
     wrap = Sig . Fix
     unwrap = unFix . unSig
-
-instance Val I where
-    wrap = I . Fix
-    unwrap = unFix . unI
 
 instance Val D where
     wrap = D . Fix
@@ -390,12 +375,6 @@ instance Arg () where
         , toNote = const []
         , arity = const 0 }
 
-instance Arg I where
-    argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
-         
 instance Arg D where
     argMethods = ArgMethods {
         arg = p,
@@ -466,11 +445,6 @@ class CsdTuple a where
     arityCsdTuple :: a -> Int
 
 instance CsdTuple Sig where
-    fromCsdTuple = return . Fix . unwrap
-    toCsdTuple = wrap . unFix . head
-    arityCsdTuple = const 1
-
-instance CsdTuple I where
     fromCsdTuple = return . Fix . unwrap
     toCsdTuple = wrap . unFix . head
     arityCsdTuple = const 1

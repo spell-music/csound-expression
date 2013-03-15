@@ -210,7 +210,7 @@ module Csound.Base(
     -- ** Constants     
     -- | A constant value doesn't change while instrument is playing a note.
     -- Only constants can be passed as arguments to the instruments.
-    D, I, Str,
+    D, Str,
     withInits,
     
     -- ** Tables
@@ -233,7 +233,7 @@ module Csound.Base(
     CsdTuple,
     
     -- ** Converters
-    ToSig(..), ir, int, double, str,          
+    ToSig(..), ir, double, str,          
         
     -- * Making a sound
     

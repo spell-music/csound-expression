@@ -13,7 +13,7 @@ import Control.Monad((<=<), zipWithM)
 import Data.Fix
 
 import Csound.Exp
-import Csound.Exp.Wrapper hiding (int, double)
+import Csound.Exp.Wrapper hiding (double)
 import Csound.Exp.Cons(opcs)
 import Csound.Exp.Numeric
 

@@ -13,22 +13,15 @@ import Csound.Exp.Cons
 -- instances for numerical expressions
 
 class NumOpt a where
-    maybeInt    :: a -> Maybe Int
     maybeDouble :: a -> Maybe Double
-    fromInt     :: Int -> a
     fromDouble  :: Double -> a
     fromNum     :: NumExp a -> a
 
 instance NumOpt E where
-    maybeInt x = case ratedExpExp $ unFix x of
-        ExpPrim (PrimInt n) -> Just n
-        _ -> Nothing
-     
     maybeDouble x = case ratedExpExp $ unFix x of
         ExpPrim (PrimDouble d) -> Just d
-        _ -> Nothing
-    
-    fromInt = prim . PrimInt
+        _ -> Nothing   
+
     fromDouble = prim . PrimDouble
     fromNum = noRate . ExpNum . fmap toPrimOr   
 
@@ -39,28 +32,28 @@ instance Num E where
     (+) a b 
         | isZero a = b
         | isZero b = a
-        | otherwise = biOpt (+) (+) Add a b
+        | otherwise = biOpt (+) Add a b
         
     (*) a b 
-        | isZero a || isZero b = fromInt 0
-        | otherwise = biOpt (*) (*) Mul a b
+        | isZero a || isZero b = fromDouble 0
+        | otherwise = biOpt (*) Mul a b
         
     (-) a b  
         | isZero a = negate b
         | isZero b = a
-        | otherwise = biOpt (-) (-) Sub a b    
+        | otherwise = biOpt (-) Sub a b    
     
-    negate = unOpt negate negate Neg
+    negate = unOpt negate Neg
     
-    fromInteger = fromInt . fromInteger
-    abs = unOpt abs abs Abs
+    fromInteger = fromDouble . fromInteger
+    abs = unOpt abs Abs
     signum = undefined
 
 instance Fractional E where
     (/) a b 
-        | isZero a = fromInt 0
+        | isZero a = fromDouble 0
         | isZero b = error "csound (/): division by zero" 
-        | otherwise = biOptOnDouble (/) Div a b
+        | otherwise = biOpt (/) Div a b
 
     fromRational = fromDouble . fromRational    
 
@@ -73,7 +66,7 @@ instance Floating E where
         2 -> funOpt (flip logBase 2) Logbtwo a
         10 -> funOpt (flip logBase 10) Log10 a
         b -> log a / log b
-    (**) = biOpt (^) (**) Pow
+    (**) = biOpt (**) Pow
     sin = funOpt sin Sin 
     tan = funOpt tan Tan
     cos = funOpt cos Cos
@@ -127,15 +120,6 @@ onConst f = wrap . unFix . f
 -- wrappers
 
 instance Num Sig where    
-    (+) = onE2 (+)
-    (*) = onE2 (*)
-    (-) = onE2 (-)
-    negate = onE1 negate
-    fromInteger = onConst fromInteger
-    abs = onE1 abs
-    signum = onE1 signum
-
-instance Num I where
     (+) = onE2 (+)
     (*) = onE2 (*)
     (-) = onE2 (-)
@@ -204,34 +188,22 @@ instance Floating D where
 ------------------------------------------------------------
 
 isZero :: NumOpt a => a -> Bool
-isZero a = maybe False id $ liftA2 (||) ((== 0) <$> maybeInt a) ((==0) <$> maybeDouble a)
+isZero a = maybe False id $ ((==0) <$> maybeDouble a)
 
-getDouble :: NumOpt a => a -> Maybe Double
-getDouble a = maybe (fromIntegral <$> maybeInt a) Just $ maybeDouble a 
-
-unOpt :: (NumOpt a) => (Int -> Int) -> (Double -> Double) -> NumOp -> a -> a
-unOpt intOp doubleOp op a = fromJust $
-        (fromInt . intOp <$> maybeInt a)
-    <|> (fromDouble . doubleOp <$> maybeDouble a)
+unOpt :: (NumOpt a) => (Double -> Double) -> NumOp -> a -> a
+unOpt doubleOp op a = fromJust $
+        (fromDouble . doubleOp <$> maybeDouble a)
     <|> Just (noOpt1 op a)
 
-biOpt :: (NumOpt a) => (Int -> Int -> Int) -> (Double -> Double -> Double) -> NumOp -> a -> a -> a
-biOpt intOp doubleOp op a b = fromJust $
-        intOpA (maybeInt a) (maybeInt b) 
-    <|> doubleOpA (getDouble a) (getDouble b)
-    <|> Just (noOpt2 op a b)
-    where intOpA a b = fromInt <$> liftA2 intOp a b
-          doubleOpA a b = fromDouble <$> liftA2 doubleOp a b
-
-biOptOnDouble :: (NumOpt a) => (Double -> Double -> Double) -> NumOp -> a -> a -> a
-biOptOnDouble doubleOp op a b = fromJust $
-        (fromDouble <$> liftA2 doubleOp (getDouble a) (getDouble b))
+biOpt :: (NumOpt a) => (Double -> Double -> Double) -> NumOp -> a -> a -> a
+biOpt doubleOp op a b = fromJust $
+        (fromDouble <$> liftA2 doubleOp (maybeDouble a) (maybeDouble b))
     <|> Just (noOpt2 op a b) 
         
 
 funOpt :: NumOpt a => (Double -> Double) -> NumOp -> a -> a
 funOpt doubleOp op a = fromJust $
-        (fromDouble . doubleOp <$> getDouble a)
+        (fromDouble . doubleOp <$> maybeDouble a)
     <|> Just (noOpt1 op a)
 
 noOpt1 :: NumOpt a => NumOp -> a -> a
@@ -241,15 +213,14 @@ noOpt2 :: NumOpt a => NumOp -> a -> a -> a
 noOpt2 op a b = fromNum $ PreInline op [a, b]
 
 doubleToInt :: NumOpt a => (Double -> Int) -> NumOp -> a -> a
-doubleToInt fun op a = fromJust $
-        (fromInt <$> maybeInt a)
-    <|> (fromInt . fun <$> maybeDouble a)
+doubleToInt fun op a = fromJust $        
+        (fromDouble . fromIntegral . fun <$> maybeDouble a)
     <|> Just (noOpt1 op a)
 
 -- arithmetic
 
 mod' :: NumOpt a => a -> a -> a
-mod' = biOpt mod (\a b -> fromIntegral $ mod (floor a) (floor b)) Pow
+mod' = biOpt (\a b -> fromIntegral $ mod (floor a) (floor b)) Pow
  
 -- other functions
 
@@ -258,7 +229,7 @@ ceil', floor', frac', int', round' :: NumOpt a => a -> a
 ceil'   = doubleToInt ceiling Ceil 
 floor'  = doubleToInt floor Floor
 round'  = doubleToInt round Round
-frac'   = unOpt (const 0) (snd . properFraction) Frac 
+frac'   = unOpt (snd . properFraction) Frac 
 int'    = doubleToInt truncate IntOp 
     
 

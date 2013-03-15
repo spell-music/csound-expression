@@ -71,7 +71,7 @@ aftouch = const $ constDiap "aftouch"
 -- > adest ctrl7 ichan, ictlno, kmin, kmax [, ifn] [, icutoff]
 --
 -- doc: <http://www.csounds.com/manual/html/ctrl7.html>
-ctrl7 :: I -> I -> Sig -> Sig -> Sig
+ctrl7 :: D -> D -> Sig -> Sig -> Sig
 ctrl7 = opc4 "ctrl7" [
     (i, replicate 5 i),
     (k, [i, i, k, k, i]),

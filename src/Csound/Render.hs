@@ -11,7 +11,7 @@ import Control.Monad.Trans.State(evalState)
 import Data.Fix
 
 import Csound.Exp
-import Csound.Exp.Wrapper hiding (double, int)
+import Csound.Exp.Wrapper hiding (double)
 import Csound.Render.Sco
 import Csound.Render.Instr
 import Csound.Render.Options

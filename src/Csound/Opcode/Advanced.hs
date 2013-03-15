@@ -317,7 +317,7 @@ ftconv = mopc3 "ftconv" (as 8, [a,i,i,i,i,i])
 -- > ares dconv asig, isize, ifn
 --
 -- doc: <http://www.csounds.com/manual/html/dconv.html>
-dconv :: Sig -> I -> Tab -> Sig
+dconv :: Sig -> D -> Tab -> Sig
 dconv = opc3 "dconv" [(a, [a,i,i])]
 
 -----------------------------------------------------
@@ -331,7 +331,7 @@ dconv = opc3 "dconv" [(a, [a,i,i])]
 -- > fsig pvsanal ain, ifftsize, ioverlap, iwinsize, iwintype [, iformat] [, iinit]
 --
 -- doc: <http://www.csounds.com/manual/html/pvsanal.html>
-pvsanal :: Sig -> I -> I -> I -> I -> Spec
+pvsanal :: Sig -> D -> D -> D -> D -> Spec
 pvsanal = opc5 "pvsanal" [(f, a:is 6)]
 
 -- | pvstanal implements phase vocoder analysis by reading function tables containing sampled-sound sources, with GEN01, and pvstanal will accept deferred allocation tables.
@@ -360,7 +360,7 @@ pvsynth = opc1 "pvsynth" [(a, [f,i])]
 -- > ares pvsadsyn fsrc, inoscs, kfmod [, ibinoffset] [, ibinincr] [, iinit]
 --
 -- doc: <http://www.csounds.com/manual/html/pvsadsyn.html>
-pvsadsyn :: Spec -> I -> Sig -> Sig
+pvsadsyn :: Spec -> D -> Sig -> Sig
 pvsadsyn = opc3 "pvsadsyn" [(a, [f,i,k,i,i,i])]
 
 -----------------------------------------------------
@@ -403,7 +403,7 @@ pvsdiskin = opc3 "pvsdiskin" [(f, [s,k,k,i,i])]
 -- > ioverlap, inumbins, iwinsize, iformat pvsinfo fsrc
 --
 -- doc: <http://www.csounds.com/manual/html/pvsinfo.html>
-pvsinfo :: Spec -> (I, I, I, I)
+pvsinfo :: Spec -> (D, D, D, D)
 pvsinfo = mopc1 "pvsinfo" ([i,i,i,i], [f])
 
 -- | Obtain the amp and freq values off a PVS signal bin as k-rate variables. 
@@ -595,7 +595,7 @@ streson = opc3 "streson" [(a, [a,k,i])]
 -- > ares pluck kamp, kcps, icps, ifn, imeth [, iparm1] [, iparm2]     
 --
 -- doc: <http://www.csounds.com/manual/html/pluck.html>
-pluck :: Sig -> Sig -> D -> Tab -> I -> Sig
+pluck :: Sig -> Sig -> D -> Tab -> D -> Sig
 pluck = opc5 "pluck" [(a, [k,k,i,i,i,i,i])]
 
 -- | repluck is an implementation of the physical model of the plucked string. A user can control the pluck point, 

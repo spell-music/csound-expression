@@ -215,7 +215,7 @@ mpulse = opc2 "mpulse" [(a, [k, k, i])]
 --
 -- doc: <http://www.csounds.com/manual/html/vco.html> 
 
-vco :: Sig -> Sig -> I -> Sig -> Sig
+vco :: Sig -> Sig -> D -> Sig -> Sig
 vco = opc4 "vco" [(a, [x, x, i, k] ++ is 6)]
 
 -- | vco2 is similar to vco. But the implementation uses pre-calculated tables of band-limited waveforms (see also GEN30) 
@@ -851,7 +851,7 @@ peak = opc1 "peak" [(k, [x])]
 -- > knumkout max_k asig, ktrig, itype
 --
 -- doc: <http://www.csounds.com/manual/html/max_k.html>
-max_k :: Sig -> Sig -> I -> Sig
+max_k :: Sig -> Sig -> D -> Sig
 max_k = opc3 "max_k" [(k, [a, k, i])]
 
 -------------------------------------------------
@@ -934,7 +934,7 @@ dam = opc6 "dam" [(a, a:k:is 4)]
 -- > ares clip asig, imeth, ilimit [, iarg]
 --
 -- doc: <http://www.csounds.com/manual/html/clip.html>
-clip :: Sig -> I -> D -> Sig
+clip :: Sig -> D -> D -> Sig
 clip = opc3 "clip" [(a, [a, i, i])]
 
 -------------------------------------------------
