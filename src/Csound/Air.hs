@@ -3,10 +3,10 @@ module Csound.Air (
     -- * Oscillators
     
     -- ** Bipolar
-    osc, saw, sq, tri,
+    osc, saw, sq, tri, pulse, ramp,
     
     -- ** Unipolar
-    unipolar, uosc, usaw, usq, utri,
+    unipolar, uosc, usaw, usq, utri, upulse, uramp,
     
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
@@ -31,7 +31,7 @@ module Csound.Air (
 import Csound.Exp(Tab)
 import Csound.Exp.Wrapper(Sig, Spec, SE, kr)
 import Csound.Exp.Numeric
-import Csound.Opcode(idur, oscil3, pvscross, 
+import Csound.Opcode(idur, oscil3, vco, pvscross, 
     atone, tone, areson, reson,
     buthp, butbp, butlp, butbr)
 import Csound.Tab(hifi, sines, guardPoint)
@@ -45,15 +45,34 @@ osc cps = oscil3 1 cps (hifi $ sines [1])
 
 -- | Sawtooth.
 saw :: Sig -> Sig
-saw cps = oscil3 1 cps (hifi $ sines [1, 0.5, 0.3, 0.25, 0.2, 0.167, 0.14, 0.111])
+saw cps = vco 1 cps 1 0.5
+-- oscil3 1 cps (hifi $ sines [1, 0.5, 0.3, 0.25, 0.2, 0.167, 0.14, 0.111])
 
 -- | Square wave.
 sq :: Sig -> Sig
-sq cps = oscil3 1 cps (hifi $ sines [1, 0, 0.3, 0, 0.2, 0, 0.14, 0, 0.111])
+sq cps = vco 1 cps 2 0.5
+-- oscil3 1 cps (hifi $ sines [1, 0, 0.3, 0, 0.2, 0, 0.14, 0, 0.111])
 
 -- | Triangle wave.
 tri :: Sig -> Sig
-tri cps = oscil3 1 cps (hifi $ sines [1, 0, -1/9, 0, 1/25, 0, -1/49, 0, 1/81, 0, -1/121])
+tri cps = vco 1 cps 3 0.5
+-- oscil3 1 cps (hifi $ sines [1, 0, -1/9, 0, 1/25, 0, -1/49, 0, 1/81, 0, -1/121])
+
+-- | Square wave with variable dty cycle.
+--
+-- > pulse duty cps
+--
+-- First argument varies between 0 and 1 (0.5 equals to square wave)
+pulse :: Sig -> Sig -> Sig
+pulse duty cps = vco 1 cps 2 duty
+
+-- | Triangle wave with variable ramp character.
+--
+-- > ramp angle cps
+--
+-- First argument varies between 0 and 1 (0.5 equals to triangle wave)
+ramp :: Sig -> Sig -> Sig
+ramp angle cps = vco 1 cps 3 angle
 
 -- unipolar waves
 
@@ -76,6 +95,13 @@ usq = unipolar . sq
 -- | Unipolar triangle wave.
 utri :: Sig -> Sig
 utri = unipolar . tri
+
+-- | Unipolar pulse.
+upulse :: Sig -> Sig -> Sig
+upulse a = unipolar . pulse a
+
+uramp :: Sig -> Sig -> Sig
+uramp a = unipolar . ramp a
 
 --------------------------------------------------------------------------
 -- filters
