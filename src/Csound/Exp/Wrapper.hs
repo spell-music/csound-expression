@@ -3,6 +3,7 @@
         FlexibleInstances #-}
 module Csound.Exp.Wrapper(
     Out(..), Outs, Sig, D, Str, BoolSig(..), BoolD(..), Spec, ToSig(..),
+    Sig2, Sig3, Sig4,
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
@@ -32,6 +33,9 @@ import Csound.Exp
 type Channel = Int
 
 type Outs = SE [Sig]
+type Sig2 = (Sig, Sig)
+type Sig3 = (Sig, Sig, Sig)
+type Sig4 = (Sig, Sig, Sig, Sig)
 
 -- | Output of the instrument.
 class Out a where
@@ -461,6 +465,11 @@ instance CsdTuple Sig where
     arityCsdTuple = const 1
 
 instance CsdTuple D where
+    fromCsdTuple = return . Fix . unwrap
+    toCsdTuple = wrap . unFix . head
+    arityCsdTuple = const 1
+
+instance CsdTuple Tab where
     fromCsdTuple = return . Fix . unwrap
     toCsdTuple = wrap . unFix . head
     arityCsdTuple = const 1

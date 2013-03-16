@@ -3,10 +3,10 @@ module Csound.Air (
     -- * Oscillators
     
     -- ** Bipolar
-    osc, saw, sq, tri, pulse, ramp,
+    osc, saw, sq, tri, -- pulse, ramp,
     
     -- ** Unipolar
-    unipolar, uosc, usaw, usq, utri, upulse, uramp,
+    unipolar, uosc, usaw, usq, utri, -- upulse, uramp,
     
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
@@ -30,6 +30,7 @@ module Csound.Air (
 
 import Csound.Exp(Tab)
 import Csound.Exp.Wrapper(Sig, Spec, SE, kr)
+import Csound.Exp.Cons(withInits)
 import Csound.Exp.Numeric
 import Csound.Opcode(idur, oscil3, vco, pvscross, 
     atone, tone, areson, reson,
@@ -43,28 +44,38 @@ import Csound.Tab(hifi, sines, guardPoint)
 osc :: Sig -> Sig
 osc cps = oscil3 1 cps (hifi $ sines [1])
 
+resolution = 12
+
 -- | Sawtooth.
 saw :: Sig -> Sig
-saw cps = vco 1 cps 1 0.5
--- oscil3 1 cps (hifi $ sines [1, 0.5, 0.3, 0.25, 0.2, 0.167, 0.14, 0.111])
+saw cps = oscil3 1 cps (hifi $ sines $ take resolution $ fmap (1 / ) [1 .. ])
+-- vco 1 cps 1 0.5 `withInits` (sines [1])
+
 
 -- | Square wave.
 sq :: Sig -> Sig
-sq cps = vco 1 cps 2 0.5
--- oscil3 1 cps (hifi $ sines [1, 0, 0.3, 0, 0.2, 0, 0.14, 0, 0.111])
+sq cps = oscil3 1 cps (hifi $ sines $ take resolution $ fmap f [1 .. ])
+    where f x
+            | even x    = 0
+            | otherwise = 1 / fromIntegral x
+-- vco 1 cps 2 0.5 `withInits` (sines [1])
 
 -- | Triangle wave.
 tri :: Sig -> Sig
-tri cps = vco 1 cps 3 0.5
--- oscil3 1 cps (hifi $ sines [1, 0, -1/9, 0, 1/25, 0, -1/49, 0, 1/81, 0, -1/121])
+tri cps = oscil3 1 cps (hifi $ sines $ take resolution $ zipWith f (cycle [1, -1]) [1 ..])
+    where f a x
+            | even x    = 0
+            | otherwise = a / fromIntegral (x ^ 2)
+-- vco 1 cps 3 0.5 `withInits` (sines [1])
 
+{-
 -- | Square wave with variable dty cycle.
 --
 -- > pulse duty cps
 --
 -- First argument varies between 0 and 1 (0.5 equals to square wave)
 pulse :: Sig -> Sig -> Sig
-pulse duty cps = vco 1 cps 2 duty
+pulse duty cps = vco 1 cps 2 duty `withInits` (sines [1])
 
 -- | Triangle wave with variable ramp character.
 --
@@ -72,7 +83,8 @@ pulse duty cps = vco 1 cps 2 duty
 --
 -- First argument varies between 0 and 1 (0.5 equals to triangle wave)
 ramp :: Sig -> Sig -> Sig
-ramp angle cps = vco 1 cps 3 angle
+ramp angle cps = vco 1 cps 3 angle `withInits` (sines [1])
+-}
 
 -- unipolar waves
 
@@ -96,13 +108,14 @@ usq = unipolar . sq
 utri :: Sig -> Sig
 utri = unipolar . tri
 
+{-
 -- | Unipolar pulse.
 upulse :: Sig -> Sig -> Sig
 upulse a = unipolar . pulse a
 
 uramp :: Sig -> Sig -> Sig
 uramp a = unipolar . ramp a
-
+-}
 --------------------------------------------------------------------------
 -- filters
 
