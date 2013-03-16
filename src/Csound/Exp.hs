@@ -123,7 +123,9 @@ data LowTab = LowTab
 
 -- | Csound f-tables. You can make a value of 'Tab' with the function 'Csound.Tab.gen' or
 -- use more higher level functions.
-data Tab = Tab 
+data Tab 
+    = TabExp E
+    | Tab 
     { tabSize :: TabSize
     , tabGen  :: Int
     , tabArgs :: TabArgs

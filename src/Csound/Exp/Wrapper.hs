@@ -250,7 +250,9 @@ defineTabSize base x = case x of
             | n < 0  = base `div` (2 ^ abs n)    
 
 updateTabSize :: (TabSize -> TabSize) -> Tab -> Tab
-updateTabSize phi tab = tab{ tabSize = phi $ tabSize tab }
+updateTabSize phi x = case x of
+    TabExp _ -> error "you can change size only for primitive tables (made with gen-routines)"
+    primTab  -> primTab{ tabSize = phi $ tabSize primTab }
 
 --------------------------------------------
 -- signals from primitive types
@@ -314,8 +316,10 @@ instance Val Str where
     unwrap = unFix . unStr
 
 instance Val Tab where
-    wrap = undefined
-    unwrap = prim . PrimTab . Left
+    wrap = TabExp . Fix
+    unwrap x = case x of
+        TabExp e -> unFix e
+        primTab -> (prim . PrimTab . Left) primTab
 
 instance Val BoolSig where
     wrap = BoolSig . Fix

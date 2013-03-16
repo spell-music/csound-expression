@@ -59,6 +59,13 @@ instance OrdB D where
     (<=*) = boolOp2 LessEquals
     (>=*) = boolOp2 GreaterEquals
 
+-- booleans for tables
+
+type instance BooleanOf Tab = BoolD
+
+instance IfB Tab where
+    ifB = cond'
+
 --------------------------------------------
 -- if-then-else
 
