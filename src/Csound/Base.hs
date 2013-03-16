@@ -58,8 +58,7 @@ module Csound.Base(
     -- It's a list of events. Haskell can help you with powerful functions for lists but it's not so convenient as it
     -- can be. It's so on purpose. Csound-expression stays clear from score-generation libraries. But you can use
     -- your favourite library to create complex scores. You can use temporal-music-notation or Haskore or Euterpea.
-    -- Any library that can generate the list of events will do. I've made a port for the library 'temporal-music-notation'.
-    -- It's called 'temporal-csound' and can be found on Hackage.
+    -- Any library that can generate the list of events will do. 
     --  
     
     -- ** Flags and options

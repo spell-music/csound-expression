@@ -209,7 +209,8 @@ data NumOp
     = Add | Sub | Neg | Mul | Div
     | Pow | Mod 
     | Sin | Cos | Sinh | Cosh | Tan | Tanh | Sininv | Cosinv | Taninv
-    | Abs | Ceil | ExpOp | Floor | Frac| IntOp | Log | Log10 | Logbtwo | Round | Sqrt    
+    | Ceil | Floor | Frac | Round | IntOp
+    | Abs | ExpOp | Log | Log10 | Logbtwo | Sqrt    
     | Ampdb | Ampdbfs | Dbamp | Dbfsamp 
     | Cpspch
     deriving (Show, Eq, Ord)

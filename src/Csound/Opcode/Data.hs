@@ -47,6 +47,10 @@ module Csound.Opcode.Data (
 
     -- ** Pitch conversions
     cpspch,
+
+    -- ** Integer and fractional parts
+    fracD, floorD, ceilD, intD, roundD,
+    fracSig, floorSig, ceilSig, intSig, roundSig,
         
     -----------------------------------------------------
     -- * Printing and Strings
@@ -67,6 +71,7 @@ module Csound.Opcode.Data (
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.LowLevel
+import Csound.Exp.Numeric
 
 -----------------------------------------------------
 -- * Buffer and Function tables
