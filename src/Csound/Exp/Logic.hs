@@ -66,6 +66,13 @@ type instance BooleanOf Tab = BoolD
 instance IfB Tab where
     ifB = cond'
 
+-- booleans for strings
+
+type instance BooleanOf Str = BoolD
+
+instance IfB Str where
+    ifB = cond'
+
 --------------------------------------------
 -- if-then-else
 
