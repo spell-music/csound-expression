@@ -2,7 +2,7 @@
         TypeSynonymInstances,
         FlexibleInstances #-}
 module Csound.Exp.Wrapper(
-    Out(..), Outs, Sig, D, Str, BoolSig(..), Spec, ToSig(..),
+    Out(..), Outs, Sig, D, Str, BoolSig(..), BoolD(..), Spec, ToSig(..),
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
@@ -46,9 +46,11 @@ newtype D = D { unD :: E }
 -- | Strings.
 newtype Str = Str { unStr :: E }
 
--- | Boolean signals. Use functions from the module "Data.Boolean" to make boolean signals
--- out of simple signals.
+-- | Boolean signals. 
 newtype BoolSig = BoolSig { unBoolSig :: E }
+
+-- | Boolean constants. 
+newtype BoolD = BoolD { unBoolD :: E }
 
 -- | Spectrum of the signal (see FFT and Spectral Processing at "Csound.Opcode.Advanced"). 
 newtype Spec = Spec { unSpec :: E }
@@ -318,6 +320,10 @@ instance Val Tab where
 instance Val BoolSig where
     wrap = BoolSig . Fix
     unwrap = unFix . unBoolSig 
+
+instance Val BoolD where
+    wrap = BoolD . Fix
+    unwrap = unFix . unBoolD 
 
 instance Val Spec where
     wrap = Spec . Fix

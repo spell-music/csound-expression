@@ -26,7 +26,7 @@ module Csound.Base(
     --
     -- 2. Scores. User triggers instruments with a list of notes
     --
-    -- Instrument is something that listens to notes and converts them to signals. 
+    -- Ab instrument is something that listens to notes and converts them to signals. 
     -- Note is a tuple: (instrument name, start time, duration, parameters). Parameters cell is
     -- a tuple of primitive types: numbers ('Csound.Base.D'), strings ('Csound.Base.Str') and tables or arrays of numbers ("Csound.Tab").
     -- 
@@ -36,14 +36,14 @@ module Csound.Base(
     --
     -- But main strength lies in the Orchestra section. Here you can define the timbres for
     -- your musical journey. Csound is mostly for making strange sounds. How you can do it?
-    -- You do it with instruments. Instrument is a sequence of statements that define a flow-graph
+    -- You do it with instruments. An instrument is a sequence of statements that define a flow-graph
     -- for your sound waves. In instrument you can use predefined sound generators and transformers ("Csound.Opcode" and "Csound.Air").
     -- 
     -- Score/Orchestra division stays in this library too. You define your instruments of the type
     --
     -- > (Arg a, Out b) => a -> b
     --
-    -- Instrument is something that converts arguments-like things to output-like things.
+    -- An instrument is something that converts arguments-like things (tuple of primitive values) to output-like things (list of signals).
     --
     -- Later when you are done with orchestra section you can trigger the instruments with the function 'Csound.Base.score'
     --
@@ -222,7 +222,11 @@ module Csound.Base(
     -- If there are rate-collisions, values will be converted to the right rates.    
     -- For example, if you are trying to apply an opcode that expects control
     -- rate signal to some audio rate signal, the signal will be downsampled behind the scenes.
-    Sig, BoolSig, Spec,
+    Sig, Spec,
+   
+    -- ** Booleans
+    -- | Use functions from the module "Data.Boolean" to make boolean expressions.
+    BoolSig, BoolD,  
     module Data.Boolean,
 
     -- ** Side effects

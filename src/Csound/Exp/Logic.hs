@@ -11,6 +11,8 @@ import Data.Boolean
 import Csound.Exp.Wrapper
 import Csound.Exp
 
+-- booleans for signals
+
 instance Boolean BoolSig where
     true = boolOp0 TrueOp
     false = boolOp0 FalseOp
@@ -33,12 +35,36 @@ instance OrdB Sig where
     (<=*) = boolOp2 LessEquals
     (>=*) = boolOp2 GreaterEquals
 
+-- booleans for inits
+
+instance Boolean BoolD where
+    true = boolOp0 TrueOp
+    false = boolOp0 FalseOp
+    notB = BoolD . notE . unBoolD
+    (&&*) = boolOp2 And
+    (||*) = boolOp2 Or
+
+type instance BooleanOf D = BoolD
+
+instance IfB D where
+    ifB = cond'
+    
+instance EqB D where
+    (==*) = boolOp2 Equals
+    (/=*) = boolOp2 NotEquals
+    
+instance OrdB D where
+    (<*) = boolOp2 Less
+    (>*) = boolOp2 Greater
+    (<=*) = boolOp2 LessEquals
+    (>=*) = boolOp2 GreaterEquals
+
 --------------------------------------------
 -- if-then-else
 
 boolExp = PreInline
 
-cond' :: BoolSig -> Sig -> Sig -> Sig
+cond' :: (Val bool, Val a) => bool -> a -> a -> a
 cond' p t e = wrap $ mkCond (condInfo $ toPrimOr $ Fix $ unwrap p) (unwrap t) (unwrap e)
     where mkCond :: CondInfo (PrimOr E) -> RatedExp E -> RatedExp E -> RatedExp E
           mkCond p t e 
@@ -86,6 +112,4 @@ notE x = Fix $ onExp phi $ unFix x
             Greater           -> boolExp LessEquals     args
             LessEquals        -> boolExp Greater        args
             GreaterEquals     -> boolExp Less           args     
-
-   
 
