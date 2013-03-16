@@ -204,6 +204,7 @@ defineInstrTabs n = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpEx
 definePrimTab :: Int -> Prim -> Prim
 definePrimTab n x = case x of
     PrimTab (Left tab) -> PrimTab (Right $ defineTab n tab)
+    _ -> x
 
 defineTab :: Int -> Tab -> LowTab
 defineTab midSize tab = LowTab size (tabGen tab) args

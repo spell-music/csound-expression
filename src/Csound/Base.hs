@@ -167,7 +167,7 @@ module Csound.Base(
     -- > -- 1 - means the amplitude, cps - is cycles per second and the last argument
     -- > -- is the table that we want to read. 
     -- > myOsc :: Sig -> Sig
-    -- > myOsc cps = oscil1 1 cps (sines [1])
+    -- > myOsc cps = oscili 1 cps (sines [1])
     -- > 
     -- > -- Let's define a simple instrument that plays a sound on the specified frequency.
     -- > -- We use kr to convert a constant value to signal and then plug it in the osc unit. 
