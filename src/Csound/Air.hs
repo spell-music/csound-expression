@@ -42,19 +42,19 @@ import Csound.Tab(hifi, sines, guardPoint)
 
 -- | Pure tone.
 osc :: Sig -> Sig
-osc cps = oscil3 1 cps (hifi $ sines [1])
+osc cps = oscil3 1 cps (sines [1])
 
 resolution = 12
 
 -- | Sawtooth.
 saw :: Sig -> Sig
-saw cps = oscil3 1 cps (hifi $ sines $ take resolution $ fmap (1 / ) [1 .. ])
+saw cps = oscil3 1 cps (sines $ take resolution $ fmap (1 / ) [1 .. ])
 -- vco 1 cps 1 0.5 `withInits` (sines [1])
 
 
 -- | Square wave.
 sq :: Sig -> Sig
-sq cps = oscil3 1 cps (hifi $ sines $ take resolution $ fmap f [1 .. ])
+sq cps = oscil3 1 cps (sines $ take resolution $ fmap f [1 .. ])
     where f x
             | even x    = 0
             | otherwise = 1 / fromIntegral x
@@ -62,7 +62,7 @@ sq cps = oscil3 1 cps (hifi $ sines $ take resolution $ fmap f [1 .. ])
 
 -- | Triangle wave.
 tri :: Sig -> Sig
-tri cps = oscil3 1 cps (hifi $ sines $ take resolution $ zipWith f (cycle [1, -1]) [1 ..])
+tri cps = oscil3 1 cps (sines $ take resolution $ zipWith f (cycle [1, -1]) [1 ..])
     where f a x
             | even x    = 0
             | otherwise = a / fromIntegral (x ^ 2)
@@ -173,10 +173,9 @@ bbr freq band a = butbr a freq band
 --------------------------------------------------------------------------
 -- patterns
 
--- | Reads table once during the note length. Guard point is inserted inside the function.
--- No need to specify it explicitly.
+-- | Reads table once during the note length. 
 once :: Tab -> Sig
-once a = oscil3 1 (1 / kr idur) (guardPoint a)
+once a = oscil3 1 (1 / kr idur) a
 
 -- | Mean value.
 mean :: Fractional a => [a] -> a

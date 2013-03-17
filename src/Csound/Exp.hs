@@ -134,14 +134,12 @@ data Tab
 instance Default TabSize where
     def = SizeDegree
         { hasGuardPoint = False
-        , isNormalized = True
         , sizeDegree = 0 }
 
 data TabSize 
     = SizePlain Int
     | SizeDegree 
     { hasGuardPoint :: Bool
-    , isNormalized  :: Bool
     , sizeDegree    :: Int 
     } deriving (Show, Eq, Ord)
     

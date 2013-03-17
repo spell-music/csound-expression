@@ -64,9 +64,14 @@ import Data.Default
 import Csound.Exp
 import Csound.Exp.Wrapper(updateTabSize)
 
-
 interp id as = Tab def id (ArgsRelative as)
 plains id as = Tab def id (ArgsPlain as)
+
+insertOnes :: [Double] -> [Double]
+insertOnes as = case as of
+    [] -> []
+    a:[] -> [a]
+    a:as -> a : 1 : insertOnes as
 
 
 tableSizes :: [Int]
@@ -149,7 +154,7 @@ segs = interp 7
 --
 -- > segs [a, 1, b, 1, c, ...]
 esegs :: [Double] -> Tab
-esegs = esegs . insertOnes
+esegs = segs . insertOnes
 
 -- | Cubic spline curve.
 --
@@ -194,12 +199,6 @@ consts = interp 17
 -- > consts [a, 1, b, 1, c, ...]
 econsts :: [Double] -> Tab
 econsts = consts . insertOnes
-
-insertOnes :: [Double] -> [Double]
-insertOnes as = case as of
-    [] -> []
-    a:[] -> [a]
-    a:as -> a : 1 : insertOnes as
     
 type PartialNumber = Double
 type PartialStrength = Double
@@ -298,8 +297,11 @@ gen id args = Tab def id (ArgsPlain args)
 -- table once but you don't need the guard point if you read table in many cycles, the guard point is the the first point of your table).  
 guardPoint :: Tab -> Tab
 guardPoint = updateTabSize $ \x -> case x of
-    SizePlain n -> SizePlain (n + 1)
+    SizePlain n -> SizePlain $ plainGuardPoint n
     a -> a{ hasGuardPoint = True }    
+    where plainGuardPoint n
+            | even n    = n + 1
+            | otherwise = n
 
 -- | Shortcut for 'Csound.Tab.guardPoint'.
 gp :: Tab -> Tab
@@ -325,16 +327,15 @@ lllofi  = setDegree (-3)
 llofi   = setDegree (-2)
 lofi    = setDegree (-1)
 midfi   = setDegree 0
-hifi    = setDegree 2
-hhifi   = setDegree 1
+hifi    = setDegree 1
+hhifi   = setDegree 2
 hhhifi  = setDegree 3 
 
 -- | Skips normalization (sets table size to negative value)
 skipNorm :: Tab -> Tab
-skipNorm = updateTabSize phi
-    where phi size = case size of 
-            SizePlain n -> SizePlain $ negate $ abs n
-            x -> x{ isNormalized = False }
+skipNorm x = case x of
+    TabExp _ -> error "you can skip normalization only for primitive tables (made with gen-routines)"
+    primTab  -> primTab{ tabGen = negate $ abs $ tabGen primTab }
 
 
 

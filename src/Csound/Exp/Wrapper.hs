@@ -12,7 +12,7 @@ module Csound.Exp.Wrapper(
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, 
-    getRates, tabMap, updateTabSize, defineInstrTabs, defineScoreTabs, substInstrTabs, substScoreTabs,
+    getRates, tabMap, updateTabSize, defineInstrTabs, defineScoreTabs, substInstrTabs, substScoreTabs, 
     readVar, writeVar, gOutVar,
     Channel
 ) where
@@ -237,15 +237,10 @@ defineTabArgs size args = case args of
 defineTabSize :: Int -> TabSize -> Int
 defineTabSize base x = case x of
        SizePlain n -> n
-       SizeDegree guardPoint normalized degree -> 
-                byNormalization normalized $
+       SizeDegree guardPoint degree ->          
                 byGuardPoint guardPoint $
                 byDegree base degree
-    where byNormalization norm 
-            | norm      = id
-            | otherwise = negate
-            
-          byGuardPoint guardPoint 
+    where byGuardPoint guardPoint 
             | guardPoint = (+ 1)
             | otherwise  = id
             

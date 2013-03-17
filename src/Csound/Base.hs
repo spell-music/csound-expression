@@ -194,7 +194,7 @@ module Csound.Base(
     -- ** References
     
     -- | Got interested in Csound? Csound is very well documented. There are good tutorials, read about it at:
-    --
+    --    
     -- * Reference manual: <http://www.csounds.com/manual/html/index.html >
     --
     -- * Floss tutorials: <http://en.flossmanuals.net/csound/>
@@ -202,6 +202,8 @@ module Csound.Base(
     -- * Amsterdam Csound catalog: <http://www.music.buffalo.edu/hiller/accci/>
     --
     -- * Lots of wonderful real-time examples by Iain McCurdy: <http://iainmccurdy.org/csound.html>
+    --
+    -- * Outdated but short manual on Csound <http://cara.gsu.edu/courses/csound_users_seminar/csound/3.46/CsIntro.html>
    
     -- * Types
     Val,
