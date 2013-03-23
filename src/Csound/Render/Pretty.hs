@@ -188,36 +188,17 @@ ppNumOp op = case  op of
     Mul -> bi "*"
     Div -> bi "/"
     Neg -> uno "-"    
-    Pow -> bi "^"
+    Pow -> bi "^"    
     Mod -> bi "%"
-    Sin -> fun "sin"
-    Cos -> fun "cos"
-    Sinh -> fun "sinh"    
-    Cosh -> fun "cosh"
-    Tan -> fun "tan"
-    Tanh -> fun "tanh"    
-    Sininv -> fun "sininv"
-    Cosinv -> fun "cosinv"
-    Taninv -> fun "taninv"        
-    Abs -> fun "abs"    
-    Ceil -> fun "ceil" 
+    
     ExpOp -> fun "exp"
-    Floor -> fun "floor" 
-    Frac -> fun "frac"
     IntOp -> fun "int" 
-    Log -> fun "log" 
-    Log10 -> fun "log10" 
-    Logbtwo -> fun "logbtwo" 
-    Round -> fun "round"
-    Sqrt -> fun "sqrt"    
-
-    Ampdb -> fun "ampdb" 
-    Ampdbfs -> fun "ampdbfs" 
-    Dbamp -> fun "dbamp"
-    Dbfsamp -> fun "dbfsamp"    
-    Cpspch -> fun "cpspch"
+    
+    x -> fun (firstLetterToLower $ show x)        
     where bi  = binaries
           uno = unaries
           fun = funcs
+          firstLetterToLower (x:xs) = toLower x : xs
+          
 
 

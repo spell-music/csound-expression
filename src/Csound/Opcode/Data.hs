@@ -46,7 +46,7 @@ module Csound.Opcode.Data (
     ampdb, ampdbfs, dbamp, dbfsamp,
 
     -- ** Pitch conversions
-    cpspch,
+    cent, cpsmidinn, cpsoct, cpspch, octave, octcps, octmidinn, octpch, pchmidinn, pchoct, semitone,
 
     -- ** Integer and fractional parts
     fracD, floorD, ceilD, intD, roundD,
@@ -374,12 +374,20 @@ interp = opc1 "interp" [(a, [k,i,i])]
 -- amplitude conversions
 
 -- | Floating number types: 'Sig' or 'D'.
-class Val a => Nums a 
-instance Nums Sig
-instance Nums D
+class Val a => Nums a where
+    isSig :: a -> Bool 
+    
+instance Nums Sig where isSig = const True
+instance Nums D   where isSig = const False
 
 conv :: Nums a => NumOp -> a -> a
 conv op a = noRate $ ExpNum $ PreInline op [toPrimOr $ toE a]
+
+convKr :: Nums a => NumOp -> a -> a
+convKr op a = conv op $ phi a
+    where phi
+            | isSig a = setRate Kr 
+            | otherwise = id
 
 
 -- | Returns the amplitude equivalent of the decibel value x. Thus:
@@ -420,7 +428,7 @@ ampdbfs = conv Ampdbfs
 -- doc: <http://www.csounds.com/manual/html/dbamp.html>
 
 dbamp :: Nums a => a -> a
-dbamp = conv Dbamp
+dbamp = convKr Dbamp
 
 -- | Returns the decibel equivalent of the raw amplitude x, relative to full scale amplitude. Full scale is assumed to be 16 bit. New is Csound version 4.10. 
 --
@@ -428,10 +436,34 @@ dbamp = conv Dbamp
 --
 -- doc: <http://www.csounds.com/manual/html/dbfsamp.html>
 dbfsamp :: Nums a => a -> a 
-dbfsamp = conv Dbfsamp 
+dbfsamp = convKr Dbfsamp 
 
 ------------------------------------------------------------------------------------------
 -- pitch conversions
+
+-- | Calculates a factor to raise/lower a frequency by a given amount of cents. 
+--
+-- > cent(x) (no rate restriction)
+--
+-- doc: <http://www.csounds.com/manual/html/cent.html>
+cent :: Nums a => a -> a
+cent = conv Cent
+
+-- | Converts a Midi note number value to cycles-per-second. 
+--
+-- > cpsmidinn (MidiNoteNumber)  (init- or control-rate args only)
+--
+-- doc: <http://www.csounds.com/manual/html/cpsmidinn.html>
+cpsmidinn :: Nums a => a -> a
+cpsmidinn = convKr Cpsmidinn
+
+-- | Converts an octave-point-decimal value to cycles-per-second. 
+--
+-- > cpsoct(oct) (no rate restriction)
+--
+-- doc: <http://www.csounds.com/manual/html/cpsoct.html>
+cpsoct :: Nums a => a -> a
+cpsoct = conv Cpsoct
 
 -- | Converts a pitch-class value to cycles-per-second. 
 --
@@ -439,7 +471,65 @@ dbfsamp = conv Dbfsamp
 --
 -- doc: <http://www.csounds.com/manual/html/cpspch.html>
 cpspch :: Nums a => a -> a
-cpspch = conv Cpspch
+cpspch = convKr Cpspch
+
+
+-- | Calculates a factor to raise/lower a frequency by a given amount of octaves. 
+--
+-- > octave(x) (no rate restriction)
+--
+-- doc: <http://www.csounds.com/manual/html/octave.html>
+octave :: Nums a => a -> a
+octave = conv Octave
+
+-- | Converts a cycles-per-second value to octave-point-decimal. 
+--
+-- > octcps (cps)  (init- or control-rate args only)
+--
+-- doc: <http://www.csounds.com/manual/html/octcps.html>
+octcps :: Nums a => a -> a
+octcps = convKr Octcps
+
+-- | Converts a Midi note number value to octave-point-decimal. 
+--
+-- > octmidinn (MidiNoteNumber)  (init- or control-rate args only)
+--
+-- doc: <http://www.csounds.com/manual/html/octmidinn.html>
+octmidinn :: Nums a => a -> a
+octmidinn = convKr Octmidinn
+
+
+-- | Converts a pitch-class value to octave-point-decimal. 
+--
+-- > octpch (pch)  (init- or control-rate args only)
+--
+-- doc: <http://www.csounds.com/manual/html/octpch.html>
+octpch :: Nums a => a -> a
+octpch = convKr Octpch
+
+-- | Converts a Midi note number value to octave point pitch-class units. 
+--
+-- > pchmidinn (MidiNoteNumber)  (init- or control-rate args only)
+--
+-- doc: <http://www.csounds.com/manual/html/pchmidinn.html>
+pchmidinn :: Nums a => a -> a
+pchmidinn = convKr Pchmidinn
+
+-- | Converts an octave-point-decimal value to pitch-class. 
+--
+-- > pchoct (oct)  (init- or control-rate args only)
+--
+-- doc: <http://www.csounds.com/manual/html/pchoct.html>
+pchoct :: Nums a => a -> a
+pchoct = convKr Pchoct
+
+-- | Calculates a factor to raise/lower a frequency by a given amount of semitones. 
+--
+-- > semitone(x) (no rate restriction)
+--
+-- doc: <http://www.csounds.com/manual/html/semitone.html>
+semitone :: Nums a => a -> a
+semitone = conv Semitone
 
 -----------------------------------------------------
 -- * Printing and Strings

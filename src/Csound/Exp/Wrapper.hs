@@ -161,7 +161,7 @@ tabMap :: [E] -> [[Event Note]] -> TabMap
 tabMap es ps = M.fromList $ zip (nub $ (concat $ mapM (getScoreTabs =<< ) ps) ++ (getInstrTabs =<< es)) [1 ..]
     
 getInstrTabs :: E -> [LowTab]
-getInstrTabs = cata $ \re -> case fmap fromPrimOr $ ratedExpExp re of    
+getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fromPrimOr $ ratedExpExp re of    
     ExpPrim p -> getPrimTabs p
     Tfm _ as -> concat as
     ConvertRate _ _ a -> a

@@ -212,7 +212,7 @@ data NumOp
     | Ceil | Floor | Frac | Round | IntOp
     | Abs | ExpOp | Log | Log10 | Logbtwo | Sqrt    
     | Ampdb | Ampdbfs | Dbamp | Dbfsamp 
-    | Cpspch
+    | Cent | Cpsmidinn | Cpsoct | Cpspch | Octave | Octcps | Octmidinn | Octpch | Pchmidinn | Pchoct | Semitone
     deriving (Show, Eq, Ord)
 
 -------------------------------------------------------
