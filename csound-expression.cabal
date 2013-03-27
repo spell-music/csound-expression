@@ -66,7 +66,7 @@ Source-repository head
 
 Library
   Build-Depends:
-        base >= 4, base < 5, containers, array, transformers, wl-pprint,
+        base >= 4, base < 5, containers, array, transformers, wl-pprint, stable-maps,
         data-default, Boolean >= 0.1.0, data-fix, data-fix-cse, temporal-media >= 0.3
   Hs-Source-Dirs:      src/
   Exposed-Modules:
@@ -94,6 +94,7 @@ Library
         Csound.Render.Instr
         Csound.Render.Sco
         Csound.Render.Mix
+        Csound.Render.IndexMap
       
 
 

@@ -1,7 +1,8 @@
 {-# Language 
         TypeFamilies,
         TypeSynonymInstances,
-        FlexibleInstances #-}
+        FlexibleInstances,
+        FlexibleContexts #-}
 module Csound.Exp.Wrapper(
     Out(..), Outs, Sig, D, Str, BoolSig(..), BoolD(..), Spec, ToSig(..),
     Sig2, Sig3, Sig4,
@@ -39,7 +40,7 @@ type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
 
 -- | Output of the instrument.
-class Out a where
+class CsdTuple (NoSE a) => Out a where
     type NoSE a :: *
     toOut :: a -> SE [Sig]
     fromOut :: [Sig] -> a
@@ -557,7 +558,7 @@ instance Out Sig where
     toOut = return . return
     fromOut = head
     
-
+{-
 instance (CsdTuple a, Out a) => Out [a] where
     type NoSE [a] = [NoSE a]
     toOut = fmap concat . mapM toOut 
@@ -574,16 +575,20 @@ instance (CsdTuple a, Out a) => Out [a] where
                 [] -> []
                 _  -> let (a, b) = splitAt n xs
                       in  a : chunks n b     
+-}
 
-instance Out a => Out (SE a) where
+instance (Out a, CsdTuple a) => Out (SE a) where
     type NoSE (SE a) = a
     toOut = join . fmap toOut
     fromOut = return . fromOut
 
-{-
+
 instance (Out a, Out b) => Out (a, b) where
+    type NoSE (a, b) = (NoSE a, NoSE b)
     toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
-    
+    fromOut = undefined
+
+{-    
 instance (Out a, Out b, Out c) => Out (a, b, c) where
     toOut (a, b, c) = toOut (a, (b, c))
     

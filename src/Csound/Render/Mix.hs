@@ -2,13 +2,18 @@
 module Csound.Render.Mix where
 
 import Control.Monad(zipWithM_)
+import Control.Monad.Trans.State.Strict
 
+import Data.Tuple(swap)
 import Data.Foldable
+import Data.Traversable hiding (mapM)
 import Data.Default
 import Control.Arrow(second)
 
 import qualified Data.IntMap as IM
 import qualified Data.Set    as S
+
+import qualified Csound.Render.IndexMap as DM
 
 import Temporal.Media(temp, stretch, dur, Track, Event(..), tmap)
 import qualified Temporal.Media as T
@@ -25,52 +30,72 @@ import Csound.Opcode(clip, zeroDbfs, sprintf)
 
 un = undefined
 
+outArity :: Out a => a -> Int
+outArity a = arityCsdTuple (proxy a)
+    where proxy :: Out a => a -> NoSE a
+          proxy = undefined  
+
 data Arity = Arity
     { arityIns  :: Int
     , arityOuts :: Int }
 
-type Instr = E
-
-type Sco a = Track Double a
-
-data Mix a where
-    Sco :: SE [Sig] -> Sco Note -> Mix a
-    Mix :: ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
-
-    
-tempAs :: Sco b -> a -> Sco a
-tempAs a = stretch (dur a) . temp
-
-sco :: (Arg a, Out b) => (a -> b) -> Sco a       -> Sco (Mix (NoSE b))
-sco instr notes = tempAs notes $ Sco (toOut $ instr toArg) $ fmap (toNote argMethods) notes
-
-mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE b))
-mix effect sigs = tempAs sigs $ Mix (toOut . effect . fromOut) sigs
-
-
 type InstrId = Int
 
 type InstrTab a = IM.IntMap a
+type PreSndTab = DM.IndexMap SndSrc
 
 data SndSrc = SndSrc Arity (SE [Sig])
 data Mixing = Mixing Arity ([Sig] -> SE [Sig]) (Sco (InstrId, Note))
 
+data MixE = MixE
+    { mixExpE :: E
+    , mixExpSco :: (Sco (InstrId, Note)) }
+
+type Sco a = Track Double a
+
+data Mix a where
+    Sco :: Arity -> SE [Sig] -> Sco Note -> Mix a
+    Mix :: Arity -> ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
+
+  
+tempAs :: Sco b -> a -> Sco a
+tempAs a = stretch (dur a) . temp
+
+sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
+sco instr notes = tempAs notes $ Sco (getArity instr) (toOut $ instr toArg) $ fmap (toNote argMethods) notes
+    where getArity :: (Arg a, Out b) => (a -> b) -> Arity
+          getArity f = let (a, b) = funProxy f in Arity (arity argMethods a) (outArity b)           
+
+mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE b))
+mix effect sigs = tempAs sigs $ Mix (getArity effect) (toOut . effect . fromOut) sigs
+    where getArity :: (Out a, Out b) => (a -> b) -> Arity
+          getArity f = let (a, b) = funProxy f in Arity (outArity a) (outArity b)
+
+funProxy :: (a -> b) -> (a, b)
+funProxy = const (undefined, undefined)  
+
 clipByMax :: Out a => Sco (Mix a) -> Sco (Mix a)
-clipByMax a = tempAs a $ Mix (return . fmap clip') a
+clipByMax a = tempAs a $ Mix (getArity a) (return . fmap clip') a
     where clip' x = clip x 0 zeroDbfs
+
+          getArity :: Out a => Sco (Mix a) -> Arity
+          getArity a = let v = outArity (proxy a) in Arity v v
+
+          proxy :: Sco (Mix a) -> a
+          proxy = undefined  
 
 rescale :: Sco (Mix a) -> Sco (Mix a)
 rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
                        in  mixStretch factor (eventContent e)
     where mixDur :: Mix a -> Double
           mixDur x = case x of
-            Sco _ a -> dur a
-            Mix _ a -> dur a
+            Sco _ _ a -> dur a
+            Mix _ _ a -> dur a
 
           mixStretch :: Double -> Mix a -> Mix a
           mixStretch k x = case x of
-            Sco a sco -> Sco a $ stretch k sco
-            Mix a sco -> Mix a $ stretch k sco
+            Sco ar a sco -> Sco ar a $ stretch k sco
+            Mix ar a sco -> Mix ar a $ stretch k sco
 
 
 renderCsd :: (Out a) => Sco (Mix a) -> IO String
@@ -96,12 +121,6 @@ render opt a = do
           defMixTab (MixE eff sco) = MixE (defTab eff) (fmap (second $ defineNoteTabs $ tabResolution opt) sco) 
       
 
-type PreSndTab = IM.IntMap [(SndSrc, Int)]
-
-data MixE = MixE
-    { mixExpE :: E
-    , mixExpSco :: (Sco (InstrId, Note)) }
-    
 getNotes :: InstrTab MixE -> [Note]
 getNotes = foldMap (scoNotes . mixExpSco)
     where scoNotes = foldMap (return . snd)
@@ -153,16 +172,32 @@ renderMix krateSet = ppOrc . fmap (uncurry render) . IM.toList
 portVar :: Var
 portVar = Var LocalVar Ir "Port"
 
--- hard stuff
+tableSoundSources :: PreSndTab -> InstrTab SndSrc
+tableSoundSources = IM.fromList . fmap swap . DM.elems
 
 getSoundSources :: Sco (Mix a) -> IO PreSndTab
-getSoundSources = un
+getSoundSources = flip execState (return DM.empty) . getSndSrcSco
 
-tableSoundSources :: PreSndTab -> InstrTab SndSrc
-tableSoundSources = un
+type MkIndexMap = State (IO PreSndTab) ()
+
+getSndSrcSco :: Sco (Mix a) -> MkIndexMap
+getSndSrcSco sco = traverse getSndSrcMix sco >> return ()
+
+getSndSrcMix :: Mix a -> MkIndexMap
+getSndSrcMix x = case x of
+    Mix ar eff sco -> getSndSrcSco sco
+    Sco ar snd sco -> modify (DM.insert (SndSrc ar snd) =<<)
+
+instance Traversable (Track a) where
+    traverse = un
+
+-- hard stuff
 
 getMixing :: PreSndTab -> Sco (Mix a) -> IO (InstrTab Mixing)
 getMixing = un
+
+
+    
 
 
 
