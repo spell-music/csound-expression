@@ -1,4 +1,5 @@
 {-# Language 
+        TypeFamilies,
         TypeSynonymInstances,
         FlexibleInstances #-}
 module Csound.Exp.Wrapper(
@@ -12,7 +13,7 @@ module Csound.Exp.Wrapper(
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, 
-    getRates, tabMap, updateTabSize, defineInstrTabs, defineScoreTabs, substInstrTabs, substScoreTabs, 
+    getRates, tabMap, updateTabSize, defineInstrTabs, defineScoreTabs, substInstrTabs, substScoreTabs, defineNoteTabs, substNoteTabs,
     readVar, writeVar, gOutVar,
     Channel
 ) where
@@ -21,7 +22,7 @@ import Control.Applicative
 import Control.Monad(ap, join)
 import Control.Monad.Trans.State
 
-import Data.List(nub)
+import Data.List(nub, splitAt)
 import Data.String
 import Data.Fix
 import Control.Monad.Trans.State
@@ -39,7 +40,9 @@ type Sig4 = (Sig, Sig, Sig, Sig)
 
 -- | Output of the instrument.
 class Out a where
+    type NoSE a :: *
     toOut :: a -> SE [Sig]
+    fromOut :: [Sig] -> a
 
 -- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
@@ -157,8 +160,8 @@ getPrimUnsafe :: Val a => a -> Prim
 getPrimUnsafe a = case ratedExpExp $ unwrap a of
     ExpPrim p -> p
 
-tabMap :: [E] -> [[Event Note]] -> TabMap
-tabMap es ps = M.fromList $ zip (nub $ (concat $ mapM (getScoreTabs =<< ) ps) ++ (getInstrTabs =<< es)) [1 ..]
+tabMap :: [E] -> [Note] -> TabMap
+tabMap es ps = M.fromList $ zip (nub $ (concat $ mapM (getPrimTabs =<< ) ps) ++ (getInstrTabs =<< es)) [1 ..]
     
 getInstrTabs :: E -> [LowTab]
 getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fromPrimOr $ ratedExpExp re of    
@@ -173,9 +176,6 @@ getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fro
     where fromPrimOr x = case unPrimOr x of
             Left  p -> getPrimTabs p
             Right a -> a
-
-getScoreTabs :: Event Note -> [LowTab]
-getScoreTabs = (getPrimTabs =<< ) . eventContent
 
 getPrimTabs :: Prim -> [LowTab]
 getPrimTabs x = case x of
@@ -196,6 +196,9 @@ substInstrTabs m = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp
 substScoreTabs :: TabMap -> [Event Note] -> [Event Note]
 substScoreTabs m = fmap (fmap (fmap (substPrimTab m)))
 
+substNoteTabs :: TabMap -> Note -> Note
+substNoteTabs m = fmap (substPrimTab m)
+
 defineScoreTabs :: Int -> [Event Note] -> [Event Note]
 defineScoreTabs n = fmap (fmap (fmap (definePrimTab n)))
 
@@ -209,6 +212,9 @@ definePrimTab :: Int -> Prim -> Prim
 definePrimTab n x = case x of
     PrimTab (Left tab) -> PrimTab (Right $ defineTab n tab)
     _ -> x
+
+defineNoteTabs :: Int -> Note -> Note
+defineNoteTabs n = fmap (definePrimTab n)
 
 defineTab :: Int -> Tab -> LowTab
 defineTab midSize tab = LowTab size (tabGen tab) args
@@ -547,14 +553,34 @@ isMultiOutSignature x = case x of
 -- instrument outs
 
 instance Out Sig where
+    type NoSE Sig = Sig
     toOut = return . return
+    fromOut = head
     
-instance Out a => Out [a] where
+
+instance (CsdTuple a, Out a) => Out [a] where
+    type NoSE [a] = [NoSE a]
     toOut = fmap concat . mapM toOut 
+    fromOut as = res
+        where proxy :: [a] -> a
+              proxy = undefined  
+
+              res = fmap fromOut $ chunks arity as  
+                
+              arity = arityCsdTuple $ proxy res  
+            
+              chunks :: Int -> [a] -> [[a]]
+              chunks n xs = case xs of
+                [] -> []
+                _  -> let (a, b) = splitAt n xs
+                      in  a : chunks n b     
 
 instance Out a => Out (SE a) where
+    type NoSE (SE a) = a
     toOut = join . fmap toOut
+    fromOut = return . fromOut
 
+{-
 instance (Out a, Out b) => Out (a, b) where
     toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
     
@@ -575,7 +601,7 @@ instance (Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e
 
 instance (Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
     toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
-
+-}
 
        
  

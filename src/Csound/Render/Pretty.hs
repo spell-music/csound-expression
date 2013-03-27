@@ -7,7 +7,8 @@ module Csound.Render.Pretty (
     ($=), ppPrimOrVar, ppRatedVar, ppOuts, ppOpc, ppProc, ppVar,
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
-    ppInline, ppCondOp, ppNumOp
+    ppInline, ppCondOp, ppNumOp,
+    ppEvent
 ) where
 
 import Data.Char(toLower)
@@ -150,6 +151,10 @@ ppSco = vcat
 ppScore = vcat
 
 ppNote instrId time dur args = char 'i' <> int instrId <+> double time <+> double dur <+> hsep args
+
+ppEvent :: Int -> Double -> Double -> [Prim] -> Var -> Doc
+ppEvent instrId time dur args var = evt <> comma <+> ppVar var
+    where evt = ppProc "event_i" $ dquotes (char 'i') : int instrId : double time : double dur : fmap ppPrim args
 
 ppTotalDur d = text "f0" <+> double d
 

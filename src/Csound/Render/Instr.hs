@@ -1,6 +1,6 @@
 {-# Language TupleSections #-}
 module Csound.Render.Instr(
-    renderInstr
+    renderInstr, renderInstrBody
 ) where
 
 import qualified Data.IntMap as IM
