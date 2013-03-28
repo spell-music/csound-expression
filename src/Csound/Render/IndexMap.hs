@@ -1,5 +1,5 @@
 module Csound.Render.IndexMap(
-    IndexMap, empty, insert, member, lookup, elems
+    IndexMap, empty, insert, member, lookup, elems, length
 ) where 
 
 import Prelude hiding (lookup, length)

@@ -3,7 +3,9 @@ module Csound.Render.Mix where
 
 import Control.Monad(zipWithM_)
 import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.Class
 
+import Data.Monoid
 import Data.Tuple(swap)
 import Data.Foldable
 import Data.Traversable hiding (mapM)
@@ -15,7 +17,7 @@ import qualified Data.Set    as S
 
 import qualified Csound.Render.IndexMap as DM
 
-import Temporal.Media(temp, stretch, dur, Track, Event(..), tmap)
+import Temporal.Media(temp, stretch, dur, Track, Event(..), tmap, delay)
 import qualified Temporal.Media as T
 
 import Csound.Exp hiding (Event(..))
@@ -45,11 +47,11 @@ type InstrTab a = IM.IntMap a
 type PreSndTab = DM.IndexMap SndSrc
 
 data SndSrc = SndSrc Arity (SE [Sig])
-data Mixing = Mixing Arity ([Sig] -> SE [Sig]) (Sco (InstrId, Note))
+data Mixing = Mixing Arity ([Sig] -> SE [Sig]) (Sco MixNote)
 
 data MixE = MixE
     { mixExpE :: E
-    , mixExpSco :: (Sco (InstrId, Note)) }
+    , mixExpSco :: Sco MixNote }
 
 type Sco a = Track Double a
 
@@ -57,6 +59,8 @@ data Mix a where
     Sco :: Arity -> SE [Sig] -> Sco Note -> Mix a
     Mix :: Arity -> ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
 
+
+data MixNote = MixNote InstrId | SndNote InstrId (Sco Note)
   
 tempAs :: Sco b -> a -> Sco a
 tempAs a = stretch (dur a) . temp
@@ -110,7 +114,10 @@ render opt a = do
     return $ show $ renderSnd krateSet (fmap (substInstrTabs ftables) sndTab) $$
              renderMix krateSet (fmap (substMixFtables ftables) mixTab)
     where substMixFtables :: TabMap -> MixE -> MixE
-          substMixFtables m (MixE exp sco) = MixE (substInstrTabs m exp) (fmap (second $ substNoteTabs m) sco)
+          substMixFtables m (MixE exp sco) = MixE (substInstrTabs m exp) (fmap substNote sco)
+              where substNote x = case x of
+                        SndNote n sco -> SndNote n $ fmap (substNoteTabs m) sco
+                        _ -> x
 
           krateSet = S.fromList $ csdKrate opt        
 
@@ -118,12 +125,18 @@ render opt a = do
           defTab = defineInstrTabs (tabResolution opt)
 
           defMixTab :: MixE -> MixE
-          defMixTab (MixE eff sco) = MixE (defTab eff) (fmap (second $ defineNoteTabs $ tabResolution opt) sco) 
+          defMixTab (MixE eff sco) = MixE (defTab eff) (fmap defNoteTab sco) 
+              where defNoteTab x = case x of
+                        SndNote n sco -> SndNote n $ fmap (defineNoteTabs $ tabResolution opt) sco      
+                        _ -> x
       
 
-getNotes :: InstrTab MixE -> [Note]
-getNotes = foldMap (scoNotes . mixExpSco)
-    where scoNotes = foldMap (return . snd)
+getNotes :: InstrTab MixE -> Note
+getNotes = foldMap (foldMap scoNotes . mixExpSco)
+    where scoNotes :: MixNote -> Note
+          scoNotes x = case x of
+            SndNote n sco -> fold sco
+            _ -> mempty    
 
 sndExp :: SndSrc -> E
 sndExp (SndSrc arity sigs) = execSE $ outs arity =<< sigs
@@ -167,7 +180,10 @@ renderMix :: KrateSet -> IM.IntMap MixE -> Doc
 renderMix krateSet = ppOrc . fmap (uncurry render) . IM.toList
     where render instrId (MixE exp sco) = ppInstr instrId $ (renderPort $$ renderSco sco) : renderInstrBody krateSet exp
           renderPort = ppOpc (ppVar portVar) "FreePort" []
-          renderSco a = ppSco $ fmap (\e -> ppEvent (fst $ eventContent e) (eventStart e) (eventDur e) (snd $ eventContent e) portVar) $ T.render a
+          renderSco a = ppSco $ renderNote =<< T.render a
+          renderNote e = case eventContent e of
+              MixNote n     -> return $ ppEvent n (eventStart e) (eventDur e) [] portVar
+              SndNote n sco -> fmap (\x -> ppEvent n (eventStart x) (eventDur x) (eventContent x) portVar) $ T.render $ delay (eventStart e) sco -- only delay, stretch was done before
           
 portVar :: Var
 portVar = Var LocalVar Ir "Port"
@@ -182,7 +198,7 @@ type MkIndexMap = State (IO PreSndTab) ()
 
 getSndSrcSco :: Sco (Mix a) -> MkIndexMap
 getSndSrcSco sco = traverse getSndSrcMix sco >> return ()
-
+    
 getSndSrcMix :: Mix a -> MkIndexMap
 getSndSrcMix x = case x of
     Mix ar eff sco -> getSndSrcSco sco
@@ -193,10 +209,49 @@ instance Traversable (Track a) where
 
 -- hard stuff
 
+type MkMixing a = StateT MixingState IO a
+
+data MixingState = MixingState 
+    { counter :: Int
+    , elems   :: [(Int, Mixing)] }
+
+
+initMixingState :: Int -> MixingState
+initMixingState n = MixingState n []
+
+saveElem :: Int -> Mixing -> MkMixing ()
+saveElem n a = modify $ \x -> x{ elems = (n, a) : elems x }
+
+getCounter :: MkMixing Int
+getCounter = fmap counter get
+
+putCounter :: Int -> MkMixing ()
+putCounter n = modify $ \s -> s{ counter = n }
+
 getMixing :: PreSndTab -> Sco (Mix a) -> IO (InstrTab Mixing)
-getMixing = un
+getMixing tab sco = fmap (IM.fromList . elems) $ 
+    execStateT (traverse (getMixingMix tab) sco) 
+               (initMixingState $ DM.length tab + numOfInstrSco sco)
 
+getMixingMix :: PreSndTab -> Mix a -> MkMixing MixNote
+getMixingMix tab x = case x of
+    Sco ar snd sco -> do
+        Just n <- lift $ DM.lookup (SndSrc ar snd) tab
+        return $ SndNote n sco
+    Mix ar eff sco -> do
+        n <- getCounter
+        putCounter $ pred n
+        notes <- traverse (getMixingMix tab) sco
+        saveElem n $ Mixing ar eff notes
+        return $ MixNote n
 
+numOfInstrSco :: Sco (Mix a) -> Int
+numOfInstrSco as = getSum $ foldMap (Sum . numOfInstrForMix) as
+
+numOfInstrForMix :: Mix a -> Int
+numOfInstrForMix x = case x of
+    Sco _ _ _ -> 0
+    Mix _ _ a -> 1 + numOfInstrSco a
     
 
 

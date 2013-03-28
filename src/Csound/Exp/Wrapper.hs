@@ -161,8 +161,8 @@ getPrimUnsafe :: Val a => a -> Prim
 getPrimUnsafe a = case ratedExpExp $ unwrap a of
     ExpPrim p -> p
 
-tabMap :: [E] -> [Note] -> TabMap
-tabMap es ps = M.fromList $ zip (nub $ (concat $ mapM (getPrimTabs =<< ) ps) ++ (getInstrTabs =<< es)) [1 ..]
+tabMap :: [E] -> [Prim] -> TabMap
+tabMap es ps = M.fromList $ zip (nub $ (getPrimTabs =<< ps) ++ (getInstrTabs =<< es)) [1 ..]
     
 getInstrTabs :: E -> [LowTab]
 getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fromPrimOr $ ratedExpExp re of    
