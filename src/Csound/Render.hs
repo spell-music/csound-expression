@@ -37,7 +37,7 @@ renderCsdBy opt as = show $ ppCsdFile
     where scos   = fmap (scoSigOut' . sigOutContent) as          
           (instrs, effects, initOuts) = unzip3 $ zipWith runExpReader as ids    
           fts    = tabMap allInstrs (concat $ fmap eventContent $ concat scos)
-          strs   = stringMap $ concat scos
+          strs   = stringMap $ eventContent =<< concat scos
           ids    = take nInstr [2 .. ]
           
           allInstrs = fmap (defineInstrTabs (tabResolution opt)) $ firstInstr : lastInstr : instrs

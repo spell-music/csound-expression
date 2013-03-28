@@ -10,7 +10,6 @@ import Data.Tuple(swap)
 import Data.Foldable
 import Data.Traversable hiding (mapM)
 import Data.Default
-import Control.Arrow(second)
 
 import qualified Data.IntMap as IM
 import qualified Data.Set    as S
@@ -23,10 +22,11 @@ import qualified Temporal.Media as T
 import Csound.Exp hiding (Event(..))
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons
-import Csound.Render.Pretty(Doc, ($$), ppOrc, ppOpc, ppInstr, ppVar, ppSco, ppEvent)
+import Csound.Render.Pretty -- (Doc, ($$), ppOrc, ppOpc, ppInstr, ppVar, ppSco, ppEvent, verbatimLines)
 import Csound.Render.Instr
 import Csound.Tfm.RateGraph(KrateSet)
 import Csound.Render.Options
+import Csound.Render.Sco(stringMap, substNoteStrs, StringMap)
 
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 
@@ -108,15 +108,26 @@ renderCsd as = render def $ rescale $ clipByMax as
 render :: (Out a) => CsdOptions -> Sco (Mix a) -> IO String
 render opt a = do
     snds <- getSoundSources a
-    mixTab <- fmap (fmap (defMixTab . mixExp)) $ getMixing snds a
-    let sndTab = fmap (defTab . sndExp) $ tableSoundSources snds
-        ftables = tabMap (IM.elems sndTab ++ (fmap mixExpE $ IM.elems mixTab)) (getNotes mixTab)
-    return $ show $ renderSnd krateSet (fmap (substInstrTabs ftables) sndTab) $$
-             renderMix krateSet (fmap (substMixFtables ftables) mixTab)
-    where substMixFtables :: TabMap -> MixE -> MixE
-          substMixFtables m (MixE exp sco) = MixE (substInstrTabs m exp) (fmap substNote sco)
+    (lastInstrId, preMixTab) <- getMixing snds a    
+    let mixTab = fmap (defMixTab . mixExp) preMixTab
+        sndTab = fmap (defTab . sndExp) $ tableSoundSources snds
+        notes = getNotes mixTab
+        strs = stringMap notes
+        ftables = tabMap (IM.elems sndTab ++ (fmap mixExpE $ IM.elems mixTab)) notes
+        scoDoc = ppNote lastInstrId 0 (dur a) []
+    return $ show $ ppCsdFile 
+        (renderFlags opt)
+        (renderInstr0 (nchnls a) midiInstrs opt $$ portUpdateStmt)
+
+        (renderSnd krateSet (fmap (substInstrTabs ftables) sndTab) $$
+             renderMix krateSet (fmap (substMixFtables strs ftables) mixTab))
+        (scoDoc)
+        (ppMapTable ppStrset strs)
+        (ppTotalDur (dur a) $$ ppMapTable ppTabDef ftables)
+    where substMixFtables :: StringMap -> TabMap -> MixE -> MixE
+          substMixFtables strMap tabMap (MixE exp sco) = MixE (substInstrTabs tabMap exp) (fmap substNote sco)
               where substNote x = case x of
-                        SndNote n sco -> SndNote n $ fmap (substNoteTabs m) sco
+                        SndNote n sco -> SndNote n $ fmap (substNoteStrs strMap . substNoteTabs tabMap) sco
                         _ -> x
 
           krateSet = S.fromList $ csdKrate opt        
@@ -129,6 +140,12 @@ render opt a = do
               where defNoteTab x = case x of
                         SndNote n sco -> SndNote n $ fmap (defineNoteTabs $ tabResolution opt) sco      
                         _ -> x
+
+          nchnls = outArity . proxy  
+              where proxy :: Sco (Mix a) -> a
+                    proxy = undefined  
+
+          midiInstrs = [] -- ??? how to include midis
       
 
 getNotes :: InstrTab MixE -> Note
@@ -228,10 +245,11 @@ getCounter = fmap counter get
 putCounter :: Int -> MkMixing ()
 putCounter n = modify $ \s -> s{ counter = n }
 
-getMixing :: PreSndTab -> Sco (Mix a) -> IO (InstrTab Mixing)
-getMixing tab sco = fmap (IM.fromList . elems) $ 
+getMixing :: PreSndTab -> Sco (Mix a) -> IO (InstrId, InstrTab Mixing)
+getMixing tab sco = fmap (formRes . elems) $ 
     execStateT (traverse (getMixingMix tab) sco) 
                (initMixingState $ DM.length tab + numOfInstrSco sco)
+    where formRes xs = (fst $ last xs, IM.fromList xs)
 
 getMixingMix :: PreSndTab -> Mix a -> MkMixing MixNote
 getMixingMix tab x = case x of
@@ -254,6 +272,11 @@ numOfInstrForMix x = case x of
     Mix _ _ a -> 1 + numOfInstrSco a
     
 
-
+portUpdateStmt = verbatimLines [
+    "giPort init 0",
+    "opcode FreePort, i, 0",
+    "xout giPort",
+    "giPort = giPort + 1",
+    "endop"]
 
 

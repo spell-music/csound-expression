@@ -2,7 +2,7 @@ module Csound.Render.Sco(
     score, SigOut(..), effect, 
     massign , pgmassign, MidiType(..),
     eventEnd, PlainSigOut(..), renderScores,
-    runExpReader, nchnls, stringMap, outs'
+    runExpReader, nchnls, StringMap, stringMap, substNoteStrs, outs'
 ) where
 
 import Data.List(nub)
@@ -108,12 +108,19 @@ renderNote strs instrId e = ppNote instrId (eventStart e) (eventDur e) (map prim
               PrimTab f -> error $ "i'm lost in the scores, substitute me (" ++ show f ++ ")"
               
 
-stringMap :: [Event Note] -> StringMap
-stringMap as = M.fromList $ zip (nub $ allStrings =<< as) [1 .. ]
-    where allStrings evt = primStrings =<< eventContent evt
-          primStrings x = case x of
+stringMap :: [Prim] -> StringMap
+stringMap as = M.fromList $ zip (nub $ primStrings =<< as) [1 .. ]
+    where primStrings x = case x of
               PrimString s -> [s]
               _ -> []
+
+substNoteStrs :: StringMap -> Note -> Note
+substNoteStrs m = fmap (substPrimStrs m)
+
+substPrimStrs :: StringMap -> Prim -> Prim
+substPrimStrs strs x = case x of
+    PrimString s -> PrimInt $ strs M.! s
+    _ -> x
 
 
 

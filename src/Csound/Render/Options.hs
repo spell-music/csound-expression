@@ -74,7 +74,7 @@ renderInstr0 nchnls massignTable opt = ppInstr0 $ [
     stmt "0dbfs" 1,
     maybe empty seed $ csdSeed opt] 
     ++ map initc7 (csdInitc7 opt)
-    ++ fmap renderMidiAssign massignTable
+    ++ fmap renderMidiAssign massignTable        
     where stmt a b = text a $= int b
           seed n = ppProc "seed" [int n]
           initc7 (chn, ctl, val) = ppProc "initc7" [int chn, int ctl, double val]

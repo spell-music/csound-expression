@@ -1,5 +1,6 @@
 module Csound.Render.Pretty (
     Doc, int, double, text, empty, ($$),
+    verbatimLines,
 
     binaries, unaries, funcs,
     binary, unary, func,
@@ -17,6 +18,9 @@ import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen
 
 import Csound.Exp
+
+verbatimLines :: [String] -> Doc
+verbatimLines = vcat . fmap text
 
 ($$) = (<$$>)
 
