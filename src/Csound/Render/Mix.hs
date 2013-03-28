@@ -30,6 +30,9 @@ import Csound.Render.Sco(stringMap, substNoteStrs, StringMap)
 
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 
+instance Traversable (Track a) where
+    traverse = un
+
 un = undefined
 
 outArity :: Out a => a -> Int
@@ -220,9 +223,6 @@ getSndSrcMix :: Mix a -> MkIndexMap
 getSndSrcMix x = case x of
     Mix ar eff sco -> getSndSrcSco sco
     Sco ar snd sco -> modify (DM.insert (SndSrc ar snd) =<<)
-
-instance Traversable (Track a) where
-    traverse = un
 
 -- hard stuff
 
