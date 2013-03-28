@@ -22,16 +22,13 @@ import qualified Temporal.Media as T
 import Csound.Exp hiding (Event(..))
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons
-import Csound.Render.Pretty -- (Doc, ($$), ppOrc, ppOpc, ppInstr, ppVar, ppSco, ppEvent, verbatimLines)
+import Csound.Render.Pretty
 import Csound.Render.Instr
 import Csound.Tfm.RateGraph(KrateSet)
 import Csound.Render.Options
 import Csound.Render.Sco(stringMap, substNoteStrs, StringMap)
 
 import Csound.Opcode(clip, zeroDbfs, sprintf)
-
-instance Traversable (Track a) where
-    traverse = un
 
 un = undefined
 
