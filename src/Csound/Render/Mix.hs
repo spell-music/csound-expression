@@ -52,7 +52,12 @@ type InstrId = Int
 type InstrTab a = IM.IntMap a
 type PreSndTab = DM.IndexMap SndSrc
 
-data SndSrc = SndSrc Arity (SE [Sig]) | MidiSndSrc Arity (SE [Sig]) MidiType Channel
+data Instr = Instr DM.InstrName Arity (SE [Sig])
+
+data SndSrc
+    = SndSrc Instr     
+    | MidiSndSrc Instr MidiType Channel
+
 data Mixing = Mixing Arity ([Sig] -> SE [Sig]) (Sco MixNote)
 
 data MixE = MixE
@@ -62,9 +67,10 @@ data MixE = MixE
 type Sco a = Track Double a
 
 data Mix a where
-    Sco :: Arity -> SE [Sig] -> Sco Note -> Mix a
+    Sco :: Instr -> Sco Note -> Mix a
+    Mid :: Instr -> MidiType -> Channel -> Mix a
     Mix :: Arity -> ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
-    Mid :: Arity -> SE [Sig] -> MidiType -> Channel -> Mix a
+
 
 
 data MixNote = MixNote InstrId | SndNote InstrId (Sco Note) | MidNote MidiInstrParams
@@ -73,7 +79,7 @@ tempAs :: Sco b -> a -> Sco a
 tempAs a = stretch (dur a) . temp
 
 sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
-sco instr notes = tempAs notes $ Sco (getArity instr) (toOut $ instr toArg) $ fmap (toNote argMethods) notes
+sco instr notes = tempAs notes $ Sco (Instr (DM.makeInstrName instr) (getArity instr) (toOut $ instr toArg)) $ fmap (toNote argMethods) notes
     where getArity :: (Arg a, Out b) => (a -> b) -> Arity
           getArity f = let (a, b) = funProxy f in Arity (arity argMethods a) (outArity b)           
 
@@ -83,10 +89,10 @@ mix effect sigs = tempAs sigs $ Mix (getArity effect) (toOut . effect . fromOut)
           getArity f = let (a, b) = funProxy f in Arity (outArity a) (outArity b)
 
 midi :: (Out a) => Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
-midi chn f = temp $ Mid (getMidiArity f) (toOut $ f Msg) Massign chn
+midi chn f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) Massign chn
 
 pgmidi :: (Out a) => Maybe Int -> Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
-pgmidi mchn n f = temp $ Mid (getMidiArity f) (toOut $ f Msg) (Pgmassign mchn) n
+pgmidi mchn n f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) (Pgmassign mchn) n
 
 getMidiArity :: (Out a) => (Msg -> a) -> Arity
 getMidiArity f = Arity 0 $ outArity $ snd $ funProxy f
@@ -109,15 +115,15 @@ rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
                        in  mixStretch factor (eventContent e)
     where mixDur :: Mix a -> Double
           mixDur x = case x of
-            Sco _ _ a -> dur a
+            Sco _ a -> dur a
             Mix _ _ a -> dur a
-            Mid _ _ _ _ -> 1
+            Mid _ _ _ -> 1
 
           mixStretch :: Double -> Mix a -> Mix a
           mixStretch k x = case x of
-            Sco ar a sco -> Sco ar a $ stretch k sco
+            Sco a sco -> Sco a $ stretch k sco
             Mix ar a sco -> Mix ar a $ stretch k sco
-            Mid _ _ _ _  -> x     
+            Mid _ _ _  -> x     
 
 
 renderCsd :: (Out a) => Sco (Mix a) -> IO String
@@ -198,7 +204,7 @@ getMidiVars (MidiInstrParams arity instrId _ _) = fmap (midiVar instrId) [1 .. a
 getMidiInstrParams :: PreSndTab -> [MidiInstrParams]
 getMidiInstrParams a = catMaybes $ fmap extract $ DM.elems a
     where extract (x, n) = case x of
-            MidiSndSrc arity _ ty chn -> Just $ MidiInstrParams arity n ty chn
+            MidiSndSrc (Instr _ arity _) ty chn -> Just $ MidiInstrParams arity n ty chn
             _ -> Nothing
 
 initMidiVar :: Var -> Doc
@@ -219,8 +225,8 @@ getNotes = foldMap (foldMap scoNotes . mixExpSco)
 
 sndExp :: InstrId -> SndSrc -> E
 sndExp instrId x = execSE $ case x of
-    SndSrc arity sigs -> outs arity =<< sigs
-    MidiSndSrc arity sigs mType chn -> midiOuts instrId =<< sigs
+    SndSrc (Instr _ arity sigs) -> outs arity =<< sigs
+    MidiSndSrc (Instr _ arity sigs) mType chn -> midiOuts instrId =<< sigs
 
 mixExp :: Mixing -> MixE
 mixExp (Mixing arity effect sco) = MixE exp sco
@@ -299,12 +305,23 @@ getSndSrcSco sco = traverse getSndSrcMix sco >> return ()
     
 getSndSrcMix :: Mix a -> MkIndexMap
 getSndSrcMix x = case x of
-    Mix ar eff sco    -> getSndSrcSco sco
-    Sco ar snd sco    -> saveSndSrc $ SndSrc ar snd
-    Mid ar snd ty chn -> saveSndSrc $ MidiSndSrc ar snd ty chn
+    Mix ar eff sco   -> getSndSrcSco sco
+    Sco instr sco    -> saveSndSrc $ SndSrc instr
+    Mid instr ty chn -> saveSndSrc $ MidiSndSrc instr ty chn
     
 saveSndSrc :: SndSrc -> MkIndexMap
-saveSndSrc a = modify (DM.insert a =<<)
+saveSndSrc a = modify (DM.insert (sndSrcName a) a =<<)
+
+sndSrcName :: SndSrc -> DM.InstrName
+sndSrcName = instrName . sndSrcInstr
+
+instrName :: Instr -> DM.InstrName
+instrName (Instr name _ _) = name
+
+sndSrcInstr :: SndSrc -> Instr
+sndSrcInstr x = case x of
+    SndSrc instr -> instr
+    MidiSndSrc instr _ _ -> instr
 
 -- hard stuff
 
@@ -335,12 +352,12 @@ getMixing tab sco = fmap formRes $
 
 getMixingMix :: PreSndTab -> Mix a -> MkMixing MixNote
 getMixingMix tab x = case x of
-    Sco ar snd sco -> do
-        Just n <- lift $ DM.lookup (SndSrc ar snd) tab
+    Sco snd sco -> do
+        Just n <- lift $ DM.lookup (instrName snd) tab
         return $ SndNote n sco
-    Mid ar snd ty chn -> do
-        Just n <- lift $ DM.lookup (MidiSndSrc ar snd ty chn) tab
-        return $ MidNote (MidiInstrParams ar n ty chn)
+    Mid snd ty chn -> do
+        Just n <- lift $ DM.lookup (instrName snd) tab
+        return $ MidNote (MidiInstrParams (instrArity snd) n ty chn)
     Mix ar eff sco -> do
         n <- getCounter
         putCounter $ pred n
@@ -348,14 +365,16 @@ getMixingMix tab x = case x of
         saveElem n $ Mixing ar eff notes
         return $ MixNote n
         
+instrArity (Instr _ ar _) = ar
+
 numOfInstrSco :: Sco (Mix a) -> Int
 numOfInstrSco as = getSum $ foldMap (Sum . numOfInstrForMix) as
 
 numOfInstrForMix :: Mix a -> Int
 numOfInstrForMix x = case x of
     Mix _ _ a -> 1 + numOfInstrSco a
-    Sco _ _ _ -> 0
-    Mid _ _ _ _ -> 0
+    Mid _ _ _ -> 0
+    Sco _ _   -> 0
 
 portUpdateStmt = verbatimLines [
     "giPort init 0",
