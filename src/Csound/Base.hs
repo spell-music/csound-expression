@@ -251,16 +251,18 @@ module Csound.Base(
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
     score, Arg(..), ArgMethods, makeArgMethods,
+    Sco, Mix, sco, mix,
+    module Temporal.Media,
 
     -- ** Midi
     -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.
-    Msg, massign, pgmassign,
+    Msg, midi, pgmidi,
 
     -- ** Rendering
     -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
     -- contains the description of our music. We can save it to a file and compile it with our @csound@
     -- wizard. 
-    renderCsd,
+    renderCsd, writeCsd,
    
     -- ** Opcodes    
     -- | Some colors to paint our soundscapes.
@@ -272,12 +274,13 @@ module Csound.Base(
 
     -- ** Options
     -- | We can set some csound options.
-    renderCsdBy,    
+    renderCsdBy, writeCsdBy,   
     Channel, CtrlId, CsdOptions(..), module Data.Default, mixing, mixingBy
 ) where
 
 import Data.Default
 import Data.Boolean
+import Temporal.Media
 
 import Csound.Air 
 
@@ -291,7 +294,7 @@ import Csound.Exp.Logic
 
 import Csound.Render.Sco
 import Csound.Render.Options
-import Csound.Render
+import Csound.Render.Mix
 
 
 
