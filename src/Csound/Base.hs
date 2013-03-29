@@ -206,7 +206,7 @@ module Csound.Base(
     -- * Outdated but short manual on Csound <http://cara.gsu.edu/courses/csound_users_seminar/csound/3.46/CsIntro.html>
    
     -- * Types
-    Val,
+    Val, arity,
     
     -- ** Constants     
     -- | A constant value doesn't change while instrument is playing a note.

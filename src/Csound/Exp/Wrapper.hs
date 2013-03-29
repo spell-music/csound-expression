@@ -418,8 +418,9 @@ instance (Arg a, Arg b) => Arg (a, b) where
                   where a = arg argMethods n
                         b = arg argMethods (n + arity argMethods a)
               toNote' (a, b) = toNote argMethods a ++ toNote argMethods b
-              arity' (a, b) = arity argMethods a + arity argMethods b    
-
+              arity' x = let (a, b) = proxy x in arity argMethods a + arity argMethods b    
+                  where proxy :: (a, b) -> (a, b)
+                        proxy = const (undefined, undefined)
 
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c) where
     argMethods = makeArgMethods to from
