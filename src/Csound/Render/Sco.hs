@@ -1,5 +1,5 @@
 module Csound.Render.Sco(
-    score, SigOut(..), effect, 
+    score, SigOut(..),
     massign , pgmassign, MidiType(..),
     eventEnd, PlainSigOut(..), renderScores,
     runExpReader, nchnls, StringMap, stringMap, substNoteStrs, outs'

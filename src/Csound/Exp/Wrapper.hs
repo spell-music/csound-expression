@@ -4,6 +4,7 @@
         FlexibleInstances,
         FlexibleContexts #-}
 module Csound.Exp.Wrapper(
+    toE, fromE,
     Out(..), Outs, Sig, D, Str, BoolSig(..), BoolD(..), Spec, ToSig(..),
     Sig2, Sig3, Sig4,
     SE, se, se_, runSE, execSE,
@@ -38,6 +39,14 @@ type Outs = SE [Sig]
 type Sig2 = (Sig, Sig)
 type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
+
+-- | Converts a value to the private representation.
+toE :: Val a => a -> E
+toE = Fix . unwrap
+
+-- | Constructs a value from the private representation.
+fromE :: Val a => E -> a
+fromE = wrap . unFix
 
 -- | Output of the instrument.
 class CsdTuple (NoSE a) => Out a where
@@ -353,7 +362,7 @@ data ArgMethods a = ArgMethods
 toArg :: Arg a => a
 toArg = arg argMethods 4
 
--- | Defines instance of type class 'Arg' for a new type in terms of an old one.
+-- | Defines instance of type class 'Arg' for a new type in terms of an already defined one.
 makeArgMethods :: (Arg a) => (a -> b) -> (b -> a) -> ArgMethods b
 makeArgMethods to from = ArgMethods {
     arg = to . arg argMethods,
@@ -573,26 +582,7 @@ isMultiOutSignature x = case x of
 instance Out Sig where
     type NoSE Sig = Sig
     toOut = return . return
-    fromOut = head
-    
-{-
-instance (CsdTuple a, Out a) => Out [a] where
-    type NoSE [a] = [NoSE a]
-    toOut = fmap concat . mapM toOut 
-    fromOut as = res
-        where proxy :: [a] -> a
-              proxy = undefined  
-
-              res = fmap fromOut $ chunks arity as  
-                
-              arity = arityCsdTuple $ proxy res  
-            
-              chunks :: Int -> [a] -> [[a]]
-              chunks n xs = case xs of
-                [] -> []
-                _  -> let (a, b) = splitAt n xs
-                      in  a : chunks n b     
--}
+    fromOut = head  
 
 instance (Out a, CsdTuple a) => Out (SE a) where
     type NoSE (SE a) = a
@@ -600,30 +590,41 @@ instance (Out a, CsdTuple a) => Out (SE a) where
     fromOut = return . fromOut
 
 
-instance (Out a, Out b) => Out (a, b) where
+instance (CsdTuple a, CsdTuple b, Out a, Out b) => Out (a, b) where
     type NoSE (a, b) = (NoSE a, NoSE b)
     toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
-    fromOut = undefined
+    fromOut = toCsdTuple . fmap toE
 
-{-    
-instance (Out a, Out b, Out c) => Out (a, b, c) where
-    toOut (a, b, c) = toOut (a, (b, c))
     
-instance (Out a, Out b, Out c, Out d) => Out (a, b, c, d) where
+instance (CsdTuple a, CsdTuple b, CsdTuple c, Out a, Out b, Out c) => Out (a, b, c) where
+    type NoSE (a, b, c) = (NoSE a, NoSE b, NoSE c)
+    toOut (a, b, c) = toOut (a, (b, c))
+    fromOut = toCsdTuple . fmap toE
+    
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, Out a, Out b, Out c, Out d) => Out (a, b, c, d) where
+    type NoSE (a, b, c, d) = (NoSE a, NoSE b, NoSE c, NoSE d)
     toOut (a, b, c, d) = toOut (a, (b, c, d))
- 
-instance (Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
+    fromOut = toCsdTuple . fmap toE
+    
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
+    type NoSE (a, b, c, d, e) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e)
     toOut (a, b, c, d, e) = toOut (a, (b, c, d, e))
-
-instance (Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
+    fromOut = toCsdTuple . fmap toE
+    
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
+    type NoSE (a, b, c, d, e, f) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f)
     toOut (a, b, c, d, e, f) = toOut (a, (b, c, d, e, f))
-
-instance (Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e, f, g) where
+    fromOut = toCsdTuple . fmap toE
+    
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e, f, g) where
+    type NoSE (a, b, c, d, e, f, g) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g)
     toOut (a, b, c, d, e, f, g) = toOut (a, (b, c, d, e, f, g))
-
-instance (Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
+    fromOut = toCsdTuple . fmap toE
+    
+instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h, Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
+    type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
     toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
--}
+    fromOut = toCsdTuple . fmap toE
 
        
  

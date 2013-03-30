@@ -26,7 +26,7 @@ module Csound.Base(
     --
     -- 2. Scores. User triggers instruments with a list of notes
     --
-    -- Ab instrument is something that listens to notes and converts them to signals. 
+    -- An instrument is something that listens to notes and converts them to signals. 
     -- Note is a tuple: (instrument name, start time, duration, parameters). Parameters cell is
     -- a tuple of primitive types: numbers ('Csound.Base.D'), strings ('Csound.Base.Str') and tables or arrays of numbers ("Csound.Tab").
     -- 
@@ -37,7 +37,7 @@ module Csound.Base(
     -- But main strength lies in the Orchestra section. Here you can define the timbres for
     -- your musical journey. Csound is mostly for making strange sounds. How you can do it?
     -- You do it with instruments. An instrument is a sequence of statements that define a flow-graph
-    -- for your sound waves. In instrument you can use predefined sound generators and transformers ("Csound.Opcode" and "Csound.Air").
+    -- for your sound waves. For an instrument you can use predefined sound generators and transformers ("Csound.Opcode" and "Csound.Air").
     -- 
     -- Score/Orchestra division stays in this library too. You define your instruments of the type
     --
@@ -45,20 +45,35 @@ module Csound.Base(
     --
     -- An instrument is something that converts arguments-like things (tuple of primitive values) to output-like things (list of signals).
     --
-    -- Later when you are done with orchestra section you can trigger the instruments with the function 'Csound.Base.score'
+    -- Later when you are done with orchestra section you can trigger the instruments with the function 'Csound.Base.sco'
     --
-    -- > score :: (Arg a, Out b) => (a -> b) -> [(Double, Double, a)] -> SigOut
+    -- > sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
     --
-    -- It takes an instrument and the list of notes for this instrument. I've said that in Csound note contains
-    -- four elements. But here it has only three because we define all notes at the time for one instrument.
-    -- No need to label instrument with names explicitly. arguments-like thing is something that can be converted
-    -- to the tuple of primitive values. There are a lot of predefined instances.
+    -- It takes an instrument and the bunch of notes for this instrument. The output looks scary but let's try to understand it by bits:
     --
-    -- This library doesn't help you with score section that much. Scores are the same as you would write them with Csound.
-    -- It's a list of events. Haskell can help you with powerful functions for lists but it's not so convenient as it
-    -- can be. It's so on purpose. Csound-expression stays clear from score-generation libraries. But you can use
-    -- your favourite library to create complex scores. You can use temporal-music-notation or Haskore or Euterpea.
-    -- Any library that can generate the list of events will do. 
+    -- * @Sco a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
+    --
+    -- * @Mix a@ - is an output of Csound instrument it can be one or several signals ('Csound.Base.Sig' or 'Csound.Base.CsdTuple'). 
+    --
+    -- *NoSE a* - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip the 'Csound.Base.SE' wrapper
+    -- from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. Why should it be? I need 'SE' to deduce the order of the
+    -- instruments that have side effects. I need it within one instrument. But when instrument is rendered I no longer need 'SE' type. So 'NoSE' lets me drop it
+    -- from the output type. 
+    --
+    -- If you got used to Csound you can ask "where is the instrument name?" No need to worry about names they are generated automatically.
+    --
+    -- In Csound to apply some effect one must use the global variables. There are some instruments that produce signals and write them to
+    -- the global variables and there is an instrument that functions as mixer. It's turned on for the whole piece and it reads the global
+    -- variables and applies the effects to the sound and finally writes it to the file or to the speakers. In this library it's very easy
+    -- to apply an effect to the outputs of the instruments. There is a function 'Csound.Base.mix':
+    --
+    -- > mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE a))
+    --
+    -- Looks like the function 'Csound.Base.sco'. But now the first argument is an effect. It takes not a note but a signal (or a tuple of signals)
+    -- and gives back some signal. The second argument holds the sound that we'd like to apply the effect to. With this function we can apply reverb or
+    -- adjust the gain levels or apply some envelope, any valid csound transformation will do. What's interesting is that we can delay and stretch it, align
+    -- with functions 'Temporal.Media.line' and 'Temporal.Media.chord' add another signal to it and apply some fancy effect to the cumulative sound.
+    -- (If you are familiar with Csound this functionality is implemented with chnmix and chnget opcodes).
     --  
     
     -- ** Flags and options
@@ -104,8 +119,7 @@ module Csound.Base(
     
     -- ** How to read the Csound docs
     
-    -- | I'm to lazy to rewrite the Csound docs for all opcodes so you'd better get acquainted with Csound docs.
-    -- Docs are very good. How to read them? For instance you want to use an oscillator with cubic interpolation 
+    -- | You'd better get acquainted with Csound docs. Docs are very good. How to read them? For instance you want to use an oscillator with cubic interpolation 
     -- so you dig into the "Csound.Opcode.Basic" and find the function:
     --
     -- > oscil3 :: Sig -> Sig -> Tab -> Sig
@@ -178,11 +192,11 @@ module Csound.Base(
     -- > -- Let's trigger the instrument from the score section.
     -- > -- It plays a single note that starts at 0 and lasts for 1 second and 
     -- > -- triggers the instrument 'instr' with frequency of 440 (Hz).
-    -- > res = score pureTone [(0, 1, 440)]
+    -- > res = sco pureTone $ temp 440
     -- > 
     -- > -- Renders generated csd-file to the "tmp.csd".
     -- > main :: IO ()
-    -- > main = writeFile "tmp.csd" $ renderCsd [res]
+    -- > main = writeCsd "tmp.csd" res
     --
     -- Now you can invoke Csound on tmp.csd and listen to the result with your favourite player.
     --
@@ -243,7 +257,7 @@ module Csound.Base(
     -- * Making a sound
     
     -- | Let's make some noise. Sound is build from list of tracks ('SigOut').
-    Out(NoSE),
+    Out,
     
     -- ** Handy short-cuts
     Sig2, Sig3, Sig4,
@@ -252,6 +266,9 @@ module Csound.Base(
     -- | We can define an instrument and tell it to play some notes.
     Arg(..), ArgMethods, makeArgMethods,
     Sco, Mix, sco, mix, 
+    
+    -- ** Effects
+    effect, effectS,
     module Temporal.Media,
 
     -- ** Midi

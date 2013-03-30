@@ -1,7 +1,8 @@
 {-# Language GADTs, DeriveFunctor, DeriveFoldable #-}
 module Csound.Render.Mix(
     Sco, Mix, sco, mix, midi, pgmidi,
-    renderCsd, renderCsdBy, writeCsd, writeCsdBy, playCsd, playCsdBy
+    renderCsd, renderCsdBy, writeCsd, writeCsdBy, playCsd, playCsdBy, 
+    effect, effectS
 ) where
 
 import Control.Monad(zipWithM_)
@@ -76,6 +77,72 @@ playCsdBy opt player file sco = do
     where fileCsd = file ++ ".csd"
           fileWav = file ++ ".wav"  
 
+-- | A bunch of events.
+type Sco a = Track Double a
+
+-- | Track of sound. 
+data Mix a where
+    Sco :: Instr -> Sco Note -> Mix a
+    Mid :: Instr -> MidiType -> Channel -> Mix a
+    Mix :: Arity -> ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
+
+-- | Play a bunch of notes with the given instrument.
+--
+-- > res = sco instrument scores 
+--
+-- * @instrument@ is a function that takes notes and produces a tuple of signals (maybe with some side effect)
+--  
+-- * @scores@ are some notes (see the module "Temporal.Media" on how to build complex scores out of simple ones)
+--
+-- Let's try to understand the type of the output. It's @Sco (Mix (NoSE a))@. What does it mean? Let's look at the different parts of this type:
+--
+-- * @Sco a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
+--
+-- * @Mix a@ - is an output of Csound instrument it can be one or several signals ('Csound.Base.Sig' or 'Csound.Base.CsdTuple'). 
+--
+-- *NoSE a* - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip the 'Csound.Base.SE' wrapper
+-- from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. Why should it be? I need 'SE' to deduce the order of the
+-- instruments that have side effects. I need it within one instrument. But when instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
+-- from the output type. 
+sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
+sco instr notes = tempAs notes $ Sco (Instr (DM.makeInstrName instr) (getArity instr) (toOut $ instr toArg)) $ fmap (toNote argMethods) notes
+    where getArity :: (Arg a, Out b) => (a -> b) -> Arity
+          getArity f = let (a, b) = funProxy f in Arity (arity argMethods a) (outArity b)           
+
+-- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
+--
+-- > res = mix effect sco 
+--
+-- * @effect@ - a function that takes a tuple of signals and produces a tuple of signals.
+--
+-- * @sco@ - something that is constructed with 'Csound.Base.sco' or 'Csound.Base.mix' or 'Csound.Base.midi'. 
+--
+-- With the function 'Csound.Base.mix' you can apply a reverb or adjust the level of the signal. It functions like a mixing board
+-- but unlike mixing board it produces the value that you can arrange with functions from the module "Temporal.Media". You can delay it
+-- mix with some other track and apply some another effect on top of it!
+mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE b))
+mix effect sigs = tempAs sigs $ Mix (getArity effect) (toOut . effect . fromOut) sigs
+    where getArity :: (Out a, Out b) => (a -> b) -> Arity
+          getArity f = let (a, b) = funProxy f in Arity (outArity a) (outArity b)
+
+-- | Triggers a midi-instrument (like Csound's massign). The result type is a fake one. It's wrapped in the 'Csound.Base.Sco' for the ease of mixing.
+-- you can not delay or stretch it. The only operation that is meaningful for it is 'Temporal.Media.chord'. But you can add effects to it with 'Csound.Base.mix'!
+midi :: (Out a) => Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
+midi chn f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) Massign chn
+
+-- | Triggers a - midi-instrument (like Csound's pgmassign). 
+pgmidi :: (Out a) => Maybe Int -> Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
+pgmidi mchn n f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) (Pgmassign mchn) n
+
+
+-- | Constructs the effect that applies a given function on every channel.
+effect :: (CsdTuple a, Out a) => (Sig -> Sig) -> (a -> a)
+effect f = toCsdTuple . fmap (toE . f . fromE) . fromCsdTuple
+
+-- | Constructs the effect that applies a given function with side effect (it uses random opcodes or delays) on every channel.
+effectS :: (CsdTuple a, Out a) => (Sig -> SE Sig) -> (a -> SE a)
+effectS f a = fmap fromOut $ mapM f =<< toOut a
+
 outArity :: Out a => a -> Int
 outArity a = arityCsdTuple (proxy a)
     where proxy :: Out a => a -> NoSE a
@@ -121,35 +188,10 @@ data MixE = MixE
     { mixExpE :: E
     , mixExpSco :: Sco MixNote }
 
-type Sco a = Track Double a
-
-data Mix a where
-    Sco :: Instr -> Sco Note -> Mix a
-    Mid :: Instr -> MidiType -> Channel -> Mix a
-    Mix :: Arity -> ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
-
-
-
 data MixNote = MixNote InstrId | SndNote InstrId (Sco Note) | MidNote MidiInstrParams
   
 tempAs :: Sco b -> a -> Sco a
 tempAs a = stretch (dur a) . temp
-
-sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
-sco instr notes = tempAs notes $ Sco (Instr (DM.makeInstrName instr) (getArity instr) (toOut $ instr toArg)) $ fmap (toNote argMethods) notes
-    where getArity :: (Arg a, Out b) => (a -> b) -> Arity
-          getArity f = let (a, b) = funProxy f in Arity (arity argMethods a) (outArity b)           
-
-mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE b))
-mix effect sigs = tempAs sigs $ Mix (getArity effect) (toOut . effect . fromOut) sigs
-    where getArity :: (Out a, Out b) => (a -> b) -> Arity
-          getArity f = let (a, b) = funProxy f in Arity (outArity a) (outArity b)
-
-midi :: (Out a) => Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
-midi chn f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) Massign chn
-
-pgmidi :: (Out a) => Maybe Int -> Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
-pgmidi mchn n f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) (Pgmassign mchn) n
 
 getMidiArity :: (Out a) => (Msg -> a) -> Arity
 getMidiArity f = Arity 0 $ outArity $ snd $ funProxy f
