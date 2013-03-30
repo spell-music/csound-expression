@@ -17,11 +17,12 @@ makeInstrName = DM.makeDynamicStableName
 
 data IndexMap a = IndexMap 
     { elems     :: [(a, Int)]
+    , counter   :: Int    
     , length    :: Int
     , dynMap    :: DM.Map Int }
 
-empty :: IndexMap a
-empty = IndexMap [] 0 DM.empty
+empty :: Int -> IndexMap a
+empty startId = IndexMap [] startId 0 DM.empty
 
 insert :: InstrName -> a -> IndexMap a -> IO (IndexMap a)
 insert mname v m = do
@@ -29,8 +30,9 @@ insert mname v m = do
     isMember <- member mname m
     if isMember 
         then return m
-        else return $ IndexMap ((v, len) : elems m) (succ len) (DM.insert name len (dynMap m))
+        else return $ IndexMap ((v, n) : elems m) (succ n) (succ len) (DM.insert name n $ dynMap m)
     where len = length m
+          n   = counter m  
 
 member :: InstrName -> IndexMap a -> IO Bool
 member v m = flip DM.member (dynMap m) <$> v

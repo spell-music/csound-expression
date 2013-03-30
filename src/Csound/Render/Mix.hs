@@ -1,12 +1,13 @@
-{-# Language GADTs #-}
+{-# Language GADTs, DeriveFunctor, DeriveFoldable #-}
 module Csound.Render.Mix(
     Sco, Mix, sco, mix, midi, pgmidi,
-    renderCsd, renderCsdBy, writeCsd, writeCsdBy
+    renderCsd, renderCsdBy, writeCsd, writeCsdBy, playCsd, playCsdBy
 ) where
 
 import Control.Monad(zipWithM_)
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class
+import Control.Arrow(second)
 
 import Data.List(transpose)
 import Data.Monoid
@@ -16,7 +17,8 @@ import Data.Foldable hiding (mapM_, sum)
 import Data.Traversable hiding (mapM)
 import Data.Default
 
-import qualified Data.IntMap as IM
+import System.Cmd(system)
+
 import qualified Data.Set    as S
 
 import qualified Csound.Render.IndexMap as DM
@@ -38,6 +40,42 @@ import Csound.Opcode(clip, zeroDbfs, sprintf)
 
 un = undefined
 
+-- | Renders Csound file.
+renderCsd :: (Out a) => Sco (Mix a) -> IO String
+renderCsd = renderCsdBy def
+
+-- | Renders Csound file with options.
+renderCsdBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO String
+renderCsdBy opt as = render opt $ rescale as
+
+-- | Render Csound file and save it to the give file.
+writeCsd :: (Out a) => String -> Sco (Mix a) -> IO ()
+writeCsd file sco = writeFile file =<< renderCsd sco 
+
+-- | Render Csound file with options and save it to the give file.
+writeCsdBy :: (Out a) => CsdOptions -> String -> Sco (Mix a) -> IO ()
+writeCsdBy opt file sco = writeFile file =<< renderCsdBy opt sco
+
+-- | RenderCsound file save it to the given file, render with csound command and play it with the given program.
+-- 
+-- > playCsd program file sco 
+--
+-- Produces files @file.csd@ (with 'Csound.Render.Mix.renderCsd') and @file.wav@ (with @csound@) and then invokes:
+--
+-- > program file.wav
+playCsd :: (Out a) => String -> String -> Sco (Mix a) -> IO ()
+playCsd = playCsdBy def
+
+-- | Works just like 'Csound.Render.Mix.playCsd' but you can supply csound options.
+playCsdBy :: (Out a) => CsdOptions -> String -> String -> Sco (Mix a) -> IO ()
+playCsdBy opt player file sco = do
+    writeCsdBy opt fileCsd sco
+    system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
+    system $ player ++ " " ++ fileWav
+    return ()
+    where fileCsd = file ++ ".csd"
+          fileWav = file ++ ".wav"  
+
 outArity :: Out a => a -> Int
 outArity a = arityCsdTuple (proxy a)
     where proxy :: Out a => a -> NoSE a
@@ -49,7 +87,26 @@ data Arity = Arity
 
 type InstrId = Int
 
-type InstrTab a = IM.IntMap a
+data MixInstrTab a = MixInstrTab 
+    { masterInstr :: (InstrId, a)
+    , otherInstr  :: [(InstrId, a)] 
+    } deriving (Functor)
+
+instance Foldable MixInstrTab where
+    foldMap f = foldMap f . mixInstrTabElems
+
+mixInstrTabElems :: MixInstrTab a -> [a]
+mixInstrTabElems (MixInstrTab master other) = snd master : fmap snd other
+
+newtype InstrTab a = InstrTab { unInstrTab :: [(InstrId, a)] }
+    deriving (Functor, Foldable) 
+    
+mapWithKey :: (InstrId -> a -> b) -> InstrTab a -> InstrTab b   
+mapWithKey f (InstrTab as) = InstrTab $ fmap (\(n, a) -> (n, f n a)) as
+
+elems :: InstrTab a -> [a]
+elems (InstrTab as) = fmap snd as
+    
 type PreSndTab = DM.IndexMap SndSrc
 
 data Instr = Instr DM.InstrName Arity (SE [Sig])
@@ -100,15 +157,9 @@ getMidiArity f = Arity 0 $ outArity $ snd $ funProxy f
 funProxy :: (a -> b) -> (a, b)
 funProxy = const (undefined, undefined)  
 
-clipByMax :: Out a => Sco (Mix a) -> Sco (Mix a)
-clipByMax a = tempAs a $ Mix (getArity a) (return . fmap clip') a
+clipByMax :: [Sig] -> SE [Sig]
+clipByMax = return . fmap clip'
     where clip' x = clip x 0 zeroDbfs
-
-          getArity :: Out a => Sco (Mix a) -> Arity
-          getArity a = let v = outArity (proxy a) in Arity v v
-
-          proxy :: Sco (Mix a) -> a
-          proxy = undefined  
 
 rescale :: Sco (Mix a) -> Sco (Mix a)
 rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
@@ -122,35 +173,26 @@ rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
           mixStretch :: Double -> Mix a -> Mix a
           mixStretch k x = case x of
             Sco a sco -> Sco a $ stretch k sco
-            Mix ar a sco -> Mix ar a $ stretch k sco
+            Mix ar a sco -> Mix ar a $ rescale $ stretch k sco
             Mid _ _ _  -> x     
 
-
-renderCsd :: (Out a) => Sco (Mix a) -> IO String
-renderCsd = renderCsdBy def
-
-renderCsdBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO String
-renderCsdBy opt as = render opt $ rescale $ clipByMax as
-
-writeCsd :: (Out a) => String -> Sco (Mix a) -> IO ()
-writeCsd file sco = writeFile file =<< renderCsd sco 
-
-writeCsdBy :: (Out a) => CsdOptions -> String -> Sco (Mix a) -> IO ()
-writeCsdBy opt file sco = writeFile file =<< renderCsdBy opt sco
+getLastInstrId :: MixInstrTab a -> Int
+getLastInstrId = fst . masterInstr
 
 render :: (Out a) => CsdOptions -> Sco (Mix a) -> IO String
 render opt a = do
     snds <- getSoundSources a
-    (lastInstrId, preMixTab) <- getMixing snds a    
-    let mixTab = fmap (defMixTab . mixExp) preMixTab
+    preMixTab <- getMixing snds a    
+    let lastInstrId = getLastInstrId preMixTab
+        mixTab = fmap defMixTab $ mixExps preMixTab
         midiParams = getMidiInstrParams snds
         midiInstrs = fmap (\(MidiInstrParams _ instrId ty chn) -> MidiAssign ty chn instrId) midiParams
         resetMidiInstrId = succ lastInstrId
-        sndTab = IM.mapWithKey (\key -> defTab . sndExp key) $ tableSoundSources snds
+        sndTab = mapWithKey (\key -> defTab . sndExp key) $ tableSoundSources snds
         notes = getNotes mixTab
         strs = stringMap notes
-        ftables = tabMap (IM.elems sndTab ++ (fmap mixExpE $ IM.elems mixTab)) notes
-        midiResetInstrNote = if null midiParams then empty else alwayson resetMidiInstrId
+        ftables = tabMap (elems sndTab ++ (fmap mixExpE $ mixInstrTabElems mixTab)) notes
+        midiResetInstrNote = if null midiParams then empty else alwayson totalDur resetMidiInstrId
     return $ show $ ppCsdFile 
         -- flags
         (renderFlags opt)
@@ -161,7 +203,7 @@ render opt a = do
             $$ renderMix krateSet (fmap (substMixFtables strs ftables) mixTab) 
             $$ midiReset resetMidiInstrId midiParams)           
         -- scores
-        (alwayson lastInstrId $$ midiResetInstrNote)
+        (lastInstrNotes totalDur (masterInstr mixTab) $$ midiResetInstrNote)
         -- strings
         (ppMapTable ppStrset strs)
         -- ftables
@@ -182,12 +224,15 @@ render opt a = do
               where defNoteTab x = case x of
                         SndNote n sco -> SndNote n $ fmap (defineNoteTabs $ tabResolution opt) sco      
                         _ -> x
+                        
+          totalDur = dur a
+          
+alwayson totalDur instrId = ppNote instrId 0 totalDur []      
 
-          alwayson instrId = ppNote instrId 0 (dur a) []  
-
-          nchnls = outArity . proxy  
-              where proxy :: Sco (Mix a) -> a
-                    proxy = undefined  
+nchnls :: Out a => Sco (Mix a) -> Int
+nchnls = outArity . proxy  
+    where proxy :: Sco (Mix a) -> a
+          proxy = undefined  
           
 data MidiInstrParams = MidiInstrParams Arity InstrId MidiType Channel
 
@@ -216,7 +261,7 @@ resetMidiVarInstr vs = execSE $ mapM_ (flip writeVar (0 :: Sig)) vs
 midiVar :: InstrId -> Int -> Var
 midiVar instrId portId = Var GlobalVar Ar ("midi_" ++ show instrId ++ "_" ++ show portId)
  
-getNotes :: InstrTab MixE -> Note
+getNotes :: MixInstrTab MixE -> Note
 getNotes = foldMap (foldMap scoNotes . mixExpSco)
     where scoNotes :: MixNote -> Note
           scoNotes x = case x of
@@ -225,12 +270,20 @@ getNotes = foldMap (foldMap scoNotes . mixExpSco)
 
 sndExp :: InstrId -> SndSrc -> E
 sndExp instrId x = execSE $ case x of
-    SndSrc (Instr _ arity sigs) -> outs arity =<< sigs
+    SndSrc (Instr _ arity sigs) -> outs (4 + arityIns arity) =<< sigs   -- 4 + arity because there are 3 first arguments (instrId, start, dur) and arity params comes next
     MidiSndSrc (Instr _ arity sigs) mType chn -> midiOuts instrId =<< sigs
 
-mixExp :: Mixing -> MixE
-mixExp (Mixing arity effect sco) = MixE exp sco
-    where exp = execSE $ outs arity . mixMidis midiNotes =<< effect =<< ins arity
+
+
+mixExps :: MixInstrTab Mixing -> MixInstrTab MixE
+mixExps (MixInstrTab master other) = MixInstrTab (second masterMixExp master) (fmap (second mixExp) other) 
+
+masterMixExp    = mixExpGen masterOuts
+mixExp          = mixExpGen (outs 4) -- for mixing instruments we expect the port number to be the fourth parameter
+
+mixExpGen :: ([Sig] -> SE ()) -> Mixing -> MixE
+mixExpGen formOuts (Mixing arity effect sco) = MixE exp sco
+    where exp = execSE $ formOuts . mixMidis midiNotes =<< effect =<< ins arity
           midiNotes = foldMap getMidiFromMixNote sco
 
 mixMidis :: [MidiInstrParams] -> [Sig] -> [Sig]
@@ -244,24 +297,32 @@ getMidiFromMixNote x = case x of
     MidNote a -> [a]
     _ -> []
 
+masterOuts :: [Sig] -> SE ()
+masterOuts xs = se_ $ case xs of
+    a:[] -> opc1 "out" [(Xr, [Ar])] a
+    _    -> opcs "outs" [(Xr, repeat Ar)] xs    
 
 midiOuts :: InstrId -> [Sig] -> SE ()
 midiOuts instrId as = zipWithM_ (\portId sig -> writeVar (midiVar instrId portId) sig) [1 .. ] as
 
-outs :: Arity -> [Sig] -> SE ()
-outs arity sigs = zipWithM_ (out arity) [1 .. arityOuts arity] sigs
+outs :: Int -> [Sig] -> SE ()
+outs readPortId sigs = zipWithM_ (out readPortId) [1 .. ] sigs
 
 ins  :: Arity -> SE [Sig]
 ins  arity = mapM in_ [1 .. arityIns arity] 
 
-out :: Arity -> Int -> Sig -> SE ()
-out arity n sig = chnmix sig $ portName n (p $ succ $ arityIns arity) 
+out :: Int -> Int -> Sig -> SE ()
+out readPortId n sig = chnmix sig $ portName n (p readPortId) 
 
 in_ :: Int -> SE Sig
-in_ n = chnget (portName n $ readVar portVar)
+in_ n = do
+    sig <- chnget name
+    chnclear name
+    return sig    
+    where name = portName n $ readVar portVar
 
 portFormatString :: Int -> Str
-portFormatString n = str $ show n ++ "_" ++ "%d"
+portFormatString n = str $ 'p' : show n ++ "_" ++ "%d"
 
 portName :: Int -> D -> Str
 portName n = sprintf (portFormatString n) . return
@@ -276,27 +337,37 @@ chnget :: Str -> SE Sig
 chnget a = se $ opc1 "chnget" [(Ar, [Sr])] a
 
 
-renderSnd :: KrateSet -> IM.IntMap E -> Doc
-renderSnd krateSet = ppOrc . fmap (uncurry $ renderInstr krateSet) . IM.toList
+renderSnd :: KrateSet -> InstrTab E -> Doc
+renderSnd krateSet = ppOrc . fmap (uncurry $ renderInstr krateSet) . unInstrTab
  
-renderMix :: KrateSet -> IM.IntMap MixE -> Doc
-renderMix krateSet = ppOrc . fmap (uncurry render) . IM.toList
-    where render instrId (MixE exp sco) = ppInstr instrId $ (renderPort $$ renderSco sco) : renderInstrBody krateSet exp
-          renderPort = ppOpc (ppVar portVar) "FreePort" []
-          renderSco a = ppSco $ renderNote =<< T.render a
-          renderNote e = case eventContent e of
-              MixNote n     -> return $ ppEvent n (eventStart e) (eventDur e) [] portVar
-              SndNote n sco -> fmap (\x -> ppEvent n (eventStart x) (eventDur x) (eventContent x) portVar) $ T.render $ delay (eventStart e) sco -- only delay, stretch was done before
-              MidNote _ -> mempty  
-          
+renderMix :: KrateSet -> MixInstrTab MixE -> Doc
+renderMix krateSet (MixInstrTab master other) = (ppOrc . (uncurry renderMaster master : ) . fmap (uncurry render)) other
+    where renderMaster instrId (MixE exp _) = ppInstr instrId $ renderMasterPort : renderInstrBody krateSet exp
+          render instrId (MixE exp sco) = ppInstr instrId $ (renderPort $$ renderSco ppEvent sco) : renderInstrBody krateSet exp          
+          renderPort = ppOpc (ppVar portVar) "FreePort" []           
+          renderMasterPort = ppVar portVar $= int 0
+
+renderSco :: (InstrId -> Event Double [Prim] -> Var -> Doc) -> Sco MixNote -> Doc
+renderSco formNote a = ppSco $ renderNote =<< T.render a
+    where renderNote e = case eventContent e of
+              MixNote n     -> return $ formNote n (fmap (const []) e) portVar
+              SndNote n sco -> fmap (\x -> formNote n x portVar) $ T.render $ delay (eventStart e) sco -- only delay, stretch was done before
+              MidNote _     -> mempty
+
+              
+lastInstrNotes :: Double -> (InstrId, MixE) -> Doc
+lastInstrNotes totalDur (instrId, a) = alwayson totalDur instrId $$ sco
+    where sco = renderSco (\n evt var -> ppMasterNote n evt) $ mixExpSco a
+  
+       
 portVar :: Var
 portVar = Var LocalVar Ir "Port"
 
 tableSoundSources :: PreSndTab -> InstrTab SndSrc
-tableSoundSources = IM.fromList . fmap swap . DM.elems
+tableSoundSources = InstrTab . fmap swap . DM.elems
 
 getSoundSources :: Sco (Mix a) -> IO PreSndTab
-getSoundSources = flip execState (return DM.empty) . getSndSrcSco
+getSoundSources = flip execState (return $ DM.empty 1) . getSndSrcSco
 
 type MkIndexMap = State (IO PreSndTab) ()
 
@@ -328,27 +399,30 @@ sndSrcInstr x = case x of
 type MkMixing a = StateT MixingState IO a
 
 data MixingState = MixingState 
-    { counter :: Int
-    , elems   :: [(Int, Mixing)] }
+    { counterSt :: Int
+    , elemsSt   :: [(Int, Mixing)] }
 
 
 initMixingState :: Int -> MixingState
 initMixingState n = MixingState n []
 
 saveElem :: Int -> Mixing -> MkMixing ()
-saveElem n a = modify $ \x -> x{ elems = (n, a) : elems x }
+saveElem n a = modify $ \x -> x{ elemsSt = (n, a) : elemsSt x }
 
 getCounter :: MkMixing Int
-getCounter = fmap counter get
+getCounter = fmap counterSt get
 
 putCounter :: Int -> MkMixing ()
-putCounter n = modify $ \s -> s{ counter = n }
+putCounter n = modify $ \s -> s{ counterSt = n }
 
-getMixing :: PreSndTab -> Sco (Mix a) -> IO (InstrId, InstrTab Mixing)
+getMixing :: Out a => PreSndTab -> Sco (Mix a) -> IO (MixInstrTab Mixing)
 getMixing tab sco = fmap formRes $ 
-    execStateT (traverse (getMixingMix tab) sco) 
-               (initMixingState $ DM.length tab + numOfInstrSco sco)
-    where formRes x = (fst $ last $ elems x, IM.fromList $ elems x)
+    runStateT (traverse (getMixingMix tab) sco) 
+               (initMixingState $ pred lastInstrId)
+    where formRes (sco, st) = MixInstrTab (lastInstrId, Mixing (Arity n n) clipByMax sco) (elemsSt st)
+          lastInstrId = 1 + DM.length tab + numOfInstrSco sco
+          n = nchnls sco     
+                             
 
 getMixingMix :: PreSndTab -> Mix a -> MkMixing MixNote
 getMixingMix tab x = case x of
@@ -377,7 +451,7 @@ numOfInstrForMix x = case x of
     Sco _ _   -> 0
 
 portUpdateStmt = verbatimLines [
-    "giPort init 0",
+    "giPort init 1",
     "opcode FreePort, i, 0",
     "xout giPort",
     "giPort = giPort + 1",

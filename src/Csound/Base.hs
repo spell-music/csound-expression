@@ -243,15 +243,15 @@ module Csound.Base(
     -- * Making a sound
     
     -- | Let's make some noise. Sound is build from list of tracks ('SigOut').
-    Out, SigOut, effect, 
+    Out(NoSE),
     
     -- ** Handy short-cuts
-    Outs, Sig2, Sig3, Sig4,
+    Sig2, Sig3, Sig4,
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
-    score, Arg(..), ArgMethods, makeArgMethods,
-    Sco, Mix, sco, mix,
+    Arg(..), ArgMethods, makeArgMethods,
+    Sco, Mix, sco, mix, 
     module Temporal.Media,
 
     -- ** Midi
@@ -262,7 +262,7 @@ module Csound.Base(
     -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
     -- contains the description of our music. We can save it to a file and compile it with our @csound@
     -- wizard. 
-    renderCsd, writeCsd,
+    renderCsd, writeCsd, playCsd,
    
     -- ** Opcodes    
     -- | Some colors to paint our soundscapes.
@@ -274,8 +274,8 @@ module Csound.Base(
 
     -- ** Options
     -- | We can set some csound options.
-    renderCsdBy, writeCsdBy,   
-    Channel, CtrlId, CsdOptions(..), module Data.Default, mixing, mixingBy
+    renderCsdBy, writeCsdBy, playCsdBy,  
+    Channel, CtrlId, CsdOptions(..), module Data.Default
 ) where
 
 import Data.Default

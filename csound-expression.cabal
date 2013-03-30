@@ -66,7 +66,7 @@ Source-repository head
 
 Library
   Build-Depends:
-        base >= 4, base < 5, containers, array, transformers, wl-pprint, stable-maps,
+        base >= 4, base < 5, containers, array, transformers, wl-pprint, stable-maps >= 0.0.3.3, process,
         data-default, Boolean >= 0.1.0, data-fix, data-fix-cse, temporal-media >= 0.3.2
   Hs-Source-Dirs:      src/
   Exposed-Modules:

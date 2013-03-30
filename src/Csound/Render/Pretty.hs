@@ -9,7 +9,7 @@ module Csound.Render.Pretty (
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
     ppInline, ppCondOp, ppNumOp,
-    ppEvent
+    ppEvent, ppMasterNote
 ) where
 
 import Data.Char(toLower)
@@ -17,7 +17,8 @@ import qualified Data.Map as M
 import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen
 
-import Csound.Exp
+import Temporal.Media(Event(..))
+import Csound.Exp hiding (Event(..))
 
 verbatimLines :: [String] -> Doc
 verbatimLines = vcat . fmap text
@@ -156,9 +157,13 @@ ppScore = vcat
 
 ppNote instrId time dur args = char 'i' <> int instrId <+> double time <+> double dur <+> hsep args
 
-ppEvent :: Int -> Double -> Double -> [Prim] -> Var -> Doc
-ppEvent instrId time dur args var = evt <> comma <+> ppVar var
-    where evt = ppProc "event_i" $ dquotes (char 'i') : int instrId : double time : double dur : fmap ppPrim args
+ppMasterNote :: Int -> Event Double [Prim] -> Doc
+ppMasterNote instrId evt = ppNote instrId (eventStart evt) (eventDur evt) (fmap ppPrim $ eventContent evt) <+> int 0
+
+ppEvent :: Int -> Event Double [Prim] -> Var -> Doc
+ppEvent instrId evt var = pre <> comma <+> ppVar var
+    where pre = ppProc "event_i" $ dquotes (char 'i') : int instrId 
+                : (double $ eventStart evt) : (double $ eventDur evt) : (fmap ppPrim $ eventContent evt)
 
 ppTotalDur d = text "f0" <+> double d
 
