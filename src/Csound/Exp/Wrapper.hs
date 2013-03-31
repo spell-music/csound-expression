@@ -6,7 +6,7 @@
 module Csound.Exp.Wrapper(
     toE, fromE,
     Out(..), Outs, Sig, D, Str, BoolSig(..), BoolD(..), Spec, ToSig(..),
-    Sig2, Sig3, Sig4,
+    Sig2, Sig3, Sig4, Amp, Cps, Iamp, Icps,
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
@@ -39,6 +39,18 @@ type Outs = SE [Sig]
 type Sig2 = (Sig, Sig)
 type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
+
+-- | An alias for amplitude.
+type Amp = Sig
+
+-- | An alias for cycles per second.
+type Cps = Sig
+
+-- | An alias for amplitude as number.
+type Iamp = D
+
+-- | An alias for cycles per second as number.
+type Icps = D
 
 -- | Converts a value to the private representation.
 toE :: Val a => a -> E

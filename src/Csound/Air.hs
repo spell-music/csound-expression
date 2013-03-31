@@ -29,7 +29,7 @@ module Csound.Air (
 ) where
 
 import Csound.Exp(Tab)
-import Csound.Exp.Wrapper(Sig, Spec, SE, kr)
+import Csound.Exp.Wrapper(Sig, Spec, SE, kr, Amp, Cps)
 import Csound.Exp.Cons(withInits)
 import Csound.Exp.Numeric
 import Csound.Opcode(idur, oscil3, vco, pvscross, 
@@ -41,23 +41,23 @@ import Csound.Tab(hifi, sines, guardPoint)
 -- oscillators
 
 -- | Pure tone.
-osc :: Sig -> Sig
+osc :: Cps -> Sig
 osc cps = oscil3 1 cps (sines [1])
 
--- | Oscillates with given table (cubic interpolation).
-oscBy :: Tab -> Sig -> Sig
+-- | Oscillates with the given table (cubic interpolation).
+oscBy :: Tab -> Cps -> Sig
 oscBy tab cps = oscil3 1 cps tab
 
 resolution = 12
 
 -- | Sawtooth.
-saw :: Sig -> Sig
+saw :: Cps -> Sig
 saw cps = oscil3 1 cps (sines $ take resolution $ fmap (1 / ) [1 .. ])
 -- vco 1 cps 1 0.5 `withInits` (sines [1])
 
 
 -- | Square wave.
-sq :: Sig -> Sig
+sq :: Cps -> Sig
 sq cps = oscil3 1 cps (sines $ take resolution $ fmap f [1 .. ])
     where f x
             | even x    = 0
@@ -65,7 +65,7 @@ sq cps = oscil3 1 cps (sines $ take resolution $ fmap f [1 .. ])
 -- vco 1 cps 2 0.5 `withInits` (sines [1])
 
 -- | Triangle wave.
-tri :: Sig -> Sig
+tri :: Cps -> Sig
 tri cps = oscil3 1 cps (sines $ take resolution $ zipWith f (cycle [1, -1]) [1 ..])
     where f a x
             | even x    = 0
@@ -97,23 +97,23 @@ unipolar :: Sig -> Sig
 unipolar a = 0.5 + 0.5 * a
 
 -- | Unipolar pure tone.
-uosc :: Sig -> Sig
+uosc :: Cps -> Sig
 uosc = unipolar . osc
 
 -- | Unipolar 'Csound.Air.oscBy'.
-uoscBy :: Tab -> Sig -> Sig
+uoscBy :: Tab -> Cps -> Sig
 uoscBy tab = unipolar . oscBy tab
 
 -- | Unipolar sawtooth.
-usaw :: Sig -> Sig
+usaw :: Cps -> Sig
 usaw = unipolar . saw
 
 -- | Unipolar square wave.
-usq :: Sig -> Sig
+usq :: Cps -> Sig
 usq = unipolar . sq
 
 -- | Unipolar triangle wave.
-utri :: Sig -> Sig
+utri :: Cps -> Sig
 utri = unipolar . tri
 
 {-

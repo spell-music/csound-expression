@@ -78,7 +78,7 @@ import Csound.LowLevel
 -- > ares foscil xamp, kcps, xcar, xmod, kndx, ifn [, iphs]
 --
 -- doc: <http://www.csounds.com/manual/html/foscil.html>
-foscil :: Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+foscil :: Amp -> Cps -> Sig -> Sig -> Sig -> Tab -> Sig
 foscil = opc6 "foscil" [(a, [x, k, x, x, k, i, i])]
 
 -- | Basic frequency modulated oscillator with linear interpolation. 
@@ -86,7 +86,7 @@ foscil = opc6 "foscil" [(a, [x, k, x, x, k, i, i])]
 -- > ares foscili xamp, kcps, xcar, xmod, kndx, ifn [, iphs]
 --
 -- doc: <http://www.csounds.com/manual/html/foscili.html>
-foscili :: Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+foscili :: Amp -> Cps -> Sig -> Sig -> Sig -> Tab -> Sig
 foscili = opc6 "foscili" [(a, [x, k, x, x, k, i, i])]
 
 
@@ -103,7 +103,7 @@ foscili = opc6 "foscili" [(a, [x, k, x, x, k, i, i])]
 crossfmGen :: Name -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig, Sig)
 crossfmGen name = mopc7 name ([a, a], [x, x, x, x, k, i, i, i, i])
 
-crossfm, crossfmi, crosspm, crosspmi, crossfmpm, crossfmpmi :: Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig, Sig)
+crossfm, crossfmi, crosspm, crosspmi, crossfmpm, crossfmpmi :: Cps -> Cps -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig, Sig)
 
 crossfm = crossfmGen "crossfm"
 crossfmi = crossfmGen "crossfmi"
@@ -267,7 +267,7 @@ doppler = opc3 "doppler" [(a, [a, k, k, i, i])]
 -- > ar fof xamp, xfund, xform, koct, kband, kris, kdur, kdec, iolaps, ifna, ifnb, itotdur, [iphs, ifmode]
 --
 -- doc: <http://www.csounds.com/manual/html/fof.html>
-fof :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> D -> Sig
+fof :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> D -> Sig
 fof = opc12 "fof" [(a, [x, x, x, k, k, k, k, k, i, i, i, i, i, i, i])]   
 
 -----------------------------------------------------
@@ -595,7 +595,7 @@ streson = opc3 "streson" [(a, [a,k,i])]
 -- > ares pluck kamp, kcps, icps, ifn, imeth [, iparm1] [, iparm2]     
 --
 -- doc: <http://www.csounds.com/manual/html/pluck.html>
-pluck :: Sig -> Sig -> D -> Tab -> D -> Sig
+pluck :: Amp -> Cps -> Icps -> Tab -> D -> Sig
 pluck = opc5 "pluck" [(a, [k,k,i,i,i,i,i])]
 
 -- | repluck is an implementation of the physical model of the plucked string. A user can control the pluck point, 
@@ -604,7 +604,7 @@ pluck = opc5 "pluck" [(a, [k,k,i,i,i,i,i])]
 -- > ares repluck iplk, kamp, icps, kpick, krefl, axcite
 --
 -- doc: <http://www.csounds.com/manual/html/repluck.html>
-repluck :: D -> Sig -> D -> Sig -> Sig -> Sig -> Sig
+repluck :: D -> Amp -> Icps -> Sig -> Sig -> Sig -> Sig
 repluck = opc6 "repluck" [(a, [i,k,i,k,k,a])]
 
 -- | Audio output is a tone similar to a bowed string, using a physical model developed from Perry Cook, but re-coded for Csound. 
@@ -612,7 +612,7 @@ repluck = opc6 "repluck" [(a, [i,k,i,k,k,a])]
 -- > ares wgbow kamp, kfreq, kpres, krat, kvibf, kvamp, ifn [, iminfreq]
 --
 -- doc: <http://www.csounds.com/manual/html/wgbow.html>
-wgbow :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+wgbow :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
 wgbow = opc7 "wgbow" [(a, ks 6 ++ is 2)]
 
 -- | A physical model of a bowed bar, belonging to the Perry Cook family of waveguide instruments. 
@@ -621,7 +621,7 @@ wgbow = opc7 "wgbow" [(a, ks 6 ++ is 2)]
 -- >      [, ibowpos] [, ilow]
 --
 -- doc: <http://www.csounds.com/manual/html/wgbowedbar.html>
-wgbowedbar :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+wgbowedbar :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig
 wgbowedbar = opc5 "wgbowedbar" [(a, ks 5 ++ is 2)]
 
 -- | Audio output is a tone related to a brass instrument, using a physical model developed from Perry Cook, but re-coded for Csound. 
@@ -629,7 +629,7 @@ wgbowedbar = opc5 "wgbowedbar" [(a, ks 5 ++ is 2)]
 -- > ares wgbrass kamp, kfreq, ktens, iatt, kvibf, kvamp, ifn [, iminfreq]   
 --
 -- doc: <http://www.csounds.com/manual/html/wgbrass.html>
-wgbrass :: Sig -> Sig -> Sig -> D -> Sig -> Sig -> Tab -> Sig 
+wgbrass :: Amp -> Cps -> Sig -> D -> Sig -> Sig -> Tab -> Sig 
 wgbrass = opc7 "wgbrass" [(a, [k,k,k,i,k,k,i,i])]
 
 -- | Audio output is a tone similar to a clarinet, using a physical model developed from Perry Cook, but re-coded for Csound. 
@@ -638,7 +638,7 @@ wgbrass = opc7 "wgbrass" [(a, [k,k,k,i,k,k,i,i])]
 -- >       [, iminfreq]
 --
 -- doc: <http://www.csounds.com/manual/html/wgclar.html>
-wgclar :: Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Tab -> Sig
+wgclar :: Amp -> Cps -> Sig -> D -> D -> Sig -> Sig -> Sig -> Tab -> Sig
 wgclar = opc9 "wgclar" [(a, [k,k,k,i,i,k,k,k,i,i])]
 
 -- | Audio output is a tone similar to a flute, using a physical model developed from Perry Cook, but re-coded for Csound. 
@@ -647,7 +647,7 @@ wgclar = opc9 "wgclar" [(a, [k,k,k,i,i,k,k,k,i,i])]
 -- >      [, iminfreq] [, ijetrf] [, iendrf]
 --
 -- doc: <http://www.csounds.com/manual/html/wgflute.html>
-wgflute :: Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Tab -> Sig
+wgflute :: Amp -> Cps -> Sig -> D -> D -> Sig -> Sig -> Sig -> Tab -> Sig
 wgflute = opc9 "wgflute" [(a, [k,k,k,i,i,k,k,k,i,i,i,i])]
 
 -- | A high fidelity simulation of a plucked string, using interpolating delay-lines. 
@@ -655,7 +655,7 @@ wgflute = opc9 "wgflute" [(a, [k,k,k,i,i,k,k,k,i,i,i,i])]
 -- > ares wgpluck icps, iamp, kpick, iplk, idamp, ifilt, axcite
 --
 -- doc: <http://www.csounds.com/manual/html/wgpluck.html>
-wgpluck :: D -> D -> Sig -> D -> D -> D -> Sig -> Sig
+wgpluck :: Icps -> Iamp -> Sig -> D -> D -> D -> Sig -> Sig
 wgpluck = opc7 "wgplusk" [(a, [i,i,k,i,i,i,a])]
 
 -- | wgpluck2 is an implementation of the physical model of the plucked string, with control over the pluck point, the pickup point and the filter. Based on the Karplus-Strong algorithm. 
@@ -663,7 +663,7 @@ wgpluck = opc7 "wgplusk" [(a, [i,i,k,i,i,i,a])]
 -- > ares wgpluck2 iplk, kamp, icps, kpick, krefl
 --
 -- doc: <http://www.csounds.com/manual/html/wgpluck2.html>
-wgpluck2 :: D -> Sig -> D -> Sig -> Sig -> Sig
+wgpluck2 :: D -> Amp -> D -> Sig -> Sig -> Sig
 wgpluck2 = opc5 "wgpluck2" [(a, [i,k,i,k,k])]
 
 -- | A simple waveguide model consisting of one delay-line and one first-order lowpass filter. 
@@ -671,7 +671,7 @@ wgpluck2 = opc5 "wgpluck2" [(a, [i,k,i,k,k])]
 -- > ares wguide1 asig, xfreq, kcutoff, kfeedback
 --
 -- doc: <http://www.csounds.com/manual/html/wguide1.html>
-wguide1 :: Sig -> Sig -> Sig -> Sig -> Sig
+wguide1 :: Amp -> Cps -> Sig -> Sig -> Sig
 wguide1 = opc4 "wguide1" [(a, [a,x,k,k])]
 
 -- | A model of beaten plate consisting of two parallel delay-lines and two first-order lowpass filters. 
@@ -680,7 +680,7 @@ wguide1 = opc4 "wguide1" [(a, [a,x,k,k])]
 -- >       kfeedback1, kfeedback2
 --
 -- doc: <http://www.csounds.com/manual/html/wguide2.html>
-wguide2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+wguide2 ::  Amp -> Cps -> Cps -> Sig -> Sig -> Sig -> Sig -> Sig
 wguide2 = opc7 "wguide2" [(a, [a,x,x,k,k,k,k])]
   
 ----------------------------------------------------
@@ -697,7 +697,7 @@ fmGen name = opc11 name [(a, ks 6 ++ is 6)]
 -- >      ifn4, ivfn
 --
 -- doc: <http://www.csounds.com/manual/html/fmb3.html>
-fmb3 :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmb3 :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
 
 
 -- | Uses FM synthesis to create a tublar bell sound. It comes from a family of FM sounds, all using 4 basic oscillators and various architectures, as used in the TX81Z synthesizer. 
@@ -706,7 +706,7 @@ fmb3 :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Ta
 -- >       ifn4, ivfn[, isus]
 --
 -- doc: <http://www.csounds.com/manual/html/fmbell.html>
-fmbell :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmbell :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
 
 -- | Uses FM synthesis to create a “Heavy Metal” sound. It comes from a family of FM sounds, all using 4 basic oscillators and various architectures, as used in the TX81Z synthesizer. 
 --
@@ -714,7 +714,7 @@ fmbell :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> 
 -- >       ifn4, ivfn
 --
 -- doc: <http://www.csounds.com/manual/html/fmmetal.html>
-fmmetal :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmmetal :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
 
 -- | Uses FM synthesis to create a percussive flute sound. It comes from a family of FM sounds, all using 4 basic oscillators and various architectures, as used in the TX81Z synthesizer. 
 --
@@ -722,7 +722,7 @@ fmmetal :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab ->
 -- >       ifn3, ifn4, ivfn
 --
 -- doc: <http://www.csounds.com/manual/html/fmpercfl.html>
-fmpercfl :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmpercfl :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
 
 -- | Uses FM synthesis to create a Fender Rhodes electric piano sound. It comes from a family of FM sounds, all using 4 basic oscillators and various architectures, as used in the TX81Z synthesizer. 
 --
@@ -731,7 +731,7 @@ fmpercfl :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -
 --
 -- doc: <http://www.csounds.com/manual/html/fmrhode.html>
 
-fmrhode :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmrhode :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
 
 -- | FM Singing Voice Synthesis 
 --
@@ -739,10 +739,10 @@ fmrhode :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab ->
 -- >      ifn2, ifn3, ifn4, ivibfn
 --
 -- doc: <http://www.csounds.com/manual/html/fmvoice.html>
-fmvoice :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmvoice :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
 
 
-fmwurlie :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
+fmwurlie :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
       
 fmb3 = fmGen "fmb3"
 fmbell = fmGen "fmbell"
@@ -762,7 +762,7 @@ fmwurlie = fmGen "fmwurlie"
 --
 -- doc: <http://www.csounds.com/manual/html/bamboo.html> 
 
-bamboo :: Sig -> D -> Sig
+bamboo :: Amp -> D -> Sig
 bamboo = opc2 "bamboo" [(a, k:is 7)]
 
 -- | cabasa is a semi-physical model of a cabasa sound.
@@ -770,7 +770,7 @@ bamboo = opc2 "bamboo" [(a, k:is 7)]
 -- > ares cabasa iamp, idettack [, inum] [, idamp] [, imaxshake]
 --
 -- doc: <http://www.csounds.com/manual/html/cabasa.html> 
-cabasa :: D -> D -> Sig
+cabasa :: Iamp -> D -> Sig
 cabasa = opc2 "cabasa" [(a, is 5)]
 
 -- | crunch is a semi-physical model of a crunch sound.
@@ -779,7 +779,7 @@ cabasa = opc2 "cabasa" [(a, is 5)]
 --
 -- doc: <http://www.csounds.com/manual/html/crunch.html> 
 
-crunch :: D -> D -> Sig
+crunch :: Iamp -> D -> Sig
 crunch = opc2 "crunch" [(a, is 5)]
 
 -- | dripwater is a semi-physical model of a water drop.
@@ -789,7 +789,7 @@ crunch = opc2 "crunch" [(a, is 5)]
 --
 -- doc: <http://www.csounds.com/manual/html/dripwater.html> 
 
-dripwater :: Sig -> D -> Sig
+dripwater :: Amp -> D -> Sig
 dripwater = opc2 "dripwater" [(a, k:is 7)]
 
 -- | guiro is a semi-physical model of a guiro sound.
@@ -798,7 +798,7 @@ dripwater = opc2 "dripwater" [(a, k:is 7)]
 --
 -- doc: <http://www.csounds.com/manual/html/guiro.html> 
 
-guiro :: Sig -> D -> Sig
+guiro :: Amp -> D -> Sig
 guiro = opc2 "guiro" [(a, k:is 7)]
 
 -- | sandpaper is a semi-physical model of a sandpaper sound.
@@ -807,7 +807,7 @@ guiro = opc2 "guiro" [(a, k:is 7)]
 --
 -- doc: <http://www.csounds.com/manual/html/sandpaper.html> 
 
-sandpaper :: D -> D -> Sig
+sandpaper :: Iamp -> D -> Sig
 sandpaper = opc2 "sandpaper" [(a, is 5)]
 
 -- | sekere is a semi-physical model of a sekere sound.
@@ -816,7 +816,7 @@ sandpaper = opc2 "sandpaper" [(a, is 5)]
 --
 -- doc: <http://www.csounds.com/manual/html/sekere.html> 
 
-sekere :: D -> D -> Sig
+sekere :: Iamp -> D -> Sig
 sekere = opc2 "sekere" [(a, is 5)]
 
 -- | sleighbells is a semi-physical model of a sleighbell sound.
@@ -826,7 +826,7 @@ sekere = opc2 "sekere" [(a, is 5)]
 --
 -- doc: <http://www.csounds.com/manual/html/sleighbells.html> 
 
-sleighbells :: Sig -> D -> Sig
+sleighbells :: Amp -> D -> Sig
 sleighbells = opc2 "sleighbells" [(a, k:is 7)]
 
 -- | stix is a semi-physical model of a stick sound.
@@ -835,7 +835,7 @@ sleighbells = opc2 "sleighbells" [(a, k:is 7)]
 --
 -- doc: <http://www.csounds.com/manual/html/stix.html> 
 
-stix :: D -> D -> Sig
+stix :: Iamp -> D -> Sig
 stix = opc2 "stix" [(a, is 5)]
 
 -- | tambourine is a semi-physical model of a tambourine sound.
@@ -844,7 +844,7 @@ stix = opc2 "stix" [(a, is 5)]
 -- >      [, ifreq1] [, ifreq2]
 --
 -- doc: <http://www.csounds.com/manual/html/tambourine.html> 
-tambourine :: Sig -> D -> Sig
+tambourine :: Amp -> D -> Sig
 tambourine = opc2 "tambourine" [(a, k:is 7)]
 
 -------------------------------------------------------------
@@ -856,7 +856,7 @@ tambourine = opc2 "tambourine" [(a, k:is 7)]
 --
 -- doc: <http://www.csounds.com/manual/html/gogobel.html> 
 
-gogobel :: Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Tab -> Sig
+gogobel :: Amp -> Cps -> D -> D -> D -> Sig -> Sig -> Tab -> Sig
 gogobel = opc8 "gogobel" [(a, [k,k,i,i,i,k,k,i])]
 
 
@@ -867,7 +867,7 @@ gogobel = opc8 "gogobel" [(a, [k,k,i,i,i,k,k,i])]
 --
 -- doc: <http://www.csounds.com/manual/html/marimba.html> 
 
-marimba :: Sig -> Sig -> D -> D -> Tab -> Sig -> Sig -> Tab -> D -> Sig
+marimba :: Amp -> Cps -> D -> D -> Tab -> Sig -> Sig -> Tab -> D -> Sig
 marimba = opc9 "marimba" [(a, [k,k,i,i,i,k,k,i,i,i,i])]
 
 -- | Audio output is a tone related to the shaking of a maraca or similar gourd instrument.
@@ -876,7 +876,7 @@ marimba = opc9 "marimba" [(a, [k,k,i,i,i,k,k,i,i,i,i])]
 --
 -- doc: <http://www.csounds.com/manual/html/shaker.html> 
 
-shaker :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+shaker :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig
 shaker = opc5 "shaker" [(a, ks 5 ++ [i])]
 
 
@@ -886,7 +886,7 @@ shaker = opc5 "shaker" [(a, ks 5 ++ [i])]
 --
 -- doc: <http://www.csounds.com/manual/html/vibes.html> 
 
-vibes :: Sig -> Sig -> D -> D -> Tab -> Sig -> Sig -> Tab -> D -> Sig
+vibes :: Amp -> Cps -> D -> D -> Tab -> Sig -> Sig -> Tab -> D -> Sig
 vibes = opc9 "vibes" [(a, [k,k,i,i,i,k,k,i,i])]
 
 ---------------------------------------------------------------
@@ -908,7 +908,7 @@ barmodel = opc9 "barmodel" [(a, [k,k,i,i,k,i,i,i,i])]
 --
 -- doc: <http://www.csounds.com/manual/html/mandol.html> 
 
-mandol :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+mandol :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
 mandol = opc7 "mandol" [(a, ks 6 ++ is 2)]
 
 
@@ -918,7 +918,7 @@ mandol = opc7 "mandol" [(a, ks 6 ++ is 2)]
 --
 -- doc: <http://www.csounds.com/manual/html/moog.html> 
 
-moog :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Sig
+moog :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Sig
 moog = opc9 "moog" [(a, ks 6 ++ is 3)]
  
 
@@ -928,7 +928,7 @@ moog = opc9 "moog" [(a, ks 6 ++ is 3)]
 --
 -- doc: <http://www.csounds.com/manual/html/voice.html> 
 
-voice :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Sig
+voice :: Amp -> Cps -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Sig
 voice = opc9 "voice" [(a, [k,k,k,k,k,k,k,i,i])]
       
 

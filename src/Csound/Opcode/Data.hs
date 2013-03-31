@@ -277,7 +277,7 @@ soundin = mopc1 "soundin" (repeat a, s:is 4)
 -- >       [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]
 --
 -- doc: <http://www.csounds.com/manual/html/diskin2.html>
-diskin2 :: CsdTuple a => Str -> Sig -> a
+diskin2 :: CsdTuple a => Str -> Cps -> a
 diskin2 = mopc2 "diskin2" (repeat a, s:k:is 6)
 
 -- | Reads stereo audio data from an external MP3 file. 

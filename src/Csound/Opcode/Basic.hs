@@ -120,7 +120,7 @@ blockSize = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "ksmps")
 -- > ares oscils iamp, icps, iphs [, iflg]
 --
 -- doc: <http://www.csounds.com/manual/html/oscils.html>
-oscils :: D -> D -> D -> Sig
+oscils :: Iamp -> Icps -> D -> Sig
 oscils = opc3 "oscils" [(a, [i, i, i])]
 
 oscGen :: Name -> Sig -> Sig -> Tab -> Sig 
@@ -134,7 +134,7 @@ oscGen name = opc3 name [
 -- > kres oscil kamp, kcps, ifn [, iphs]
 --
 -- doc: <http://www.csounds.com/manual/html/oscil.html>
-oscil :: Sig -> Sig -> Tab -> Sig
+oscil :: Amp -> Cps -> Tab -> Sig
 oscil = oscGen "oscil"
 
 -- |  oscili reads table ifn sequentially and repeatedly at a frequency xcps. The amplitude is scaled by xamp. Linear interpolation is applied for table look up from internal phase values. 
@@ -143,7 +143,7 @@ oscil = oscGen "oscil"
 -- > kres oscili kamp, kcps, ifn [, iphs]
 --
 -- doc: <http://www.csounds.com/manual/html/oscili.html>
-oscili :: Sig -> Sig -> Tab -> Sig
+oscili :: Amp -> Cps -> Tab -> Sig
 oscili = oscGen "oscili"
 
 -- |  oscil3 reads table ifn sequentially and repeatedly at a frequency xcps. The amplitude is scaled by xamp. Cubic interpolation is applied for table look up from internal phase values. 
@@ -153,7 +153,7 @@ oscili = oscGen "oscili"
 --
 -- doc: <http://www.csounds.com/manual/html/oscil3.html>
 
-oscil3 :: Sig -> Sig -> Tab -> Sig
+oscil3 :: Amp -> Cps -> Tab -> Sig
 oscil3 = oscGen "oscil3"
 
 -- | High precision oscillator. 
@@ -163,7 +163,7 @@ oscil3 = oscGen "oscil3"
 --
 -- doc: <http://www.csounds.com/manual/html/poscil.html>
 
-poscil :: Sig -> Sig -> Tab -> Sig
+poscil :: Amp -> Cps -> Tab -> Sig
 poscil = oscGen "poscil"
 
 -- | High precision oscillator with cubic interpolation. 
@@ -173,7 +173,7 @@ poscil = oscGen "poscil"
 --
 -- doc: <http://www.csounds.com/manual/html/poscil3.html>
 
-poscil3 :: Sig -> Sig -> Tab -> Sig
+poscil3 :: Amp -> Cps -> Tab -> Sig
 poscil3 = oscGen "poscil3"
 
 -----------------------------------------------------
@@ -187,7 +187,7 @@ poscil3 = oscGen "poscil3"
 --
 -- doc: <http://www.csounds.com/manual/html/buzz.html> 
 
-buzz :: Sig -> Sig -> Sig -> Tab -> Sig
+buzz :: Amp -> Cps -> Sig -> Tab -> Sig
 buzz = opc4 "buzz" [(a, [x, x, k, i, i])]
 
 -- |  Output is a set of harmonically related cosine partials. 
@@ -196,7 +196,7 @@ buzz = opc4 "buzz" [(a, [x, x, k, i, i])]
 --
 -- doc: <http://www.csounds.com/manual/html/gbuzz.html> 
 
-gbuzz :: Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+gbuzz :: Amp -> Cps -> Sig -> Sig -> Sig -> Tab -> Sig
 gbuzz = opc6 "gbuzz" [(a, [x, x, k, k, k, i, i])]
 
 -- | Generates a set of impulses of amplitude kamp separated by kintvl seconds (or samples if kintvl is negative). The first impulse is generated after a delay of ioffset seconds. 
@@ -205,7 +205,7 @@ gbuzz = opc6 "gbuzz" [(a, [x, x, k, k, k, i, i])]
 --
 -- doc: <http://www.csounds.com/manual/html/mpulse.html> 
 
-mpulse :: Sig -> Sig -> Sig
+mpulse :: Amp -> Sig -> Sig
 mpulse = opc2 "mpulse" [(a, [k, k, i])]
 
 -- | Implementation of a band limited, analog modeled oscillator, based on integration of band limited impulses. vco can be used to simulate a variety of analog wave forms. 
@@ -215,7 +215,7 @@ mpulse = opc2 "mpulse" [(a, [k, k, i])]
 --
 -- doc: <http://www.csounds.com/manual/html/vco.html> 
 
-vco :: Sig -> Sig -> D -> Sig -> Sig
+vco :: Amp -> Cps -> D -> Sig -> Sig
 vco = opc4 "vco" [(a, [x, x, i, k] ++ is 6)]
 
 -- | vco2 is similar to vco. But the implementation uses pre-calculated tables of band-limited waveforms (see also GEN30) 
@@ -227,7 +227,7 @@ vco = opc4 "vco" [(a, [x, x, i, k] ++ is 6)]
 --
 -- doc: <http://www.csounds.com/manual/html/vco2.html> 
 
-vco2 :: Sig -> Sig -> Sig
+vco2 :: Amp -> Cps -> Sig
 vco2 = opc2 "vco2" [(a, [k, k, i, k, k, i])]
 
 
@@ -241,7 +241,7 @@ vco2 = opc2 "vco2" [(a, [k, k, i, k, k, i])]
 --
 -- doc: <http://www.csounds.com/manual/html/phasor.html> 
 
-phasor :: Sig -> Sig 
+phasor :: Cps -> Sig 
 phasor = opc1 "phasor" [
     (a, [x, i]),
     (k, [x, i])]
@@ -267,7 +267,7 @@ syncphasor = mopc2 "syncphasor" ([a, a], [x, a, i])
 --
 -- doc: <http://www.csounds.com/manual/html/rand.html> 
 
-rand :: Sig -> SE Sig
+rand :: Amp -> SE Sig
 rand sig = se $ opc1 "rand" [
     (a, x:rest),
     (k, k:rest)] sig
@@ -280,7 +280,7 @@ rand sig = se $ opc1 "rand" [
 --
 -- doc: <http://www.csounds.com/manual/html/randi.html> 
 
-randi :: Sig -> Sig -> SE Sig
+randi :: Amp -> Sig -> SE Sig
 randi = randiGen "randi"
 
 -- | Generates random numbers and holds them for a period of time. 
@@ -290,7 +290,7 @@ randi = randiGen "randi"
 --
 -- doc: <http://www.csounds.com/manual/html/randh.html> 
 
-randh :: Sig -> Sig -> SE Sig
+randh :: Amp -> Sig -> SE Sig
 randh = randiGen "randh"
 
 randiGen :: Name -> Sig -> Sig -> SE Sig
@@ -334,7 +334,7 @@ random a1 a2 = se $ opc2 "random" [
 -- > kres randomi kmin, kmax, kcps [,imode] [,ifirstval]
 --
 -- doc: <http://www.csounds.com/manual/html/randomi.html> 
-randomi :: Sig -> Sig -> Sig -> SE Sig
+randomi :: Amp -> Amp -> Cps -> SE Sig
 randomi a1 a2 a3 = se $ opc3 "randomi" [
     (a, [k, k, x, i, i]),
     (k, [k, k, k, i, i])] a1 a2 a3
@@ -346,7 +346,7 @@ randomi a1 a2 a3 = se $ opc3 "randomi" [
 --
 -- doc: <http://www.csounds.com/manual/html/randomh.html> 
 
-randomh :: Sig -> Sig -> Sig -> SE Sig
+randomh :: Amp -> Amp -> Cps -> SE Sig
 randomh a1 a2 a3 = se $ opc3 "randomh" [
     (a, [k, k, x, i, i]),
     (k, [k, k, k, i, i])] a1 a2 a3
@@ -377,14 +377,14 @@ pinkish' = opc1 "pinkish" [(a, x: replicate 4 i)]
 --
 -- doc: <http://www.csounds.com/manual/html/noise.html>
  
-noise :: Sig -> Sig -> SE Sig
+noise :: Amp -> Sig -> SE Sig
 noise a1 a2 = se $ opc2 "noise" [(a, [x, k])] a1 a2
 
 -- | Unsafe version of the 'noise' opcode. Unsafe means that there can be possible alias
 -- on the expression level. Two expressions with the same arguments can be unexpectedly
 -- rendered as the same expression within one instrument. 
 
-noise' :: Sig -> Sig -> Sig
+noise' :: Amp -> Sig -> Sig
 noise' = opc2 "noise" [(a, [x, k])]
 
 --------------------------------------------------
