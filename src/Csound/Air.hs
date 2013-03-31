@@ -3,10 +3,10 @@ module Csound.Air (
     -- * Oscillators
     
     -- ** Bipolar
-    osc, saw, sq, tri, -- pulse, ramp,
+    osc, oscBy, saw, sq, tri, -- pulse, ramp,
     
     -- ** Unipolar
-    unipolar, uosc, usaw, usq, utri, -- upulse, uramp,
+    unipolar, uosc, uoscBy, usaw, usq, utri, -- upulse, uramp,
     
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
@@ -43,6 +43,10 @@ import Csound.Tab(hifi, sines, guardPoint)
 -- | Pure tone.
 osc :: Sig -> Sig
 osc cps = oscil3 1 cps (sines [1])
+
+-- | Oscillates with given table (cubic interpolation).
+oscBy :: Tab -> Sig -> Sig
+oscBy tab cps = oscil3 1 cps tab
 
 resolution = 12
 
@@ -95,6 +99,10 @@ unipolar a = 0.5 + 0.5 * a
 -- | Unipolar pure tone.
 uosc :: Sig -> Sig
 uosc = unipolar . osc
+
+-- | Unipolar 'Csound.Air.oscBy'.
+uoscBy :: Tab -> Sig -> Sig
+uoscBy tab = unipolar . oscBy tab
 
 -- | Unipolar sawtooth.
 usaw :: Sig -> Sig
