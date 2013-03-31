@@ -29,7 +29,6 @@ mixingBy f = (f =<<) . mixing
 -- >             , csdBlockSize = 64
 -- >             , csdSeed = Nothing
 -- >             , csdInitc7 = []
--- >             , csdEffect = mixing
 -- >             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"],
 -- >             , tabResolution = 8192 }  -- should be power of 2
 
@@ -39,7 +38,6 @@ data CsdOptions = CsdOptions
     , csdBlockSize  :: Int          
     , csdSeed       :: Maybe Int    
     , csdInitc7     :: [(Channel, CtrlId, Double)]
-    , csdEffect     :: [[Sig]] -> Outs
     , csdKrate      :: [String]
     , tabResolution :: Int
     }
@@ -51,7 +49,6 @@ instance Default CsdOptions where
             , csdBlockSize = 64
             , csdSeed = Nothing
             , csdInitc7 = []
-            , csdEffect = mixing
             , csdKrate  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"]
             , tabResolution = 8192 }
 

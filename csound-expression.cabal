@@ -86,9 +86,8 @@ Library
         Csound.Exp.Logic
         Csound.Exp.Numeric       
         
-        Csound.Tfm.RateGraph
-        
-        Csound.Render
+        Csound.Tfm.RateGraph       
+
         Csound.Render.Pretty
         Csound.Render.Options
         Csound.Render.Instr
