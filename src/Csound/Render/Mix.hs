@@ -234,7 +234,8 @@ render opt a = do
         notes = getNotes mixTab
         strs = stringMap notes
         ftables = tabMap (elems sndTab ++ (fmap mixExpE $ mixInstrTabElems mixTab)) notes
-        midiResetInstrNote = if null midiParams then empty else alwayson totalDur resetMidiInstrId
+        midiResetInstrNote = if null midiParams then empty else alwayson totalDur resetMidiInstrId        
+        mixTabSubstituted = fmap (substMixFtables strs ftables) mixTab
     return $ show $ ppCsdFile 
         -- flags
         (renderFlags opt)
@@ -242,10 +243,10 @@ render opt a = do
         (renderInstr0 (nchnls a) midiInstrs opt $$ portUpdateStmt $$ midiInits midiParams) 
         -- orchestra
         (renderSnd krateSet (fmap (substInstrTabs ftables) sndTab)
-            $$ renderMix krateSet (fmap (substMixFtables strs ftables) mixTab) 
+            $$ renderMix krateSet mixTabSubstituted
             $$ midiReset resetMidiInstrId midiParams)           
         -- scores
-        (lastInstrNotes totalDur (masterInstr mixTab) $$ midiResetInstrNote)
+        (lastInstrNotes totalDur (masterInstr mixTabSubstituted) $$ midiResetInstrNote)
         -- strings
         (ppMapTable ppStrset strs)
         -- ftables
