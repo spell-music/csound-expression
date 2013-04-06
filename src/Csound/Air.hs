@@ -18,7 +18,7 @@ module Csound.Air (
     blp, bhp, bbp, bbr,
     
     -- * Patterns
-    once, mean,
+    once, several, sine, mean,
     
     -- ** Series
     hase, whase,
@@ -181,9 +181,17 @@ bbr freq band a = butbr a freq band
 --------------------------------------------------------------------------
 -- patterns
 
+-- | Table for pure sine wave.
+sine :: Tab
+sine = sines [1]
+
 -- | Reads table once during the note length. 
 once :: Tab -> Sig
 once a = oscil3 1 (1 / kr idur) a
+
+-- | Reads table several times during the note length.  
+several :: Tab -> Sig -> Sig
+several tab rate = oscil3 1 (rate / kr idur) tab
 
 -- | Mean value.
 mean :: Fractional a => [a] -> a

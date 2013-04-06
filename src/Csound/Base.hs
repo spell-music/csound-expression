@@ -280,6 +280,10 @@ module Csound.Base(
     -- contains the description of our music. We can save it to a file and compile it with our @csound@
     -- wizard. 
     renderCsd, writeCsd, playCsd,
+    
+    -- *** Players 
+    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    mplayer, totem, 
    
     -- ** Opcodes    
     -- | Some colors to paint our soundscapes.
@@ -291,8 +295,13 @@ module Csound.Base(
 
     -- ** Options
     -- | We can set some csound options.
+    Channel, CtrlId, CsdOptions(..), module Data.Default,
+        
     renderCsdBy, writeCsdBy, playCsdBy,  
-    Channel, CtrlId, CsdOptions(..), module Data.Default
+    
+    -- *** Players 
+    -- | Handy short-cuts for function 'Csound.Base.playCsdBy'.
+    mplayerBy, totemBy
 ) where
 
 import Data.Default

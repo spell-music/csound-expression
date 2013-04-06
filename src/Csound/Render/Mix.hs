@@ -2,6 +2,7 @@
 module Csound.Render.Mix(
     Sco, Mix, sco, mix, midi, pgmidi,
     renderCsd, renderCsdBy, writeCsd, writeCsdBy, playCsd, playCsdBy, 
+    mplayer, mplayerBy, totem, totemBy,
     effect, effectS
 ) where
 
@@ -76,6 +77,26 @@ playCsdBy opt player file sco = do
     return ()
     where fileCsd = file ++ ".csd"
           fileWav = file ++ ".wav"  
+
+--------------------------------------------------------
+-- players
+
+-- | Renders to tmp.csd and tmp.wav and plays with mplayer.
+mplayer :: (Out a) => Sco (Mix a) -> IO ()
+mplayer = mplayerBy def
+
+-- | Renders to tmp.csd and tmp.wav and plays with mplayer.
+mplayerBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO ()
+mplayerBy opt = playCsdBy opt "mplayer" "tmp"
+
+-- | Renders to tmp.csd and tmp.wav and plays with totem player.
+totem :: (Out a) => Sco (Mix a) -> IO ()
+totem = totemBy def
+
+-- | Renders to tmp.csd and tmp.wav and plays with totem player.
+totemBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO ()
+totemBy opt = playCsdBy opt "totem" "tmp"
+
 
 -- | A bunch of events.
 type Sco a = Track Double a
