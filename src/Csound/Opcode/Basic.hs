@@ -8,7 +8,7 @@ module Csound.Opcode.Basic(
     -- * Oscillators and phasors
 
     -- ** Standard Oscillators
-    oscils, poscil, poscil3, oscil, oscili, oscil3,
+    oscils, poscil, poscil3, oscil, oscili, oscil3, oscil1i,
 
     -- ** Dynamic Sprectrum Oscillators
     buzz, gbuzz, mpulse, vco, vco2,  
@@ -175,6 +175,14 @@ poscil = oscGen "poscil"
 
 poscil3 :: Amp -> Cps -> Tab -> Sig
 poscil3 = oscGen "poscil3"
+
+-- | Accesses table values by incremental sampling with linear interpolation. 
+--
+-- > kres oscil1i idel, kamp, idur, ifn
+--
+-- doc: <http://www.csounds.com/manual/html/oscil1i.html>
+oscil1i :: D -> Amp -> D -> Tab -> Sig
+oscil1i = opc4 "oscil1i" [(k, [i, k, i, i])]
 
 -----------------------------------------------------
 -- Dynamic Sprectrum Oscillators

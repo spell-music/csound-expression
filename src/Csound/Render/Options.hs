@@ -24,7 +24,7 @@ mixingBy f = (f =<<) . mixing
 --
 -- > instance Default CsdOptions where
 -- >     def = CsdOptions 
--- >             { csdFlags = ""
+-- >             { csdFlags = "-d"           -- suppress ftable printing
 -- >             , csdRate  = 44100
 -- >             , csdBlockSize = 64
 -- >             , csdSeed = Nothing
@@ -44,7 +44,7 @@ data CsdOptions = CsdOptions
 
 instance Default CsdOptions where
     def = CsdOptions 
-            { csdFlags = ""
+            { csdFlags = "-d"
             , csdRate  = 44100
             , csdBlockSize = 64
             , csdSeed = Nothing

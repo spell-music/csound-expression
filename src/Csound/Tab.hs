@@ -11,7 +11,7 @@ module Csound.Tab (
     
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
-    sines, sines3, sines4, buzzes,
+    sines, sines3, sines2, partials, sines4, buzzes,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -217,6 +217,14 @@ type PartialDC = Double
 -- > triangle = sines $ zipWith (\a b -> a / (b ** 2)) (cycle [1, -1]) [1, 3 .. 11]
 sines :: [PartialStrength] -> Tab
 sines = plains 10
+
+-- | Just like 'Csound.Tab.sines2' but partial strength is set to one.
+partials :: [PartialNumber] -> Tab
+partials xs = sines2 $ zip xs (repeat 1)
+
+-- | Just like 'Csound.Tab.sines3' but phases are set to zero.
+sines2 :: [(PartialNumber, PartialStrength)] -> Tab
+sines2 xs = sines3 [(num, str, 0) | (num, str) <- xs]
 
 -- | Specifies series of possibly inharmonic partials.
 sines3 :: [(PartialNumber, PartialStrength, PartialPhase)] -> Tab
