@@ -10,7 +10,7 @@ module Csound.Opcode.Data (
     -}
 
     -- ** Reading From Tables
-    table, tablei, table3, tab_i, tab, 
+    table, tablei, table3, tableD, tableiD, table3D, tab_i, tab, 
 
     -----------------------------------------------------
     -- * Signal Input and Output,  Sample and Loop Playback, Soundfonts
@@ -157,12 +157,46 @@ tablei :: Sig -> Tab -> Sig
 -- doc: <http://www.csounds.com/manual/html/table3.html>
 table3 :: Sig -> Tab -> Sig
 
+
+-- | Accesses table values by direct indexing. 
+--
+-- > ires table indx, ifn [, ixmode] [, ixoff] [, iwrap]
+--
+-- doc: <http://www.csounds.com/manual/html/table.html>
+tableD :: D -> Tab -> D
+
+-- | Accesses table values by direct indexing with linear interpolation. 
+--
+-- > ires tablei indx, ifn [, ixmode] [, ixoff] [, iwrap]
+--
+-- doc: <http://www.csounds.com/manual/html/tablei.html>
+
+tableiD :: D -> Tab -> D
+
+-- | Accesses table values by direct indexing with cubic interpolation. 
+--
+-- > ires table3 indx, ifn [, ixmode] [, ixoff] [, iwrap]
+--
+-- doc: <http://www.csounds.com/manual/html/table3.html>
+table3D :: D -> Tab -> D
+
 table = mkTable "table"
 tablei = mkTable "tablei"
 table3 = mkTable "table3"
 
+tableD = mkTableD "table"
+tableiD = mkTableD "tablei"
+table3D = mkTableD "table3"
+
 mkTable :: Name -> Sig -> Tab -> Sig
 mkTable name = opc2 name [
+    (a, a:rest),
+    (k, k:rest),
+    (i, i:rest)]
+    where rest = [i, i, i]
+
+mkTableD :: Name -> D -> Tab -> D
+mkTableD name = opc2 name [
     (a, a:rest),
     (k, k:rest),
     (i, i:rest)]
