@@ -1,6 +1,6 @@
 {-# Language GADTs, DeriveFunctor, DeriveFoldable #-}
 module Csound.Render.Mix(
-    Sco, Mix, sco, mix, midi, pgmidi,
+    Mix, sco, mix, midi, pgmidi,
     renderCsd, renderCsdBy, writeCsd, writeCsdBy, playCsd, playCsdBy, 
     mplayer, mplayerBy, totem, totemBy,
     effect, effectS
@@ -25,8 +25,8 @@ import qualified Data.Set    as S
 
 import qualified Csound.Render.IndexMap as DM
 
-import Temporal.Media(temp, stretch, dur, Track, Event(..), tmap, delay)
-import qualified Temporal.Media as T
+import Temporal.Music.Score(temp, stretch, dur, Score, Event(..), tmap, delay)
+import qualified Temporal.Music.Score as T
 
 import Csound.Exp hiding (Event(..))
 import Csound.Exp.Numeric
@@ -43,19 +43,19 @@ import Csound.Opcode(clip, zeroDbfs, sprintf)
 un = undefined
 
 -- | Renders Csound file.
-renderCsd :: (Out a) => Sco (Mix a) -> IO String
+renderCsd :: (Out a) => Score (Mix a) -> IO String
 renderCsd = renderCsdBy def
 
 -- | Renders Csound file with options.
-renderCsdBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO String
+renderCsdBy :: (Out a) => CsdOptions -> Score (Mix a) -> IO String
 renderCsdBy opt as = render opt $ rescale as
 
 -- | Render Csound file and save it to the give file.
-writeCsd :: (Out a) => String -> Sco (Mix a) -> IO ()
+writeCsd :: (Out a) => String -> Score (Mix a) -> IO ()
 writeCsd file sco = writeFile file =<< renderCsd sco 
 
 -- | Render Csound file with options and save it to the give file.
-writeCsdBy :: (Out a) => CsdOptions -> String -> Sco (Mix a) -> IO ()
+writeCsdBy :: (Out a) => CsdOptions -> String -> Score (Mix a) -> IO ()
 writeCsdBy opt file sco = writeFile file =<< renderCsdBy opt sco
 
 -- | RenderCsound file save it to the given file, render with csound command and play it with the given program.
@@ -65,11 +65,11 @@ writeCsdBy opt file sco = writeFile file =<< renderCsdBy opt sco
 -- Produces files @file.csd@ (with 'Csound.Render.Mix.renderCsd') and @file.wav@ (with @csound@) and then invokes:
 --
 -- > program file.wav
-playCsd :: (Out a) => String -> String -> Sco (Mix a) -> IO ()
+playCsd :: (Out a) => String -> String -> Score (Mix a) -> IO ()
 playCsd = playCsdBy def
 
 -- | Works just like 'Csound.Render.Mix.playCsd' but you can supply csound options.
-playCsdBy :: (Out a) => CsdOptions -> String -> String -> Sco (Mix a) -> IO ()
+playCsdBy :: (Out a) => CsdOptions -> String -> String -> Score (Mix a) -> IO ()
 playCsdBy opt player file sco = do
     writeCsdBy opt fileCsd sco
     system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
@@ -82,30 +82,26 @@ playCsdBy opt player file sco = do
 -- players
 
 -- | Renders to tmp.csd and tmp.wav and plays with mplayer.
-mplayer :: (Out a) => Sco (Mix a) -> IO ()
+mplayer :: (Out a) => Score (Mix a) -> IO ()
 mplayer = mplayerBy def
 
 -- | Renders to tmp.csd and tmp.wav and plays with mplayer.
-mplayerBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO ()
+mplayerBy :: (Out a) => CsdOptions -> Score (Mix a) -> IO ()
 mplayerBy opt = playCsdBy opt "mplayer" "tmp"
 
 -- | Renders to tmp.csd and tmp.wav and plays with totem player.
-totem :: (Out a) => Sco (Mix a) -> IO ()
+totem :: (Out a) => Score (Mix a) -> IO ()
 totem = totemBy def
 
 -- | Renders to tmp.csd and tmp.wav and plays with totem player.
-totemBy :: (Out a) => CsdOptions -> Sco (Mix a) -> IO ()
+totemBy :: (Out a) => CsdOptions -> Score (Mix a) -> IO ()
 totemBy opt = playCsdBy opt "totem" "tmp"
-
-
--- | A bunch of events.
-type Sco a = Track Double a
 
 -- | Track of sound. 
 data Mix a where
-    Sco :: Instr -> Sco Note -> Mix a
+    Sco :: Instr -> Score Note -> Mix a
     Mid :: Instr -> MidiType -> Channel -> Mix a
-    Mix :: Arity -> ([Sig] -> SE [Sig]) -> Sco (Mix a) -> Mix b
+    Mix :: Arity -> ([Sig] -> SE [Sig]) -> Score (Mix a) -> Mix b
 
 -- | Play a bunch of notes with the given instrument.
 --
@@ -115,9 +111,9 @@ data Mix a where
 --  
 -- * @scores@ are some notes (see the module "Temporal.Media" on how to build complex scores out of simple ones)
 --
--- Let's try to understand the type of the output. It's @Sco (Mix (NoSE a))@. What does it mean? Let's look at the different parts of this type:
+-- Let's try to understand the type of the output. It's @Score (Mix (NoSE a))@. What does it mean? Let's look at the different parts of this type:
 --
--- * @Sco a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
+-- * @Score a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
 --
 -- * @Mix a@ - is an output of Csound instrument it can be one or several signals ('Csound.Base.Sig' or 'Csound.Base.CsdTuple'). 
 --
@@ -125,7 +121,7 @@ data Mix a where
 -- from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. Why should it be? I need 'SE' to deduce the order of the
 -- instruments that have side effects. I need it within one instrument. But when instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
-sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
+sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
 sco instr notes = tempAs notes $ Sco (Instr (DM.makeInstrName instr) (getArity instr) (toOut $ instr toArg)) $ fmap (toNote argMethods) notes
     where getArity :: (Arg a, Out b) => (a -> b) -> Arity
           getArity f = let (a, b) = funProxy f in Arity (arity argMethods a) (outArity b)           
@@ -141,18 +137,18 @@ sco instr notes = tempAs notes $ Sco (Instr (DM.makeInstrName instr) (getArity i
 -- With the function 'Csound.Base.mix' you can apply a reverb or adjust the level of the signal. It functions like a mixing board
 -- but unlike mixing board it produces the value that you can arrange with functions from the module "Temporal.Media". You can delay it
 -- mix with some other track and apply some another effect on top of it!
-mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE b))
+mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE b))
 mix effect sigs = tempAs sigs $ Mix (getArity effect) (toOut . effect . fromOut) sigs
     where getArity :: (Out a, Out b) => (a -> b) -> Arity
           getArity f = let (a, b) = funProxy f in Arity (outArity a) (outArity b)
 
--- | Triggers a midi-instrument (like Csound's massign). The result type is a fake one. It's wrapped in the 'Csound.Base.Sco' for the ease of mixing.
+-- | Triggers a midi-instrument (like Csound's massign). The result type is a fake one. It's wrapped in the 'Csound.Base.Score' for the ease of mixing.
 -- you can not delay or stretch it. The only operation that is meaningful for it is 'Temporal.Media.chord'. But you can add effects to it with 'Csound.Base.mix'!
-midi :: (Out a) => Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
+midi :: (Out a) => Channel -> (Msg -> a) -> Score (Mix (NoSE a))
 midi chn f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) Massign chn
 
 -- | Triggers a - midi-instrument (like Csound's pgmassign). 
-pgmidi :: (Out a) => Maybe Int -> Channel -> (Msg -> a) -> Sco (Mix (NoSE a))
+pgmidi :: (Out a) => Maybe Int -> Channel -> (Msg -> a) -> Score (Mix (NoSE a))
 pgmidi mchn n f = temp $ Mid (Instr (DM.makeInstrName f) (getMidiArity f) (toOut $ f Msg)) (Pgmassign mchn) n
 
 
@@ -203,15 +199,15 @@ data SndSrc
     = SndSrc Instr     
     | MidiSndSrc Instr MidiType Channel
 
-data Mixing = Mixing Arity ([Sig] -> SE [Sig]) (Sco MixNote)
+data Mixing = Mixing Arity ([Sig] -> SE [Sig]) (Score MixNote)
 
 data MixE = MixE
     { mixExpE :: E
-    , mixExpSco :: Sco MixNote }
+    , mixExpSco :: Score MixNote }
 
-data MixNote = MixNote InstrId | SndNote InstrId (Sco Note) | MidNote MidiInstrParams
+data MixNote = MixNote InstrId | SndNote InstrId (Score Note) | MidNote MidiInstrParams
   
-tempAs :: Sco b -> a -> Sco a
+tempAs :: Score b -> a -> Score a
 tempAs a = stretch (dur a) . temp
 
 getMidiArity :: (Out a) => (Msg -> a) -> Arity
@@ -224,7 +220,7 @@ clipByMax :: [Sig] -> SE [Sig]
 clipByMax = return . fmap clip'
     where clip' x = clip x 0 zeroDbfs
 
-rescale :: Sco (Mix a) -> Sco (Mix a)
+rescale :: Score (Mix a) -> Score (Mix a)
 rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
                        in  mixStretch factor (eventContent e)
     where mixDur :: Mix a -> Double
@@ -242,7 +238,7 @@ rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
 getLastInstrId :: MixInstrTab a -> Int
 getLastInstrId = fst . masterInstr
 
-render :: (Out a) => CsdOptions -> Sco (Mix a) -> IO String
+render :: (Out a) => CsdOptions -> Score (Mix a) -> IO String
 render opt a = do
     snds <- getSoundSources a
     preMixTab <- getMixing snds a    
@@ -293,9 +289,9 @@ render opt a = do
           
 alwayson totalDur instrId = ppNote instrId 0 totalDur []      
 
-nchnls :: Out a => Sco (Mix a) -> Int
+nchnls :: Out a => Score (Mix a) -> Int
 nchnls = outArity . proxy  
-    where proxy :: Sco (Mix a) -> a
+    where proxy :: Score (Mix a) -> a
           proxy = undefined  
           
 data MidiInstrParams = MidiInstrParams Arity InstrId MidiType Channel
@@ -411,7 +407,7 @@ renderMix krateSet (MixInstrTab master other) = (ppOrc . (uncurry renderMaster m
           renderPort = ppOpc (ppVar portVar) "FreePort" []           
           renderMasterPort = ppVar portVar $= int 0
 
-renderSco :: (InstrId -> Event Double [Prim] -> Var -> Doc) -> Sco MixNote -> Doc
+renderSco :: (InstrId -> Event Double [Prim] -> Var -> Doc) -> Score MixNote -> Doc
 renderSco formNote a = ppSco $ renderNote =<< T.render a
     where renderNote e = case eventContent e of
               MixNote n     -> return $ formNote n (fmap (const []) e) portVar
@@ -430,12 +426,12 @@ portVar = Var LocalVar Ir "Port"
 tableSoundSources :: PreSndTab -> InstrTab SndSrc
 tableSoundSources = InstrTab . fmap swap . DM.elems
 
-getSoundSources :: Sco (Mix a) -> IO PreSndTab
+getSoundSources :: Score (Mix a) -> IO PreSndTab
 getSoundSources = flip execState (return $ DM.empty 1) . getSndSrcSco
 
 type MkIndexMap = State (IO PreSndTab) ()
 
-getSndSrcSco :: Sco (Mix a) -> MkIndexMap
+getSndSrcSco :: Score (Mix a) -> MkIndexMap
 getSndSrcSco sco = traverse getSndSrcMix sco >> return ()
     
 getSndSrcMix :: Mix a -> MkIndexMap
@@ -479,7 +475,7 @@ getCounter = fmap counterSt get
 putCounter :: Int -> MkMixing ()
 putCounter n = modify $ \s -> s{ counterSt = n }
 
-getMixing :: Out a => PreSndTab -> Sco (Mix a) -> IO (MixInstrTab Mixing)
+getMixing :: Out a => PreSndTab -> Score (Mix a) -> IO (MixInstrTab Mixing)
 getMixing tab sco = fmap formRes $ 
     runStateT (traverse (getMixingMix tab) sco) 
                (initMixingState $ pred lastInstrId)
@@ -505,7 +501,7 @@ getMixingMix tab x = case x of
         
 instrArity (Instr _ ar _) = ar
 
-numOfInstrSco :: Sco (Mix a) -> Int
+numOfInstrSco :: Score (Mix a) -> Int
 numOfInstrSco as = getSum $ foldMap (Sum . numOfInstrForMix) as
 
 numOfInstrForMix :: Mix a -> Int

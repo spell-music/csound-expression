@@ -17,7 +17,7 @@ import qualified Data.Map as M
 import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen
 
-import Temporal.Media(Event(..))
+import Temporal.Music.Score(Event(..))
 import Csound.Exp hiding (Event(..))
 
 verbatimLines :: [String] -> Doc

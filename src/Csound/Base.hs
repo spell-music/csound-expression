@@ -265,11 +265,11 @@ module Csound.Base(
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
     Arg(..), ArgMethods, makeArgMethods,
-    Sco, Mix, sco, mix, 
+    Mix, sco, mix, 
     
     -- ** Effects
     effect, effectS,
-    module Temporal.Media,
+    module Temporal.Music,
 
     -- ** Midi
     -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.
@@ -306,7 +306,7 @@ module Csound.Base(
 
 import Data.Default
 import Data.Boolean
-import Temporal.Media
+import Temporal.Music
 
 import Csound.Air 
 
