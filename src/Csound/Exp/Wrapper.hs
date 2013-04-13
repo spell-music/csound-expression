@@ -11,7 +11,7 @@ module Csound.Exp.Wrapper(
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
     CsdTuple(..), multiOuts,
     Val(..),
-    str, double, ir,
+    str, double, ir, ar, kr, sig,
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, 
@@ -287,34 +287,41 @@ updateTabSize phi x = case x of
 
 -- | Values that can be converted to signals. 
 class ToSig a where
-    ar :: a -> Sig  -- ^ Forces signal to audio rate. 
-    kr :: a -> Sig  -- ^ Forces signal to control rate. 
+    toSig :: a -> Sig    
     
 instance ToSig D where
-    ar = setRate Ar
-    kr = setRate Kr        
+    toSig = sig
 
 instance ToSig Sig where
-    ar = setRate Ar
-    kr = setRate Kr        
+    toSig = id
     
 instance ToSig Int where
-    ar = ar . double . fromIntegral
-    kr = kr . double . fromIntegral
-    
+    toSig = sig . double . fromIntegral
+   
 instance ToSig Double where
-    ar = ar . double
-    kr = kr . double
-    
+    toSig = sig . double
+
 --------------------------------------------
 -- rate conversion 
 
 setRate :: (Val a, Val b) => Rate -> a -> b
 setRate r a = wrap $ (\x -> x { ratedExpRate = Just r }) $ unwrap a
 
+-- | Sets rate to audio rate.
+ar :: Sig -> Sig
+ar = setRate Ar
+
+-- | Sets rate to control rate.
+kr :: Sig -> Sig 
+kr = setRate Kr
+
 -- | Converts signal to double.
 ir :: Sig -> D
 ir = setRate Ir
+
+-- | Converts numbers to signals. It creates constant signal.
+sig :: D -> Sig
+sig (D a) = Sig a
 
 ------------------------------------------------------
 -- values

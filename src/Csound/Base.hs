@@ -252,7 +252,7 @@ module Csound.Base(
     CsdTuple,
     
     -- ** Converters
-    ToSig(..), ir, double, str,          
+    ToSig(..), ar, kr, ir, sig, double, str,          
         
     -- * Making a sound
     

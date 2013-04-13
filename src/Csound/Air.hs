@@ -29,7 +29,7 @@ module Csound.Air (
 ) where
 
 import Csound.Exp(Tab)
-import Csound.Exp.Wrapper(Sig, Spec, SE, kr, Amp, Cps)
+import Csound.Exp.Wrapper(Sig, Spec, SE, sig, kr, Amp, Cps)
 import Csound.Exp.Cons(withInits)
 import Csound.Exp.Numeric
 import Csound.Opcode(idur, oscil3, vco, pvscross, 
@@ -187,11 +187,11 @@ sine = sines [1]
 
 -- | Reads table once during the note length. 
 once :: Tab -> Sig
-once a = oscil3 1 (1 / kr idur) a
+once a = kr $ oscil3 1 (1 / sig idur) a
 
 -- | Reads table several times during the note length.  
 several :: Tab -> Sig -> Sig
-several tab rate = oscil3 1 (rate / kr idur) tab
+several tab rate = kr $ oscil3 1 (rate / sig idur) tab
 
 -- | Mean value.
 mean :: Fractional a => [a] -> a
