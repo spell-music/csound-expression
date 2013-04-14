@@ -28,7 +28,7 @@ import qualified Csound.Render.IndexMap as DM
 import Temporal.Music.Score(temp, stretch, dur, Score, Event(..), tmap, delay)
 import qualified Temporal.Music.Score as T
 
-import Csound.Exp hiding (Event(..))
+import Csound.Exp hiding (Event(..), tabSize)
 import Csound.Exp.Numeric
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons
@@ -274,15 +274,15 @@ render opt a = do
                         SndNote n sco -> SndNote n $ fmap (substNoteStrs strMap . substNoteTabs tabMap) sco
                         _ -> x
 
-          krateSet = S.fromList $ csdKrate opt        
+          krateSet = S.fromList $ krateOpcodes opt        
 
           defTab :: E -> E
-          defTab = defineInstrTabs (tabResolution opt)
+          defTab = defineInstrTabs (tabFi opt)
 
           defMixTab :: MixE -> MixE
           defMixTab (MixE eff sco) = MixE (defTab eff) (fmap defNoteTab sco) 
               where defNoteTab x = case x of
-                        SndNote n sco -> SndNote n $ fmap (defineNoteTabs $ tabResolution opt) sco      
+                        SndNote n sco -> SndNote n $ fmap (defineNoteTabs $ tabFi opt) sco      
                         _ -> x
                         
           totalDur = dur a

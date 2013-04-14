@@ -3,7 +3,7 @@ module Csound.Exp(
     E, RatedExp(..), RatedVar(..), onExp, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
     VarType(..), Var(..), Info(..), OpcType(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
-    Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap,
+    Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap, TabFi(..),
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,    
     NumExp, NumOp(..), Msg(..), Note, Event(..), eventEnd,   
@@ -130,6 +130,11 @@ data Tab
     , tabGen  :: Int
     , tabArgs :: TabArgs
     } deriving (Show, Eq, Ord)
+
+-- | Table size fidelity (how many points in the table by default).
+data TabFi = TabFi
+    { tabFiBase   :: Int
+    , tabFiGens   :: IM.IntMap Int }
 
 instance Default TabSize where
     def = SizeDegree

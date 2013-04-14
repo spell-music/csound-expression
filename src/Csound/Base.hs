@@ -1,7 +1,7 @@
 -- | Basic types and functions.
 --
 -- WARNING (for Csound users): the maximum amplitude is 1.0. There is no way to alter it. 
--- don't define your amplitudes with 9000 or 11000. But the good news are: all signals
+-- Don't define your amplitudes with 9000 or 11000. But the good news are: all signals
 -- are clipped by 1 so that you can not damage your ears and your speakers by a little typo.
 module Csound.Base(
     -- * Introduction to Csound for Haskell users
@@ -20,7 +20,7 @@ module Csound.Base(
     -- | You don't need to know Csound to use this library.
     -- but it's helpful to know the main features of the Csound: how can you create music with Csound in general, 
     -- what design choices were made, basic features and quirks. Csound belongs to the MUSIC N family 
-    -- of  programming languages. What does it mean? It means that music is divided in two parts:
+    -- of  programming languages. What does it mean? It means that description of the music is divided in two parts:
     --
     -- 1. Orchestra. User defines instruments
     --
@@ -43,31 +43,54 @@ module Csound.Base(
     --
     -- > (Arg a, Out b) => a -> b
     --
-    -- An instrument is something that converts arguments-like things (tuple of primitive values) to output-like things (list of signals).
+    -- An instrument is something that converts arguments-like things (tuple of primitive values) to output-like things (tuple of signals).
     --
-    -- Later when you are done with orchestra section you can trigger the instruments with the function 'Csound.Base.sco'
+    -- When you are done with the orchestra section you can trigger the instruments with the function 'Csound.Base.sco'
     --
-    -- > sco :: (Arg a, Out b) => (a -> b) -> Sco a -> Sco (Mix (NoSE b))
+    -- > sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
     --
     -- It takes an instrument and the bunch of notes for this instrument. The output looks scary but let's try to understand it by bits:
     --
-    -- * @Sco a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
+    -- * @Score a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
     --
     -- * @Mix a@ - is an output of Csound instrument it can be one or several signals ('Csound.Base.Sig' or 'Csound.Base.CsdTuple'). 
     --
-    -- *NoSE a* - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip the 'Csound.Base.SE' wrapper
+    -- * @NoSE a@ - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip the 'Csound.Base.SE' wrapper
     -- from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. Why should it be? I need 'SE' to deduce the order of the
     -- instruments that have side effects. I need it within one instrument. But when instrument is rendered I no longer need 'SE' type. So 'NoSE' lets me drop it
     -- from the output type. 
     --
-    -- If you got used to Csound you can ask "where is the instrument name?" No need to worry about names they are generated automatically.
+    -- How to put the values in the container 'Temporal.Music.Score.Score'? There are many functions to construct the 'Temporal.Music.Score.Score'.
+    -- They live in the module "Temporal.Music.Score". If you are not familiar with it, you can start with six basic functions. 
+    --
+    -- * 'Temporal.Music.Score.rest' -- makes a pause that lasts for some time (in seconds).
+    --
+    -- * 'Temporal.Music.Score.temp' -- makes a score of one note that lasts for one second.    
+    --
+    -- * 'Temporal.Music.Score.line' -- plays a list of notes in sequence (one after the other).
+    -- 
+    -- * 'Temporal.Music.Score.chord' -- plays a list of notes in parallel (at the same time).
+    --
+    -- * 'Temporal.Music.Score.delay' -- delays all notes for some time.
+    --
+    -- * 'Temporal.Music.Score.stretch' -- change the tempo for all notes by the given ratio.
+    --
+    -- Let's play something:
+    --
+    -- > res = stretch 0.5 $ line [ temp a, stretch 2 $ temp b, rest 1, chord [temp a, temp b] ]
+    --
+    -- There are two handy infix operators for delay and stretch: @(+|)@ and @(*|)@. So we can write the previous score:
+    --
+    -- > res = 0.5 *| line [ temp a, 2 *| temp b, 1 +| chord [temp a, temp b] ]
+    --
+    -- If you got used to Csound you can ask -- where is the instrument name in the score? No need to worry about names they are generated automatically.
     --
     -- In Csound to apply some effect one must use the global variables. There are some instruments that produce signals and write them to
     -- the global variables and there is an instrument that functions as mixer. It's turned on for the whole piece and it reads the global
     -- variables and applies the effects to the sound and finally writes it to the file or to the speakers. In this library it's very easy
     -- to apply an effect to the outputs of the instruments. There is a function 'Csound.Base.mix':
     --
-    -- > mix :: (Out a, Out b) => (a -> b) -> Sco (Mix a) -> Sco (Mix (NoSE a))
+    -- > mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE a))
     --
     -- Looks like the function 'Csound.Base.sco'. But now the first argument is an effect. It takes not a note but a signal (or a tuple of signals)
     -- and gives back some signal. The second argument holds the sound that we'd like to apply the effect to. With this function we can apply reverb or
@@ -108,13 +131,11 @@ module Csound.Base(
     -- at control rate, write:
     --
     -- > env = ar $ linseg [0, idur/2, 1, idur/2, 0]
-    --
-    -- Constants are converted to signals with them also.
     
     -- *** Table size
     
     -- | For speed table size should be the power of two or power of two plus one (all tables for oscillators). 
-    -- In this library you can specify the relative size (see 'Csound.Base.Adoptions').
+    -- In this library you can specify the relative size (see 'Csound.Base.CsdOptions').
     -- I've tried to hide the size definition to make sings easier.     
     
     -- ** How to read the Csound docs
@@ -184,10 +205,10 @@ module Csound.Base(
     -- > myOsc cps = oscili 1 cps (sines [1])
     -- > 
     -- > -- Let's define a simple instrument that plays a sound on the specified frequency.
-    -- > -- We use kr to convert a constant value to signal and then plug it in the osc unit. 
+    -- > -- We use sig to convert a constant value to signal and then plug it in the osc unit. 
     -- > -- We make it a bit quieter by multiplying with 0.5.
     -- > pureTone :: D -> Sig
-    -- > pureTone cps = 0.5 * (myOsc $ kr cps)
+    -- > pureTone cps = 0.5 * (myOsc $ sig cps)
     -- > 
     -- > -- Let's trigger the instrument from the score section.
     -- > -- It plays a single note that starts at 0 and lasts for 1 second and 
@@ -205,6 +226,14 @@ module Csound.Base(
     -- That's it @csound@ is a separate program that we have to run to compile our csd-files to sounds.
     -- We can listen to the sound as it runs. It can be configured with flags.
     
+    -- ** More examples
+    
+    -- | You can find many examples at:
+    --
+    -- * A translation of the Amsterdam catalog of Csound computer instruments: <https://github.com/anton-k/amsterdam>
+    --
+    -- * Csound expression Tutorial at (TODO).
+        
     -- ** References
     
     -- | Got interested in Csound? Csound is very well documented. There are good tutorials, read about it at:
@@ -213,7 +242,7 @@ module Csound.Base(
     --
     -- * Floss tutorials: <http://en.flossmanuals.net/csound/>
     --
-    -- * Amsterdam Csound catalog: <http://www.music.buffalo.edu/hiller/accci/>
+    -- * Amsterdam catalog of Csound computer instruments: <http://www.codemist.co.uk/AmsterdamCatalog/>
     --
     -- * Lots of wonderful real-time examples by Iain McCurdy: <http://iainmccurdy.org/csound.html>
     --
@@ -281,9 +310,20 @@ module Csound.Base(
     -- wizard. 
     renderCsd, writeCsd, playCsd,
     
-    -- *** Players 
+    -- *** Players (Linux)
     -- | Handy short-cuts for function 'Csound.Base.playCsd'.
     mplayer, totem, 
+    
+    -- *** Players (Windows)
+    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    --
+    -- TODO (you can send me your definitions)
+
+    -- *** Players (OS X)
+    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    --
+    -- TODO (you can send me your definitions)
+
    
     -- ** Opcodes    
     -- | Some colors to paint our soundscapes.
@@ -296,12 +336,26 @@ module Csound.Base(
     -- ** Options
     -- | We can set some csound options.
     Channel, CtrlId, CsdOptions(..), module Data.Default,
+    coarseFi, fineFi,
         
     renderCsdBy, writeCsdBy, playCsdBy,  
     
-    -- *** Players 
+    -- *** Players (Linux)
     -- | Handy short-cuts for function 'Csound.Base.playCsdBy'.
     mplayerBy, totemBy
+    
+    
+    -- *** Players (Windows)
+    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    --
+    -- TODO (you can send me your definitions)
+
+    -- *** Players (OS X)
+    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    --
+    -- TODO (you can send me your definitions)
+
+
 ) where
 
 import Data.Default

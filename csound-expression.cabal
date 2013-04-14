@@ -16,7 +16,7 @@ Description:
     It's very efficient. But sometimes Csound is too low level. So many details: integer identifiers for instruments 
     and arrays, should I use control rate or audio rate signals, lack of abstractions, no nested expressions and it has limited set of types. 
     This library embeds Csound in Haskell. It's Csound code generator. We can use powerful Csound's primitives and glue them
-    together with Haskell abstractions. Start with the module "Csound.Base". It contains basic types and functions. 
+    together with Haskell abstractions. Start with the module "Csound.Base". It contains basic types and functions.     
     .
     Key principles
     .
@@ -51,6 +51,8 @@ Description:
     * Timing of events. User can set the beat rate and align events by beat events.
     .
     * Set Csound flags with meaningful (well-typed) values. Derive as much as you can from the context.
+    .
+    * Optimization of the memory allocation (liveness analysis).
    
 Extra-Source-Files : 
 

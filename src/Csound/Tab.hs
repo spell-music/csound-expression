@@ -45,7 +45,7 @@ module Csound.Tab (
     econsts, esegs, ecubes, eexps, esplines,
 
     -- * Polynomials    
-    polys, chebs1, chebs2,
+    polys, chebs1, chebs2, bessels,
     
     -- 
 
@@ -57,7 +57,12 @@ module Csound.Tab (
     
     -- ** Handy shortcuts        
     -- | handy shortcuts for the function 'setDegree'.
-    lllofi, llofi, lofi, midfi, hifi, hhifi, hhhifi
+    lllofi, llofi, lofi, midfi, hifi, hhifi, hhhifi,
+    
+    -- * Identifiers for GEN-routines
+    
+    -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
+    idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idSegs, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels
 ) where
 
 import Data.Default
@@ -87,7 +92,7 @@ findTableSize n = head $ dropWhile (< n) tableSizes
 -- | Table contains all provided values 
 -- (table is extended to contain all values and to be of the power of 2 or the power of two plus one).
 doubles :: [Double] -> Tab
-doubles as = setSize (findTableSize n) $ plains 2 as
+doubles as = setSize (findTableSize n) $ plains idDoubles as
     where n = length as
 
 -- | Segments of the exponential curves.
@@ -100,7 +105,7 @@ doubles as = setSize (findTableSize n) $ plains 2 as
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
 exps :: [Double] -> Tab
-exps = interp 5
+exps = interp idExps
 
 -- | Equally spaced segments of exponential curves.
 --
@@ -122,7 +127,7 @@ eexps = exps . insertOnes
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
 cubes :: [Double] -> Tab
-cubes = interp 6
+cubes = interp idCubes
 
 -- | Equally spaced segments of cubic polynomials.
 --
@@ -144,7 +149,7 @@ ecubes = cubes . insertOnes
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
 segs :: [Double] -> Tab
-segs = interp 7
+segs = interp idSegs
 
 -- | Equally spaced segments of straight lines.
 --
@@ -166,7 +171,7 @@ esegs = segs . insertOnes
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
 splines :: [Double] -> Tab
-splines = interp 8
+splines = interp idSplines
 
 -- | Equally spaced spline curve.
 --
@@ -188,7 +193,7 @@ esplines = splines . insertOnes
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
 consts :: [Double] -> Tab
-consts = interp 17
+consts = interp idConsts
 
 -- | Equally spaced constant segments.
 --
@@ -216,7 +221,7 @@ type PartialDC = Double
 --
 -- > triangle = sines $ zipWith (\a b -> a / (b ** 2)) (cycle [1, -1]) [1, 3 .. 11]
 sines :: [PartialStrength] -> Tab
-sines = plains 10
+sines = plains idSines
 
 -- | Just like 'Csound.Tab.sines2' but partial strength is set to one.
 partials :: [PartialNumber] -> Tab
@@ -228,11 +233,11 @@ sines2 xs = sines3 [(num, str, 0) | (num, str) <- xs]
 
 -- | Specifies series of possibly inharmonic partials.
 sines3 :: [(PartialNumber, PartialStrength, PartialPhase)] -> Tab
-sines3 xs = plains 9 [a | (pn, str, phs) <- xs, a <- [pn, str, phs]]
+sines3 xs = plains idSines3 [a | (pn, str, phs) <- xs, a <- [pn, str, phs]]
 
 -- | Specifies series of possibly inharmonic partials with direct current.
 sines4 :: [(PartialNumber, PartialStrength, PartialPhase, PartialDC)] -> Tab
-sines4 xs = plains 19 [a | (pn, str, phs, dc) <- xs, a <- [pn, str, phs, dc]]
+sines4 xs = plains idSines4 [a | (pn, str, phs, dc) <- xs, a <- [pn, str, phs, dc]]
 
 -- | Generates values similar to the opcode 'Csound.Opcode.Basic.buzz'. 
 --
@@ -241,7 +246,7 @@ sines4 xs = plains 19 [a | (pn, str, phs, dc) <- xs, a <- [pn, str, phs, dc]]
 -- With @buzzes n [l, r]@ you get @n@ harmonics from @l@ that are attenuated by the factor of @r@
 -- on each step.
 buzzes :: Double -> [Double] -> Tab
-buzzes nh opts = plains 11 (nh : take 2 opts)
+buzzes nh opts = plains idBuzzes (nh : take 2 opts)
 
 -- | Modified Bessel function of the second kind, order 0 (for amplitude modulated FM). 
 --
@@ -249,7 +254,7 @@ buzzes nh opts = plains 11 (nh : take 2 opts)
 --
 -- the function is defined within the interval @[0, xint]@.
 bessels :: Double -> Tab
-bessels xint = plains 12 [xint]
+bessels xint = plains idBessels [xint]
 
 -- | Polynomials.
 --
@@ -263,7 +268,7 @@ bessels xint = plains 12 [xint]
 --
 -- > c0 + c1 * x + c2 * x * x + ...
 polys :: Double -> Double -> [Double] -> Tab
-polys x0 x1 cs = plains 3 (x0:x1:cs)
+polys x0 x1 cs = plains idPolys (x0:x1:cs)
 
 -- | Chebyshev polynomials of the first kind.
 --
@@ -275,7 +280,7 @@ polys x0 x1 cs = plains 3 (x0:x1:cs)
 --
 -- * [h0, h1, h2, ...] -- relative strength of the partials
 chebs1 :: Double -> Double -> [Double] -> Tab
-chebs1 xint xamp hs = plains 13 (xint : xamp : hs)
+chebs1 xint xamp hs = plains idChebs1 (xint : xamp : hs)
 
 -- | Chebyshev polynomials of the second kind.
 --
@@ -287,7 +292,7 @@ chebs1 xint xamp hs = plains 13 (xint : xamp : hs)
 --
 -- * [h0, h1, h2, ...] -- relative strength of the partials
 chebs2 :: Double -> Double -> [Double] -> Tab
-chebs2 xint xamp hs = plains 14 (xint : xamp : hs)
+chebs2 xint xamp hs = plains idChebs2 (xint : xamp : hs)
 
 
 -- | Creates a table of doubles (It's f-table in Csound).
@@ -347,4 +352,22 @@ skipNorm x = case x of
 
 
 
+idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idSegs, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
+
+idDoubles = 2
+idSines = 10
+idSines3 = 9
+idSines2 = 9
+idPartials = 9
+idSines4 = 19
+idBuzzes = 11
+idConsts = 17
+idSegs = 7
+idCubes = 6
+idExps = 5
+idSplines = 8 
+idPolys = 3
+idChebs1 = 13
+idChebs2 = 14
+idBessels = 12
 

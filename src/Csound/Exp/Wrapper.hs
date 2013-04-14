@@ -29,6 +29,7 @@ import Data.String
 import Data.Fix
 import Control.Monad.Trans.State
 import qualified Data.Map as M
+import qualified Data.IntMap as IM
 import Data.Foldable(foldMap)
 
 import Csound.Exp
@@ -221,27 +222,30 @@ substScoreTabs m = fmap (fmap (fmap (substPrimTab m)))
 substNoteTabs :: TabMap -> Note -> Note
 substNoteTabs m = fmap (substPrimTab m)
 
-defineScoreTabs :: Int -> [Event Note] -> [Event Note]
+defineScoreTabs :: TabFi -> [Event Note] -> [Event Note]
 defineScoreTabs n = fmap (fmap (fmap (definePrimTab n)))
 
-defineInstrTabs :: Int -> E -> E
+defineInstrTabs :: TabFi -> E -> E
 defineInstrTabs n = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp re }
     where phi x = case unPrimOr x of
             Left p -> PrimOr $ Left $ definePrimTab n p
             _ -> x 
 
-definePrimTab :: Int -> Prim -> Prim
+definePrimTab :: TabFi -> Prim -> Prim
 definePrimTab n x = case x of
     PrimTab (Left tab) -> PrimTab (Right $ defineTab n tab)
     _ -> x
 
-defineNoteTabs :: Int -> Note -> Note
+defineNoteTabs :: TabFi -> Note -> Note
 defineNoteTabs n = fmap (definePrimTab n)
 
-defineTab :: Int -> Tab -> LowTab
-defineTab midSize tab = LowTab size (tabGen tab) args
-    where size = defineTabSize midSize (tabSize tab)
+defineTab :: TabFi -> Tab -> LowTab
+defineTab tabFi tab = LowTab size (tabGen tab) args
+    where size = defineTabSize (getTabSizeBase tabFi tab) (tabSize tab)
           args = defineTabArgs size (tabArgs tab)
+
+getTabSizeBase :: TabFi -> Tab -> Int
+getTabSizeBase tf tab = IM.findWithDefault (tabFiBase tf) (tabGen tab) (tabFiGens tf)
 
 defineTabArgs :: Int -> TabArgs -> [Double] 
 defineTabArgs size args = case args of
@@ -272,10 +276,7 @@ defineTabSize base x = case x of
             | guardPoint = (+ 1)
             | otherwise  = id
             
-          byDegree base n 
-            | n == 0 = base
-            | n > 0  = base * (2 ^ n)
-            | n < 0  = base `div` (2 ^ abs n)    
+          byDegree base n = 2 ^ max 0 (base + n) 
 
 updateTabSize :: (TabSize -> TabSize) -> Tab -> Tab
 updateTabSize phi x = case x of
