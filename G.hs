@@ -1,27 +1,14 @@
 module G where
 
 import Data.Default
+import BoxModel(Scene)
 
 data Orient = Hor | Ver
 
 newtype Handle = Handle { unHandle :: Maybe String }
 
-type Measure = Maybe Int
-
-data Size = Size 
-    { height :: Measure
-    , width  :: Measure }
-
-data Offset = Offset 
-    { offsetX :: Measure
-    , offsetY :: Measure }
-
-data Place = Place
-    { placeSize     :: Size 
-    , placeOffset   :: Offset }
-
 data Border 
-    = NoBorder | DownBox | UpBox | EngravedBorder 
+    = NoBorder | DownBoxBorder | UpBoxBorder | EngravedBorder 
     | EmbossedBorder | BlackLine | ThinDown | ThinUp
 
 data Diap = Diap 
@@ -34,9 +21,6 @@ data Font = Helvetica | Courier | Times | Symbol | Screen | Dingbats
 
 -- defaults 
 
-instance Default Size   where def = Size def def
-instance Default Offset where def = Offset def def
-instance Default Place  where def = Place def def
 instance Default Orient where def = Hor
 instance Default Handle where def = Handle def
 instance Default Border where def = NoBorder
@@ -45,17 +29,21 @@ instance Default Diap where def = Diap 0 1
 
 -- GUIs
 
+data Window = Single Panel | Tabs String [Panel]
+
+data Panel = Panel 
+    { panelName     :: String
+    , panelContent  :: Scene Border Fl }
+
 data Fl = Fl 
-    { flPlace   :: Place
-    , flLabel   :: String
+    { flName    :: String
     , flType    :: FlType }
 
+data ContParam = ContParam
+data RollerParam = RollerParam
+
 data FlType 
-    = Container 
-        { containerChildren :: [Fl]
-        , containerBorder   :: Border
-        , containerParam    :: ContainerType }
-    | Valuator
+    = Valuator
         { valuatorDiap      :: Diap
         , valuatorScaleType :: ScaleType
         , valuatorDisp      :: Handle
@@ -78,34 +66,20 @@ data FlType
         , butBankNumY   :: Int
         , butBankType   :: ButtonType }
 
--- containers        
-
-data ContainerType 
-    = Group 
-    | Pack 
-        { packOrient :: Orient
-        , packSpace  :: Double }
-    | Panel
-        { panelKbdcapture :: Bool
-        , panelClose :: Bool } 
-    | Scroll
-    | Tabs        
-
 -- valuators
 
 data ValuatorType 
     = Slider
-        { sliderOrient      :: Orient
-        , sliderType        :: SliderType
-        }
+        { sliderOrient  :: Orient
+        , sliderType    :: SliderType }
     | Knob
-        { knobType :: KnobType }
+        { knobType      :: KnobType }
     | Roller
         { rollerOrient  :: Orient
         , rollerStep    :: Double }
     | Text
-        { textType  :: TextType   
-        , textStep  :: Double } 
+        { textType      :: TextType   
+        , textStep      :: Double } 
 
 data KnobType   = ThreeD (Maybe Int) | Pie | Clock | Flat
 data SliderType = Fill | Engraved | Nice | Upbox 
@@ -127,6 +101,6 @@ data ButtonTypeVal = NormalButton | LightButton | CheckButton | RoundButton
 
 instance Default SliderType  where def = Fill
 instance Default KnobType  where def = Flat
-instance Default RollerParam where def = RollerParam def 1
+instance Default RollerParam where def = RollerParam
 instance Default TextType where def = NormalText
 
