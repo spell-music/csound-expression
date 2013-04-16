@@ -1,8 +1,9 @@
-module Box where
+{-# Language DeriveFunctor #-}
+module BoxModel where
 
 import Control.Monad.Trans.State.Strict
 import Data.Default
-
+import Data.Monoid
 
 data Interval = Interval 
     { start :: Int
@@ -18,29 +19,48 @@ data Rect = Rect
 
 fromRect r = (Interval (px r) (width r), Interval (py r) (height r))
 toRect a b = Rect (start a) (start b) (leng a) (leng b)
-          
-data Scene 
-    = Prim 
-    | Space   
-    | Scale Double Scene
-    | Hor Offset [Scene]
-    | Ver Offset [Scene]
+  
+data AbsScene ctx a 
+    = Elem Rect a
+    | EmptyScene 
+    | Group [AbsScene ctx a]
+    | Ctx ctx (AbsScene ctx a)
     deriving (Show)
+     
+instance Monoid (AbsScene ctx a) where
+    mempty = EmptyScene
+    mappend a b = case (a, b) of
+        (EmptyScene, _) -> b
+        (_, EmptyScene) -> a        
+        (Elem r1 a1, Group bs) -> Group (a:bs)
+        (Group as, Elem r2 a2) -> Group (as ++ [b])
+        (Group as, Group bs)   -> Group (as ++ bs)
+        (_, _) -> Group [a, b]
+   
+data Scene ctx a
+    = Prim a
+    | Space   
+    | Scale Double (Scene ctx a)
+    | Hor Offset [Scene ctx a]
+    | Ver Offset [Scene ctx a]
+    | Context ctx (Scene ctx a)
+    deriving (Show, Functor)
 
 data Offset = Offset 
-    { offsetMargin    :: Int
-    , offsetPadding   :: Int 
+    { offsetOuter :: Int
+    , offsetInner :: Int 
     } deriving (Show)
 
 instance Default Offset where
     def = Offset 3 3
 
-hor, ver :: [Scene] -> Scene
-space, prim :: Scene
+hor, ver    :: [Scene a b] -> Scene a b
+space       :: Scene a b
+prim        :: a -> Scene ctx a 
 
-sca :: Double -> Scene -> Scene
-margin  :: Int -> Scene -> Scene
-padding :: Int -> Scene -> Scene
+sca :: Double -> Scene a b -> Scene a b
+margin  :: Int -> Scene a b -> Scene a b
+padding :: Int -> Scene a b -> Scene a b
 
 hor     = Hor def
 ver     = Ver def
@@ -48,23 +68,24 @@ sca     = Scale
 space   = Space
 prim    = Prim
 
-margin  n = withOffset (\x -> x{ offsetMargin  = n })
-padding n = withOffset (\x -> x{ offsetPadding = n })
+margin  n = withOffset (\x -> x{ offsetOuter = n })
+padding n = withOffset (\x -> x{ offsetInner = n })
 
 withOffset f x = case x of
     Hor off as -> Hor (f off) as
     Ver off as -> Ver (f off) as
     _ -> x
 
-draw :: Rect -> Scene -> [Rect]
+draw :: Rect -> Scene ctx a -> AbsScene ctx a
 draw rect x = case x of
-    Space -> []
-    Prim  -> [rect]
+    Space  -> mempty
+    Prim a -> Elem rect a
     Scale d a -> draw rect a
     Hor off as -> composite (horRects rect) off as
     Ver off as -> composite (verRects rect) off as
+    Context ctx a -> Ctx ctx (draw rect a)
 
-composite getRects off as = concat $ zipWith draw (getRects off $ factors as) (fmap stripScale as)
+composite getRects off as = mconcat $ zipWith draw (getRects off $ factors as) (fmap stripScale as)
    
 horRects rect off scales = fmap (flip toRect commonSide) is 
     where commonSide = withoutMargin off iy
@@ -79,31 +100,30 @@ verRects rect off scales = fmap (toRect commonSide) is
 intervals :: Offset -> Interval -> [Double] -> [Interval]
 intervals off total scales = evalState (mapM next scales') (start total') 
     where total'  = withoutMargin off total
-          leng'   = withoutPaddings off (length scales) (leng total')
+          leng'   = fromIntegral $ withoutPaddings off (length scales) (leng total')
           scales' = fmap ( / s) scales
           s       = sum scales
-          totalLeng = fromIntegral $ leng total'  
 
-          next d  = state $ \soFar -> let l = round $ d * totalLeng
-                                      in  (Interval soFar l, soFar + l + offsetPadding off)
+          next d  = state $ \soFar -> let l = round $ d * leng'
+                                      in  (Interval soFar l, soFar + l + offsetInner off)
             
-withoutPaddings off n a = a - offsetPadding off * (n - 1)
+withoutPaddings off n a = a - offsetInner off * (n - 1)
 
 withoutMargin :: Offset -> Interval -> Interval
-withoutMargin off a = Interval (start a + offsetMargin off) (leng a - 2 * offsetMargin off)
+withoutMargin off a = Interval (start a + offsetOuter off) (leng a - 2 * offsetOuter off)
 
 scaleRect :: Double -> Rect -> Rect
 scaleRect d (Rect x y w h)  = Rect (f x) (f y) (f w) (f h)
     where f a = round $ d * fromIntegral a
 
-factors :: [Scene] -> [Double]
+factors :: [Scene a b] -> [Double]
 factors = fmap factor
     where factor = maybe 1 fst . maybeScale
 
-stripScale :: Scene -> Scene
+stripScale :: Scene a b -> Scene a b
 stripScale x = maybe x snd $ maybeScale x
 
-maybeScale :: Scene -> Maybe (Double, Scene)
+maybeScale :: Scene a b -> Maybe (Double, Scene a b)
 maybeScale x = case x of
     Scale d x   -> Just (d, x)    
     _           -> Nothing
