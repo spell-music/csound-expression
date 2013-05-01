@@ -5,10 +5,8 @@ module Csound.Render.IndexMap(
 
 import Prelude hiding (lookup, length)
 
-import Control.Applicative((<$>))
-
-import qualified System.Mem.StableName.Dynamic.Map as DM()
-import qualified System.Mem.StableName.Dynamic     as DM()
+import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, member, lookup)
+import qualified System.Mem.StableName.Dynamic     as DM(DynamicStableName, makeDynamicStableName)
 
 type InstrName = IO DM.DynamicStableName
 
@@ -35,8 +33,8 @@ insert mname v m = do
           n   = counter m  
 
 member :: InstrName -> IndexMap a -> IO Bool
-member v m = flip DM.member (dynMap m) <$> v
+member v m = fmap (flip DM.member (dynMap m)) $ v
 
 lookup :: InstrName -> IndexMap a -> IO (Maybe Int)
-lookup a m = flip DM.lookup (dynMap m) <$> a
+lookup a m = fmap (flip DM.lookup (dynMap m)) $ a
 

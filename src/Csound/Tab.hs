@@ -67,7 +67,7 @@ module Csound.Tab (
 
 import Data.Default
 import Csound.Exp
-import Csound.Exp.Wrapper(updateTabSize)
+import Csound.Tfm.Tab(updateTabSize)
 
 interp id as = Tab def id (ArgsRelative as)
 plains id as = Tab def id (ArgsPlain as)

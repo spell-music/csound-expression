@@ -11,8 +11,9 @@ import Data.String
 import qualified Data.Map as M(fromList)
 
 import Csound.Exp
-import Csound.Exp.Wrapper(Str, Sig, Val(..), CsdTuple(..), tfm, pref, str, multiOuts, 
+import Csound.Exp.Wrapper(Str, Sig, Val(..), tfm, pref, str,
         onExp)
+import Csound.Exp.Tuple(CsdTuple(..), multiOuts)
 
 -- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
 --

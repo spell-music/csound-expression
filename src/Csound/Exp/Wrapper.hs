@@ -5,18 +5,14 @@
         FlexibleContexts #-}
 module Csound.Exp.Wrapper(
     onE1, onE2, toExp, onExp,
-    Out(..), Outs, Sig, D, Str, BoolSig, BoolD, Spec, ToSig(..),
+    Outs, Sig, D, Str, Spec, ToSig(..),
     Sig2, Sig3, Sig4, Amp, Cps, Iamp, Icps,
     SE, se, se_, runSE, execSE,
-    Arg(..), ArgMethods(..), toArg, makeArgMethods,
-    CsdTuple(..), multiOuts,
     Val(..),
     str, double, ir, ar, kr, sig,
-    tfm, pref, prim, p,
-    isMultiOutSignature,
-    noRate, setRate, 
-    getRates, tabMap, updateTabSize, defineInstrTabs, substInstrTabs, defineNoteTabs, substNoteTabs,
-    stringMap, substNoteStrs,
+    tfm, pref, prim, p,    
+    noRate, setRate, withRate,
+    getRates, isMultiOutSignature,
     readVar, writeVar, gOutVar,
     Channel
 ) where
@@ -24,33 +20,9 @@ module Csound.Exp.Wrapper(
 import Control.Applicative
 import Control.Monad(ap, join)
 import Control.Monad.Trans.State
-
-import Data.List(nub, splitAt)
-import Data.String
 import Data.Fix
-import Control.Monad.Trans.State
-import qualified Data.Map as M
-import qualified Data.IntMap as IM
-import Data.Foldable(foldMap)
 
 import Csound.Exp
-
-fromVal :: (Val a, Val b) => a -> b
-fromVal = fromE . toE
-
-onE1 :: (Val a, Val b) => (E -> E) -> (a -> b)
-onE1 f = fromE . f . toE
-
-onE2 :: (Val a, Val b, Val c) => (E -> E -> E) -> (a -> b -> c)
-onE2 f a b = fromE $ f (toE a) (toE b)
-
-toExp :: Val a => a -> Exp E
-toExp = ratedExpExp . unFix . toE
-
--- Lifts transformation of main expression
-onExp :: (Exp E -> Exp E) -> E -> E
-onExp f x = case unFix x of
-    a -> Fix $ a{ ratedExpExp = f (ratedExpExp a) }
 
 type Channel = Int
 
@@ -71,12 +43,6 @@ type Iamp = D
 -- | An alias for cycles per second as number.
 type Icps = D
 
--- | Output of the instrument.
-class CsdTuple (NoSE a) => Out a where
-    type NoSE a :: *
-    toOut :: a -> SE [Sig]
-    fromOut :: [Sig] -> a
-
 -- | Audio or control rate signals. 
 newtype Sig = Sig { unSig :: E }
 
@@ -85,12 +51,6 @@ newtype D = D { unD :: E }
 
 -- | Strings.
 newtype Str = Str { unStr :: E }
-
--- | Boolean signals. 
-newtype BoolSig = BoolSig { unBoolSig :: E }
-
--- | Boolean constants. 
-newtype BoolD = BoolD { unBoolD :: E }
 
 -- | Spectrum of the signal (see FFT and Spectral Processing at "Csound.Opcode.Advanced"). 
 newtype Spec = Spec { unSpec :: E }
@@ -121,6 +81,52 @@ runSE a = runState (unSE a) (unD (p 3 :: D))
 
 execSE :: SE a -> E
 execSE = snd . runSE
+
+se :: (Val a) => E -> SE a
+se a = SE $ state $ \s -> 
+    let x = Fix $ (unFix a) { ratedExpDepends = Just s }
+    in  (fromE x, x)
+
+se_ :: E -> SE ()
+se_ = fmap (const ()) . (se :: E -> SE E)
+
+------------------------------------------------------
+-- values
+
+class Val a where
+    toE     :: a -> E
+    fromE   :: E -> a
+
+instance Val E          where { toE = id;       fromE = id }    
+instance Val (Exp E)    where { toE = noRate;   fromE = toExp }
+instance Val Sig        where { toE = unSig;    fromE = Sig }
+instance Val D          where { toE = unD;      fromE = D }
+instance Val Str        where { toE = unStr;    fromE = Str }
+instance Val Spec       where { toE = unSpec;   fromE = Spec }
+
+instance Val Tab    where
+    fromE = TabExp
+    toE x = case x of
+        TabExp e -> e
+        primTab -> (prim . PrimTab . Left) primTab
+
+
+fromVal :: (Val a, Val b) => a -> b
+fromVal = fromE . toE
+
+onE1 :: (Val a, Val b) => (E -> E) -> (a -> b)
+onE1 f = fromE . f . toE
+
+onE2 :: (Val a, Val b, Val c) => (E -> E -> E) -> (a -> b -> c)
+onE2 f a b = fromE $ f (toE a) (toE b)
+
+toExp :: Val a => a -> Exp E
+toExp = ratedExpExp . unFix . toE
+
+-- Lifts transformation of main expression
+onExp :: (Exp E -> Exp E) -> E -> E
+onExp f x = case unFix x of
+    a -> Fix $ a{ ratedExpExp = f (ratedExpExp a) }
 
 ------------------------------------------------
 -- basic constructors
@@ -175,137 +181,14 @@ gOutVar :: Int -> Int -> Var
 gOutVar instrId portId = Var GlobalVar Ar (gOutName instrId portId)
     where gOutName instrId portId = "Out" ++ show instrId ++ "_" ++ show portId
 
--------------------------------
--- side effects
-
-se :: (Val a) => E -> SE a
-se a = SE $ state $ \s -> 
-    let x = Fix $ (unFix a) { ratedExpDepends = Just s }
-    in  (fromE x, x)
-
-se_ :: E -> SE ()
-se_ = fmap (const ()) . (se :: E -> SE E)
-
-------------------------------------------------
--- basic extractors
-
-getPrimUnsafe :: Val a => a -> Prim
-getPrimUnsafe a = case toExp a of
-    ExpPrim p -> p
-
-tabMap :: [E] -> [Prim] -> TabMap
-tabMap es ps = M.fromList $ zip (nub $ (getPrimTabs =<< ps) ++ (getInstrTabs =<< es)) [1 ..]
+getRates :: MainExp a -> [Rate]
+getRates (Tfm info _) = case infoSignature info of
+    MultiRate outs _ -> outs
     
-getInstrTabs :: E -> [LowTab]
-getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fromPrimOr $ ratedExpExp re of    
-    ExpPrim p -> getPrimTabs p
-    Tfm _ as -> concat as
-    ConvertRate _ _ a -> a
-    ExpNum a -> foldMap id a
-    Select _ _ a -> a
-    If info a b -> foldMap id info ++ a ++ b
-    ReadVar _ -> []
-    WriteVar _ a -> a
-    where fromPrimOr x = case unPrimOr x of
-            Left  p -> getPrimTabs p
-            Right a -> a
-
-getPrimTabs :: Prim -> [LowTab]
-getPrimTabs x = case x of
-    PrimTab (Right t) -> [t]
-    _ -> []
-
-substPrimTab :: TabMap -> Prim -> Prim
-substPrimTab m x = case x of 
-    PrimTab (Right tab) -> PrimInt (m M.! tab)
-    _ -> x
-
-substInstrTabs :: TabMap -> E -> E
-substInstrTabs m = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp re }
-    where phi x = case unPrimOr x of
-            Left p -> PrimOr $ Left $ substPrimTab m p
-            _ -> x 
-
-substNoteTabs :: TabMap -> Note -> Note
-substNoteTabs m = fmap (substPrimTab m)
-
-defineInstrTabs :: TabFi -> E -> E
-defineInstrTabs n = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp re }
-    where phi x = case unPrimOr x of
-            Left p -> PrimOr $ Left $ definePrimTab n p
-            _ -> x 
-
-definePrimTab :: TabFi -> Prim -> Prim
-definePrimTab n x = case x of
-    PrimTab (Left tab) -> PrimTab (Right $ defineTab n tab)
-    _ -> x
-
-defineNoteTabs :: TabFi -> Note -> Note
-defineNoteTabs n = fmap (definePrimTab n)
-
-defineTab :: TabFi -> Tab -> LowTab
-defineTab tabFi tab = LowTab size (tabGen tab) args
-    where size = defineTabSize (getTabSizeBase tabFi tab) (tabSize tab)
-          args = defineTabArgs size (tabArgs tab)
-
-getTabSizeBase :: TabFi -> Tab -> Int
-getTabSizeBase tf tab = IM.findWithDefault (tabFiBase tf) (tabGen tab) (tabFiGens tf)
-
-defineTabArgs :: Int -> TabArgs -> [Double] 
-defineTabArgs size args = case args of
-    ArgsPlain as -> as 
-    ArgsRelative as -> fromRelative size as
-    where fromRelative n as = substEvens (mkRelative n $ getEvens as) as
-          getEvens xs = case xs of
-            [] -> []
-            a:[] -> []
-            a:b:as -> b : getEvens as
-            
-          substEvens evens xs = case (evens, xs) of
-            ([], xs) -> xs
-            (es, []) -> []
-            (e:es, a:b:as) -> a : e : substEvens es as
-            
-          mkRelative n as = fmap (fromIntegral . round . (s * )) as
-            where s = fromIntegral n / sum as
-            
-
-defineTabSize :: Int -> TabSize -> Int
-defineTabSize base x = case x of
-       SizePlain n -> n
-       SizeDegree guardPoint degree ->          
-                byGuardPoint guardPoint $
-                byDegree base degree
-    where byGuardPoint guardPoint 
-            | guardPoint = (+ 1)
-            | otherwise  = id
-            
-          byDegree base n = 2 ^ max 0 (base + n) 
-
-updateTabSize :: (TabSize -> TabSize) -> Tab -> Tab
-updateTabSize phi x = case x of
-    TabExp _ -> error "you can change size only for primitive tables (made with gen-routines)"
-    primTab  -> primTab{ tabSize = phi $ tabSize primTab }
-
-
-------------------------------------------------------------------
--- render strings
-
-stringMap :: [Prim] -> StringMap
-stringMap as = M.fromList $ zip (nub $ primStrings =<< as) [1 .. ]
-    where primStrings x = case x of
-              PrimString s -> [s]
-              _ -> []
-
-substNoteStrs :: StringMap -> Note -> Note
-substNoteStrs m = fmap (substPrimStrs m)
-
-substPrimStrs :: StringMap -> Prim -> Prim
-substPrimStrs strs x = case x of
-    PrimString s -> PrimInt $ strs M.! s
-    _ -> x
-
-
+isMultiOutSignature :: Signature -> Bool
+isMultiOutSignature x = case x of
+    MultiRate _ _ -> True
+    _ -> False
 
 --------------------------------------------
 -- signals from primitive types
@@ -348,302 +231,4 @@ ir = setRate Ir
 sig :: D -> Sig
 sig (D a) = Sig a
 
-------------------------------------------------------
--- values
-
-class Val a where
-    toE     :: a -> E
-    fromE   :: E -> a
-
-instance Val E          where { toE = id;       fromE = id }    
-instance Val (Exp E)    where { toE = noRate;   fromE = toExp }
-instance Val Sig        where { toE = unSig;    fromE = Sig }
-instance Val D          where { toE = unD;      fromE = D }
-instance Val Str        where { toE = unStr;    fromE = Str }
-instance Val BoolSig    where { toE = unBoolSig;fromE = BoolSig }
-instance Val BoolD      where { toE = unBoolD;  fromE = BoolD }
-instance Val Spec       where { toE = unSpec;   fromE = Spec }
-
-instance Val Tab    where
-    fromE = TabExp
-    toE x = case x of
-        TabExp e -> e
-        primTab -> (prim . PrimTab . Left) primTab
-
-------------------------------------------------
--- arguments
-
--- | The abstract type of methods for the class 'Arg'.
-data ArgMethods a = ArgMethods 
-    { arg :: Int -> a
-    , toNote :: a -> [Prim]
-    , arity :: a -> Int
-    }
-
-toArg :: Arg a => a
-toArg = arg argMethods 4
-
--- | Defines instance of type class 'Arg' for a new type in terms of an already defined one.
-makeArgMethods :: (Arg a) => (a -> b) -> (b -> a) -> ArgMethods b
-makeArgMethods to from = ArgMethods {
-    arg = to . arg argMethods,
-    toNote = toNote argMethods . from,
-    arity = const $ arity argMethods $ proxy to }
-    where proxy :: (a -> b) -> a
-          proxy = undefined
-
--- | Describes all Csound values that can be used in the score section. 
--- Instruments are triggered with the values from this type class.
--- Actual methods are hidden, but you can easily make instances for your own types
--- with function 'makeArgMethods'. You need to describe the new instance in  terms 
--- of some existing one. For example:
---
--- > data Note = Note 
--- >     { noteAmplitude    :: D
--- >     , notePitch        :: D
--- >     , noteVibrato      :: D
--- >     , noteSample       :: S
--- >     }
--- > 
--- > instance Arg Note where
--- >     argMethods = makeArgMethods to from
--- >         where to (amp, pch, vibr, sample) = Note amp pch vibr sample
--- >               from (Note amp pch vibr sample) = (amp, pch, vibr, sample)
--- 
--- Then you can use this type in an instrument definition.
--- 
--- > instr :: Note -> Out
--- > instr x = ...
-
-class Arg a where
-    argMethods :: ArgMethods a
-
-instance Arg () where
-    argMethods = ArgMethods 
-        { arg = const ()
-        , toNote = const []
-        , arity = const 0 }
-
-instance Arg D where
-    argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
-
-instance Arg Str where
-    argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
-
-instance Arg Tab where
-    argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
-
-instance (Arg a, Arg b) => Arg (a, b) where
-    argMethods = ArgMethods arg' toNote' arity' 
-        where arg' n = (a, b)
-                  where a = arg argMethods n
-                        b = arg argMethods (n + arity argMethods a)
-              toNote' (a, b) = toNote argMethods a ++ toNote argMethods b
-              arity' x = let (a, b) = proxy x in arity argMethods a + arity argMethods b    
-                  where proxy :: (a, b) -> (a, b)
-                        proxy = const (undefined, undefined)
-
-instance (Arg a, Arg b, Arg c) => Arg (a, b, c) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c)) = (a, b, c)
-              from (a, b, c) = (a, (b, c))
-
-instance (Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d)) = (a, b, c, d)
-              from (a, b, c, d) = (a, (b, c, d))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e) => Arg (a, b, c, d, e) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e)) = (a, b, c, d, e)
-              from (a, b, c, d, e) = (a, (b, c, d, e))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e, f)) = (a, b, c, d, e, f)
-              from (a, b, c, d, e, f) = (a, (b, c, d, e, f))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g) => Arg (a, b, c, d, e, f, g) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e, f, g)) = (a, b, c, d, e, f, g)
-              from (a, b, c, d, e, f, g) = (a, (b, c, d, e, f, g))
-
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, c, d, e, f, g, h) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e, f, g, h)) = (a, b, c, d, e, f, g, h)
-              from (a, b, c, d, e, f, g, h) = (a, (b, c, d, e, f, g, h))
-
-
-------------------------------------------------
--- tuples
-
--- | Describes tuples of Csound values. It's used for functions that can return 
--- several results (such as 'soundin' or 'diskin2'). Tuples can be nested. 
-class CsdTuple a where
-    fromCsdTuple :: a -> [E]
-    toCsdTuple :: [E] -> a
-    arityCsdTuple :: a -> Int
-
-instance CsdTuple Sig where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
-
-instance CsdTuple D where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
-
-instance CsdTuple Tab where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
-
-instance CsdTuple Str where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
-
-instance CsdTuple Spec where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
-
-instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
-    fromCsdTuple (a, b) = fromCsdTuple a ++ fromCsdTuple b
-    arityCsdTuple x = let (a, b) = proxy x in arityCsdTuple a + arityCsdTuple b
-        where proxy :: (a, b) -> (a, b)
-              proxy = const (undefined, undefined)  
-    toCsdTuple xs = (a, b)
-        where a = toCsdTuple $ take (arityCsdTuple a) xs
-              xsb = drop (arityCsdTuple a) xs  
-              b = toCsdTuple (take (arityCsdTuple b) xsb)
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c) => CsdTuple (a, b, c) where
-    fromCsdTuple (a, b, c) = fromCsdTuple (a, (b, c))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c) -> (a, (b, c))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c)) -> (a, b, c)) . toCsdTuple 
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, d) where
-    fromCsdTuple (a, b, c, d) = fromCsdTuple (a, (b, c, d))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d) -> (a, (b, c, d))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d)) -> (a, b, c, d)) . toCsdTuple
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e) => CsdTuple (a, b, c, d, e) where
-    fromCsdTuple (a, b, c, d, e) = fromCsdTuple (a, (b, c, d, e))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e) -> (a, (b, c, d, e))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e)) -> (a, b, c, d, e)) . toCsdTuple
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f) => CsdTuple (a, b, c, d, e, f) where
-    fromCsdTuple (a, b, c, d, e, f) = fromCsdTuple (a, (b, c, d, e, f))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e, f) -> (a, (b, c, d, e, f))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e, f)) -> (a, b, c, d, e, f)) . toCsdTuple
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g) => CsdTuple (a, b, c, d, e, f, g) where
-    fromCsdTuple (a, b, c, d, e, f, g) = fromCsdTuple (a, (b, c, d, e, f, g))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e, f, g) -> (a, (b, c, d, e, f, g))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e, f, g)) -> (a, b, c, d, e, f, g)) . toCsdTuple
-
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h) => CsdTuple (a, b, c, d, e, f, g, h) where
-    fromCsdTuple (a, b, c, d, e, f, g, h) = fromCsdTuple (a, (b, c, d, e, f, g, h))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e, f, g, h) -> (a, (b, c, d, e, f, g, h))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e, f, g, h)) -> (a, b, c, d, e, f, g, h)) . toCsdTuple
-
-------------------------------------------------
--- multiple outs
-
-multiOuts :: CsdTuple a => E -> a
-multiOuts exp = res
-    where res = toCsdTuple $ multiOutsSection (arityCsdTuple res) exp
-
-multiOutsSection :: Int -> E -> [E]
-multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
-    where rates = take n $ getRates $ ratedExpExp $ unFix e          
-          e' = onExp (setMultiRate rates) e
-          
-          setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
-              where MultiRate _ ins = infoSignature info
-            
-          select n r e = withRate r $ Select r n (PrimOr $ Right e)
-
-getRates :: MainExp a -> [Rate]
-getRates (Tfm info _) = case infoSignature info of
-    MultiRate outs _ -> outs
-    
-isMultiOutSignature :: Signature -> Bool
-isMultiOutSignature x = case x of
-    MultiRate _ _ -> True
-    _ -> False
-
-------------------------------------------------
--- instrument outs
-
-instance Out Sig where
-    type NoSE Sig = Sig
-    toOut = return . return
-    fromOut = head  
-
-instance (Out a, CsdTuple a) => Out (SE a) where
-    type NoSE (SE a) = a
-    toOut = join . fmap toOut
-    fromOut = return . fromOut
-
-
-instance (CsdTuple a, CsdTuple b, Out a, Out b) => Out (a, b) where
-    type NoSE (a, b) = (NoSE a, NoSE b)
-    toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
-    fromOut = toCsdTuple . fmap toE
-
-    
-instance (CsdTuple a, CsdTuple b, CsdTuple c, Out a, Out b, Out c) => Out (a, b, c) where
-    type NoSE (a, b, c) = (NoSE a, NoSE b, NoSE c)
-    toOut (a, b, c) = toOut (a, (b, c))
-    fromOut = toCsdTuple . fmap toE
-    
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, Out a, Out b, Out c, Out d) => Out (a, b, c, d) where
-    type NoSE (a, b, c, d) = (NoSE a, NoSE b, NoSE c, NoSE d)
-    toOut (a, b, c, d) = toOut (a, (b, c, d))
-    fromOut = toCsdTuple . fmap toE
-    
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
-    type NoSE (a, b, c, d, e) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e)
-    toOut (a, b, c, d, e) = toOut (a, (b, c, d, e))
-    fromOut = toCsdTuple . fmap toE
-    
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
-    type NoSE (a, b, c, d, e, f) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f)
-    toOut (a, b, c, d, e, f) = toOut (a, (b, c, d, e, f))
-    fromOut = toCsdTuple . fmap toE
-    
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e, f, g) where
-    type NoSE (a, b, c, d, e, f, g) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g)
-    toOut (a, b, c, d, e, f, g) = toOut (a, (b, c, d, e, f, g))
-    fromOut = toCsdTuple . fmap toE
-    
-instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h, Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
-    type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
-    toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
-    fromOut = toCsdTuple . fmap toE
 

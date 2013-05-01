@@ -214,5 +214,3 @@ ppNumOp op = case  op of
           fun = funcs
           firstLetterToLower (x:xs) = toLower x : xs
           
-
-

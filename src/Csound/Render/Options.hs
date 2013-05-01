@@ -6,10 +6,11 @@ module Csound.Render.Options(
 
 import Data.List(transpose)
 import Data.Default
-import qualified Data.IntMap as IM
+import qualified Data.IntMap as IM(fromList, empty)
 
 import Csound.Exp(TabFi(..), MidiType(..))
-import Csound.Exp.Wrapper(Channel, Sig, SE, Out, Outs)
+import Csound.Exp.Wrapper(Channel, Sig, SE, Outs)
+import Csound.Exp.Tuple(Out)
 import Csound.Render.Pretty
 import Csound.Tab(idConsts, idSegs, idExps)
 

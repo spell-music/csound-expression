@@ -15,7 +15,7 @@ import Data.Fix(Fix(..), cata)
 import Data.Fix.Cse(fromDag, cse)
 
 import Csound.Exp
-import Csound.Exp.Wrapper hiding (double)
+import Csound.Exp.Wrapper(getRates, isMultiOutSignature)
 
 import Csound.Tfm.RateGraph
 import Csound.Render.Pretty

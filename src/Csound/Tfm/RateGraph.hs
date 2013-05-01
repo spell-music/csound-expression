@@ -23,9 +23,20 @@ import Csound.Exp
 
 import Debug.Trace
 
-
 echo :: Show a => String -> a -> a
 echo msg a = trace (msg ++ ": " ++ show a) a
+
+grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
+grate krateSet as = runST $ do
+    freshIds <- newSTRef n
+    box <- msgBox n    
+    mapM_ (discussLine krateSet box freshIds) lines
+    graph <- fmap (reverse . concat) $ mapM (processLine box) lines
+    lastFreshId <- readSTRef freshIds
+    return (graph, lastFreshId)
+    where n = length as
+          lines = reverse as 
+  
 
 type AgentId = Int
 
@@ -214,19 +225,4 @@ findRate xs = case sort $ nub xs of
     [] -> Xr
     Xr:as -> minimum as
     as -> minimum as
-        
-
-grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
-grate krateSet as = runST $ do
-    freshIds <- newSTRef n
-    box <- msgBox n    
-    mapM_ (discussLine krateSet box freshIds) lines
-    graph <- fmap (reverse . concat) $ mapM (processLine box) lines
-    lastFreshId <- readSTRef freshIds
-    return (graph, lastFreshId)
-    where n = length as
-          lines = reverse as 
-  
-
-
 

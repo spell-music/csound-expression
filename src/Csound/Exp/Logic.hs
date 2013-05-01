@@ -1,5 +1,5 @@
 {-# Language TypeFamilies #-}
-module Csound.Exp.Logic() where
+module Csound.Exp.Logic(BoolSig, BoolD) where
 
 import Control.Monad.Trans.State(State, state, evalState)
 import qualified Data.IntMap as IM(fromList)
@@ -8,9 +8,20 @@ import Data.Boolean
 
 import Csound.Exp
 import Csound.Exp.Wrapper(
-    Sig, D, Str, BoolSig, BoolD, 
+    Sig, D, Str,  
     setRate, noRate,
     Val(..), toExp, onExp, onE1)
+
+-- booleans
+
+-- | Boolean signals. 
+newtype BoolSig = BoolSig { unBoolSig :: E }
+
+-- | Boolean constants. 
+newtype BoolD = BoolD { unBoolD :: E }
+
+instance Val BoolSig    where { toE = unBoolSig;fromE = BoolSig }
+instance Val BoolD      where { toE = unBoolD;  fromE = BoolD }
 
 -- booleans for signals
 

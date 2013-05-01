@@ -39,6 +39,12 @@ import Csound.Render.Options
 
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 
+import Csound.Tfm.String
+import Csound.Tfm.Tab
+
+import Csound.Exp.Arg
+import Csound.Exp.Tuple
+
 un = undefined
 
 -- | Renders Csound file.

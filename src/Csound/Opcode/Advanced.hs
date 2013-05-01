@@ -65,6 +65,7 @@ module Csound.Opcode.Advanced (
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.Tuple
 import Csound.LowLevel
 
 -----------------------------------------------------
