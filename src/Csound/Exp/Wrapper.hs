@@ -15,7 +15,8 @@ module Csound.Exp.Wrapper(
     tfm, pref, prim, p,
     isMultiOutSignature,
     noRate, setRate, 
-    getRates, tabMap, updateTabSize, defineInstrTabs, defineScoreTabs, substInstrTabs, substScoreTabs, defineNoteTabs, substNoteTabs,
+    getRates, tabMap, updateTabSize, defineInstrTabs, substInstrTabs, defineNoteTabs, substNoteTabs,
+    stringMap, substNoteStrs,
     readVar, writeVar, gOutVar,
     Channel
 ) where
@@ -216,14 +217,8 @@ substInstrTabs m = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp
             Left p -> PrimOr $ Left $ substPrimTab m p
             _ -> x 
 
-substScoreTabs :: TabMap -> [Event Note] -> [Event Note]
-substScoreTabs m = fmap (fmap (fmap (substPrimTab m)))
-
 substNoteTabs :: TabMap -> Note -> Note
 substNoteTabs m = fmap (substPrimTab m)
-
-defineScoreTabs :: TabFi -> [Event Note] -> [Event Note]
-defineScoreTabs n = fmap (fmap (fmap (definePrimTab n)))
 
 defineInstrTabs :: TabFi -> E -> E
 defineInstrTabs n = cata $ \re -> Fix $ re { ratedExpExp = fmap phi $ ratedExpExp re }
@@ -282,6 +277,26 @@ updateTabSize :: (TabSize -> TabSize) -> Tab -> Tab
 updateTabSize phi x = case x of
     TabExp _ -> error "you can change size only for primitive tables (made with gen-routines)"
     primTab  -> primTab{ tabSize = phi $ tabSize primTab }
+
+
+------------------------------------------------------------------
+-- render strings
+
+stringMap :: [Prim] -> StringMap
+stringMap as = M.fromList $ zip (nub $ primStrings =<< as) [1 .. ]
+    where primStrings x = case x of
+              PrimString s -> [s]
+              _ -> []
+
+substNoteStrs :: StringMap -> Note -> Note
+substNoteStrs m = fmap (substPrimStrs m)
+
+substPrimStrs :: StringMap -> Prim -> Prim
+substPrimStrs strs x = case x of
+    PrimString s -> PrimInt $ strs M.! s
+    _ -> x
+
+
 
 --------------------------------------------
 -- signals from primitive types

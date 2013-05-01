@@ -91,7 +91,6 @@ Library
         Csound.Render.Pretty
         Csound.Render.Options
         Csound.Render.Instr
-        Csound.Render.Sco
         Csound.Render.Mix
         Csound.Render.IndexMap
       

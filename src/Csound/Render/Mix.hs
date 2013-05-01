@@ -28,7 +28,7 @@ import qualified Csound.Render.IndexMap as DM
 import Temporal.Music.Score(temp, stretch, dur, Score, Event(..), tmap, delay)
 import qualified Temporal.Music.Score as T
 
-import Csound.Exp hiding (Event(..), tabSize)
+import Csound.Exp hiding (tabSize)
 import Csound.Exp.Numeric
 import Csound.Exp.Wrapper
 import Csound.Exp.Cons
@@ -36,7 +36,6 @@ import Csound.Render.Pretty
 import Csound.Render.Instr
 import Csound.Tfm.RateGraph(KrateSet)
 import Csound.Render.Options
-import Csound.Render.Sco(stringMap, substNoteStrs, StringMap, MidiType(..))
 
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 

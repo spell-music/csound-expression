@@ -8,9 +8,8 @@ import Data.List(transpose)
 import Data.Default
 import qualified Data.IntMap as IM
 
-import Csound.Exp(TabFi(..))
+import Csound.Exp(TabFi(..), MidiType(..))
 import Csound.Exp.Wrapper(Channel, Sig, SE, Out, Outs)
-import Csound.Render.Sco
 import Csound.Render.Pretty
 import Csound.Tab(idConsts, idSegs, idExps)
 

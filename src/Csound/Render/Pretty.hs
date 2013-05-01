@@ -18,7 +18,7 @@ import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen
 
 import Temporal.Music.Score(Event(..))
-import Csound.Exp hiding (Event(..))
+import Csound.Exp 
 
 verbatimLines :: [String] -> Doc
 verbatimLines = vcat . fmap text
