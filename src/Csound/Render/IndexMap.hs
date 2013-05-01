@@ -7,8 +7,8 @@ import Prelude hiding (lookup, length)
 
 import Control.Applicative((<$>))
 
-import qualified System.Mem.StableName.Dynamic.Map as DM
-import qualified System.Mem.StableName.Dynamic     as DM
+import qualified System.Mem.StableName.Dynamic.Map as DM()
+import qualified System.Mem.StableName.Dynamic     as DM()
 
 type InstrName = IO DM.DynamicStableName
 
