@@ -4,8 +4,8 @@
         FlexibleInstances,
         FlexibleContexts #-}
 module Csound.Exp.Wrapper(
-    toE, fromE,
-    Out(..), Outs, Sig, D, Str, BoolSig(..), BoolD(..), Spec, ToSig(..),
+    onE1, onE2, toExp, onExp,
+    Out(..), Outs, Sig, D, Str, BoolSig, BoolD, Spec, ToSig(..),
     Sig2, Sig3, Sig4, Amp, Cps, Iamp, Icps,
     SE, se, se_, runSE, execSE,
     Arg(..), ArgMethods(..), toArg, makeArgMethods,
@@ -35,6 +35,23 @@ import Data.Foldable(foldMap)
 
 import Csound.Exp
 
+fromVal :: (Val a, Val b) => a -> b
+fromVal = fromE . toE
+
+onE1 :: (Val a, Val b) => (E -> E) -> (a -> b)
+onE1 f = fromE . f . toE
+
+onE2 :: (Val a, Val b, Val c) => (E -> E -> E) -> (a -> b -> c)
+onE2 f a b = fromE $ f (toE a) (toE b)
+
+toExp :: Val a => a -> Exp E
+toExp = ratedExpExp . unFix . toE
+
+-- Lifts transformation of main expression
+onExp :: (Exp E -> Exp E) -> E -> E
+onExp f x = case unFix x of
+    a -> Fix $ a{ ratedExpExp = f (ratedExpExp a) }
+
 type Channel = Int
 
 type Outs = SE [Sig]
@@ -53,14 +70,6 @@ type Iamp = D
 
 -- | An alias for cycles per second as number.
 type Icps = D
-
--- | Converts a value to the private representation.
-toE :: Val a => a -> E
-toE = Fix . unwrap
-
--- | Constructs a value from the private representation.
-fromE :: Val a => E -> a
-fromE = wrap . unFix
 
 -- | Output of the instrument.
 class CsdTuple (NoSE a) => Out a where
@@ -123,10 +132,10 @@ withRate :: Val a => Rate -> Exp E -> a
 withRate r = ratedExp (Just r)
 
 ratedExp :: Val a => Maybe Rate -> Exp E -> a
-ratedExp r = wrap . RatedExp r Nothing
+ratedExp r = fromE . Fix . RatedExp r Nothing
 
 prim :: Val a => Prim -> a
-prim = wrap . noRate . ExpPrim 
+prim = noRate . ExpPrim 
 
 pref :: Name -> Signature -> Info
 pref name signature = Info name signature Prefix Nothing
@@ -134,8 +143,8 @@ pref name signature = Info name signature Prefix Nothing
 inf :: Name -> Signature -> Info
 inf name signature = Info name signature Infix Nothing
   
-tfm :: Val a => Info -> [RatedExp E] -> a
-tfm info args = wrap $ noRate $ Tfm info $ map (toPrimOr . Fix) args
+tfm :: Val a => Info -> [E] -> a
+tfm info args = noRate $ Tfm info $ fmap toPrimOr args
 
 gvar, var :: Val a => Rate -> Name -> a
 
@@ -143,7 +152,7 @@ var  = mkVar LocalVar
 gvar = mkVar GlobalVar
 
 mkVar :: Val a => VarType -> Rate -> String -> a
-mkVar ty rate name = wrap $ noRate $ ReadVar (Var ty rate name)
+mkVar ty rate name = noRate $ ReadVar (Var ty rate name)
 
 p :: Val a => Int -> a
 p = prim . P
@@ -157,7 +166,7 @@ str :: String -> Str
 str = prim . PrimString
 
 writeVar :: (Val a) => Var -> a -> SE ()
-writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ Fix $ unwrap x 
+writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ toE x 
 
 readVar :: (Val a) => Var -> a
 readVar v = noRate $ ReadVar v
@@ -171,8 +180,8 @@ gOutVar instrId portId = Var GlobalVar Ar (gOutName instrId portId)
 
 se :: (Val a) => E -> SE a
 se a = SE $ state $ \s -> 
-    let x = (unwrap a) { ratedExpDepends = Just s }
-    in  (wrap x, Fix $ x)
+    let x = Fix $ (unFix a) { ratedExpDepends = Just s }
+    in  (fromE x, x)
 
 se_ :: E -> SE ()
 se_ = fmap (const ()) . (se :: E -> SE E)
@@ -181,7 +190,7 @@ se_ = fmap (const ()) . (se :: E -> SE E)
 -- basic extractors
 
 getPrimUnsafe :: Val a => a -> Prim
-getPrimUnsafe a = case ratedExpExp $ unwrap a of
+getPrimUnsafe a = case toExp a of
     ExpPrim p -> p
 
 tabMap :: [E] -> [Prim] -> TabMap
@@ -321,7 +330,7 @@ instance ToSig Double where
 -- rate conversion 
 
 setRate :: (Val a, Val b) => Rate -> a -> b
-setRate r a = wrap $ (\x -> x { ratedExpRate = Just r }) $ unwrap a
+setRate r a = fromE $ Fix $ (\x -> x { ratedExpRate = Just r }) $ unFix $ toE a
 
 -- | Sets rate to audio rate.
 ar :: Sig -> Sig
@@ -343,46 +352,23 @@ sig (D a) = Sig a
 -- values
 
 class Val a where
-    wrap    :: RatedExp E -> a 
-    unwrap  :: a -> RatedExp E
+    toE     :: a -> E
+    fromE   :: E -> a
 
-instance Val (RatedExp E) where
-    wrap = id
-    unwrap = id
-     
-instance Val E where
-    wrap = Fix
-    unwrap = unFix
-     
-instance Val Sig where
-    wrap = Sig . Fix
-    unwrap = unFix . unSig
+instance Val E          where { toE = id;       fromE = id }    
+instance Val (Exp E)    where { toE = noRate;   fromE = toExp }
+instance Val Sig        where { toE = unSig;    fromE = Sig }
+instance Val D          where { toE = unD;      fromE = D }
+instance Val Str        where { toE = unStr;    fromE = Str }
+instance Val BoolSig    where { toE = unBoolSig;fromE = BoolSig }
+instance Val BoolD      where { toE = unBoolD;  fromE = BoolD }
+instance Val Spec       where { toE = unSpec;   fromE = Spec }
 
-instance Val D where
-    wrap = D . Fix
-    unwrap = unFix . unD
-
-instance Val Str where
-    wrap = Str . Fix
-    unwrap = unFix . unStr
-
-instance Val Tab where
-    wrap = TabExp . Fix
-    unwrap x = case x of
-        TabExp e -> unFix e
+instance Val Tab    where
+    fromE = TabExp
+    toE x = case x of
+        TabExp e -> e
         primTab -> (prim . PrimTab . Left) primTab
-
-instance Val BoolSig where
-    wrap = BoolSig . Fix
-    unwrap = unFix . unBoolSig 
-
-instance Val BoolD where
-    wrap = BoolD . Fix
-    unwrap = unFix . unBoolD 
-
-instance Val Spec where
-    wrap = Spec . Fix
-    unwrap = unFix . unSpec
 
 ------------------------------------------------
 -- arguments
@@ -509,28 +495,28 @@ class CsdTuple a where
     arityCsdTuple :: a -> Int
 
 instance CsdTuple Sig where
-    fromCsdTuple = return . Fix . unwrap
-    toCsdTuple = wrap . unFix . head
+    fromCsdTuple = return . toE
+    toCsdTuple = fromE . head
     arityCsdTuple = const 1
 
 instance CsdTuple D where
-    fromCsdTuple = return . Fix . unwrap
-    toCsdTuple = wrap . unFix . head
+    fromCsdTuple = return . toE
+    toCsdTuple = fromE . head
     arityCsdTuple = const 1
 
 instance CsdTuple Tab where
-    fromCsdTuple = return . Fix . unwrap
-    toCsdTuple = wrap . unFix . head
+    fromCsdTuple = return . toE
+    toCsdTuple = fromE . head
     arityCsdTuple = const 1
 
 instance CsdTuple Str where
-    fromCsdTuple = return . Fix . unwrap
-    toCsdTuple = wrap . unFix . head
+    fromCsdTuple = return . toE
+    toCsdTuple = fromE . head
     arityCsdTuple = const 1
 
 instance CsdTuple Spec where
-    fromCsdTuple = return . Fix . unwrap
-    toCsdTuple = wrap . unFix . head
+    fromCsdTuple = return . toE
+    toCsdTuple = fromE . head
     arityCsdTuple = const 1
 
 instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
@@ -595,7 +581,7 @@ multiOuts exp = res
 multiOutsSection :: Int -> E -> [E]
 multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
     where rates = take n $ getRates $ ratedExpExp $ unFix e          
-          e' = Fix $ onExp (setMultiRate rates) $ unFix e
+          e' = onExp (setMultiRate rates) e
           
           setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
               where MultiRate _ ins = infoSignature info
@@ -660,9 +646,4 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f
     type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
     toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
     fromOut = toCsdTuple . fmap toE
-
-       
- 
-
-
 

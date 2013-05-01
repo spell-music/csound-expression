@@ -1,7 +1,7 @@
 -- | Main types
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp(
-    E, RatedExp(..), RatedVar(..), onExp, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
+    E, RatedExp(..), RatedVar(..), Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
     Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap, TabFi(..),
@@ -38,10 +38,6 @@ data RatedExp a = RatedExp
     , ratedExpExp       :: Exp a
         -- ^ Main expression
     } deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
-
--- Lifts transformation of main expression in the rated expression
-onExp :: (Exp a -> Exp a) -> RatedExp a -> RatedExp a
-onExp f a = a{ ratedExpExp = f (ratedExpExp a) }
 
 -- | RatedVar is for pretty printing of the wiring ports.
 data RatedVar = RatedVar 

@@ -1,22 +1,23 @@
 {-# Language TypeFamilies #-}
 module Csound.Exp.Logic() where
 
-import Control.Monad.Trans.State
-import Data.Fix
-import qualified Data.IntMap as IM
-import Control.Applicative
+import Control.Monad.Trans.State(State, state, evalState)
+import qualified Data.IntMap as IM(fromList)
 
 import Data.Boolean
 
-import Csound.Exp.Wrapper
 import Csound.Exp
+import Csound.Exp.Wrapper(
+    Sig, D, Str, BoolSig, BoolD, 
+    setRate, noRate,
+    Val(..), toExp, onExp, onE1)
 
 -- booleans for signals
 
 instance Boolean BoolSig where
     true = boolOp0 TrueOp
     false = boolOp0 FalseOp
-    notB = BoolSig . notE . unBoolSig
+    notB = onE1 notE
     (&&*) = boolOp2 And
     (||*) = boolOp2 Or
 
@@ -40,7 +41,7 @@ instance OrdB Sig where
 instance Boolean BoolD where
     true = boolOp0 TrueOp
     false = boolOp0 FalseOp
-    notB = BoolD . notE . unBoolD
+    notB = onE1 notE
     (&&*) = boolOp2 And
     (||*) = boolOp2 Or
 
@@ -81,23 +82,23 @@ instance IfB Str where
 boolExp = PreInline
 
 condExp :: (Val bool, Val a) => bool -> a -> a -> a
-condExp p t e = wrap $ mkCond (condInfo $ toPrimOr $ Fix $ unwrap p) (unwrap t) (unwrap e)
-    where mkCond :: CondInfo (PrimOr E) -> RatedExp E -> RatedExp E -> RatedExp E
+condExp p t e = fromE $ mkCond (condInfo $ toPrimOr $ toE p) (toE t) (toE e)
+    where mkCond :: CondInfo (PrimOr E) -> E -> E -> E
           mkCond p t e 
             | isTrue p = t
             | isFalse p = e
-            | otherwise = noRate $ If p (toPrimOr $ Fix t) (toPrimOr $ Fix e)            
+            | otherwise = noRate $ If p (toPrimOr t) (toPrimOr e)            
 
 condInfo :: PrimOr E -> CondInfo (PrimOr E)
 condInfo exp = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' exp) 0
     where condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
           condInfo' e = maybe (onLeaf e) (onExp e) $ parseNode e
           onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
-          onExp  e (op, args) = mkNode <$> mapM condInfo' args
+          onExp  e (op, args) = fmap mkNode $ mapM condInfo' args
               where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
 
           parseNode :: PrimOr E -> Maybe (CondOp, [PrimOr E])
-          parseNode x = case unPrimOr $ fmap (ratedExpExp . unFix) x of
+          parseNode x = case unPrimOr $ fmap toExp x of
               Right (ExpBool (PreInline op args)) -> Just (op, args)
               _ -> Nothing    
 
@@ -114,15 +115,15 @@ boolOp0 :: Val a => CondOp -> a
 boolOp0 op = boolOps op []
 
 boolOp1 :: Val a => CondOp -> a -> a
-boolOp1 op a = boolOps op [setRate Kr $ Fix $ unwrap a]
+boolOp1 op a = boolOps op [setRate Kr $ toE a]
 
 boolOp2 :: (Val a1, Val a2, Val b) => CondOp -> a1 -> a2 -> b
-boolOp2 op a b = boolOps op $ map (Fix . setRate Kr) [unwrap a, unwrap b]
+boolOp2 op a b = boolOps op $ map (setRate Kr) [toE a, toE b]
 
 -----------------------------------------------------------------------------
 -- no support for not in csound so we perform not-elimination
 notE :: E -> E
-notE x = Fix $ onExp phi $ unFix x
+notE x = onExp phi x
     where phi (ExpBool (PreInline op args)) = ExpBool $ case op of
             TrueOp            -> boolExp FalseOp        []
             FalseOp           -> boolExp TrueOp         []

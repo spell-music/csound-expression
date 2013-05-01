@@ -4,13 +4,10 @@ module Csound.Exp.Numeric(
     fracSig, floorSig, ceilSig, intSig, roundSig
 ) where
 
-import Data.Maybe(fromJust)
-import Control.Applicative
-import Data.Fix
-
 import Csound.Exp
-import Csound.Exp.Wrapper
-import Csound.Exp.Cons 
+import Csound.Exp.Wrapper(
+    Sig, D, prim, double, noRate,
+    Val(..), toExp, onE1, onE2)
 
 --------------------------------------------
 -- numeric instances
@@ -98,14 +95,8 @@ instance Integral E where
     divMod a b = (div a b, mod a b)
     toInteger = undefined    
 
-onE1 :: (Val a, Val b) => (E -> E) -> (a -> b)
-onE1 f = wrap . unFix . f . Fix . unwrap
-
-onE2 :: (Val a, Val b, Val c) => (E -> E -> E) -> (a -> b -> c)
-onE2 f a b = wrap $ unFix $ f (Fix $ unwrap a) (Fix $ unwrap b)
-
 onConst :: Val b => (a -> E) -> (a -> b)
-onConst f = wrap . unFix . f 
+onConst f = fromE . f 
 
 -------------------------------------------
 -- wrappers
@@ -227,7 +218,7 @@ instance Fractional D where
     fromRational = onConst fromRational
 
 instance Floating Sig where
-    pi = wrap $ unFix pi
+    pi = fromE pi
     exp = onE1 exp
     sqrt = onE1 sqrt
     log = onE1 log
@@ -247,7 +238,7 @@ instance Floating Sig where
     atanh = onE1 atanh
    
 instance Floating D where
-    pi = wrap $ unFix pi
+    pi = fromE pi
     exp = onE1 exp
     sqrt = onE1 sqrt
     log = onE1 log
@@ -275,7 +266,7 @@ instance Floating D where
 -- propogate a constant value.
 
 toNumOpt :: E -> Either Double E
-toNumOpt x = case ratedExpExp $ unFix x of
+toNumOpt x = case toExp x of
     ExpPrim (PrimDouble d) -> Left d
     _ -> Right x
 
