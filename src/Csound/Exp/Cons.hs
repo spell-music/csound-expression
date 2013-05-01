@@ -1,3 +1,4 @@
+-- |  Constructors
 module Csound.Exp.Cons (
     Spec1, Specs,
     withInits,
@@ -7,15 +8,10 @@ module Csound.Exp.Cons (
 ) where
 
 import Data.String
-import Control.Applicative
-import Data.Default
-import qualified Data.Map as M
-import Control.Monad.Trans.State
-
-import Data.Fix
+import qualified Data.Map as M(fromList)
 
 import Csound.Exp
-import Csound.Exp.Wrapper
+import Csound.Exp.Wrapper(Str, Sig, Val(..), CsdTuple(..), tfm, pref, str, multiOuts)
 
 -- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
 --
@@ -27,7 +23,7 @@ withInits a b = wrap $ onExp phi $ unwrap a
             x        -> x
 
 ------------------------------------------------
--- helper constructors
+-- string constructor
 
 instance IsString Str where
     fromString = str
@@ -51,7 +47,7 @@ idSignature = [
     (Ir, repeat Ir)]
 
 ----------------------------
--- spec tfms
+-- constructors for opcodes (single or multiple rates)
 
 tfms :: (Val a, Val b) => Info -> [a] -> b
 tfms t as = tfm t $ map unwrap as
@@ -96,8 +92,9 @@ tfm12 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9
 tfm12 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10, unwrap a11, unwrap a12]
 
 -------------------------------
--- single out
+-- single output
 
+-- User friendly type for single output type signatures
 type Spec1 = [(Rate, [Rate])]
 
 spec1 :: Spec1 -> Signature
@@ -147,8 +144,9 @@ opc12 name signature = tfm12 (pref name $ spec1 signature)
 
 
 -------------------------------
--- multiple outs
+-- multiple outputs
 
+-- User friendly type for multiple outputs type signatures
 type Specs = ([Rate], [Rate])
 
 specs :: Specs -> Signature
@@ -183,7 +181,4 @@ mopc6 name signature a1 a2 a3 a4 a5 a6 = mo $ tfm6 (pref name $ specs signature)
 
 mopc7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
 mopc7 name signature a1 a2 a3 a4 a5 a6 a7 = mo $ tfm7 (pref name $ specs signature) a1 a2 a3 a4 a5 a6 a7
-
-
-
 

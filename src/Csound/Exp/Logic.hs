@@ -23,7 +23,7 @@ instance Boolean BoolSig where
 type instance BooleanOf Sig = BoolSig
 
 instance IfB Sig where
-    ifB = cond'
+    ifB = condExp
     
 instance EqB Sig where
     (==*) = boolOp2 Equals
@@ -47,7 +47,7 @@ instance Boolean BoolD where
 type instance BooleanOf D = BoolD
 
 instance IfB D where
-    ifB = cond'
+    ifB = condExp
     
 instance EqB D where
     (==*) = boolOp2 Equals
@@ -64,22 +64,24 @@ instance OrdB D where
 type instance BooleanOf Tab = BoolD
 
 instance IfB Tab where
-    ifB = cond'
+    ifB = condExp
 
 -- booleans for strings
 
 type instance BooleanOf Str = BoolD
 
 instance IfB Str where
-    ifB = cond'
+    ifB = condExp
 
---------------------------------------------
+--------------------------------------------------------------------------
 -- if-then-else
+--
+-- performs inlining of the boolean expressions
 
 boolExp = PreInline
 
-cond' :: (Val bool, Val a) => bool -> a -> a -> a
-cond' p t e = wrap $ mkCond (condInfo $ toPrimOr $ Fix $ unwrap p) (unwrap t) (unwrap e)
+condExp :: (Val bool, Val a) => bool -> a -> a -> a
+condExp p t e = wrap $ mkCond (condInfo $ toPrimOr $ Fix $ unwrap p) (unwrap t) (unwrap e)
     where mkCond :: CondInfo (PrimOr E) -> RatedExp E -> RatedExp E -> RatedExp E
           mkCond p t e 
             | isTrue p = t
@@ -99,9 +101,14 @@ condInfo exp = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' exp)
               Right (ExpBool (PreInline op args)) -> Just (op, args)
               _ -> Nothing    
 
+--------------------------------------------------------------------------------
+-- constructors for boolean expressions
 
+-- generic constructor
 boolOps :: (Val a) => CondOp -> [E] -> a
 boolOps op as = noRate $ ExpBool $ boolExp op $ fmap toPrimOr as
+
+-- constructors by arity
 
 boolOp0 :: Val a => CondOp -> a
 boolOp0 op = boolOps op []
@@ -112,6 +119,7 @@ boolOp1 op a = boolOps op [setRate Kr $ Fix $ unwrap a]
 boolOp2 :: (Val a1, Val a2, Val b) => CondOp -> a1 -> a2 -> b
 boolOp2 op a b = boolOps op $ map (Fix . setRate Kr) [unwrap a, unwrap b]
 
+-----------------------------------------------------------------------------
 -- no support for not in csound so we perform not-elimination
 notE :: E -> E
 notE x = Fix $ onExp phi $ unFix x
