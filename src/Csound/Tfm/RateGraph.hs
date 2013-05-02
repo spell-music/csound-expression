@@ -26,6 +26,8 @@ import Debug.Trace
 echo :: Show a => String -> a -> a
 echo msg a = trace (msg ++ ": " ++ show a) a
 
+-- grate :: [(Int, f Int)] -> [(Var Rate, f (Var Rate))]
+
 grate :: [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
 grate as = runST $ do
     freshIds <- newSTRef n
