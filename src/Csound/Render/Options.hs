@@ -25,7 +25,6 @@ type CtrlId = Int
 -- >             , blockSize = 64
 -- >             , seed = Nothing
 -- >             , initc7 = []
--- >             , krateOpcodes  = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"],
 -- >             , tabFi = fineFi 13 [(idSegs, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
 
 data CsdOptions = CsdOptions 
@@ -34,7 +33,6 @@ data CsdOptions = CsdOptions
     , blockSize     :: Int          
     , seed          :: Maybe Int    
     , initc7        :: [(Channel, CtrlId, Double)]
-    , krateOpcodes  :: [String]
     , tabFi         :: TabFi
     }
 
@@ -45,7 +43,6 @@ instance Default CsdOptions where
             , blockSize = 64
             , seed = Nothing
             , initc7 = []
-            , krateOpcodes = ["linseg", "expseg", "linsegr", "expsegr", "linen", "linenr", "envlpx"]
             , tabFi = fineFi 13 [(idSegs, 10), (idExps, 10), (idConsts, 8)] }
 
 

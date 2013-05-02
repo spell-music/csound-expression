@@ -1,5 +1,5 @@
 module Csound.Tfm.RateGraph(
-    grate, KrateSet
+    grate
 ) where
 
 import Data.List(sort, sortBy, nub, find)
@@ -26,11 +26,11 @@ import Debug.Trace
 echo :: Show a => String -> a -> a
 echo msg a = trace (msg ++ ": " ++ show a) a
 
-grate :: KrateSet -> [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
-grate krateSet as = runST $ do
+grate :: [(Int, RatedExp Int)] -> ([(RatedVar, Exp RatedVar)], Int)
+grate as = runST $ do
     freshIds <- newSTRef n
     box <- msgBox n    
-    mapM_ (discussLine krateSet box freshIds) lines
+    mapM_ (discussLine box freshIds) lines
     graph <- fmap (reverse . concat) $ mapM (processLine box) lines
     lastFreshId <- readSTRef freshIds
     return (graph, lastFreshId)
@@ -47,8 +47,6 @@ data Agent = Agent
     , agentConversions :: [Conversion] }
 
 type Conversion = (RatedVar, Exp RatedVar)
-
-type KrateSet = S.Set Name
 
 instance Default Agent where
     def = Agent [] [] Xr []
@@ -91,18 +89,18 @@ loadAgent pid box = readArray (unMsgBox box) pid
 saveAgent :: AgentId -> MsgBox s -> Agent -> ST s ()
 saveAgent pid box e = writeArray (unMsgBox box) pid e
 
-discussLine :: KrateSet -> MsgBox s -> STRef s Int -> (Int, RatedExp Int) -> ST s ()
-discussLine krateSet box freshIds (pid, exp) = do
+discussLine :: MsgBox s -> STRef s Int -> (Int, RatedExp Int) -> ST s ()
+discussLine box freshIds (pid, exp) = do
     ag <- loadAgent pid box
     let desiredRates = nub $ map queryRate $ agentQueries ag
-        curRate = deduceRate krateSet desiredRates exp
+        curRate = deduceRate desiredRates exp
     notifyChildren pid curRate (ratedExpExp exp) box
     convTab <- conversionTable freshIds pid curRate desiredRates
     notifyParents box convTab (agentQueries ag)
     saveAgent pid box $ ag{ agentRate = curRate, agentConversions = getConversions pid curRate convTab }
         
-deduceRate :: KrateSet -> [Rate] -> RatedExp Int -> Rate
-deduceRate krateSet desiredRates exp = case ratedExpExp exp of
+deduceRate :: [Rate] -> RatedExp Int -> Rate
+deduceRate desiredRates exp = case ratedExpExp exp of
     ExpPrim p -> case desiredRates of
         [Sr] -> Sr
         _ -> Ir
@@ -126,8 +124,7 @@ deduceRate krateSet desiredRates exp = case ratedExpExp exp of
     ReadVar v -> varRate v
     WriteVar _ _ -> Xr    
     where tfmNoRate name desiredRates tab = case sort desiredRates of
-              [Xr] -> let newDesiredRates = if S.member name krateSet then [Kr] else [Ar]
-                      in  tfmNoRate name newDesiredRates tab                
+              [Xr]  -> tfmNoRate name [Ar] tab                
               Xr:as -> tfmNoRate name as tab
               as -> fromJust $ find (flip M.member tab) (as ++ [minBound .. maxBound])         
    

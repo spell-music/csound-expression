@@ -23,11 +23,11 @@ import Csound.Render.Pretty
 type InstrId = Int
 type Dag f = [(Int, f Int)]
 
-renderInstr :: KrateSet -> InstrId -> E -> Doc
-renderInstr krateSet instrId exp = ppInstr instrId $ renderInstrBody krateSet exp
+renderInstr :: InstrId -> E -> Doc
+renderInstr instrId exp = ppInstr instrId $ renderInstrBody exp
 
-renderInstrBody :: KrateSet -> E -> [Doc]
-renderInstrBody krateSet sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
+renderInstrBody :: E -> [Doc]
+renderInstrBody sig = map (stmt . clearEmptyResults) $ collectRates st g
     where stmt :: ([RatedVar], Exp RatedVar) -> Doc
           stmt (res, exp) = renderExp (ppOuts res) exp
           
@@ -81,10 +81,10 @@ trimByArgLength = cata $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates krateSet st dag = evalState res lastFreshId  
+collectRates :: RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
+collectRates st dag = evalState res lastFreshId  
     where res = tfmMultiRates st $ filterMultiOutHelpers dag1
-          (dag1, lastFreshId) = grate krateSet dag
+          (dag1, lastFreshId) = grate dag
 
 
 tfmMultiRates :: RenderState -> [(RatedVar, Exp RatedVar)] -> State Int [([RatedVar], Exp RatedVar)]

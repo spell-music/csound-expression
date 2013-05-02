@@ -6,7 +6,7 @@
 module Csound.Exp.Wrapper(
     onE1, onE2, toExp, onExp,
     Outs, Sig, D, Str, Spec, ToSig(..),
-    Sig2, Sig3, Sig4, Amp, Cps, Iamp, Icps,
+    Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
     SE, se, se_, runSE, execSE,
     Val(..),
     str, double, ir, ar, kr, sig,
@@ -30,6 +30,9 @@ type Outs = SE [Sig]
 type Sig2 = (Sig, Sig)
 type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
+
+-- | An alias for control rate signals (it's used only to clarify that 'Csound.Base.kr' was applied to the signal).
+type Ksig = Sig
 
 -- | An alias for amplitude.
 type Amp = Sig

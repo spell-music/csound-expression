@@ -34,7 +34,6 @@ import Csound.Exp.Wrapper
 import Csound.Exp.Cons
 import Csound.Render.Pretty
 import Csound.Render.Instr
-import Csound.Tfm.RateGraph(KrateSet)
 import Csound.Render.Options
 
 import Csound.Opcode(clip, zeroDbfs, sprintf)
@@ -264,8 +263,8 @@ render opt a = do
         -- instr 0 
         (renderInstr0 (nchnls a) midiInstrs opt $$ portUpdateStmt $$ midiInits midiParams) 
         -- orchestra
-        (renderSnd krateSet (fmap (substInstrTabs ftables) sndTab)
-            $$ renderMix krateSet mixTabSubstituted
+        (renderSnd (fmap (substInstrTabs ftables) sndTab)
+            $$ renderMix mixTabSubstituted
             $$ midiReset resetMidiInstrId midiParams)           
         -- scores
         (lastInstrNotes totalDur (masterInstr mixTabSubstituted) $$ midiResetInstrNote)
@@ -278,8 +277,6 @@ render opt a = do
               where substNote x = case x of
                         SndNote n sco -> SndNote n $ fmap (substNoteStrs strMap . substNoteTabs tabMap) sco
                         _ -> x
-
-          krateSet = S.fromList $ krateOpcodes opt        
 
           defTab :: E -> E
           defTab = defineInstrTabs (tabFi opt)
@@ -402,13 +399,13 @@ chnget :: Str -> SE Sig
 chnget a = se $ opc1 "chnget" [(Ar, [Sr])] a
 
 
-renderSnd :: KrateSet -> InstrTab E -> Doc
-renderSnd krateSet = ppOrc . fmap (uncurry $ renderInstr krateSet) . unInstrTab
+renderSnd :: InstrTab E -> Doc
+renderSnd = ppOrc . fmap (uncurry renderInstr) . unInstrTab
  
-renderMix :: KrateSet -> MixInstrTab MixE -> Doc
-renderMix krateSet (MixInstrTab master other) = (ppOrc . (uncurry renderMaster master : ) . fmap (uncurry render)) other
-    where renderMaster instrId (MixE exp _) = ppInstr instrId $ renderMasterPort : renderInstrBody krateSet exp
-          render instrId (MixE exp sco) = ppInstr instrId $ (renderPort $$ renderSco ppEvent sco) : renderInstrBody krateSet exp          
+renderMix :: MixInstrTab MixE -> Doc
+renderMix (MixInstrTab master other) = (ppOrc . (uncurry renderMaster master : ) . fmap (uncurry render)) other
+    where renderMaster instrId (MixE exp _) = ppInstr instrId $ renderMasterPort : renderInstrBody exp
+          render instrId (MixE exp sco) = ppInstr instrId $ (renderPort $$ renderSco ppEvent sco) : renderInstrBody exp          
           renderPort = ppOpc (ppVar portVar) "FreePort" []           
           renderMasterPort = ppVar portVar $= int 0
 

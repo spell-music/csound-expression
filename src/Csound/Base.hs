@@ -289,7 +289,7 @@ module Csound.Base(
     Out,
     
     -- ** Handy short-cuts
-    Sig2, Sig3, Sig4, Amp, Cps, Iamp, Icps,
+    Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
