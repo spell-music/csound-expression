@@ -107,11 +107,11 @@ data VarType = LocalVar | GlobalVar
 
 -- Opcode information.
 data Info = Info 
-    -- | Opcode name
+    -- Opcode name
     { infoName          :: Name     
-    -- | Opcode type signature
+    -- Opcode type signature
     , infoSignature     :: Signature
-    -- | Opcode can be infix or prefix
+    -- Opcode can be infix or prefix
     , infoOpcFixity     :: OpcFixity
     , infoNextSE        :: Maybe Int
     } deriving (Show, Eq, Ord)           

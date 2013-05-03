@@ -89,6 +89,7 @@ Library
         Csound.Exp.Tuple
         
         Csound.Tfm.DeduceTypes       
+        Csound.Tfm.UnfoldMultiOuts
         Csound.Tfm.Tab       
         Csound.Tfm.String       
 
