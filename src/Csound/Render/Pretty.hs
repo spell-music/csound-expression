@@ -5,7 +5,8 @@ module Csound.Render.Pretty (
     binaries, unaries, funcs,
     binary, unary, func,
     ppMapTable,
-    ($=), ppPrimOrVar, ppRatedVar, ppOuts, ppOpc, ppProc, ppVar,
+    ppStmt,
+    ($=), ppOpc, ppProc, ppVar,
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
     ppInline, ppCondOp, ppNumOp,
@@ -213,4 +214,22 @@ ppNumOp op = case  op of
           uno = unaries
           fun = funcs
           firstLetterToLower (x:xs) = toLower x : xs
+
+
+ppStmt :: [RatedVar] -> Exp RatedVar -> Doc
+ppStmt outs exp = ppExp (ppOuts outs) exp
+
+ppExp :: Doc -> Exp RatedVar -> Doc
+ppExp res exp = case fmap ppPrimOrVar exp of
+    ExpPrim (PString n) -> ppStrget res n
+    ExpPrim p -> res $= ppPrim p
+    Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
+    Tfm info xs -> ppOpc res (infoName info) xs
+    ConvertRate to from x -> ppConvertRate res to from x
+    If info t e -> res $= ppIf (ppInline ppCondOp info) t e
+    ExpNum (PreInline op as) -> res $= ppNumOp op as
+    WriteVar v a -> ppVar v $= a
+    ReadVar v -> res $= ppVar v
+    x -> error $ "unknown expression: " ++ show x
+
           

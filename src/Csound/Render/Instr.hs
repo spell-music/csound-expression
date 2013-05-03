@@ -21,7 +21,7 @@ import Csound.Exp
 import Csound.Exp.Wrapper(getRates, isMultiOutSignature, toE, noRate)
 
 import Csound.Tfm.DeduceTypes
-import Csound.Render.Pretty
+import Csound.Render.Pretty(ppStmt, ppInstr, Doc)
 
 type InstrId = Int
 type Dag f = [(Int, f Int)]
@@ -30,13 +30,7 @@ renderInstr :: InstrId -> E -> Doc
 renderInstr instrId exp = ppInstr instrId $ renderInstrBody exp
 
 renderInstrBody :: E -> [Doc]
-renderInstrBody sig = map (stmt . clearEmptyResults) $ collectRates st g
-    where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = renderExp (ppOuts res) exp
-          
-          st = getRenderState g
-          g  = toDag sig
-
+renderInstrBody sig = map (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
 
 data RenderState = RenderState 
     { multiOutsLinks :: IM.IntMap [MultiOutPort]
@@ -84,9 +78,10 @@ trimByArgLength = cata $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-collectRates :: RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates st dag = evalState res lastFreshId  
-    where res = tfmMultiRates st $ filterMultiOutHelpers dag1
+collectRates :: Dag RatedExp -> [([RatedVar], Exp RatedVar)]
+collectRates dag = evalState res lastFreshId  
+    where st = getRenderState dag    
+          res = tfmMultiRates st $ filterMultiOutHelpers dag1
           (dag1, lastFreshId) = rateGraph dag
 
           rateGraph dag = (fmap (second ratedExpExp) stmts, lastId)
@@ -192,19 +187,6 @@ getMultiOutVars ports rates = fmap (zipWith ratedVar rates) (getPorts ports)
 
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
-
-renderExp :: Doc -> Exp RatedVar -> Doc
-renderExp res exp = case fmap ppPrimOrVar exp of
-    ExpPrim (PString n) -> ppStrget res n
-    ExpPrim p -> res $= ppPrim p
-    Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
-    Tfm info xs -> ppOpc res (infoName info) xs
-    ConvertRate to from x -> ppConvertRate res to from x
-    If info t e -> res $= ppIf (ppInline ppCondOp info) t e
-    ExpNum (PreInline op as) -> res $= ppNumOp op as
-    WriteVar v a -> ppVar v $= a
-    ReadVar v -> res $= ppVar v
-    x -> error $ "unknown expression: " ++ show x
 
  
     
