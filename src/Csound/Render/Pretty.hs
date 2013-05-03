@@ -54,7 +54,7 @@ ppPrimOrVar :: PrimOr RatedVar -> Doc
 ppPrimOrVar x = either ppPrim ppRatedVar $ unPrimOr x
 
 ppRatedVar :: RatedVar -> Doc
-ppRatedVar (RatedVar r x) = ppRate r <> int x
+ppRatedVar v = ppRate (ratedVarRate v) <> int (ratedVarId v)
 
 ppOuts :: [RatedVar] -> Doc
 ppOuts xs = hsep $ punctuate comma $ map ppRatedVar xs

@@ -88,7 +88,7 @@ Library
         Csound.Exp.Arg
         Csound.Exp.Tuple
         
-        Csound.Tfm.RateGraph       
+        Csound.Tfm.DeduceTypes       
         Csound.Tfm.Tab       
         Csound.Tfm.String       
 

@@ -1,7 +1,7 @@
 -- | Main types
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp(
-    E, RatedExp(..), RatedVar(..), Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
+    E, RatedExp(..), RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
     Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap, TabFi(..),
@@ -23,6 +23,8 @@ import qualified Data.IntMap as IM
 import qualified Data.Map    as M
 import Data.Fix
 
+import qualified Csound.Tfm.DeduceTypes as R(Var(..)) 
+
 type Name = String
 
 -- | The inner representation of csound expressions.
@@ -40,10 +42,16 @@ data RatedExp a = RatedExp
     } deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 -- | RatedVar is for pretty printing of the wiring ports.
-data RatedVar = RatedVar 
-    { ratedVarRate :: Rate   
-    , ratedVarId   :: Int 
-    } deriving (Show)
+type RatedVar = R.Var Rate
+
+ratedVar :: Rate -> Int -> RatedVar
+ratedVar     = flip R.Var
+
+ratedVarRate :: RatedVar -> Rate
+ratedVarRate = R.varType
+
+ratedVarId :: RatedVar -> Int
+ratedVarId   = R.varId
 
 -- | It's a primitive value or something else. It's used for inlining
 -- of the constants (primitive values).

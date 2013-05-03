@@ -18,9 +18,11 @@ pureTone :: D -> Sig
 pureTone cps = 0.5 * (myOsc $ sig cps)
 
 -- Let's trigger the instrument from the score section.
--- It plays a single note that starts at 0 and lasts for 1 second and 
+-- It plays a single note that starts at 1 and lasts for 3 seconds and 
 -- triggers the instrument 'instr' with frequency of 440 (Hz).
-res = sco pureTone $ temp 440
+-- A function 'temp' always creates a note that starts right away and 
+-- lasts for 1 second. Then we can 'stretch' this note or 'delay' it.
+res = sco pureTone $ delay 1 $ stretch 3 $ temp 440
 
 -- Renders generated csd-file to the "tmp.csd".
 main :: IO ()
