@@ -48,19 +48,20 @@ collectRates dag = fmap (second ratedExpExp) res
     where res = unfoldMultiOuts unfoldSpec lastFreshId dag1  
           (dag1, lastFreshId) = rateGraph dag
 
-          rateGraph dag = (stmts, lastId)
-             where (stmts, lastId) = deduceTypes algSpec dag
-                   algSpec = TypeGraph mkConvert' defineType'
+rateGraph dag = (stmts, lastId)
+     where (stmts, lastId) = deduceTypes algSpec dag
+           algSpec = TypeGraph mkConvert' defineType'
 
-                   mkConvert' a = (to, RatedExp def def $ ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from)
-                       where from = convertFrom a
-                             to   = convertTo   a
+           mkConvert' a = (to, RatedExp def def $ 
+                   ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from)
+               where from = convertFrom a
+                     to   = convertTo   a
 
-                   defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
-                       where possibleRate = deduceRate desiredRates expr 
-                             ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
-                             expr' = RatedExp def def $ rateExp possibleRate $ ratedExpExp expr
-                             outVar' = ratedVar possibleRate outVar
+           defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
+               where possibleRate = deduceRate desiredRates expr 
+                     ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
+                     expr' = RatedExp def def $ rateExp possibleRate $ ratedExpExp expr
+                     outVar' = ratedVar possibleRate outVar
 
 unfoldSpec = UnfoldMultiOuts getSelector' getParentTypes'
     where getSelector' x = case ratedExpExp x of
