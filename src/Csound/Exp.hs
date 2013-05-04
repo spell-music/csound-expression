@@ -1,7 +1,7 @@
 -- | Main types
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp(
-    E, RatedExp(..), RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name,
+    E, RatedExp(..), RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name, InstrId,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
     Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap, TabFi(..),
@@ -26,6 +26,7 @@ import Data.Fix
 import qualified Csound.Tfm.DeduceTypes as R(Var(..)) 
 
 type Name = String
+type InstrId = Int
 
 -- | The inner representation of csound expressions.
 type E = Fix RatedExp

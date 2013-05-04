@@ -18,7 +18,6 @@ import Csound.Tfm.DeduceTypes
 import Csound.Tfm.UnfoldMultiOuts
 import Csound.Render.Pretty(ppStmt, ppInstr, Doc)
 
-type InstrId = Int
 type Dag f = [(Int, f Int)]
 
 renderInstr :: InstrId -> E -> Doc
@@ -26,6 +25,9 @@ renderInstr instrId exp = ppInstr instrId $ renderInstrBody exp
 
 renderInstrBody :: E -> [Doc]
 renderInstrBody sig = map (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
+
+-------------------------------------------------------------
+-- E -> Dag
 
 toDag :: E -> Dag RatedExp 
 toDag exp = fromDag $ cse $ trimByArgLength exp
@@ -48,6 +50,12 @@ collectRates dag = fmap (second ratedExpExp) res
     where res = unfoldMultiOuts unfoldSpec lastFreshId dag1  
           (dag1, lastFreshId) = rateGraph dag
 
+-----------------------------------------------------------
+-- Dag -> Dag
+
+-----------------------------------------------------------
+-- deduces types
+
 rateGraph dag = (stmts, lastId)
      where (stmts, lastId) = deduceTypes algSpec dag
            algSpec = TypeGraph mkConvert' defineType'
@@ -62,6 +70,9 @@ rateGraph dag = (stmts, lastId)
                      ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
                      expr' = RatedExp def def $ rateExp possibleRate $ ratedExpExp expr
                      outVar' = ratedVar possibleRate outVar
+
+----------------------------------------------------------
+-- unfolds multiple rates
 
 unfoldSpec = UnfoldMultiOuts getSelector' getParentTypes'
     where getSelector' x = case ratedExpExp x of

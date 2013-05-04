@@ -87,6 +87,7 @@ Library
         Csound.Exp.Numeric       
         Csound.Exp.Arg
         Csound.Exp.Tuple
+        Csound.Exp.Mix
        
         Csound.IO
 
@@ -95,11 +96,13 @@ Library
         Csound.Tfm.Tab       
         Csound.Tfm.String       
 
+        Csound.Render
         Csound.Render.Pretty
         Csound.Render.Options
         Csound.Render.Instr
-        Csound.Render.Mix
         Csound.Render.IndexMap
+        Csound.Render.InstrTable
+        Csound.Render.Channel
       
 
 

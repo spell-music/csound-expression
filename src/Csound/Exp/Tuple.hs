@@ -2,8 +2,7 @@
         TypeFamilies,
         FlexibleContexts #-}
 module Csound.Exp.Tuple(
-    CsdTuple(..), Out(..), multiOuts,
-
+    CsdTuple(..), Out(..), multiOuts, outArity
 ) where
 
 import Control.Applicative(liftA2)
@@ -25,6 +24,11 @@ class CsdTuple (NoSE a) => Out a where
     type NoSE a :: *
     toOut :: a -> SE [Sig]
     fromOut :: [Sig] -> a
+
+outArity :: Out a => a -> Int
+outArity a = arityCsdTuple (proxy a)
+    where proxy :: Out a => a -> NoSE a
+          proxy = undefined  
 
 -- CsdTuple instances
 

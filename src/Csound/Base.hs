@@ -375,7 +375,7 @@ import Csound.Exp.Numeric
 import Csound.Exp.Logic
 
 import Csound.Render.Options
-import Csound.Render.Mix
+import Csound.Exp.Mix
 
 import Csound.IO
 

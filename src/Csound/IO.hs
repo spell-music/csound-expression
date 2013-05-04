@@ -9,7 +9,8 @@ import System.Cmd(system)
 import Data.Default
 import Temporal.Music.Score(Score)
 
-import Csound.Render.Mix(Mix, render)
+import Csound.Exp.Mix(Mix)
+import Csound.Render(render)
 import Csound.Render.Options(CsdOptions)
 import Csound.Exp.Tuple(Out)
 
