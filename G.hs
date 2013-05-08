@@ -3,6 +3,7 @@ module G where
 import Data.Default
 import BoxModel(Scene)
 
+
 data Orient = Hor | Ver
 
 newtype Handle = Handle { unHandle :: Maybe String }
@@ -33,11 +34,11 @@ data Window = Single Panel | Tabs String [Panel]
 
 data Panel = Panel 
     { panelName     :: String
-    , panelContent  :: Scene Border Fl }
+    , panelContent  :: Scene Border Widget }
 
-data Fl = Fl 
-    { flName    :: String
-    , flType    :: FlType }
+data Widget = Widget
+    { widgetName    :: String
+    , widgetType    :: FlType }
 
 data ContParam = ContParam
 data RollerParam = RollerParam
@@ -49,12 +50,12 @@ data FlType
         , valuatorDisp      :: Handle
         , valyatorType      :: ValuatorType }
     | Joy 
-        { joyX  :: ContParam
-        , joyY  :: ContParam }
+        { joyX          :: ContParam
+        , joyY          :: ContParam }
     | Count 
-        { countStep1 :: Int
-        , countStep2 :: Int
-        , countType  :: CountType }
+        { countStep1    :: Int
+        , countStep2    :: Int
+        , countType     :: CountType }
     | Box 
         { boxType       :: BoxType
         , boxFont       :: Font
@@ -99,8 +100,8 @@ data ButtonType = ButtonType
 
 data ButtonTypeVal = NormalButton | LightButton | CheckButton | RoundButton
 
-instance Default SliderType  where def = Fill
-instance Default KnobType  where def = Flat
-instance Default RollerParam where def = RollerParam
-instance Default TextType where def = NormalText
+instance Default SliderType     where def = Fill
+instance Default KnobType       where def = Flat
+instance Default RollerParam    where def = RollerParam
+instance Default TextType       where def = NormalText
 
