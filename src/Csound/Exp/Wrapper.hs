@@ -7,7 +7,8 @@ module Csound.Exp.Wrapper(
     onE1, onE2, toExp, onExp,
     Outs, Sig, D, Str, Spec, ToSig(..),
     Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
-    SE, se, se_, runSE, execSE,
+    SE, History(..), se, se_, runSE, execSE, newVar,
+    ifBegin, ifEnd, elseIfBegin, elseBegin,
     Val(..),
     str, double, ir, ar, kr, sig,
     tfm, pref, prim, p,    
@@ -21,6 +22,8 @@ import Control.Applicative
 import Control.Monad(ap, join)
 import Control.Monad.Trans.State
 import Data.Fix
+import Data.Default
+import Data.Maybe(fromJust)
 
 import Csound.Exp
 
@@ -66,7 +69,14 @@ newtype Spec = Spec { unSpec :: E }
 -- making random signals or trying to save your audio to file. 
 -- Instrument is expected to return a value of @SE [Sig]@. 
 -- So it's okay to do some side effects when playing a note.
-newtype SE a = SE { unSE :: State E a }
+newtype SE a = SE { unSE :: State History a }
+
+data History = History
+    { expDependency :: Maybe E
+    , newVarId      :: Int }
+
+instance Default History where
+    def = History Nothing 0
 
 instance Functor SE where
     fmap f = SE . fmap f . unSE
@@ -79,19 +89,40 @@ instance Monad SE where
     return = SE . return
     ma >>= mf = SE $ unSE ma >>= unSE . mf
 
-runSE :: SE a -> (a, E)
-runSE a = runState (unSE a) (unD (p 3 :: D))
+runSE :: SE a -> (a, History)
+runSE a = runState (unSE a) def
 
 execSE :: SE a -> E
-execSE = snd . runSE
+execSE = fromJust . expDependency . snd . runSE
 
 se :: (Val a) => E -> SE a
 se a = SE $ state $ \s -> 
-    let x = Fix $ (unFix a) { ratedExpDepends = Just s }
-    in  (fromE x, x)
+    let x = Fix $ (unFix a) { ratedExpDepends = expDependency s }
+    in  (fromE x, s{ expDependency = Just x } )
 
 se_ :: E -> SE ()
 se_ = fmap (const ()) . (se :: E -> SE E)
+
+newVar :: Rate -> SE Var
+newVar rate = SE $ state $ \s -> 
+    (Var LocalVar rate ("var" ++ show (newVarId s)), s{ newVarId = succ (newVarId s) })
+
+ifBegin :: Val a => a -> SE ()
+ifBegin = withCond IfBegin
+
+elseIfBegin :: Val a => a -> SE ()
+elseIfBegin = withCond ElseIfBegin
+
+elseBegin :: SE ()
+elseBegin = stmtOnly ElseBegin
+
+ifEnd :: SE ()
+ifEnd = stmtOnly IfEnd
+
+stmtOnly stmt = se_ $ fromE $ noRate stmt
+
+withCond :: Val a => (E -> MainExp E) -> a -> SE ()
+withCond stmt cond = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE cond)
 
 ------------------------------------------------------
 -- values

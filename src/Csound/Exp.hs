@@ -38,7 +38,7 @@ data RatedExp a = RatedExp
     , ratedExpDepends   :: Maybe a          
         -- ^ Dependency (it is used for expressions with side effects,
         -- value contains the privious statement)
-    , ratedExpExp       :: Exp a
+    , ratedExpExp       :: Exp a    
         -- ^ Main expression
     } deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
@@ -89,6 +89,11 @@ data MainExp a
     -- | Reading/writing a named variable
     | ReadVar Var
     | WriteVar Var a    
+    -- | Imperative If-then-else
+    | IfBegin a
+    | ElseIfBegin a
+    | ElseBegin
+    | IfEnd
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable)  
 
 -- Named variable

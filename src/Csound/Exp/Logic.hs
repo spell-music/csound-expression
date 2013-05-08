@@ -10,7 +10,16 @@ import Csound.Exp
 import Csound.Exp.Wrapper(
     Sig, D, Str,  
     setRate, noRate,
-    Val(..), toExp, onExp, onE1)
+    Val(..), toExp, onExp, onE1,
+    SE, ifBegin, ifEnd)
+
+-- imperative if-then-else
+
+when :: BoolSig -> SE () -> SE ()
+when cond body = do
+    ifBegin cond
+    body
+    ifEnd
 
 -- booleans
 
