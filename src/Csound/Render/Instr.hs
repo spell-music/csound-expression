@@ -1,71 +1,36 @@
-{-# Language TupleSections #-}
 module Csound.Render.Instr(
     renderInstr, renderInstrBody
 ) where
 
-import qualified Data.IntMap as IM
-import Control.Monad.Trans.State.Strict
-import Data.Char(toLower)
-import Data.List(partition, sortBy)
-import Control.Arrow(second)
-import Data.Ord(comparing)
-import Data.Maybe(fromJust)
+import Control.Arrow(first, second)
+import Data.List(sort, find)
+import qualified Data.Map as M
 
+import Data.Maybe(fromJust)
+import Data.Default
 import Data.Fix(Fix(..), cata)
 import Data.Fix.Cse(fromDag, cse)
 
 import Csound.Exp
-import Csound.Exp.Wrapper hiding (double)
+import Csound.Exp.Wrapper(getRates, isMultiOutSignature)
 
-import Csound.Tfm.RateGraph
-import Csound.Render.Pretty
+import Csound.Tfm.DeduceTypes
+import Csound.Tfm.UnfoldMultiOuts
+import Csound.Render.Pretty(ppStmt, ppInstr, Doc)
 
-type InstrId = Int
 type Dag f = [(Int, f Int)]
 
-renderInstr :: KrateSet -> InstrId -> E -> Doc
-renderInstr krateSet instrId exp = ppInstr instrId $ renderInstrBody krateSet exp
+renderInstr :: InstrId -> E -> Doc
+renderInstr instrId exp = ppInstr instrId $ renderInstrBody exp
 
-renderInstrBody :: KrateSet -> E -> [Doc]
-renderInstrBody krateSet sig = map (stmt . clearEmptyResults) $ collectRates krateSet st g
-    where stmt :: ([RatedVar], Exp RatedVar) -> Doc
-          stmt (res, exp) = renderExp (ppOuts res) exp
-          
-          st = getRenderState g
-          g  = toDag sig
+renderInstrBody :: E -> [Doc]
+renderInstrBody sig = map (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
 
-
-data RenderState = RenderState 
-    { multiOutsLinks :: IM.IntMap [MultiOutPort]
-    , multiOutsRates :: [(Int, Rate)]    
-    }
-
-data MultiOutPort = MultiOutPort
-    { idMultiOutPort    :: Int
-    , orderMultiOutPort :: Int
-    } 
-
-getRenderState :: Dag RatedExp -> RenderState
-getRenderState a = RenderState moLinks moRates
-    where moLinks = IM.fromListWith (++) $ map extract selectInfo
-          moRates = fmap (second getRate) selectInfo           
-
-          selectInfo = filter (isSelect . ratedExpExp . snd) a    
-            
-          extract (n, x) = case ratedExpExp x of
-                Select rate order (PrimOr (Right parent)) -> (parent, [MultiOutPort n order])
-
-filterMultiOutHelpers :: [(RatedVar, Exp RatedVar)] -> [(RatedVar, Exp RatedVar)]
-filterMultiOutHelpers = filter (not . isSelect . snd) 
-
-isSelect x = case x of
-    Select _ _ _ -> True
-    _ -> False
-
+-------------------------------------------------------------
+-- E -> Dag
 
 toDag :: E -> Dag RatedExp 
 toDag exp = fromDag $ cse $ trimByArgLength exp
-
 
 trimByArgLength :: E -> E
 trimByArgLength = cata $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
@@ -77,63 +42,103 @@ trimByArgLength = cata $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
             MultiRate outs ins -> MultiRate outs (trim ins)        
             where trim = take (length args)    
                   
-
 clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, exp) = (filter ((/= Xr) . ratedVarRate) res, exp)
         
-collectRates :: KrateSet -> RenderState -> Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates krateSet st dag = evalState res lastFreshId  
-    where res = tfmMultiRates st $ filterMultiOutHelpers dag1
-          (dag1, lastFreshId) = grate krateSet dag
+collectRates :: Dag RatedExp -> [([RatedVar], Exp RatedVar)]
+collectRates dag = fmap (second ratedExpExp) res
+    where res = unfoldMultiOuts unfoldSpec lastFreshId dag1  
+          (dag1, lastFreshId) = rateGraph dag
 
+-----------------------------------------------------------
+-- Dag -> Dag
 
-tfmMultiRates :: RenderState -> [(RatedVar, Exp RatedVar)] -> State Int [([RatedVar], Exp RatedVar)]
-tfmMultiRates st as = mapM substRate as
-    where substRate (n, exp) 
-            | isMultiOutExp exp = fmap (,exp) $ getMultiOutVars (multiOutsLinks st IM.! ratedVarId n) (getRates exp)
-            | otherwise = return ([n], exp)
+-----------------------------------------------------------
+-- deduces types
 
-          isMultiOutExp x = case x of
-              Tfm i _ -> isMultiOutSignature (infoSignature i)
-              _ -> False
-  
-getMultiOutVars :: [MultiOutPort] -> [Rate] -> State Int [RatedVar]
-getMultiOutVars ports rates = fmap (zipWith RatedVar rates) (getPorts ports)
-    where getPorts ps = state $ \lastFreshId -> 
-            let ps' = sortBy (comparing orderMultiOutPort) ps
-                (ids, lastPortOrder) = runState (mapM (fillMissingPorts lastFreshId) ps') 0
-                ids' = ids ++ [map (+ lastFreshId) [0 .. portsSize - 1 - lastPortOrder]]                
-            in  (concat ids', lastFreshId + portsSize - inUsePortsSize)                             
+rateGraph dag = (stmts, lastId)
+     where (stmts, lastId) = deduceTypes algSpec dag
+           algSpec = TypeGraph mkConvert' defineType'
 
-          portsSize = length rates    
-          inUsePortsSize = length ports  
-                    
-            
-          fillMissingPorts :: Int -> MultiOutPort -> State Int [Int]
-          fillMissingPorts lastFreshId port = state $ \s ->
-                if s == order
-                then ([e], next) 
-                else (fmap (+ lastFreshId) [s .. order - 1] ++ [e], next)
-            where e = idMultiOutPort port
-                  order = orderMultiOutPort port                  
-                  next = order + 1
-             
+           mkConvert' a = (to, RatedExp def def $ 
+                   ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from)
+               where from = convertFrom a
+                     to   = convertTo   a
+
+           defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
+               where possibleRate = deduceRate desiredRates expr 
+                     ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
+                     expr' = RatedExp def def $ rateExp possibleRate $ ratedExpExp expr
+                     outVar' = ratedVar possibleRate outVar
+
+----------------------------------------------------------
+-- unfolds multiple rates
+
+unfoldSpec = UnfoldMultiOuts getSelector' getParentTypes'
+    where getSelector' x = case ratedExpExp x of
+                Select _ order (PrimOr (Right parent)) -> Just $ Selector parent order 
+                _ -> Nothing
+          getParentTypes' x = case ratedExpExp x of
+                Tfm i _ -> if (isMultiOutSignature $ infoSignature i) 
+                           then Just (getRates $ ratedExpExp x) 
+                           else Nothing 
+                _ -> Nothing
+
 
 getRate :: RatedExp a -> Rate
 getRate = fromJust . ratedExpRate
 
-renderExp :: Doc -> Exp RatedVar -> Doc
-renderExp res exp = case fmap ppPrimOrVar exp of
-    ExpPrim (PString n) -> ppStrget res n
-    ExpPrim p -> res $= ppPrim p
-    Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
-    Tfm info xs -> ppOpc res (infoName info) xs
-    ConvertRate to from x -> ppConvertRate res to from x
-    If info t e -> res $= ppIf (ppInline ppCondOp info) t e
-    ExpNum (PreInline op as) -> res $= ppNumOp op as
-    WriteVar v a -> ppVar v $= a
-    ReadVar v -> res $= ppVar v
-    x -> error $ "unknown expression: " ++ show x
+coherentRates :: Rate -> Rate -> Bool
+coherentRates to from = case (to, from) of
+    (a, b)  | a == b    -> True
+    (Xr, a)             -> True             
+    (Kr, Ir)            -> True
+    _                   -> False
 
- 
+deduceRate :: [Rate] -> RatedExp Int -> Rate
+deduceRate desiredRates exp = case ratedExpExp exp of
+    ExpPrim p -> case desiredRates of
+        [Sr] -> Sr
+        _ -> Ir
+       
+    Tfm info as | isProcedure info -> Xr
+    Tfm info as -> case infoSignature info of
+        MultiRate _ _ -> Xr
+        SingleRate tab -> 
+            let r1 = tfmNoRate (infoName info) desiredRates tab
+            in  case ratedExpRate exp of
+                    Just r | M.member r tab -> r
+                    Just r -> r1
+                    Nothing -> r1
     
+    ExpNum _ -> case maximum desiredRates of
+        Xr -> Ar
+        r -> r
+    
+    Select rate _ _ -> rate
+    If info a b -> head $ filter (/= Xr) $ sort desiredRates   
+    ReadVar v -> varRate v
+    WriteVar _ _ -> Xr    
+    where tfmNoRate name desiredRates tab = case sort desiredRates of
+              [Xr]  -> tfmNoRate name [Ar] tab                
+              Xr:as -> tfmNoRate name as tab
+              as -> fromJust $ find (flip M.member tab) (as ++ [minBound .. maxBound])         
+
+rateExp :: Rate -> Exp Int -> Exp RatedVar 
+rateExp curRate exp = case exp of
+    ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
+    Tfm i xs -> Tfm i $ mergeWithPrimOrBy (flip ratedVar) xs (ratesFromSignature curRate (infoSignature i))
+    Select rate pid a -> Select rate pid (fmap (ratedVar Xr) a)    
+    If condInfo a' b' -> let curRate' = max curRate Kr
+                         in  fmap (fmap (ratedVar curRate')) exp
+    ExpNum _ -> fmap (fmap (ratedVar curRate)) exp    
+    ReadVar v -> ReadVar v
+    WriteVar v a -> WriteVar v $ fmap (ratedVar (varRate v)) a
+    ExpPrim p -> ExpPrim p
+    where ratesFromSignature rate signature = case signature of
+              SingleRate table -> table M.! rate
+              MultiRate _ rs   -> rs
+
+mergeWithPrimOrBy :: (a -> b -> c) -> [PrimOr a] -> [b] -> [PrimOr c]
+mergeWithPrimOrBy cons = zipWith (\primOr b -> fmap (flip cons b) primOr)
+

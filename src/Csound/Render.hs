@@ -1,90 +1,85 @@
 module Csound.Render(
-    renderCsd, renderCsdBy
+    render    
 ) where
 
-import Data.Default
-import Data.Maybe(catMaybes)
-import qualified Data.Map as M
-import qualified Data.Set as S
+import Data.Monoid
 
-import Control.Monad.Trans.State(evalState)
-import Data.Fix
+import Temporal.Music.Score(temp, stretch, dur, Score, Event(..), tmap, delay)
+import qualified Temporal.Music.Score as T(render)
 
 import Csound.Exp
-import Csound.Exp.Wrapper hiding (double)
-import Csound.Render.Sco
+import Csound.Render.Pretty
 import Csound.Render.Instr
 import Csound.Render.Options
-import Csound.Exp.Numeric
+import Csound.Render.Channel
 
-import Csound.Render.Pretty
+import Csound.Exp.Tuple(Out)
+import Csound.Render.InstrTable
+import Csound.Exp.Mix
 
-import Csound.Opcode(clip, zeroDbfs)
-
--- | Renders Csound file.
-renderCsd :: [SigOut] -> String
-renderCsd = renderCsdBy def
-
--- | Renders Csound file with options.
-renderCsdBy :: CsdOptions -> [SigOut] -> String
-renderCsdBy opt as = show $ ppCsdFile 
-    (renderFlags opt)
-    (renderInstr0 (nchnls lastInstr) (midiAssignTable ids as) opt)
-    (ppOrc $ zipWith (renderInstr krateSet) allIds (fmap (substInstrTabs fts) allInstrs))
-    (ppSco $ firstInstrNote : lastInstrNote : zipWith (renderScores strs) ids (fmap (substScoreTabs fts) $ scos))
-    (renderStringTable strs)
-    (renderTotalDur $$ renderTabs fts)
-    where scos   = fmap (scoSigOut' . sigOutContent) as          
-          (instrs, effects, initOuts) = unzip3 $ zipWith runExpReader as ids    
-          fts    = tabMap allInstrs (concat $ fmap eventContent $ concat scos)
-          strs   = stringMap $ eventContent =<< concat scos
-          ids    = take nInstr [2 .. ]
-          
-          allInstrs = fmap (defineInstrTabs (tabResolution opt)) $ firstInstr : lastInstr : instrs
-          allIds    = firstInstrId : lastInstrId : ids
-          
-          nInstr = length as
-          firstInstrId = 1
-          lastInstrId  = nInstr + 2          
-        
-          firstInstr = execSE $ sequence_ initOuts
-          lastInstr  = mixingInstrExp globalEffect effects
-           
-          scoSigOut' x = case x of
-              PlainSigOut _ _ -> defineScoreTabs (tabResolution opt) $ scoSigOut x
-              _ -> []            
-
-          dur = maybe 64000000 id $ totalDur as
-          renderTotalDur = ppTotalDur dur
-          firstInstrNote = alwayson firstInstrId dur
-          lastInstrNote  = alwayson lastInstrId dur
-          alwayson instrId time = ppNote instrId 0 time []
-          krateSet = S.fromList $ csdKrate opt
-          globalEffect = csdEffect opt
+render :: (Out a) => CsdOptions -> Score (Mix a) -> IO String
+render opt a' = do
+    (sndTab, mixTab, midiParams, tabs, strs) <- instrTabs (tabFi opt) a
+    let lastInstrId = getLastInstrId mixTab
+        midiInstrs = fmap (\(MidiInstrParams _ instrId ty chn) -> MidiAssign ty chn instrId) midiParams
+        resetMidiInstrId = succ lastInstrId
+        midiResetInstrNote = if null midiParams then empty else alwayson totalDur resetMidiInstrId
+    return $ show $ ppCsdFile 
+        -- flags
+        (renderFlags opt)
+        -- instr 0 
+        (renderInstr0 (nchnls a) midiInstrs opt $$ chnUpdateStmt $$ midiInits midiParams) 
+        -- orchestra
+        (renderSnd sndTab
+            $$ renderMix mixTab
+            $$ midiReset resetMidiInstrId midiParams)           
+        -- scores
+        (lastInstrNotes totalDur (masterInstr mixTab) $$ midiResetInstrNote)
+        -- strings
+        (ppMapTable ppStrset strs)
+        -- ftables
+        (ppTotalDur (dur a) $$ ppMapTable ppTabDef tabs)
+    where a = rescale a'
+          totalDur = dur a'
 
 
-midiAssignTable :: [Int] -> [SigOut] -> [MidiAssign]
-midiAssignTable ids instrs = catMaybes $ zipWith mk ids instrs
-    where mk n instr = case sigOutContent $ instr of
-            Midi ty chn _ -> Just $ MidiAssign ty chn n
-            _ -> Nothing
+alwayson totalDur instrId = ppNote instrId 0 totalDur []      
 
-renderTabs = ppMapTable ppTabDef
-renderStringTable = ppMapTable ppStrset
+renderSnd :: InstrTab E -> Doc
+renderSnd = ppOrc . fmap (uncurry renderInstr) . unInstrTab
+ 
+renderMix :: MixerTab MixerExp -> Doc
+renderMix (MixerTab master other) = (ppOrc . (uncurry renderMaster master : ) . fmap (uncurry render)) other
+    where renderMaster instrId (MixerExp exp _) = ppInstr instrId $ renderMasterPort : renderInstrBody exp
+          render instrId (MixerExp exp sco) = ppInstr instrId $ (renderPort $$ renderSco ppEvent sco) : renderInstrBody exp          
+          renderPort = ppOpc (ppVar chnVar) "FreePort" []           
+          renderMasterPort = ppVar chnVar $= int 0
 
-mixingInstrExp :: ([[Sig]] -> SE [Sig]) -> [SE [Sig]] -> E
-mixingInstrExp globalEffect effects = execSE $ outs' . fmap clip' =<< globalEffect =<< sequence effects
-    where clip' x = clip x 0 zeroDbfs
-          
-totalDur :: [SigOut] -> Maybe Double
-totalDur as 
-    | null as'  = Nothing
-    | otherwise = Just $ maximum $ map eventEnd . scoSigOut =<< as' 
-    where as' = filter isNotMidi $ map sigOutContent as
-          isNotMidi x = case x of
-            Midi _ _ _ -> False
-            _ -> True
+renderSco :: (InstrId -> Event Double [Prim] -> Var -> Doc) -> Score MixerNote -> Doc
+renderSco formNote a = ppSco $ renderNote =<< T.render a
+    where renderNote e = case eventContent e of
+              MixerNote n     -> return $ formNote n (fmap (const []) e) chnVar
+              SoundNote n sco -> fmap (\x -> formNote n x chnVar) $ T.render $ delay (eventStart e) sco -- only delay, stretch was done before
+              MidiNote _      -> mempty
+              
+lastInstrNotes :: Double -> (InstrId, MixerExp) -> Doc
+lastInstrNotes totalDur (instrId, a) = alwayson totalDur instrId $$ sco
+    where sco = renderSco (\n evt var -> ppMasterNote n evt) $ mixerExpSco a
   
+getLastInstrId :: MixerTab a -> Int
+getLastInstrId = fst . masterInstr
+          
+rescale :: Score (Mix a) -> Score (Mix a)
+rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
+                       in  mixStretch factor (eventContent e)
+    where mixDur :: Mix a -> Double
+          mixDur x = case x of
+            Sco _ a -> dur a
+            Mix _ _ a -> dur a
+            Mid _ -> 1
 
-
-
+          mixStretch :: Double -> Mix a -> Mix a
+          mixStretch k x = case x of
+            Sco a sco -> Sco a $ stretch k sco
+            Mix ar a sco -> Mix ar a $ rescale $ stretch k sco
+            Mid _ -> x     

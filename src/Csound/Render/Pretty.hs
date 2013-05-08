@@ -5,7 +5,8 @@ module Csound.Render.Pretty (
     binaries, unaries, funcs,
     binary, unary, func,
     ppMapTable,
-    ($=), ppPrimOrVar, ppRatedVar, ppOuts, ppOpc, ppProc, ppVar,
+    ppStmt,
+    ($=), ppOpc, ppProc, ppVar,
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
     ppInline, ppCondOp, ppNumOp,
@@ -18,7 +19,7 @@ import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen
 
 import Temporal.Music.Score(Event(..))
-import Csound.Exp hiding (Event(..))
+import Csound.Exp 
 
 verbatimLines :: [String] -> Doc
 verbatimLines = vcat . fmap text
@@ -54,7 +55,7 @@ ppPrimOrVar :: PrimOr RatedVar -> Doc
 ppPrimOrVar x = either ppPrim ppRatedVar $ unPrimOr x
 
 ppRatedVar :: RatedVar -> Doc
-ppRatedVar (RatedVar r x) = ppRate r <> int x
+ppRatedVar v = ppRate (ratedVarRate v) <> int (ratedVarId v)
 
 ppOuts :: [RatedVar] -> Doc
 ppOuts xs = hsep $ punctuate comma $ map ppRatedVar xs
@@ -213,6 +214,22 @@ ppNumOp op = case  op of
           uno = unaries
           fun = funcs
           firstLetterToLower (x:xs) = toLower x : xs
+
+
+ppStmt :: [RatedVar] -> Exp RatedVar -> Doc
+ppStmt outs exp = ppExp (ppOuts outs) exp
+
+ppExp :: Doc -> Exp RatedVar -> Doc
+ppExp res exp = case fmap ppPrimOrVar exp of
+    ExpPrim (PString n) -> ppStrget res n
+    ExpPrim p -> res $= ppPrim p
+    Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
+    Tfm info xs -> ppOpc res (infoName info) xs
+    ConvertRate to from x -> ppConvertRate res to from x
+    If info t e -> res $= ppIf (ppInline ppCondOp info) t e
+    ExpNum (PreInline op as) -> res $= ppNumOp op as
+    WriteVar v a -> ppVar v $= a
+    ReadVar v -> res $= ppVar v
+    x -> error $ "unknown expression: " ++ show x
+
           
-
-

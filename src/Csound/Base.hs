@@ -289,7 +289,7 @@ module Csound.Base(
     Out,
     
     -- ** Handy short-cuts
-    Sig2, Sig3, Sig4, Amp, Cps, Iamp, Icps,
+    Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
      
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
@@ -367,14 +367,16 @@ import Csound.Air
 import Csound.Exp
 import Csound.Exp.Cons
 import Csound.Exp.Wrapper
+import Csound.Exp.Tuple
+import Csound.Exp.Arg
 import Csound.Tab
 import Csound.Opcode
 import Csound.Exp.Numeric
 import Csound.Exp.Logic
 
-import Csound.Render.Sco
 import Csound.Render.Options
-import Csound.Render.Mix
+import Csound.Exp.Mix
 
+import Csound.IO
 
 

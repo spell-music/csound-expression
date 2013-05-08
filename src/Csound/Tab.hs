@@ -67,7 +67,7 @@ module Csound.Tab (
 
 import Data.Default
 import Csound.Exp
-import Csound.Exp.Wrapper(updateTabSize)
+import Csound.Tfm.Tab(updateTabSize)
 
 interp id as = Tab def id (ArgsRelative as)
 plains id as = Tab def id (ArgsPlain as)
@@ -353,6 +353,8 @@ skipNorm x = case x of
 
 
 idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idSegs, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
+
+-- Human readable Csound identifiers for GEN-routines
 
 idDoubles = 2
 idSines = 10

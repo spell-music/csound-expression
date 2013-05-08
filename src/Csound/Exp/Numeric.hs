@@ -4,29 +4,10 @@ module Csound.Exp.Numeric(
     fracSig, floorSig, ceilSig, intSig, roundSig
 ) where
 
-import Data.Maybe(fromJust)
-import Control.Applicative
-import Data.Fix
-
 import Csound.Exp
-import Csound.Exp.Wrapper
-import Csound.Exp.Cons 
-
--------------------------------------------------------
--- instances for numerical expressions
-
-class NumOpt a where
-    maybeDouble :: a -> Maybe Double
-    fromDouble  :: Double -> a
-    fromNum     :: NumExp a -> a
-
-instance NumOpt E where
-    maybeDouble x = case ratedExpExp $ unFix x of
-        ExpPrim (PrimDouble d) -> Just d
-        _ -> Nothing   
-
-    fromDouble = prim . PrimDouble
-    fromNum = noRate . ExpNum . fmap toPrimOr   
+import Csound.Exp.Wrapper(
+    Sig, D, prim, double, noRate,
+    Val(..), toExp, onE1, onE2)
 
 --------------------------------------------
 -- numeric instances
@@ -62,23 +43,23 @@ instance Fractional E where
 
 instance Floating E where
     pi = fromDouble pi
-    exp = funOpt exp ExpOp
-    sqrt = funOpt sqrt Sqrt
-    log = funOpt log Log
+    exp = unOpt exp ExpOp
+    sqrt = unOpt sqrt Sqrt
+    log = unOpt log Log
     logBase a n = case n of
-        2 -> funOpt (flip logBase 2) Logbtwo a
-        10 -> funOpt (flip logBase 10) Log10 a
+        2 -> unOpt (flip logBase 2) Logbtwo a
+        10 -> unOpt (flip logBase 10) Log10 a
         b -> log a / log b
     (**) = biOpt (**) Pow
-    sin = funOpt sin Sin 
-    tan = funOpt tan Tan
-    cos = funOpt cos Cos
-    asin = funOpt asin Sininv
-    atan = funOpt atan Taninv
-    acos = funOpt acos Cosinv
-    sinh = funOpt sinh Sinh
-    tanh = funOpt tanh Tanh
-    cosh = funOpt cosh Cosh
+    sin = unOpt sin Sin 
+    tan = unOpt tan Tan
+    cos = unOpt cos Cos
+    asin = unOpt asin Sininv
+    atan = unOpt atan Taninv
+    acos = unOpt acos Cosinv
+    sinh = unOpt sinh Sinh
+    tanh = unOpt tanh Tanh
+    cosh = unOpt cosh Cosh
     asinh a = log $ a + sqrt (a * a + 1)
     acosh a = log $ a + sqrt (a + 1) * sqrt (a - 1)
     atanh a = 0.5 * log ((1 + a) / (1 - a))
@@ -94,12 +75,12 @@ instance Enum E where
     
     enumFromThen a b = a : enumFromThen (a + b) b
      
-    enumFromTo a b = case (maybeDouble a, maybeDouble b) of
-        (Just x, Just y) -> fmap fromDouble $ enumFromTo x y
+    enumFromTo a b = case (toNumOpt a, toNumOpt b) of
+        (Left x, Left y) -> fmap fromDouble $ enumFromTo x y
         _ -> enumError "[a .. b]"
             
-    enumFromThenTo a b c = case (maybeDouble a, maybeDouble b, maybeDouble c) of
-        (Just x, Just y, Just z) -> fmap fromDouble $ enumFromThenTo x y z
+    enumFromThenTo a b c = case (toNumOpt a, toNumOpt b, toNumOpt c) of
+        (Left x, Left y, Left z) -> fmap fromDouble $ enumFromThenTo x y z
         _ -> enumError "[a, b .. c]"
     
     
@@ -114,14 +95,8 @@ instance Integral E where
     divMod a b = (div a b, mod a b)
     toInteger = undefined    
 
-onE1 :: (Val a, Val b) => (E -> E) -> (a -> b)
-onE1 f = wrap . unFix . f . Fix . unwrap
-
-onE2 :: (Val a, Val b, Val c) => (E -> E -> E) -> (a -> b -> c)
-onE2 f a b = wrap $ unFix $ f (Fix $ unwrap a) (Fix $ unwrap b)
-
 onConst :: Val b => (a -> E) -> (a -> b)
-onConst f = wrap . unFix . f 
+onConst f = fromE . f 
 
 -------------------------------------------
 -- wrappers
@@ -243,7 +218,7 @@ instance Fractional D where
     fromRational = onConst fromRational
 
 instance Floating Sig where
-    pi = wrap $ unFix pi
+    pi = fromE pi
     exp = onE1 exp
     sqrt = onE1 sqrt
     log = onE1 log
@@ -263,7 +238,7 @@ instance Floating Sig where
     atanh = onE1 atanh
    
 instance Floating D where
-    pi = wrap $ unFix pi
+    pi = fromE pi
     exp = onE1 exp
     sqrt = onE1 sqrt
     log = onE1 log
@@ -283,40 +258,47 @@ instance Floating D where
     atanh = onE1 atanh
 
 ------------------------------------------------------------
+-- Optimizations for constants
+--
+-- If an arithmetic expression contains constants we can execute
+-- it and render as constant. We check wether all arguments 
+-- are constants. If it's so we apply some numeric function and
+-- propogate a constant value.
 
-isZero :: NumOpt a => a -> Bool
-isZero a = maybe False id $ ((==0) <$> maybeDouble a)
+toNumOpt :: E -> Either Double E
+toNumOpt x = case toExp x of
+    ExpPrim (PrimDouble d) -> Left d
+    _ -> Right x
 
-unOpt :: (NumOpt a) => (Double -> Double) -> NumOp -> a -> a
-unOpt doubleOp op a = fromJust $
-        (fromDouble . doubleOp <$> maybeDouble a)
-    <|> Just (noOpt1 op a)
+fromNumOpt :: Either Double E -> E
+fromNumOpt = either (prim . PrimDouble) id 
 
-biOpt :: (NumOpt a) => (Double -> Double -> Double) -> NumOp -> a -> a -> a
-biOpt doubleOp op a b = fromJust $
-        (fromDouble <$> liftA2 doubleOp (maybeDouble a) (maybeDouble b))
-    <|> Just (noOpt2 op a b) 
-        
+expNum :: NumExp E -> E
+expNum = noRate . ExpNum . fmap toPrimOr
 
-funOpt :: NumOpt a => (Double -> Double) -> NumOp -> a -> a
-funOpt doubleOp op a = fromJust $
-        (fromDouble . doubleOp <$> maybeDouble a)
-    <|> Just (noOpt1 op a)
+fromDouble = fromNumOpt . Left
 
-noOpt1 :: NumOpt a => NumOp -> a -> a
-noOpt1 op a = fromNum $ PreInline op [a]
+isZero :: E -> Bool
+isZero a = either ( == 0) (const False) $ toNumOpt a
 
-noOpt2 :: NumOpt a => NumOp -> a -> a -> a
-noOpt2 op a b = fromNum $ PreInline op [a, b]
+-- optimization for unary functions
+unOpt :: (Double -> Double) -> NumOp -> E -> E
+unOpt doubleOp op a = fromNumOpt $ either (Left . doubleOp) (Right . noOpt1) $ toNumOpt a
+    where noOpt1 a = expNum $ PreInline op [a] 
 
-doubleToInt :: NumOpt a => (Double -> Int) -> NumOp -> a -> a
-doubleToInt fun op a = fromJust $        
-        (fromDouble . fromIntegral . fun <$> maybeDouble a)
-    <|> Just (noOpt1 op a)
+-- optimization for binary functions
+biOpt :: (Double -> Double -> Double) -> NumOp -> E -> E -> E
+biOpt doubleOp op a b = fromNumOpt $ case (toNumOpt a, toNumOpt b) of
+    (Left da, Left db) -> Left $ doubleOp da db
+    _ -> Right $ noOpt2 a b
+    where noOpt2 a b = expNum $ PreInline op [a, b]
+
+doubleToInt :: (Double -> Int) -> NumOp -> E -> E
+doubleToInt fun = unOpt (fromIntegral . fun) 
 
 -- arithmetic
 
-mod' :: NumOpt a => a -> a -> a
+mod' :: E -> E -> E
 mod' = biOpt (\a b -> fromIntegral $ mod (floor a) (floor b)) Pow
  
 -- other functions
@@ -329,12 +311,3 @@ roundE  = doubleToInt round Round
 fracE   = unOpt (snd . properFraction) Frac 
 intE    = doubleToInt truncate IntOp 
     
-
-
-
-    
-
-
-
-
-

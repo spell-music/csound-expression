@@ -404,8 +404,8 @@ noise' = opc2 "noise" [(a, [x, k])]
 -- > kres linseg ia, idur1, ib [, idur2] [, ic] [...]
 --
 -- doc: <http://www.csounds.com/manual/html/linseg.html>
-linseg :: [D] -> Sig
-linseg = opcs "linseg" [
+linseg :: [D] -> Ksig
+linseg = kr . opcs "linseg" [
     (a, repeat i),
     (k, repeat i)]
 
@@ -416,8 +416,8 @@ linseg = opcs "linseg" [
 --
 -- doc: <http://www.csounds.com/manual/html/linsegr.html>
 
-linsegr :: [D] -> D -> D -> Sig
-linsegr xs relDur relVal = opcs "linsegr" ([
+linsegr :: [D] -> D -> D -> Ksig
+linsegr xs relDur relVal = kr $ opcs "linsegr" ([
     (a, repeat i),
     (k, repeat i)]) (xs ++ [relDur, relVal])
 
@@ -429,8 +429,8 @@ linsegr xs relDur relVal = opcs "linsegr" ([
 --
 -- doc: <http://www.csounds.com/manual/html/expseg.html>
 
-expseg :: [D] -> Sig
-expseg = opcs "expseg" [
+expseg :: [D] -> Ksig
+expseg = kr . opcs "expseg" [
     (a, repeat i),
     (k, repeat i)]
 
@@ -441,8 +441,8 @@ expseg = opcs "expseg" [
 --
 -- doc: <http://www.csounds.com/manual/html/expsegr.html>
 
-expsegr :: [D] -> D -> D -> Sig
-expsegr xs relDur relVal = opcs "expsegr" ([
+expsegr :: [D] -> D -> D -> Ksig
+expsegr xs relDur relVal = kr $ opcs "expsegr" ([
     (a, repeat i),
     (k, repeat i)]) (xs ++ [relDur, relVal])
 
@@ -453,7 +453,7 @@ expsegr xs relDur relVal = opcs "expsegr" ([
 --
 -- doc: <http://www.csounds.com/manual/html/lpshold.html>
 
-lpshold :: Sig -> Sig -> [Sig] -> Sig
+lpshold :: Sig -> Sig -> [Sig] -> Ksig
 lpshold = mkLps "lpshold"
 
 -- | Generate control signal consisting of linear segments delimited by two or more specified points. The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate. 
@@ -463,7 +463,7 @@ lpshold = mkLps "lpshold"
 --
 -- doc: <http://www.csounds.com/manual/html/loopseg.html>
 
-loopseg :: Sig -> Sig -> [Sig] -> Sig
+loopseg :: Sig -> Sig -> [Sig] -> Ksig
 loopseg = mkLps "loopseg"
 
 -- | Generate control signal consisting of controllable exponential segments or linear segments delimited by two or more specified points. 
@@ -474,11 +474,11 @@ loopseg = mkLps "loopseg"
 --
 -- doc: <http://www.csounds.com/manual/html/looptseg.html>
 
-looptseg :: Sig -> Sig -> [Sig] -> Sig
+looptseg :: Sig -> Sig -> [Sig] -> Ksig
 looptseg = mkLps "looptseg"
 
-mkLps :: Name -> Sig -> Sig -> [Sig] -> Sig
-mkLps name kfreq ktrig kvals = opcs name signature $ kfreq:ktrig:kvals
+mkLps :: Name -> Sig -> Sig -> [Sig] -> Ksig
+mkLps name kfreq ktrig kvals = kr $ opcs name signature $ kfreq:ktrig:kvals
     where signature = [(k, repeat k)]
 
 -- | Apply a stright line rise and decay pattern to an imput amp signal.
@@ -487,10 +487,10 @@ mkLps name kfreq ktrig kvals = opcs name signature $ kfreq:ktrig:kvals
 -- > ar linen xamp, iris, idur, idec
 --
 -- doc: <http://www.csounds.com/manual/html/linen.html>
-linen :: Amp -> D -> D -> D -> Sig
-linen = opc4 "linen" [
+linen :: Amp -> D -> D -> D -> Ksig
+linen a1 a2 a3 a4 = kr $ opc4 "linen" [
     (k, k:is 3),
-    (a, x:is 3)]
+    (a, x:is 3)] a1 a2 a3 a4
     
 -- | Apply a stright line rise then an exponential decay decay while the note is extended in time.
 --
@@ -498,10 +498,10 @@ linen = opc4 "linen" [
 -- > ar linenr xamp, iris, idur, iatdec
 --
 -- doc: <http://www.csounds.com/manual/html/linenr.html>
-linenr :: Amp -> D -> D -> D -> Sig
-linenr = opc4 "linenr" [
+linenr :: Amp -> D -> D -> D -> Ksig
+linenr a1 a2 a3 a4 = kr $ opc4 "linenr" [
     (k, k:is 3),
-    (a, x:is 3)]
+    (a, x:is 3)] a1 a2 a3 a4
 
 -- | Apply an envelope consisting of 3 segments:
 --
@@ -515,10 +515,10 @@ linenr = opc4 "linenr" [
 -- > ar envlpx xamp, irise, idur, idec, ifn, iatss, iatdec, [ixmod]
 --
 -- doc: <http://www.csounds.com/manual/html/envlpx.html>
-envlpx :: Amp -> D -> D -> D -> Tab -> D -> D -> Sig
-envlpx = opc7 "envlpx" [
+envlpx :: Amp -> D -> D -> D -> Tab -> D -> D -> Ksig
+envlpx a1 a2 a3 a4 a5 a6 a7 = kr $ opc7 "envlpx" [
     (k, k:is 8),
-    (a, x:is 8)]
+    (a, x:is 8)] a1 a2 a3 a4 a5 a6 a7
 
 ----------------------------------------------------
 -- audio delays

@@ -2,7 +2,7 @@
 -- You can find a lot of examples in source code (see directory @Csound/Opcode@)
 module Csound.LowLevel(
     -- * Types    
-    Rate(..), Name, E, 
+    Rate(..), Name, E, Val(..),
 
     -- * Handy shortcuts
     i, k, a, x, s, f, is, ks, as,
@@ -59,8 +59,6 @@ module Csound.LowLevel(
     -- >            (a, [x, x, i, i]),
     -- >            (k, [k, k, i, i])]
     
-    toE,
-
     se, se_
 ) where
 

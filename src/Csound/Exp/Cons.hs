@@ -1,3 +1,4 @@
+-- |  Constructors
 module Csound.Exp.Cons (
     Spec1, Specs,
     withInits,
@@ -7,27 +8,24 @@ module Csound.Exp.Cons (
 ) where
 
 import Data.String
-import Control.Applicative
-import Data.Default
-import qualified Data.Map as M
-import Control.Monad.Trans.State
-
-import Data.Fix
+import qualified Data.Map as M(fromList)
 
 import Csound.Exp
-import Csound.Exp.Wrapper
+import Csound.Exp.Wrapper(Str, Sig, Val(..), tfm, pref, str,
+        onExp)
+import Csound.Exp.Tuple(CsdTuple(..), multiOuts)
 
 -- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
 --
 -- > oscil 0.5 440 sinWave `withInits` (0.5 :: D)
 withInits :: (Val a, CsdTuple inits) => a -> inits -> Sig
-withInits a b = wrap $ onExp phi $ unwrap a
+withInits a b = fromE $ onExp phi $ toE a
     where phi x = case x of
             Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr $ fromCsdTuple b))
             x        -> x
 
 ------------------------------------------------
--- helper constructors
+-- string constructor
 
 instance IsString Str where
     fromString = str
@@ -51,53 +49,54 @@ idSignature = [
     (Ir, repeat Ir)]
 
 ----------------------------
--- spec tfms
+-- constructors for opcodes (single or multiple rates)
 
 tfms :: (Val a, Val b) => Info -> [a] -> b
-tfms t as = tfm t $ map unwrap as
+tfms t as = tfm t $ map toE as
 
 tfm0 :: (Val a) => Info -> a
 tfm0 t = tfm t []
 
 tfm1 :: (Val a, Val b) => Info -> a -> b
-tfm1 t a = tfm t [unwrap a]
+tfm1 t a = tfm t [toE a]
 
 tfm2 :: (Val a1, Val a2, Val b) => Info -> a1 -> a2 -> b
-tfm2 t a1 a2 = tfm t [unwrap a1, unwrap a2]
+tfm2 t a1 a2 = tfm t [toE a1, toE a2]
 
 tfm3 :: (Val a1, Val a2, Val a3, Val b) => Info -> a1 -> a2 -> a3 -> b
-tfm3 t a1 a2 a3 = tfm t [unwrap a1, unwrap a2, unwrap a3]
+tfm3 t a1 a2 a3 = tfm t [toE a1, toE a2, toE a3]
 
 tfm4 :: (Val a1, Val a2, Val a3, Val a4, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> b
-tfm4 t a1 a2 a3 a4 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4]
+tfm4 t a1 a2 a3 a4 = tfm t [toE a1, toE a2, toE a3, toE a4]
 
 tfm5 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> b
-tfm5 t a1 a2 a3 a4 a5 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5]
+tfm5 t a1 a2 a3 a4 a5 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5]
 
 tfm6 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> b
-tfm6 t a1 a2 a3 a4 a5 a6 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6]
+tfm6 t a1 a2 a3 a4 a5 a6 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6]
 
 tfm7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
-tfm7 t a1 a2 a3 a4 a5 a6 a7 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7]
+tfm7 t a1 a2 a3 a4 a5 a6 a7 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6, toE a7]
 
 tfm8 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> b
-tfm8 t a1 a2 a3 a4 a5 a6 a7 a8 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8]
+tfm8 t a1 a2 a3 a4 a5 a6 a7 a8 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6, toE a7, toE a8]
 
 tfm9 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> b
-tfm9 t a1 a2 a3 a4 a5 a6 a7 a8 a9 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9]
+tfm9 t a1 a2 a3 a4 a5 a6 a7 a8 a9 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6, toE a7, toE a8, toE a9]
 
 tfm10 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> b
-tfm10 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10]
+tfm10 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6, toE a7, toE a8, toE a9, toE a10]
 
 tfm11 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> b
-tfm11 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10, unwrap a11]
+tfm11 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6, toE a7, toE a8, toE a9, toE a10, toE a11]
 
 tfm12 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, Val a8, Val a9, Val a10, Val a11, Val a12, Val b) => Info -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10 -> a11 -> a12 -> b
-tfm12 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = tfm t [unwrap a1, unwrap a2, unwrap a3, unwrap a4, unwrap a5, unwrap a6, unwrap a7, unwrap a8, unwrap a9, unwrap a10, unwrap a11, unwrap a12]
+tfm12 t a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = tfm t [toE a1, toE a2, toE a3, toE a4, toE a5, toE a6, toE a7, toE a8, toE a9, toE a10, toE a11, toE a12]
 
 -------------------------------
--- single out
+-- single output
 
+-- User friendly type for single output type signatures
 type Spec1 = [(Rate, [Rate])]
 
 spec1 :: Spec1 -> Signature
@@ -147,8 +146,9 @@ opc12 name signature = tfm12 (pref name $ spec1 signature)
 
 
 -------------------------------
--- multiple outs
+-- multiple outputs
 
+-- User friendly type for multiple outputs type signatures
 type Specs = ([Rate], [Rate])
 
 specs :: Specs -> Signature
@@ -183,7 +183,4 @@ mopc6 name signature a1 a2 a3 a4 a5 a6 = mo $ tfm6 (pref name $ specs signature)
 
 mopc7 :: (Val a1, Val a2, Val a3, Val a4, Val a5, Val a6, Val a7, CsdTuple b) => Name -> Specs -> a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b
 mopc7 name signature a1 a2 a3 a4 a5 a6 a7 = mo $ tfm7 (pref name $ specs signature) a1 a2 a3 a4 a5 a6 a7
-
-
-
 

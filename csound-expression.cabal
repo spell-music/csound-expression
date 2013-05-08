@@ -85,15 +85,24 @@ Library
         Csound.Exp.Cons
         Csound.Exp.Logic
         Csound.Exp.Numeric       
-        
-        Csound.Tfm.RateGraph       
+        Csound.Exp.Arg
+        Csound.Exp.Tuple
+        Csound.Exp.Mix
+       
+        Csound.IO
 
+        Csound.Tfm.DeduceTypes       
+        Csound.Tfm.UnfoldMultiOuts
+        Csound.Tfm.Tab       
+        Csound.Tfm.String       
+
+        Csound.Render
         Csound.Render.Pretty
         Csound.Render.Options
         Csound.Render.Instr
-        Csound.Render.Sco
-        Csound.Render.Mix
         Csound.Render.IndexMap
+        Csound.Render.InstrTable
+        Csound.Render.Channel
       
 
 
