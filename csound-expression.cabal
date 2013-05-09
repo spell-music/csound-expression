@@ -82,12 +82,14 @@ Library
   Other-Modules:
         Csound.Exp        
         Csound.Exp.Wrapper
+        Csound.Exp.SE
         Csound.Exp.Cons
         Csound.Exp.Logic
         Csound.Exp.Numeric       
         Csound.Exp.Arg
         Csound.Exp.Tuple
         Csound.Exp.Mix
+        Csound.Exp.Event
        
         Csound.IO
 

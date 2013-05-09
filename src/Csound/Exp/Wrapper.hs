@@ -5,16 +5,14 @@
         FlexibleContexts #-}
 module Csound.Exp.Wrapper(
     onE1, onE2, toExp, onExp,
-    Outs, Sig, D, Str, Spec, ToSig(..),
+    Sig, D, Str, Spec, ToSig(..),
     Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
-    SE, History(..), se, se_, runSE, execSE, newVar,
-    ifBegin, ifEnd, elseIfBegin, elseBegin,
     Val(..),
     str, double, ir, ar, kr, sig,
     tfm, pref, prim, p,    
     noRate, setRate, withRate,
     getRates, isMultiOutSignature,
-    readVar, writeVar, gOutVar,
+    gOutVar,
     Channel
 ) where
 
@@ -29,7 +27,6 @@ import Csound.Exp
 
 type Channel = Int
 
-type Outs = SE [Sig]
 type Sig2 = (Sig, Sig)
 type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
@@ -61,68 +58,6 @@ newtype Str = Str { unStr :: E }
 -- | Spectrum of the signal (see FFT and Spectral Processing at "Csound.Opcode.Advanced"). 
 newtype Spec = Spec { unSpec :: E }
 
-------------------------------------------------
--- side effects
-
--- | Csound's synonym for 'IO'-monad. 'SE' means Side Effect. 
--- You will bump into 'SE' trying to read and write to delay lines,
--- making random signals or trying to save your audio to file. 
--- Instrument is expected to return a value of @SE [Sig]@. 
--- So it's okay to do some side effects when playing a note.
-newtype SE a = SE { unSE :: State History a }
-
-data History = History
-    { expDependency :: Maybe E
-    , newVarId      :: Int }
-
-instance Default History where
-    def = History Nothing 0
-
-instance Functor SE where
-    fmap f = SE . fmap f . unSE
-
-instance Applicative SE where
-    pure = return
-    (<*>) = ap
-
-instance Monad SE where
-    return = SE . return
-    ma >>= mf = SE $ unSE ma >>= unSE . mf
-
-runSE :: SE a -> (a, History)
-runSE a = runState (unSE a) def
-
-execSE :: SE a -> E
-execSE = fromJust . expDependency . snd . runSE
-
-se :: (Val a) => E -> SE a
-se a = SE $ state $ \s -> 
-    let x = Fix $ (unFix a) { ratedExpDepends = expDependency s }
-    in  (fromE x, s{ expDependency = Just x } )
-
-se_ :: E -> SE ()
-se_ = fmap (const ()) . (se :: E -> SE E)
-
-newVar :: Rate -> SE Var
-newVar rate = SE $ state $ \s -> 
-    (Var LocalVar rate ("var" ++ show (newVarId s)), s{ newVarId = succ (newVarId s) })
-
-ifBegin :: Val a => a -> SE ()
-ifBegin = withCond IfBegin
-
-elseIfBegin :: Val a => a -> SE ()
-elseIfBegin = withCond ElseIfBegin
-
-elseBegin :: SE ()
-elseBegin = stmtOnly ElseBegin
-
-ifEnd :: SE ()
-ifEnd = stmtOnly IfEnd
-
-stmtOnly stmt = se_ $ fromE $ noRate stmt
-
-withCond :: Val a => (E -> MainExp E) -> a -> SE ()
-withCond stmt cond = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE cond)
 
 ------------------------------------------------------
 -- values
@@ -204,12 +139,6 @@ double = prim . PrimDouble
 -- | Converts Haskell's strings to Csound's strings
 str :: String -> Str
 str = prim . PrimString
-
-writeVar :: (Val a) => Var -> a -> SE ()
-writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ toE x 
-
-readVar :: (Val a) => Var -> a
-readVar v = noRate $ ReadVar v
 
 gOutVar :: Int -> Int -> Var
 gOutVar instrId portId = Var GlobalVar Ar (gOutName instrId portId)

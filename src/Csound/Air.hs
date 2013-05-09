@@ -29,7 +29,8 @@ module Csound.Air (
 ) where
 
 import Csound.Exp(Tab)
-import Csound.Exp.Wrapper(Sig, Spec, SE, sig, kr, Amp, Cps)
+import Csound.Exp.Wrapper(Sig, Spec, sig, kr, Amp, Cps)
+import Csound.Exp.SE
 import Csound.Exp.Cons(withInits)
 import Csound.Exp.Numeric
 import Csound.Opcode(idur, oscil3, vco, pvscross, 

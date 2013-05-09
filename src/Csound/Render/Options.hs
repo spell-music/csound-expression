@@ -9,7 +9,8 @@ import Data.Default
 import qualified Data.IntMap as IM(fromList, empty)
 
 import Csound.Exp(TabFi(..), MidiType(..))
-import Csound.Exp.Wrapper(Channel, Sig, SE, Outs)
+import Csound.Exp.Wrapper(Channel, Sig)
+import Csound.Exp.SE
 import Csound.Exp.Tuple(Out)
 import Csound.Render.Pretty
 import Csound.Tab(idConsts, idSegs, idExps)
@@ -73,14 +74,9 @@ renderFlags = text . flags
 
 type Nchnls = Int
 
-data MidiAssign = MidiAssign 
-    { midiAssignType    :: MidiType
-    , midiAssignChannel :: Channel
-    , midiAssignInstr   :: Int }
-
 type InstrId = Int
 
-renderInstr0 :: Nchnls -> [MidiAssign] -> CsdOptions -> Doc
+renderInstr0 :: Nchnls -> [PureMidiAssign] -> CsdOptions -> Doc
 renderInstr0 nchnls massignTable opt = ppInstr0 $ [
     stmt "sr"    $ sampleRate opt,
     stmt "ksmps" $ blockSize opt,
@@ -94,7 +90,7 @@ renderInstr0 nchnls massignTable opt = ppInstr0 $ [
           stmtInitc7 (chn, ctl, val) = ppProc "initc7" [int chn, int ctl, double val]
             
   
-renderMidiAssign :: MidiAssign -> Doc
+renderMidiAssign :: PureMidiAssign -> Doc
 renderMidiAssign a = ppProc opcode $ [int $ midiAssignChannel a, int $ midiAssignInstr a] ++ auxParams
     where opcode = case midiAssignType a of
               Massign     -> "massign"

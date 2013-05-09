@@ -2,11 +2,11 @@
 module Csound.Render.Channel (
     InstrId,
     -- * renders instruments to expressions
-    instrExp, mixerExp, masterMixerExp,
-    -- * midi instruments
-    midiInits, midiReset,
+    instrExp, mixerExp, masterExp,
     -- * master output
-    masterOuts, outs, midiOuts, midiVar, 
+    masterOuts, outs,
+    -- * master inputs
+    ins,
     -- * channel opcodes
     chnVar, chnName, 
     chnmix, chnget, chnclear,
@@ -19,7 +19,7 @@ import Data.List(transpose)
 
 import Csound.Exp
 import Csound.Exp.Wrapper
-import Csound.Exp.Mix
+import Csound.Exp.SE
 import Csound.Exp.Cons(opc1, opc2, opcs)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 import Csound.Render.Pretty(verbatimLines)
@@ -29,57 +29,15 @@ import Csound.Render.Pretty
 -- simple instrument trigered with score
 
 -- How to render an instrument
-instrExp :: InstrId -> Instr -> E
-instrExp instrId x = execSE $ instrOut =<< instrBody x
-    where instrOut = case instrMidi x of
-            -- 4 + arity because there are 3 first arguments (instrId, start, dur) and arity params comes next
-            Nothing                     -> outs (4 + arityIns (instrArity x))   
-            Just (midiType, channel)    -> midiOuts instrId
+instrExp, masterExp, mixerExp :: Instr -> IO E
 
+-- 4 + arity because there are 3 first arguments (instrId, start, dur) and arity params comes next
+instrExp x = instrExpGen (outs (4 + arityIns (instrArity x))) x    
+masterExp  = instrExpGen masterOuts
+mixerExp   = instrExpGen (outs 4) -- for mixing instruments we expect the port number to be the fourth parameter
 
------------------------------------------------------------
--- mixer instruments
-
-masterMixerExp :: Mixer -> MixerExp
-masterMixerExp = mixerExpGen masterOuts
-
-mixerExp :: Mixer -> MixerExp
-mixerExp = mixerExpGen (outs 4) -- for mixing instruments we expect the port number to be the fourth parameter
-
-mixerExpGen :: ([Sig] -> SE ()) -> Mixer -> MixerExp
-mixerExpGen formOuts (Mixer arity effect sco) = MixerExp exp sco
-    where exp = execSE $ formOuts . mixMidis midiNotes =<< effect =<< ins arity
-          midiNotes = foldMap getMidiFromMixNote sco
-
-midiInits :: [MidiInstrParams] -> Doc
-midiInits = vcat . fmap initMidiVar . (getMidiVars =<< )
-
-midiReset :: InstrId -> [MidiInstrParams] -> Doc
-midiReset n = ppInstr n . fmap reset . (getMidiVars =<< ) 
-    where reset v = ppVar v $= int 0
-
-initMidiVar :: Var -> Doc
-initMidiVar a = ppOpc (ppVar a) "init" [int 0]
-
-resetMidiVarInstr :: [Var] -> E
-resetMidiVarInstr vs = execSE $ mapM_ (flip writeVar (0 :: Sig)) vs
-
------------------------------------------------------------
--- midi instrument
-
-mixMidis :: [MidiInstrParams] -> [Sig] -> [Sig]
-mixMidis ms sigs 
-    | null ms   = sigs
-    | otherwise = zipWith (+) midiSums sigs
-    where midiSums = fmap sum $ transpose $ fmap (fmap readVar . getMidiVars) ms
-
-getMidiFromMixNote :: MixerNote -> [MidiInstrParams] 
-getMidiFromMixNote x = case x of
-    MidiNote a -> [a]
-    _ -> []
-
-getMidiVars :: MidiInstrParams -> [Var]
-getMidiVars (MidiInstrParams arity instrId _ _) = fmap (midiVar instrId) [1 .. arityOuts arity]
+instrExpGen :: ([Sig] -> SE ()) -> Instr -> IO E
+instrExpGen formOuts x = execSE $ formOuts =<< instrBody x
 
 ---------------------------------------------------------
 -- master instrument output
@@ -96,25 +54,19 @@ clipByMax = fmap clip'
 
 -- other outputs
 
-midiOuts :: InstrId -> [Sig] -> SE ()
-midiOuts instrId as = zipWithM_ (\portId sig -> writeVar (midiVar instrId portId) sig) [1 .. ] as
-
 outs :: Int -> [Sig] -> SE ()
 outs readChnId sigs = zipWithM_ (out readChnId) [1 .. ] sigs
     where out readChnId n sig = chnmix sig $ chnName n (p readChnId) 
-
-midiVar :: InstrId -> Int -> Var
-midiVar instrId portId = Var GlobalVar Ar ("midi_" ++ show instrId ++ "_" ++ show portId)
 
 -- inputs
 
 ins :: Arity -> SE [Sig]
 ins arity = mapM in_ [1 .. arityIns arity] 
     where in_ n = do
+              let name = chnName n $ readVar chnVar
               sig <- chnget name
               chnclear name
               return sig    
-              where name = chnName n $ readVar chnVar
 
 ----------------------------------------------------------
 -- channels

@@ -70,6 +70,7 @@ module Csound.Opcode.Data (
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.SE
 import Csound.Exp.Tuple
 import Csound.LowLevel
 import Csound.Exp.Numeric

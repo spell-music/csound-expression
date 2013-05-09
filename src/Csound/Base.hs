@@ -302,7 +302,7 @@ module Csound.Base(
 
     -- ** Midi
     -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.
-    Msg, midi, pgmidi,
+    --Msg, midi, pgmidi,
 
     -- ** Rendering
     -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
@@ -373,6 +373,7 @@ import Csound.Tab
 import Csound.Opcode
 import Csound.Exp.Numeric
 import Csound.Exp.Logic
+import Csound.Exp.SE
 
 import Csound.Render.Options
 import Csound.Exp.Mix

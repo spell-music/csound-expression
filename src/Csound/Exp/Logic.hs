@@ -10,8 +10,9 @@ import Csound.Exp
 import Csound.Exp.Wrapper(
     Sig, D, Str,  
     setRate, noRate,
-    Val(..), toExp, onExp, onE1,
-    SE, ifBegin, ifEnd)
+    Val(..), toExp, onExp, onE1)
+
+import Csound.Exp.SE(SE, ifBegin, ifEnd)
 
 -- imperative if-then-else
 

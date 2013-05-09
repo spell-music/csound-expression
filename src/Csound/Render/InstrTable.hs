@@ -9,6 +9,7 @@ import Control.Monad.Trans.Class
 import Control.Arrow(second)
 
 import Data.Monoid
+import Data.Traversable(traverse)
 import Data.Foldable
 import Data.Tuple(swap)
 import Data.Maybe(fromJust, mapMaybe)
@@ -17,6 +18,7 @@ import Temporal.Music.Score(Score)
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.SE(InstrIndexMap, historySE, History(..))
 import Csound.Exp.Mix
 import Csound.Exp.Tuple(Out(..), outArity)
 import qualified Csound.Render.IndexMap as DM
@@ -41,22 +43,23 @@ instance Foldable MixerTab where
 mixerTabElems :: MixerTab a -> [a]
 mixerTabElems a = snd (masterInstr a) : fmap snd (otherInstr a)
 
-instrTabs :: Out a => TabFi 
-    -> Score (Mix a) -> IO (InstrTab E, MixerTab MixerExp, [MidiInstrParams], TabMap, StringMap)
-instrTabs tabFi sco = do
-    instrs <- soundSources sco
+instrTabs :: TabFi -> Score M -> History -> IO (InstrTab E, MixerTab MixerExp, TabMap, StringMap)
+instrTabs tabFi sco history = do
+    let instrs = instrMap history
     mixers <- mixers instrs sco
-    let midiParams = getMidiInstrParams instrs
-        (instrs', mixers', tabs, strs) = substTablesAndStrings 
-            (tableSoundSources tabFi instrs) (tableMixers tabFi mixers)
-    return (instrs', mixers', midiParams, tabs, strs)
+    tabSndSrc <- tableSoundSources tabFi instrs
+    tabMixer  <- tableMixers tabFi mixers
+    let (instrs', mixers', tabs, strs) = substTablesAndStrings tabSndSrc tabMixer
+    return (instrs', mixers', tabs, strs)
             
-tableSoundSources :: TabFi -> InstrIndexMap -> InstrTab E
-tableSoundSources tabFi = InstrTab . fmap phi . DM.elems
-    where phi (exp, name) = (name, defineInstrTabs tabFi $ instrExp name exp)
+tableSoundSources :: TabFi -> InstrIndexMap -> IO (InstrTab E)
+tableSoundSources tabFi = fmap InstrTab . mapM phi . DM.elems
+    where phi (exp, name) = do
+            exp' <- instrExp exp
+            return (name, defineInstrTabs tabFi exp')
         
-tableMixers :: TabFi -> MixerTab Mixer -> MixerTab MixerExp    
-tableMixers tabFi = fmap (defMixTab tabFi) . mixExps
+tableMixers :: TabFi -> MixerTab Mixer -> IO (MixerTab MixerExp)
+tableMixers tabFi = fmap (fmap (defMixTab tabFi)) . mixExps
 
 --------------------------------------------------------------------------
 -- define table sizes
@@ -107,38 +110,14 @@ substMixFtables strMap tabMap (MixerExp exp sco) =
 -------------------------------------------------------------------------
 -- render mixers
 
-mixExps :: MixerTab Mixer -> MixerTab MixerExp
-mixExps (MixerTab master other) = 
-    MixerTab (second masterMixerExp master) (fmap (second mixerExp) other) 
-
---------------------------------------------------------------------------
---
--- Gets sound sources from scores. We extract all instruments
--- that lie in the bottom of the score hierarchy. Sound source
--- is an instrument that is trigered with notes or midi messages.
---
--- We just traverse the Score and insert all instruments into the 
--- special container DM.IndexMap. IndexMap is a Set that relies 
--- on stable names (OMG).
-
--- Instruments that are referenced with stable names.
-type InstrIndexMap = DM.IndexMap Instr
-
-type MkIndexMap = State (IO InstrIndexMap) ()
-    
-insertInstr :: Instr -> MkIndexMap
-insertInstr a = modify (DM.insert (instrName a) a =<<)
-
-soundSources :: Score (Mix a) -> IO InstrIndexMap
-soundSources sco = execState indexMap (return $ DM.empty 1)
-    where indexMap = traverseMix onSco onMid onMix sco >> return ()
+mixExps :: MixerTab Mixer -> IO (MixerTab MixerExp)
+mixExps (MixerTab master other) = do
+    master' <- inPair masterExp master
+    other'  <- mapM (inPair mixerExp) other
+    return $ MixerTab master' other'
+    where inPair f (a, Mixer b sco) = fmap (\x -> (a, MixerExp x sco)) (f b)
             
-          onMix _ _ _   = return ()
-          onSco instr _ = insertInstr instr
-          onMid instr   = insertInstr instr
-
 --------------------------------------------------------------------------
---
 -- Gets the mixing instruments.
 
 type MkMixerTab a = StateT MixingState IO a
@@ -159,8 +138,10 @@ getCounter = fmap mixingCounter get
 putCounter :: Int -> MkMixerTab ()
 putCounter n = modify $ \s -> s{ mixingCounter = n }
 
-mixers :: Out a => InstrIndexMap -> Score (Mix a) -> IO (MixerTab Mixer)
-mixers tab sco = fmap formRes $ runStateT (traverseMix onSco onMid onMix sco) (initMixingState $ pred lastInstrId)
+mixers :: InstrIndexMap -> Score M -> IO (MixerTab Mixer)
+mixers tab sco = undefined
+{-
+    fmap formRes $ runStateT (traverseMix onSco onMid onMix sco) (initMixingState $ pred lastInstrId)
     where formRes (sco, st) = MixerTab (lastInstrId, Mixer (Arity n n) return sco) (mixingElems st)
           lastInstrId = 1 + DM.length tab + numOfInstrSco sco
           n = nchnls sco     
@@ -176,25 +157,13 @@ mixers tab sco = fmap formRes $ runStateT (traverseMix onSco onMid onMix sco) (i
                 putCounter $ pred n
                 saveElem n $ Mixer ar eff notes
                 return $ MixerNote n        
+-}
 
-
-numOfInstrSco :: Score (Mix a) -> Int
+numOfInstrSco :: Score M -> Int
 numOfInstrSco as = getSum $ foldMap (Sum . numOfInstrForMix) as
 
-numOfInstrForMix :: Mix a -> Int
+numOfInstrForMix :: M -> Int
 numOfInstrForMix x = case x of
-    Mix _ _ a -> 1 + numOfInstrSco a
-    Mid _     -> 0
-    Sco _ _   -> 0
-
-----------------------------------------------------------------------
--- Midi parameters
-
-getMidiInstrParams :: InstrIndexMap -> [MidiInstrParams]
-getMidiInstrParams a = mapMaybe (uncurry $ flip extractInstrMidiParams) $ DM.elems a
-
-extractInstrMidiParams :: InstrId -> Instr -> Maybe MidiInstrParams
-extractInstrMidiParams name x = case instrMidi x of
-    Just (midiType, chn) -> Just $ MidiInstrParams (instrArity x) name midiType chn
-    _ -> Nothing
+    Eff _ a -> 1 + numOfInstrSco a
+    _ -> 0
 

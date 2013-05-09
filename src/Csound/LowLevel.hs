@@ -66,6 +66,7 @@ import Data.Fix
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.SE
 import Csound.Exp.Cons
 
 i = Ir

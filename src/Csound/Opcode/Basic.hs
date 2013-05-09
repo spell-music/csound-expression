@@ -93,6 +93,7 @@ module Csound.Opcode.Basic(
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.SE
 import Csound.LowLevel
 
 -- | Reads @p3@-argument for the current instrument.

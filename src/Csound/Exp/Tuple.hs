@@ -9,8 +9,9 @@ import Control.Applicative(liftA2)
 import Control.Monad(join)
 
 import Csound.Exp
-import Csound.Exp.Wrapper(Val(..), Sig, D, Str, Spec, SE, onExp, toExp, 
+import Csound.Exp.Wrapper(Val(..), Sig, D, Str, Spec, onExp, toExp, 
     withRate, getRates, isMultiOutSignature)
+import Csound.Exp.SE(SE)
 
 -- | Describes tuples of Csound values. It's used for functions that can return 
 -- several results (such as 'soundin' or 'diskin2'). Tuples can be nested. 
