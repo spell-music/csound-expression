@@ -90,6 +90,7 @@ Library
         Csound.Exp.Tuple
         Csound.Exp.Mix
         Csound.Exp.Event
+        Csound.Exp.Instr
        
         Csound.IO
 

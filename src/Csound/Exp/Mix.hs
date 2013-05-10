@@ -24,8 +24,9 @@ import Temporal.Music.Score(Score, temp, stretch, dur)
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
+import Csound.Exp.Instr
 import Csound.Exp.Arg
-import Csound.Exp.Tuple(Out(..), CsdTuple(..), outArity)
+import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
 import qualified Csound.Render.IndexMap as DM
 
 import Csound.Render.Channel(ins)
@@ -43,17 +44,6 @@ import Csound.Render.Channel(ins)
 --  * body      - actual Csound expression (it's a list of output signals, 
 --                each signal is an expression-tree)
 
-type InstrFun a b = a -> b
-
-mkInstr :: Out b => (InstrFun a b -> Arity) -> a -> InstrFun a b -> (DM.InstrName, Instr)
-mkInstr getArity arg instrFun = (DM.makeInstrName instrFun, x)
-    where x = Instr (getArity instrFun) (toOut $ instrFun arg)
-          
-
-mkArity :: (a -> Int) -> (b -> Int) -> InstrFun a b -> Arity
-mkArity ins outs instr = let (a, b) = funProxy instr in Arity (ins a) (outs b)
-    where funProxy :: (a -> b) -> (a, b)
-          funProxy = const (undefined, undefined)      
 
 -- Mixer is an instrument that applies an effect to the sound.
 data Mixer = Mixer
@@ -114,12 +104,8 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
-sco instr notes = tempAs notes $ Mix $ do
-    saveInstr name body
-    return $ Snd name notes'
-    where getArity = mkArity (arity argMethods) outArity
-          (name, body) = mkInstr getArity toArg instr
-          notes' = fmap (toNote argMethods) notes
+sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstr instr
+    where notes' = fmap toNote notes
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --

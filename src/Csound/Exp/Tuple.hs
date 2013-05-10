@@ -2,7 +2,9 @@
         TypeFamilies,
         FlexibleContexts #-}
 module Csound.Exp.Tuple(
-    CsdTuple(..), Out(..), multiOuts, outArity
+    CsdTuple(..), 
+    fromCsdTuple, toCsdTuple, arityCsdTuple,
+    Out(..), multiOuts, outArity
 ) where
 
 import Control.Applicative(liftA2)
@@ -16,9 +18,30 @@ import Csound.Exp.SE(SE)
 -- | Describes tuples of Csound values. It's used for functions that can return 
 -- several results (such as 'soundin' or 'diskin2'). Tuples can be nested. 
 class CsdTuple a where
-    fromCsdTuple :: a -> [E]
-    toCsdTuple :: [E] -> a
-    arityCsdTuple :: a -> Int
+    csdTupleMethods :: CsdTupleMethods a
+
+data CsdTupleMethods a = CsdTupleMethods
+    { fromCsdTuple_  :: a -> [E]
+    , toCsdTuple_    :: [E] -> a
+    , arityCsdTuple_ :: a -> Int }
+
+fromCsdTuple :: CsdTuple a => a -> [E] 
+fromCsdTuple = fromCsdTuple_ csdTupleMethods
+
+toCsdTuple :: CsdTuple a => [E] -> a
+toCsdTuple = toCsdTuple_ csdTupleMethods
+
+arityCsdTuple :: CsdTuple a => a -> Int
+arityCsdTuple = arityCsdTuple_ csdTupleMethods
+
+-- | Defines instance of type class 'Arg' for a new type in terms of an already defined one.
+makeCsdTupleMethods :: (CsdTuple a) => (a -> b) -> (b -> a) -> CsdTupleMethods b
+makeCsdTupleMethods to from = CsdTupleMethods 
+    { fromCsdTuple_  = fromCsdTuple . from
+    , toCsdTuple_    = to . toCsdTuple 
+    , arityCsdTuple_ = const $ arityCsdTuple $ proxy to }
+    where proxy :: (a -> b) -> a
+          proxy = undefined
 
 -- | Output of the instrument.
 class CsdTuple (NoSE a) => Out a where
@@ -34,81 +57,80 @@ outArity a = arityCsdTuple (proxy a)
 -- CsdTuple instances
 
 instance CsdTuple Sig where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
-
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_ = return . toE
+        , toCsdTuple_ = fromE . head
+        , arityCsdTuple_ = const 1 }
+        
 instance CsdTuple D where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_ = return . toE
+        , toCsdTuple_ = fromE . head
+        , arityCsdTuple_ = const 1 }
 
 instance CsdTuple Tab where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_ = return . toE
+        , toCsdTuple_ = fromE . head
+        , arityCsdTuple_ = const 1 }
 
 instance CsdTuple Str where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_ = return . toE
+        , toCsdTuple_ = fromE . head
+        , arityCsdTuple_ = const 1 }
 
 instance CsdTuple Spec where
-    fromCsdTuple = return . toE
-    toCsdTuple = fromE . head
-    arityCsdTuple = const 1
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_ = return . toE
+        , toCsdTuple_ = fromE . head
+        , arityCsdTuple_ = const 1 }
 
-instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
-    fromCsdTuple (a, b) = fromCsdTuple a ++ fromCsdTuple b
-    arityCsdTuple x = let (a, b) = proxy x in arityCsdTuple a + arityCsdTuple b
-        where proxy :: (a, b) -> (a, b)
-              proxy = const (undefined, undefined)  
-    toCsdTuple xs = (a, b)
-        where a = toCsdTuple $ take (arityCsdTuple a) xs
-              xsb = drop (arityCsdTuple a) xs  
-              b = toCsdTuple (take (arityCsdTuple b) xsb)
+
+instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where    
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_  = fromCsdTuple'
+        , toCsdTuple_    = toCsdTuple'
+        , arityCsdTuple_ = arityCsdTuple' }
+        where 
+            fromCsdTuple' (a, b) = fromCsdTuple a ++ fromCsdTuple b
+            arityCsdTuple' x = let (a, b) = proxy x in arityCsdTuple a + arityCsdTuple b
+                where proxy :: (a, b) -> (a, b)
+                      proxy = const (undefined, undefined)  
+            toCsdTuple' xs = (a, b)
+                where a = toCsdTuple $ take (arityCsdTuple a) xs
+                      xsb = drop (arityCsdTuple a) xs  
+                      b = toCsdTuple (take (arityCsdTuple b) xsb)
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c) => CsdTuple (a, b, c) where
-    fromCsdTuple (a, b, c) = fromCsdTuple (a, (b, c))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c) -> (a, (b, c))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c)) -> (a, b, c)) . toCsdTuple 
+    csdTupleMethods = makeCsdTupleMethods to from
+        where to (a, (b, c)) = (a, b, c)
+              from (a, b, c) = (a, (b, c))  
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d) => CsdTuple (a, b, c, d) where
-    fromCsdTuple (a, b, c, d) = fromCsdTuple (a, (b, c, d))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d) -> (a, (b, c, d))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d)) -> (a, b, c, d)) . toCsdTuple
+    csdTupleMethods = makeCsdTupleMethods to from
+        where to (a, (b, c, d)) = (a, b, c, d)
+              from (a, b, c, d) = (a, (b, c, d))  
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e) => CsdTuple (a, b, c, d, e) where
-    fromCsdTuple (a, b, c, d, e) = fromCsdTuple (a, (b, c, d, e))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e) -> (a, (b, c, d, e))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e)) -> (a, b, c, d, e)) . toCsdTuple
+    csdTupleMethods = makeCsdTupleMethods to from
+        where to (a, (b, c, d, e)) = (a, b, c, d, e)
+              from (a, b, c, d, e) = (a, (b, c, d, e))  
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f) => CsdTuple (a, b, c, d, e, f) where
-    fromCsdTuple (a, b, c, d, e, f) = fromCsdTuple (a, (b, c, d, e, f))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e, f) -> (a, (b, c, d, e, f))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e, f)) -> (a, b, c, d, e, f)) . toCsdTuple
+    csdTupleMethods = makeCsdTupleMethods to from
+        where to (a, (b, c, d, e, f)) = (a, b, c, d, e, f)
+              from (a, b, c, d, e, f) = (a, (b, c, d, e, f))  
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g) => CsdTuple (a, b, c, d, e, f, g) where
-    fromCsdTuple (a, b, c, d, e, f, g) = fromCsdTuple (a, (b, c, d, e, f, g))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e, f, g) -> (a, (b, c, d, e, f, g))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e, f, g)) -> (a, b, c, d, e, f, g)) . toCsdTuple
+    csdTupleMethods = makeCsdTupleMethods to from
+        where to (a, (b, c, d, e, f, g)) = (a, b, c, d, e, f, g)
+              from (a, b, c, d, e, f, g) = (a, (b, c, d, e, f, g))  
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h) => CsdTuple (a, b, c, d, e, f, g, h) where
-    fromCsdTuple (a, b, c, d, e, f, g, h) = fromCsdTuple (a, (b, c, d, e, f, g, h))
-    arityCsdTuple = arityCsdTuple . proxy
-        where proxy :: (a, b, c, d, e, f, g, h) -> (a, (b, c, d, e, f, g, h))
-              proxy = const undefined  
-    toCsdTuple = (\(a, (b, c, d, e, f, g, h)) -> (a, b, c, d, e, f, g, h)) . toCsdTuple
+    csdTupleMethods = makeCsdTupleMethods to from
+        where to (a, (b, c, d, e, f, g, h)) = (a, b, c, d, e, f, g, h)
+              from (a, b, c, d, e, f, g, h) = (a, (b, c, d, e, f, g, h))  
 
 ------------------------------------------------
 -- multiple outs
@@ -176,4 +198,3 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f
     type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
     toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
     fromOut = toCsdTuple . fmap toE
-

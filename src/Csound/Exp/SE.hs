@@ -1,12 +1,11 @@
 -- | side effects
 module Csound.Exp.SE(
     Outs,
-    SE, History(..), Instr(..), Arity(..), 
+    SE(..), History(..), Instr(..), Arity(..), 
     PureMidiAssign, DirtyMidiAssign, MidiAssign(..), pureMidiAssign,
     InstrIndexMap, se, se_, runSE, execSE, historySE, newVar,
     ifBegin, ifEnd, elseIfBegin, elseBegin,
-    writeVar, readVar,
-    saveInstr
+    writeVar, readVar
 ) where
 
 import Control.Applicative
@@ -123,10 +122,4 @@ readVar :: (Val a) => Var -> a
 readVar v = noRate $ ReadVar v
 
 ---------------------------------------------------
-
-saveInstr :: DM.InstrName -> Instr -> SE ()
-saveInstr name instr = SE $ do
-    s <- get
-    im <- lift $ DM.insert name instr (instrMap s)
-    put $ s { instrMap = im }
 

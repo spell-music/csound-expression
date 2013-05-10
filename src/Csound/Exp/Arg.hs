@@ -1,6 +1,7 @@
 -- | instrument p-arguments
 module Csound.Exp.Arg(        
-    Arg(..), ArgMethods(..), toArg, makeArgMethods,
+    Arg, arg, toNote, arity, 
+    ArgMethods, toArg, makeArgMethods,
 ) where
 
 import Control.Applicative
@@ -17,20 +18,28 @@ getPrimUnsafe a = case toExp a of
 
 -- | The abstract type of methods for the class 'Arg'.
 data ArgMethods a = ArgMethods 
-    { arg :: Int -> a
-    , toNote :: a -> [Prim]
-    , arity :: a -> Int
-    }
+    { arg_    :: Int -> a
+    , toNote_ :: a -> [Prim]
+    , arity_  :: a -> Int }
+
+arg :: Arg a => Int -> a
+arg = arg_ argMethods
+
+toNote :: Arg a => a -> [Prim]
+toNote = toNote_ argMethods
+
+arity :: Arg a => a -> Int
+arity = arity_ argMethods
 
 toArg :: Arg a => a
-toArg = arg argMethods 4
+toArg = arg 4
 
 -- | Defines instance of type class 'Arg' for a new type in terms of an already defined one.
 makeArgMethods :: (Arg a) => (a -> b) -> (b -> a) -> ArgMethods b
 makeArgMethods to from = ArgMethods {
-    arg = to . arg argMethods,
-    toNote = toNote argMethods . from,
-    arity = const $ arity argMethods $ proxy to }
+    arg_ = to . arg,
+    toNote_ = toNote . from,
+    arity_ = const $ arity $ proxy to }
     where proxy :: (a -> b) -> a
           proxy = undefined
 
@@ -62,35 +71,35 @@ class Arg a where
 
 instance Arg () where
     argMethods = ArgMethods 
-        { arg = const ()
-        , toNote = const []
-        , arity = const 0 }
+        { arg_ = const ()
+        , toNote_ = const []
+        , arity_ = const 0 }
 
 instance Arg D where
     argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
+        arg_ = p,
+        toNote_ = pure . getPrimUnsafe,
+        arity_ = const 1 }
 
 instance Arg Str where
     argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
+        arg_ = p,
+        toNote_ = pure . getPrimUnsafe,
+        arity_ = const 1 }
 
 instance Arg Tab where
     argMethods = ArgMethods {
-        arg = p,
-        toNote = pure . getPrimUnsafe,
-        arity = const 1 }
+        arg_ = p,
+        toNote_ = pure . getPrimUnsafe,
+        arity_ = const 1 }
 
 instance (Arg a, Arg b) => Arg (a, b) where
     argMethods = ArgMethods arg' toNote' arity' 
         where arg' n = (a, b)
-                  where a = arg argMethods n
-                        b = arg argMethods (n + arity argMethods a)
-              toNote' (a, b) = toNote argMethods a ++ toNote argMethods b
-              arity' x = let (a, b) = proxy x in arity argMethods a + arity argMethods b    
+                  where a = arg n
+                        b = arg (n + arity a)
+              toNote' (a, b) = toNote a ++ toNote b
+              arity' x = let (a, b) = proxy x in arity a + arity b    
                   where proxy :: (a, b) -> (a, b)
                         proxy = const (undefined, undefined)
 

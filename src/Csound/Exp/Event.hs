@@ -11,7 +11,8 @@ import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Exp.Mix
 import Csound.Exp.SE
-
+import Csound.Exp.Instr
+import qualified Csound.Render.IndexMap as DM
 
 data Event a where
     -- event sources
@@ -108,11 +109,16 @@ accumEvent s0 f x = case x of
 --
 
 schedule :: (Arg a, Out b) => (a -> b) -> Event (D, a) -> SE (NoSE b)
-schedule = undefined
+schedule instr trigger = do    
+    name <- saveInstr instr
+    saveTrigger trigger name
 
 toggle :: (Arg a, Out b) => (a -> b) -> Event a -> Event c -> SE (NoSE b)
 toggle = undefined
 
 --------------
 --
+
+saveTrigger :: CsdTuple b => Event (D, a) -> DM.InstrName -> SE b
+saveTrigger = undefined
 
