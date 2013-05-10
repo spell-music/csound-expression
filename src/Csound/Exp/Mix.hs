@@ -68,7 +68,7 @@ type Effect = [Sig] -> SE [Sig]
 newtype Mix a = Mix { unMix :: SE M } 
 
 data M 
-    = Snd DM.InstrName (Score Note)
+    = Snd InstrId (Score Note)
     | Eff Instr (Score M)    
 
 nchnls :: Out a => Score (Mix a) -> Int

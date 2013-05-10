@@ -1,7 +1,6 @@
 {-# Language DeriveFunctor, DeriveFoldable #-}
 module Csound.Render.InstrTable(
-    InstrTab(..), MixerTab(..), instrTabs,
-    instrTabElems, mixerTabElems
+    InstrTab, MixerTab(..), instrTabs,  mixerTabElems
 ) where
 
 import Control.Monad.Trans.State.Strict
@@ -18,7 +17,7 @@ import Temporal.Music.Score(Score)
 
 import Csound.Exp
 import Csound.Exp.Wrapper
-import Csound.Exp.SE(InstrIndexMap, historySE, History(..))
+import Csound.Exp.SE(History(..))
 import Csound.Exp.Mix
 import Csound.Exp.Tuple(Out(..), outArity)
 import qualified Csound.Render.IndexMap as DM
@@ -26,11 +25,7 @@ import Csound.Tfm.Tab
 import Csound.Tfm.String
 import Csound.Render.Channel
 
-newtype InstrTab a = InstrTab { unInstrTab :: [(InstrId, a)] }
-    deriving (Functor, Foldable) 
-    
-instrTabElems :: InstrTab a -> [a]
-instrTabElems (InstrTab as) = fmap snd as
+type InstrTab = [(InstrId, E)]
     
 data MixerTab a = MixerTab 
     { masterInstr :: (InstrId, a)
@@ -43,20 +38,16 @@ instance Foldable MixerTab where
 mixerTabElems :: MixerTab a -> [a]
 mixerTabElems a = snd (masterInstr a) : fmap snd (otherInstr a)
 
-instrTabs :: TabFi -> Score M -> History -> IO (InstrTab E, MixerTab MixerExp, TabMap, StringMap)
+instrTabs :: TabFi -> Score M -> History -> IO (InstrTab, MixerTab MixerExp, TabMap, StringMap)
 instrTabs tabFi sco history = do
-    let instrs = instrMap history
-    mixers <- mixers instrs sco
-    tabSndSrc <- tableSoundSources tabFi instrs
+    mixers <- mixers sco
+    let tabSndSrc = tableSoundSources tabFi history
     tabMixer  <- tableMixers tabFi mixers
     let (instrs', mixers', tabs, strs) = substTablesAndStrings tabSndSrc tabMixer
     return (instrs', mixers', tabs, strs)
             
-tableSoundSources :: TabFi -> InstrIndexMap -> IO (InstrTab E)
-tableSoundSources tabFi = fmap InstrTab . mapM phi . DM.elems
-    where phi (exp, name) = do
-            exp' <- instrExp exp
-            return (name, defineInstrTabs tabFi exp')
+tableSoundSources :: TabFi -> History -> InstrTab
+tableSoundSources tabFi = fmap (second $ defineInstrTabs tabFi) . instrMap
         
 tableMixers :: TabFi -> MixerTab Mixer -> IO (MixerTab MixerExp)
 tableMixers tabFi = fmap (fmap (defMixTab tabFi)) . mixExps
@@ -72,9 +63,9 @@ defMixTab tabFi (MixerExp eff sco) = MixerExp (defineInstrTabs tabFi eff) (fmap 
 
 -- substitute tables 
 
-substTablesAndStrings :: InstrTab E -> MixerTab MixerExp -> (InstrTab E, MixerTab MixerExp, TabMap, StringMap)
+substTablesAndStrings :: InstrTab -> MixerTab MixerExp -> (InstrTab, MixerTab MixerExp, TabMap, StringMap)
 substTablesAndStrings instrTab mixerTab = 
-    (fmap (substInstrTabs tabs) instrTab, 
+    (fmap (second $ substInstrTabs tabs) instrTab, 
      fmap (substMixFtables strs tabs) mixerTab,
      tabs, 
      strs)
@@ -84,9 +75,8 @@ substTablesAndStrings instrTab mixerTab =
 
 -- collect tables 
 
-getEs :: InstrTab E -> MixerTab MixerExp -> [E]
-getEs instrTab mixerTab = 
-    instrTabElems instrTab ++ (fmap mixerExpE $ mixerTabElems mixerTab)
+getEs :: InstrTab -> MixerTab MixerExp -> [E]
+getEs instrTab mixerTab = fmap snd instrTab ++ (fmap mixerExpE $ mixerTabElems mixerTab)
 
 getNotes :: MixerTab MixerExp -> Note
 getNotes = foldMap (foldMap scoNotes . mixerExpSco)
@@ -138,8 +128,8 @@ getCounter = fmap mixingCounter get
 putCounter :: Int -> MkMixerTab ()
 putCounter n = modify $ \s -> s{ mixingCounter = n }
 
-mixers :: InstrIndexMap -> Score M -> IO (MixerTab Mixer)
-mixers tab sco = undefined
+mixers :: Score M -> IO (MixerTab Mixer)
+mixers sco = undefined
 {-
     fmap formRes $ runStateT (traverseMix onSco onMid onMix sco) (initMixingState $ pred lastInstrId)
     where formRes (sco, st) = MixerTab (lastInstrId, Mixer (Arity n n) return sco) (mixingElems st)

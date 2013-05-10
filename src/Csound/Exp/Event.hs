@@ -6,10 +6,12 @@ import Temporal.Music.Score(Score)
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.Cons(spec1)
 import Csound.Exp.Logic
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Exp.Mix
+import Csound.Exp.Logic
 import Csound.Exp.SE
 import Csound.Exp.Instr
 import qualified Csound.Render.IndexMap as DM
@@ -116,9 +118,64 @@ schedule instr trigger = do
 toggle :: (Arg a, Out b) => (a -> b) -> Event a -> Event c -> SE (NoSE b)
 toggle = undefined
 
+
 --------------
 --
 
-saveTrigger :: CsdTuple b => Event (D, a) -> DM.InstrName -> SE b
-saveTrigger = undefined
+saveTrigger :: CsdTuple b => Event (D, a) -> InstrId -> SE b
+saveTrigger evt name = do
+    globalVars <- newCsdTuple
+    saveTrigInstr name (renderEvent globalVars evt)
+    return globalVars
+    
+renderEvent :: CsdTuple b => b -> Event (D, a) -> (Int -> E)
+renderEvent = undefined
 
+react :: Event a -> (a -> SE ()) -> SE ()
+react x bam = case x of
+    Trigger cond -> when cond $ bam ()
+
+    TriggerK cond a -> when cond $ bam a
+
+    -- transforms
+    Map f evt -> react evt $ \a -> bam (f a)
+
+    Filter cond evt -> react evt $ \a -> 
+        when (toBoolSig $ cond a) $ bam a
+
+    Accum s0 g evt -> do
+        (readSt, writeSt) <- initState s0
+        react evt $ \a -> do
+            s1 <- readSt
+            let (b, s2) = g s1 a
+            writeSt s2
+            bam b  
+
+    Snapshot f sig evt -> react evt $ \a ->
+        bam (f (readSnap sig) a)
+
+
+    -- monoid
+    Empty -> return ()
+
+    Merge evt1 evt2 -> do
+        react evt1 $ \a -> bam a
+        react evt2 $ \a -> bam a
+
+
+toBoolSig :: BoolD -> BoolSig
+toBoolSig = undefined
+
+initState :: CsdTuple s => s -> SE (SE s, s -> SE ())
+initState s0 = undefined
+
+readSnap :: CsdTuple a => a -> Snap a
+readSnap = undefined
+
+bam :: Arg a => InstrId -> D -> D -> a -> Int -> SE ()
+bam instrId start dur arg chn = se_ $ tfm info $
+       [toE $ str "i", prim $ PrimInt $ instrId, toE start, toE dur] 
+    ++ (fmap prim $ toNote arg) 
+    ++ [prim $ PrimInt chn]  
+    where info = pref "event" $ spec1 [(Xr, repeat Ir)]
+    

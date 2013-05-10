@@ -128,7 +128,6 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g) => Arg (a, b, c, d, e
         where to (a, (b, c, d, e, f, g)) = (a, b, c, d, e, f, g)
               from (a, b, c, d, e, f, g) = (a, (b, c, d, e, f, g))
 
-
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, c, d, e, f, g, h) where
     argMethods = makeArgMethods to from
         where to (a, (b, c, d, e, f, g, h)) = (a, b, c, d, e, f, g, h)

@@ -76,7 +76,7 @@ type Nchnls = Int
 
 type InstrId = Int
 
-renderInstr0 :: Nchnls -> [PureMidiAssign] -> CsdOptions -> Doc
+renderInstr0 :: Nchnls -> [MidiAssign] -> CsdOptions -> Doc
 renderInstr0 nchnls massignTable opt = ppInstr0 $ [
     stmt "sr"    $ sampleRate opt,
     stmt "ksmps" $ blockSize opt,
@@ -90,7 +90,7 @@ renderInstr0 nchnls massignTable opt = ppInstr0 $ [
           stmtInitc7 (chn, ctl, val) = ppProc "initc7" [int chn, int ctl, double val]
             
   
-renderMidiAssign :: PureMidiAssign -> Doc
+renderMidiAssign :: MidiAssign -> Doc
 renderMidiAssign a = ppProc opcode $ [int $ midiAssignChannel a, int $ midiAssignInstr a] ++ auxParams
     where opcode = case midiAssignType a of
               Massign     -> "massign"

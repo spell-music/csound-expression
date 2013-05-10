@@ -1,7 +1,10 @@
+{-# Language ScopedTypeVariables #-}
 module Csound.Exp.Instr(
-    InstrFun, mkInstr, mkArity, saveInstr
+    InstrFun, mkInstr, mkArity, saveInstr, saveTrigInstr,
+    newCsdTuple
 ) where
 
+import Control.Monad(zipWithM)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict
 
@@ -10,16 +13,28 @@ import Csound.Exp.SE
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
 
+import Csound.Render.Channel(instrExp)
 import qualified Csound.Render.IndexMap as DM
 
-saveInstr :: (Arg a, Out b) => (a -> b) -> SE DM.InstrName
+saveInstr :: (Arg a, Out b) => (a -> b) -> SE InstrId
 saveInstr instrFun = SE $ do
-    let (name, body) = mkInstr getArity toArg instrFun
     s <- get
-    im <- lift $ DM.insert name body (instrMap s)
-    put $ s { instrMap = im }
-    return name
-    where getArity = mkArity arity outArity
+    let name = DM.makeInstrName instrFun
+    maybeInstrId <- lift $ DM.lookup name (instrSet s)
+    case maybeInstrId of
+        Just n  -> return n
+        Nothing -> do
+            (n, instrSet') <- lift $ DM.insert name (instrSet s)
+            let instrBody = toOut $ instrFun toArg  
+            exp <- lift $ instrExp (insArity instrFun) instrBody
+            put $ s{ instrSet = instrSet', instrMap = (n, exp) : instrMap s }
+            return n
+    where insArity = arity . fst . funProxy
+
+saveTrigInstr :: InstrId -> (Int -> E) -> SE ()
+saveTrigInstr = undefined {-name exp = SE $ modify $ 
+    \s -> s{ trigMap = TrigInstrMap (TrigInstr name exp : unTrigInstrMap (trigMap s)) }
+    -}
 
 type InstrFun a b = a -> b
 
@@ -30,10 +45,12 @@ mkInstr getArity arg instrFun = (DM.makeInstrName instrFun, x)
 
 mkArity :: (a -> Int) -> (b -> Int) -> InstrFun a b -> Arity
 mkArity ins outs instr = let (a, b) = funProxy instr in Arity (ins a) (outs b)
-    where funProxy :: (a -> b) -> (a, b)
-          funProxy = const (undefined, undefined)      
 
+funProxy :: (a -> b) -> (a, b)
+funProxy = const (undefined, undefined)      
 
-newTuple :: CsdTuple a => SE a
-newTuple = undefined
+newCsdTuple :: forall a . CsdTuple a => SE a
+newCsdTuple = fmap toCsdTuple $ 
+    zipWithM (\a b -> fmap readVar $ newGlobalVar a b) (ratesCsdTuple x) (fromCsdTuple x)
+    where x = defCsdTuple :: a
 

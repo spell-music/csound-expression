@@ -1,5 +1,5 @@
 {-# Language TypeFamilies #-}
-module Csound.Exp.Logic(BoolSig, BoolD) where
+module Csound.Exp.Logic(BoolSig, BoolD, when) where
 
 import Control.Monad.Trans.State(State, state, evalState)
 import qualified Data.IntMap as IM(fromList)

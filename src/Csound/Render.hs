@@ -22,7 +22,6 @@ import Csound.Exp.SE
 render :: (Out a) => CsdOptions -> Score (Mix a) -> IO String
 render opt a' = do
     (ms, history) <- runSE $ traverse unMix a'
-    midis <- mapM (pureMidiAssign (instrMap history)) (midiInstrs history)
     let a = rescale ms
     (sndTab, mixTab, tabs, strs) <- instrTabs (tabFi opt) a history
     let lastInstrId = getLastInstrId mixTab
@@ -30,7 +29,7 @@ render opt a' = do
         -- flags
         (renderFlags opt)
         -- instr 0 
-        (renderInstr0 (nchnls a') midis opt $$ chnUpdateStmt) 
+        (renderInstr0 (nchnls a') (midiInstrs history) opt $$ chnUpdateStmt) 
         -- orchestra
         (renderSnd sndTab
             $$ renderMix mixTab)           
@@ -45,14 +44,14 @@ render opt a' = do
 
 alwayson totalDur instrId = ppNote instrId 0 totalDur []      
 
-renderSnd :: InstrTab E -> Doc
-renderSnd = ppOrc . fmap (uncurry renderInstr) . unInstrTab
+renderSnd :: InstrTab -> Doc
+renderSnd = ppOrc . fmap (uncurry renderInstr)
  
 renderMix :: MixerTab MixerExp -> Doc
 renderMix (MixerTab master other) = (ppOrc . (uncurry renderMaster master : ) . fmap (uncurry render)) other
     where renderMaster instrId (MixerExp exp _) = ppInstr instrId $ renderMasterPort : renderInstrBody exp
           render instrId (MixerExp exp sco) = ppInstr instrId $ (renderPort $$ renderSco ppEvent sco) : renderInstrBody exp          
-          renderPort = ppOpc (ppVar chnVar) "FreePort" []           
+          renderPort = ppOpc (ppVar chnVar) chnUpdateOpcodeName []           
           renderMasterPort = ppVar chnVar $= int 0
 
 renderSco :: (InstrId -> Event Double [Prim] -> Var -> Doc) -> Score MixerNote -> Doc

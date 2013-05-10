@@ -2,8 +2,9 @@
 module Csound.Exp.SE(
     Outs,
     SE(..), History(..), Instr(..), Arity(..), 
-    PureMidiAssign, DirtyMidiAssign, MidiAssign(..), pureMidiAssign,
-    InstrIndexMap, se, se_, runSE, execSE, historySE, newVar,
+    TrigInstr(..), TrigInstrMap(..),
+    MidiAssign(..), 
+    se, se_, runSE, execSE, historySE, newVar, newGlobalVar,
     ifBegin, ifEnd, elseIfBegin, elseBegin,
     writeVar, readVar
 ) where
@@ -33,12 +34,11 @@ newtype SE a = SE { unSE :: StateT History IO a }
 data History = History
     { expDependency     :: Maybe E
     , newVarId          :: Int
-    , newGlobalVarId    :: Int
-    , instrMap          :: InstrIndexMap
-    , midiInstrs        :: [DirtyMidiAssign] }
-
--- Instruments that are referenced with stable names.
-type InstrIndexMap = DM.IndexMap Instr
+    , globals           :: Globals
+    , instrSet          :: DM.IndexMap
+    , instrMap          :: [(InstrId, E)]
+    , trigMap           :: TrigInstrMap 
+    , midiInstrs        :: [MidiAssign] }
 
 data Instr = Instr 
     { instrArity    :: Arity 
@@ -48,21 +48,34 @@ data Arity = Arity
     { arityIns  :: Int
     , arityOuts :: Int }
 
-type PureMidiAssign  = MidiAssign Int
-type DirtyMidiAssign = MidiAssign DM.InstrName
 
-pureMidiAssign :: InstrIndexMap -> DirtyMidiAssign -> IO PureMidiAssign
-pureMidiAssign m x = do
-    instrId <- fmap fromJust $ DM.lookup (midiAssignInstr x) m
-    return $ x{ midiAssignInstr = instrId }
+data Globals = Globals
+    { newGlobalVarId :: Int
+    , globalsSoFar   :: [Global] }
 
-data MidiAssign a = MidiAssign 
+instance Default Globals where 
+    def = Globals 0 []
+
+data Global = Global 
+    { globalVar     :: Var
+    , globalInit    :: E }
+
+data TrigInstr = TrigInstr 
+    { instrToTrig     :: DM.InstrName
+    , trigInstrExp    :: Int -> E }
+
+newtype TrigInstrMap = TrigInstrMap { unTrigInstrMap :: [TrigInstr] }
+
+instance Default TrigInstrMap where
+    def = TrigInstrMap []
+
+data MidiAssign = MidiAssign 
     { midiAssignType    :: MidiType
     , midiAssignChannel :: Channel
-    , midiAssignInstr   :: a }
+    , midiAssignInstr   :: Int }
 
 instance Default History where
-    def = History Nothing 0 0 (DM.empty 1) []
+    def = History def def def (DM.empty 1) def def def
 
 instance Functor SE where
     fmap f = SE . fmap f . unSE
@@ -95,6 +108,25 @@ se_ = fmap (const ()) . (se :: E -> SE E)
 newVar :: Rate -> SE Var
 newVar rate = SE $ state $ \s -> 
     (Var LocalVar rate ("var" ++ show (newVarId s)), s{ newVarId = succ (newVarId s) })
+
+newGlobalId :: SE Int
+newGlobalId = SE $ do
+    s <- get
+    put $ s{ globals = globals s }
+    return $ newGlobalVarId $ globals s 
+
+insertGlobal :: Rate -> E -> Globals -> (Global, Globals)
+insertGlobal rate init s = (g, s{ newGlobalVarId = succ n, globalsSoFar = g:gs })
+    where g = Global (Var GlobalVar rate (show $ newGlobalVarId s)) init
+          n  = newGlobalVarId s
+          gs = globalsSoFar s
+            
+newGlobalVar :: Rate -> E -> SE Var
+newGlobalVar rate init = SE $ do
+    s <- get
+    let (g, gs) = insertGlobal rate init (globals s)
+    put $ s{ globals = gs }    
+    return $ globalVar g
 
 ifBegin :: Val a => a -> SE ()
 ifBegin = withCond IfBegin

@@ -3,9 +3,11 @@
         FlexibleContexts #-}
 module Csound.Exp.Tuple(
     CsdTuple(..), 
-    fromCsdTuple, toCsdTuple, arityCsdTuple,
+    fromCsdTuple, toCsdTuple, arityCsdTuple, ratesCsdTuple, defCsdTuple,
     Out(..), multiOuts, outArity
 ) where
+
+import Data.Default
 
 import Control.Applicative(liftA2)
 import Control.Monad(join)
@@ -23,7 +25,9 @@ class CsdTuple a where
 data CsdTupleMethods a = CsdTupleMethods
     { fromCsdTuple_  :: a -> [E]
     , toCsdTuple_    :: [E] -> a
-    , arityCsdTuple_ :: a -> Int }
+    , arityCsdTuple_ :: a -> Int
+    , ratesCsdTuple_ :: a -> [Rate]
+    , defCsdTuple_   :: a }
 
 fromCsdTuple :: CsdTuple a => a -> [E] 
 fromCsdTuple = fromCsdTuple_ csdTupleMethods
@@ -34,12 +38,20 @@ toCsdTuple = toCsdTuple_ csdTupleMethods
 arityCsdTuple :: CsdTuple a => a -> Int
 arityCsdTuple = arityCsdTuple_ csdTupleMethods
 
+ratesCsdTuple :: CsdTuple a => a -> [Rate]
+ratesCsdTuple = ratesCsdTuple_ csdTupleMethods
+
+defCsdTuple :: CsdTuple a => a
+defCsdTuple = defCsdTuple_ csdTupleMethods
+
 -- | Defines instance of type class 'Arg' for a new type in terms of an already defined one.
 makeCsdTupleMethods :: (CsdTuple a) => (a -> b) -> (b -> a) -> CsdTupleMethods b
 makeCsdTupleMethods to from = CsdTupleMethods 
     { fromCsdTuple_  = fromCsdTuple . from
     , toCsdTuple_    = to . toCsdTuple 
-    , arityCsdTuple_ = const $ arityCsdTuple $ proxy to }
+    , arityCsdTuple_ = const $ arityCsdTuple $ proxy to
+    , ratesCsdTuple_ = ratesCsdTuple . from
+    , defCsdTuple_   = to defCsdTuple }
     where proxy :: (a -> b) -> a
           proxy = undefined
 
@@ -60,38 +72,44 @@ instance CsdTuple Sig where
     csdTupleMethods = CsdTupleMethods 
         { fromCsdTuple_ = return . toE
         , toCsdTuple_ = fromE . head
-        , arityCsdTuple_ = const 1 }
+        , arityCsdTuple_ = const 1
+        , ratesCsdTuple_ = const [Ar]
+        , defCsdTuple_   = def }
         
 instance CsdTuple D where
     csdTupleMethods = CsdTupleMethods 
         { fromCsdTuple_ = return . toE
         , toCsdTuple_ = fromE . head
-        , arityCsdTuple_ = const 1 }
+        , arityCsdTuple_ = const 1
+        , ratesCsdTuple_ = const [Ir]
+        , defCsdTuple_   = def }
 
 instance CsdTuple Tab where
     csdTupleMethods = CsdTupleMethods 
         { fromCsdTuple_ = return . toE
         , toCsdTuple_ = fromE . head
-        , arityCsdTuple_ = const 1 }
+        , arityCsdTuple_ = const 1
+        , ratesCsdTuple_ = const [Ir]
+        , defCsdTuple_   = def }
 
 instance CsdTuple Str where
     csdTupleMethods = CsdTupleMethods 
         { fromCsdTuple_ = return . toE
         , toCsdTuple_ = fromE . head
-        , arityCsdTuple_ = const 1 }
+        , arityCsdTuple_ = const 1
+        , ratesCsdTuple_ = const [Sr]
+        , defCsdTuple_   = def }
 
 instance CsdTuple Spec where
     csdTupleMethods = CsdTupleMethods 
         { fromCsdTuple_ = return . toE
         , toCsdTuple_ = fromE . head
-        , arityCsdTuple_ = const 1 }
-
+        , arityCsdTuple_ = const 1
+        , ratesCsdTuple_ = const [Fr]
+        , defCsdTuple_   = def }
 
 instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where    
-    csdTupleMethods = CsdTupleMethods 
-        { fromCsdTuple_  = fromCsdTuple'
-        , toCsdTuple_    = toCsdTuple'
-        , arityCsdTuple_ = arityCsdTuple' }
+    csdTupleMethods = CsdTupleMethods fromCsdTuple' toCsdTuple' arityCsdTuple' ratesCsdTuple' defCsdTuple'
         where 
             fromCsdTuple' (a, b) = fromCsdTuple a ++ fromCsdTuple b
             arityCsdTuple' x = let (a, b) = proxy x in arityCsdTuple a + arityCsdTuple b
@@ -101,6 +119,9 @@ instance (CsdTuple a, CsdTuple b) => CsdTuple (a, b) where
                 where a = toCsdTuple $ take (arityCsdTuple a) xs
                       xsb = drop (arityCsdTuple a) xs  
                       b = toCsdTuple (take (arityCsdTuple b) xsb)
+
+            ratesCsdTuple' (a, b) = ratesCsdTuple a ++ ratesCsdTuple b
+            defCsdTuple' = (defCsdTuple, defCsdTuple)
 
 instance (CsdTuple a, CsdTuple b, CsdTuple c) => CsdTuple (a, b, c) where
     csdTupleMethods = makeCsdTupleMethods to from

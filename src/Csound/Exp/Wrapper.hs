@@ -194,4 +194,18 @@ ir = setRate Ir
 sig :: D -> Sig
 sig (D a) = Sig a
 
+--------------------------------------------
+-- defaults
+
+instance Default E   where def = prim $ PrimDouble 0
+
+instance Default Sig  where def = fromE def    
+instance Default D    where def = fromE def
+instance Default Tab  where def = fromE def
+instance Default Spec where def = fromE def
+
+instance Default Str  where def = prim $ PrimString ""
+
+
+    
 
