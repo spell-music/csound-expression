@@ -16,6 +16,7 @@ import Csound.Exp.SE
 data Event a where
     -- event sources
     Trigger     :: BoolSig -> Event ()
+    TriggerK    :: BoolSig -> a -> Event a
     Keyboard    :: Event D
     MouseLeft   :: Event (D, D)
     MouseRight  :: Event (D, D)
@@ -27,15 +28,21 @@ data Event a where
     Accum       :: (CsdTuple a, CsdTuple b, CsdTuple s)  
                     => s -> (s -> a -> (b, s)) -> Event a -> Event b
     Snapshot    :: (CsdTuple a, CsdTuple b, CsdTuple c) 
-                    => (a -> b -> c) -> a -> Event b -> Event c
+                    => (Snap a -> b -> c) -> a -> Event b -> Event c
     -- operation
     Empty       :: Event a
     Merge       :: Event a -> Event a -> Event a
+    
+    -- switch ???
+    Switch      :: Arg a => (a -> Event b) -> Event a -> Event b
 
 
 instance Monoid (Event a) where
     mempty  = Empty
-    mappend = Merge
+    mappend a b = case (a, b) of
+        (Empty, a) -> a
+        (a, Empty) -> a
+        (a, b) -> Merge a b
 
 -- snap 
 
@@ -57,9 +64,6 @@ type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
 trigger :: BoolSig -> Event ()
 trigger = Trigger
 
-snapshot :: (CsdTuple a, CsdTuple b, CsdTuple c) => (a -> b -> c) -> a -> Event b -> Event c
-snapshot = Snapshot
-
 keyboard :: Event D
 keyboard = Keyboard
 
@@ -73,15 +77,32 @@ button :: Event ()
 button = Button
     
 -- transform
+
+snapshot :: (CsdTuple a, CsdTuple b, CsdTuple c) => (Snap a -> b -> c) -> a -> Event b -> Event c
+snapshot f x y = case y of
+    Empty -> Empty    
+    _ -> Snapshot f x y
+
 mapEvent :: (CsdTuple a, CsdTuple b) => (a -> b) -> Event a -> Event b
-mapEvent = Map
+mapEvent f x = case x of
+    Empty -> Empty
+    Trigger a -> TriggerK a (f ())
+    TriggerK a b -> TriggerK a (f b)
+    Map g a -> Map (f . g) a
+    Accum s g a -> Accum s (\s x -> let (y, s') = g s x in (f y, s)) a
+    Snapshot g a b -> Snapshot (\a b -> f (g a b)) a b
 
 filterEvent :: (CsdTuple a) => (a -> BoolD) -> Event a -> Event a
-filterEvent = Filter
+filterEvent p x = case x of
+    Empty -> Empty
+    _ -> Filter p x
 
 accumEvent :: (CsdTuple a, CsdTuple b, CsdTuple s) 
     => s -> (s -> a -> (b, s)) -> Event a -> Event b    
-accumEvent = Accum
+accumEvent s0 f x = case x of
+    Empty -> Empty
+    Map g a -> Accum s0 (\s a -> f s (g a)) a    
+    _ -> Accum s0 f x
 
 --------------------------------------------------
 --
