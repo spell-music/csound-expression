@@ -1,5 +1,5 @@
 module Csound.Render.InstrTable(
-    InstrTab, MixerTab(..), instrTabs,  mixerTabElems
+    InstrTab, MixerTab(..), instrTabs  
 ) where
 
 import Control.Monad.Trans.State.Strict
