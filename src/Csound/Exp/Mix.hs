@@ -5,8 +5,7 @@ module Csound.Exp.Mix(
     Arity(..), mkArity,
     
     -- * Mixer
-    Mixer(..), MixerNote(..), MidiInstrParams(..),
-    MixerExp(..),
+    MixerNote(..), MixerExp(..),
 
     Effect, effect, effectS, 
 
@@ -44,20 +43,12 @@ import Csound.Render.Channel(ins)
 --  * body      - actual Csound expression (it's a list of output signals, 
 --                each signal is an expression-tree)
 
-
--- Mixer is an instrument that applies an effect to the sound.
-data Mixer = Mixer
-    { mixerInstr    :: Instr
-    , mixerScore    :: Score MixerNote }
-
 -- Mixer can expect sound from three sources:
 data MixerNote 
     -- another mixer
     = MixerNote InstrId 
     -- instrument trigered by score
     | SoundNote InstrId (Score Note)
-
-data MidiInstrParams = MidiInstrParams Arity InstrId MidiType Channel
 
 data MixerExp = MixerExp
     { mixerExpE   :: E

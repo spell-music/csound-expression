@@ -47,7 +47,7 @@ alwayson totalDur instrId = ppNote instrId 0 totalDur []
 renderSnd :: InstrTab -> Doc
 renderSnd = ppOrc . fmap (uncurry renderInstr)
  
-renderMix :: MixerTab MixerExp -> Doc
+renderMix :: MixerTab -> Doc
 renderMix (MixerTab master other) = (ppOrc . (uncurry renderMaster master : ) . fmap (uncurry render)) other
     where renderMaster instrId (MixerExp exp _) = ppInstr instrId $ renderMasterPort : renderInstrBody exp
           render instrId (MixerExp exp sco) = ppInstr instrId $ (renderPort $$ renderSco ppEvent sco) : renderInstrBody exp          
@@ -64,7 +64,7 @@ lastInstrNotes :: Double -> (InstrId, MixerExp) -> Doc
 lastInstrNotes totalDur (instrId, a) = alwayson totalDur instrId $$ sco
     where sco = renderSco (\n evt var -> ppMasterNote n evt) $ mixerExpSco a
   
-getLastInstrId :: MixerTab a -> Int
+getLastInstrId :: MixerTab -> Int
 getLastInstrId = fst . masterInstr
           
 rescale :: Score M -> Score M
