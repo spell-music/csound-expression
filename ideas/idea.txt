@@ -1,0 +1,21 @@
+* tables: mv segs lins
+
+* how about all GENs, and readWavs in particular?
+
+* make it score independent by interfaces, smth like
+
+class (Foldable f, Traversable f) => CsdSco f where
+    type Dur f :: *
+    stretchSco :: Dur f -> f a -> f a
+    delaySco :: Dur f -> f a -> f a
+    renderSco :: Num (Dur f) => f a -> [(Dur f, Dur f, a)]
+
+score :: (Arg a, Out b, CsdSco sco) => (a -> b) -> sco a       -> sco (Mix b)
+mixer :: (Out a, Out b, CsdSco sco) => (a -> b) -> sco (Mix a) -> sco (Mix b) 
+
+* how about events in the local instruments? *troloface*
+
+* generic renderers, by dif soundproducers, with or without guis, options, etc
+
+
+

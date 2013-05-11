@@ -91,6 +91,8 @@ Library
         Csound.Exp.Mix
         Csound.Exp.Event
         Csound.Exp.Instr
+        Csound.Exp.Gui
+        Csound.Exp.Widget
        
         Csound.IO
 

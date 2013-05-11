@@ -64,6 +64,12 @@ type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
 -----------------------------------------
 -- smart constructors
 
+onChange :: Sig -> Event D
+onChange = undefined
+
+stepper :: CsdTuple a => a -> Event (Snap a) -> SE a
+stepper = undefined 
+
 trigger :: BoolSig -> Event ()
 trigger = Trigger
 

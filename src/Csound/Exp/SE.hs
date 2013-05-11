@@ -6,7 +6,8 @@ module Csound.Exp.SE(
     MidiAssign(..), 
     se, se_, runSE, execSE, historySE, newVar, newGlobalVar,
     ifBegin, ifEnd, elseIfBegin, elseBegin,
-    writeVar, readVar
+    writeVar, readVar,
+    appendToGui, newGuiId
 ) where
 
 import Control.Applicative
@@ -19,6 +20,7 @@ import Data.Fix(Fix(..))
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.Gui(Gui)
 
 import qualified Csound.Render.IndexMap as DM
 
@@ -38,7 +40,8 @@ data History = History
     , instrSet          :: DM.IndexMap
     , instrMap          :: [(InstrId, E)]
     , trigMap           :: TrigInstrMap 
-    , midiInstrs        :: [MidiAssign] }
+    , midiInstrs        :: [MidiAssign]
+    , guiState          :: GuiState }
 
 data Instr = Instr 
     { instrArity    :: Arity 
@@ -74,8 +77,16 @@ data MidiAssign = MidiAssign
     , midiAssignChannel :: Channel
     , midiAssignInstr   :: Int }
 
+data GuiState = GuiState 
+    { guiStateNewId     :: Int
+    , guiStateInstr     :: SE ()
+    , guiStateToDraw    :: [Gui] }
+
+instance Default GuiState where 
+    def = GuiState 0 (return ()) []
+
 instance Default History where
-    def = History def def def (DM.empty 1) def def def
+    def = History def def def (DM.empty 1) def def def def
 
 instance Functor SE where
     fmap f = SE . fmap f . unSE
@@ -154,4 +165,24 @@ readVar :: (Val a) => Var -> a
 readVar v = noRate $ ReadVar v
 
 ---------------------------------------------------
+
+bumpGuiStateId :: GuiState -> (Int, GuiState)
+bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
+
+appendToGuiState :: Gui -> SE () -> GuiState -> GuiState
+appendToGuiState gui act s = s
+    { guiStateToDraw = gui : guiStateToDraw s
+    , guiStateInstr  = guiStateInstr s >> act }
+
+newGuiId :: SE Int 
+newGuiId = SE $ do 
+    s <- get
+    let (n, guiState')  = bumpGuiStateId $ guiState s
+    put $ s{ guiState = guiState' } 
+    return n
+
+appendToGui :: Gui -> SE () -> SE ()
+appendToGui gui act = SE $ modify $ \s -> s{ guiState = appendToGuiState gui act $ guiState s }
+
+
 

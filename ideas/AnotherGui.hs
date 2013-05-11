@@ -13,7 +13,7 @@ butn   :: Widget Trig Trig
 
 widget :: SE (Gui, ins, outs) -> Widget ins outs
 
-parts   :: Widget ins outs -> SE (Gui, ins, outs)
+parts   :: Widget ins outs -> SE (Gui, ins, outs, loop)
 
 inputs  :: Widget ins outs -> SE ins
 outputs :: Widget ins outs -> SE outs
