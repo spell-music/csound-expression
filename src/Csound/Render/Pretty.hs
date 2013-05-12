@@ -139,9 +139,9 @@ tag name content = vcat $ punctuate newline [
 
 -- instrument
 
-ppInstr :: Int -> [Doc] -> Doc
+ppInstr :: InstrId -> [Doc] -> Doc
 ppInstr instrId body = vcat [
-    text "instr" <+> int instrId,
+    text "instr" <+> ppInstrId instrId,
     vcat body,
     text "endin"]
 
@@ -150,20 +150,24 @@ ppInstr0 = vcat
 ppOrc :: [Doc] -> Doc
 ppOrc = vcat . punctuate newline
 
+ppInstrId :: InstrId -> Doc
+ppInstrId (InstrId den nom) = int nom <> maybe empty ppAfterDot den 
+    where ppAfterDot x = text $ reverse $ show x
+
 -- score
 
 ppSco = vcat
 
 ppScore = vcat
 
-ppNote instrId time dur args = char 'i' <> int instrId <+> double time <+> double dur <+> hsep args
+ppNote instrId time dur args = char 'i' <> ppInstrId instrId <+> double time <+> double dur <+> hsep args
 
-ppMasterNote :: Int -> Event Double [Prim] -> Doc
+ppMasterNote :: InstrId -> Event Double [Prim] -> Doc
 ppMasterNote instrId evt = ppNote instrId (eventStart evt) (eventDur evt) (fmap ppPrim $ eventContent evt) <+> int 0
 
-ppEvent :: Int -> Event Double [Prim] -> Var -> Doc
+ppEvent :: InstrId -> Event Double [Prim] -> Var -> Doc
 ppEvent instrId evt var = pre <> comma <+> ppVar var
-    where pre = ppProc "event_i" $ dquotes (char 'i') : int instrId 
+    where pre = ppProc "event_i" $ dquotes (char 'i') : ppInstrId instrId 
                 : (double $ eventStart evt) : (double $ eventDur evt) : (fmap ppPrim $ eventContent evt)
 
 ppTotalDur d = text "f0" <+> double d

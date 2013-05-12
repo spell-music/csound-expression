@@ -23,13 +23,13 @@ saveInstr instrFun = GE $ do
     let name = DM.makeInstrName instrFun
     maybeInstrId <- lift $ DM.lookup name (instrSet s)
     case maybeInstrId of
-        Just n  -> return n
+        Just n  -> return $ intInstrId n
         Nothing -> do
             (n, instrSet') <- lift $ DM.insert name (instrSet s)
             let instrBody = toOut $ instrFun toArg  
                 exp = instrExp (insArity instrFun) instrBody
-            put $ s{ instrSet = instrSet', instrMap = (n, exp) : instrMap s }
-            return n
+            put $ s{ instrSet = instrSet', instrMap = (intInstrId n, exp) : instrMap s }
+            return $ intInstrId n
     where insArity = arity . fst . funProxy
 
 saveTrigInstr :: InstrId -> (Int -> E) -> GE ()

@@ -65,7 +65,7 @@ lastInstrNotes :: Double -> (InstrId, MixerExp) -> Doc
 lastInstrNotes totalDur (instrId, a) = alwayson totalDur instrId $$ sco
     where sco = renderSco (\n evt var -> ppMasterNote n evt) $ mixerExpSco a
   
-getLastInstrId :: MixerTab -> Int
+getLastInstrId :: MixerTab -> InstrId
 getLastInstrId = fst . masterInstr
           
 rescale :: Score M -> Score M

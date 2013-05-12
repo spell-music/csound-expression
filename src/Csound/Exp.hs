@@ -1,7 +1,8 @@
 -- | Main types
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp(
-    E, RatedExp(..), RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name, InstrId,
+    E, RatedExp(..), RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name, 
+    InstrId(..), intInstrId, ratioInstrId,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
     Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap, TabFi(..),
@@ -26,7 +27,17 @@ import Data.Fix
 import qualified Csound.Tfm.DeduceTypes as R(Var(..)) 
 
 type Name = String
-type InstrId = Int
+
+data InstrId = InstrId 
+    { instrIdFrac :: Maybe Int
+    , instrIdCeil :: Int 
+    } deriving (Show, Eq, Ord)
+
+intInstrId :: Int -> InstrId
+intInstrId n = InstrId Nothing n
+
+ratioInstrId :: Int -> Int -> InstrId
+ratioInstrId beforeDot afterDot = InstrId (Just $ afterDot) beforeDot
 
 -- | The inner representation of csound expressions.
 type E = Fix RatedExp
@@ -167,6 +178,7 @@ data Prim
     | PrimInt Int 
     | PrimDouble Double 
     | PrimString String 
+    | PrimInstrId InstrId
     -- Here we use Tab and well LowTab. Tab contains no size. It is deduced 
     -- from the renderer settings.
     | PrimTab (Either Tab LowTab)

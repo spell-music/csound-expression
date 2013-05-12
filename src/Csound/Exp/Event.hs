@@ -181,7 +181,7 @@ readSnap = undefined
 
 bam :: Arg a => InstrId -> D -> D -> a -> Int -> SE ()
 bam instrId start dur arg chn = se_ $ tfm info $
-       [toE $ str "i", prim $ PrimInt $ instrId, toE start, toE dur] 
+       [toE $ str "i", prim $ PrimInstrId $ instrId, toE start, toE dur] 
     ++ (fmap prim $ toNote arg) 
     ++ [prim $ PrimInt chn]  
     where info = pref "event" $ spec1 [(Xr, repeat Ir)]
