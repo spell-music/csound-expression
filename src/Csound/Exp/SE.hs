@@ -2,9 +2,8 @@
 module Csound.Exp.SE(
     Outs,
     SE(..), LocalHistory(..), 
-    se, se_, runSE, execSE, newVar, 
-    ifBegin, ifEnd, elseIfBegin, elseBegin,
-    writeVar, readVar
+    se, se_, stmtOnly, runSE, execSE, 
+    writeVar, readVar, initVar, newVar
 ) where
 
 import Control.Applicative
@@ -30,10 +29,18 @@ newtype SE a = SE { unSE :: State LocalHistory a }
 
 data LocalHistory = LocalHistory
     { expDependency     :: Maybe E
-    , newVarId          :: Int }
+    , locals            :: Locals }
+
 
 instance Default LocalHistory where
     def = LocalHistory def def
+
+data Locals = Locals 
+    { newVarId          :: Int
+    , localInits        :: [SE ()] }
+
+instance Default Locals where
+    def = Locals def def
 
 instance Functor SE where
     fmap f = SE . fmap f . unSE
@@ -50,7 +57,14 @@ runSE :: SE a -> (a, LocalHistory)
 runSE a = runState (unSE a) def
 
 execSE :: SE a -> E
-execSE = fromJust . expDependency . snd . runSE
+execSE a 
+    | null initList = exp
+    | otherwise     = execSE $ applyInitList initList exp >> clearInitList
+    where state = snd $ runSE a
+          exp = fromJust $ expDependency state
+          initList = localInits $ locals state
+          clearInitList = SE $ modify $ \s -> s{ locals = def }
+          applyInitList inits exp = sequence_ inits >> se_ exp
 
 -- dependency tracking
 
@@ -62,32 +76,14 @@ se a = SE $ state $ \s ->
 se_ :: E -> SE ()
 se_ = fmap (const ()) . (se :: E -> SE E)
 
-------------------------------------------------------
--- imperative if-then-else
-
-ifBegin :: Val a => a -> SE ()
-ifBegin = withCond IfBegin
-
-elseIfBegin :: Val a => a -> SE ()
-elseIfBegin = withCond ElseIfBegin
-
-elseBegin :: SE ()
-elseBegin = stmtOnly ElseBegin
-
-ifEnd :: SE ()
-ifEnd = stmtOnly IfEnd
-
+stmtOnly :: Exp E -> SE ()
 stmtOnly stmt = se_ $ fromE $ noRate stmt
 
-withCond :: Val a => (E -> MainExp E) -> a -> SE ()
-withCond stmt cond = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE cond)
 
 --------------------------------------------------
 -- variables
 
-newVar :: Rate -> SE Var
-newVar rate = SE $ state $ \s -> 
-    (Var LocalVar rate ("var" ++ show (newVarId s)), s{ newVarId = succ (newVarId s) })
+-- generic funs
 
 writeVar :: (Val a) => Var -> a -> SE ()
 writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ toE x 
@@ -95,7 +91,22 @@ writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ toE x
 readVar :: (Val a) => Var -> a
 readVar v = noRate $ ReadVar v
 
----------------------------------------------------
+initVar :: (Val a) => Var -> a -> SE ()
+initVar v x = se_ $ noRate $ InitVar v $ toPrimOr $ toE x
 
+-- new local variables
 
+newVar :: Val a => Rate -> a -> SE Var
+newVar rate init = SE $ do
+    s <- get
+    let (var, locals') = newVarOnLocals rate init (locals s)
+    put $ s { locals = locals' }
+    return var
+
+newVarOnLocals :: Val a => Rate -> a -> Locals -> (Var, Locals)
+newVarOnLocals rate init st = 
+    (var, st { newVarId = succ n, localInits = initStmt : localInits st })
+    where var = Var LocalVar rate (show n)
+          n = newVarId st  
+          initStmt = initVar var init
 

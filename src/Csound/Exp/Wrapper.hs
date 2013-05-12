@@ -121,6 +121,8 @@ inf name signature = Info name signature Infix Nothing
 tfm :: Val a => Info -> [E] -> a
 tfm info args = noRate $ Tfm info $ fmap toPrimOr args
 
+-- variables
+
 gvar, var :: Val a => Rate -> Name -> a
 
 var  = mkVar LocalVar 

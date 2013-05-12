@@ -1,5 +1,7 @@
 {-# Language TypeFamilies #-}
-module Csound.Exp.Logic(BoolSig, BoolD, when) where
+module Csound.Exp.Logic(
+    BoolSig, BoolD, when
+) where
 
 import Control.Monad.Trans.State(State, state, evalState)
 import qualified Data.IntMap as IM(fromList)
@@ -12,8 +14,9 @@ import Csound.Exp.Wrapper(
     setRate, noRate,
     Val(..), toExp, onExp, onE1)
 
-import Csound.Exp.SE(SE, ifBegin, ifEnd)
+import Csound.Exp.SE(SE, se_, stmtOnly)
 
+------------------------------------------------------
 -- imperative if-then-else
 
 when :: BoolSig -> SE () -> SE ()
@@ -22,6 +25,20 @@ when cond body = do
     body
     ifEnd
 
+ifBegin :: Val a => a -> SE ()
+ifBegin = withCond IfBegin
+
+elseIfBegin :: Val a => a -> SE ()
+elseIfBegin = withCond ElseIfBegin
+
+elseBegin :: SE ()
+elseBegin = stmtOnly ElseBegin
+
+ifEnd :: SE ()
+ifEnd = stmtOnly IfEnd
+
+withCond :: Val a => (E -> MainExp E) -> a -> SE ()
+withCond stmt cond = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE cond)
 -- booleans
 
 -- | Boolean signals. 

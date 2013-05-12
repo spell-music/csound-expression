@@ -87,6 +87,7 @@ data MainExp a
     -- | Numerical expressions (rendered in infix notation in the Csound)
     | ExpNum (NumExp a)
     -- | Reading/writing a named variable
+    | InitVar Var a
     | ReadVar Var
     | WriteVar Var a    
     -- | Imperative If-then-else
