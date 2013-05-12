@@ -96,7 +96,7 @@ slider label = mkWidget $ do
         reader = return $ readVar var
     return (gui, writer, reader)
 
-btn :: Label -> Source (Event ()) 
+btn :: Label -> Source (Evt ()) 
 btn label = mkSource $ do
     name <- newGuiId 
     let gui = Prim name label Btn

@@ -12,7 +12,9 @@ module Csound.Render.Channel (
     -- * channel opcodes
     chnVar, chnName, 
     chnmix, chnget, chnclear,
-    chnUpdateStmt, chnUpdateOpcodeName
+    chnUpdateStmt, chnUpdateOpcodeName,
+    -- * trigger an instrument
+    event, eventWithChannel, instrOn, instrOff
 ) where
 
 import Control.Monad(zipWithM_)
@@ -23,10 +25,10 @@ import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.GE
-import Csound.Exp.Cons(opc0, opc1, opc2, opcs)
+import Csound.Exp.Arg(Arg, toNote)
+import Csound.Exp.Cons(opc0, opc1, opc2, opcs, spec1)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 import Csound.Render.Pretty(verbatimLines)
-import Csound.Render.Pretty
 
 -----------------------------------------------------------
 -- simple instrument trigered with score
@@ -123,4 +125,22 @@ chnUpdateOpcodeName = "FreePort"
 
 freePort :: SE D
 freePort = se $ opc0 "FreePort" [(Ir, [])]
+
+-------------------------------------------------------------
+-- notes
+
+event :: Arg a => InstrId -> D -> D -> a -> SE ()
+event instrId start dur arg = se_ $ opcs "event" [(Xr, repeat Ir)] argExp
+    where argExp :: [E]
+          argExp = fmap prim $ toNote (str "i", start, dur, arg) 
+
+eventWithChannel :: Arg a => InstrId -> D -> D -> a -> Int -> SE ()
+eventWithChannel instrId start dur arg chn = event instrId start dur (arg, double $ fromIntegral chn)
+
+instrOn :: Arg a => InstrId -> a -> Int -> SE ()
+instrOn instrId arg chn = eventWithChannel instrId 0 (-1) arg chn
+
+instrOff :: InstrId -> SE ()
+instrOff instrId = event (toNegative instrId) 0 (-1) ()
+    where toNegative a = a { instrIdCeil = negate $ abs $ instrIdCeil a }
 

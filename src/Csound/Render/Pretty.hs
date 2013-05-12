@@ -152,7 +152,7 @@ ppOrc = vcat . punctuate newline
 
 ppInstrId :: InstrId -> Doc
 ppInstrId (InstrId den nom) = int nom <> maybe empty ppAfterDot den 
-    where ppAfterDot x = text $ reverse $ show x
+    where ppAfterDot x = text $ ('.': ) $ reverse $ show x
 
 -- score
 
