@@ -23,6 +23,7 @@ import Temporal.Music.Score(Score, temp, stretch, dur)
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
+import Csound.Exp.GE
 import Csound.Exp.Instr
 import Csound.Exp.Arg
 import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
@@ -56,7 +57,7 @@ data MixerExp = MixerExp
 
 type Effect = [Sig] -> SE [Sig]
 
-newtype Mix a = Mix { unMix :: SE M } 
+newtype Mix a = Mix { unMix :: GE M } 
 
 data M 
     = Snd InstrId (Score Note)

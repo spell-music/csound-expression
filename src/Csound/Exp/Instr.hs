@@ -10,14 +10,15 @@ import Control.Monad.Trans.State.Strict
 
 import Csound.Exp
 import Csound.Exp.SE
+import Csound.Exp.GE
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
 
 import Csound.Render.Channel(instrExp)
 import qualified Csound.Render.IndexMap as DM
 
-saveInstr :: (Arg a, Out b) => (a -> b) -> SE InstrId
-saveInstr instrFun = SE $ do
+saveInstr :: (Arg a, Out b) => (a -> b) -> GE InstrId
+saveInstr instrFun = GE $ do
     s <- get
     let name = DM.makeInstrName instrFun
     maybeInstrId <- lift $ DM.lookup name (instrSet s)
@@ -26,12 +27,12 @@ saveInstr instrFun = SE $ do
         Nothing -> do
             (n, instrSet') <- lift $ DM.insert name (instrSet s)
             let instrBody = toOut $ instrFun toArg  
-            exp <- lift $ instrExp (insArity instrFun) instrBody
+                exp = instrExp (insArity instrFun) instrBody
             put $ s{ instrSet = instrSet', instrMap = (n, exp) : instrMap s }
             return n
     where insArity = arity . fst . funProxy
 
-saveTrigInstr :: InstrId -> (Int -> E) -> SE ()
+saveTrigInstr :: InstrId -> (Int -> E) -> GE ()
 saveTrigInstr = undefined {-name exp = SE $ modify $ 
     \s -> s{ trigMap = TrigInstrMap (TrigInstr name exp : unTrigInstrMap (trigMap s)) }
     -}
@@ -49,7 +50,7 @@ mkArity ins outs instr = let (a, b) = funProxy instr in Arity (ins a) (outs b)
 funProxy :: (a -> b) -> (a, b)
 funProxy = const (undefined, undefined)      
 
-newCsdTuple :: forall a . CsdTuple a => SE a
+newCsdTuple :: forall a . CsdTuple a => GE a
 newCsdTuple = fmap toCsdTuple $ 
     zipWithM (\a b -> fmap readVar $ newGlobalVar a b) (ratesCsdTuple x) (fromCsdTuple x)
     where x = defCsdTuple :: a

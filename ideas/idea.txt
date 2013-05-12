@@ -17,5 +17,5 @@ mixer :: (Out a, Out b, CsdSco sco) => (a -> b) -> sco (Mix a) -> sco (Mix b)
 
 * generic renderers, by dif soundproducers, with or without guis, options, etc
 
-
+* rewrite rules for oscils
 

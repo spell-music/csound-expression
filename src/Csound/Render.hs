@@ -18,10 +18,11 @@ import Csound.Exp.Tuple(Out)
 import Csound.Render.InstrTable
 import Csound.Exp.Mix
 import Csound.Exp.SE
+import Csound.Exp.GE
 
 render :: (Out a) => CsdOptions -> Score (Mix a) -> IO String
 render opt a' = do
-    (ms, history) <- runSE $ traverse unMix a'
+    (ms, history) <- runGE $ traverse unMix a'
     let a = rescale ms
     (sndTab, mixTab, tabs, strs) <- instrTabs (tabFi opt) a history
     let lastInstrId = getLastInstrId mixTab

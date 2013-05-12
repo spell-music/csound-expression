@@ -16,7 +16,7 @@ import Temporal.Music.Score(Score)
 
 import Csound.Exp
 import Csound.Exp.Wrapper
-import Csound.Exp.SE(History(..))
+import Csound.Exp.GE(History(..))
 import Csound.Exp.Mix
 import Csound.Exp.Tuple(Out(..), outArity)
 import qualified Csound.Render.IndexMap as DM

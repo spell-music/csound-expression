@@ -12,6 +12,7 @@ import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Exp.Mix
 import Csound.Exp.Logic
+import Csound.Exp.GE
 import Csound.Exp.SE
 import Csound.Exp.Instr
 import qualified Csound.Render.IndexMap as DM
@@ -116,19 +117,19 @@ accumEvent s0 f x = case x of
 --------------------------------------------------
 --
 
-schedule :: (Arg a, Out b) => (a -> b) -> Event (D, a) -> SE (NoSE b)
+schedule :: (Arg a, Out b) => (a -> b) -> Event (D, a) -> GE (NoSE b)
 schedule instr trigger = do    
     name <- saveInstr instr
     saveTrigger trigger name
 
-toggle :: (Arg a, Out b) => (a -> b) -> Event a -> Event c -> SE (NoSE b)
+toggle :: (Arg a, Out b) => (a -> b) -> Event a -> Event c -> GE (NoSE b)
 toggle = undefined
 
 
 --------------
 --
 
-saveTrigger :: CsdTuple b => Event (D, a) -> InstrId -> SE b
+saveTrigger :: CsdTuple b => Event (D, a) -> InstrId -> GE b
 saveTrigger evt name = do
     globalVars <- newCsdTuple
     saveTrigInstr name (renderEvent globalVars evt)

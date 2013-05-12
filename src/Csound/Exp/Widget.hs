@@ -7,6 +7,7 @@ import Csound.Exp.Gui
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
+import Csound.Exp.GE
 import Csound.Exp.Logic
 import Csound.Exp.Event
 
@@ -34,51 +35,51 @@ noRead  = return ()
 noInner :: Inner
 noInner = return ()
 
-newtype Widget a b = Widget { unWidget :: SE (Gui, Writer a, Reader b, Inner) }
+newtype Widget a b = Widget { unWidget :: GE (Gui, Writer a, Reader b, Inner) }
 
 type Sink   a = Widget a ()
 type Source a = Widget () a
 type Display  = Widget () ()
 
-widget :: Widget a b -> SE (Gui, Writer a, Reader b)
+widget :: Widget a b -> GE (Gui, Writer a, Reader b)
 widget a = do 
     (gui, writer, reader, inner) <- unWidget a
     appendToGui gui inner
     return (gui, writer, reader)
 
-sink :: Widget a b -> SE (Gui, Writer a)
+sink :: Widget a b -> GE (Gui, Writer a)
 sink a = do
     (gui, writer, _) <- widget a
     return (gui, writer)
 
-source :: Widget a b -> SE (Gui, Reader b)
+source :: Widget a b -> GE (Gui, Reader b)
 source a = do
     (gui, _, reader) <- widget a
     return (gui, reader)
 
-mkWidgetWith :: SE (Gui, Writer a, Reader b, Inner) -> Widget a b
+mkWidgetWith :: GE (Gui, Writer a, Reader b, Inner) -> Widget a b
 mkWidgetWith = Widget
 
-mkDisplayWith :: SE (Gui, Inner) -> Display 
+mkDisplayWith :: GE (Gui, Inner) -> Display 
 mkDisplayWith a = mkWidgetWith $ do
     (gui, inner) <- a
     return (gui, noWrite, noRead, inner)
     
-mkWidget :: SE (Gui, Writer a, Reader b) -> Widget a b
+mkWidget :: GE (Gui, Writer a, Reader b) -> Widget a b
 mkWidget = Widget . fmap appendEmptyBody
     where appendEmptyBody (a, b, c) = (a, b, c, noInner)
 
-mkSink :: SE (Gui, Writer a) -> Sink a
+mkSink :: GE (Gui, Writer a) -> Sink a
 mkSink a = mkWidget $ do
     (gui, writer) <- a 
     return (gui, writer, noRead)
 
-mkSource :: SE (Gui, Reader b) -> Source b
+mkSource :: GE (Gui, Reader b) -> Source b
 mkSource a = mkWidget $ do
     (gui, reader) <- a 
     return (gui, noWrite, reader)
     
-mkDisplay :: SE Gui -> Display
+mkDisplay :: GE Gui -> Display
 mkDisplay a = mkWidget $ do
     gui <- a
     return (gui, noWrite, noRead)

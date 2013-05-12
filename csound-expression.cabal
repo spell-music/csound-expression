@@ -82,6 +82,7 @@ Library
   Other-Modules:
         Csound.Exp        
         Csound.Exp.Wrapper
+        Csound.Exp.GE
         Csound.Exp.SE
         Csound.Exp.Cons
         Csound.Exp.Logic

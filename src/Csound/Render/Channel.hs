@@ -22,6 +22,7 @@ import Data.List(transpose)
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
+import Csound.Exp.GE
 import Csound.Exp.Cons(opc0, opc1, opc2, opcs)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 import Csound.Render.Pretty(verbatimLines)
@@ -31,16 +32,16 @@ import Csound.Render.Pretty
 -- simple instrument trigered with score
 
 -- How to render an instrument
-masterExp, mixerExp :: Instr -> IO E
+masterExp, mixerExp :: Instr -> E
 
 -- 4 + arity because there are 3 first arguments (instrId, start, dur) and arity params comes next
 masterExp  = instrExpGen masterOuts
 mixerExp   = instrExpGen (outs 4) -- for mixing instruments we expect the port number to be the fourth parameter
 
-instrExpGen :: ([Sig] -> SE ()) -> Instr -> IO E
+instrExpGen :: ([Sig] -> SE ()) -> Instr -> E
 instrExpGen formOuts x = execSE $ formOuts =<< instrBody x
 
-instrExp :: Int -> SE [Sig] -> IO E
+instrExp :: Int -> SE [Sig] -> E
 instrExp insArity body = execSE $ outs (4 + insArity) =<< body
 
 ---------------------------------------------------------
@@ -75,12 +76,12 @@ ins arity = mapM in_ [1 .. arityIns arity]
 ------------------------------------------------------------------
 -- trigger
 
-monoTrigInstrExp, polyTrigInstrExp :: Arity -> [Var] -> (D -> SE ()) -> IO E
+monoTrigInstrExp, polyTrigInstrExp :: Arity -> [Var] -> (D -> SE ()) -> E
 
 monoTrigInstrExp = trigInstrExpGen monoWrite
 polyTrigInstrExp = trigInstrExpGen polyWrite
 
-trigInstrExpGen :: (Var -> Sig -> SE ()) -> Arity -> [Var] -> (D -> SE ()) -> IO E
+trigInstrExpGen :: (Var -> Sig -> SE ()) -> Arity -> [Var] -> (D -> SE ()) -> E
 trigInstrExpGen writeVar ar outs body = execSE $ do
     port <- freePort
     body port

@@ -10,6 +10,7 @@ import qualified Data.IntMap as IM(fromList, empty)
 
 import Csound.Exp(TabFi(..), MidiType(..))
 import Csound.Exp.Wrapper(Channel, Sig)
+import Csound.Exp.GE
 import Csound.Exp.SE
 import Csound.Exp.Tuple(Out)
 import Csound.Render.Pretty
