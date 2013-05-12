@@ -8,7 +8,8 @@ module Csound.Exp(
     Prim(..), LowTab(..), Tab(..), TabSize(..), TabArgs(..), TabMap, TabFi(..),
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,    
-    NumExp, NumOp(..), Msg(..), MidiType(..), Note,
+    NumExp, NumOp(..), Msg(..), MidiType(..), MidiAssign(..), Note,
+    CsdOptions(..),
     StringMap
 ) where
 
@@ -239,6 +240,11 @@ data Msg = Msg
 
 data MidiType = Massign | Pgmassign (Maybe Int)
 
+data MidiAssign = MidiAssign 
+    { midiAssignType    :: MidiType
+    , midiAssignChannel :: Channel
+    , midiAssignInstr   :: Int }
+
 -- Csound note
 type Note = [Prim]
 
@@ -311,6 +317,34 @@ instance Traversable PrimOr where
     traverse f x = case unPrimOr x of
         Left  p -> pure $ PrimOr $ Left p
         Right a -> PrimOr . Right <$> f a
+
+-------------------------------------------------------
+-- csound options
+
+
+type CtrlId = Int
+type Channel = Int
+
+-- | Csound options. The default value is
+--
+-- > instance Default CsdOptions where
+-- >     def = CsdOptions 
+-- >             { flags = "-d"           -- suppress ftable printing
+-- >             , sampleRate  = 44100
+-- >             , blockSize = 64
+-- >             , seed = Nothing
+-- >             , initc7 = []
+-- >             , tabFi = fineFi 13 [(idSegs, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
+
+data CsdOptions = CsdOptions 
+    { flags         :: String       
+    , sampleRate    :: Int          
+    , blockSize     :: Int          
+    , seed          :: Maybe Int    
+    , initc7        :: [(Channel, CtrlId, Double)]
+    , tabFi         :: TabFi
+    }
+
 
 -- comments
 -- 

@@ -21,9 +21,15 @@ import Csound.Exp.SE
 import Csound.Exp.GE
 
 render :: (Out a) => CsdOptions -> Score (Mix a) -> IO String
-render opt a' = do
-    (ms, history) <- runGE $ traverse unMix a'
+render opt a' = undefined 
+{-
+do
+    (ms, history) <- runGE (traverse unMix a') opt
     let a = rescale ms
+        tabs = tabMap history
+        strs = strMap history
+        scos = socres ms history
+        
     (sndTab, mixTab, tabs, strs) <- instrTabs (tabFi opt) a history
     let lastInstrId = getLastInstrId mixTab
     return $ show $ ppCsdFile 
@@ -40,8 +46,19 @@ render opt a' = do
         (ppMapTable ppStrset strs)
         -- ftables
         (ppTotalDur (dur a) $$ ppMapTable ppTabDef tabs)
-    where totalDur = dur a'
+    where totalDur = dur a'            
 
+strMap :: History -> StringMap
+strMap = undefined
+
+tabMap :: History -> TabMap
+tabMap = undefined
+
+scores :: Score M -> History -> Doc
+scores = undefined
+
+instrs :: History -> [(InstrId, Doc)]
+instrs = undefined
 
 alwayson totalDur instrId = ppNote instrId 0 totalDur []      
 
@@ -80,3 +97,4 @@ rescale = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
           mixStretch k x = case x of
             Snd a sco -> Snd a $ stretch k sco
             Eff a sco -> Eff a $ rescale $ stretch k sco
+-}

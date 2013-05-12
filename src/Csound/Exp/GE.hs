@@ -1,35 +1,39 @@
 -- | Global side effects
 module Csound.Exp.GE(
     GE(..), runGE, History(..),
+    saveInstr, saveInstrCached,
     -- * globals
-    newGlobalVar,
+ --   newGlobalVar,
     -- * instruments
 
     -- ** sound sources
-    Instr(..), Arity(..), 
+ --   Instr(..), Arity(..), 
     -- ** event driven
-    TrigInstr(..), TrigInstrMap(..),
-    -- ** miids
-    MidiAssign(..), 
+ --   TrigInstr(..), TrigInstrMap(..),
     -- * guis    
     appendToGui, newGuiId
 ) where
+
+import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, member, lookup)
+import qualified System.Mem.StableName.Dynamic     as DM(DynamicStableName, makeDynamicStableName)
 
 import Control.Applicative
 import Control.Monad.Trans.Class
 import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.Reader
 import Data.Default
-
-import qualified Csound.Render.IndexMap as DM
 
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.Gui(Gui)
 
+import Csound.Tfm.Tab
 
-newtype GE a = GE { unGE :: StateT History IO a }
+import Csound.Render.Pretty(Doc)
+
+newtype GE a = GE { unGE :: ReaderT CsdOptions (StateT History IO) a }
 
 instance Functor GE where
     fmap f = GE . fmap f . unGE
@@ -42,6 +46,121 @@ instance Monad GE where
     return = GE . return
     ma >>= mf = GE $ unGE ma >>= unGE . mf
 
+data History = History 
+    { tabIndex :: Index Tab
+    , strIndex :: Index String
+    , instrs   :: Instrs
+    , guis     :: Guis 
+    , globals  :: Globals }
+
+instance Default History where
+    def = History def def def def
+
+runGE :: GE a -> CsdOptions -> IO (a, History)
+runGE (GE a) options = runStateT (runReaderT a options) def
+
+------------------------------------------------------
+-- tables
+
+type TabId = Int
+type StrId = Int
+
+ge :: (CsdOptions -> History -> IO (a, History)) -> GE a
+ge phi = GE $ ReaderT $ \opt -> StateT $ \history -> phi opt history    
+
+history :: GE History
+history = ge $ \opt h -> return (h, h)
+
+putHistory :: History -> GE ()
+putHistory h = ge $ \_ _ -> return ((), h)
+
+options :: GE CsdOptions
+options = ge $ \opt h -> return (opt, h)
+
+exec :: IO a -> GE a
+exec act = ge $ \opt h -> do
+    a <- act
+    return (a, h)
+
+withHistory :: (History -> (a, History)) -> GE a
+withHistory phi = ge $ \opt history -> return $ phi history
+
+saveTab :: Tab -> GE TabId
+saveTab x = withHistory $ \history -> 
+    let (n, tabs') = indexInsert x (tabIndex history)
+    in  (n, history{ tabIndex = tabs' })
+
+saveStr :: String -> GE StrId
+saveStr x = withHistory $ \history -> 
+    let (n, strs') = indexInsert x (strIndex history)
+    in  (n, history{ strIndex = strs' })
+
+-------------------------------------------------------
+-- instruments
+
+data Instrs = Instrs 
+    { instrExps     :: [(InstrId, Doc)]
+    , instrCounter  :: Int
+    , instrCache    :: DM.Map Int }
+
+instance Default Instrs where
+    def = Instrs def 1 DM.empty
+
+saveInstrCached :: a -> (a -> GE Doc) -> GE InstrId
+saveInstrCached instr render = do
+    h <- history
+    let cache = instrCache $ instrs h
+    name <- exec $ DM.makeDynamicStableName instr
+    case DM.lookup name cache of
+        Just n  -> return $ intInstrId n
+        Nothing -> do
+            let counter' = succ $ instrCounter $ instrs h 
+                instrId  = intInstrId counter' 
+                instrCache' = DM.insert name counter' cache
+            doc <- render instr
+            let instrExps' = (instrId, doc) : (instrExps $ instrs h)
+                instrs' = instrs h
+            putHistory $ h { instrs = instrs' { instrExps = instrExps', instrCounter = counter', instrCache = instrCache' }}
+            return instrId
+
+saveInstr :: Doc -> GE InstrId
+saveInstr doc = withHistory $ \h ->
+    let ins = instrs h
+        counter' = succ $ instrCounter ins
+        instrId  = intInstrId counter'
+        instrExps' = (instrId, doc) : instrExps ins
+    in  (instrId, h{ instrs = ins { instrExps = instrExps', instrCounter = counter' }})
+
+
+--------------------------------------------------------
+-- guis
+
+data Guis = Guis
+    { guiStateNewId     :: Int
+    , guiStateInstr     :: SE ()
+    , guiStateToDraw    :: [Gui] }
+
+instance Default Guis where 
+    def = Guis 0 (return ()) []
+
+newGuiId :: GE Int 
+newGuiId = withHistory $ \h -> 
+    let (n, g') = bumpGuiStateId $ guis h
+    in  (n, h{ guis = g' })
+
+appendToGui :: Gui -> SE () -> GE ()
+appendToGui gui act = withHistory $ \h ->
+    ((), h{ guis = appendToGuiState gui act $ guis h })
+
+bumpGuiStateId :: Guis -> (Int, Guis)
+bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
+
+appendToGuiState :: Gui -> SE () -> Guis -> Guis
+appendToGuiState gui act s = s
+    { guiStateToDraw = gui : guiStateToDraw s
+    , guiStateInstr  = guiStateInstr s >> act }
+
+{-
 runGE :: GE a -> IO (a, History)
 runGE a = runStateT (unGE a) def
 
@@ -86,10 +205,6 @@ instance Default TrigInstrMap where
 
 -- midis
 
-data MidiAssign = MidiAssign 
-    { midiAssignType    :: MidiType
-    , midiAssignChannel :: Channel
-    , midiAssignInstr   :: Int }
 
 ---------------------------------------------------------
 -- globals
@@ -152,4 +267,4 @@ newGuiId = GE $ do
 
 appendToGui :: Gui -> SE () -> GE ()
 appendToGui gui act = GE $ modify $ \s -> s{ guiState = appendToGuiState gui act $ guiState s }
-
+-}

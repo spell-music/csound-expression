@@ -1,9 +1,4 @@
 module Csound.Exp.Mix(
-    -- * Sound source
-    InstrFun, 
-    Instr(..), mkInstr,
-    Arity(..), mkArity,
-    
     -- * Mixer
     MixerNote(..), MixerExp(..),
 
@@ -30,21 +25,8 @@ import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
 import qualified Csound.Render.IndexMap as DM
 
 import Csound.Render.Channel(ins)
+import Csound.Render.Pretty(Doc)
 
--- There are three types of instruments:
---
--- * sound sorces controlled by scores
--- * midi-instruments
--- * mix-instrument - listens to other instruments and applies effects.
-
--- Instrument is a sound source (controlled by score or midi). It has 
---
---  * name      - here we use stable names to distinguish instruments quickly
---  * arity     - how many arguments expected, how many signals to produce) 
---  * body      - actual Csound expression (it's a list of output signals, 
---                each signal is an expression-tree)
-
--- Mixer can expect sound from three sources:
 data MixerNote 
     -- another mixer
     = MixerNote InstrId 
@@ -61,7 +43,7 @@ newtype Mix a = Mix { unMix :: GE M }
 
 data M 
     = Snd InstrId (Score Note)
-    | Eff Instr (Score M)    
+    | Eff InstrId (Score M)    
 
 nchnls :: Out a => Score (Mix a) -> Int
 nchnls = outArity . proxy  
@@ -96,8 +78,11 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
-sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstr instr
+sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached instr getInstrExp
     where notes' = fmap toNote notes
+
+getInstrExp :: (Arg a, Out b) => (a -> b) -> GE Doc
+getInstrExp = undefined
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --
@@ -117,9 +102,12 @@ sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstr instr
 mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE b))
 mix effect sigs = tempAs sigs $ Mix $ do
     notes <- traverse unMix sigs
-    return $ Eff (Instr arity body) notes 
-    where arity = mkArity outArity outArity effect
-          body  = (toOut . effect . fromOut) =<< ins arity  
+    instrId <- saveInstr =<< getMasterInstr effect
+    return $ Eff instrId notes 
+
+getMasterInstr :: (Out a, Out b) => (a -> b) -> GE Doc
+getMasterInstr = undefined
+--    body  = (toOut . effect . fromOut) =<< ins arity  
 
 {-
 -- | Triggers a midi-instrument (like Csound's massign). The result type 

@@ -1,11 +1,13 @@
 module Csound.Tfm.Tab(
+    Index(..), indexInsert,
     tabMap,
     substInstrTabs, substNoteTabs, 
     defineInstrTabs, defineNoteTabs,
     updateTabSize
 ) where
 
-import qualified Data.Map as M(fromList, (!))
+import Data.Default
+import qualified Data.Map as M(Map, lookup, insert, fromList, (!))
 import qualified Data.IntMap as IM(findWithDefault)
 
 import Data.Fix(Fix(..), cata)
@@ -13,6 +15,22 @@ import Data.List(nub)
 import Data.Foldable(foldMap)
 
 import Csound.Exp
+
+---------------------------------------------------------------------
+--  
+
+data Index a = Index 
+    { indexElems  :: M.Map a Int
+    , indexLength :: Int }
+
+indexInsert :: Ord a => a -> Index a -> (Int, Index a)
+indexInsert a m = case M.lookup a (indexElems m) of
+    Just n  -> (n, m)
+    Nothing -> (len, m{ indexElems = M.insert a len (indexElems m), indexLength = succ len })
+    where len = indexLength m
+
+instance Ord a => Default (Index a) where
+    def = Index (M.fromList []) 0
 
 ----------------------------------------------------------------------------
 -- Collects all tables from instruments [E] and notes [Prim]

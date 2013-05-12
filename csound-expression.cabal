@@ -83,7 +83,9 @@ Library
         Csound.Exp        
         Csound.Exp.Wrapper
         Csound.Exp.GE
+        Csound.Exp.GERef
         Csound.Exp.SE
+        Csound.Exp.SERef
         Csound.Exp.Cons
         Csound.Exp.Logic
         Csound.Exp.Numeric       

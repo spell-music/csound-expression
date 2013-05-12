@@ -1,21 +1,29 @@
-{-# Language GADTs, TypeFamilies #-}
-module Csound.Exp.Event where
+{-# Language TypeFamilies, FlexibleContexts #-}
+module Csound.Exp.Event(
+    Evt(..), Trig, Snap,
+    trigger, filterEvt, accumEvt, snapshot,
+    stepper, schedule, toggle
+) where
 
 import Data.Monoid
 import Temporal.Music.Score(Score)
 
 import Csound.Exp
 import Csound.Exp.Wrapper
-import Csound.Exp.Cons(spec1)
 import Csound.Exp.Logic
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Exp.Mix
 import Csound.Exp.Logic
 import Csound.Exp.GE
+import Csound.Exp.GERef
 import Csound.Exp.SE
+import Csound.Exp.SERef
 import Csound.Exp.Instr
-import qualified Csound.Render.IndexMap as DM
+
+import Csound.Render.Pretty(Doc)
+
+import Csound.Render.Channel(event)
 
 type Bam a = a -> SE ()
 type Trig = Evt ()
@@ -38,7 +46,7 @@ filterEvt pred evt = Evt $ \bam -> runEvt evt $ \a ->
 
 accumEvt :: (CsdTuple s) => s -> (a -> s -> (b, s)) -> Evt a -> Evt b
 accumEvt s0 update evt = Evt $ \bam -> do
-    (readSt, writeSt) <- initState s0
+    (readSt, writeSt) <- sensorsSE s0
     runEvt evt $ \a -> do
         s1 <- readSt
         let (b, s2) = update a s1
@@ -51,8 +59,8 @@ snapshot f sig evt = Evt $ \bam -> runEvt evt $ \a ->
 toBoolSig :: BoolD -> BoolSig
 toBoolSig = undefined
 
-initState :: CsdTuple s => s -> SE (SE s, s -> SE ())
-initState s0 = undefined
+initCsdTuple :: CsdTuple s => s -> SE (SE s, s -> SE ())
+initCsdTuple s0 = undefined
 
 readSnap :: CsdTuple a => a -> Snap a
 readSnap = undefined
@@ -75,12 +83,33 @@ type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
 --------------------------------------------------
 --
 
-stepper :: CsdTuple a => Evt a -> SE (NoSE a)
-stepper = undefined
+stepper :: CsdTuple a => a -> Evt a -> SE a
+stepper initVal evt = do
+    (read, write) <- sensorsSE initVal
+    runEvt evt $ \a -> write a
+    read 
 
-schedule :: (Arg a, Out b) => (a -> b) -> Evt (D, a) -> GE (NoSE b)
-schedule instr trigger = undefined
+schedule :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt (D, a) -> GE (SE (NoSE b))
+schedule instr evt = do    
+    ref <- newGERef
+    instrId <- saveInstr =<< getTrigExp (writeGERef ref) instr 
+    saveAlwaysOnInstr $ scheduleInstr (writeGERef ref) instrId evt
+    return $ readGERef ref
+    where proxy :: Out b => GE (NoSE b) -> (a -> b) -> GE (NoSE b)
+          proxy = const  
 
+getTrigExp :: (Arg a, Out b) => (NoSE b -> SE ()) -> (a -> b) -> GE Doc
+getTrigExp = undefined
+
+saveAlwaysOnInstr :: E -> GE ()
+saveAlwaysOnInstr = undefined
+
+scheduleInstr :: (Arg a, Out b) => (b -> SE ()) -> InstrId -> Evt (D, a) -> E
+scheduleInstr write instrId evt = execSE $ 
+    runEvt evt $ \(dt, a) -> do
+        event instrId 0 dt a
+
+  
 toggle :: (Arg a, Out b) => (a -> b) -> Evt a -> Evt c -> GE (NoSE b)
 toggle = undefined
 

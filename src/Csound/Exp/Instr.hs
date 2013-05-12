@@ -1,7 +1,7 @@
 {-# Language ScopedTypeVariables #-}
 module Csound.Exp.Instr(
-    InstrFun, mkInstr, mkArity, saveInstr, saveTrigInstr,
-    newCsdTuple
+--    InstrFun, mkInstr, mkArity, saveInstr, saveTrigInstr,
+--    newCsdTuple
 ) where
 
 import Control.Monad(zipWithM)
@@ -17,6 +17,7 @@ import Csound.Exp.Arg
 import Csound.Render.Channel(instrExp)
 import qualified Csound.Render.IndexMap as DM
 
+{-
 saveInstr :: (Arg a, Out b) => (a -> b) -> GE InstrId
 saveInstr instrFun = GE $ do
     s <- get
@@ -54,4 +55,4 @@ newCsdTuple :: forall a . CsdTuple a => GE a
 newCsdTuple = fmap toCsdTuple $ 
     zipWithM (\a b -> fmap readVar $ newGlobalVar a b) (ratesCsdTuple x) (fromCsdTuple x)
     where x = defCsdTuple :: a
-
+-}

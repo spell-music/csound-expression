@@ -8,7 +8,7 @@ import Data.List(transpose)
 import Data.Default
 import qualified Data.IntMap as IM(fromList, empty)
 
-import Csound.Exp(TabFi(..), MidiType(..))
+import Csound.Exp(MidiAssign(..), CsdOptions(..), TabFi(..), MidiType(..))
 import Csound.Exp.Wrapper(Channel, Sig)
 import Csound.Exp.GE
 import Csound.Exp.SE
@@ -17,26 +17,6 @@ import Csound.Render.Pretty
 import Csound.Tab(idConsts, idSegs, idExps)
 
 type CtrlId = Int
-
--- | Csound options. The default value is
---
--- > instance Default CsdOptions where
--- >     def = CsdOptions 
--- >             { flags = "-d"           -- suppress ftable printing
--- >             , sampleRate  = 44100
--- >             , blockSize = 64
--- >             , seed = Nothing
--- >             , initc7 = []
--- >             , tabFi = fineFi 13 [(idSegs, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
-
-data CsdOptions = CsdOptions 
-    { flags         :: String       
-    , sampleRate    :: Int          
-    , blockSize     :: Int          
-    , seed          :: Maybe Int    
-    , initc7        :: [(Channel, CtrlId, Double)]
-    , tabFi         :: TabFi
-    }
 
 instance Default CsdOptions where
     def = CsdOptions 

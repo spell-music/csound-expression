@@ -1,5 +1,5 @@
 module Csound.Render.InstrTable(
-    InstrTab, MixerTab(..), instrTabs  
+--    InstrTab, MixerTab(..), instrTabs  
 ) where
 
 import Control.Monad.Trans.State.Strict
@@ -23,7 +23,7 @@ import qualified Csound.Render.IndexMap as DM
 import Csound.Tfm.Tab
 import Csound.Tfm.String
 import Csound.Render.Channel
-
+{-
 type InstrTab = [(InstrId, E)]
     
 data MixerTab = MixerTab 
@@ -105,3 +105,4 @@ numOfInstrForMix x = case x of
     Eff _ a -> 1 + numOfInstrSco a
     _ -> 0
 
+-}
