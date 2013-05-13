@@ -1,6 +1,7 @@
 module Csound.Tfm.Tab(
     Index(..), indexInsert,
     tabMap,
+    getInstrTabs,
     substInstrTabs, substNoteTabs, 
     defineInstrTabs, defineNoteTabs,
     updateTabSize

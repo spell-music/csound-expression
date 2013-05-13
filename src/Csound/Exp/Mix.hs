@@ -24,7 +24,7 @@ import Csound.Exp.Arg
 import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
 import qualified Csound.Render.IndexMap as DM
 
-import Csound.Render.Channel(ins)
+import Csound.Render.Channel
 import Csound.Render.Pretty(Doc)
 
 data MixerNote 

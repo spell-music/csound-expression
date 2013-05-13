@@ -4,55 +4,86 @@ module Csound.Exp.Instr(
 --    newCsdTuple
 ) where
 
-import Control.Monad(zipWithM)
+import Control.Monad(zipWithM, zipWithM_)
+import Data.Foldable(foldMap)
+import Data.List(transpose)
+
+import qualified Data.Map as M
+
+
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict
 
 import Csound.Exp
+import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.GE
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
 
-import Csound.Render.Channel(instrExp)
+import Csound.Render.Channel
+import Csound.Render.Instr(renderInstrBody)
+import Csound.Render.Pretty
+import Csound.Tfm.Tab
 import qualified Csound.Render.IndexMap as DM
 
-{-
-saveInstr :: (Arg a, Out b) => (a -> b) -> GE InstrId
-saveInstr instrFun = GE $ do
-    s <- get
-    let name = DM.makeInstrName instrFun
-    maybeInstrId <- lift $ DM.lookup name (instrSet s)
-    case maybeInstrId of
-        Just n  -> return $ intInstrId n
-        Nothing -> do
-            (n, instrSet') <- lift $ DM.insert name (instrSet s)
-            let instrBody = toOut $ instrFun toArg  
-                exp = instrExp (insArity instrFun) instrBody
-            put $ s{ instrSet = instrSet', instrMap = (intInstrId n, exp) : instrMap s }
-            return $ intInstrId n
-    where insArity = arity . fst . funProxy
-
-saveTrigInstr :: InstrId -> (Int -> E) -> GE ()
-saveTrigInstr = undefined {-name exp = SE $ modify $ 
-    \s -> s{ trigMap = TrigInstrMap (TrigInstr name exp : unTrigInstrMap (trigMap s)) }
-    -}
-
-type InstrFun a b = a -> b
-
-mkInstr :: Out b => (InstrFun a b -> Arity) -> a -> InstrFun a b -> (DM.InstrName, Instr)
-mkInstr getArity arg instrFun = (DM.makeInstrName instrFun, x)
-    where x = Instr (getArity instrFun) (toOut $ instrFun arg)
-          
-
-mkArity :: (a -> Int) -> (b -> Int) -> InstrFun a b -> Arity
-mkArity ins outs instr = let (a, b) = funProxy instr in Arity (ins a) (outs b)
 
 funProxy :: (a -> b) -> (a, b)
-funProxy = const (undefined, undefined)      
+funProxy = const (undefined, undefined)    
 
-newCsdTuple :: forall a . CsdTuple a => GE a
-newCsdTuple = fmap toCsdTuple $ 
-    zipWithM (\a b -> fmap readVar $ newGlobalVar a b) (ratesCsdTuple x) (fromCsdTuple x)
-    where x = defCsdTuple :: a
--}
+soundSourceExp :: (Arg a, Out b) => (a -> b) -> GE E
+soundSourceExp instr = substTabs exp
+    where insArity = arity $ fst $ funProxy instr
+          exp = instrExp insArity $ toOut $ instr toArg
+
+effectExp :: (Out a, Out b) => (a -> b) -> GE E
+effectExp eff = substTabs $ mixerExp $ do
+    inputs <- ins $ outArity $ fst $ funProxy eff
+    toOut $ eff $ fromOut $ inputs
+    
+
+substTabs :: E -> GE E
+substTabs exp = do
+    opt <- options
+    let exp' = defineInstrTabs (tabFi opt) exp
+        tabs = getInstrTabs exp'
+    ids <- mapM saveTab tabs
+    let tabMap = M.fromList $ zip tabs ids
+    return $ substInstrTabs tabMap exp'
+    
+
+----------------------------------------------------------
+-- simple instrument trigered with score
+
+-- How to render an instrument
+masterExp, mixerExp :: SE [Sig] -> E
+
+-- 4 + arity because there are 3 first arguments (instrId, start, dur) and arity params comes next
+masterExp  = instrExpGen masterOuts
+mixerExp   = instrExpGen (outs 4) -- for mixing instruments we expect the port number to be the fourth parameter
+
+instrExp :: Int -> SE [Sig] -> E
+instrExp insArity = instrExpGen (outs (4 + insArity))
+
+instrExpGen :: ([Sig] -> SE ()) -> SE [Sig] -> E
+instrExpGen formOuts instrBody = execSE $ formOuts =<< instrBody
+
+
+
+-- other outputs
+
+outs :: Int -> [Sig] -> SE ()
+outs readChnId sigs = zipWithM_ (out readChnId) [1 .. ] sigs
+    where out readChnId n sig = chnmix sig $ chnName n (p readChnId) 
+
+-- inputs
+
+ins :: Int -> SE [Sig]
+ins n = mapM in_ [1 .. n] 
+    where in_ n = do
+              let name = chnName n $ readVar chnVar
+              sig <- chnget name
+              chnclear name
+              return sig
+
+

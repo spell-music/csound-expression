@@ -1,7 +1,10 @@
 -- | Global side effects
 module Csound.Exp.GE(
     GE(..), runGE, History(..),
+    history, options, withHistory, putHistory,
     saveInstr, saveInstrCached,
+
+    saveTab, saveStr,
     -- * globals
  --   newGlobalVar,
     -- * instruments
@@ -48,7 +51,7 @@ instance Monad GE where
     ma >>= mf = GE $ unGE ma >>= unGE . mf
 
 data History = History 
-    { tabIndex :: Index Tab
+    { tabIndex :: Index LowTab
     , strIndex :: Index String
     , instrs   :: Instrs
     , guis     :: Guis 
@@ -59,12 +62,6 @@ instance Default History where
 
 runGE :: GE a -> CsdOptions -> IO (a, History)
 runGE (GE a) options = runStateT (runReaderT a options) def
-
-------------------------------------------------------
--- tables
-
-type TabId = Int
-type StrId = Int
 
 ge :: (CsdOptions -> History -> IO (a, History)) -> GE a
 ge phi = GE $ ReaderT $ \opt -> StateT $ \history -> phi opt history    
@@ -86,7 +83,13 @@ exec act = ge $ \opt h -> do
 withHistory :: (History -> (a, History)) -> GE a
 withHistory phi = ge $ \opt history -> return $ phi history
 
-saveTab :: Tab -> GE TabId
+------------------------------------------------------
+-- tables
+
+type TabId = Int
+type StrId = Int
+
+saveTab :: LowTab -> GE TabId
 saveTab x = withHistory $ \history -> 
     let (n, tabs') = indexInsert x (tabIndex history)
     in  (n, history{ tabIndex = tabs' })
