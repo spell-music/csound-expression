@@ -25,7 +25,9 @@ import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
 import qualified Csound.Render.IndexMap as DM
 
 import Csound.Render.Channel
-import Csound.Render.Pretty(Doc)
+import Csound.Render.Instr
+import Csound.Render.Pretty(Doc, vcat)
+
 
 data MixerNote 
     -- another mixer
@@ -78,11 +80,9 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
-sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached instr getInstrExp
+sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached instr getDoc
     where notes' = fmap toNote notes
-
-getInstrExp :: (Arg a, Out b) => (a -> b) -> GE Doc
-getInstrExp = undefined
+          getDoc = fmap (vcat . renderInstrBody) . soundSourceExp
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --
@@ -102,12 +102,9 @@ getInstrExp = undefined
 mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE b))
 mix effect sigs = tempAs sigs $ Mix $ do
     notes <- traverse unMix sigs
-    instrId <- saveInstr =<< getMasterInstr effect
+    instrId <- saveInstr =<< getDoc effect
     return $ Eff instrId notes 
-
-getMasterInstr :: (Out a, Out b) => (a -> b) -> GE Doc
-getMasterInstr = undefined
---    body  = (toOut . effect . fromOut) =<< ins arity  
+    where getDoc = fmap (vcat . renderInstrBody) . effectExp
 
 {-
 -- | Triggers a midi-instrument (like Csound's massign). The result type 

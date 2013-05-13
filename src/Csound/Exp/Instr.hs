@@ -1,7 +1,7 @@
 {-# Language ScopedTypeVariables #-}
 module Csound.Exp.Instr(
---    InstrFun, mkInstr, mkArity, saveInstr, saveTrigInstr,
---    newCsdTuple
+    soundSourceExp,
+    effectExp
 ) where
 
 import Control.Monad(zipWithM, zipWithM_)
