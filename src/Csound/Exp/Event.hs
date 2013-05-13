@@ -91,7 +91,7 @@ stepper initVal evt = do
 
 schedule :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt (D, a) -> GE (SE (NoSE b))
 schedule instr evt = do    
-    ref <- newGERef
+    ref <- newGERef defCsdTuple
     instrId <- saveInstr =<< getTrigExp (writeGERef ref) instr 
     saveAlwaysOnInstr $ scheduleInstr (writeGERef ref) instrId evt
     return $ readGERef ref

@@ -11,7 +11,8 @@ module Csound.Exp.GE(
     -- ** event driven
  --   TrigInstr(..), TrigInstrMap(..),
     -- * guis    
-    appendToGui, newGuiId
+    appendToGui, newGuiId,
+    newGlobalVar
 ) where
 
 import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, member, lookup)
@@ -54,7 +55,7 @@ data History = History
     , globals  :: Globals }
 
 instance Default History where
-    def = History def def def def
+    def = History def def def def def
 
 runGE :: GE a -> CsdOptions -> IO (a, History)
 runGE (GE a) options = runStateT (runReaderT a options) def
@@ -159,6 +160,33 @@ appendToGuiState :: Gui -> SE () -> Guis -> Guis
 appendToGuiState gui act s = s
     { guiStateToDraw = gui : guiStateToDraw s
     , guiStateInstr  = guiStateInstr s >> act }
+
+--------------------------------------------------------
+-- globals
+
+data Globals = Globals
+    { newGlobalVarId :: Int
+    , globalsSoFar   :: [Global] }
+
+instance Default Globals where 
+    def = Globals 0 []
+
+data Global = Global 
+    { globalVar     :: Var
+    , globalInit    :: E }
+
+
+newGlobalVarOnGlobals :: Val a => Rate -> a -> Globals -> (Var, Globals)
+newGlobalVarOnGlobals rate a s = 
+    (v, s{ newGlobalVarId = succ n, globalsSoFar = g : globalsSoFar s })
+    where n = newGlobalVarId s
+          v = Var GlobalVar rate (show n)
+          g = Global v (toE a)  
+
+newGlobalVar :: Val a => Rate -> a -> GE Var
+newGlobalVar rate initVal = withHistory $ \h -> 
+    let (v, globals') = newGlobalVarOnGlobals rate initVal (globals h)
+    in  (v, h{ globals = globals' })
 
 {-
 runGE :: GE a -> IO (a, History)

@@ -1,3 +1,6 @@
+* make all CsdTuples to Monoids and render function expects just CsdTuple
+  mixing with Monoids
+
 * tables: mv segs lins
 
 * how about all GENs, and readWavs in particular?

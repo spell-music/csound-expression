@@ -3,7 +3,7 @@ module Csound.Exp.SE(
     Outs,
     SE(..), LocalHistory(..), 
     se, se_, stmtOnly, runSE, execSE, 
-    writeVar, readVar, initVar, newVar
+    writeVar, readVar, initVar, newLocalVar
 ) where
 
 import Control.Applicative
@@ -96,8 +96,8 @@ initVar v x = se_ $ noRate $ InitVar v $ toPrimOr $ toE x
 
 -- new local variables
 
-newVar :: Val a => Rate -> a -> SE Var
-newVar rate init = SE $ do
+newLocalVar :: Val a => Rate -> a -> SE Var
+newLocalVar rate init = SE $ do
     s <- get
     let (var, locals') = newVarOnLocals rate init (locals s)
     put $ s { locals = locals' }
