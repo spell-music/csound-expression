@@ -21,7 +21,7 @@ import Csound.Exp.SE
 import Csound.Exp.SERef
 import Csound.Exp.Instr
 
-import Csound.Render.Channel(event)
+import Csound.Render.Channel(event, instrOn, instrOff)
 
 type Bam a = a -> SE ()
 type Trig = Evt ()
@@ -81,6 +81,9 @@ type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
 --------------------------------------------------
 --
 
+evtToBool :: Evt a -> SE BoolSig
+evtToBool = undefined
+
 stepper :: CsdTuple a => a -> Evt a -> SE a
 stepper initVal evt = do
     (read, write) <- sensorsSE initVal
@@ -90,16 +93,33 @@ stepper initVal evt = do
 schedule :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt (D, a) -> GE (SE (NoSE b))
 schedule instr evt = do    
     ref <- newGERef defCsdTuple
-    instrId <- saveInstr SoundSource =<< trigExp (writeGERef ref) instr 
-    saveInstr Alwayson $ scheduleInstr (writeGERef ref) instrId evt
+    instrId <- saveSourceInstr =<< trigExp (writeGERef ref) instr 
+    saveAlwaysOnInstr $ scheduleInstr (writeGERef ref) instrId evt
     return $ readGERef ref
 
 scheduleInstr :: (Arg a, Out b) => (b -> SE ()) -> InstrId -> Evt (D, a) -> E
 scheduleInstr write instrId evt = execSE $ 
     runEvt evt $ \(dt, a) -> do
         event instrId 0 dt a
-
   
-toggle :: (Arg a, Out b) => (a -> b) -> Evt a -> Evt c -> GE (NoSE b)
-toggle = undefined
+toggle :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt a -> Evt c -> GE (SE (NoSE b))
+toggle instr onEvt offEvt = do
+    ref <- newGERef defCsdTuple
+    instrId <- saveSourceInstr =<< trigExp (writeGERef ref) instr 
+    saveAlwaysOnInstr $ scheduleToggleInstr (writeGERef ref) instrId onEvt offEvt
+    return $ readGERef ref
+
+scheduleToggleInstr :: (Arg a, Out b) => (b -> SE ()) -> InstrId -> Evt a -> Evt c -> E
+scheduleToggleInstr write instrId onEvt offEvt = execSE $ do
+    runEvt onEvt $ \a -> do
+        instrOn instrId a 0
+    cond <- evtToBool offEvt
+    when cond $ do
+        instrOff instrId
+        
+        
+
+    
+
+
 

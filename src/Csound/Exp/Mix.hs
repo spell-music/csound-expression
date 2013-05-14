@@ -7,6 +7,7 @@ module Csound.Exp.Mix(
 ) where
 
 import Data.Traversable(traverse)
+import qualified Data.IntMap as IM
 
 import Temporal.Music.Score(Score, temp, stretch, dur, tmap, Event(..))
 
@@ -57,7 +58,7 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
-sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached SoundSource instr soundSourceExp
+sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveSourceInstrCached instr soundSourceExp
     where notes' = fmap toNote notes
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
@@ -78,7 +79,7 @@ sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached 
 mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE b))
 mix effect sigs = tempAs sigs $ Mix $ do
     notes <- traverse unMix sigs
-    instrId <- saveInstr Mixer =<< effectExp effect
+    instrId <- saveMixerInstr =<< effectExp effect
     return $ Eff instrId notes 
 
 {-
@@ -113,9 +114,9 @@ tempAs a = stretch (dur a) . temp
 
 data EventList a = EventList
     { eventListDur      :: Double
-    , eventListElems    :: [(Double, Double, a)] 
+    , eventListElems    :: [(Double, Double, a)] }
 
-renderSco :: Score M -> IM.IntMap (EventList Note)
+renderSco :: Score M -> IM.IntMap LowLevelSco
 renderSco = undefined
 
 rescaleM :: Score M -> Score M

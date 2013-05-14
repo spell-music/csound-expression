@@ -2,10 +2,11 @@
 module Csound.Exp.GE(
     GE(..), runGE, History(..),
     history, options, withHistory, putHistory,
-    Instr(..), InstrType(..),
-    saveInstr, saveInstrCached,    
+    saveMixerInstr, saveSourceInstr, saveAlwaysOnInstr, saveSourceInstrCached,    
 
     saveTab, saveStr,
+
+    saveSco, LowLevelSco,    
     -- * globals
  --   newGlobalVar,
     -- * instruments
@@ -28,6 +29,8 @@ import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Reader
 import Data.Default
+
+import qualified Data.IntMap as IM
 
 import Csound.Exp
 import Csound.Exp.Wrapper
@@ -55,11 +58,12 @@ data History = History
     { tabIndex :: Index LowTab
     , strIndex :: Index String
     , instrs   :: Instrs
+    , scos     :: Scos
     , guis     :: Guis 
     , globals  :: Globals }
 
-instance Default History where
-    def = History def def def def def
+instance Default History where 
+    def = History def def def def def def
 
 runGE :: GE a -> CsdOptions -> IO (a, History)
 runGE (GE a) options = runStateT (runReaderT a options) def
@@ -84,6 +88,9 @@ exec act = ge $ \opt h -> do
 withHistory :: (History -> (a, History)) -> GE a
 withHistory phi = ge $ \opt history -> return $ phi history
 
+modifyHistory :: (History -> History) -> GE ()
+modifyHistory f = withHistory $ \h -> ((), f h)
+
 ------------------------------------------------------
 -- tables
 
@@ -104,45 +111,71 @@ saveStr x = withHistory $ \history ->
 -- instruments
 
 data Instrs = Instrs 
-    { instrExps     :: [Instr]
+    { instrSources  :: [(InstrId, E)]
+    , instrMixers   :: [(InstrId, E)] 
     , instrCounter  :: Int
     , instrCache    :: DM.Map Int }
 
 instance Default Instrs where
-    def = Instrs def 1 DM.empty
+    def = Instrs def def 1 DM.empty
 
-data Instr = Instr 
-    { instrId   :: InstrId
-    , instrBody :: E
-    , instrType :: InstrType }    
-
-data InstrType = SoundSource | Alwayson | Mixer
-
-saveInstrCached :: InstrType -> a -> (a -> GE E) -> GE InstrId
-saveInstrCached instrType instr render = do
+saveSourceInstrCached :: a -> (a -> GE E) -> GE InstrId
+saveSourceInstrCached instr render = do
     h <- history
     let cache = instrCache $ instrs h
     name <- exec $ DM.makeDynamicStableName instr
     case DM.lookup name cache of
         Just n  -> return $ intInstrId n
         Nothing -> do
-            let counter' = succ $ instrCounter $ instrs h 
-                instrId  = intInstrId counter' 
-                instrCache' = DM.insert name counter' cache
-            doc <- render instr
-            let instrExps' = (Instr instrId doc instrType) : (instrExps $ instrs h)
-                instrs' = instrs h
-            putHistory $ h { instrs = instrs' { instrExps = instrExps', instrCounter = counter', instrCache = instrCache' }}
+            instrId <- saveSourceInstr =<< render instr
+            saveToCache name (instrIdCeil instrId)
             return instrId
 
-saveInstr :: InstrType -> E -> GE InstrId
-saveInstr instrType exp = withHistory $ \h ->
+saveToCache :: DM.DynamicStableName -> Int -> GE ()
+saveToCache name counter = modifyHistory $ \h ->
+    let x = instrs h
+    in  h { instrs = x { instrCache = DM.insert name counter (instrCache x) }}
+
+saveAlwaysOnInstr :: E -> GE InstrId
+saveAlwaysOnInstr exp = do
+    instrId <- saveSourceInstr exp
+    saveAlwaysOnNote instrId
+    return instrId
+
+saveSourceInstr :: E -> GE InstrId
+saveSourceInstr = saveInstr $ \a s -> s{ instrSources = a : instrSources s }
+
+saveMixerInstr :: E -> GE InstrId
+saveMixerInstr = saveInstr $ \a s -> s{ instrMixers = a : instrMixers s }
+
+saveInstr :: ((InstrId, E) -> Instrs -> Instrs) -> E -> GE InstrId
+saveInstr save exp = withHistory $ \h ->
     let ins = instrs h
         counter' = succ $ instrCounter ins
         instrId  = intInstrId counter'
-        instrExps' = (Instr instrId exp instrType) : instrExps ins
-    in  (instrId, h{ instrs = ins { instrExps = instrExps', instrCounter = counter' }})
+    in  (instrId, h{ instrs = save (instrId, exp) $ ins { instrCounter = counter' }})
 
+--------------------------------------------------------
+-- scores
+
+data Scos = Scos 
+    { alwaysOnInstrs :: [InstrId]
+    , mixerNotes     :: IM.IntMap LowLevelSco }
+
+type LowLevelSco = [(InstrId, Note)]
+
+instance Default Scos where
+    def = Scos def def
+
+saveAlwaysOnNote :: InstrId -> GE ()
+saveAlwaysOnNote instrId = modifyHistory $ \h -> 
+    let x = scos h
+    in  h { scos = x{ alwaysOnInstrs = instrId : alwaysOnInstrs x } }
+
+saveSco :: IM.IntMap LowLevelSco -> GE ()
+saveSco sco = modifyHistory $ \h -> 
+    let x = scos h
+    in  h { scos = x{ mixerNotes = sco }}
 
 --------------------------------------------------------
 -- guis
