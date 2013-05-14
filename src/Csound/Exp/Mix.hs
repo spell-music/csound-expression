@@ -1,18 +1,14 @@
 module Csound.Exp.Mix(
-    -- * Mixer
-    MixerNote(..),
+    -- * Container for sounds (triggered with notes and mixers)
+    Mix(..), M(..), nchnls, rescaleM,
 
     effect, effectS, 
-
-    -- * Container for sounds (triggered with notes and mixers)
-    Mix(..), M(..), nchnls,
-
     sco, mix --, midi, pgmidi
 ) where
 
 import Data.Traversable(traverse)
 
-import Temporal.Music.Score(Score, temp, stretch, dur)
+import Temporal.Music.Score(Score, temp, stretch, dur, tmap, Event(..))
 
 import Csound.Exp
 import Csound.Exp.Wrapper
@@ -21,12 +17,6 @@ import Csound.Exp.GE
 import Csound.Exp.Instr
 import Csound.Exp.Arg
 import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
-
-data MixerNote 
-    -- another mixer
-    = MixerNote InstrId 
-    -- instrument trigered by score
-    | SoundNote InstrId (Score Note)
 
 newtype Mix a = Mix { unMix :: GE M } 
 
@@ -119,4 +109,26 @@ effectS f a = fmap fromOut $ mapM f =<< toOut a
 
 tempAs :: Score b -> a -> Score a
 tempAs a = stretch (dur a) . temp
+
+
+data EventList a = EventList
+    { eventListDur      :: Double
+    , eventListElems    :: [(Double, Double, a)] 
+
+renderSco :: Score M -> IM.IntMap (EventList Note)
+renderSco = undefined
+
+rescaleM :: Score M -> Score M
+rescaleM = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
+                       in  mixStretch factor (eventContent e)
+    where mixDur :: M -> Double
+          mixDur x = case x of
+            Snd _ a -> dur a
+            Eff _ a -> dur a
+
+          mixStretch :: Double -> M -> M
+          mixStretch k x = case x of
+            Snd a sco -> Snd a $ stretch k sco
+            Eff a sco -> Eff a $ rescaleM $ stretch k sco
+
 
