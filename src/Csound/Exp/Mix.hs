@@ -1,8 +1,8 @@
 module Csound.Exp.Mix(
     -- * Mixer
-    MixerNote(..), MixerExp(..),
+    MixerNote(..),
 
-    Effect, effect, effectS, 
+    effect, effectS, 
 
     -- * Container for sounds (triggered with notes and mixers)
     Mix(..), M(..), nchnls,
@@ -10,7 +10,6 @@ module Csound.Exp.Mix(
     sco, mix --, midi, pgmidi
 ) where
 
-import Control.Applicative
 import Data.Traversable(traverse)
 
 import Temporal.Music.Score(Score, temp, stretch, dur)
@@ -22,24 +21,12 @@ import Csound.Exp.GE
 import Csound.Exp.Instr
 import Csound.Exp.Arg
 import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
-import qualified Csound.Render.IndexMap as DM
-
-import Csound.Render.Channel
-import Csound.Render.Instr
-import Csound.Render.Pretty(Doc, vcat)
-
 
 data MixerNote 
     -- another mixer
     = MixerNote InstrId 
     -- instrument trigered by score
     | SoundNote InstrId (Score Note)
-
-data MixerExp = MixerExp
-    { mixerExpE   :: E
-    , mixerExpSco :: Score MixerNote }
-
-type Effect = [Sig] -> SE [Sig]
 
 newtype Mix a = Mix { unMix :: GE M } 
 
@@ -80,9 +67,8 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
-sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached instr getDoc
+sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached SoundSource instr soundSourceExp
     where notes' = fmap toNote notes
-          getDoc = fmap (vcat . renderInstrBody) . soundSourceExp
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --
@@ -102,9 +88,8 @@ sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveInstrCached 
 mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE b))
 mix effect sigs = tempAs sigs $ Mix $ do
     notes <- traverse unMix sigs
-    instrId <- saveInstr =<< getDoc effect
+    instrId <- saveInstr Mixer =<< effectExp effect
     return $ Eff instrId notes 
-    where getDoc = fmap (vcat . renderInstrBody) . effectExp
 
 {-
 -- | Triggers a midi-instrument (like Csound's massign). The result type 

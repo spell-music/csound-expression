@@ -2,7 +2,8 @@
 module Csound.Exp.GE(
     GE(..), runGE, History(..),
     history, options, withHistory, putHistory,
-    saveInstr, saveInstrCached,
+    Instr(..), InstrType(..),
+    saveInstr, saveInstrCached,    
 
     saveTab, saveStr,
     -- * globals
@@ -103,15 +104,22 @@ saveStr x = withHistory $ \history ->
 -- instruments
 
 data Instrs = Instrs 
-    { instrExps     :: [(InstrId, Doc)]
+    { instrExps     :: [Instr]
     , instrCounter  :: Int
     , instrCache    :: DM.Map Int }
 
 instance Default Instrs where
     def = Instrs def 1 DM.empty
 
-saveInstrCached :: a -> (a -> GE Doc) -> GE InstrId
-saveInstrCached instr render = do
+data Instr = Instr 
+    { instrId   :: InstrId
+    , instrBody :: E
+    , instrType :: InstrType }    
+
+data InstrType = SoundSource | Alwayson | Mixer
+
+saveInstrCached :: InstrType -> a -> (a -> GE E) -> GE InstrId
+saveInstrCached instrType instr render = do
     h <- history
     let cache = instrCache $ instrs h
     name <- exec $ DM.makeDynamicStableName instr
@@ -122,17 +130,17 @@ saveInstrCached instr render = do
                 instrId  = intInstrId counter' 
                 instrCache' = DM.insert name counter' cache
             doc <- render instr
-            let instrExps' = (instrId, doc) : (instrExps $ instrs h)
+            let instrExps' = (Instr instrId doc instrType) : (instrExps $ instrs h)
                 instrs' = instrs h
             putHistory $ h { instrs = instrs' { instrExps = instrExps', instrCounter = counter', instrCache = instrCache' }}
             return instrId
 
-saveInstr :: Doc -> GE InstrId
-saveInstr doc = withHistory $ \h ->
+saveInstr :: InstrType -> E -> GE InstrId
+saveInstr instrType exp = withHistory $ \h ->
     let ins = instrs h
         counter' = succ $ instrCounter ins
         instrId  = intInstrId counter'
-        instrExps' = (instrId, doc) : instrExps ins
+        instrExps' = (Instr instrId exp instrType) : instrExps ins
     in  (instrId, h{ instrs = ins { instrExps = instrExps', instrCounter = counter' }})
 
 

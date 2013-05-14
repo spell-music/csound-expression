@@ -1,7 +1,8 @@
 {-# Language ScopedTypeVariables #-}
 module Csound.Exp.Instr(
     soundSourceExp,
-    effectExp
+    effectExp,
+    trigExp
 ) where
 
 import Control.Monad(zipWithM, zipWithM_)
@@ -22,8 +23,6 @@ import Csound.Exp.Tuple
 import Csound.Exp.Arg
 
 import Csound.Render.Channel
-import Csound.Render.Instr(renderInstrBody)
-import Csound.Render.Pretty
 import Csound.Tfm.Tab
 import qualified Csound.Render.IndexMap as DM
 
@@ -50,7 +49,12 @@ substTabs exp = do
     ids <- mapM saveTab tabs
     let tabMap = M.fromList $ zip tabs ids
     return $ substInstrTabs tabMap exp'
-    
+   
+trigExp :: (Arg a, Out b) => (NoSE b -> SE ()) -> (a -> b) -> GE E
+trigExp writer instr = substTabs $ execSE $ 
+    writer . toCsdTuple . fmap toE =<< (toOut $ instr toArg)
+
+ 
 
 ----------------------------------------------------------
 -- simple instrument trigered with score

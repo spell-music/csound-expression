@@ -21,8 +21,6 @@ import Csound.Exp.SE
 import Csound.Exp.SERef
 import Csound.Exp.Instr
 
-import Csound.Render.Pretty(Doc)
-
 import Csound.Render.Channel(event)
 
 type Bam a = a -> SE ()
@@ -92,17 +90,9 @@ stepper initVal evt = do
 schedule :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt (D, a) -> GE (SE (NoSE b))
 schedule instr evt = do    
     ref <- newGERef defCsdTuple
-    instrId <- saveInstr =<< getTrigExp (writeGERef ref) instr 
-    saveAlwaysOnInstr $ scheduleInstr (writeGERef ref) instrId evt
+    instrId <- saveInstr SoundSource =<< trigExp (writeGERef ref) instr 
+    saveInstr Alwayson $ scheduleInstr (writeGERef ref) instrId evt
     return $ readGERef ref
-    where proxy :: Out b => GE (NoSE b) -> (a -> b) -> GE (NoSE b)
-          proxy = const  
-
-getTrigExp :: (Arg a, Out b) => (NoSE b -> SE ()) -> (a -> b) -> GE Doc
-getTrigExp = undefined
-
-saveAlwaysOnInstr :: E -> GE ()
-saveAlwaysOnInstr = undefined
 
 scheduleInstr :: (Arg a, Out b) => (b -> SE ()) -> InstrId -> Evt (D, a) -> E
 scheduleInstr write instrId evt = execSE $ 
