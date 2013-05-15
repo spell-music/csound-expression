@@ -1,5 +1,5 @@
 module Csound.Render.Pretty (
-    Doc, int, double, text, empty, ($$), vcat,
+    Doc, int, double, text, empty, ($$), vcat, vcatMap,
     verbatimLines,
 
     binaries, unaries, funcs,
@@ -10,7 +10,7 @@ module Csound.Render.Pretty (
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
     ppInline, ppCondOp, ppNumOp,
-    ppEvent, ppMasterNote
+    ppEvent, ppMasterNote, ppAlwayson
 ) where
 
 import Data.Char(toLower)
@@ -18,8 +18,11 @@ import qualified Data.Map as M
 import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen
 
-import Temporal.Music.Score(Event(..))
+import Csound.Tfm.Tab
 import Csound.Exp 
+
+vcatMap :: (a -> Doc) -> [a] -> Doc
+vcatMap f = vcat . fmap f
 
 verbatimLines :: [String] -> Doc
 verbatimLines = vcat . fmap text
@@ -41,8 +44,8 @@ unary op a = parens $ text op <> a
 func :: String -> Doc -> Doc
 func op a = text op <> parens a
 
-ppMapTable :: (a -> Int -> Doc) -> M.Map a Int -> Doc
-ppMapTable phi = vcat . map (uncurry phi) . M.toList
+ppMapTable :: (a -> Int -> Doc) -> Index a -> Doc
+ppMapTable phi = vcat . map (uncurry phi) . M.toList . indexElems
 
 
 ppRate :: Rate -> Doc
@@ -139,10 +142,10 @@ tag name content = vcat $ punctuate newline [
 
 -- instrument
 
-ppInstr :: InstrId -> [Doc] -> Doc
+ppInstr :: InstrId -> Doc -> Doc
 ppInstr instrId body = vcat [
     text "instr" <+> ppInstrId instrId,
-    vcat body,
+    body,
     text "endin"]
 
 ppInstr0 = vcat
@@ -162,15 +165,18 @@ ppScore = vcat
 
 ppNote instrId time dur args = char 'i' <> ppInstrId instrId <+> double time <+> double dur <+> hsep args
 
-ppMasterNote :: InstrId -> Event Double [Prim] -> Doc
+ppMasterNote :: InstrId -> CsdEvent [Prim] -> Doc
 ppMasterNote instrId evt = ppNote instrId (eventStart evt) (eventDur evt) (fmap ppPrim $ eventContent evt) <+> int 0
 
-ppEvent :: InstrId -> Event Double [Prim] -> Var -> Doc
+ppEvent :: InstrId -> CsdEvent [Prim] -> Var -> Doc
 ppEvent instrId evt var = pre <> comma <+> ppVar var
     where pre = ppProc "event_i" $ dquotes (char 'i') : ppInstrId instrId 
                 : (double $ eventStart evt) : (double $ eventDur evt) : (fmap ppPrim $ eventContent evt)
 
 ppTotalDur d = text "f0" <+> double d
+
+ppAlwayson :: InstrId -> Doc
+ppAlwayson instrId = char 'i' <> ppInstrId instrId <+> int 0  <+> int (-1)
 
 -- expressions
 

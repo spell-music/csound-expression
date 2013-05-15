@@ -6,7 +6,6 @@ module Csound.Exp.Event(
 ) where
 
 import Data.Monoid
-import Temporal.Music.Score(Score)
 
 import Csound.Exp
 import Csound.Exp.Wrapper

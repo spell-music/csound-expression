@@ -1,12 +1,16 @@
 -- | Global side effects
 module Csound.Exp.GE(
-    GE(..), runGE, History(..),
+    GE(..), runGE, execGE, History(..),
     history, options, withHistory, putHistory,
+
+    Instrs(..),
     saveMixerInstr, saveSourceInstr, saveAlwaysOnInstr, saveSourceInstrCached,    
+    saveMixerNotes, 
 
     saveTab, saveStr,
 
-    saveSco, LowLevelSco,    
+    Scos(..),
+    LowLevelSco,    
     -- * globals
  --   newGlobalVar,
     -- * instruments
@@ -57,13 +61,17 @@ instance Monad GE where
 data History = History 
     { tabIndex :: Index LowTab
     , strIndex :: Index String
+    , midis    :: [MidiAssign]
     , instrs   :: Instrs
     , scos     :: Scos
     , guis     :: Guis 
     , globals  :: Globals }
 
 instance Default History where 
-    def = History def def def def def def
+    def = History def def def def def def def
+
+execGE :: GE a -> CsdOptions -> IO History
+execGE a opt = fmap snd $ runGE a opt
 
 runGE :: GE a -> CsdOptions -> IO (a, History)
 runGE (GE a) options = runStateT (runReaderT a options) def
@@ -112,12 +120,13 @@ saveStr x = withHistory $ \history ->
 
 data Instrs = Instrs 
     { instrSources  :: [(InstrId, E)]
-    , instrMixers   :: [(InstrId, E)] 
+    , instrMixers   :: [(InstrId, E)]     
     , instrCounter  :: Int
-    , instrCache    :: DM.Map Int }
+    , instrCache    :: DM.Map Int
+    , mixerNotes    :: IM.IntMap LowLevelSco }
 
 instance Default Instrs where
-    def = Instrs def def 1 DM.empty
+    def = Instrs def def 1 DM.empty def
 
 saveSourceInstrCached :: a -> (a -> GE E) -> GE InstrId
 saveSourceInstrCached instr render = do
@@ -155,27 +164,26 @@ saveInstr save exp = withHistory $ \h ->
         instrId  = intInstrId counter'
     in  (instrId, h{ instrs = save (instrId, exp) $ ins { instrCounter = counter' }})
 
+saveMixerNotes :: IM.IntMap LowLevelSco -> GE ()
+saveMixerNotes sco = modifyHistory $ \h -> 
+    let x = instrs h
+    in  h { instrs = x{ mixerNotes = sco }}
+
 --------------------------------------------------------
 -- scores
 
 data Scos = Scos 
-    { alwaysOnInstrs :: [InstrId]
-    , mixerNotes     :: IM.IntMap LowLevelSco }
+    { alwaysOnInstrs :: [InstrId] }
 
 type LowLevelSco = [(InstrId, Note)]
 
 instance Default Scos where
-    def = Scos def def
+    def = Scos def
 
 saveAlwaysOnNote :: InstrId -> GE ()
 saveAlwaysOnNote instrId = modifyHistory $ \h -> 
     let x = scos h
     in  h { scos = x{ alwaysOnInstrs = instrId : alwaysOnInstrs x } }
-
-saveSco :: IM.IntMap LowLevelSco -> GE ()
-saveSco sco = modifyHistory $ \h -> 
-    let x = scos h
-    in  h { scos = x{ mixerNotes = sco }}
 
 --------------------------------------------------------
 -- guis

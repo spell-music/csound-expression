@@ -298,7 +298,6 @@ module Csound.Base(
     
     -- ** Effects
     effect, effectS,
-    module Temporal.Music,
 
     -- ** Midi
     -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.
@@ -360,8 +359,6 @@ module Csound.Base(
 
 import Data.Default
 import Data.Boolean
-import Temporal.Music
-
 import Csound.Air 
 
 import Csound.Exp

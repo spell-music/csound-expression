@@ -16,15 +16,15 @@ import Csound.Exp.Wrapper(getRates, isMultiOutSignature)
 
 import Csound.Tfm.DeduceTypes
 import Csound.Tfm.UnfoldMultiOuts
-import Csound.Render.Pretty(ppStmt, ppInstr, Doc)
+import Csound.Render.Pretty(ppStmt, ppInstr, vcat, Doc)
 
 type Dag f = [(Int, f Int)]
 
 renderInstr :: InstrId -> E -> Doc
 renderInstr instrId exp = ppInstr instrId $ renderInstrBody exp
 
-renderInstrBody :: E -> [Doc]
-renderInstrBody sig = map (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
+renderInstrBody :: E -> Doc
+renderInstrBody sig = vcat $ map (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
 
 -------------------------------------------------------------
 -- E -> Dag

@@ -4,7 +4,7 @@ module Csound.Render.Channel (
     -- * channel opcodes
     chnVar, chnName, 
     chnmix, chnget, chnclear,
-    chnUpdateStmt, chnUpdateOpcodeName,
+    chnUpdateStmt, chnUpdateOpcodeName, ppFreeChnStmt,
     -- * trigger an instrument
     event, eventWithChannel, instrOn, instrOff
 ) where
@@ -17,9 +17,8 @@ import Csound.Exp.Tuple(Out)
 import Csound.Exp.Arg(Arg, toNote)
 import Csound.Exp.Cons(opc0, opc1, opc2, opcs, spec1)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
-import Csound.Render.Pretty(verbatimLines)
+import Csound.Render.Pretty(verbatimLines, ($=), ppVar, text)   
 
-   
 ---------------------------------------------------------
 -- master instrument output
 
@@ -34,8 +33,8 @@ clipByMax = fmap clip'
     where clip' x = clip x 0 zeroDbfs
 
 ----------------------------------------------------------
--- channels
-       
+-- channels  
+
 chnVar :: Var
 chnVar = Var LocalVar Ir "Port"
 
@@ -58,6 +57,8 @@ chnUpdateStmt = verbatimLines [
     "xout giPort",
     "giPort = giPort + 1",
     "endop"]
+
+ppFreeChnStmt = ppVar chnVar $= text chnUpdateOpcodeName
 
 chnUpdateOpcodeName = "FreePort"
 

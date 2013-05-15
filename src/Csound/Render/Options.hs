@@ -14,6 +14,7 @@ import Csound.Exp.GE
 import Csound.Exp.SE
 import Csound.Exp.Tuple(Out)
 import Csound.Render.Pretty
+import Csound.Render.Channel(chnUpdateStmt)
 import Csound.Tab(idConsts, idSegs, idExps)
 
 type CtrlId = Int
@@ -58,7 +59,7 @@ type Nchnls = Int
 type InstrId = Int
 
 renderInstr0 :: Nchnls -> [MidiAssign] -> CsdOptions -> Doc
-renderInstr0 nchnls massignTable opt = ppInstr0 $ [
+renderInstr0 nchnls massignTable opt = ($$ chnUpdateStmt) $ ppInstr0 $ [
     stmt "sr"    $ sampleRate opt,
     stmt "ksmps" $ blockSize opt,
     stmt "nchnls" nchnls,   

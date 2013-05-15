@@ -9,8 +9,6 @@ module Csound.Exp.Mix(
 import Data.Traversable(traverse)
 import qualified Data.IntMap as IM
 
-import Temporal.Music.Score(Score, temp, stretch, dur, tmap, Event(..))
-
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
@@ -22,12 +20,12 @@ import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
 newtype Mix a = Mix { unMix :: GE M } 
 
 data M 
-    = Snd InstrId (Score Note)
-    | Eff InstrId (Score M)    
+    = Snd InstrId (CsdEventList Note)
+    | Eff InstrId (CsdEventList M)    
 
-nchnls :: Out a => Score (Mix a) -> Int
+nchnls :: Out a => f (Mix a) -> Int
 nchnls = outArity . proxy  
-    where proxy :: Score (Mix a) -> a
+    where proxy :: f (Mix a) -> a
           proxy = undefined  
 
 -- | Play a bunch of notes with the given instrument.
@@ -57,9 +55,9 @@ nchnls = outArity . proxy
 -- instruments that have side effects. I need it within one instrument. But when 
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
-sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
-sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveSourceInstrCached instr soundSourceExp
-    where notes' = fmap toNote notes
+sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
+sco instr notes = singleEvent $ Mix $ fmap (flip Snd notes') $ saveSourceInstrCached instr soundSourceExp
+    where notes' = toCsdEventList $ fmap toNote notes
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --
@@ -76,11 +74,11 @@ sco instr notes = tempAs notes $ Mix $ fmap (flip Snd notes') $ saveSourceInstrC
 -- board it produces the value that you can arrange with functions from the 
 -- module "Temporal.Media". You can delay it mix with some other track and 
 -- apply some another effect on top of it!
-mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE b))
-mix effect sigs = tempAs sigs $ Mix $ do
+mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
+mix effect sigs = singleEvent $ Mix $ do
     notes <- traverse unMix sigs
     instrId <- saveMixerInstr =<< effectExp effect
-    return $ Eff instrId notes 
+    return $ Eff instrId $ toCsdEventList notes 
 
 {-
 -- | Triggers a midi-instrument (like Csound's massign). The result type 
@@ -108,19 +106,13 @@ effect f = toCsdTuple . fmap (toE . f . fromE) . fromCsdTuple
 effectS :: (CsdTuple a, Out a) => (Sig -> SE Sig) -> (a -> SE a)
 effectS f a = fmap fromOut $ mapM f =<< toOut a
 
-tempAs :: Score b -> a -> Score a
-tempAs a = stretch (dur a) . temp
+lowLevelSco :: CsdSco f => f M -> IM.IntMap LowLevelSco
+lowLevelSco = undefined
 
-
-data EventList a = EventList
-    { eventListDur      :: Double
-    , eventListElems    :: [(Double, Double, a)] }
-
-renderSco :: Score M -> IM.IntMap LowLevelSco
-renderSco = undefined
-
-rescaleM :: Score M -> Score M
-rescaleM = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
+rescaleM :: CsdEventList M -> CsdEventList M
+rescaleM = undefined
+{-
+tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
                        in  mixStretch factor (eventContent e)
     where mixDur :: M -> Double
           mixDur x = case x of
@@ -132,4 +124,4 @@ rescaleM = tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
             Snd a sco -> Snd a $ stretch k sco
             Eff a sco -> Eff a $ rescaleM $ stretch k sco
 
-
+-}

@@ -12,8 +12,6 @@ import Data.Foldable
 import Data.Tuple(swap)
 import Data.Maybe(fromJust, mapMaybe)
 
-import Temporal.Music.Score(Score)
-
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.GE(History(..))
