@@ -29,14 +29,12 @@ module Csound.Air (
 ) where
 
 import Csound.Exp(Tab)
-import Csound.Exp.Wrapper(Sig, Spec, sig, kr, Amp, Cps)
+import Csound.Exp.Wrapper(Sig, Spec, sig, kr, Cps)
 import Csound.Exp.SE
-import Csound.Exp.Cons(withInits)
-import Csound.Exp.Numeric
-import Csound.Opcode(idur, oscil3, vco, pvscross, 
+import Csound.Opcode(idur, oscil3, pvscross, 
     atone, tone, areson, reson,
     buthp, butbp, butlp, butbr)
-import Csound.Tab(hifi, sines, guardPoint)
+import Csound.Tab(sines)
 
 --------------------------------------------------------------------------
 -- oscillators
@@ -49,6 +47,7 @@ osc cps = oscil3 1 cps (sines [1])
 oscBy :: Tab -> Cps -> Sig
 oscBy tab cps = oscil3 1 cps tab
 
+resolution :: Int
 resolution = 12
 
 -- | Sawtooth.
@@ -59,8 +58,9 @@ saw cps = oscil3 1 cps (sines $ take resolution $ fmap (1 / ) [1 .. ])
 
 -- | Square wave.
 sq :: Cps -> Sig
-sq cps = oscil3 1 cps (sines $ take resolution $ fmap f [1 .. ])
-    where f x
+sq cps = oscil3 1 cps (sines $ take resolution $ fmap f [(1::Int) .. ])
+    where f :: Int -> Double
+          f x
             | even x    = 0
             | otherwise = 1 / fromIntegral x
 -- vco 1 cps 2 0.5 `withInits` (sines [1])
@@ -68,9 +68,10 @@ sq cps = oscil3 1 cps (sines $ take resolution $ fmap f [1 .. ])
 -- | Triangle wave.
 tri :: Cps -> Sig
 tri cps = oscil3 1 cps (sines $ take resolution $ zipWith f (cycle [1, -1]) [1 ..])
-    where f a x
+    where f :: Double -> Int -> Double
+          f a x
             | even x    = 0
-            | otherwise = a / fromIntegral (x ^ 2)
+            | otherwise = a / fromIntegral (x ^ (2::Int))
 -- vco 1 cps 3 0.5 `withInits` (sines [1])
 
 {-

@@ -368,7 +368,6 @@ import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Tab
 import Csound.Opcode
-import Csound.Exp.Numeric
 import Csound.Exp.Logic
 import Csound.Exp.SE
 

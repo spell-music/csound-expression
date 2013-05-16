@@ -1,6 +1,6 @@
 -- | instrument p-arguments
 module Csound.Exp.Arg(        
-    Arg, arg, toNote, arity, 
+    Arg(..), arg, toNote, arity, 
     ArgMethods, toArg, makeArgMethods,
 ) where
 

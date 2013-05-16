@@ -1,7 +1,7 @@
 -- | Global side effects
 module Csound.Exp.GE(
     GE(..), runGE, execGE, History(..),
-    history, options, withHistory, putHistory,
+    getHistory, getOptions, withHistory, putHistory,
 
     Instrs(..),
     saveMixerInstr, saveSourceInstr, saveAlwaysOnInstr, saveSourceInstrCached,    
@@ -79,14 +79,14 @@ runGE (GE a) options = runStateT (runReaderT a options) def
 ge :: (CsdOptions -> History -> IO (a, History)) -> GE a
 ge phi = GE $ ReaderT $ \opt -> StateT $ \history -> phi opt history    
 
-history :: GE History
-history = ge $ \opt h -> return (h, h)
+getHistory :: GE History
+getHistory = ge $ \opt h -> return (h, h)
 
 putHistory :: History -> GE ()
 putHistory h = ge $ \_ _ -> return ((), h)
 
-options :: GE CsdOptions
-options = ge $ \opt h -> return (opt, h)
+getOptions :: GE CsdOptions
+getOptions = ge $ \opt h -> return (opt, h)
 
 exec :: IO a -> GE a
 exec act = ge $ \opt h -> do
@@ -130,7 +130,7 @@ instance Default Instrs where
 
 saveSourceInstrCached :: a -> (a -> GE E) -> GE InstrId
 saveSourceInstrCached instr render = do
-    h <- history
+    h <- getHistory
     let cache = instrCache $ instrs h
     name <- exec $ DM.makeDynamicStableName instr
     case DM.lookup name cache of

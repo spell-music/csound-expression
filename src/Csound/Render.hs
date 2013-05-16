@@ -47,13 +47,13 @@ renderSco x = vcat $ fmap ppAlwayson $ alwaysOnInstrs x
 
 renderOrc :: Instrs -> Doc
 renderOrc x = (vcatMap renderSource $ instrSources x) $$ (vcatMap renderMixer $ instrMixers x)
-    where getMixerNotes id = (fmap renderNotes $ mixerNotes x) IM.! (instrIdCeil id)
+    where getMixerNotes instrId = (fmap renderNotes $ mixerNotes x) IM.! (instrIdCeil instrId)
           
           renderSource = uncurry renderInstr    
-          renderMixer  (instrId, exp) = ppInstr instrId $
+          renderMixer  (instrId, expr) = ppInstr instrId $
                ppFreeChnStmt
             $$ getMixerNotes instrId
-            $$ renderInstrBody exp
+            $$ renderInstrBody expr
 
 renderNotes :: [(InstrId, Note)] -> Doc
 renderNotes = undefined
