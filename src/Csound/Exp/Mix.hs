@@ -1,6 +1,6 @@
 module Csound.Exp.Mix(
     -- * Container for sounds (triggered with notes and mixers)
-    Mix(..), M(..), nchnls, rescaleM,
+    Mix(..), M(..), nchnls,
 
     effect, effectS, 
     sco, mix --, midi, pgmidi
@@ -8,6 +8,9 @@ module Csound.Exp.Mix(
 
 import Data.Traversable(traverse)
 import qualified Data.IntMap as IM
+import qualified Data.Map    as M
+
+import Csound.Tfm.Tab
 
 import Csound.Exp
 import Csound.Exp.Wrapper
@@ -56,8 +59,30 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
-sco instr notes = singleEvent $ Mix $ fmap (flip Snd notes') $ saveSourceInstrCached instr soundSourceExp
-    where notes' = toCsdEventList $ fmap toNote notes
+sco instr notes = singleEvent $ Mix $ do    
+    notes'  <- fmap toCsdEventList $ traverse renderNote notes
+    instrId <- saveSourceInstrCached instr soundSourceExp
+    return $ Snd instrId notes'
+
+renderNote :: (Arg a) => a -> GE [Prim]
+renderNote a = tfmNoteStrs =<< tfmNoteTabs (toNote a) 
+
+tfmNoteTabs :: Note -> GE Note
+tfmNoteTabs xs = do
+    opt <- options
+    let xs' = defineNoteTabs (tabFi opt) xs
+        tabs = getPrimTabs =<< xs'
+    ids <- mapM saveTab tabs
+    let tabMap = M.fromList $ zip tabs ids
+    return $ substNoteTabs tabMap xs'
+
+tfmNoteStrs :: Note -> GE Note
+tfmNoteStrs xs = do    
+    ids <- mapM saveStr strs
+    let strMap = M.fromList $ zip strs ids
+    return $ substNoteStrs strMap xs   
+    where strs = getStrings xs
+
 
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --
@@ -106,22 +131,22 @@ effect f = toCsdTuple . fmap (toE . f . fromE) . fromCsdTuple
 effectS :: (CsdTuple a, Out a) => (Sig -> SE Sig) -> (a -> SE a)
 effectS f a = fmap fromOut $ mapM f =<< toOut a
 
-lowLevelSco :: CsdSco f => f M -> IM.IntMap LowLevelSco
-lowLevelSco = undefined
+rescaleCsdEventListM :: CsdEventList M -> CsdEventList M
+rescaleCsdEventListM es = 
+    es { csdEventListNotes = fmap rescaleCsdEventM $ csdEventListNotes es }
 
-rescaleM :: CsdEventList M -> CsdEventList M
-rescaleM = undefined
-{-
-tmap $ \e -> let factor = (eventDur e / (mixDur $ eventContent e))
-                       in  mixStretch factor (eventContent e)
-    where mixDur :: M -> Double
-          mixDur x = case x of
-            Snd _ a -> dur a
-            Eff _ a -> dur a
+rescaleCsdEventM :: CsdEvent M -> CsdEvent M
+rescaleCsdEventM (start, dur, x) = (start, dur, x)
+    where phi x = case x of
+            Snd n evts -> Snd n $ rescaleCsdEventList dur evts
+            Eff n evts -> Eff n $ rescaleCsdEventListM $ rescaleCsdEventList dur evts
 
-          mixStretch :: Double -> M -> M
-          mixStretch k x = case x of
-            Snd a sco -> Snd a $ stretch k sco
-            Eff a sco -> Eff a $ rescaleM $ stretch k sco
+rescaleCsdEventList :: Double -> CsdEventList a -> CsdEventList a
+rescaleCsdEventList k (CsdEventList totalDur events) = 
+    CsdEventList (k * totalDur) (fmap (rescaleCsdEvent k) events)
 
--}
+rescaleCsdEvent :: Double -> CsdEvent a -> CsdEvent a
+rescaleCsdEvent k (start, dur, a) = (k * start, k * dur, a)
+
+
+

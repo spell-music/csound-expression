@@ -1,7 +1,10 @@
 module Csound.Tfm.Tab(
+    -- * index table
     Index(..), indexInsert,
-    tabMap,
-    getInstrTabs,
+    -- * strings
+    getStrings, substNoteStrs,        
+    -- * f-tables
+    getInstrTabs, getPrimTabs,
     substInstrTabs, substNoteTabs, 
     defineInstrTabs, defineNoteTabs,
     updateTabSize
@@ -33,11 +36,27 @@ indexInsert a m = case M.lookup a (indexElems m) of
 instance Ord a => Default (Index a) where
     def = Index (M.fromList []) 0
 
+---------------------------------------------------------------------
+--  strings
+
+getStrings :: [Prim] -> [String]
+getStrings xs = primStrings =<< xs
+
+primStrings x = case x of
+    PrimString s -> [s]
+    _ -> []
+
+substNoteStrs :: StringMap -> Note -> Note
+substNoteStrs m = fmap (substPrimStrs m)
+
+substPrimStrs :: StringMap -> Prim -> Prim
+substPrimStrs strs x = case x of
+    PrimString s -> PrimInt (strs M.! s)
+    _ -> x
+
 ----------------------------------------------------------------------------
 -- Collects all tables from instruments [E] and notes [Prim]
 --
-tabMap :: [E] -> [Prim] -> TabMap
-tabMap es ps = M.fromList $ zip (nub $ (getPrimTabs =<< ps) ++ (getInstrTabs =<< es)) [1 ..]
     
 getInstrTabs :: E -> [LowTab]
 getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fromPrimOr $ ratedExpExp re of    

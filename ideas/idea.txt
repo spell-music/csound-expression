@@ -5,7 +5,7 @@
 
 * how about events in the local instruments? *troloface*
 
-* generic renderers, by dif soundproducers, with or without guis, options, etc
+* generic renderers: soundproducers, with or without guis, options, etc
 
 * rewrite rules for oscils
 
