@@ -29,20 +29,20 @@ module Csound.Tab (
     -- automatically. For example if we want to define a curve that rises to 1 over 25\% of the table and then falls down to zero
     -- we can define it like this:
     --
-    -- > segs [0, 0.25, 1, 0.75, 0] 
+    -- > lins [0, 0.25, 1, 0.75, 0] 
     --
     -- or
     --
-    -- > segs [0, 25, 1, 75, 0]
+    -- > lins [0, 25, 1, 75, 0]
     --
     -- or
     --
-    -- > segs [0, 1, 1, 3, 0]
+    -- > lins [0, 1, 1, 3, 0]
     --
     -- all these expressions are equivalent. 
-    consts, segs, cubes, exps, splines,    
+    consts, lins, cubes, exps, splines,    
     -- ** Equally spaced interpolants
-    econsts, esegs, ecubes, eexps, esplines,
+    econsts, elins, ecubes, eexps, esplines,
 
     -- * Polynomials    
     polys, chebs1, chebs2, bessels,
@@ -141,25 +141,25 @@ ecubes = cubes . insertOnes
 
 -- | Segments of straight lines. 
 --
--- > segs [a, n1, b, n2, c, ...]
+-- > lins [a, n1, b, n2, c, ...]
 --
 -- where
 --
 -- * a, b, c .. - are ordinate values
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
-segs :: [Double] -> Tab
-segs = interp idSegs
+lins :: [Double] -> Tab
+lins = interp idSegs
 
 -- | Equally spaced segments of straight lines.
 --
--- > esegs [a, b, c, ...] 
+-- > elins [a, b, c, ...] 
 --
 -- is the same as
 --
--- > segs [a, 1, b, 1, c, ...]
-esegs :: [Double] -> Tab
-esegs = segs . insertOnes
+-- > lins [a, 1, b, 1, c, ...]
+elins :: [Double] -> Tab
+elins = lins . insertOnes
 
 -- | Cubic spline curve.
 --
