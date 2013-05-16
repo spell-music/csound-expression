@@ -14,7 +14,6 @@ import Csound.Render.Options
 import Csound.Render.Channel
 
 import Csound.Exp.Tuple(Out)
-import Csound.Render.InstrTable
 import Csound.Exp.Mix
 import Csound.Exp.SE
 import Csound.Exp.GE

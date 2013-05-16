@@ -83,9 +83,8 @@ Library
         Csound.Exp        
         Csound.Exp.Wrapper
         Csound.Exp.GE
-        Csound.Exp.GERef
         Csound.Exp.SE
-        Csound.Exp.SERef
+        Csound.Exp.Ref
         Csound.Exp.Cons
         Csound.Exp.Logic
         Csound.Exp.Numeric       
@@ -102,14 +101,11 @@ Library
         Csound.Tfm.DeduceTypes       
         Csound.Tfm.UnfoldMultiOuts
         Csound.Tfm.Tab       
-        Csound.Tfm.String       
 
         Csound.Render
         Csound.Render.Pretty
         Csound.Render.Options
         Csound.Render.Instr
-        Csound.Render.IndexMap
-        Csound.Render.InstrTable
         Csound.Render.Channel
       
 

@@ -24,7 +24,6 @@ import Csound.Exp.Arg
 
 import Csound.Render.Channel
 import Csound.Tfm.Tab
-import qualified Csound.Render.IndexMap as DM
 
 
 funProxy :: (a -> b) -> (a, b)

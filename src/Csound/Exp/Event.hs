@@ -15,9 +15,8 @@ import Csound.Exp.Arg
 import Csound.Exp.Mix
 import Csound.Exp.Logic
 import Csound.Exp.GE
-import Csound.Exp.GERef
 import Csound.Exp.SE
-import Csound.Exp.SERef
+import Csound.Exp.Ref
 import Csound.Exp.Instr
 
 import Csound.Render.Channel(event, instrOn, instrOff)
