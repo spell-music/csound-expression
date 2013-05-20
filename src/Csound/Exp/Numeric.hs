@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language TypeSynonymInstances, FlexibleInstances #-}
 module Csound.Exp.Numeric(
     fracD, floorD, ceilD, intD, roundD,
@@ -6,7 +7,7 @@ module Csound.Exp.Numeric(
 
 import Csound.Exp
 import Csound.Exp.Wrapper(
-    Sig, D, prim, double, noRate,
+    Sig, D, prim, noRate,
     Val(..), toExp, onE1, onE2)
 
 --------------------------------------------
@@ -64,6 +65,7 @@ instance Floating E where
     acosh a = log $ a + sqrt (a + 1) * sqrt (a - 1)
     atanh a = 0.5 * log ((1 + a) / (1 - a))
 
+enumError :: String -> a
 enumError name = error $ name ++ " -- is defined only for literals"
     
 instance Enum E where
@@ -276,6 +278,7 @@ fromNumOpt = either (prim . PrimDouble) id
 expNum :: NumExp E -> E
 expNum = noRate . ExpNum . fmap toPrimOr
 
+fromDouble :: Double -> E
 fromDouble = fromNumOpt . Left
 
 isZero :: E -> Bool
@@ -284,14 +287,14 @@ isZero a = either ( == 0) (const False) $ toNumOpt a
 -- optimization for unary functions
 unOpt :: (Double -> Double) -> NumOp -> E -> E
 unOpt doubleOp op a = fromNumOpt $ either (Left . doubleOp) (Right . noOpt1) $ toNumOpt a
-    where noOpt1 a = expNum $ PreInline op [a] 
+    where noOpt1 x = expNum $ PreInline op [x] 
 
 -- optimization for binary functions
 biOpt :: (Double -> Double -> Double) -> NumOp -> E -> E -> E
 biOpt doubleOp op a b = fromNumOpt $ case (toNumOpt a, toNumOpt b) of
     (Left da, Left db) -> Left $ doubleOp da db
     _ -> Right $ noOpt2 a b
-    where noOpt2 a b = expNum $ PreInline op [a, b]
+    where noOpt2 x y = expNum $ PreInline op [x, y]
 
 doubleToInt :: (Double -> Int) -> NumOp -> E -> E
 doubleToInt fun = unOpt (fromIntegral . fun) 
@@ -299,7 +302,7 @@ doubleToInt fun = unOpt (fromIntegral . fun)
 -- arithmetic
 
 mod' :: E -> E -> E
-mod' = biOpt (\a b -> fromIntegral $ mod (floor a) (floor b)) Pow
+mod' = biOpt (\a b -> fromIntegral $ mod (floor a :: Int) (floor b)) Pow
  
 -- other functions
 
@@ -308,6 +311,6 @@ ceilE, floorE, fracE, intE, roundE :: E -> E
 ceilE   = doubleToInt ceiling Ceil 
 floorE  = doubleToInt floor Floor
 roundE  = doubleToInt round Round
-fracE   = unOpt (snd . properFraction) Frac 
+fracE   = unOpt (snd . (properFraction :: (Double -> (Int, Double)))) Frac 
 intE    = doubleToInt truncate IntOp 
     

@@ -18,7 +18,7 @@ module Csound.Opcode.Basic(
 
     -----------------------------------------------------
     -- * Random and Noise generators    
-    rand, randi, randh, rnd31, random, randomi, randomh, pinkish, noise,
+    rand, randi, randh, rnd31, random, randomi, randomh, pinkish, noise, pinkish', noise',
 
     -----------------------------------------------------
     -- * Envelopes
@@ -277,9 +277,9 @@ syncphasor = mopc2 "syncphasor" ([a, a], [x, a, i])
 -- doc: <http://www.csounds.com/manual/html/rand.html> 
 
 rand :: Amp -> SE Sig
-rand sig = se $ opc1 "rand" [
+rand asig = se $ opc1 "rand" [
     (a, x:rest),
-    (k, k:rest)] sig
+    (k, k:rest)] asig
     where rest = is 3
 
 -- | Generates a controlled random number series with interpolation between each new number. 
@@ -612,10 +612,16 @@ deltapxw a1 a2 a3 = se_ $ opc3 "deltapxw" [(x, [a, a, i])] a1 a2 a3
 ---------------------------------------------------
 -- filters
 
+filterSignature1 :: [(Rate, [Rate])]
 filterSignature1 = [(a, [a, k, i])]
+
+mkFilter1 :: (Val a1, Val a2, Val b) => Name -> a1 -> a2 -> b
 mkFilter1 name = opc2 name filterSignature1
 
+filterSignature2 :: [(Rate, [Rate])]
 filterSignature2 = [(a, [a, k, k, i])]
+
+mkFilter2 :: (Val a1, Val a2, Val a3, Val b) => Name -> a1 -> a2 -> a3 -> b
 mkFilter2 name = opc3 name filterSignature2
 
 

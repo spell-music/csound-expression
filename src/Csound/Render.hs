@@ -2,12 +2,10 @@ module Csound.Render(
     render    
 ) where
 
-import Data.Traversable(traverse)
-import Data.Monoid
-
 import qualified Data.IntMap as IM
 
 import Csound.Exp
+import Csound.Exp.Options
 import Csound.Render.Pretty
 import Csound.Render.Instr
 import Csound.Render.Options
@@ -15,7 +13,6 @@ import Csound.Render.Channel
 
 import Csound.Exp.Tuple(Out)
 import Csound.Exp.Mix
-import Csound.Exp.SE
 import Csound.Exp.GE
 
 render :: (Out a, CsdSco f) => CsdOptions -> f (Mix a) -> IO String
@@ -27,11 +24,11 @@ saveMasterInstr :: CsdEventList (Mix a) -> GE ()
 saveMasterInstr = undefined
 
 renderHistory :: Int -> Double -> CsdOptions -> History -> Doc
-renderHistory nchnls totalDur options history = ppCsdFile 
+renderHistory numOfChnls totalDur options history = ppCsdFile 
     -- flags
     (renderFlags options) 
     -- instr 0
-    (renderInstr0 nchnls (midis history) options)
+    (renderInstr0 numOfChnls (midis history) options)
     -- orchestra
     (renderOrc $ instrs history)
     -- scores

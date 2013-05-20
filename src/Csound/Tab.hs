@@ -5,7 +5,10 @@ module Csound.Tab (
     -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the 
     -- table once but you don't need the guard point if you read the table in many cycles, then the guard point is the the first point of your table).  
     Tab,
-    
+
+    -- * Table granularity
+    TabFi, fineFi, coarseFi,        
+
     -- * Fill table with numbers
     doubles,
     
@@ -69,11 +72,39 @@ import Data.Default
 import Csound.Exp
 import Csound.Tfm.Tab(updateTabSize)
 
-interp id as = Tab def id (ArgsRelative as)
-plains id as = Tab def id (ArgsPlain as)
+import qualified Data.IntMap as IM
+
+-- | Sets different table size for different GEN-routines. 
+--
+-- > fineFi n ps 
+--
+-- where 
+-- 
+-- * @n@ is the default value for table size (size is a @n@ power of 2) for all gen routines that are not listed in the next argument @ps@.
+--
+-- * @ps@ is a list of pairs @(genRoutineId, tableSizeDegreeOf2)@ that sets the given table size for a 
+--   given GEN-routine.
+--
+-- with this function we can set lower table sizes for tables that are usually used in the envelopes.
+fineFi :: Int -> [(Int, Int)] -> TabFi
+fineFi n xs = TabFi n (IM.fromList xs)
+
+-- | Sets the same table size for all tables. 
+--
+-- > coarseFi n
+--
+-- where @n@  is a degree of 2. For example, @n = 10@ sets size to 1024 points for all tables by default.
+coarseFi :: Int -> TabFi
+coarseFi n = TabFi n IM.empty
+
+interp :: Int -> [Double] -> Tab
+interp genId as = Tab def genId (ArgsRelative as)
+
+plains :: Int -> [Double] -> Tab
+plains genId as = Tab def genId (ArgsPlain as)
 
 insertOnes :: [Double] -> [Double]
-insertOnes as = case as of
+insertOnes xs = case xs of
     [] -> []
     a:[] -> [a]
     a:as -> a : 1 : insertOnes as
@@ -81,7 +112,7 @@ insertOnes as = case as of
 
 tableSizes :: [Int]
 tableSizes = [res | a <- twos, b <- twos1, res <- [a, b]]
-    where twos  = fmap (2 ^) [0 .. ]
+    where twos  = fmap (2 ^) [(0::Int) .. ]
           twos1 = fmap ( +1) twos  
 
 findTableSize :: Int -> Int
@@ -304,7 +335,7 @@ chebs2 xint xamp hs = plains idChebs2 (xint : xamp : hs)
 --
 -- All tables are created at 0 and memory is never released.
 gen :: Int -> [Double] -> Tab
-gen id args = Tab def id (ArgsPlain args)
+gen genId args = Tab def genId (ArgsPlain args)
 
 -- | Adds guard point to the table size (details of the interpolation schemes: you do need guard point if your intention is to read the 
 -- table once but you don't need the guard point if you read table in many cycles, the guard point is the the first point of your table).  

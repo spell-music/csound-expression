@@ -62,12 +62,12 @@ module Csound.LowLevel(
     se, se_
 ) where
 
-import Data.Fix
-
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.Cons
+
+i, k, a, x, s, f :: Rate
 
 i = Ir
 k = Kr
@@ -75,6 +75,8 @@ a = Ar
 x = Xr
 s = Sr
 f = Fr
+
+is, ks, as :: Int -> [Rate]
 
 is n = replicate n i
 ks n = replicate n k 

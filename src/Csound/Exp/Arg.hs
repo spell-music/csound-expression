@@ -13,8 +13,9 @@ import Csound.Exp.Wrapper(Val, toExp, D, Str, p)
 -- basic extractor
 
 getPrimUnsafe :: Val a => a -> Prim
-getPrimUnsafe a = case toExp a of
-    ExpPrim p -> p
+getPrimUnsafe x = case toExp x of
+    ExpPrim a -> a
+    _ -> error "Arg.hs:getPrimUnsafe - value is not prim"
 
 -- | The abstract type of methods for the class 'Arg'.
 data ArgMethods a = ArgMethods 
@@ -73,6 +74,12 @@ instance Arg () where
     argMethods = ArgMethods 
         { arg_ = const ()
         , toNote_ = const []
+        , arity_ = const 0 }
+
+instance Arg InstrId where
+    argMethods = ArgMethods 
+        { arg_ = error "method arg is undefined for InstrId"
+        , toNote_ = pure . PrimInstrId
         , arity_ = const 0 }
 
 instance Arg D where

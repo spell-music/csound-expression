@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language 
         TypeFamilies,
         TypeSynonymInstances,
@@ -11,17 +12,13 @@ module Csound.Exp.Wrapper(
     str, double, ir, ar, kr, sig,
     tfm, pref, prim, p,    
     noRate, setRate, withRate,
-    getRates, isMultiOutSignature,
-    gOutVar,
+    getRates, isMultiOutSignature,    
     Channel
 ) where
 
-import Control.Applicative
-import Control.Monad(ap, join)
-import Control.Monad.Trans.State
 import Data.Fix
 import Data.Default
-import Data.Maybe(fromJust)
+import Data.String
 
 import Csound.Exp
 
@@ -62,6 +59,9 @@ newtype Spec = Spec { unSpec :: E }
 ------------------------------------------------------
 -- values
 
+instance IsString Str where
+    fromString = str
+
 class Val a where
     toE     :: a -> E
     fromE   :: E -> a
@@ -78,10 +78,6 @@ instance Val Tab    where
     toE x = case x of
         TabExp e -> e
         primTab -> (prim . PrimTab . Left) primTab
-
-
-fromVal :: (Val a, Val b) => a -> b
-fromVal = fromE . toE
 
 onE1 :: (Val a, Val b) => (E -> E) -> (a -> b)
 onE1 f = fromE . f . toE
@@ -115,21 +111,10 @@ prim = noRate . ExpPrim
 pref :: Name -> Signature -> Info
 pref name signature = Info name signature Prefix Nothing
 
-inf :: Name -> Signature -> Info
-inf name signature = Info name signature Infix Nothing
-  
 tfm :: Val a => Info -> [E] -> a
 tfm info args = noRate $ Tfm info $ fmap toPrimOr args
 
 -- variables
-
-gvar, var :: Val a => Rate -> Name -> a
-
-var  = mkVar LocalVar 
-gvar = mkVar GlobalVar
-
-mkVar :: Val a => VarType -> Rate -> String -> a
-mkVar ty rate name = noRate $ ReadVar (Var ty rate name)
 
 p :: Val a => Int -> a
 p = prim . P
@@ -142,13 +127,11 @@ double = prim . PrimDouble
 str :: String -> Str
 str = prim . PrimString
 
-gOutVar :: Int -> Int -> Var
-gOutVar instrId portId = Var GlobalVar Ar (gOutName instrId portId)
-    where gOutName instrId portId = "Out" ++ show instrId ++ "_" ++ show portId
-
 getRates :: MainExp a -> [Rate]
 getRates (Tfm info _) = case infoSignature info of
     MultiRate outs _ -> outs
+    _ -> error "Wrapper.hs:getRates - argument should be multiOut"
+getRates _ = error "Wrapper.hs:getRates - argument should be Tfm-expression"
     
 isMultiOutSignature :: Signature -> Bool
 isMultiOutSignature x = case x of

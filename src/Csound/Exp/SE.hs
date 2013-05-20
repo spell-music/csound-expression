@@ -7,7 +7,6 @@ module Csound.Exp.SE(
 ) where
 
 import Control.Applicative
-import Control.Monad.Trans.Class
 import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
 import Data.Default
@@ -58,13 +57,13 @@ runSE a = runState (unSE a) def
 
 execSE :: SE a -> E
 execSE a 
-    | null initList = exp
-    | otherwise     = execSE $ applyInitList initList exp >> clearInitList
-    where state = snd $ runSE a
-          exp = fromJust $ expDependency state
-          initList = localInits $ locals state
+    | null initList = expr
+    | otherwise     = execSE $ applyInitList initList expr >> clearInitList
+    where st = snd $ runSE a
+          expr = fromJust $ expDependency st
+          initList = localInits $ locals st
           clearInitList = SE $ modify $ \s -> s{ locals = def }
-          applyInitList inits exp = sequence_ inits >> se_ exp
+          applyInitList inits xs = sequence_ inits >> se_ xs
 
 -- dependency tracking
 
@@ -97,18 +96,16 @@ initVar v x = se_ $ noRate $ InitVar v $ toPrimOr $ toE x
 -- new local variables
 
 newLocalVar :: Val a => Rate -> a -> SE Var
-newLocalVar rate init = SE $ do
+newLocalVar rate initVal = SE $ do
     s <- get
-    let (var, locals') = newVarOnLocals rate init (locals s)
+    let (var, locals') = newVarOnLocals rate initVal (locals s)
     put $ s { locals = locals' }
     return var
 
 newVarOnLocals :: Val a => Rate -> a -> Locals -> (Var, Locals)
-newVarOnLocals rate init st = 
+newVarOnLocals rate initVal st = 
     (var, st { newVarId = succ n, localInits = initStmt : localInits st })
     where var = Var LocalVar rate (show n)
           n = newVarId st  
-          initStmt = initVar var init
-
-
+          initStmt = initVar var initVal
 

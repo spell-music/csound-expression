@@ -335,7 +335,6 @@ module Csound.Base(
     -- ** Options
     -- | We can set some csound options.
     Channel, CtrlId, CsdOptions(..), module Data.Default,
-    coarseFi, fineFi,
         
     renderCsdBy, writeCsdBy, playCsdBy,  
     
@@ -353,8 +352,6 @@ module Csound.Base(
     -- | Handy short-cuts for function 'Csound.Base.playCsd'.
     --
     -- TODO (you can send me your definitions)
-
-
 ) where
 
 import Data.Default
@@ -367,13 +364,12 @@ import Csound.Exp.Wrapper
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Tab
-import Csound.Opcode
 import Csound.Exp.Logic
 import Csound.Exp.SE
-
-import Csound.Render.Options
+import Csound.Exp.Options
 import Csound.Exp.Mix
 
+import Csound.Opcode
 import Csound.IO
 
 

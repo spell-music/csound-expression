@@ -15,7 +15,6 @@ import qualified Data.Map as M(Map, lookup, insert, fromList, (!))
 import qualified Data.IntMap as IM(findWithDefault)
 
 import Data.Fix(Fix(..), cata)
-import Data.List(nub)
 import Data.Foldable(foldMap)
 
 import Csound.Exp
@@ -42,6 +41,7 @@ instance Ord a => Default (Index a) where
 getStrings :: [Prim] -> [String]
 getStrings xs = primStrings =<< xs
 
+primStrings :: Prim -> [String]
 primStrings x = case x of
     PrimString s -> [s]
     _ -> []
@@ -68,6 +68,12 @@ getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fro
     If info a b -> foldMap id info ++ a ++ b
     ReadVar _ -> []
     WriteVar _ a -> a
+    InitVar _ _ -> []
+    IfBegin _ -> []
+    ExpBool _ -> []
+    ElseIfBegin _ -> []
+    ElseBegin -> []
+    IfEnd -> []
     where fromPrimOr x = case unPrimOr x of
             Left  p -> getPrimTabs p
             Right a -> a
@@ -138,15 +144,16 @@ defineTabArgs size args = case args of
     where fromRelative n as = substEvens (mkRelative n $ getEvens as) as
           getEvens xs = case xs of
             [] -> []
-            a:[] -> []
-            a:b:as -> b : getEvens as
+            _:[] -> []
+            _:b:as -> b : getEvens as
             
           substEvens evens xs = case (evens, xs) of
-            ([], xs) -> xs
-            (es, []) -> []
-            (e:es, a:b:as) -> a : e : substEvens es as
+            ([], as) -> as
+            (_, []) -> []
+            (e:es, a:_:as) -> a : e : substEvens es as
+            _ -> error "table argument list should contain even number of elements"
             
-          mkRelative n as = fmap (fromIntegral . round . (s * )) as
+          mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as
             where s = fromIntegral n / sum as
             
 
@@ -160,7 +167,7 @@ defineTabSize base x = case x of
             | guardPoint = (+ 1)
             | otherwise  = id
             
-          byDegree base n = 2 ^ max 0 (base + n) 
+          byDegree zero n = 2 ^ max 0 (zero + n) 
 
 ----------------------------------------------------------------------------
 -- change table size

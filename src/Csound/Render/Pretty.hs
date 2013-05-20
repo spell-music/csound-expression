@@ -27,6 +27,7 @@ vcatMap f = vcat . fmap f
 verbatimLines :: [String] -> Doc
 verbatimLines = vcat . fmap text
 
+($$) :: Doc -> Doc -> Doc
 ($$) = (<$$>)
 
 binaries, unaries, funcs :: String -> [Doc] -> Doc
@@ -85,6 +86,8 @@ ppVarType x = case x of
 ppPrim :: Prim -> Doc
 ppPrim x = case x of
     P n -> char 'p' <> int n
+    PrimInstrId a -> ppInstrId a
+    PString a -> int a    
     PrimInt n -> int n
     PrimDouble d -> double d
     PrimString s -> dquotes $ text s
@@ -107,25 +110,29 @@ ppConvertRate out to from var = case (to, from) of
     (Kr, Ir) -> out $= k var
     (Ir, Ar) -> downsamp var
     (Ir, Kr) -> out $= i var
+    (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
     where upsamp x = ppOpc out "upsamp" [x]
           downsamp x = ppOpc out "downsamp" [x]
           k = func "k"
           i = func "i"
 
-ppTabDef ft id = char 'f' 
-    <>  int id 
+ppTabDef :: LowTab -> Int -> Doc
+ppTabDef ft tabId = char 'f' 
+    <>  int tabId 
     <+> int 0 
     <+> (int $ lowTabSize ft)
     <+> (int $ lowTabGen ft) 
     <+> (hsep $ map double $ lowTabArgs ft)
 
-ppStrset str id = text "strset" <+> int id <> comma <+> (dquotes $ text str)
+ppStrset :: String -> Int -> Doc
+ppStrset str strId = text "strset" <+> int strId <> comma <+> (dquotes $ text str)
 
 -- file
 
+newline :: Doc
 newline = line
 
-       
+ppCsdFile :: Doc -> Doc -> Doc -> Doc -> Doc -> Doc -> Doc
 ppCsdFile flags instr0 instrs scores strTable tabs = 
     tag "CsoundSynthesizer" [
         tag "CsOptions" [flags],
@@ -148,6 +155,7 @@ ppInstr instrId body = vcat [
     body,
     text "endin"]
 
+ppInstr0 :: [Doc] -> Doc
 ppInstr0 = vcat
 
 ppOrc :: [Doc] -> Doc
@@ -159,10 +167,13 @@ ppInstrId (InstrId den nom) = int nom <> maybe empty ppAfterDot den
 
 -- score
 
+ppSco :: [Doc] -> Doc
 ppSco = vcat
 
+ppScore :: [Doc] -> Doc
 ppScore = vcat
 
+ppNote :: InstrId -> Double -> Double -> [Doc] -> Doc
 ppNote instrId time dur args = char 'i' <> ppInstrId instrId <+> double time <+> double dur <+> hsep args
 
 ppMasterNote :: InstrId -> CsdEvent [Prim] -> Doc
@@ -173,6 +184,7 @@ ppEvent instrId evt var = pre <> comma <+> ppVar var
     where pre = ppProc "event_i" $ dquotes (char 'i') : ppInstrId instrId 
                 : (double $ eventStart evt) : (double $ eventDur evt) : (fmap ppPrim $ eventContent evt)
 
+ppTotalDur :: Double -> Doc
 ppTotalDur d = text "f0" <+> double d
 
 ppAlwayson :: InstrId -> Doc
@@ -181,10 +193,10 @@ ppAlwayson instrId = char 'i' <> ppInstrId instrId <+> int 0  <+> int (-1)
 -- expressions
 
 ppInline :: (a -> [Doc] -> Doc) -> Inline a Doc -> Doc
-ppInline ppNode a = ppExp $ inlineExp a    
-    where ppExp x = case x of
+ppInline ppNode a = iter $ inlineExp a    
+    where iter x = case x of
               InlinePrim n        -> inlineEnv a IM.! n
-              InlineExp op args   -> ppNode op $ fmap ppExp args  
+              InlineExp op args   -> ppNode op $ fmap iter args  
 
 -- booleans
 
@@ -192,7 +204,6 @@ ppCondOp :: CondOp -> [Doc] -> Doc
 ppCondOp op = case op of
     TrueOp            -> const $ text "(1 == 1)"                
     FalseOp           -> const $ text "(0 == 1)"
-    Not               -> uno "~" 
     And               -> bi "&&"
     Or                -> bi "||"
     Equals            -> bi "=="
@@ -202,7 +213,6 @@ ppCondOp op = case op of
     LessEquals        -> bi "<="    
     GreaterEquals     -> bi ">="                         
     where bi  = binaries 
-          uno = unaries
           
 -- numeric
 
@@ -223,14 +233,16 @@ ppNumOp op = case  op of
     where bi  = binaries
           uno = unaries
           fun = funcs
-          firstLetterToLower (x:xs) = toLower x : xs
+          firstLetterToLower xs = case xs of
+            a:as -> toLower a : as
+            [] -> error "ppNumOp firstLetterToLower: empty identifier"
 
 
 ppStmt :: [RatedVar] -> Exp RatedVar -> Doc
-ppStmt outs exp = ppExp (ppOuts outs) exp
+ppStmt outs expr = ppExp (ppOuts outs) expr
 
 ppExp :: Doc -> Exp RatedVar -> Doc
-ppExp res exp = case fmap ppPrimOrVar exp of
+ppExp res expr = case fmap ppPrimOrVar expr of
     ExpPrim (PString n) -> ppStrget res n
     ExpPrim p -> res $= ppPrim p
     Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b

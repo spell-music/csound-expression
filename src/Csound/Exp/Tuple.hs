@@ -14,7 +14,7 @@ import Control.Monad(join)
 
 import Csound.Exp
 import Csound.Exp.Wrapper(Val(..), Sig, D, Str, Spec, onExp, toExp, 
-    withRate, getRates, isMultiOutSignature)
+    withRate, getRates)
 import Csound.Exp.SE(SE)
 
 -- | Describes tuples of Csound values. It's used for functions that can return 
@@ -157,18 +157,21 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f
 -- multiple outs
 
 multiOuts :: CsdTuple a => E -> a
-multiOuts exp = res
-    where res = toCsdTuple $ multiOutsSection (arityCsdTuple res) exp
+multiOuts expr = res
+    where res = toCsdTuple $ multiOutsSection (arityCsdTuple res) expr
 
 multiOutsSection :: Int -> E -> [E]
-multiOutsSection n e = zipWith (\n r -> select n r e') [0 ..] rates
-    where rates = take n $ getRates $ toExp e          
-          e' = onExp (setMultiRate rates) e
+multiOutsSection n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates
+    where outRates = take n $ getRates $ toExp e          
+          e' = onExp (setMultiRate outRates) e
           
           setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs 
-              where MultiRate _ ins = infoSignature info
+              where ins = case infoSignature info of
+                        MultiRate _ a -> a
+                        _ -> error "Tuple.hs: multiOutsSection -- should be multiOut expression" 
+          setMultiRate _ _ = error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"  
             
-          select n r e = withRate r $ Select r n (PrimOr $ Right e)
+          select cellId rate expr = withRate rate $ Select rate cellId (PrimOr $ Right expr)
 
 ------------------------------------------------
 -- instrument outs

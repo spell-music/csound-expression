@@ -5,6 +5,7 @@ module Csound.Render.Channel (
     chnVar, chnName, 
     chnmix, chnget, chnclear,
     chnUpdateStmt, chnUpdateOpcodeName, ppFreeChnStmt,
+    freeChn, 
     -- * trigger an instrument
     event, eventWithChannel, instrOn, instrOff
 ) where
@@ -12,12 +13,10 @@ module Csound.Render.Channel (
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
-import Csound.Exp.GE
-import Csound.Exp.Tuple(Out)
 import Csound.Exp.Arg(Arg, toNote)
-import Csound.Exp.Cons(opc0, opc1, opc2, opcs, spec1)
+import Csound.Exp.Cons(opc0, opc1, opc2, opcs)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
-import Csound.Render.Pretty(verbatimLines, ($=), ppVar, text)   
+import Csound.Render.Pretty(Doc, verbatimLines, ($=), ppVar, text)   
 
 ---------------------------------------------------------
 -- master instrument output
@@ -51,6 +50,7 @@ chnget a = se $ opc1 "chnget" [(Ar, [Sr])] a
 chnclear :: Str -> SE ()
 chnclear a = se_ $ opc1 "chnclear" [(Xr, [Sr])] a
 
+chnUpdateStmt :: Doc
 chnUpdateStmt = verbatimLines [
     "giPort init 1",
     "opcode " ++ chnUpdateOpcodeName ++ ", i, 0",
@@ -58,16 +58,14 @@ chnUpdateStmt = verbatimLines [
     "giPort = giPort + 1",
     "endop"]
 
+ppFreeChnStmt :: Doc
 ppFreeChnStmt = ppVar chnVar $= text chnUpdateOpcodeName
 
+chnUpdateOpcodeName :: String
 chnUpdateOpcodeName = "FreePort"
 
 freeChn :: SE D
 freeChn = se $ opc0 "FreePort" [(Ir, [])]
-
-readChn :: Out b => D -> SE b
-readChn chn = undefined
-
 
 -------------------------------------------------------------
 -- notes
@@ -75,7 +73,7 @@ readChn chn = undefined
 event :: Arg a => InstrId -> D -> D -> a -> SE ()
 event instrId start dur arg = se_ $ opcs "event" [(Xr, repeat Ir)] argExp
     where argExp :: [E]
-          argExp = fmap prim $ toNote (str "i", start, dur, arg) 
+          argExp = fmap prim $ toNote (str "i", instrId, start, dur, arg) 
 
 eventWithChannel :: Arg a => InstrId -> D -> D -> a -> D -> SE ()
 eventWithChannel instrId start dur arg chn = event instrId start dur (arg, chn)

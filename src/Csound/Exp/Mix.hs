@@ -3,11 +3,12 @@ module Csound.Exp.Mix(
     Mix(..), M(..), nchnls,
 
     effect, effectS, 
-    sco, mix --, midi, pgmidi
+    sco, mix, --, midi, pgmidi
+
+    rescaleCsdEventListM
 ) where
 
 import Data.Traversable(traverse)
-import qualified Data.IntMap as IM
 import qualified Data.Map    as M
 
 import Csound.Tfm.Tab
@@ -19,6 +20,7 @@ import Csound.Exp.GE
 import Csound.Exp.Instr
 import Csound.Exp.Arg
 import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
+import Csound.Exp.Options
 
 newtype Mix a = Mix { unMix :: GE M } 
 
@@ -69,7 +71,7 @@ renderNote a = tfmNoteStrs =<< tfmNoteTabs (toNote a)
 
 tfmNoteTabs :: Note -> GE Note
 tfmNoteTabs xs = do
-    opt <- options
+    opt <- getOptions
     let xs' = defineNoteTabs (tabFi opt) xs
         tabs = getPrimTabs =<< xs'
     ids <- mapM saveTab tabs
@@ -100,9 +102,9 @@ tfmNoteStrs xs = do
 -- module "Temporal.Media". You can delay it mix with some other track and 
 -- apply some another effect on top of it!
 mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
-mix effect sigs = singleEvent $ Mix $ do
+mix eff sigs = singleEvent $ Mix $ do
     notes <- traverse unMix sigs
-    instrId <- saveMixerInstr =<< effectExp effect
+    instrId <- saveMixerInstr =<< effectExp eff
     return $ Eff instrId $ toCsdEventList notes 
 
 {-
@@ -136,7 +138,7 @@ rescaleCsdEventListM es =
     es { csdEventListNotes = fmap rescaleCsdEventM $ csdEventListNotes es }
 
 rescaleCsdEventM :: CsdEvent M -> CsdEvent M
-rescaleCsdEventM (start, dur, x) = (start, dur, x)
+rescaleCsdEventM (start, dur, evt) = (start, dur, phi evt)
     where phi x = case x of
             Snd n evts -> Snd n $ rescaleCsdEventList dur evts
             Eff n evts -> Eff n $ rescaleCsdEventListM $ rescaleCsdEventList dur evts

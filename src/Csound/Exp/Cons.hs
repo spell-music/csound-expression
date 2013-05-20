@@ -8,12 +8,10 @@ module Csound.Exp.Cons (
     mopcs, mopc0, mopc1, mopc2, mopc3, mopc4, mopc5, mopc6, mopc7
 ) where
 
-import Data.String
 import qualified Data.Map as M(fromList)
 
 import Csound.Exp
-import Csound.Exp.Wrapper(Str, Sig, Val(..), tfm, pref, str,
-        onExp)
+import Csound.Exp.Wrapper(Sig, Val(..), tfm, pref, onExp)
 import Csound.Exp.Tuple(CsdTuple, fromCsdTuple, multiOuts)
 
 -- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
@@ -23,13 +21,7 @@ withInits :: (Val a, CsdTuple inits) => a -> inits -> Sig
 withInits a b = fromE $ onExp phi $ toE a
     where phi x = case x of
             Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr $ fromCsdTuple b))
-            x        -> x
-
-------------------------------------------------
--- string constructor
-
-instance IsString Str where
-    fromString = str
+            _        -> x
 
 ------------------------------------------------
 -- constructor for simple arithmetic operators
@@ -42,12 +34,6 @@ biSignature = [
     (Ar, [Ar, Ar]),
     (Kr, [Kr, Kr]),
     (Ir, [Ir, Ir])]
-
-idSignature :: Spec1
-idSignature = [
-    (Ar, repeat Ar),
-    (Kr, repeat Kr),
-    (Ir, repeat Ir)]
 
 ----------------------------
 -- constructors for opcodes (single or multiple rates)

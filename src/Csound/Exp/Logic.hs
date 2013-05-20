@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language TypeFamilies #-}
 module Csound.Exp.Logic(
     BoolSig, BoolD, when
@@ -20,25 +21,27 @@ import Csound.Exp.SE(SE, se_, stmtOnly)
 -- imperative if-then-else
 
 when :: BoolSig -> SE () -> SE ()
-when cond body = do
-    ifBegin cond
+when p body = do
+    ifBegin p
     body
     ifEnd
 
 ifBegin :: Val a => a -> SE ()
 ifBegin = withCond IfBegin
 
+{-
 elseIfBegin :: Val a => a -> SE ()
 elseIfBegin = withCond ElseIfBegin
 
 elseBegin :: SE ()
 elseBegin = stmtOnly ElseBegin
+-}
 
 ifEnd :: SE ()
 ifEnd = stmtOnly IfEnd
 
 withCond :: Val a => (E -> MainExp E) -> a -> SE ()
-withCond stmt cond = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE cond)
+withCond stmt p = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE p)
 -- booleans
 
 -- | Boolean signals. 
@@ -117,22 +120,23 @@ instance IfB Str where
 --
 -- performs inlining of the boolean expressions
 
+boolExp :: a -> [b] -> PreInline a b
 boolExp = PreInline
 
 condExp :: (Val bool, Val a) => bool -> a -> a -> a
 condExp p t e = fromE $ mkCond (condInfo $ toPrimOr $ toE p) (toE t) (toE e)
     where mkCond :: CondInfo (PrimOr E) -> E -> E -> E
-          mkCond p t e 
-            | isTrue p = t
-            | isFalse p = e
-            | otherwise = noRate $ If p (toPrimOr t) (toPrimOr e)            
+          mkCond pr th el 
+            | isTrue pr = th
+            | isFalse pr = el
+            | otherwise = noRate $ If pr (toPrimOr th) (toPrimOr el)            
 
 condInfo :: PrimOr E -> CondInfo (PrimOr E)
-condInfo exp = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' exp) 0
+condInfo expr = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' expr) 0
     where condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
-          condInfo' e = maybe (onLeaf e) (onExp e) $ parseNode e
+          condInfo' e = maybe (onLeaf e) (onExpr e) $ parseNode e
           onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
-          onExp  e (op, args) = fmap mkNode $ mapM condInfo' args
+          onExpr  _ (op, args) = fmap mkNode $ mapM condInfo' args
               where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
 
           parseNode :: PrimOr E -> Maybe (CondOp, [PrimOr E])
@@ -152,9 +156,6 @@ boolOps op as = noRate $ ExpBool $ boolExp op $ fmap toPrimOr as
 boolOp0 :: Val a => CondOp -> a
 boolOp0 op = boolOps op []
 
-boolOp1 :: Val a => CondOp -> a -> a
-boolOp1 op a = boolOps op [setRate Kr $ toE a]
-
 boolOp2 :: (Val a1, Val a2, Val b) => CondOp -> a1 -> a2 -> b
 boolOp2 op a b = boolOps op $ map (setRate Kr) [toE a, toE b]
 
@@ -172,5 +173,8 @@ notE x = onExp phi x
             Less              -> boolExp GreaterEquals  args
             Greater           -> boolExp LessEquals     args
             LessEquals        -> boolExp Greater        args
-            GreaterEquals     -> boolExp Less           args     
+            GreaterEquals     -> boolExp Less           args
+
+          phi _ = error "Logic.hs:notE - expression is not Boolean"  
+
 

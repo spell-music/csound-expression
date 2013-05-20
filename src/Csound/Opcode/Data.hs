@@ -264,7 +264,7 @@ inch = mopcs "inch" (repeat a, repeat k)
 --
 -- doc: <http://www.csounds.com/manual/html/outch.html>
 outch :: [(Sig, Sig)] -> SE ()
-outch ts = se_ $ opcs "outch" [(x, cycle [a,k])] $ (\(a, b) -> [a, b]) =<< ts
+outch ts = se_ $ opcs "outch" [(x, cycle [a,k])] $ (\(a1, a2) -> [a1, a2]) =<< ts
 
 -- ** Sample Playback With Optional Looping
 
@@ -375,7 +375,7 @@ filebit = opc1 "filebit" [(i, [i,i])]
 --
 -- doc: <http://www.csounds.com/manual/html/fout.html>
 fout :: [Sig] -> SE ()
-fout as = se_ $ opcs "fout" [(x, repeat a)] as
+fout sigs = se_ $ opcs "fout" [(x, repeat a)] sigs
 
 -- ** Non-Soundfile Input And Output
 
@@ -417,12 +417,12 @@ instance Nums Sig where isSig = const True
 instance Nums D   where isSig = const False
 
 conv :: Nums a => NumOp -> a -> a
-conv op a = noRate $ ExpNum $ PreInline op [toPrimOr $ toE a]
+conv op arg = noRate $ ExpNum $ PreInline op [toPrimOr $ toE arg]
 
 convKr :: Nums a => NumOp -> a -> a
-convKr op a = conv op $ phi a
+convKr op arg = conv op $ phi arg
     where phi
-            | isSig a = setRate Kr 
+            | isSig arg = setRate Kr 
             | otherwise = id
 
 

@@ -12,8 +12,6 @@ import Csound.Exp.Wrapper
 import Csound.Exp.Logic
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
-import Csound.Exp.Mix
-import Csound.Exp.Logic
 import Csound.Exp.GE
 import Csound.Exp.SE
 import Csound.Exp.Ref
@@ -37,8 +35,8 @@ instance Monoid (Evt a) where
     mappend a b = Evt $ \bam -> runEvt a bam >> runEvt b bam
 
 filterEvt :: (a -> BoolD) -> Evt a -> Evt a
-filterEvt pred evt = Evt $ \bam -> runEvt evt $ \a ->
-    when (toBoolSig $ pred a) $ bam a
+filterEvt cond evt = Evt $ \bam -> runEvt evt $ \a ->
+    when (toBoolSig $ cond a) $ bam a
 
 accumEvt :: (CsdTuple s) => s -> (a -> s -> (b, s)) -> Evt a -> Evt b
 accumEvt s0 update evt = Evt $ \bam -> do
@@ -46,17 +44,15 @@ accumEvt s0 update evt = Evt $ \bam -> do
     runEvt evt $ \a -> do
         s1 <- readSt
         let (b, s2) = update a s1
+        writeSt s2
         bam b
 
 snapshot :: (CsdTuple a) => (Snap a -> b -> c) -> a -> Evt b -> Evt c
-snapshot f sig evt = Evt $ \bam -> runEvt evt $ \a -> 
-    bam (f (readSnap sig) a)
+snapshot f asig evt = Evt $ \bam -> runEvt evt $ \a -> 
+    bam (f (readSnap asig) a)
 
 toBoolSig :: BoolD -> BoolSig
 toBoolSig = undefined
-
-initCsdTuple :: CsdTuple s => s -> SE (SE s, s -> SE ())
-initCsdTuple s0 = undefined
 
 readSnap :: CsdTuple a => a -> Snap a
 readSnap = undefined
@@ -84,19 +80,19 @@ evtToBool = undefined
 
 stepper :: CsdTuple a => a -> Evt a -> SE a
 stepper initVal evt = do
-    (read, write) <- sensorsSE initVal
-    runEvt evt $ \a -> write a
-    read 
+    (readSt, writeSt) <- sensorsSE initVal
+    runEvt evt $ \a -> writeSt a
+    readSt 
 
 schedule :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt (D, a) -> GE (SE (NoSE b))
 schedule instr evt = do    
     ref <- newGERef defCsdTuple
     instrId <- saveSourceInstr =<< trigExp (writeGERef ref) instr 
-    saveAlwaysOnInstr $ scheduleInstr (writeGERef ref) instrId evt
+    _ <- saveAlwaysOnInstr $ scheduleInstr instrId evt
     return $ readGERef ref
 
-scheduleInstr :: (Arg a, Out b) => (b -> SE ()) -> InstrId -> Evt (D, a) -> E
-scheduleInstr write instrId evt = execSE $ 
+scheduleInstr :: (Arg a) => InstrId -> Evt (D, a) -> E
+scheduleInstr instrId evt = execSE $ 
     runEvt evt $ \(dt, a) -> do
         event instrId 0 dt a
   
@@ -104,11 +100,11 @@ toggle :: (Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt a -> Evt c -> GE (SE (
 toggle instr onEvt offEvt = do
     ref <- newGERef defCsdTuple
     instrId <- saveSourceInstr =<< trigExp (writeGERef ref) instr 
-    saveAlwaysOnInstr $ scheduleToggleInstr (writeGERef ref) instrId onEvt offEvt
+    _ <- saveAlwaysOnInstr $ scheduleToggleInstr instrId onEvt offEvt
     return $ readGERef ref
 
-scheduleToggleInstr :: (Arg a, Out b) => (b -> SE ()) -> InstrId -> Evt a -> Evt c -> E
-scheduleToggleInstr write instrId onEvt offEvt = execSE $ do
+scheduleToggleInstr :: (Arg a) => InstrId -> Evt a -> Evt c -> E
+scheduleToggleInstr instrId onEvt offEvt = execSE $ do
     runEvt onEvt $ \a -> do
         instrOn instrId a 0
     cond <- evtToBool offEvt

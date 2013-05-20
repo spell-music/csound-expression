@@ -11,24 +11,17 @@ module Csound.Exp.GE(
 
     Scos(..),
     LowLevelSco,    
-    -- * globals
- --   newGlobalVar,
-    -- * instruments
 
-    -- ** sound sources
- --   Instr(..), Arity(..), 
-    -- ** event driven
- --   TrigInstr(..), TrigInstrMap(..),
-    -- * guis    
+    Globals(..), Global(..),
+
     appendToGui, newGuiId,
     newGlobalVar
 ) where
 
-import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, member, lookup)
+import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, lookup)
 import qualified System.Mem.StableName.Dynamic     as DM(DynamicStableName, makeDynamicStableName)
 
 import Control.Applicative
-import Control.Monad.Trans.Class
 import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Reader
@@ -38,12 +31,11 @@ import qualified Data.IntMap as IM
 
 import Csound.Exp
 import Csound.Exp.Wrapper
+import Csound.Exp.Options
 import Csound.Exp.SE
 import Csound.Exp.Gui(Gui)
 
 import Csound.Tfm.Tab
-
-import Csound.Render.Pretty(Doc)
 
 newtype GE a = GE { unGE :: ReaderT CsdOptions (StateT History IO) a }
 
@@ -80,7 +72,7 @@ ge :: (CsdOptions -> History -> IO (a, History)) -> GE a
 ge phi = GE $ ReaderT $ \opt -> StateT $ \history -> phi opt history    
 
 getHistory :: GE History
-getHistory = ge $ \opt h -> return (h, h)
+getHistory = ge $ \_ h -> return (h, h)
 
 putHistory :: History -> GE ()
 putHistory h = ge $ \_ _ -> return ((), h)
@@ -89,12 +81,12 @@ getOptions :: GE CsdOptions
 getOptions = ge $ \opt h -> return (opt, h)
 
 exec :: IO a -> GE a
-exec act = ge $ \opt h -> do
+exec act = ge $ \_ h -> do
     a <- act
     return (a, h)
 
 withHistory :: (History -> (a, History)) -> GE a
-withHistory phi = ge $ \opt history -> return $ phi history
+withHistory phi = ge $ \_ history -> return $ phi history
 
 modifyHistory :: (History -> History) -> GE ()
 modifyHistory f = withHistory $ \h -> ((), f h)
@@ -146,8 +138,8 @@ saveToCache name counter = modifyHistory $ \h ->
     in  h { instrs = x { instrCache = DM.insert name counter (instrCache x) }}
 
 saveAlwaysOnInstr :: E -> GE InstrId
-saveAlwaysOnInstr exp = do
-    instrId <- saveSourceInstr exp
+saveAlwaysOnInstr expr = do
+    instrId <- saveSourceInstr expr
     saveAlwaysOnNote instrId
     return instrId
 
@@ -158,11 +150,11 @@ saveMixerInstr :: E -> GE InstrId
 saveMixerInstr = saveInstr $ \a s -> s{ instrMixers = a : instrMixers s }
 
 saveInstr :: ((InstrId, E) -> Instrs -> Instrs) -> E -> GE InstrId
-saveInstr save exp = withHistory $ \h ->
+saveInstr save expr = withHistory $ \h ->
     let ins = instrs h
         counter' = succ $ instrCounter ins
         instrId  = intInstrId counter'
-    in  (instrId, h{ instrs = save (instrId, exp) $ ins { instrCounter = counter' }})
+    in  (instrId, h{ instrs = save (instrId, expr) $ ins { instrCounter = counter' }})
 
 saveMixerNotes :: IM.IntMap LowLevelSco -> GE ()
 saveMixerNotes sco = modifyHistory $ \h -> 
@@ -240,111 +232,3 @@ newGlobalVar rate initVal = withHistory $ \h ->
     let (v, globals') = newGlobalVarOnGlobals rate initVal (globals h)
     in  (v, h{ globals = globals' })
 
-{-
-runGE :: GE a -> IO (a, History)
-runGE a = runStateT (unGE a) def
-
--- global state of the program
-data History = History
-    -- making new global variables
-    { globals           :: Globals
-    -- instruments
-    , instrSet          :: DM.IndexMap
-    , instrMap          :: [(InstrId, E)]
-    , trigMap           :: TrigInstrMap 
-    , midiInstrs        :: [MidiAssign]
-    -- guis
-    , guiState          :: GuiState }
-
-instance Default History where
-    def = History def (DM.empty 1) def def def def
-
-------------------------------------------------------
--- instruments
-
--- sound sources
-
-data Instr = Instr 
-    { instrArity    :: Arity 
-    , instrBody     :: SE [Sig] }
-
-data Arity = Arity
-    { arityIns  :: Int
-    , arityOuts :: Int }
-
--- event driven
-
-data TrigInstr = TrigInstr 
-    { instrToTrig     :: DM.InstrName
-    , trigInstrExp    :: Int -> E }
-
-newtype TrigInstrMap = TrigInstrMap { unTrigInstrMap :: [TrigInstr] }
-
-instance Default TrigInstrMap where
-    def = TrigInstrMap []
-
--- midis
-
-
----------------------------------------------------------
--- globals
-
-data Globals = Globals
-    { newGlobalVarId :: Int
-    , globalsSoFar   :: [Global] }
-
-instance Default Globals where 
-    def = Globals 0 []
-
-data Global = Global 
-    { globalVar     :: Var
-    , globalInit    :: E }
-
-newGlobalId :: GE Int
-newGlobalId = GE $ do
-    s <- get
-    put $ s{ globals = globals s }
-    return $ newGlobalVarId $ globals s 
-    
-insertGlobal :: Rate -> E -> Globals -> (Global, Globals)
-insertGlobal rate init s = (g, s{ newGlobalVarId = succ n, globalsSoFar = g:gs })
-    where g = Global (Var GlobalVar rate (show $ newGlobalVarId s)) init
-          n  = newGlobalVarId s
-          gs = globalsSoFar s
-            
-newGlobalVar :: Rate -> E -> GE Var
-newGlobalVar rate init = GE $ do
-    s <- get
-    let (g, gs) = insertGlobal rate init (globals s)
-    put $ s{ globals = gs }    
-    return $ globalVar g
-
----------------------------------------------------------------
--- gui
-
-data GuiState = GuiState 
-    { guiStateNewId     :: Int
-    , guiStateInstr     :: SE ()
-    , guiStateToDraw    :: [Gui] }
-
-instance Default GuiState where 
-    def = GuiState 0 (return ()) []
-
-bumpGuiStateId :: GuiState -> (Int, GuiState)
-bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
-
-appendToGuiState :: Gui -> SE () -> GuiState -> GuiState
-appendToGuiState gui act s = s
-    { guiStateToDraw = gui : guiStateToDraw s
-    , guiStateInstr  = guiStateInstr s >> act }
-
-newGuiId :: GE Int 
-newGuiId = GE $ do 
-    s <- get
-    let (n, guiState')  = bumpGuiStateId $ guiState s
-    put $ s{ guiState = guiState' } 
-    return n
-
-appendToGui :: Gui -> SE () -> GE ()
-appendToGui gui act = GE $ modify $ \s -> s{ guiState = appendToGuiState gui act $ guiState s }
--}

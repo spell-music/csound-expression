@@ -10,8 +10,8 @@ import Data.Default
 
 import Csound.Exp(CsdSco)
 import Csound.Exp.Mix(Mix)
+import Csound.Exp.Options(CsdOptions)
 import Csound.Render(render)
-import Csound.Render.Options(CsdOptions)
 import Csound.Exp.Tuple(Out)
 
 -- | Renders Csound file.
@@ -44,8 +44,8 @@ playCsd = playCsdBy def
 playCsdBy :: (Out a, CsdSco sco) => CsdOptions -> String -> String -> sco (Mix a) -> IO ()
 playCsdBy opt player file sco = do
     writeCsdBy opt fileCsd sco
-    system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
-    system $ player ++ " " ++ fileWav
+    _ <- system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
+    _ <- system $ player ++ " " ++ fileWav
     return ()
     where fileCsd = file ++ ".csd"
           fileWav = file ++ ".wav"  

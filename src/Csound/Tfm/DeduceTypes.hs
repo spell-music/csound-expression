@@ -91,22 +91,21 @@ deduceTypes :: (Ord a, T.Traversable f) => TypeGraph f a -> [Stmt f Int] -> ([St
 deduceTypes spec as = runST $ do
     freshIds <- newSTRef n
     typeRequests <- initTypeRequests n
-    lines' <- mapM (discussLine spec typeRequests freshIds) lines    
+    lines' <- mapM (discussLine spec typeRequests freshIds) $ reverse as
     let typeMap = IM.fromList $ fmap lineType lines'
     lastId <- readSTRef freshIds
     return (reverse $ processLine typeMap =<< lines', lastId)
     where n = length as
-          lines = reverse as  
           processLine typeMap line = fmap (mkConvert spec) (lineConverts line) ++ [(a, fmap (lookupVar typeMap) b)]
               where (a, b) = lineStmt line            
 
 discussLine :: (Ord a, T.Traversable f) => TypeGraph f a -> TypeRequests s a -> STRef s Int -> Stmt f Int -> ST s (Line f a)
-discussLine spec typeRequests freshIds stmt@(pid, exp) = do
-    (conv, exp') <- fmap (defineType spec stmt . nub) $ getTypes pid typeRequests
-    T.traverse (flip requestType typeRequests) (snd exp')
-    let curType = fst exp'
+discussLine spec typeRequests freshIds stmt@(pid, _) = do
+    (conv, expr') <- fmap (defineType spec stmt . nub) $ getTypes pid typeRequests
+    _ <- T.traverse (flip requestType typeRequests) (snd expr')
+    let curType = fst expr'
     (getType, convs) <- mkGetType conv curType freshIds
-    return $ Line (pid, getType) exp' convs
+    return $ Line (pid, getType) expr' convs
 
 mkGetType :: Ord a => [a] -> Var a -> STRef s Int -> ST s (GetType a, [Convert a])
 mkGetType typesToConvert curVar freshIds 

@@ -3,7 +3,7 @@ module Csound.Tfm.UnfoldMultiOuts(
     unfoldMultiOuts, UnfoldMultiOuts(..), Selector(..)
 ) where
 
-import Data.List(partition, sortBy, sort, find)
+import Data.List(sortBy)
 import Data.Ord(comparing)
 import Data.Maybe(mapMaybe, isNothing)
 import Control.Monad.Trans.State.Strict
@@ -16,8 +16,8 @@ type ChildrenMap = IM.IntMap [Port]
 lookupChildren :: ChildrenMap -> Var a -> [Port]
 lookupChildren m parentVar = m IM.! varId parentVar
 
-childrenMap :: [(Var a, Selector a)] -> ChildrenMap
-childrenMap = IM.fromListWith (++) . fmap extract 
+mkChildrenMap :: [(Var a, Selector a)] -> ChildrenMap
+mkChildrenMap = IM.fromListWith (++) . fmap extract 
     where extract (var, sel) = (varId $ selectorParent sel, 
                                 return $ Port (varId var) (selectorOrder sel))
 
@@ -39,7 +39,7 @@ data UnfoldMultiOuts f a = UnfoldMultiOuts {
 unfoldMultiOuts :: UnfoldMultiOuts f a -> Int -> [SingleStmt f a] -> [MultiStmt f a]
 unfoldMultiOuts algSpec lastFreshId stmts = evalState st lastFreshId
     where selectors = mapMaybe (\(lhs, rhs) -> fmap (lhs,) $ getSelector algSpec rhs) stmts
-          st = mapM (unfoldStmt algSpec $ childrenMap selectors) $ dropSelectors stmts
+          st = mapM (unfoldStmt algSpec $ mkChildrenMap selectors) $ dropSelectors stmts
           dropSelectors = filter (isNothing . getSelector algSpec . snd)
 
 unfoldStmt :: UnfoldMultiOuts f a -> ChildrenMap -> SingleStmt f a -> State Int (MultiStmt f a)
