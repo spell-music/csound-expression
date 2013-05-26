@@ -294,7 +294,7 @@ module Csound.Base(
     -- ** Scores
     -- | We can define an instrument and tell it to play some notes.
     Arg(..), ArgMethods, makeArgMethods,
-    Mix, sco, mix, 
+    Mix, sco, mix, CsdEvent, CsdEventList(..), CsdSco(..),
     
     -- ** Effects
     effect, effectS,
@@ -368,6 +368,7 @@ import Csound.Exp.Logic
 import Csound.Exp.SE
 import Csound.Exp.Options
 import Csound.Exp.Mix
+import Csound.Exp.EventList
 
 import Csound.Opcode
 import Csound.IO

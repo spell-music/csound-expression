@@ -22,7 +22,7 @@ pureTone cps = 0.5 * (myOsc $ sig cps)
 -- triggers the instrument 'instr' with frequency of 440 (Hz).
 -- A function 'temp' always creates a note that starts right away and 
 -- lasts for 1 second. Then we can 'stretch' this note or 'delay' it.
-res = sco pureTone $ delay 1 $ stretch 3 $ temp 440
+res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
 
 -- Renders generated csd-file to the "tmp.csd".
 main :: IO ()

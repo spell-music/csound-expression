@@ -2,7 +2,7 @@ module Csound.Exp.Mix(
     -- * Container for sounds (triggered with notes and mixers)
     Mix(..), M(..), nchnls,
 
-    effect, effectS, 
+    effect, effectS,
     sco, mix, --, midi, pgmidi
 
     rescaleCsdEventListM
@@ -62,10 +62,11 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
-sco instr notes = singleCsdEvent $ Mix $ do    
-    notes'  <- fmap toCsdEventList $ traverse renderNote notes
+sco instr notes = singleCsdEvent 0 (csdEventListDur events) $ Mix $ do    
+    events'  <- traverse renderNote events
     instrId <- saveSourceInstrCached instr soundSourceExp
-    return $ Snd instrId notes'
+    return $ Snd instrId events'
+    where events = toCsdEventList notes
 
 renderNote :: (Arg a) => a -> GE [Prim]
 renderNote a = tfmNoteStrs =<< tfmNoteTabs (toNote a) 
@@ -103,11 +104,12 @@ tfmNoteStrs xs = do
 -- module "Temporal.Media". You can delay it mix with some other track and 
 -- apply some another effect on top of it!
 mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
-mix eff sigs = singleCsdEvent $ Mix $ do
-    notes <- traverse unMix sigs
+mix eff sigs = singleCsdEvent 0 (csdEventListDur events) $ Mix $ do
+    notes <- traverse unMix events
     instrId <- saveMixerInstr =<< effectExp eff
-    return $ Eff instrId $ toCsdEventList notes 
-
+    return $ Eff instrId notes 
+    where events = toCsdEventList sigs
+    
 {-
 -- | Triggers a midi-instrument (like Csound's massign). The result type 
 -- is a fake one. It's wrapped in the 'Csound.Base.Score' for the ease of mixing.
@@ -141,7 +143,11 @@ rescaleCsdEventListM es =
 rescaleCsdEventM :: CsdEvent M -> CsdEvent M
 rescaleCsdEventM (start, dur, evt) = (start, dur, phi evt)
     where phi x = case x of
-            Snd n evts -> Snd n $ rescaleCsdEventList dur evts
-            Eff n evts -> Eff n $ rescaleCsdEventListM $ rescaleCsdEventList dur evts
+            Snd n evts -> Snd n $ rescaleCsdEventList (dur/localDur) evts
+            Eff n evts -> Eff n $ rescaleCsdEventListM $ rescaleCsdEventList (dur/localDur) evts            
+            where localDur = case x of
+                    Snd _ evts -> csdEventListDur evts
+                    Eff _ evts -> csdEventListDur evts
+
 
 

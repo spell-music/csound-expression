@@ -33,7 +33,7 @@ indexInsert a m = case M.lookup a (indexElems m) of
     where len = indexLength m
 
 instance Ord a => Default (Index a) where
-    def = Index (M.fromList []) 0
+    def = Index (M.fromList []) 1
 
 ---------------------------------------------------------------------
 --  strings

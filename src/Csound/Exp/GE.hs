@@ -10,7 +10,7 @@ module Csound.Exp.GE(
     saveTab, saveStr,
 
     Scos(..),
-    LowLevelSco,    
+    LowLevelSco, saveAlwaysOnNote,
 
     Globals(..), Global(..),
 

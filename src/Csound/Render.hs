@@ -8,6 +8,8 @@ import Control.Monad.Trans.Writer
 import qualified Data.IntMap as IM
 
 import Csound.Exp
+import Csound.Exp.Instr(effectExp)
+import Csound.Exp.SE
 import Csound.Exp.Options
 import Csound.Render.Pretty
 import Csound.Render.Instr
@@ -20,14 +22,16 @@ import Csound.Exp.GE
 import Csound.Exp.EventList
 
 render :: (Out a, CsdSco f) => CsdOptions -> f (Mix a) -> IO String
-render opt a = fmap (show . renderHistory (nchnls a) (csdEventListDur events) opt) 
-    $ execGE (prepareScos $ mix masterOuts events) opt
-    where events = toCsdEventList a
-
-prepareScos :: CsdEventList (Mix a) -> GE ()
-prepareScos notes = do
-    [(_, _, notes')] <- fmap (csdEventListNotes . rescaleCsdEventListM) $ traverse unMix notes
-    saveMixerNotes $ toLowLevelNotesMap notes'
+render opt sigs = fmap (show . renderHistory (nchnls sigs) (csdEventListDur events) opt) 
+    $ flip execGE opt $ do
+        notes <- traverse unMix events
+        instrId <- saveMixerInstr =<< effectExp (proxy masterOuts sigs)
+        let notes' = rescaleCsdEventListM $ toCsdEventList notes 
+        saveMixerNotes $ toLowLevelNotesMap $ Eff instrId notes'
+        saveAlwaysOnNote instrId
+    where events = toCsdEventList sigs
+          proxy :: (Out a) => (a -> SE ()) -> f (Mix a) -> (a -> SE ()) 
+          proxy = const
 
 toLowLevelNotesMap :: M -> IM.IntMap LowLevelSco
 toLowLevelNotesMap mixNotes = IM.fromList $ execWriter $ phi mixNotes
@@ -41,7 +45,7 @@ toLowLevelNotesMap mixNotes = IM.fromList $ execWriter $ phi mixNotes
 
 onEff :: CsdEventList M -> (LowLevelSco, [M])
 onEff (CsdEventList _ events) = execWriter $ mapM_ phi events
-    where phi :: [CsdEvent M] -> Writer (LowLevelSco, [M]) ()
+    where phi :: CsdEvent M -> Writer (LowLevelSco, [M]) ()
           phi (start, dur, content) = case content of
             Snd instrId notes -> tellFst $ fmap (instrId, ) $ csdEventListNotes $ delayCsdEventList start notes
             Eff instrId _     -> tell ([(instrId, (start, dur, []))], [content])
@@ -77,5 +81,5 @@ renderOrc x = (vcatMap renderSource $ instrSources x) $$ (vcatMap renderMixer $ 
             $$ renderInstrBody expr
 
 renderNotes :: LowLevelSco -> Doc
-renderNotes = undefined
+renderNotes notes = vcat $ fmap (\(instrId, evt) -> ppEvent instrId evt chnVar) notes
 

@@ -17,7 +17,7 @@ import Csound.Exp.Arg(Arg, toNote)
 import Csound.Exp.Tuple(Out(..))
 import Csound.Exp.Cons(opc0, opc1, opc2, opcs)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
-import Csound.Render.Pretty(Doc, verbatimLines, ($=), ppVar, text)   
+import Csound.Render.Pretty(Doc, verbatimLines, ppOpc, ppVar)   
 
 ---------------------------------------------------------
 -- master instrument output
@@ -60,7 +60,7 @@ chnUpdateStmt = verbatimLines [
     "endop"]
 
 ppFreeChnStmt :: Doc
-ppFreeChnStmt = ppVar chnVar $= text chnUpdateOpcodeName
+ppFreeChnStmt = ppOpc (ppVar chnVar) chnUpdateOpcodeName []
 
 chnUpdateOpcodeName :: String
 chnUpdateOpcodeName = "FreePort"

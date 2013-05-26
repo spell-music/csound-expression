@@ -20,7 +20,7 @@ csdEventContent (_, _, a) = a
 
 class Traversable f => CsdSco f where    
     toCsdEventList :: f a -> CsdEventList a
-    singleCsdEvent :: a -> f a
+    singleCsdEvent :: Double -> Double -> a -> f a
 
 data CsdEventList a = CsdEventList
     { csdEventListDur   :: Double
@@ -29,7 +29,7 @@ data CsdEventList a = CsdEventList
 
 instance CsdSco CsdEventList where
     toCsdEventList = id
-    singleCsdEvent a = CsdEventList 1 [(0, 1, a)]
+    singleCsdEvent start dur a = CsdEventList (start + dur) [(start, dur, a)]
 
 delayCsdEventList :: Double -> CsdEventList a -> CsdEventList a
 delayCsdEventList k (CsdEventList totalDur events) = 
