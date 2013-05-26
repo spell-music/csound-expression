@@ -222,3 +222,4 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f
     type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
     toOut (a, b, c, d, e, f, g, h) = toOut (a, (b, c, d, e, f, g, h))
     fromOut = toCsdTuple . fmap toE
+

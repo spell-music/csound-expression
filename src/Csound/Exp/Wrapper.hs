@@ -189,5 +189,3 @@ instance Default Spec where def = fromE def
 instance Default Str  where def = prim $ PrimString ""
 
 
-    
-

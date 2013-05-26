@@ -5,10 +5,22 @@ module Csound.Exp.Numeric(
     fracSig, floorSig, ceilSig, intSig, roundSig
 ) where
 
+import Data.Monoid
 import Csound.Exp
 import Csound.Exp.Wrapper(
     Sig, D, prim, noRate,
     Val(..), toExp, onE1, onE2)
+
+---------------------------------------------
+-- monoid
+
+instance Monoid Sig where
+    mempty  = 0
+    mappend = (+)
+
+instance Monoid D where
+    mempty  = 0
+    mappend = (+)
 
 --------------------------------------------
 -- numeric instances
