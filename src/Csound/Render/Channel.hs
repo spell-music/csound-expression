@@ -14,6 +14,7 @@ import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.Arg(Arg, toNote)
+import Csound.Exp.Tuple(Out(..))
 import Csound.Exp.Cons(opc0, opc1, opc2, opcs)
 import Csound.Opcode(clip, zeroDbfs, sprintf)
 import Csound.Render.Pretty(Doc, verbatimLines, ($=), ppVar, text)   
@@ -21,8 +22,8 @@ import Csound.Render.Pretty(Doc, verbatimLines, ($=), ppVar, text)
 ---------------------------------------------------------
 -- master instrument output
 
-masterOuts :: [Sig] -> SE ()
-masterOuts = outs . clipByMax
+masterOuts :: (Out a) => a -> SE ()
+masterOuts outSigs = outs . clipByMax =<< toOut outSigs
     where outs xs = se_ $ case xs of
               a:[] -> opc1 "out" [(Xr, [Ar])] a
               _    -> opcs "outs" [(Xr, repeat Ar)] xs    

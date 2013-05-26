@@ -30,6 +30,7 @@ import Data.Default
 import qualified Data.IntMap as IM
 
 import Csound.Exp
+import Csound.Exp.EventList(CsdEvent)
 import Csound.Exp.Wrapper
 import Csound.Exp.Options
 import Csound.Exp.SE
@@ -167,7 +168,7 @@ saveMixerNotes sco = modifyHistory $ \h ->
 data Scos = Scos 
     { alwaysOnInstrs :: [InstrId] }
 
-type LowLevelSco = [(InstrId, Note)]
+type LowLevelSco = [(InstrId, CsdEvent Note)]
 
 instance Default Scos where
     def = Scos def

@@ -68,6 +68,14 @@ outArity a = arityCsdTuple (proxy a)
 
 -- CsdTuple instances
 
+instance CsdTuple () where
+    csdTupleMethods = CsdTupleMethods 
+        { fromCsdTuple_  = return []
+        , toCsdTuple_    = const ()
+        , arityCsdTuple_ = const 0
+        , ratesCsdTuple_ = const []
+        , defCsdTuple_   = () }
+
 instance CsdTuple Sig where
     csdTupleMethods = CsdTupleMethods 
         { fromCsdTuple_ = return . toE
@@ -175,6 +183,11 @@ multiOutsSection n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates
 
 ------------------------------------------------
 -- instrument outs
+
+instance Out () where
+    type NoSE () = ()
+    toOut = const (return [])
+    fromOut = const ()
 
 instance Out Sig where
     type NoSE Sig = Sig

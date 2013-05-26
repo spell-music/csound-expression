@@ -1,7 +1,10 @@
+{-# Language TupleSections #-}
 module Csound.Render(
     render    
 ) where
 
+import Data.Traversable
+import Control.Monad.Trans.Writer
 import qualified Data.IntMap as IM
 
 import Csound.Exp
@@ -18,11 +21,31 @@ import Csound.Exp.EventList
 
 render :: (Out a, CsdSco f) => CsdOptions -> f (Mix a) -> IO String
 render opt a = fmap (show . renderHistory (nchnls a) (csdEventListDur events) opt) 
-    $ execGE (saveMasterInstr events) opt
+    $ execGE (prepareScos $ mix masterOuts events) opt
     where events = toCsdEventList a
 
-saveMasterInstr :: CsdEventList (Mix a) -> GE ()
-saveMasterInstr = undefined
+prepareScos :: CsdEventList (Mix a) -> GE ()
+prepareScos notes = do
+    [(_, _, notes')] <- fmap (csdEventListNotes . rescaleCsdEventListM) $ traverse unMix notes
+    saveMixerNotes $ toLowLevelNotesMap notes'
+
+toLowLevelNotesMap :: M -> IM.IntMap LowLevelSco
+toLowLevelNotesMap mixNotes = IM.fromList $ execWriter $ phi mixNotes
+    where    
+        phi :: M -> Writer [(Int, LowLevelSco)] ()
+        phi x = case x of
+            Eff instrId notes -> 
+                let (instrNotes, rest) = onEff notes
+                in  tell [(instrIdCeil instrId, instrNotes)] >> mapM_ phi rest
+            Snd _ _ -> error "Render.hs:toLowLevelNotesMap no effect instrument, end up in Snd case"
+
+onEff :: CsdEventList M -> (LowLevelSco, [M])
+onEff (CsdEventList _ events) = execWriter $ mapM_ phi events
+    where phi :: [CsdEvent M] -> Writer (LowLevelSco, [M]) ()
+          phi (start, dur, content) = case content of
+            Snd instrId notes -> tellFst $ fmap (instrId, ) $ csdEventListNotes $ delayCsdEventList start notes
+            Eff instrId _     -> tell ([(instrId, (start, dur, []))], [content])
+          tellFst x = tell (x, [])
 
 renderHistory :: Int -> Double -> CsdOptions -> History -> Doc
 renderHistory numOfChnls totalDur options history = ppCsdFile 
@@ -53,7 +76,6 @@ renderOrc x = (vcatMap renderSource $ instrSources x) $$ (vcatMap renderMixer $ 
             $$ getMixerNotes instrId
             $$ renderInstrBody expr
 
-renderNotes :: [(InstrId, Note)] -> Doc
+renderNotes :: LowLevelSco -> Doc
 renderNotes = undefined
-
 

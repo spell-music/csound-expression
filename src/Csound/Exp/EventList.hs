@@ -2,7 +2,7 @@
 module Csound.Exp.EventList(
     CsdSco(..),
     CsdEvent, csdEventStart, csdEventDur, csdEventContent,
-    CsdEventList(..), rescaleCsdEventList, rescaleCsdEvent
+    CsdEventList(..), delayCsdEventList, rescaleCsdEventList
 ) where
 
 import Data.Traversable
@@ -30,6 +30,13 @@ data CsdEventList a = CsdEventList
 instance CsdSco CsdEventList where
     toCsdEventList = id
     singleCsdEvent a = CsdEventList 1 [(0, 1, a)]
+
+delayCsdEventList :: Double -> CsdEventList a -> CsdEventList a
+delayCsdEventList k (CsdEventList totalDur events) = 
+    CsdEventList (k + totalDur) (fmap (delayCsdEvent k) events)
+
+delayCsdEvent :: Double -> CsdEvent a -> CsdEvent a 
+delayCsdEvent k (start, dur, a) = (k + start, dur, a)
 
 rescaleCsdEventList :: Double -> CsdEventList a -> CsdEventList a
 rescaleCsdEventList k (CsdEventList totalDur events) = 
