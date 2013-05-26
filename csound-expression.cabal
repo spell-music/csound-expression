@@ -6,7 +6,7 @@ License-file:  LICENSE
 Author:	       Anton Kholomiov
 Synopsis:      library to make electronic music
 Stability:     Experimental
-Tested-With:   GHC==7.4
+Tested-With:   GHC==7.6
 Build-Type:    Simple
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>

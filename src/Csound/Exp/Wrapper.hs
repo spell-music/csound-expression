@@ -12,8 +12,7 @@ module Csound.Exp.Wrapper(
     str, double, ir, ar, kr, sig,
     tfm, pref, prim, p,    
     noRate, setRate, withRate,
-    getRates, isMultiOutSignature,    
-    Channel
+    getRates, isMultiOutSignature
 ) where
 
 import Data.Fix
@@ -21,8 +20,6 @@ import Data.Default
 import Data.String
 
 import Csound.Exp
-
-type Channel = Int
 
 type Sig2 = (Sig, Sig)
 type Sig3 = (Sig, Sig, Sig)
