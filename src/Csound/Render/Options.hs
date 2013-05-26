@@ -34,5 +34,3 @@ renderMidiAssign a = ppProc opcode $ [int $ midiAssignChannel a, int $ midiAssig
               Pgmassign (Just n) -> [int n]
               _ -> []  
 
-
-

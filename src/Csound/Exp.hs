@@ -9,9 +9,7 @@ module Csound.Exp(
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,    
     NumExp, NumOp(..), Msg(..), Note,    
-    StringMap,
-
-    CsdEvent, eventStart, eventDur, eventContent, CsdSco(..), CsdEventList(..)
+    StringMap
 ) where
 
 import Control.Applicative
@@ -313,30 +311,6 @@ instance Traversable PrimOr where
         Left  p -> pure $ PrimOr $ Left p
         Right a -> PrimOr . Right <$> f a
 
-
--- events
-type CsdEvent a = (Double, Double, a)
-
-eventStart   :: CsdEvent a -> Double
-eventDur     :: CsdEvent a -> Double
-eventContent :: CsdEvent a -> a
-
-eventStart   (a, _, _) = a
-eventDur     (_, a, _) = a
-eventContent (_, _, a) = a
-
-class Traversable f => CsdSco f where    
-    toCsdEventList :: f a -> CsdEventList a
-    singleEvent    :: a -> f a
-
-data CsdEventList a = CsdEventList
-    { csdEventListDur   :: Double
-    , csdEventListNotes :: [CsdEvent a] 
-    } deriving (Eq, Show, Functor, Foldable, Traversable)
-
-instance CsdSco CsdEventList where
-    toCsdEventList = id
-    singleEvent a  = CsdEventList 1 [(0, 1, a)]
 
 -- comments
 -- 

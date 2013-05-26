@@ -14,6 +14,7 @@ import Csound.Render.Channel
 import Csound.Exp.Tuple(Out)
 import Csound.Exp.Mix
 import Csound.Exp.GE
+import Csound.Exp.EventList
 
 render :: (Out a, CsdSco f) => CsdOptions -> f (Mix a) -> IO String
 render opt a = fmap (show . renderHistory (nchnls a) (csdEventListDur events) opt) 

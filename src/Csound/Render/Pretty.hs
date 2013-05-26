@@ -20,6 +20,7 @@ import Text.PrettyPrint.Leijen
 
 import Csound.Tfm.Tab
 import Csound.Exp 
+import Csound.Exp.EventList
 
 vcatMap :: (a -> Doc) -> [a] -> Doc
 vcatMap f = vcat . fmap f
@@ -177,12 +178,12 @@ ppNote :: InstrId -> Double -> Double -> [Doc] -> Doc
 ppNote instrId time dur args = char 'i' <> ppInstrId instrId <+> double time <+> double dur <+> hsep args
 
 ppMasterNote :: InstrId -> CsdEvent [Prim] -> Doc
-ppMasterNote instrId evt = ppNote instrId (eventStart evt) (eventDur evt) (fmap ppPrim $ eventContent evt) <+> int 0
+ppMasterNote instrId evt = ppNote instrId (csdEventStart evt) (csdEventDur evt) (fmap ppPrim $ csdEventContent evt) <+> int 0
 
 ppEvent :: InstrId -> CsdEvent [Prim] -> Var -> Doc
 ppEvent instrId evt var = pre <> comma <+> ppVar var
     where pre = ppProc "event_i" $ dquotes (char 'i') : ppInstrId instrId 
-                : (double $ eventStart evt) : (double $ eventDur evt) : (fmap ppPrim $ eventContent evt)
+                : (double $ csdEventStart evt) : (double $ csdEventDur evt) : (fmap ppPrim $ csdEventContent evt)
 
 ppTotalDur :: Double -> Doc
 ppTotalDur d = text "f0" <+> double d
@@ -253,5 +254,4 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     WriteVar v a -> ppVar v $= a
     ReadVar v -> res $= ppVar v
     x -> error $ "unknown expression: " ++ show x
-
           

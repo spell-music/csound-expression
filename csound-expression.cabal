@@ -97,6 +97,7 @@ Library
         Csound.Exp.Gui
         Csound.Exp.Widget
         Csound.Exp.Options
+        Csound.Exp.EventList
        
         Csound.IO
 

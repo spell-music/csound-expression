@@ -21,6 +21,7 @@ import Csound.Exp.Instr
 import Csound.Exp.Arg
 import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
 import Csound.Exp.Options
+import Csound.Exp.EventList
 
 newtype Mix a = Mix { unMix :: GE M } 
 
@@ -61,7 +62,7 @@ nchnls = outArity . proxy
 -- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
-sco instr notes = singleEvent $ Mix $ do    
+sco instr notes = singleCsdEvent $ Mix $ do    
     notes'  <- fmap toCsdEventList $ traverse renderNote notes
     instrId <- saveSourceInstrCached instr soundSourceExp
     return $ Snd instrId notes'
@@ -102,7 +103,7 @@ tfmNoteStrs xs = do
 -- module "Temporal.Media". You can delay it mix with some other track and 
 -- apply some another effect on top of it!
 mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
-mix eff sigs = singleEvent $ Mix $ do
+mix eff sigs = singleCsdEvent $ Mix $ do
     notes <- traverse unMix sigs
     instrId <- saveMixerInstr =<< effectExp eff
     return $ Eff instrId $ toCsdEventList notes 
@@ -142,13 +143,5 @@ rescaleCsdEventM (start, dur, evt) = (start, dur, phi evt)
     where phi x = case x of
             Snd n evts -> Snd n $ rescaleCsdEventList dur evts
             Eff n evts -> Eff n $ rescaleCsdEventListM $ rescaleCsdEventList dur evts
-
-rescaleCsdEventList :: Double -> CsdEventList a -> CsdEventList a
-rescaleCsdEventList k (CsdEventList totalDur events) = 
-    CsdEventList (k * totalDur) (fmap (rescaleCsdEvent k) events)
-
-rescaleCsdEvent :: Double -> CsdEvent a -> CsdEvent a
-rescaleCsdEvent k (start, dur, a) = (k * start, k * dur, a)
-
 
 

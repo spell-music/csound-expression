@@ -8,7 +8,7 @@ module Csound.IO (
 import System.Cmd(system)
 import Data.Default
 
-import Csound.Exp(CsdSco)
+import Csound.Exp.EventList(CsdSco)
 import Csound.Exp.Mix(Mix)
 import Csound.Exp.Options(CsdOptions)
 import Csound.Render(render)
