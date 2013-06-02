@@ -18,7 +18,7 @@ csdEventStart   (a, _, _) = a
 csdEventDur     (_, a, _) = a
 csdEventContent (_, _, a) = a
 
-class Traversable f => CsdSco f where    
+class CsdSco f where    
     toCsdEventList :: f a -> CsdEventList a
     singleCsdEvent :: Double -> Double -> a -> f a
 

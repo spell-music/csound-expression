@@ -40,6 +40,8 @@ Description:
     * Ensure that output signal is limited by amplitude. Csound can produce signals with HUGE amplitudes. Little typo can damage your ears 
     and your speakers. In generated code all signals are clipped by 0dbfs value. 0dbfs is set to 1. Just as in Pure Data. So 1 is absolute maximum value
     for amplitude. 
+    . 
+    * No dependency on Score-generation libraries. Score (or list of events) is represented with type class. You can use your favorite Score-generation library if you provide an instance for the CsdSco type class. Currently there is support for temporal-music-notation library (see temporal-csound package).
     .
     For the future
     .        
@@ -55,6 +57,8 @@ Description:
     * Optimization of the memory allocation (liveness analysis).
    
 Extra-Source-Files : 
+    examples/Test.hs
+    examples/Heartbeat.hs
 
 Homepage:        https://github.com/anton-k/csound-expression
 Bug-Reports:     https://github.com/anton-k/csound-expression/issues

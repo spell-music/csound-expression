@@ -47,57 +47,41 @@ module Csound.Base(
     --
     -- When you are done with the orchestra section you can trigger the instruments with the function 'Csound.Base.sco'
     --
-    -- > sco :: (Arg a, Out b) => (a -> b) -> Score a -> Score (Mix (NoSE b))
+    -- > sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
     --
-    -- It takes an instrument and the bunch of notes for this instrument. The output looks scary but let's try to understand it by bits:
+    -- It takes an instrument and the bunch of notes for this instrument. Bunch of notes is represented with @f@-container.
+    -- It's parametrized with note type. f belongs to the type class 'Csound.Base.CsdSco'. 
+    -- This library lets you use your own representation of scores. The default one is
+    -- 'Csound.Base.CsdEventList'. It is close to the Csound native representation of the scores (so it is not very
+    -- convinient to use it). You can use a package temporal-csound as an alternative. 
     --
-    -- * @Score a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ starts at some time and lasts for some time in seconds)
+    -- The output looks scary but let's try to understand it by bits:
+    --
+    -- * @CsdSco f => f a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ 
+    -- starts at some time and lasts for some time in seconds)
     --
     -- * @Mix a@ - is an output of Csound instrument it can be one or several signals ('Csound.Base.Sig' or 'Csound.Base.CsdTuple'). 
     --
-    -- * @NoSE a@ - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip the 'Csound.Base.SE' wrapper
-    -- from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. Why should it be? I need 'SE' to deduce the order of the
-    -- instruments that have side effects. I need it within one instrument. But when instrument is rendered I no longer need 'SE' type. So 'NoSE' lets me drop it
-    -- from the output type. 
+    -- * @NoSE a@ - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip 
+    -- the 'Csound.Base.SE' wrapper from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. 
+    -- Why should it be? I need 'SE' to deduce the order of the
+    -- opcodes that have side effects. I need it within one instrument. But when instrument is rendered I no longer need 'SE' type. 
+    -- So 'NoSE' lets me drop it from the output type. 
     --
-    -- How to put the values in the container 'Temporal.Music.Score.Score'? There are many functions to construct the 'Temporal.Music.Score.Score'.
-    -- They live in the module "Temporal.Music.Score". If you are not familiar with it, you can start with six basic functions. 
     --
-    -- * 'Temporal.Music.Score.rest' -- makes a pause that lasts for some time (in seconds).
-    --
-    -- * 'Temporal.Music.Score.temp' -- makes a score of one note that lasts for one second.    
-    --
-    -- * 'Temporal.Music.Score.line' -- plays a list of notes in sequence (one after the other).
-    -- 
-    -- * 'Temporal.Music.Score.chord' -- plays a list of notes in parallel (at the same time).
-    --
-    -- * 'Temporal.Music.Score.delay' -- delays all notes for some time.
-    --
-    -- * 'Temporal.Music.Score.stretch' -- change the tempo for all notes by the given ratio.
-    --
-    -- Let's play something:
-    --
-    -- > res = stretch 0.5 $ line [ temp a, stretch 2 $ temp b, rest 1, chord [temp a, temp b] ]
-    --
-    -- There are two handy infix operators for delay and stretch: @(+|)@ and @(*|)@. So we can write the previous score:
-    --
-    -- > res = 0.5 *| line [ temp a, 2 *| temp b, 1 +| chord [temp a, temp b] ]
-    --
-    -- If you got used to Csound you can ask -- where is the instrument name in the score? No need to worry about names they are generated automatically.
+    -- If you got used to Csound you can ask -- where is the instrument name in the score? No need to worry about names 
+    -- they are generated automatically.
     --
     -- In Csound to apply some effect one must use the global variables. There are some instruments that produce signals and write them to
     -- the global variables and there is an instrument that functions as mixer. It's turned on for the whole piece and it reads the global
     -- variables and applies the effects to the sound and finally writes it to the file or to the speakers. In this library it's very easy
     -- to apply an effect to the outputs of the instruments. There is a function 'Csound.Base.mix':
     --
-    -- > mix :: (Out a, Out b) => (a -> b) -> Score (Mix a) -> Score (Mix (NoSE a))
+    -- > mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE a))
     --
     -- Looks like the function 'Csound.Base.sco'. But now the first argument is an effect. It takes not a note but a signal (or a tuple of signals)
     -- and gives back some signal. The second argument holds the sound that we'd like to apply the effect to. With this function we can apply reverb or
-    -- adjust the gain levels or apply some envelope, any valid csound transformation will do. What's interesting is that we can delay and stretch it, align
-    -- with functions 'Temporal.Media.line' and 'Temporal.Media.chord' add another signal to it and apply some fancy effect to the cumulative sound.
-    -- (If you are familiar with Csound this functionality is implemented with chnmix and chnget opcodes).
-    --  
+    -- adjust the gain levels or apply some envelope, any valid csound transformation will do. 
     
     -- ** Flags and options
     
@@ -211,9 +195,10 @@ module Csound.Base(
     -- > pureTone cps = 0.5 * (myOsc $ sig cps)
     -- > 
     -- > -- Let's trigger the instrument from the score section.
-    -- > -- It plays a single note that starts at 0 and lasts for 1 second and 
-    -- > -- triggers the instrument 'instr' with frequency of 440 (Hz).
-    -- > res = sco pureTone $ temp 440
+    -- > -- It plays a three notes. One starts at 0 and lasts for one second with frequency of 440,
+    -- another one starts at 1 second and lasts for 2 seconds, and the last note lasts for 2 seconds
+    -- at the frequency 220 Hz. 
+    -- > res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
     -- > 
     -- > -- Renders generated csd-file to the "tmp.csd".
     -- > main :: IO ()

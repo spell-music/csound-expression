@@ -488,8 +488,8 @@ mkLps name kfreq ktrig kvals = kr $ opcs name signature $ kfreq:ktrig:kvals
 -- > ar linen xamp, iris, idur, idec
 --
 -- doc: <http://www.csounds.com/manual/html/linen.html>
-linen :: Amp -> D -> D -> D -> Ksig
-linen a1 a2 a3 a4 = kr $ opc4 "linen" [
+linen :: Amp -> D -> D -> D -> Sig
+linen a1 a2 a3 a4 = opc4 "linen" [
     (k, k:is 3),
     (a, x:is 3)] a1 a2 a3 a4
     
@@ -499,8 +499,8 @@ linen a1 a2 a3 a4 = kr $ opc4 "linen" [
 -- > ar linenr xamp, iris, idur, iatdec
 --
 -- doc: <http://www.csounds.com/manual/html/linenr.html>
-linenr :: Amp -> D -> D -> D -> Ksig
-linenr a1 a2 a3 a4 = kr $ opc4 "linenr" [
+linenr :: Amp -> D -> D -> D -> Sig
+linenr a1 a2 a3 a4 = opc4 "linenr" [
     (k, k:is 3),
     (a, x:is 3)] a1 a2 a3 a4
 
@@ -516,8 +516,8 @@ linenr a1 a2 a3 a4 = kr $ opc4 "linenr" [
 -- > ar envlpx xamp, irise, idur, idec, ifn, iatss, iatdec, [ixmod]
 --
 -- doc: <http://www.csounds.com/manual/html/envlpx.html>
-envlpx :: Amp -> D -> D -> D -> Tab -> D -> D -> Ksig
-envlpx a1 a2 a3 a4 a5 a6 a7 = kr $ opc7 "envlpx" [
+envlpx :: Amp -> D -> D -> D -> Tab -> D -> D -> Sig
+envlpx a1 a2 a3 a4 a5 a6 a7 = opc7 "envlpx" [
     (k, k:is 8),
     (a, x:is 8)] a1 a2 a3 a4 a5 a6 a7
 
