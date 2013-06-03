@@ -4,7 +4,9 @@
 module Csound.Exp.Tuple(
     CsdTuple(..), 
     fromCsdTuple, toCsdTuple, arityCsdTuple, ratesCsdTuple, defCsdTuple,
-    Out(..), multiOuts, outArity
+    Out(..), multiOuts, outArity,
+    -- * Helpers for multiple outputs opcodes (like diskin2)
+    ar1, ar2, ar4, ar6, ar8
 ) where
 
 import Data.Default
@@ -180,6 +182,14 @@ multiOutsSection n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates
           setMultiRate _ _ = error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"  
             
           select cellId rate expr = withRate rate $ Select rate cellId (PrimOr $ Right expr)
+
+ar1 :: Sig -> Sig
+ar2 :: (Sig, Sig) -> (Sig, Sig)
+ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
+ar6 :: (Sig, Sig, Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig, Sig, Sig)
+ar8 :: (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+
+ar1 = id;   ar2 = id;   ar4 = id;   ar6 = id;   ar8 = id   
 
 ------------------------------------------------
 -- instrument outs

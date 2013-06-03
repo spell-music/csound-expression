@@ -265,6 +265,15 @@ module Csound.Base(
     -- ** Tuples
     CsdTuple,
     
+    -- *** Multiple outputs helpers
+    -- | Functions to help the type checker specify the number of outputs (for opcodes like 'Csound.Opcodes.Data.diskin2').
+    -- For example,
+    -- 
+    -- > (left, right) = ar2 $ diskin2 (str "cool-sound.wav") 1
+    --
+    -- Without 'Csound.Base.ar2' we have to specify the type of the output explicitly.
+    ar1, ar2, ar4, ar6, ar8,
+
     -- ** Converters
     ToSig(..), ar, kr, ir, sig, double, str,          
         
