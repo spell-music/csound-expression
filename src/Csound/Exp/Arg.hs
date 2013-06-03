@@ -9,6 +9,8 @@ import Control.Applicative
 import Csound.Exp
 import Csound.Exp.Wrapper(Val, toExp, D, Str, p)
 
+import Csound.Tfm.Tuple
+
 ------------------------------------------------
 -- basic extractor
 
@@ -82,23 +84,15 @@ instance Arg InstrId where
         , toNote_ = pure . PrimInstrId
         , arity_ = const 0 }
 
-instance Arg D where
-    argMethods = ArgMethods {
+primArgMethods :: Val a => ArgMethods a
+primArgMethods = ArgMethods {
         arg_ = p,
         toNote_ = pure . getPrimUnsafe,
         arity_ = const 1 }
 
-instance Arg Str where
-    argMethods = ArgMethods {
-        arg_ = p,
-        toNote_ = pure . getPrimUnsafe,
-        arity_ = const 1 }
-
-instance Arg Tab where
-    argMethods = ArgMethods {
-        arg_ = p,
-        toNote_ = pure . getPrimUnsafe,
-        arity_ = const 1 }
+instance Arg D      where argMethods = primArgMethods
+instance Arg Str    where argMethods = primArgMethods
+instance Arg Tab    where argMethods = primArgMethods
 
 instance (Arg a, Arg b) => Arg (a, b) where
     argMethods = ArgMethods arg' toNote' arity' 
@@ -110,33 +104,10 @@ instance (Arg a, Arg b) => Arg (a, b) where
                   where proxy :: (a, b) -> (a, b)
                         proxy = const (undefined, undefined)
 
-instance (Arg a, Arg b, Arg c) => Arg (a, b, c) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c)) = (a, b, c)
-              from (a, b, c) = (a, (b, c))
-
-instance (Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d)) = (a, b, c, d)
-              from (a, b, c, d) = (a, (b, c, d))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e) => Arg (a, b, c, d, e) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e)) = (a, b, c, d, e)
-              from (a, b, c, d, e) = (a, (b, c, d, e))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e, f)) = (a, b, c, d, e, f)
-              from (a, b, c, d, e, f) = (a, (b, c, d, e, f))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g) => Arg (a, b, c, d, e, f, g) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e, f, g)) = (a, b, c, d, e, f, g)
-              from (a, b, c, d, e, f, g) = (a, (b, c, d, e, f, g))
-
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, c, d, e, f, g, h) where
-    argMethods = makeArgMethods to from
-        where to (a, (b, c, d, e, f, g, h)) = (a, b, c, d, e, f, g, h)
-              from (a, b, c, d, e, f, g, h) = (a, (b, c, d, e, f, g, h))
+instance (Arg a, Arg b, Arg c) => Arg (a, b, c) where argMethods = makeArgMethods cons3 split3
+instance (Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d) where argMethods = makeArgMethods cons4 split4
+instance (Arg a, Arg b, Arg c, Arg d, Arg e) => Arg (a, b, c, d, e) where argMethods = makeArgMethods cons5 split5
+instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f) where argMethods = makeArgMethods cons6 split6
+instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g) => Arg (a, b, c, d, e, f, g) where argMethods = makeArgMethods cons7 split7
+instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg g, Arg h) => Arg (a, b, c, d, e, f, g, h) where argMethods = makeArgMethods cons8 split8
 

@@ -108,6 +108,7 @@ Library
         Csound.Tfm.DeduceTypes       
         Csound.Tfm.UnfoldMultiOuts
         Csound.Tfm.Tab       
+        Csound.Tfm.Tuple
 
         Csound.Render
         Csound.Render.Pretty
