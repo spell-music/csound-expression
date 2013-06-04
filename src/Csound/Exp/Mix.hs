@@ -148,5 +148,3 @@ rescaleCsdEventM (start, dur, evt) = (start, dur, phi evt)
                     Snd _ evts -> csdEventListDur evts
                     Eff _ evts -> csdEventListDur evts
 
-
-
