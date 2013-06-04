@@ -41,13 +41,12 @@ nchnls = outArity . proxy
 -- * @instrument@ is a function that takes notes and produces a 
 --   tuple of signals (maybe with some side effect)
 --  
--- * @scores@ are some notes (see the module "Temporal.Media" 
---   on how to build complex scores out of simple ones)
+-- * @scores@ are some notes (see the type class 'Csound.Base.CsdSco'
 --
--- Let's try to understand the type of the output. It's @Score (Mix (NoSE a))@. 
+-- Let's try to understand the type of the output. It's @CsdSco f => f (Mix (NoSE a))@. 
 -- What does it mean? Let's look at the different parts of this type:
 --
--- * @Score a@ - you can think of it as a container of some values of 
+-- * @CsdSco f => f a@ - you can think of it as a container of some values of 
 --   type @a@ (every value of type @a@ starts at some time and lasts 
 --   for some time in seconds)
 --
@@ -57,12 +56,12 @@ nchnls = outArity . proxy
 -- *NoSE a* - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. 
 -- It tells to the type checker that it can skip the 'Csound.Base.SE' wrapper
 -- from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ 
--- becomes @(a, b, c)@. Why should it be? I need 'SE' to deduce the order of the
--- instruments that have side effects. I need it within one instrument. But when 
--- instrument is rendered i no longer need 'SE' type. So 'NoSE' lets me drop it
+-- becomes @(a, b, c)@. Why should it be? We need 'SE' to deduce the order of the
+-- opcodes that have side effects. We need it within one instrument. But when 
+-- instrument is rendered we no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
-sco instr notes = singleCsdEvent 0 (csdEventListDur events) $ Mix $ do    
+sco instr notes = curriedSingleCsdEvent 0 (csdEventListDur events) $ Mix $ do    
     events'  <- traverse renderNote events
     instrId <- saveSourceInstrCached instr soundSourceExp
     return $ Snd instrId events'
@@ -96,15 +95,15 @@ tfmNoteStrs xs = do
 --   a tuple of signals.
 --
 -- * @sco@ - something that is constructed with 'Csound.Base.sco' or 
---   'Csound.Base.mix' or 'Csound.Base.midi'. 
+--   'Csound.Base.mix'. 
 --
 -- With the function 'Csound.Base.mix' you can apply a reverb or adjust the 
 -- level of the signal. It functions like a mixing board but unlike mixing 
--- board it produces the value that you can arrange with functions from the 
--- module "Temporal.Media". You can delay it mix with some other track and 
+-- board it produces the value that you can arrange with functions from your
+-- favourite Score-generation library. You can delay it mix with some other track and 
 -- apply some another effect on top of it!
 mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
-mix eff sigs = singleCsdEvent 0 (csdEventListDur events) $ Mix $ do
+mix eff sigs = curriedSingleCsdEvent 0 (csdEventListDur events) $ Mix $ do
     notes <- traverse unMix events
     instrId <- saveMixerInstr =<< effectExp eff
     return $ Eff instrId notes 

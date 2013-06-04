@@ -166,35 +166,28 @@ instance (CsdTuple a, CsdTuple b, Out a, Out b) => Out (a, b) where
     type NoSE (a, b) = (NoSE a, NoSE b)
     toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
     fromOut = toCsdTuple . fmap toE
-
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, Out a, Out b, Out c) => Out (a, b, c) where
     type NoSE (a, b, c) = (NoSE a, NoSE b, NoSE c)
-    toOut = toOut . split3
-    fromOut = toCsdTuple . fmap toE
+    toOut = toOut . split3;     fromOut = toCsdTuple . fmap toE
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, Out a, Out b, Out c, Out d) => Out (a, b, c, d) where
     type NoSE (a, b, c, d) = (NoSE a, NoSE b, NoSE c, NoSE d)
-    toOut = toOut . split4
-    fromOut = toCsdTuple . fmap toE
+    toOut = toOut . split4;    fromOut = toCsdTuple . fmap toE
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
     type NoSE (a, b, c, d, e) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e)
-    toOut = toOut . split5
-    fromOut = toCsdTuple . fmap toE
+    toOut = toOut . split5;    fromOut = toCsdTuple . fmap toE
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
     type NoSE (a, b, c, d, e, f) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f)
-    toOut = toOut . split6
-    fromOut = toCsdTuple . fmap toE
+    toOut = toOut . split6;    fromOut = toCsdTuple . fmap toE
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e, f, g) where
     type NoSE (a, b, c, d, e, f, g) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g)
-    toOut = toOut . split7
-    fromOut = toCsdTuple . fmap toE
+    toOut = toOut . split7;    fromOut = toCsdTuple . fmap toE
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h, Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
     type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
-    toOut = toOut . split8
-    fromOut = toCsdTuple . fmap toE
+    toOut = toOut . split8;    fromOut = toCsdTuple . fmap toE
 

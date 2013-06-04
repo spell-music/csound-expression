@@ -1,6 +1,6 @@
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp.EventList(
-    CsdSco(..),
+    CsdSco(..), curriedSingleCsdEvent,
     CsdEvent, csdEventStart, csdEventDur, csdEventContent,
     CsdEventList(..), delayCsdEventList, rescaleCsdEventList
 ) where
@@ -8,6 +8,9 @@ module Csound.Exp.EventList(
 import Data.Traversable
 import Data.Foldable
 
+-- | Csound note. It's a triple of
+--
+-- > (startTime, duration, parameters)
 type CsdEvent a = (Double, Double, a)
 
 csdEventStart   :: CsdEvent a -> Double
@@ -18,10 +21,25 @@ csdEventStart   (a, _, _) = a
 csdEventDur     (_, a, _) = a
 csdEventContent (_, _, a) = a
 
-class CsdSco f where    
-    toCsdEventList :: f a -> CsdEventList a
-    singleCsdEvent :: Double -> Double -> a -> f a
+csdEventTotalDur :: CsdEvent a -> Double
+csdEventTotalDur (start, dur, _) = start + dur
 
+-- | Class that represents Csound scores. All functions that use score are defined
+-- in terms of this class. If you want to use your own score representation, just define
+-- two methods of the class.
+class CsdSco f where    
+    -- | Converts a given score representation to the canonical one.
+    toCsdEventList :: f a -> CsdEventList a
+    -- | Constructs a scores that contains only one event.
+    singleCsdEvent ::  CsdEvent a -> f a
+
+curriedSingleCsdEvent :: CsdSco f => Double -> Double -> a -> f a
+curriedSingleCsdEvent start duration content = singleCsdEvent (start, duration, content)
+
+-- | 'Csound.Base.CsdEventList' is a canonical representation of the Csound scores.
+-- Scores is a list of events and we should know the total duration of the scores.
+-- It's not meant to be used directly. We can use a better alternative. More convenient
+-- type that belongs to 'Csound.Base.CsdSco' type class.
 data CsdEventList a = CsdEventList
     { csdEventListDur   :: Double
     , csdEventListNotes :: [CsdEvent a] 
@@ -29,7 +47,7 @@ data CsdEventList a = CsdEventList
 
 instance CsdSco CsdEventList where
     toCsdEventList = id
-    singleCsdEvent start dur a = CsdEventList (start + dur) [(start, dur, a)]
+    singleCsdEvent evt = CsdEventList (csdEventTotalDur evt) [evt]
 
 delayCsdEventList :: Double -> CsdEventList a -> CsdEventList a
 delayCsdEventList k (CsdEventList totalDur events) = 
