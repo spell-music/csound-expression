@@ -41,7 +41,7 @@ nchnls = outArity . proxy
 -- * @instrument@ is a function that takes notes and produces a 
 --   tuple of signals (maybe with some side effect)
 --  
--- * @scores@ are some notes (see the type class 'Csound.Base.CsdSco'
+-- * @scores@ are some notes (see the type class 'Csound.Base.CsdSco')
 --
 -- Let's try to understand the type of the output. It's @CsdSco f => f (Mix (NoSE a))@. 
 -- What does it mean? Let's look at the different parts of this type:
@@ -100,7 +100,7 @@ tfmNoteStrs xs = do
 -- With the function 'Csound.Base.mix' you can apply a reverb or adjust the 
 -- level of the signal. It functions like a mixing board but unlike mixing 
 -- board it produces the value that you can arrange with functions from your
--- favourite Score-generation library. You can delay it mix with some other track and 
+-- favorite Score-generation library. You can delay it or mix with some other track and 
 -- apply some another effect on top of it!
 mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
 mix eff sigs = curriedSingleCsdEvent 0 (csdEventListDur events) $ Mix $ do

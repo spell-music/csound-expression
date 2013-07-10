@@ -107,7 +107,7 @@ scoCrackle = sco instrCrackle $ chord [
     event 8 100,
     delay 13 $ event 5 50]   
    
-main = totem $ chord [
+main = mplayer $ chord [
     scoBeat, 
     scoChorusel, 
     scoPluck, 

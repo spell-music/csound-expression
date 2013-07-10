@@ -56,7 +56,7 @@ makeArgMethods to from = ArgMethods {
 -- >     { noteAmplitude    :: D
 -- >     , notePitch        :: D
 -- >     , noteVibrato      :: D
--- >     , noteSample       :: S
+-- >     , noteSample       :: Str
 -- >     }
 -- > 
 -- > instance Arg Note where

@@ -1,7 +1,7 @@
 module Csound.Exp.Options where
 
 import Data.Default
-import Csound.Tab(TabFi, fineFi, idSegs, idExps, idConsts)
+import Csound.Tab(TabFi, fineFi, idLins, idExps, idConsts)
 
 type CtrlId = Int
 type Channel = Int
@@ -15,7 +15,7 @@ type Channel = Int
 -- >             , blockSize = 64
 -- >             , seed = Nothing
 -- >             , initc7 = []
--- >             , tabFi = fineFi 13 [(idSegs, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
+-- >             , tabFi = fineFi 13 [(idLins, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
 
 data CsdOptions = CsdOptions 
     { flags         :: String       
@@ -33,7 +33,7 @@ instance Default CsdOptions where
             , blockSize = 64
             , seed = Nothing
             , initc7 = []
-            , tabFi = fineFi 13 [(idSegs, 10), (idExps, 10), (idConsts, 8)] }
+            , tabFi = fineFi 13 [(idLins, 10), (idExps, 10), (idConsts, 8)] }
 
 data MidiType = Massign | Pgmassign (Maybe Int)
 

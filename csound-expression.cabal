@@ -15,7 +15,7 @@ Description:
     Let's make music with text! We can use Csound to describe our music. Csound has so many fantastic sound generators.
     It's very efficient. But sometimes Csound is too low level. So many details: integer identifiers for instruments 
     and arrays, should I use control rate or audio rate signals, lack of abstractions, no nested expressions and it has limited set of types. 
-    This library embeds Csound in Haskell. It's Csound code generator. We can use powerful Csound's primitives and glue them
+    This library embeds Csound in Haskell. We can use powerful Csound's primitives and glue them
     together with Haskell abstractions. Start with the module "Csound.Base". It contains basic types and functions.     
     .
     Key principles

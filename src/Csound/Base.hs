@@ -279,7 +279,7 @@ module Csound.Base(
         
     -- * Making a sound
     
-    -- | Let's make some noise. Sound is build from list of tracks ('SigOut').
+    -- | Let's make some noise. Sound is build from special container of values from the class 'Csound.Base.Out'.
     Out,
     
     -- ** Handy short-cuts

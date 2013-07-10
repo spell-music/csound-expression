@@ -65,7 +65,7 @@ module Csound.Tab (
     -- * Identifiers for GEN-routines
     
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
-    idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idSegs, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels
+    idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels
 ) where
 
 import Data.Default
@@ -180,7 +180,7 @@ ecubes = cubes . insertOnes
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
 lins :: [Double] -> Tab
-lins = interp idSegs
+lins = interp idLins
 
 -- | Equally spaced segments of straight lines.
 --
@@ -383,7 +383,7 @@ skipNorm x = case x of
 
 
 
-idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idSegs, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
+idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
 
 -- Human readable Csound identifiers for GEN-routines
 
@@ -395,7 +395,7 @@ idPartials = 9
 idSines4 = 19
 idBuzzes = 11
 idConsts = 17
-idSegs = 7
+idLins = 7
 idCubes = 6
 idExps = 5
 idSplines = 8 
