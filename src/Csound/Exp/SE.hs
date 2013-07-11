@@ -3,7 +3,8 @@ module Csound.Exp.SE(
     Outs,
     SE(..), LocalHistory(..), 
     se, se_, stmtOnly, runSE, execSE, 
-    writeVar, readVar, initVar, newLocalVar
+    writeVar, readVar, initVar, appendVar, appendVarBy, 
+    newLocalVar
 ) where
 
 import Control.Applicative
@@ -11,6 +12,7 @@ import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
 import Data.Default
 import Data.Maybe(fromJust)
+import Data.Monoid
 import Data.Fix(Fix(..))
 
 import Csound.Exp
@@ -92,6 +94,12 @@ readVar v = noRate $ ReadVar v
 
 initVar :: (Val a) => Var -> a -> SE ()
 initVar v x = se_ $ noRate $ InitVar v $ toPrimOr $ toE x
+
+appendVar :: (Monoid a, Val a) => Var -> a -> SE ()
+appendVar = appendVarBy mappend
+
+appendVarBy :: (Val a) => (a -> a -> a) -> Var -> a -> SE ()
+appendVarBy op v x = writeVar v $ readVar v `op` x
 
 -- new local variables
 

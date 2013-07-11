@@ -1,7 +1,8 @@
 module Csound.Exp.Ref(
     -- * GERef
     GERef, newGERef, readGERef, writeGERef, 
-    sensorsGE, 
+    sensorsGE, appendGERef, appendGERefBy,
+    readOnlyRef, appendRef, mkSink, mkAppendSink,
 
     -- * SERef
     SERef, newSERef, readSERef, writeSERef, 
@@ -9,7 +10,10 @@ module Csound.Exp.Ref(
 ) where
 
 import Control.Monad(zipWithM, zipWithM_)
+import Data.Monoid
 
+import Csound.Exp(E, Var)
+import Csound.Exp.Wrapper
 import Csound.Exp.Tuple
 import Csound.Exp.GE
 import Csound.Exp.SE
@@ -29,6 +33,43 @@ sensorsGE a = do
 
 newGERef :: CsdTuple a => a -> GE (GERef a)
 newGERef a = fmap (uncurry GERef) $ sensorsGE a
+
+appendGERef :: Monoid a => GERef a -> a -> SE ()
+appendGERef = appendGERefBy mappend
+
+appendGERefBy :: (a -> a -> a) -> GERef a -> a -> SE ()
+appendGERefBy op ref x = do
+    cur <- readGERef ref
+    writeGERef ref $ op cur x
+
+-- global read-only-write-once references (writer is hidden from the user)
+  
+mkSink, mkAppendSink :: (Out a) => a -> GE (NoSE a, E)
+
+mkSink          = genMkSink readOnlyRef
+mkAppendSink    = genMkSink appendRef
+
+genMkSink :: (Out a) => GE (NoSE a, NoSE a -> SE ()) -> a -> GE (NoSE a, E)
+genMkSink ref a = do
+    (reader, writer) <- ref
+    return (reader, execSE $ writer . toCsdTuple . fmap toE =<< toOut a)
+
+readOnlyRef, appendRef :: (CsdTuple a) => GE (a, a -> SE ())
+
+readOnlyRef = genReadOnlyRef writeVar
+appendRef   = genReadOnlyRef $ appendVarBy (+)
+
+genReadOnlyRef :: (CsdTuple a) => (Var -> E -> SE ()) -> GE (a, a -> SE ())
+genReadOnlyRef writeRef = res
+    where 
+        a = proxy defCsdTuple res
+        res = do         
+            vs <- zipWithM newGlobalVar (ratesCsdTuple a) (fromCsdTuple a)
+            let reader = toCsdTuple $ fmap readVar vs
+                writer x = zipWithM_ writeRef vs (fromCsdTuple x)
+            return (reader, writer)
+        proxy :: a -> GE (a, a -> SE ()) -> a
+        proxy = const
 
 -- local references
 

@@ -1,6 +1,6 @@
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp.EventList(
-    CsdSco(..), curriedSingleCsdEvent,
+    CsdSco(..), 
     CsdEvent, csdEventStart, csdEventDur, csdEventContent,
     CsdEventList(..), delayCsdEventList, rescaleCsdEventList
 ) where
@@ -32,9 +32,6 @@ class CsdSco f where
     toCsdEventList :: f a -> CsdEventList a
     -- | Constructs a scores that contains only one event.
     singleCsdEvent ::  CsdEvent a -> f a
-
-curriedSingleCsdEvent :: CsdSco f => Double -> Double -> a -> f a
-curriedSingleCsdEvent start duration content = singleCsdEvent (start, duration, content)
 
 -- | 'Csound.Base.CsdEventList' is a canonical representation of the Csound scores.
 -- Scores is a list of events and we should know the total duration of the scores.

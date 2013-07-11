@@ -1,15 +1,18 @@
-module Csound.Exp.Mix(
+{-# Language FlexibleContexts, TupleSections #-}
+    module Csound.Exp.Mix(
     -- * Container for sounds (triggered with notes and mixers)
-    Mix(..), M(..), nchnls,
+    Mix(..), M(..), runMix,
 
     effect, effectS,
-    sco, mix, --, midi, pgmidi
+    sco, mix, midi, pgmidi,
 
     rescaleCsdEventListM
 ) where
 
 import Data.Traversable(traverse)
 import qualified Data.Map    as M
+import Control.Monad.Trans.Writer
+import qualified Data.IntMap as IM
 
 import Csound.Tfm.Tab
 
@@ -19,9 +22,10 @@ import Csound.Exp.SE
 import Csound.Exp.GE
 import Csound.Exp.Instr
 import Csound.Exp.Arg
-import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple, outArity)
+import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple, toCsdTuple)
 import Csound.Exp.Options
 import Csound.Exp.EventList
+import Csound.Exp.Ref
 
 newtype Mix a = Mix { unMix :: GE M } 
 
@@ -29,10 +33,9 @@ data M
     = Snd InstrId (CsdEventList Note)
     | Eff InstrId (CsdEventList M)    
 
-nchnls :: Out a => f (Mix a) -> Int
-nchnls = outArity . proxy  
-    where proxy :: f (Mix a) -> a
-          proxy = undefined  
+wrapSco :: (CsdSco f) => f a -> (CsdEventList a -> GE M) -> f (Mix b)
+wrapSco notes getContent = singleCsdEvent (0, csdEventListDur evts, Mix $ getContent evts)
+    where evts = toCsdEventList notes
 
 -- | Play a bunch of notes with the given instrument.
 --
@@ -61,11 +64,10 @@ nchnls = outArity . proxy
 -- instrument is rendered we no longer need 'SE' type. So 'NoSE' lets me drop it
 -- from the output type. 
 sco :: (Arg a, Out b, CsdSco f) => (a -> b) -> f a -> f (Mix (NoSE b))
-sco instr notes = curriedSingleCsdEvent 0 (csdEventListDur events) $ Mix $ do    
+sco instr notes = wrapSco notes $ \events -> do    
     events'  <- traverse renderNote events
-    instrId <- saveSourceInstrCached instr soundSourceExp
+    instrId <- saveSourceInstrCached instr (return . soundSourceExp)
     return $ Snd instrId events'
-    where events = toCsdEventList notes
 
 renderNote :: (Arg a) => a -> GE [Prim]
 renderNote a = tfmNoteStrs =<< tfmNoteTabs (toNote a) 
@@ -86,10 +88,9 @@ tfmNoteStrs xs = do
     return $ substNoteStrs strMap xs   
     where strs = getStrings xs
 
-
 -- | Applies an effect to the sound. Effect is applied to the sound on the give track. 
 --
--- > res = mix effect sco 
+-- > res = mix effect sco rriedSingleC
 --
 -- * @effect@ - a function that takes a tuple of signals and produces 
 --   a tuple of signals.
@@ -103,28 +104,26 @@ tfmNoteStrs xs = do
 -- favorite Score-generation library. You can delay it or mix with some other track and 
 -- apply some another effect on top of it!
 mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE b))
-mix eff sigs = curriedSingleCsdEvent 0 (csdEventListDur events) $ Mix $ do
+mix eff sigs = wrapSco sigs $ \events -> do
     notes <- traverse unMix events
-    instrId <- saveMixerInstr =<< effectExp eff
+    instrId <- saveMixerInstr $ effectExp eff
     return $ Eff instrId notes 
-    where events = toCsdEventList sigs
-    
-{-
--- | Triggers a midi-instrument (like Csound's massign). The result type 
--- is a fake one. It's wrapped in the 'Csound.Base.Score' for the ease of mixing.
--- you can not delay or stretch it. The only operation that is meaningful 
--- for it is 'Temporal.Media.chord'. But you can add effects to it with 'Csound.Base.mix'!
-midi :: (Out a) => Channel -> (Msg -> a) -> Score (Mix (NoSE a))
+
+-- | Triggers a midi-instrument (aka Csound's massign). 
+midi :: (Out a, Out (NoSE a)) => Channel -> (Msg -> a) -> GE (NoSE a)
 midi = genMidi Massign
 
--- | Triggers a - midi-instrument (like Csound's pgmassign). 
-pgmidi :: (Out a) => Maybe Int -> Channel -> (Msg -> a) -> Score (Mix (NoSE a))
+-- | Triggers a - midi-instrument (aka Csound's pgmassign). 
+pgmidi :: (Out a, Out (NoSE a)) => Maybe Int -> Channel -> (Msg -> a) -> GE (NoSE a)
 pgmidi mchn = genMidi (Pgmassign mchn)
 
-genMidi :: (Out a) => MidiType -> Channel -> (Msg -> a) -> Score (Mix (NoSE a))
-genMidi midiType chn f = temp $ Mid $ mkInstr getMidiArity Msg f (Just (midiType, chn))
-    where getMidiArity = mkArity (const 0) outArity
--}
+genMidi :: (Out a) => MidiType -> Channel -> (Msg -> a) -> GE (NoSE a)
+genMidi midiType chn instr = do
+    setDurationToInfinite
+    (reader, expr) <- mkAppendSink $ instr Msg
+    instrId <- saveSourceInstr expr
+    saveMidi $ MidiAssign midiType chn instrId
+    return reader
 
 -- | Constructs the effect that applies a given function on every channel.
 effect :: (CsdTuple a, Out a) => (Sig -> Sig) -> (a -> a)
@@ -147,4 +146,37 @@ rescaleCsdEventM (start, dur, evt) = (start, dur, phi evt)
             where localDur = case x of
                     Snd _ evts -> csdEventListDur evts
                     Eff _ evts -> csdEventListDur evts
+
+-----------------------------------------------------------------------------------
+-- render scores
+
+runMix :: (Out (NoSE a), Out a, CsdSco f) => f (Mix a) -> GE (NoSE a)
+runMix sigs = do    
+    saveDuration (csdEventListDur events)
+    (readRef, writeRef) <- readOnlyRef
+    notes <- traverse unMix events
+    instrId <- saveMixerInstr $ effectExp writeRef
+    let notes' = rescaleCsdEventListM $ toCsdEventList notes 
+    saveMixerNotes $ toLowLevelNotesMap $ Eff instrId notes'
+    saveAlwaysOnNote instrId
+    return readRef
+    where events = toCsdEventList sigs
+
+toLowLevelNotesMap :: M -> IM.IntMap LowLevelSco
+toLowLevelNotesMap mixNotes = IM.fromList $ execWriter $ phi mixNotes
+    where    
+        phi :: M -> Writer [(Int, LowLevelSco)] ()
+        phi x = case x of
+            Eff instrId notes -> 
+                let (instrNotes, rest) = onEff notes
+                in  tell [(instrIdCeil instrId, instrNotes)] >> mapM_ phi rest
+            Snd _ _ -> error "Render.hs:toLowLevelNotesMap no effect instrument, end up in Snd case"
+
+onEff :: CsdEventList M -> (LowLevelSco, [M])
+onEff (CsdEventList _ events) = execWriter $ mapM_ phi events
+    where phi :: CsdEvent M -> Writer (LowLevelSco, [M]) ()
+          phi (start, dur, content) = case content of
+            Snd instrId notes -> tellFst $ fmap (instrId, ) $ csdEventListNotes $ delayCsdEventList start notes
+            Eff instrId _     -> tell ([(instrId, (start, dur, []))], [content])
+          tellFst x = tell (x, [])
 

@@ -1,6 +1,7 @@
 module Csound.Exp.Options where
 
 import Data.Default
+import Csound.Exp(InstrId)
 import Csound.Tab(TabFi, fineFi, idLins, idExps, idConsts)
 
 type CtrlId = Int
@@ -40,6 +41,6 @@ data MidiType = Massign | Pgmassign (Maybe Int)
 data MidiAssign = MidiAssign 
     { midiAssignType    :: MidiType
     , midiAssignChannel :: Channel
-    , midiAssignInstr   :: Int }
+    , midiAssignInstr   :: InstrId }
 
 

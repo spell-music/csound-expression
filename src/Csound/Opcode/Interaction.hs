@@ -38,13 +38,13 @@ import Csound.LowLevel
 cpsmidi :: Msg -> D
 cpsmidi = const $ constOpc "cpsmidi"
 
--- | Get the velocity of the current MIDI event. 
+-- | Get the velocity of the current MIDI event. iscal is always 1 (equals to 0dbfs).
 --
 -- > iamp ampmidi iscal [, ifn]
 --
 -- doc: <http://www.csounds.com/manual/html/ampmidi.html>
 ampmidi :: Msg -> D
-ampmidi = const $ constOpc "ampmidi"
+ampmidi = const $ constOpc "ampmidi 1"
 
 -- | Get the current pitch-bend value for this channel. 
 --

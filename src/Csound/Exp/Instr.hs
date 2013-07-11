@@ -1,4 +1,6 @@
-{-# Language ScopedTypeVariables #-}
+{-# Language 
+        ScopedTypeVariables, 
+        FlexibleContexts #-}
 module Csound.Exp.Instr(
     soundSourceExp,
     effectExp,
@@ -6,47 +8,30 @@ module Csound.Exp.Instr(
 ) where
 
 import Control.Monad(zipWithM_)
-import qualified Data.Map as M
 
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
-import Csound.Exp.GE
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
-import Csound.Exp.Options
 
 import Csound.Render.Channel
-import Csound.Tfm.Tab
-
 
 funProxy :: (a -> b) -> (a, b)
 funProxy = const (undefined, undefined)    
 
-soundSourceExp :: (Arg a, Out b) => (a -> b) -> GE E
-soundSourceExp instr = substTabs expr
+soundSourceExp :: (Arg a, Out b) => (a -> b) -> E
+soundSourceExp instr = instrExp insArity $ toOut $ instr toArg
     where insArity = arity $ fst $ funProxy instr
-          expr = instrExp insArity $ toOut $ instr toArg
 
-effectExp :: (Out a, Out b) => (a -> b) -> GE E
-effectExp eff = substTabs $ mixerExp $ do
+effectExp :: (Out a, Out b) => (a -> b) -> E
+effectExp eff = mixerExp $ do
     inputs <- ins $ outArity $ fst $ funProxy eff
     toOut $ eff $ fromOut $ inputs
-    
 
-substTabs :: E -> GE E
-substTabs expr = do
-    opt <- getOptions
-    let expr' = defineInstrTabs (tabFi opt) expr
-        tabs  = getInstrTabs expr'
-    ids <- mapM saveTab tabs
-    let tabMap = M.fromList $ zip tabs ids
-    return $ substInstrTabs tabMap expr'
-   
-trigExp :: (Arg a, Out b) => (NoSE b -> SE ()) -> (a -> b) -> GE E
-trigExp writer instr = substTabs $ execSE $ 
+trigExp :: (Arg a, Out b) => (NoSE b -> SE ()) -> (a -> b) -> E
+trigExp writer instr = execSE $ 
     writer . toCsdTuple . fmap toE =<< (toOut $ instr toArg)
-
 
 ----------------------------------------------------------
 -- simple instrument trigered with score
@@ -63,8 +48,6 @@ instrExp insArity = instrExpGen (outs (4 + insArity))
 instrExpGen :: ([Sig] -> SE ()) -> SE [Sig] -> E
 instrExpGen formOuts instrBody = execSE $ formOuts =<< instrBody
 
-
-
 -- other outputs
 
 outs :: Int -> [Sig] -> SE ()
@@ -80,5 +63,4 @@ ins n = mapM in_ [1 .. n]
               asig <- chnget name
               chnclear name
               return asig
-
 

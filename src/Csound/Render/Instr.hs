@@ -117,6 +117,7 @@ deduceRate desiredRates expr = case ratedExpExp expr of
     If _ _ _ -> head $ filter (/= Xr) $ sort desiredRates   
     ReadVar v -> varRate v
     WriteVar _ _ -> Xr    
+    InitVar _ _ -> Xr    
     where tfmNoRate name rates tab = case sort rates of
               [Xr]  -> tfmNoRate name [Ar] tab                
               Xr:as -> tfmNoRate name as tab
@@ -132,6 +133,7 @@ rateExp curRate expr = case expr of
     ExpNum _ -> fmap (fmap (ratedVar curRate)) expr    
     ReadVar v -> ReadVar v
     WriteVar v a -> WriteVar v $ fmap (ratedVar (varRate v)) a
+    InitVar v a -> InitVar v $ fmap (ratedVar (varRate v)) a
     ExpPrim p -> ExpPrim p
     where ratesFromSignature rate signature = case signature of
               SingleRate table -> table M.! rate

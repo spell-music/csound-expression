@@ -7,12 +7,15 @@ module Csound.Exp.GE(
     saveMixerInstr, saveSourceInstr, saveAlwaysOnInstr, saveSourceInstrCached,    
     saveMixerNotes, 
 
+    saveMidi,
+
     saveTab, saveStr,
 
     Scos(..),
     LowLevelSco, saveAlwaysOnNote,
+    getDuration, saveDuration, setDurationToInfinite,
 
-    Globals(..), Global(..),
+    Globals(..), Global(..), clearGlobals, initGlobals,
 
     appendToGui, newGuiId,
     newGlobalVar
@@ -28,6 +31,7 @@ import Control.Monad.Trans.Reader
 import Data.Default
 
 import qualified Data.IntMap as IM
+import qualified Data.Map as M
 
 import Csound.Exp
 import Csound.Exp.EventList(CsdEvent)
@@ -58,10 +62,13 @@ data History = History
     , instrs   :: Instrs
     , scos     :: Scos
     , guis     :: Guis 
-    , globals  :: Globals }
+    , globals  :: Globals
+    , duration :: Maybe TotalDur }
+
+data TotalDur = Bounded Double | Infinite
 
 instance Default History where 
-    def = History def def def def def def def
+    def = History def def def def def def def def
 
 execGE :: GE a -> CsdOptions -> IO History
 execGE a opt = fmap snd $ runGE a opt
@@ -151,16 +158,34 @@ saveMixerInstr :: E -> GE InstrId
 saveMixerInstr = saveInstr $ \a s -> s{ instrMixers = a : instrMixers s }
 
 saveInstr :: ((InstrId, E) -> Instrs -> Instrs) -> E -> GE InstrId
-saveInstr save expr = withHistory $ \h ->
-    let ins = instrs h
-        counter' = succ $ instrCounter ins
-        instrId  = intInstrId counter'
-    in  (instrId, h{ instrs = save (instrId, expr) $ ins { instrCounter = counter' }})
+saveInstr save exprWithTabs = do
+    expr <- substTabs exprWithTabs
+    withHistory $ \h ->
+        let ins = instrs h
+            counter' = succ $ instrCounter ins
+            instrId  = intInstrId counter'
+        in  (instrId, h{ instrs = save (instrId, expr) $ ins { instrCounter = counter' }})
 
 saveMixerNotes :: IM.IntMap LowLevelSco -> GE ()
 saveMixerNotes sco = modifyHistory $ \h -> 
     let x = instrs h
     in  h { instrs = x{ mixerNotes = sco }}
+
+substTabs :: E -> GE E
+substTabs expr = do
+    opt <- getOptions
+    let expr' = defineInstrTabs (tabFi opt) expr
+        tabs  = getInstrTabs expr'
+    ids <- mapM saveTab tabs
+    let tabMap = M.fromList $ zip tabs ids
+    return $ substInstrTabs tabMap expr'
+   
+
+--------------------------------------------------------
+-- midi
+
+saveMidi :: MidiAssign -> GE ()
+saveMidi ma = modifyHistory $ \h -> h{ midis = ma : midis h }
 
 --------------------------------------------------------
 -- scores
@@ -177,6 +202,25 @@ saveAlwaysOnNote :: InstrId -> GE ()
 saveAlwaysOnNote instrId = modifyHistory $ \h -> 
     let x = scos h
     in  h { scos = x{ alwaysOnInstrs = instrId : alwaysOnInstrs x } }
+
+getDuration :: History -> Double
+getDuration = maybe dayAndNight toDouble . duration
+    where dayAndNight = 24 * 60 * 60
+          toDouble x = case x of
+            Bounded d   -> d
+            Infinite    -> dayAndNight
+
+saveDuration :: Double -> GE ()
+saveDuration d = modifyHistory $ \h ->
+    h { duration = upd $ duration h }
+    where upd x = case x of
+            Nothing             -> Just $ Bounded d
+            Just (Bounded a)    -> Just $ Bounded $ a `max` d
+            Just Infinite       -> Just Infinite
+
+setDurationToInfinite :: GE ()
+setDurationToInfinite = modifyHistory $ \h ->
+    h { duration = Just Infinite }
 
 --------------------------------------------------------
 -- guis
@@ -195,8 +239,8 @@ newGuiId = withHistory $ \h ->
     in  (n, h{ guis = g' })
 
 appendToGui :: Gui -> SE () -> GE ()
-appendToGui gui act = withHistory $ \h ->
-    ((), h{ guis = appendToGuiState gui act $ guis h })
+appendToGui gui act = modifyHistory $ \h ->
+    h{ guis = appendToGuiState gui act $ guis h }
 
 bumpGuiStateId :: Guis -> (Int, Guis)
 bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
@@ -232,4 +276,12 @@ newGlobalVar :: Val a => Rate -> a -> GE Var
 newGlobalVar rate initVal = withHistory $ \h -> 
     let (v, globals') = newGlobalVarOnGlobals rate initVal (globals h)
     in  (v, h{ globals = globals' })
+
+clearGlobals :: GE (SE ())
+clearGlobals = do 
+    gs <- fmap (globalsSoFar . globals) $ getHistory
+    return $ mapM_ (\g -> writeVar (globalVar g) (double 0)) gs 
+
+initGlobals :: [Global] -> SE ()
+initGlobals = mapM_ $ \g -> initVar (globalVar g) (globalInit g)
 

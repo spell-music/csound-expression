@@ -26,4 +26,4 @@ res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
 
 -- Renders generated csd-file to the "tmp.csd".
 main :: IO ()
-main = writeCsd "tmp.csd" res
+main = writeCsd "tmp.csd" $ runMix res

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language 
         TypeFamilies,
         FlexibleContexts #-}
@@ -9,16 +10,18 @@ module Csound.Exp.Tuple(
     ar1, ar2, ar4, ar6, ar8
 ) where
 
-import Data.Default
 
 import Control.Applicative(liftA2)
 import Control.Monad(join)
+import Data.Default
+import Data.Monoid
 
 import Csound.Exp
 import Csound.Exp.Wrapper(Val(..), Sig, D, Str, Spec, onExp, toExp, 
     withRate, getRates)
 import Csound.Exp.SE(SE)
 import Csound.Tfm.Tuple
+import Csound.Exp.Numeric()
 
 -- | Describes tuples of Csound values. It's used for functions that can return 
 -- several results (such as 'soundin' or 'diskin2'). Tuples can be nested. 
@@ -59,7 +62,7 @@ makeCsdTupleMethods to from = CsdTupleMethods
           proxy = undefined
 
 -- | Output of the instrument.
-class CsdTuple (NoSE a) => Out a where
+class (Monoid (NoSE a), CsdTuple (NoSE a)) => Out a where
     type NoSE a :: *
     toOut :: a -> SE [Sig]
     fromOut :: [Sig] -> a
@@ -156,7 +159,7 @@ instance Out Sig where
     toOut = return . return
     fromOut = head  
 
-instance (Out a, CsdTuple a) => Out (SE a) where
+instance (Monoid a, Out a, CsdTuple a) => Out (SE a) where
     type NoSE (SE a) = a
     toOut = join . fmap toOut
     fromOut = return . fromOut
@@ -178,7 +181,7 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, Out a, Out b, Out c, O
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
     type NoSE (a, b, c, d, e) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e)
     toOut = toOut . split5;    fromOut = toCsdTuple . fmap toE
-    
+   
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
     type NoSE (a, b, c, d, e, f) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f)
     toOut = toOut . split6;    fromOut = toCsdTuple . fmap toE
@@ -190,4 +193,45 @@ instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h, Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
     type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
     toOut = toOut . split8;    fromOut = toCsdTuple . fmap toE
+
+-- missing tuple monoids
+
+instance (Monoid a, Monoid b, Monoid c, Monoid d, Monoid e, Monoid f) => Monoid (a, b, c, d, e, f) where
+    mempty = (mempty, mempty, mempty, mempty, mempty, mempty)
+    mappend (a1, a2, a3, a4, a5, a6) (b1, b2, b3, b4, b5, b6) = 
+        ( mappend a1 b1
+        , mappend a2 b2
+        , mappend a3 b3
+        , mappend a4 b4
+        , mappend a5 b5
+        , mappend a6 b6
+        )
+
+instance (Monoid a, Monoid b, Monoid c, Monoid d, Monoid e, Monoid f, Monoid g) => Monoid (a, b, c, d, e, f, g) where
+    mempty = (mempty, mempty, mempty, mempty, mempty, mempty, mempty)
+    mappend (a1, a2, a3, a4, a5, a6, a7) (b1, b2, b3, b4, b5, b6, b7) = 
+        ( mappend a1 b1
+        , mappend a2 b2
+        , mappend a3 b3
+        , mappend a4 b4
+        , mappend a5 b5
+        , mappend a6 b6
+        , mappend a7 b7
+        )
+
+instance (Monoid a, Monoid b, Monoid c, Monoid d, Monoid e, Monoid f, Monoid g, Monoid h) => Monoid (a, b, c, d, e, f, g, h) where
+    mempty = (mempty, mempty, mempty, mempty, mempty, mempty, mempty, mempty)
+    mappend (a1, a2, a3, a4, a5, a6, a7, a8) (b1, b2, b3, b4, b5, b6, b7, b8) = 
+        ( mappend a1 b1
+        , mappend a2 b2
+        , mappend a3 b3
+        , mappend a4 b4
+        , mappend a5 b5
+        , mappend a6 b6
+        , mappend a7 b7
+        , mappend a8 b8
+        )
+
+
+
 

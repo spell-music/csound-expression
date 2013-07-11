@@ -196,8 +196,8 @@ module Csound.Base(
     -- > 
     -- > -- Let's trigger the instrument from the score section.
     -- > -- It plays a three notes. One starts at 0 and lasts for one second with frequency of 440,
-    -- another one starts at 1 second and lasts for 2 seconds, and the last note lasts for 2 seconds
-    -- at the frequency 220 Hz. 
+    -- > another one starts at 1 second and lasts for 2 seconds, and the last note lasts for 2 seconds
+    -- > at the frequency 220 Hz. 
     -- > res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
     -- > 
     -- > -- Renders generated csd-file to the "tmp.csd".
@@ -289,13 +289,23 @@ module Csound.Base(
     -- | We can define an instrument and tell it to play some notes.
     Arg(..), ArgMethods, makeArgMethods,
     Mix, sco, mix, CsdEvent, CsdEventList(..), CsdSco(..),
+    runMix,
     
     -- ** Effects
     effect, effectS,
+    
+    -- ** Globals
+    GE,
 
     -- ** Midi
     -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.
-    --Msg, midi, pgmidi,
+    Msg, midi, pgmidi,
+
+    -- ** Events
+    -- | We can trigger instruments with events.
+    Evt(..), Bam, Snap,
+    trigger, filterEvt, accumEvt, snapshot,
+    stepper, schedule, toggle,
 
     -- ** Rendering
     -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
@@ -359,10 +369,12 @@ import Csound.Exp.Tuple
 import Csound.Exp.Arg
 import Csound.Tab
 import Csound.Exp.Logic
+import Csound.Exp.GE
 import Csound.Exp.SE
 import Csound.Exp.Options
 import Csound.Exp.Mix
 import Csound.Exp.EventList
+import Csound.Exp.Event
 
 import Csound.Opcode
 import Csound.IO

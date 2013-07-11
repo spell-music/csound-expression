@@ -1,5 +1,5 @@
 module Csound.Render.Pretty (
-    Doc, int, double, text, empty, ($$), vcat, vcatMap,
+    Doc, int, double, text, empty, ($$), vcat, vcatMap, clearSpace,
     verbatimLines,
 
     binaries, unaries, funcs,
@@ -152,6 +152,7 @@ tag name content = vcat $ punctuate newline [
 
 ppInstr :: InstrId -> Doc -> Doc
 ppInstr instrId body = vcat [
+    newline,
     text "instr" <+> ppInstrId instrId,
     body,
     text "endin"]
@@ -252,6 +253,9 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     If info t e -> res $= ppIf (ppInline ppCondOp info) t e
     ExpNum (PreInline op as) -> res $= ppNumOp op as
     WriteVar v a -> ppVar v $= a
+    InitVar v a -> ppOpc (ppVar v) "init" [a]
     ReadVar v -> res $= ppVar v
     x -> error $ "unknown expression: " ++ show x
-          
+  
+clearSpace :: Doc -> Doc
+clearSpace x = newline $$ x $$ newline
