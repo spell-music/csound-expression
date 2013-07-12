@@ -1,5 +1,6 @@
 -- | Opcodes for routing the signals
 module Csound.Render.Channel (
+    clip, zeroDbfs, sprintf,
     masterOuts,
     -- * channel opcodes
     chnVar, chnName, 
@@ -13,11 +14,30 @@ module Csound.Render.Channel (
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
-import Csound.Exp.Arg(Arg, toNote)
-import Csound.Exp.Tuple(Out(..))
-import Csound.Exp.Cons(opc0, opc1, opc2, opcs)
-import Csound.Opcode(clip, zeroDbfs, sprintf)
+import Csound.Exp.Arg(Arg)
+import Csound.Exp.Tuple(Out(..), CsdTuple, fromCsdTuple)
+import Csound.Exp.Cons(opc0, opc1, opc2, opc3, opcs)
 import Csound.Render.Pretty(Doc, verbatimLines, ppOpc, ppVar)   
+
+-- | Clips an a-rate signal to a predefined limit, in a “soft” manner, using one of three methods. 
+--
+-- > ares clip asig, imeth, ilimit [, iarg]
+--
+-- doc: <http://www.csounds.com/manual/html/clip.html>
+clip :: Sig -> D -> D -> Sig
+clip = opc3 "clip" [(Ar, [Ar, Ir, Ir])]
+
+-- | Reads @0dbfs@ value.
+zeroDbfs :: D
+zeroDbfs = (setRate Ir :: E -> D) $ readOnlyVar (VarVerbatim Ir "0dbfs")
+
+-- | sprintf write printf-style formatted output to a string variable, similarly to the C function sprintf(). sprintf runs at i-time only. 
+--
+-- > Sdst sprintf Sfmt, xarg1[, xarg2[, ... ]]
+--
+-- doc: <http://www.csounds.com/manual/html/sprintf.html>
+sprintf :: Str -> [D] -> Str
+sprintf a1 a2 = opcs "sprintf" [(Sr, Sr:repeat Ir)] (toE a1 : map toE a2)
 
 ---------------------------------------------------------
 -- master instrument output
@@ -71,15 +91,15 @@ freeChn = se $ opc0 "FreePort" [(Ir, [])]
 -------------------------------------------------------------
 -- notes
 
-event :: Arg a => InstrId -> D -> D -> a -> SE ()
-event instrId start dur arg = se_ $ opcs "event" [(Xr, repeat Ir)] argExp
+event :: (CsdTuple a, Arg a) => InstrId -> D -> D -> a -> SE ()
+event instrId start dur arg = se_ $ opcs "event" [(Xr, repeat Kr)] argExp
     where argExp :: [E]
-          argExp = fmap prim $ toNote (str "i", instrId, start, dur, arg) 
+          argExp = fromCsdTuple (str "i", double $ fromIntegral $ instrIdCeil $ instrId, start, dur, arg) 
 
-eventWithChannel :: Arg a => InstrId -> D -> D -> a -> D -> SE ()
+eventWithChannel :: (CsdTuple a, Arg a) => InstrId -> D -> D -> a -> D -> SE ()
 eventWithChannel instrId start dur arg chn = event instrId start dur (arg, chn)
 
-instrOn :: Arg a => InstrId -> a -> D -> SE ()
+instrOn :: (CsdTuple a, Arg a) => InstrId -> a -> D -> SE ()
 instrOn instrId arg chn = eventWithChannel instrId 0 (-1) arg chn
 
 instrOff :: InstrId -> SE ()

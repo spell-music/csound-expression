@@ -93,7 +93,7 @@ slider label = mkWidget $ do
     let gui = Prim name label Slider
         var = mkGuiVar name
         writer = writeVar var
-        reader = return $ readVar var
+        reader = readVar var
     return (gui, writer, reader)
 
 btn :: Label -> Source (Evt ()) 
@@ -101,7 +101,7 @@ btn label = mkSource $ do
     name <- newGuiId 
     let gui = Prim name label Btn
         var = mkGuiVar name
-        reader = return $ trigger $ change $ readVar var
+        reader = fmap (boolToEvt . change) $ readVar var
     return (gui, reader)
 
 text :: Display 

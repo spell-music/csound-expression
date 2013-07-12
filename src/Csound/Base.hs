@@ -304,7 +304,7 @@ module Csound.Base(
     -- ** Events
     -- | We can trigger instruments with events.
     Evt(..), Bam, Snap,
-    trigger, filterEvt, accumEvt, snapshot,
+    boolToEvt, evtToBool, sigToEvt, filterEvt, accumEvt, snapshot,
     stepper, schedule, toggle,
 
     -- ** Rendering

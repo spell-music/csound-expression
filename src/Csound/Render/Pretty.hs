@@ -13,9 +13,11 @@ module Csound.Render.Pretty (
     ppEvent, ppMasterNote, ppAlwayson
 ) where
 
+import Control.Monad.Trans.State.Strict
 import Data.Char(toLower)
 import qualified Data.Map as M
 import qualified Data.IntMap as IM
+
 import Text.PrettyPrint.Leijen
 
 import Csound.Tfm.Tab
@@ -240,22 +242,44 @@ ppNumOp op = case  op of
             [] -> error "ppNumOp firstLetterToLower: empty identifier"
 
 
-ppStmt :: [RatedVar] -> Exp RatedVar -> Doc
+type TabDepth = Int
+
+ppStmt :: [RatedVar] -> Exp RatedVar -> State TabDepth Doc
 ppStmt outs expr = ppExp (ppOuts outs) expr
 
-ppExp :: Doc -> Exp RatedVar -> Doc
+ppExp :: Doc -> Exp RatedVar -> State TabDepth Doc
 ppExp res expr = case fmap ppPrimOrVar expr of
-    ExpPrim (PString n) -> ppStrget res n
-    ExpPrim p -> res $= ppPrim p
-    Tfm info [a, b] | isInfix  info -> res $= binary (infoName info) a b
-    Tfm info xs -> ppOpc res (infoName info) xs
-    ConvertRate to from x -> ppConvertRate res to from x
-    If info t e -> res $= ppIf (ppInline ppCondOp info) t e
-    ExpNum (PreInline op as) -> res $= ppNumOp op as
-    WriteVar v a -> ppVar v $= a
-    InitVar v a -> ppOpc (ppVar v) "init" [a]
-    ReadVar v -> res $= ppVar v
+    ExpPrim (PString n)             -> tab $ ppStrget res n
+    ExpPrim p                       -> tab $ res $= ppPrim p
+    Tfm info [a, b] | isInfix  info -> tab $ res $= binary (infoName info) a b
+    Tfm info xs                     -> tab $ ppOpc res (infoName info) xs
+    ConvertRate to from x           -> tab $ ppConvertRate res to from x
+    If info t e                     -> tab $ res $= ppIf (ppCond info) t e
+    ExpNum (PreInline op as)        -> tab $ res $= ppNumOp op as
+    WriteVar v a                    -> tab $ ppVar v $= a
+    InitVar v a                     -> tab $ ppOpc (ppVar v) "init" [a]
+    ReadVar v                       -> tab $ res $= ppVar v
+
+    IfBegin a                       -> succTab          $ text "if "     <> ppCond a <> text " then"
+    ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")    
+    ElseBegin                       -> left >> (succTab $ text "else")
+    IfEnd                           -> left >> (tab     $ text "endif")
+
     x -> error $ "unknown expression: " ++ show x
+    where tab doc = fmap (shiftByTab doc) get 
+          tabWidth = 4
+          shiftByTab doc n
+            | n == 0    = doc
+            | otherwise = (text $ replicate (tabWidth * n) ' ') <> doc 
+
+          left = modify pred
+          succTab doc = do
+            a <- tab doc
+            modify succ
+            return a
+
+ppCond :: Inline CondOp Doc -> Doc
+ppCond = ppInline ppCondOp 
   
 clearSpace :: Doc -> Doc
 clearSpace x = newline $$ x $$ newline

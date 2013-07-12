@@ -3,6 +3,7 @@ module Csound.Render.Instr(
 ) where
 
 import Control.Arrow(second)
+import Control.Monad.Trans.State.Strict
 import Data.List(sort, find)
 import qualified Data.Map as M
 
@@ -24,7 +25,8 @@ renderInstr :: InstrId -> E -> Doc
 renderInstr instrId expr = ppInstr instrId $ renderInstrBody expr
 
 renderInstrBody :: E -> Doc
-renderInstrBody sig = vcat $ map (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
+renderInstrBody sig = vcat $ flip evalState 0 $ 
+    mapM (uncurry ppStmt . clearEmptyResults) $ collectRates $ toDag sig
 
 -------------------------------------------------------------
 -- E -> Dag
@@ -116,8 +118,7 @@ deduceRate desiredRates expr = case ratedExpExp expr of
     Select rate _ _ -> rate
     If _ _ _ -> head $ filter (/= Xr) $ sort desiredRates   
     ReadVar v -> varRate v
-    WriteVar _ _ -> Xr    
-    InitVar _ _ -> Xr    
+    _  -> Xr    
     where tfmNoRate name rates tab = case sort rates of
               [Xr]  -> tfmNoRate name [Ar] tab                
               Xr:as -> tfmNoRate name as tab
@@ -128,16 +129,22 @@ rateExp curRate expr = case expr of
     ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
     Tfm i xs -> Tfm i $ mergeWithPrimOrBy (flip ratedVar) xs (ratesFromSignature curRate (infoSignature i))
     Select rate pid a -> Select rate pid (fmap (ratedVar Xr) a)    
-    If _ _ _ -> let curRate' = max curRate Kr
-                in  fmap (fmap (ratedVar curRate')) expr
+    If _ _ _ -> condRate expr
     ExpNum _ -> fmap (fmap (ratedVar curRate)) expr    
     ReadVar v -> ReadVar v
     WriteVar v a -> WriteVar v $ fmap (ratedVar (varRate v)) a
     InitVar v a -> InitVar v $ fmap (ratedVar (varRate v)) a
     ExpPrim p -> ExpPrim p
+    IfBegin _ -> condRate expr
+    ElseIfBegin _ -> condRate expr
+    ElseBegin -> ElseBegin
+    IfEnd -> IfEnd
     where ratesFromSignature rate signature = case signature of
               SingleRate table -> table M.! rate
               MultiRate _ rs   -> rs
+          condRate = fmap (fmap (ratedVar r))  
+              where r = Kr -- max curRate Kr
+          
 
 mergeWithPrimOrBy :: (a -> b -> c) -> [PrimOr a] -> [b] -> [PrimOr c]
 mergeWithPrimOrBy cons = zipWith (\primOr b -> fmap (flip cons b) primOr)

@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language TypeFamilies #-}
 module Csound.Exp.Logic(
-    BoolSig, BoolD, when
+    BoolSig(..), BoolD(..), when
 ) where
 
 import Control.Monad.Trans.State(State, state, evalState)
@@ -40,8 +40,9 @@ elseBegin = stmtOnly ElseBegin
 ifEnd :: SE ()
 ifEnd = stmtOnly IfEnd
 
-withCond :: Val a => (E -> MainExp E) -> a -> SE ()
-withCond stmt p = se_ $ fromE $ noRate $ fmap (PrimOr . Right) $ stmt (toE p)
+withCond :: Val a => (CondInfo (PrimOr E) -> MainExp (PrimOr E)) -> a -> SE ()
+withCond stmt p = se_ $ fromE $ noRate $ stmt (condInfo p)
+
 -- booleans
 
 -- | Boolean signals. 
@@ -124,25 +125,28 @@ boolExp :: a -> [b] -> PreInline a b
 boolExp = PreInline
 
 condExp :: (Val bool, Val a) => bool -> a -> a -> a
-condExp p t e = fromE $ mkCond (condInfo $ toPrimOr $ toE p) (toE t) (toE e)
+condExp p t e = fromE $ mkCond (condInfo p) (toE t) (toE e)
     where mkCond :: CondInfo (PrimOr E) -> E -> E -> E
           mkCond pr th el 
             | isTrue pr = th
             | isFalse pr = el
             | otherwise = noRate $ If pr (toPrimOr th) (toPrimOr el)            
 
-condInfo :: PrimOr E -> CondInfo (PrimOr E)
-condInfo expr = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' expr) 0
-    where condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
-          condInfo' e = maybe (onLeaf e) (onExpr e) $ parseNode e
-          onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
-          onExpr  _ (op, args) = fmap mkNode $ mapM condInfo' args
-              where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
+condInfo :: (Val bool) => bool -> CondInfo (PrimOr E)
+condInfo p = go $ toPrimOr $ toE p
+    where
+        go :: PrimOr E -> CondInfo (PrimOr E)
+        go expr = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' expr) 0
+        condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
+        condInfo' e = maybe (onLeaf e) (onExpr e) $ parseNode e
+        onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
+        onExpr  _ (op, args) = fmap mkNode $ mapM condInfo' args
+            where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
 
-          parseNode :: PrimOr E -> Maybe (CondOp, [PrimOr E])
-          parseNode x = case unPrimOr $ fmap toExp x of
-              Right (ExpBool (PreInline op args)) -> Just (op, args)
-              _ -> Nothing    
+        parseNode :: PrimOr E -> Maybe (CondOp, [PrimOr E])
+        parseNode x = case unPrimOr $ fmap toExp x of
+          Right (ExpBool (PreInline op args)) -> Just (op, args)
+          _ -> Nothing    
 
 --------------------------------------------------------------------------------
 -- constructors for boolean expressions

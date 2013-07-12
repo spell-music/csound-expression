@@ -75,6 +75,8 @@ import Csound.Exp.Tuple
 import Csound.LowLevel
 import Csound.Exp.Numeric
 
+import Csound.Render.Channel(sprintf)
+
 -----------------------------------------------------
 -- * Buffer and Function tables
 
@@ -592,14 +594,6 @@ printk a1 a2 = se_ $ opc2 "printk" [(x, [i,k,i])] a1 a2
 -- ** Formatted Printing
 
 -- ** String Variables
-
--- | sprintf write printf-style formatted output to a string variable, similarly to the C function sprintf(). sprintf runs at i-time only. 
---
--- > Sdst sprintf Sfmt, xarg1[, xarg2[, ... ]]
---
--- doc: <http://www.csounds.com/manual/html/sprintf.html>
-sprintf :: Str -> [D] -> Str
-sprintf a1 a2 = opcs "sprintf" [(s, s:repeat i)] (toE a1 : map toE a2)
 
 -- | sprintfk writes printf-style formatted output to a string variable, similarly to the C function sprintf(). sprintfk runs both at initialization and performance time. 
 --

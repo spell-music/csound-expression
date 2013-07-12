@@ -91,8 +91,8 @@ instance CsdTuple () where
         , defCsdTuple_   = () }
 
 instance CsdTuple Sig   where csdTupleMethods = primCsdTupleMethods Ar        
-instance CsdTuple D     where csdTupleMethods = primCsdTupleMethods Ir
-instance CsdTuple Tab   where csdTupleMethods = primCsdTupleMethods Ir
+instance CsdTuple D     where csdTupleMethods = primCsdTupleMethods Kr
+instance CsdTuple Tab   where csdTupleMethods = primCsdTupleMethods Kr
 instance CsdTuple Str   where csdTupleMethods = primCsdTupleMethods Sr
 instance CsdTuple Spec  where csdTupleMethods = primCsdTupleMethods Fr
 

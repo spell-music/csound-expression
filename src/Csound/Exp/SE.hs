@@ -3,7 +3,7 @@ module Csound.Exp.SE(
     Outs,
     SE(..), LocalHistory(..), 
     se, se_, stmtOnly, runSE, execSE, 
-    writeVar, readVar, initVar, appendVar, appendVarBy, 
+    writeVar, readVar, readOnlyVar, initVar, appendVar, appendVarBy, 
     newLocalVar
 ) where
 
@@ -18,7 +18,6 @@ import Data.Fix(Fix(..))
 import Csound.Exp
 import Csound.Exp.Wrapper
 
-
 type Outs = SE [Sig]
 
 -- | Csound's synonym for 'IO'-monad. 'SE' means Side Effect. 
@@ -30,18 +29,13 @@ newtype SE a = SE { unSE :: State LocalHistory a }
 
 data LocalHistory = LocalHistory
     { expDependency     :: Maybe E
-    , locals            :: Locals }
+    , newVarId          :: InitVarId }
 
 
 instance Default LocalHistory where
     def = LocalHistory def def
 
-data Locals = Locals 
-    { newVarId          :: Int
-    , localInits        :: [SE ()] }
-
-instance Default Locals where
-    def = Locals def def
+type InitVarId = Int
 
 instance Functor SE where
     fmap f = SE . fmap f . unSE
@@ -58,14 +52,9 @@ runSE :: SE a -> (a, LocalHistory)
 runSE a = runState (unSE a) def
 
 execSE :: SE a -> E
-execSE a 
-    | null initList = expr
-    | otherwise     = execSE $ applyInitList initList expr >> clearInitList
+execSE a = expr
     where st = snd $ runSE a
-          expr = fromJust $ expDependency st
-          initList = localInits $ locals st
-          clearInitList = SE $ modify $ \s -> s{ locals = def }
-          applyInitList inits xs = sequence_ inits >> se_ xs
+          expr  = fromJust $ expDependency st
 
 -- dependency tracking
 
@@ -80,6 +69,11 @@ se_ = fmap (const ()) . (se :: E -> SE E)
 stmtOnly :: Exp E -> SE ()
 stmtOnly stmt = se_ $ fromE $ noRate stmt
 
+dependsOn :: E -> E -> E
+dependsOn expr dep = case ratedExpDepends (unFix expr) of
+    Nothing -> insertDep dep
+    Just x  -> insertDep (dependsOn x dep) 
+    where insertDep a = Fix $ (unFix expr) { ratedExpDepends = Just a }
 
 --------------------------------------------------
 -- variables
@@ -89,8 +83,11 @@ stmtOnly stmt = se_ $ fromE $ noRate stmt
 writeVar :: (Val a) => Var -> a -> SE ()
 writeVar v x = se_ $ noRate $ WriteVar v $ toPrimOr $ toE x 
 
-readVar :: (Val a) => Var -> a
-readVar v = noRate $ ReadVar v
+readVar :: (Val a) => Var -> SE a
+readVar v = se $ noRate $ ReadVar v
+
+readOnlyVar :: (Val a) => Var -> a
+readOnlyVar v = noRate $ ReadVar v
 
 initVar :: (Val a) => Var -> a -> SE ()
 initVar v x = se_ $ noRate $ InitVar v $ toPrimOr $ toE x
@@ -99,21 +96,18 @@ appendVar :: (Monoid a, Val a) => Var -> a -> SE ()
 appendVar = appendVarBy mappend
 
 appendVarBy :: (Val a) => (a -> a -> a) -> Var -> a -> SE ()
-appendVarBy op v x = writeVar v $ readVar v `op` x
+appendVarBy op v x = writeVar v . op x =<< readVar v
 
 -- new local variables
 
 newLocalVar :: Val a => Rate -> a -> SE Var
-newLocalVar rate initVal = SE $ do
-    s <- get
-    let (var, locals') = newVarOnLocals rate initVal (locals s)
-    put $ s { locals = locals' }
-    return var
-
-newVarOnLocals :: Val a => Rate -> a -> Locals -> (Var, Locals)
-newVarOnLocals rate initVal st = 
-    (var, st { newVarId = succ n, localInits = initStmt : localInits st })
-    where var = Var LocalVar rate (show n)
-          n = newVarId st  
-          initStmt = initVar var initVal
+newLocalVar rate val = SE $ do
+    s <- get     
+    let v = Var LocalVar rate (show $ newVarId s)    
+        initStmt = noRate $ InitVar v $ toPrimOr $ toE val
+        dep = case expDependency s of
+            Nothing -> Just initStmt 
+            Just x  -> Just $ x `dependsOn` initStmt
+    put $ s { expDependency = dep, newVarId = succ $ newVarId s }
+    return v
 

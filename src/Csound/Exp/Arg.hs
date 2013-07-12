@@ -17,7 +17,7 @@ import Csound.Tfm.Tuple
 getPrimUnsafe :: Val a => a -> Prim
 getPrimUnsafe x = case toExp x of
     ExpPrim a -> a
-    _ -> error "Arg.hs:getPrimUnsafe - value is not prim"
+    other -> error $ "Arg.hs:getPrimUnsafe - value " ++ show other ++ " is not prim"
 
 -- | The abstract type of methods for the class 'Arg'.
 data ArgMethods a = ArgMethods 

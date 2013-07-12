@@ -59,7 +59,7 @@ outs readChnId sigs = zipWithM_ (out readChnId) [1 .. ] sigs
 ins :: Int -> SE [Sig]
 ins n = mapM in_ [1 .. n] 
     where in_ x = do
-              let name = chnName x $ readVar chnVar
+              name <- fmap (chnName x) $ readVar chnVar
               asig <- chnget name
               chnclear name
               return asig

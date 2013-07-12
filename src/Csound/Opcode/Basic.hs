@@ -87,30 +87,34 @@ module Csound.Opcode.Basic(
     hrtfstat, hrtfmove, hrtfmove2,
 
     -----------------------------------------------------
-    -- * Other 
-    xtratim
+    -- * Control 
+    
+    times, timek,
+    metro, changed, trigger, 
+    metroEvt, changedEvt, triggerEvt, 
+    xtratim, ihold, turnoff
+     
 ) where
 
 import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
+import Csound.Exp.Event
 import Csound.LowLevel
+
+import Csound.Render.Channel(zeroDbfs, clip)
 
 -- | Reads @p3@-argument for the current instrument.
 idur :: D
 idur = p 3
         
--- | Reads @0dbfs@ value.
-zeroDbfs :: D
-zeroDbfs = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "0dbfs")
-
 -- | Reads @sr@ value.
 getSampleRate :: D
-getSampleRate = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "sr")
+getSampleRate = (setRate Ir :: E -> D) $ readOnlyVar (VarVerbatim Ir "sr")
 
 -- | Reads @ksmps@ value.
 getBlockSize :: D
-getBlockSize = (setRate Ir :: E -> D) $ readVar (VarVerbatim Ir "ksmps")
+getBlockSize = (setRate Ir :: E -> D) $ readOnlyVar (VarVerbatim Ir "ksmps")
 
 -----------------------------------------------------
 -- Standard Oscillators
@@ -944,14 +948,6 @@ compress = opc9 "compress" [(a, [a, a, k, k, k, k, k, k, i])]
 dam :: Sig -> Sig -> D -> D -> D -> D -> Sig
 dam = opc6 "dam" [(a, a:k:is 4)]
 
--- | Clips an a-rate signal to a predefined limit, in a “soft” manner, using one of three methods. 
---
--- > ares clip asig, imeth, ilimit [, iarg]
---
--- doc: <http://www.csounds.com/manual/html/clip.html>
-clip :: Sig -> D -> D -> Sig
-clip = opc3 "clip" [(a, [a, i, i])]
-
 -------------------------------------------------
 -- Sample Level Operations
 
@@ -1044,7 +1040,62 @@ hrtfmove2 :: Sig -> Sig -> Sig -> Str -> Str -> (Sig, Sig)
 hrtfmove2 = mopc5 "hrtfmove2" ([a, a], a:k:k:s:s:is 3)
 
 --------------------------------------------------------------------------
--- Other opcodes
+-- Control opcodes
+
+-- | Read absolute time, in seconds, since the start of the performance.
+--
+-- > ires times
+-- > kres times
+--
+-- doc: <http://www.csounds.com/manual/html/times.html>
+times :: Sig
+times = opc0 "times" [(k, []), (i, [])]
+
+-- | Read absolute time, in k-rate cycles, since the start of the performance.
+--
+-- > ires timek
+-- > kres timek
+--
+-- doc: <http://www.csounds.com/manual/html/timek.html>
+timek :: Sig
+timek = opc0 "timek" [(k, []), (i, [])]
+
+-- | Generate a metronomic signal to be used in any circumstance an isochronous trigger is needed.
+--
+-- > ktrig  metro  kfreq [, initphase]
+--
+-- doc: <http://www.csounds.com/manual/html/metro.html>
+metro :: Cps -> Ksig 
+metro = opc1 "metro" [(k, [k,i])]
+
+-- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
+metroEvt :: Cps -> Evt ()
+metroEvt = sigToEvt . metro
+
+-- | This opcode outputs a trigger signal that informs when any one of its k-rate 
+-- arguments has changed. Useful with valuator widgets or MIDI controllers.
+--
+-- > ktrig changed kvar1 [, kvar2,..., kvarN]
+--
+-- doc: <http://www.csounds.com/manual/html/changed.html>
+changed :: [Ksig] -> Ksig
+changed = opcs "changed" [(k, repeat k)]
+
+-- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
+changedEvt :: [Ksig] -> Evt ()
+changedEvt = sigToEvt . changed
+
+-- | Informs when a krate signal crosses a threshold.
+-- 
+-- > kout trigger ksig, kthreshold, kmode
+--
+-- doc: <http://www.csounds.com/manual/html/trigger.html>
+trigger :: Sig -> Sig -> Sig -> Sig
+trigger = opc3 "trigger" [(k, ks 3)]
+
+-- | Behaves like 'Csound.Opcode.Basic.trigger', but returns an event stream.
+triggerEvt :: Sig -> Sig -> Sig -> Evt ()
+triggerEvt a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 
 -- | Extend the duration of real-time generated events and handle their extra life (Usually for usage along with release instead of linenr, linsegr, etc). 
 --
@@ -1053,4 +1104,20 @@ hrtfmove2 = mopc5 "hrtfmove2" ([a, a], a:k:k:s:s:is 3)
 -- doc: <http://www.csounds.com/manual/html/xtratim.html>
 xtratim :: D -> SE ()
 xtratim a1 = se_ $ opc1 "xtratim" [(x, [i])] a1
+
+-- | Causes a finite-duration note to become a “held” note.
+--
+-- >    ihold
+--
+-- doc: <http://www.csounds.com/manual/html/ihold.html>
+ihold :: SE ()
+ihold = se_ $ opc0 "ihold" [(x, [])]
+
+-- | Enables an instrument to turn itself off.
+--
+-- >    turnoff
+--
+-- doc: <http://www.csounds.com/manual/html/turnoff.html>
+turnoff :: SE ()
+turnoff = se_ $ opc0 "turnoff" [(x, [])]
 

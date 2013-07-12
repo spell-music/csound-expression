@@ -27,7 +27,7 @@ data GERef a = GERef
 sensorsGE :: CsdTuple a => a -> GE (SE a, a -> SE ())
 sensorsGE a = do
     vs <- zipWithM newGlobalVar (ratesCsdTuple a) (fromCsdTuple a)
-    let reader = return $ toCsdTuple $ fmap readVar vs
+    let reader = fmap toCsdTuple $ mapM readVar vs
         writer x = zipWithM_ writeVar vs (fromCsdTuple x)
     return (reader, writer)
 
@@ -65,7 +65,7 @@ genReadOnlyRef writeRef = res
         a = proxy defCsdTuple res
         res = do         
             vs <- zipWithM newGlobalVar (ratesCsdTuple a) (fromCsdTuple a)
-            let reader = toCsdTuple $ fmap readVar vs
+            let reader = toCsdTuple $ fmap readOnlyVar vs
                 writer x = zipWithM_ writeRef vs (fromCsdTuple x)
             return (reader, writer)
         proxy :: a -> GE (a, a -> SE ()) -> a
@@ -83,7 +83,7 @@ newSERef a = fmap (uncurry SERef) (sensorsSE a)
 sensorsSE :: CsdTuple a => a -> SE (SE a, a -> SE ())
 sensorsSE a = do
     vs <- zipWithM newLocalVar (ratesCsdTuple a) (fromCsdTuple a)
-    let reader = return $ toCsdTuple $ fmap readVar vs
+    let reader = fmap toCsdTuple $ mapM readVar vs
         writer x = zipWithM_ writeVar vs (fromCsdTuple x)
     return (reader, writer)
     

@@ -101,8 +101,8 @@ data MainExp a
     | ReadVar Var
     | WriteVar Var a    
     -- | Imperative If-then-else
-    | IfBegin a
-    | ElseIfBegin a
+    | IfBegin (CondInfo a)
+    | ElseIfBegin (CondInfo a)
     | ElseBegin
     | IfEnd
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable)  
