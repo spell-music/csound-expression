@@ -156,7 +156,7 @@ schedule :: (CsdTuple a, Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt (D, a) -
 schedule instr evt = do    
     (reader, writer) <- appendRef
     instrId <- saveSourceInstr $ trigExp writer instr 
-    _ <- saveAlwaysOnInstr $ scheduleInstr instrId evt
+    saveAlwaysOnInstr $ scheduleInstr instrId evt
     return reader
 
 scheduleInstr :: (CsdTuple a, Arg a) => InstrId -> Evt (D, a) -> E
@@ -170,7 +170,7 @@ toggle :: (CsdTuple a, Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt a -> Evt c
 toggle instr onEvt offEvt = do
     (reader, writer) <- appendRef
     instrId <- saveSourceInstr $ trigExp writer instr 
-    _ <- saveAlwaysOnInstr $ scheduleToggleInstr instrId onEvt offEvt
+    saveAlwaysOnInstr $ scheduleToggleInstr instrId onEvt offEvt
     return $ reader
 
 scheduleToggleInstr :: (CsdTuple a, Arg a) => InstrId -> Evt a -> Evt c -> E

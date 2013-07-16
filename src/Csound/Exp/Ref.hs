@@ -1,6 +1,6 @@
 module Csound.Exp.Ref(
     -- * GERef
-    GERef, newGERef, readGERef, writeGERef, 
+    GERef, newGERef, readGERef, writeGERef, newGuiRef,
     sensorsGE, appendGERef, appendGERefBy,
     readOnlyRef, appendRef, mkSink, mkAppendSink,
 
@@ -41,6 +41,11 @@ appendGERefBy :: (a -> a -> a) -> GERef a -> a -> SE ()
 appendGERefBy op ref x = do
     cur <- readGERef ref
     writeGERef ref $ op cur x
+
+newGuiRef :: Val a => GE (SE a, a -> SE ())
+newGuiRef = do
+    v <- newGuiVar
+    return (readVar v, writeVar v)
 
 -- global read-only-write-once references (writer is hidden from the user)
   

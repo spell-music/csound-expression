@@ -1,7 +1,7 @@
 -- | Main types
 {-# Language DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 module Csound.Exp(
-    E, RatedExp(..), RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name, 
+    E, RatedExp(..), isEmptyExp, RatedVar, ratedVar, ratedVarRate, ratedVarId, Exp, toPrimOr, PrimOr(..), MainExp(..), Name, 
     InstrId(..), intInstrId, ratioInstrId,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..), 
     Signature(..), isProcedure, isInfix, isPrefix,    
@@ -19,6 +19,7 @@ import Data.Foldable hiding (concat)
 import Data.Default
 
 import Data.Map(Map)
+import Data.Maybe(isNothing)
 import qualified Data.IntMap as IM
 import qualified Data.Map    as M
 import Data.Fix
@@ -107,6 +108,10 @@ data MainExp a
     | ElseBegin
     | IfEnd
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable)  
+
+isEmptyExp :: E -> Bool
+isEmptyExp e = isNothing (ratedExpDepends re) && (ratedExpExp re == EmptyExp)
+    where re = unFix e
 
 -- Named variable
 data Var 

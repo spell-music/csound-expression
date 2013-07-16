@@ -17,9 +17,8 @@ import Csound.Exp.SE(execSE)
 
 render :: (Out a) => CsdOptions -> GE a -> IO String
 render opt ge = fmap (show . renderHistory (nchnls ge) opt) $ flip execGE opt $ do
-    _ <- saveAlwaysOnInstr . execSE . masterOuts =<< ge
-    _ <- saveAlwaysOnInstr . execSE =<< clearGlobals 
-    return ()
+    saveAlwaysOnInstr . execSE . masterOuts =<< ge
+    saveAlwaysOnInstr . execSE =<< clearGlobals 
     where 
         nchnls = reactOnZero . outArity . proxy 
         proxy :: GE a -> a

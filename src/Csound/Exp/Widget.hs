@@ -3,24 +3,19 @@ module Csound.Exp.Widget where
 import Control.Applicative
 
 import Csound.Exp.Gui
-
-import Csound.Exp
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.GE
-import Csound.Exp.Logic
+import Csound.Exp.Ref(newGuiRef)
 import Csound.Exp.Event
 
 import Csound.Opcode(idur, linseg)
 
-change :: Sig -> BoolSig
-change = undefined
+runWins :: [(String, Gui)] -> GE ()
+runWins = undefined
 
-mkGuiVar :: Int -> Var
-mkGuiVar n = Var GlobalVar Kr ("fl_" ++ show n)
-
-mkGuiHandle :: Int -> Var
-mkGuiHandle n = Var GlobalVar Ir ("hfl_" ++ show n)
+runFl :: Gui -> GE ()
+runFl = undefined
 
 type Reader a = SE a
 type Writer a = a -> SE ()
@@ -35,7 +30,7 @@ noRead  = return ()
 noInner :: Inner
 noInner = return ()
 
-newtype Widget a b = Widget { unWidget :: GE (Gui, Writer a, Reader b, Inner) }
+newtype Widget a b = Widget { unWidget :: GE (GuiNode, Writer a, Reader b, Inner) }
 
 type Sink   a = Widget a ()
 type Source a = Widget () a
@@ -45,76 +40,57 @@ widget :: Widget a b -> GE (Gui, Writer a, Reader b)
 widget a = do 
     (gui, writer, reader, inner) <- unWidget a
     appendToGui gui inner
-    return (gui, writer, reader)
-
-sink :: Widget a b -> GE (Gui, Writer a)
-sink a = do
-    (gui, writer, _) <- widget a
-    return (gui, writer)
-
-source :: Widget a b -> GE (Gui, Reader b)
-source a = do
-    (gui, _, reader) <- widget a
-    return (gui, reader)
+    return (guiNodeElem gui, writer, reader)
 
 mkWidgetWith :: GE (Gui, Writer a, Reader b, Inner) -> Widget a b
-mkWidgetWith = Widget
+mkWidgetWith elems = Widget $ do
+    n <- newGuiId 
+    (gui, writer, reader, inner) <- elems
+    return (GuiNode gui n, writer, reader, inner)
+
+sink :: Widget a b -> GE (Gui, Writer a)
+sink = fmap (\(gui, writer, _) -> (gui, writer)) . widget
+
+source :: Widget a b -> GE (Gui, Reader b)
+source = fmap (\(gui, _, reader) -> (gui, reader)) . widget
 
 mkDisplayWith :: GE (Gui, Inner) -> Display 
-mkDisplayWith a = mkWidgetWith $ do
-    (gui, inner) <- a
-    return (gui, noWrite, noRead, inner)
+mkDisplayWith = mkWidgetWith . fmap (\(gui, inner) -> (gui, noWrite, noRead, inner))
     
 mkWidget :: GE (Gui, Writer a, Reader b) -> Widget a b
-mkWidget = Widget . fmap appendEmptyBody
-    where appendEmptyBody (a, b, c) = (a, b, c, noInner)
+mkWidget = mkWidgetWith . fmap (\(a, b, c) -> (a, b, c, noInner))
 
 mkSink :: GE (Gui, Writer a) -> Sink a
-mkSink a = mkWidget $ do
-    (gui, writer) <- a 
-    return (gui, writer, noRead)
+mkSink = mkWidget . fmap (\(gui, writer) -> (gui, writer, noRead))
 
 mkSource :: GE (Gui, Reader b) -> Source b
-mkSource a = mkWidget $ do
-    (gui, reader) <- a 
-    return (gui, noWrite, reader)
+mkSource = mkWidget . fmap (\(gui, reader) -> (gui, noWrite, reader))
     
 mkDisplay :: GE Gui -> Display
-mkDisplay a = mkWidget $ do
-    gui <- a
-    return (gui, noWrite, noRead)
+mkDisplay = mkWidget . fmap (\gui -> (gui, noWrite, noRead))
 
 -----------------------------------------------------------------------------  
 -- primitive elements
 
 slider :: Label -> Widget Sig Sig
 slider label = mkWidget $ do
-    name <- newGuiId
-    let gui = Prim name label Slider
-        var = mkGuiVar name
-        writer = writeVar var
-        reader = readVar var
-    return (gui, writer, reader)
+    (reader, writer) <- newGuiRef
+    return (Prim label Slider, writer, reader)
 
 btn :: Label -> Source (Evt ()) 
 btn label = mkSource $ do
-    name <- newGuiId 
-    let gui = Prim name label Btn
-        var = mkGuiVar name
-        reader = fmap (boolToEvt . change) $ readVar var
-    return (gui, reader)
+    (reader, _) <- newGuiRef
+    return (Prim label Btn, fmap sigToEvt reader)
 
-text :: Display 
-text = mkDisplay $ do
-    name <- newGuiId
-    return $ Prim name "" Text
+text :: String -> Display 
+text name = mkDisplay $ return $ Prim name Text
 
 ------------------------------------------------------------------------------------
 
 linenWidget :: Source Sig
 linenWidget = mkSource $ do
-    (g1, r1) <- source $ slider "first"
-    (g2, r2) <- source $ slider "second"
+    (g1, r1) <- source $ slider "rise time"
+    (g2, r2) <- source $ slider "decay time"
     let out = liftA2 fun r1 r2        
     return (Comp [g1, g2], out)
     where fun a b = linseg [0, ir a, 1, idur - ir a - ir b, 1, ir b, 0]

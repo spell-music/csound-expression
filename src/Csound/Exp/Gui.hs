@@ -1,8 +1,12 @@
 module Csound.Exp.Gui where
 
-data Gui 
+data GuiNode = GuiNode
+    { guiNodeElem   :: Gui
+    , guiNodeId     :: Int }
+
+data Gui
     = Comp [Gui] 
-    | Prim Int Label Elem
+    | Prim Label Elem
 
 data Elem = Slider | Btn | Radio | Text
 

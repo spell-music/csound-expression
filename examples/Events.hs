@@ -57,9 +57,9 @@ e10 = fmap (\x -> (0.5, x)) $ filterE (>* 110) $ mconcat
 
 -----------------------
 
-res = schedule echo $ fmap (\a -> (0.1, a)) $ e9
+res = schedule echo $ fmap (\a -> (0.1, a)) $ e4
 
 resSnd = schedule pureTone $ fmap (\a -> (0.1, a)) $ e10
 
-main = dac resSnd
+main = dac res
 

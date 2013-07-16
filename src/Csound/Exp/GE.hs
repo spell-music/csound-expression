@@ -15,10 +15,9 @@ module Csound.Exp.GE(
     LowLevelSco, saveAlwaysOnNote,
     getDuration, saveDuration, setDurationToInfinite,
 
-    Globals(..), Global(..), clearGlobals, initGlobals,
-
-    appendToGui, newGuiId,
-    newGlobalVar
+    Globals(..), Global(..), initGlobals, newGlobalVar, clearGlobals,
+    
+    newGuiVar, appendToGui, newGuiId
 ) where
 
 import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, lookup)
@@ -29,6 +28,7 @@ import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Reader
 import Data.Default
+import Data.Maybe(isJust, fromJust)
 
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
@@ -38,7 +38,7 @@ import Csound.Exp.EventList(CsdEvent)
 import Csound.Exp.Wrapper
 import Csound.Exp.Options
 import Csound.Exp.SE
-import Csound.Exp.Gui(Gui)
+import Csound.Exp.Gui(Gui, GuiNode)
 
 import Csound.Tfm.Tab
 
@@ -145,11 +145,12 @@ saveToCache name counter = modifyHistory $ \h ->
     let x = instrs h
     in  h { instrs = x { instrCache = DM.insert name counter (instrCache x) }}
 
-saveAlwaysOnInstr :: E -> GE InstrId
-saveAlwaysOnInstr expr = do
-    instrId <- saveSourceInstr expr
-    saveAlwaysOnNote instrId
-    return instrId
+saveAlwaysOnInstr :: E -> GE ()
+saveAlwaysOnInstr expr 
+    | isEmptyExp expr = return ()
+    | otherwise       = do
+        instrId <- saveSourceInstr expr
+        saveAlwaysOnNote instrId
 
 saveSourceInstr :: E -> GE InstrId
 saveSourceInstr = saveInstr $ \a s -> s{ instrSources = a : instrSources s }
@@ -228,7 +229,7 @@ setDurationToInfinite = modifyHistory $ \h ->
 data Guis = Guis
     { guiStateNewId     :: Int
     , guiStateInstr     :: SE ()
-    , guiStateToDraw    :: [Gui] }
+    , guiStateToDraw    :: [GuiNode] }
 
 instance Default Guis where 
     def = Guis 0 (return ()) []
@@ -238,14 +239,14 @@ newGuiId = withHistory $ \h ->
     let (n, g') = bumpGuiStateId $ guis h
     in  (n, h{ guis = g' })
 
-appendToGui :: Gui -> SE () -> GE ()
+appendToGui :: GuiNode -> SE () -> GE ()
 appendToGui gui act = modifyHistory $ \h ->
     h{ guis = appendToGuiState gui act $ guis h }
 
 bumpGuiStateId :: Guis -> (Int, Guis)
 bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
 
-appendToGuiState :: Gui -> SE () -> Guis -> Guis
+appendToGuiState :: GuiNode -> SE () -> Guis -> Guis
 appendToGuiState gui act s = s
     { guiStateToDraw = gui : guiStateToDraw s
     , guiStateInstr  = guiStateInstr s >> act }
@@ -262,26 +263,34 @@ instance Default Globals where
 
 data Global = Global 
     { globalVar     :: Var
-    , globalInit    :: E }
+    , globalInit    :: Maybe E }
 
 
-newGlobalVarOnGlobals :: Val a => Rate -> a -> Globals -> (Var, Globals)
+newGlobalVarOnGlobals :: Rate -> Maybe E -> Globals -> (Var, Globals)
 newGlobalVarOnGlobals rate a s = 
     (v, s{ newGlobalVarId = succ n, globalsSoFar = g : globalsSoFar s })
     where n = newGlobalVarId s
           v = Var GlobalVar rate (show n)
-          g = Global v (toE a)  
+          g = Global v a
 
 newGlobalVar :: Val a => Rate -> a -> GE Var
-newGlobalVar rate initVal = withHistory $ \h -> 
+newGlobalVar rate initVal = mkNewGlobalVar rate (Just $ toE initVal)
+
+newGuiVar :: GE Var
+newGuiVar = mkNewGlobalVar Kr Nothing
+
+mkNewGlobalVar :: Rate -> Maybe E -> GE Var
+mkNewGlobalVar rate initVal = withHistory $ \h -> 
     let (v, globals') = newGlobalVarOnGlobals rate initVal (globals h)
     in  (v, h{ globals = globals' })
 
+initGlobals :: [Global] -> SE ()
+initGlobals = mapM_ initMe . filter hasInits
+    where initMe   g = initVar (globalVar g) (fromJust $ globalInit g)
+          hasInits g = isJust $ globalInit g  
+
 clearGlobals :: GE (SE ())
 clearGlobals = do 
-    gs <- fmap (globalsSoFar . globals) $ getHistory
-    return $ mapM_ (\g -> writeVar (globalVar g) (double 0)) gs 
-
-initGlobals :: [Global] -> SE ()
-initGlobals = mapM_ $ \g -> initVar (globalVar g) (globalInit g)
+    gs <- fmap (globalsSoFar . globals) $ getHistory
+    return $ mapM_ (\g -> writeVar (globalVar g) (double 0)) gs 
 
