@@ -1,6 +1,6 @@
 -- | Opcodes for routing the signals
 module Csound.Render.Channel (
-    clip, zeroDbfs, sprintf,
+    clip, zeroDbfs, sprintf, ihold, turnoff, random, follow,
     masterOuts,
     -- * channel opcodes
     chnVar, chnName, 
@@ -39,14 +39,38 @@ zeroDbfs = (setRate Ir :: E -> D) $ readOnlyVar (VarVerbatim Ir "0dbfs")
 sprintf :: Str -> [D] -> Str
 sprintf a1 a2 = opcs "sprintf" [(Sr, Sr:repeat Ir)] (toE a1 : map toE a2)
 
+-- | Causes a finite-duration note to become a “held” note.
+--
+-- >    ihold
+--
+-- doc: <http://www.csounds.com/manual/html/ihold.html>
+ihold :: SE ()
+ihold = se_ $ opc0 "ihold" [(Xr, [])]
+
+-- | Enables an instrument to turn itself off.
+--
+-- >    turnoff
+--
+-- doc: <http://www.csounds.com/manual/html/turnoff.html>
+turnoff :: SE ()
+turnoff = se_ $ opc0 "turnoff" [(Xr, [])]
+
+random :: Sig -> Sig -> SE Sig
+random xMin xMax = se $ opc2 "random" [(Kr, [Kr, Kr])] xMin xMax
+
+-- amplitude follower
+follow :: Sig -> D -> Sig
+follow = opc2 "follow" [(Ar, [Kr, Ir])]
+
 ---------------------------------------------------------
 -- master instrument output
 
 masterOuts :: (Out a) => a -> SE ()
 masterOuts outSigs = outs . clipByMax =<< toOut outSigs
-    where outs xs = se_ $ case xs of
-              a:[] -> opc1 "out" [(Xr, [Ar])] a
-              _    -> opcs "outs" [(Xr, repeat Ar)] xs    
+    where outs xs = case xs of
+              []   -> return ()
+              a:[] -> se_ $ opc1 "out" [(Xr, [Ar])] a
+              _    -> se_ $ opcs "outs" [(Xr, repeat Ar)] xs    
 
 clipByMax :: [Sig] -> [Sig]
 clipByMax = fmap clip'

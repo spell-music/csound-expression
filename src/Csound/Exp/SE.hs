@@ -11,7 +11,6 @@ import Control.Applicative
 import Control.Monad(ap)
 import Control.Monad.Trans.State.Strict
 import Data.Default
-import Data.Maybe(fromJust)
 import Data.Monoid
 import Data.Fix(Fix(..))
 
@@ -52,9 +51,9 @@ runSE :: SE a -> (a, LocalHistory)
 runSE a = runState (unSE a) def
 
 execSE :: SE a -> E
-execSE a = expr
+execSE a = maybe emptyExp id $ expDependency st
     where st = snd $ runSE a
-          expr  = fromJust $ expDependency st
+          emptyExp = noRate $ EmptyExp  
 
 -- dependency tracking
 
@@ -101,6 +100,23 @@ appendVarBy op v x = writeVar v . op x =<< readVar v
 -- new local variables
 
 newLocalVar :: Val a => Rate -> a -> SE Var
+newLocalVar rate val = do
+    var <- newVar rate
+    initNewVar var val
+    return var
+
+newVar :: Rate -> SE Var
+newVar rate = SE $ do
+    s <- get
+    let v = Var LocalVar rate (show $ newVarId s)    
+    put $ s { newVarId = succ $ newVarId s }
+    return v
+
+initNewVar :: Val a => Var -> a -> SE ()
+initNewVar var val = se_ $ noRate $ InitVar var $ toPrimOr $ toE val
+
+{-
+newLocalVar :: Val a => Rate -> a -> SE Var
 newLocalVar rate val = SE $ do
     s <- get     
     let v = Var LocalVar rate (show $ newVarId s)    
@@ -110,4 +126,6 @@ newLocalVar rate val = SE $ do
             Just x  -> Just $ x `dependsOn` initStmt
     put $ s { expDependency = dep, newVarId = succ $ newVarId s }
     return v
+-}
+
 

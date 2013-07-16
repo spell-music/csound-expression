@@ -257,6 +257,8 @@ module Csound.Base(
     -- ** Booleans
     -- | Use functions from the module "Data.Boolean" to make boolean expressions.
     BoolSig, BoolD,  
+    ifTuple, caseTuple, guardedTuple,
+    ifArg, caseArg, guardedArg,
     module Data.Boolean,
 
     -- ** Side effects
@@ -275,7 +277,7 @@ module Csound.Base(
     ar1, ar2, ar4, ar6, ar8,
 
     -- ** Converters
-    ToSig(..), ar, kr, ir, sig, double, str,          
+    ToSig(..), ar, kr, ir, sig, double, int, str,          
         
     -- * Making a sound
     
@@ -304,14 +306,23 @@ module Csound.Base(
     -- ** Events
     -- | We can trigger instruments with events.
     Evt(..), Bam, Snap,
-    boolToEvt, evtToBool, sigToEvt, filterEvt, accumEvt, snapshot,
-    stepper, schedule, toggle,
+    -- *** Event converters
+    boolToEvt, evtToBool, sigToEvt, 
+    -- *** Main functions
+    filterE, accumE, accumSE, 
+    filterAccumE, filterAccumSE, 
+    snapshot, stepper, 
+    cycleE, iterateE, repeatE, appendE, mappendE,
+    oneOf, freqOneOf, freqAccum, randDs, randInts, range, listAt,   
+    every,
+    -- *** Instrument invocation
+    schedule, toggle,
 
     -- ** Rendering
     -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
     -- contains the description of our music. We can save it to a file and compile it with our @csound@
     -- wizard. 
-    renderCsd, writeCsd, playCsd,
+    renderCsd, writeCsd, playCsd, dac,
     
     -- *** Players (Linux)
     -- | Handy short-cuts for function 'Csound.Base.playCsd'.
@@ -340,7 +351,7 @@ module Csound.Base(
     -- | We can set some csound options.
     Channel, CtrlId, CsdOptions(..), module Data.Default,
         
-    renderCsdBy, writeCsdBy, playCsdBy,  
+    renderCsdBy, writeCsdBy, playCsdBy, dacBy,  
     
     -- *** Players (Linux)
     -- | Handy short-cuts for function 'Csound.Base.playCsdBy'.

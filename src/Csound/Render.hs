@@ -21,9 +21,12 @@ render opt ge = fmap (show . renderHistory (nchnls ge) opt) $ flip execGE opt $ 
     _ <- saveAlwaysOnInstr . execSE =<< clearGlobals 
     return ()
     where 
-        nchnls = outArity . proxy 
+        nchnls = reactOnZero . outArity . proxy 
         proxy :: GE a -> a
         proxy = undefined
+        reactOnZero x = case x of
+            0 -> 1
+            _ -> x
 
 renderHistory :: Int -> CsdOptions -> History -> Doc
 renderHistory numOfChnls options history = ppCsdFile 

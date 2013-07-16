@@ -1,6 +1,7 @@
 module Csound.IO (
     renderCsd, renderCsdBy, 
     writeCsd, writeCsdBy, playCsd, playCsdBy, 
+    dac, dacBy,
     mplayer, mplayerBy, totem, totemBy,
 ) where
 
@@ -48,6 +49,19 @@ playCsdBy opt player file sco = do
     return ()
     where fileCsd = file ++ ".csd"
           fileWav = file ++ ".wav"  
+
+
+-- | Renders csound code to file @tmp.csd@ and plays it with @-odac@ option
+-- (sound output goes to soundcard in real time).
+dac :: (Out a) => GE a -> IO ()
+dac = dacBy def
+
+-- | 'Csound.Base.dac' with options.
+dacBy :: (Out a) => CsdOptions -> GE a -> IO ()
+dacBy opt sco = do
+    writeCsdBy opt "tmp.csd" sco
+    _ <- system $ "csound -odac " ++ "tmp.csd" 
+    return ()
 
 --------------------------------------------------------
 -- players

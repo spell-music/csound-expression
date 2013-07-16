@@ -314,7 +314,7 @@ doubleToInt fun = unOpt (fromIntegral . fun)
 -- arithmetic
 
 mod' :: E -> E -> E
-mod' = biOpt (\a b -> fromIntegral $ mod (floor a :: Int) (floor b)) Pow
+mod' = biOpt (\a b -> fromIntegral $ mod (floor a :: Int) (floor b)) Mod
  
 -- other functions
 

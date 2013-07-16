@@ -81,9 +81,10 @@ toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
 type Exp a = MainExp (PrimOr a)
 
 -- Csound expressions
-data MainExp a 
+data MainExp a     
+    = EmptyExp
     -- | Primitives
-    = ExpPrim Prim
+    | ExpPrim Prim
     -- | Application of the opcode: we have opcode information (Info) and the arguments [a] 
     | Tfm Info [a]
     -- | Rate conversion

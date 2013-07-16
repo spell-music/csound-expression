@@ -1,9 +1,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language TypeFamilies #-}
 module Csound.Exp.Logic(
-    BoolSig(..), BoolD(..), when
+    BoolSig(..), BoolD(..), when, whens, 
+    ifTuple, caseTuple, guardedTuple,
+    ifArg, caseArg, guardedArg
 ) where
 
+import Control.Arrow(second)
 import Control.Monad.Trans.State(State, state, evalState)
 import qualified Data.IntMap as IM(fromList)
 
@@ -16,6 +19,8 @@ import Csound.Exp.Wrapper(
     Val(..), toExp, onExp, onE1)
 
 import Csound.Exp.SE(SE, se_, stmtOnly)
+import Csound.Exp.Arg
+import Csound.Exp.Tuple
 
 ------------------------------------------------------
 -- imperative if-then-else
@@ -26,16 +31,26 @@ when p body = do
     body
     ifEnd
 
+whens :: [(BoolSig, SE ())] -> SE () -> SE ()
+whens bodies el = case bodies of
+    []   -> el
+    a:as -> do
+        ifBegin (fst a)
+        snd a
+        elseIfs as
+        elseBegin 
+        el
+        ifEnd
+    where elseIfs = mapM_ (\(p, body) -> elseIfBegin p >> body)
+
 ifBegin :: Val a => a -> SE ()
 ifBegin = withCond IfBegin
 
-{-
 elseIfBegin :: Val a => a -> SE ()
 elseIfBegin = withCond ElseIfBegin
 
 elseBegin :: SE ()
 elseBegin = stmtOnly ElseBegin
--}
 
 ifEnd :: SE ()
 ifEnd = stmtOnly IfEnd
@@ -63,6 +78,8 @@ instance Boolean BoolSig where
     (&&*) = boolOp2 And
     (||*) = boolOp2 Or
 
+-- instances
+
 type instance BooleanOf Sig = BoolSig
 
 instance IfB Sig where
@@ -77,6 +94,33 @@ instance OrdB Sig where
     (>*) = boolOp2 Greater
     (<=*) = boolOp2 LessEquals
     (>=*) = boolOp2 GreaterEquals
+
+-- boolean tuples
+
+newtype BoolTuple = BoolTuple { unBoolTuple :: [E] }
+
+toBoolTuple :: CsdTuple a => a -> BoolTuple
+toBoolTuple   = BoolTuple . fromCsdTuple
+
+fromBoolTuple :: CsdTuple a => BoolTuple -> a
+fromBoolTuple = toCsdTuple . unBoolTuple
+
+type instance BooleanOf BoolTuple = BoolSig
+
+instance IfB BoolTuple where
+    ifB p (BoolTuple as) (BoolTuple bs) = BoolTuple $ zipWith (condExp p) as bs
+
+-- | @ifB@ for tuples of csound values.
+ifTuple :: (CsdTuple a) => BoolSig -> a -> a -> a
+ifTuple p a b = fromBoolTuple $ ifB p (toBoolTuple a) (toBoolTuple b)
+
+-- | @guardedB@ for tuples of csound values.
+guardedTuple :: (CsdTuple b) => [(BoolSig, b)] -> b -> b
+guardedTuple bs b = fromBoolTuple $ guardedB undefined (fmap (second toBoolTuple) bs) (toBoolTuple b)
+
+-- | @caseB@ for tuples of csound values.
+caseTuple :: (CsdTuple b) => a -> [(a -> BoolSig, b)] -> b -> b
+caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (toBoolTuple other)
 
 -- booleans for inits
 
@@ -115,6 +159,31 @@ type instance BooleanOf Str = BoolD
 
 instance IfB Str where
     ifB = condExp
+
+newtype BoolArg = BoolArg { unBoolArg :: [E] }
+
+toBoolArg :: (Arg a, CsdTuple a) => a -> BoolArg
+toBoolArg   = BoolArg . fromCsdTuple
+
+fromBoolArg :: (Arg a, CsdTuple a) => BoolArg -> a
+fromBoolArg = toCsdTuple . unBoolArg
+
+type instance BooleanOf BoolArg = BoolD
+
+instance IfB BoolArg where
+    ifB p (BoolArg as) (BoolArg bs) = BoolArg $ zipWith (condExp p) as bs
+
+-- | @ifB@ for constants.
+ifArg :: (Arg a, CsdTuple a) => BoolD -> a -> a -> a
+ifArg p a b = fromBoolArg $ ifB p (toBoolArg a) (toBoolArg b)
+
+-- | @guardedB@ for constants.
+guardedArg :: (CsdTuple b, Arg b) => [(BoolD, b)] -> b -> b
+guardedArg bs b = fromBoolArg $ guardedB undefined (fmap (second toBoolArg) bs) (toBoolArg b)
+
+-- | @caseB@ for constants.
+caseArg :: (CsdTuple b, Arg b) => a -> [(a -> BoolD, b)] -> b -> b
+caseArg a bs other = fromBoolArg $ caseB a (fmap (second toBoolArg) bs) (toBoolArg other)
 
 --------------------------------------------------------------------------
 -- if-then-else

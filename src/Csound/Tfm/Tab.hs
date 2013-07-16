@@ -74,6 +74,7 @@ getInstrTabs = cata $ \re -> (maybe [] id $ ratedExpDepends re) ++ case fmap fro
     ElseIfBegin _ -> []
     ElseBegin -> []
     IfEnd -> []
+    EmptyExp -> []
     where fromPrimOr x = case unPrimOr x of
             Left  p -> getPrimTabs p
             Right a -> a

@@ -91,7 +91,7 @@ module Csound.Opcode.Basic(
     
     times, timek,
     metro, changed, trigger, 
-    metroEvt, changedEvt, triggerEvt, 
+    metroE, changedE, triggerE, 
     xtratim, ihold, turnoff
      
 ) where
@@ -102,7 +102,7 @@ import Csound.Exp.SE
 import Csound.Exp.Event
 import Csound.LowLevel
 
-import Csound.Render.Channel(zeroDbfs, clip)
+import Csound.Render.Channel(zeroDbfs, clip, ihold, turnoff)
 
 -- | Reads @p3@-argument for the current instrument.
 idur :: D
@@ -1069,8 +1069,8 @@ metro :: Cps -> Ksig
 metro = opc1 "metro" [(k, [k,i])]
 
 -- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
-metroEvt :: Cps -> Evt ()
-metroEvt = sigToEvt . metro
+metroE :: Cps -> Evt ()
+metroE = sigToEvt . metro
 
 -- | This opcode outputs a trigger signal that informs when any one of its k-rate 
 -- arguments has changed. Useful with valuator widgets or MIDI controllers.
@@ -1082,8 +1082,8 @@ changed :: [Ksig] -> Ksig
 changed = opcs "changed" [(k, repeat k)]
 
 -- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
-changedEvt :: [Ksig] -> Evt ()
-changedEvt = sigToEvt . changed
+changedE :: [Ksig] -> Evt ()
+changedE = sigToEvt . changed
 
 -- | Informs when a krate signal crosses a threshold.
 -- 
@@ -1094,8 +1094,8 @@ trigger :: Sig -> Sig -> Sig -> Sig
 trigger = opc3 "trigger" [(k, ks 3)]
 
 -- | Behaves like 'Csound.Opcode.Basic.trigger', but returns an event stream.
-triggerEvt :: Sig -> Sig -> Sig -> Evt ()
-triggerEvt a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
+triggerE :: Sig -> Sig -> Sig -> Evt ()
+triggerE a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 
 -- | Extend the duration of real-time generated events and handle their extra life (Usually for usage along with release instead of linenr, linsegr, etc). 
 --
@@ -1104,20 +1104,4 @@ triggerEvt a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 -- doc: <http://www.csounds.com/manual/html/xtratim.html>
 xtratim :: D -> SE ()
 xtratim a1 = se_ $ opc1 "xtratim" [(x, [i])] a1
-
--- | Causes a finite-duration note to become a “held” note.
---
--- >    ihold
---
--- doc: <http://www.csounds.com/manual/html/ihold.html>
-ihold :: SE ()
-ihold = se_ $ opc0 "ihold" [(x, [])]
-
--- | Enables an instrument to turn itself off.
---
--- >    turnoff
---
--- doc: <http://www.csounds.com/manual/html/turnoff.html>
-turnoff :: SE ()
-turnoff = se_ $ opc0 "turnoff" [(x, [])]
 

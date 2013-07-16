@@ -9,7 +9,7 @@ module Csound.Exp.Wrapper(
     Sig, D, Str, Spec, ToSig(..),
     Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
     Val(..),
-    str, double, ir, ar, kr, sig,
+    str, double, int, ir, ar, kr, sig,
     tfm, pref, prim, p,    
     noRate, setRate, withRate,
     getRates, isMultiOutSignature
@@ -123,6 +123,10 @@ double = prim . PrimDouble
 -- | Converts Haskell's strings to Csound's strings
 str :: String -> Str
 str = prim . PrimString
+
+-- | Converts Haskell's integers to Csound's doubles
+int :: Int -> D
+int = double . fromIntegral
 
 getRates :: MainExp a -> [Rate]
 getRates (Tfm info _) = case infoSignature info of

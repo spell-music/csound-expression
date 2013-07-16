@@ -139,6 +139,7 @@ rateExp curRate expr = case expr of
     ElseIfBegin _ -> condRate expr
     ElseBegin -> ElseBegin
     IfEnd -> IfEnd
+    EmptyExp -> EmptyExp
     where ratesFromSignature rate signature = case signature of
               SingleRate table -> table M.! rate
               MultiRate _ rs   -> rs

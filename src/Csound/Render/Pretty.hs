@@ -78,7 +78,7 @@ ppProc name xs = text name <+> (hsep $ punctuate comma xs)
 
 ppVar :: Var -> Doc
 ppVar v = case v of
-    Var ty rate name -> ppVarType ty <> ppRate rate <> text name
+    Var ty rate name -> ppVarType ty <> ppRate rate <> text ('l' : name)
     VarVerbatim _ name -> text name
 
 ppVarType :: VarType -> Doc
@@ -264,7 +264,7 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")    
     ElseBegin                       -> left >> (succTab $ text "else")
     IfEnd                           -> left >> (tab     $ text "endif")
-
+    EmptyExp                        -> return empty
     x -> error $ "unknown expression: " ++ show x
     where tab doc = fmap (shiftByTab doc) get 
           tabWidth = 4
