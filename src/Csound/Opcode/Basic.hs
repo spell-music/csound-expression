@@ -90,7 +90,7 @@ module Csound.Opcode.Basic(
     -- * Control 
     
     times, timek,
-    metro, changed, trigger, 
+    metro, trigger, 
     metroE, changedE, triggerE, 
     xtratim, ihold, turnoff
      
@@ -102,7 +102,7 @@ import Csound.Exp.SE
 import Csound.Exp.Event
 import Csound.LowLevel
 
-import Csound.Render.Channel(zeroDbfs, clip, ihold, turnoff)
+import Csound.Render.Channel(zeroDbfs, clip, ihold, turnoff, changed)
 
 -- | Reads @p3@-argument for the current instrument.
 idur :: D
@@ -1072,14 +1072,6 @@ metro = opc1 "metro" [(k, [k,i])]
 metroE :: Cps -> Evt ()
 metroE = sigToEvt . metro
 
--- | This opcode outputs a trigger signal that informs when any one of its k-rate 
--- arguments has changed. Useful with valuator widgets or MIDI controllers.
---
--- > ktrig changed kvar1 [, kvar2,..., kvarN]
---
--- doc: <http://www.csounds.com/manual/html/changed.html>
-changed :: [Ksig] -> Ksig
-changed = opcs "changed" [(k, repeat k)]
 
 -- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
 changedE :: [Ksig] -> Evt ()

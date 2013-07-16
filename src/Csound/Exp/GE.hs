@@ -1,11 +1,11 @@
 -- | Global side effects
 module Csound.Exp.GE(
-    GE(..), runGE, execGE, History(..),
+    GE(..), execGE, History(..),
     getHistory, getOptions, withHistory, putHistory,
 
     Instrs(..),
     saveMixerInstr, saveSourceInstr, saveAlwaysOnInstr, saveSourceInstrCached,    
-    saveMixerNotes, 
+    saveMixerNotes,
 
     saveMidi,
 
@@ -17,7 +17,7 @@ module Csound.Exp.GE(
 
     Globals(..), Global(..), initGlobals, newGlobalVar, clearGlobals,
     
-    newGuiVar, appendToGui, newGuiId
+    newGuiVar, appendToGui, newGuiHandle, guiHandleToVar, saveGuiRoot
 ) where
 
 import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, lookup)
@@ -38,7 +38,7 @@ import Csound.Exp.EventList(CsdEvent)
 import Csound.Exp.Wrapper
 import Csound.Exp.Options
 import Csound.Exp.SE
-import Csound.Exp.Gui(Gui, GuiNode)
+import Csound.Exp.Gui(Win, GuiNode, GuiHandle(..))
 
 import Csound.Tfm.Tab
 
@@ -71,7 +71,11 @@ instance Default History where
     def = History def def def def def def def def
 
 execGE :: GE a -> CsdOptions -> IO History
-execGE a opt = fmap snd $ runGE a opt
+execGE a opt = fmap snd $ runGE (withGui a) opt
+    where withGui x = do
+            res <- x
+            saveGuiInstr
+            return res
 
 runGE :: GE a -> CsdOptions -> IO (a, History)
 runGE (GE a) options = runStateT (runReaderT a options) def
@@ -125,8 +129,15 @@ data Instrs = Instrs
     , instrCache    :: DM.Map Int
     , mixerNotes    :: IM.IntMap LowLevelSco }
 
+-- Identifier 1 is reserved for GUI-updates,
+-- so we start with 2
+theFirstInstrId, guiInstrId :: InstrId
+
+theFirstInstrId = intInstrId 2 
+guiInstrId      = intInstrId 1
+
 instance Default Instrs where
-    def = Instrs def def 1 DM.empty def
+    def = Instrs def def (instrIdCeil theFirstInstrId) DM.empty def
 
 saveSourceInstrCached :: a -> (a -> GE E) -> GE InstrId
 saveSourceInstrCached instr render = do
@@ -158,13 +169,23 @@ saveSourceInstr = saveInstr $ \a s -> s{ instrSources = a : instrSources s }
 saveMixerInstr :: E -> GE InstrId
 saveMixerInstr = saveInstr $ \a s -> s{ instrMixers = a : instrMixers s }
 
+-- have to be executed after all instruments
+saveGuiInstr :: GE ()
+saveGuiInstr = do
+    expr <- fmap (execSE . guiStateInstr . guis) getHistory
+    if (isEmptyExp expr)
+        then return ()
+        else do
+            _ <- saveInstr (\(_, e) s -> s{ instrSources = (guiInstrId, e) : instrSources s }) expr
+            saveAlwaysOnNote guiInstrId 
+
 saveInstr :: ((InstrId, E) -> Instrs -> Instrs) -> E -> GE InstrId
 saveInstr save exprWithTabs = do
     expr <- substTabs exprWithTabs
     withHistory $ \h ->
         let ins = instrs h
             counter' = succ $ instrCounter ins
-            instrId  = intInstrId counter'
+            instrId  = intInstrId $ instrCounter ins
         in  (instrId, h{ instrs = save (instrId, expr) $ ins { instrCounter = counter' }})
 
 saveMixerNotes :: IM.IntMap LowLevelSco -> GE ()
@@ -229,27 +250,37 @@ setDurationToInfinite = modifyHistory $ \h ->
 data Guis = Guis
     { guiStateNewId     :: Int
     , guiStateInstr     :: SE ()
-    , guiStateToDraw    :: [GuiNode] }
+    , guiStateToDraw    :: [GuiNode] 
+    , guiStateRoots     :: [Win] }
 
 instance Default Guis where 
-    def = Guis 0 (return ()) []
+    def = Guis 0 (return ()) [] []
 
-newGuiId :: GE Int 
-newGuiId = withHistory $ \h -> 
+newGuiHandle :: GE GuiHandle 
+newGuiHandle = withHistory $ \h -> 
     let (n, g') = bumpGuiStateId $ guis h
-    in  (n, h{ guis = g' })
+    in  (GuiHandle n, h{ guis = g' })
+
+guiHandleToVar :: GuiHandle -> Var
+guiHandleToVar (GuiHandle n) = Var LocalVar Ir ('h' : show n)
+
+newGuiVar :: GE (Var, GuiHandle)
+newGuiVar = liftA2 (,) (mkNewGlobalVar Kr Nothing) newGuiHandle
+
+modifyGuis :: (Guis -> Guis) -> GE ()
+modifyGuis f = modifyHistory $ \h -> h{ guis = f $ guis h }
 
 appendToGui :: GuiNode -> SE () -> GE ()
-appendToGui gui act = modifyHistory $ \h ->
-    h{ guis = appendToGuiState gui act $ guis h }
+appendToGui gui act = modifyGuis $ \st -> st
+    { guiStateToDraw = gui : guiStateToDraw st
+    , guiStateInstr  = guiStateInstr st >> act }
+
+saveGuiRoot :: Win -> GE ()
+saveGuiRoot g = modifyGuis $ \st -> 
+    st { guiStateRoots = g : guiStateRoots st }
 
 bumpGuiStateId :: Guis -> (Int, Guis)
 bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
-
-appendToGuiState :: GuiNode -> SE () -> Guis -> Guis
-appendToGuiState gui act s = s
-    { guiStateToDraw = gui : guiStateToDraw s
-    , guiStateInstr  = guiStateInstr s >> act }
 
 --------------------------------------------------------
 -- globals
@@ -275,9 +306,6 @@ newGlobalVarOnGlobals rate a s =
 
 newGlobalVar :: Val a => Rate -> a -> GE Var
 newGlobalVar rate initVal = mkNewGlobalVar rate (Just $ toE initVal)
-
-newGuiVar :: GE Var
-newGuiVar = mkNewGlobalVar Kr Nothing
 
 mkNewGlobalVar :: Rate -> Maybe E -> GE Var
 mkNewGlobalVar rate initVal = withHistory $ \h -> 

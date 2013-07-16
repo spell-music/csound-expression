@@ -355,7 +355,7 @@ module Csound.Base(
     
     -- *** Players (Linux)
     -- | Handy short-cuts for function 'Csound.Base.playCsdBy'.
-    mplayerBy, totemBy
+    mplayerBy, totemBy,
     
     
     -- *** Players (Windows)
@@ -367,6 +367,15 @@ module Csound.Base(
     -- | Handy short-cuts for function 'Csound.Base.playCsd'.
     --
     -- TODO (you can send me your definitions)
+    
+    -- * Gui
+    Gui(Comp), Win(..), Widget, Sink, Source, Display,
+    widget, sink, source, display,
+    mkWidget, mkSource, mkSink, mkDisplayWith,
+    runFl, runWin, runWins,
+
+    -- ** Widgets
+    slider, btn, text
 ) where
 
 import Data.Default
@@ -386,6 +395,9 @@ import Csound.Exp.Options
 import Csound.Exp.Mix
 import Csound.Exp.EventList
 import Csound.Exp.Event
+
+import Csound.Exp.Gui
+import Csound.Exp.Widget
 
 import Csound.Opcode
 import Csound.IO

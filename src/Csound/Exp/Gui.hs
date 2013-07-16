@@ -1,8 +1,14 @@
 module Csound.Exp.Gui where
 
+newtype GuiHandle = GuiHandle { unGuiHandle :: Int }
+
+data Win = Win 
+    { winTitle :: String 
+    , winGui   :: Gui }
+
 data GuiNode = GuiNode
     { guiNodeElem   :: Gui
-    , guiNodeId     :: Int }
+    , guiNodeId     :: GuiHandle }
 
 data Gui
     = Comp [Gui] 

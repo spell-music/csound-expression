@@ -1,6 +1,6 @@
 -- | Opcodes for routing the signals
 module Csound.Render.Channel (
-    clip, zeroDbfs, sprintf, ihold, turnoff, random, follow,
+    clip, zeroDbfs, sprintf, ihold, turnoff, random, follow, changed,
     masterOuts,
     -- * channel opcodes
     chnVar, chnName, 
@@ -8,7 +8,9 @@ module Csound.Render.Channel (
     chnUpdateStmt, chnUpdateOpcodeName, ppFreeChnStmt,
     freeChn, 
     -- * trigger an instrument
-    event, eventWithChannel, instrOn, instrOff
+    event, eventWithChannel, instrOn, instrOff,
+    -- * set gui value
+    flSetVal
 ) where
 
 import Csound.Exp
@@ -61,6 +63,16 @@ random xMin xMax = se $ opc2 "random" [(Kr, [Kr, Kr])] xMin xMax
 -- amplitude follower
 follow :: Sig -> D -> Sig
 follow = opc2 "follow" [(Ar, [Kr, Ir])]
+
+-- | This opcode outputs a trigger signal that informs when any one of its k-rate 
+-- arguments has changed. Useful with valuator widgets or MIDI controllers.
+--
+-- > ktrig changed kvar1 [, kvar2,..., kvarN]
+--
+-- doc: <http://www.csounds.com/manual/html/changed.html>
+changed :: [Ksig] -> Ksig
+changed = opcs "changed" [(Kr, repeat Kr)]
+
 
 ---------------------------------------------------------
 -- master instrument output
@@ -129,4 +141,11 @@ instrOn instrId arg chn = eventWithChannel instrId 0 (-1) arg chn
 instrOff :: InstrId -> SE ()
 instrOff instrId = event (toNegative instrId) 0 (-1) ()
     where toNegative a = a { instrIdCeil = negate $ abs $ instrIdCeil a }
+
+-------------------------------------------------------------
+-- set gui value
+
+flSetVal :: Sig -> Sig -> D -> SE ()
+flSetVal trig val handle = se_ $ opc3 "FLsetVal" [(Xr, [Kr, Kr, Ir])] trig val handle
+
 

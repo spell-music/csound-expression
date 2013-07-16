@@ -1,7 +1,5 @@
 module Csound.Exp.Widget where
 
-import Control.Applicative
-
 import Csound.Exp.Gui
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
@@ -9,13 +7,14 @@ import Csound.Exp.GE
 import Csound.Exp.Ref(newGuiRef)
 import Csound.Exp.Event
 
-import Csound.Opcode(idur, linseg)
+runWins :: [Win] -> GE ()
+runWins = mapM_ runWin
 
-runWins :: [(String, Gui)] -> GE ()
-runWins = undefined
+runWin :: Win -> GE ()
+runWin w = saveGuiRoot w
 
 runFl :: Gui -> GE ()
-runFl = undefined
+runFl g = runWin (Win "" g)
 
 type Reader a = SE a
 type Writer a = a -> SE ()
@@ -44,7 +43,7 @@ widget a = do
 
 mkWidgetWith :: GE (Gui, Writer a, Reader b, Inner) -> Widget a b
 mkWidgetWith elems = Widget $ do
-    n <- newGuiId 
+    n <- newGuiHandle 
     (gui, writer, reader, inner) <- elems
     return (GuiNode gui n, writer, reader, inner)
 
@@ -53,6 +52,9 @@ sink = fmap (\(gui, writer, _) -> (gui, writer)) . widget
 
 source :: Widget a b -> GE (Gui, Reader b)
 source = fmap (\(gui, _, reader) -> (gui, reader)) . widget
+
+display :: Widget a b -> GE Gui
+display = fmap (\(gui, _, _) -> gui) . widget
 
 mkDisplayWith :: GE (Gui, Inner) -> Display 
 mkDisplayWith = mkWidgetWith . fmap (\(gui, inner) -> (gui, noWrite, noRead, inner))
@@ -73,33 +75,16 @@ mkDisplay = mkWidget . fmap (\gui -> (gui, noWrite, noRead))
 -- primitive elements
 
 slider :: Label -> Widget Sig Sig
-slider label = mkWidget $ do
-    (reader, writer) <- newGuiRef
-    return (Prim label Slider, writer, reader)
+slider label = Widget $ do
+    (handle, reader, writer) <- newGuiRef
+    return (GuiNode (Prim label Slider) handle, writer, reader, noInner)
 
 btn :: Label -> Source (Evt ()) 
-btn label = mkSource $ do
-    (reader, _) <- newGuiRef
-    return (Prim label Btn, fmap sigToEvt reader)
+btn label = Widget $ do
+    (handle, reader, _) <- newGuiRef
+    return (GuiNode (Prim label Btn) handle, noWrite, fmap sigToEvt reader, noInner)
 
 text :: String -> Display 
 text name = mkDisplay $ return $ Prim name Text
 
-------------------------------------------------------------------------------------
-
-linenWidget :: Source Sig
-linenWidget = mkSource $ do
-    (g1, r1) <- source $ slider "rise time"
-    (g2, r2) <- source $ slider "decay time"
-    let out = liftA2 fun r1 r2        
-    return (Comp [g1, g2], out)
-    where fun a b = linseg [0, ir a, 1, idur - ir a - ir b, 1, ir b, 0]
-
-adder :: Display
-adder = mkDisplayWith $ do
-    (ga, ina)   <- source $ slider "a"
-    (gb, inb)   <- source $ slider "b"
-    (gres, res) <- sink   $ slider "res"
-    return (Comp [ga, gb, gres], 
-            res =<< liftA2 (+) ina inb)
 

@@ -16,7 +16,10 @@ import Csound.Exp(E, Var)
 import Csound.Exp.Wrapper
 import Csound.Exp.Tuple
 import Csound.Exp.GE
+import Csound.Exp.Gui(GuiHandle)
 import Csound.Exp.SE
+
+import Csound.Render.Channel(flSetVal, changed)
 
 -- global references
 
@@ -42,10 +45,15 @@ appendGERefBy op ref x = do
     cur <- readGERef ref
     writeGERef ref $ op cur x
 
-newGuiRef :: Val a => GE (SE a, a -> SE ())
+newGuiRef :: GE (GuiHandle, SE Sig, Sig -> SE ())
 newGuiRef = do
-    v <- newGuiVar
-    return (readVar v, writeVar v)
+    (v, h) <- newGuiVar    
+    return (h, readVar v, writeHandle h)
+
+writeHandle :: GuiHandle -> Sig -> SE ()
+writeHandle handle val = do
+    h <- readVar (guiHandleToVar handle)
+    flSetVal (changed [val]) val h
 
 -- global read-only-write-once references (writer is hidden from the user)
   
