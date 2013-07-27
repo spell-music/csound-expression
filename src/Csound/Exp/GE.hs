@@ -15,9 +15,10 @@ module Csound.Exp.GE(
     LowLevelSco, saveAlwaysOnNote,
     getDuration, saveDuration, setDurationToInfinite,
 
-    Globals(..), Global(..), initGlobals, newGlobalVar, clearGlobals,
+    Globals(..), Global(..), GlobalVarType(..), initGlobals, newGlobalVar, clearGlobals,
     
-    newGuiVar, appendToGui, newGuiHandle, guiHandleToVar, saveGuiRoot
+    newGuiVar, appendToGui, newGuiHandle, guiHandleToVar, saveGuiRoot, getWins,
+    guiInstrExp
 ) where
 
 import qualified System.Mem.StableName.Dynamic.Map as DM(Map, empty, insert, lookup)
@@ -38,7 +39,7 @@ import Csound.Exp.EventList(CsdEvent)
 import Csound.Exp.Wrapper
 import Csound.Exp.Options
 import Csound.Exp.SE
-import Csound.Exp.Gui(Win, GuiNode, GuiHandle(..))
+import Csound.Exp.Gui(Win(..), GuiNode, GuiHandle(..), restoreTree, guiMap)
 
 import Csound.Tfm.Tab
 
@@ -71,11 +72,7 @@ instance Default History where
     def = History def def def def def def def def
 
 execGE :: GE a -> CsdOptions -> IO History
-execGE a opt = fmap snd $ runGE (withGui a) opt
-    where withGui x = do
-            res <- x
-            saveGuiInstr
-            return res
+execGE a opt = fmap snd $ runGE a opt
 
 runGE :: GE a -> CsdOptions -> IO (a, History)
 runGE (GE a) options = runStateT (runReaderT a options) def
@@ -129,12 +126,8 @@ data Instrs = Instrs
     , instrCache    :: DM.Map Int
     , mixerNotes    :: IM.IntMap LowLevelSco }
 
--- Identifier 1 is reserved for GUI-updates,
--- so we start with 2
-theFirstInstrId, guiInstrId :: InstrId
-
-theFirstInstrId = intInstrId 2 
-guiInstrId      = intInstrId 1
+theFirstInstrId :: InstrId
+theFirstInstrId = intInstrId 1 
 
 instance Default Instrs where
     def = Instrs def def (instrIdCeil theFirstInstrId) DM.empty def
@@ -170,14 +163,8 @@ saveMixerInstr :: E -> GE InstrId
 saveMixerInstr = saveInstr $ \a s -> s{ instrMixers = a : instrMixers s }
 
 -- have to be executed after all instruments
-saveGuiInstr :: GE ()
-saveGuiInstr = do
-    expr <- fmap (execSE . guiStateInstr . guis) getHistory
-    if (isEmptyExp expr)
-        then return ()
-        else do
-            _ <- saveInstr (\(_, e) s -> s{ instrSources = (guiInstrId, e) : instrSources s }) expr
-            saveAlwaysOnNote guiInstrId 
+guiInstrExp :: GE E
+guiInstrExp = fmap (execSE . guiStateInstr . guis) getHistory
 
 saveInstr :: ((InstrId, E) -> Instrs -> Instrs) -> E -> GE InstrId
 saveInstr save exprWithTabs = do
@@ -262,10 +249,10 @@ newGuiHandle = withHistory $ \h ->
     in  (GuiHandle n, h{ guis = g' })
 
 guiHandleToVar :: GuiHandle -> Var
-guiHandleToVar (GuiHandle n) = Var LocalVar Ir ('h' : show n)
+guiHandleToVar (GuiHandle n) = Var GlobalVar Ir ('h' : show n)
 
 newGuiVar :: GE (Var, GuiHandle)
-newGuiVar = liftA2 (,) (mkNewGlobalVar Kr Nothing) newGuiHandle
+newGuiVar = liftA2 (,) (mkNewGlobalVar Kr (GlobalVarType WriteOnly PersistentVar Nothing)) newGuiHandle
 
 modifyGuis :: (Guis -> Guis) -> GE ()
 modifyGuis f = modifyHistory $ \h -> h{ guis = f $ guis h }
@@ -282,6 +269,10 @@ saveGuiRoot g = modifyGuis $ \st ->
 bumpGuiStateId :: Guis -> (Int, Guis)
 bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
 
+getWins :: History -> [Win]
+getWins h = fmap (\w -> w { winGui = restoreTree m (winGui w) }) $ guiStateRoots $ guis h 
+    where m = guiMap $ guiStateToDraw $ guis h
+
 --------------------------------------------------------
 -- globals
 
@@ -294,10 +285,18 @@ instance Default Globals where
 
 data Global = Global 
     { globalVar     :: Var
-    , globalInit    :: Maybe E }
+    , globalVarType :: GlobalVarType }
 
+data GlobalVarType = GlobalVarType
+    { writeMethod   :: WriteMethod
+    , presence      :: Presence
+    , initVal       :: Maybe E }
 
-newGlobalVarOnGlobals :: Rate -> Maybe E -> Globals -> (Var, Globals)
+data WriteMethod = WriteOnly | AppendOnly
+data Presence    = PersistentVar | ClearableVar 
+    deriving (Eq)
+
+newGlobalVarOnGlobals :: Rate -> GlobalVarType -> Globals -> (Var, Globals)
 newGlobalVarOnGlobals rate a s = 
     (v, s{ newGlobalVarId = succ n, globalsSoFar = g : globalsSoFar s })
     where n = newGlobalVarId s
@@ -305,20 +304,23 @@ newGlobalVarOnGlobals rate a s =
           g = Global v a
 
 newGlobalVar :: Val a => Rate -> a -> GE Var
-newGlobalVar rate initVal = mkNewGlobalVar rate (Just $ toE initVal)
+newGlobalVar rate initVal = mkNewGlobalVar rate ty
+    where ty = GlobalVarType AppendOnly ClearableVar (Just $ toE initVal)
 
-mkNewGlobalVar :: Rate -> Maybe E -> GE Var
-mkNewGlobalVar rate initVal = withHistory $ \h -> 
-    let (v, globals') = newGlobalVarOnGlobals rate initVal (globals h)
+mkNewGlobalVar :: Rate -> GlobalVarType -> GE Var
+mkNewGlobalVar rate gVarType = withHistory $ \h -> 
+    let (v, globals') = newGlobalVarOnGlobals rate gVarType (globals h)
     in  (v, h{ globals = globals' })
 
 initGlobals :: [Global] -> SE ()
 initGlobals = mapM_ initMe . filter hasInits
-    where initMe   g = initVar (globalVar g) (fromJust $ globalInit g)
-          hasInits g = isJust $ globalInit g  
+    where initMe   g = initVar (globalVar g) (fromJust $ getInit g)
+          hasInits g = isJust $ getInit g  
+          getInit  g = initVal $ globalVarType g 
 
 clearGlobals :: GE (SE ())
 clearGlobals = do 
-    gs <- fmap (globalsSoFar . globals) $ getHistory
+    gs <- fmap (filter isClearable . globalsSoFar . globals) $ getHistory
     return $ mapM_ (\g -> writeVar (globalVar g) (double 0)) gs 
+    where isClearable g = presence (globalVarType g) == ClearableVar
 

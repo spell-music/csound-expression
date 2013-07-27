@@ -6,7 +6,7 @@ module Csound.Render.Pretty (
     binary, unary, func,
     ppMapTable,
     ppStmt,
-    ($=), ppOpc, ppProc, ppVar,
+    ($=), ppOpc, ppMoOpc, ppProc, ppVar,
     ppPrim, ppTab, ppStrget, ppStrset, ppTabDef, ppConvertRate, ppIf,
     ppCsdFile, ppInstr, ppInstr0, ppScore, ppNote, ppTotalDur, ppOrc, ppSco, 
     ppInline, ppCondOp, ppNumOp,
@@ -72,6 +72,9 @@ ppOuts xs = hsep $ punctuate comma $ map ppRatedVar xs
 
 ppOpc :: Doc -> String -> [Doc] -> Doc
 ppOpc out name xs = out <+> ppProc name xs
+
+ppMoOpc :: [Doc] -> String -> [Doc] -> Doc
+ppMoOpc outs = ppOpc (hcat $ punctuate comma outs)
 
 ppProc :: String -> [Doc] -> Doc
 ppProc name xs = text name <+> (hsep $ punctuate comma xs)
@@ -165,10 +168,10 @@ ppInstr instrId body = vcat [
     text "endin"]
 
 ppInstr0 :: [Doc] -> Doc
-ppInstr0 = vcat
+ppInstr0 = vcat . punctuate newline
 
 ppOrc :: [Doc] -> Doc
-ppOrc = vcat . punctuate newline
+ppOrc = vcat . punctuate newline 
 
 ppInstrId :: InstrId -> Doc
 ppInstrId (InstrId den nom) = int nom <> maybe empty ppAfterDot den 

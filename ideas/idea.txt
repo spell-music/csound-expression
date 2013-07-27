@@ -1,3 +1,6 @@
+* problem with mixing instant if-then-elses and signal updates
+  no signal update can be inside an instant if-then-else structure.
+
 * make all CsdTuples to Monoids and render function expects just CsdTuple
   mixing with Monoids
 

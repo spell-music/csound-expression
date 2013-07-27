@@ -10,7 +10,7 @@ module Csound.Render.Channel (
     -- * trigger an instrument
     event, eventWithChannel, instrOn, instrOff,
     -- * set gui value
-    flSetVal
+    flSetVal, flPrintk2
 ) where
 
 import Csound.Exp
@@ -147,5 +147,9 @@ instrOff instrId = event (toNegative instrId) 0 (-1) ()
 
 flSetVal :: Sig -> Sig -> D -> SE ()
 flSetVal trig val handle = se_ $ opc3 "FLsetVal" [(Xr, [Kr, Kr, Ir])] trig val handle
+
+flPrintk2 :: Sig -> D -> SE ()
+flPrintk2 val handle = se_ $ opc2 "FLprintk2" [(Xr, [Kr, Ir])] val handle
+
 
 

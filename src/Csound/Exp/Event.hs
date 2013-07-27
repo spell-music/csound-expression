@@ -13,7 +13,6 @@ module Csound.Exp.Event(
     scheduleHold, autoOff    
 ) where
 
-import Control.Arrow(second)
 import Data.Monoid
 import Data.Boolean
 
@@ -122,8 +121,8 @@ evtToBool evt = do
 
 -- | Converts events to signals.
 stepper :: CsdTuple a => a -> Evt a -> SE a
-stepper initVal evt = do
-    (readSt, writeSt) <- sensorsSE initVal
+stepper v0 evt = do
+    (readSt, writeSt) <- sensorsSE v0
     runEvt evt $ \a -> writeSt a
     readSt 
 
@@ -145,7 +144,7 @@ autoOff a = do
         trig = fmap (( <* eps) . kr . flip follow dt . l2) $ toOut a
 
         dt = 3
-        eps = 1e-6
+        eps = 1e-5
 
         -- square root norm
         l2 :: [Sig] -> Sig
@@ -270,7 +269,8 @@ patternToMask xs = case xs of
             | n <= 0    = []
             | otherwise = True : replicate (n - 1) False
 
--- if-then-else with side effects
+{-
+-- if-then-else with side effects -- consider this to optimize lists in events
 
 guardedSE :: CsdTuple a => [(BoolSig, SE a)] -> SE a -> SE a
 guardedSE as el = do
@@ -281,4 +281,4 @@ guardedSE as el = do
 
 newLocalDefCsdTuple :: CsdTuple a => SE (SE a, a -> SE ())
 newLocalDefCsdTuple = undefined 
-
+-}

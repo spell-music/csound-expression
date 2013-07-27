@@ -18,6 +18,7 @@ import Csound.Exp.SE(execSE)
 render :: (Out a) => CsdOptions -> GE a -> IO String
 render opt ge = fmap (show . renderHistory (nchnls ge) opt) $ flip execGE opt $ do
     saveAlwaysOnInstr . execSE . masterOuts =<< ge
+    saveAlwaysOnInstr =<< guiInstrExp
     saveAlwaysOnInstr . execSE =<< clearGlobals 
     where 
         nchnls = reactOnZero . outArity . proxy 
@@ -32,7 +33,7 @@ renderHistory numOfChnls options history = ppCsdFile
     -- flags
     (renderFlags options) 
     -- instr 0
-    (renderInstr0 numOfChnls (midis history) (globalsSoFar $ globals history) options)
+    (renderInstr0 numOfChnls (midis history) (globalsSoFar $ globals history) (getWins $ history) options)
     -- orchestra
     (renderOrc $ instrs history)
     -- scores

@@ -4,8 +4,8 @@ import Csound.Exp.Gui
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
 import Csound.Exp.GE
-import Csound.Exp.Ref(newGuiRef)
 import Csound.Exp.Event
+import Csound.Render.Channel(flSetVal, flPrintk2, changed)
 
 runWins :: [Win] -> GE ()
 runWins = mapM_ runWin
@@ -14,7 +14,7 @@ runWin :: Win -> GE ()
 runWin w = saveGuiRoot w
 
 runFl :: Gui -> GE ()
-runFl g = runWin (Win "" g)
+runFl g = runWin (Win "" (Rect 50 50 300 300) g)
 
 type Reader a = SE a
 type Writer a = a -> SE ()
@@ -39,7 +39,7 @@ widget :: Widget a b -> GE (Gui, Writer a, Reader b)
 widget a = do 
     (gui, writer, reader, inner) <- unWidget a
     appendToGui gui inner
-    return (guiNodeElem gui, writer, reader)
+    return (GuiVar $ guiNodeHandle gui, writer, reader)
 
 mkWidgetWith :: GE (Gui, Writer a, Reader b, Inner) -> Widget a b
 mkWidgetWith elems = Widget $ do
@@ -76,15 +76,27 @@ mkDisplay = mkWidget . fmap (\gui -> (gui, noWrite, noRead))
 
 slider :: Label -> Widget Sig Sig
 slider label = Widget $ do
-    (handle, reader, writer) <- newGuiRef
-    return (GuiNode (Prim label Slider) handle, writer, reader, noInner)
+    (var, handle) <- newGuiVar
+    return (GuiNode (sliderElem [var, guiHandleToVar handle] label) handle, setVal handle, readVar var, noInner)
 
 btn :: Label -> Source (Evt ()) 
 btn label = Widget $ do
-    (handle, reader, _) <- newGuiRef
-    return (GuiNode (Prim label Btn) handle, noWrite, fmap sigToEvt reader, noInner)
+    (var, handle) <- newGuiVar
+    return (GuiNode (btnElem [var, guiHandleToVar handle] label) handle, noWrite, fmap sigToEvt $ readVar var, noInner)
 
-text :: String -> Display 
-text name = mkDisplay $ return $ Prim name Text
+text :: String -> Sink Sig 
+text name = Widget $ do
+    (_, handle) <- newGuiVar
+    return $ (GuiNode (textElem [guiHandleToVar handle] name) handle, printk2 handle, noRead, noInner)
 
+-- writers
+
+refHandle :: GuiHandle -> SE D
+refHandle h = readVar (guiHandleToVar h)
+
+setVal :: GuiHandle -> Sig -> SE ()
+setVal handle val = flSetVal (changed [val]) val =<< refHandle handle
+
+printk2 :: GuiHandle -> Sig -> SE ()
+printk2 handle val = flPrintk2 val =<< refHandle handle
 

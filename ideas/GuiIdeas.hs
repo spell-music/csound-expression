@@ -69,7 +69,6 @@ osc = un
 linseg :: [Double'] -> Sig
 linseg = un
 
-
 ---------------------
 
 class View a where
@@ -86,8 +85,4 @@ vcat :: [View] -> View
 mcat :: Int -> [View] -> View
 
 scale :: Double -> View -> View
-
-
-
-
 
