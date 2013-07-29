@@ -103,6 +103,8 @@ Library
         Csound.Exp.Options
         Csound.Exp.EventList
        
+        Csound.BoxModel
+
         Csound.IO
 
         Csound.Tfm.DeduceTypes       

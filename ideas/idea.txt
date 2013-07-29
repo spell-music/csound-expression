@@ -7,6 +7,7 @@
 * how about all GENs, and readWavs in particular?
 
 * how about events in the local instruments? *troloface*
+  it means to remove GE, everything happens in the SE
 
 * generic renderers: soundproducers, with or without guis, options, etc
 

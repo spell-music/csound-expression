@@ -3,7 +3,7 @@ module Csound.Exp.Event(
     Evt(..), Trig, Snap, Bam,
     -- * core funs
     boolToEvt, evtToBool, sigToEvt, filterE, 
-    accumE, accumSE, filterAccumSE, filterAccumE, snapshot,
+    accumE, accumSE, filterAccumSE, filterAccumE, snapshot, snaps,
     -- * aux funs
     cycleE, iterateE, repeatE, appendE, mappendE,
     oneOf, freqOneOf, freqAccum, randDs, randInts, range, listAt,   
@@ -27,7 +27,7 @@ import Csound.Exp.Ref
 import Csound.Exp.Instr
 import Csound.Exp.Numeric
 
-import Csound.Render.Channel(event, instrOn, instrOff, random, ihold, turnoff, follow)
+import Csound.Render.Channel(event, instrOn, instrOff, random, ihold, turnoff, follow, changed)
 
 type Bam a = a -> SE ()
 type Trig = Evt ()
@@ -92,6 +92,10 @@ toBoolSig (BoolD expr) = BoolSig expr
 
 readSnap :: (CsdTuple (Snap a), CsdTuple a) => a -> Snap a
 readSnap = toCsdTuple . fromCsdTuple
+
+snaps :: Sig -> Evt D
+snaps asig = snapshot const asig trig
+    where trig = sigToEvt $ changed [asig]
 
 -------------------------------------------------------------------
 -- snap 

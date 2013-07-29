@@ -311,7 +311,7 @@ module Csound.Base(
     -- *** Main functions
     filterE, accumE, accumSE, 
     filterAccumE, filterAccumSE, 
-    snapshot, stepper, 
+    snapshot, snaps, stepper, 
     cycleE, iterateE, repeatE, appendE, mappendE,
     oneOf, freqOneOf, freqAccum, randDs, randInts, range, listAt,   
     every,
@@ -369,13 +369,29 @@ module Csound.Base(
     -- TODO (you can send me your definitions)
     
     -- * Gui
-    Gui(Comp), Win(..), Widget, Sink, Source, Display,
+    Gui, Win(..), Widget, Sink, Source, Display,
     widget, sink, source, display,
     mkWidget, mkSource, mkSink, mkDisplayWith,
     runFl, runWin, runWins,
 
     -- ** Widgets
-    slider, btn, text
+    
+    -- *** Valuators
+    count, joy, knob, roller, slider, text,
+
+    -- *** Other widgets
+    box, butBank, button, butBankSig, buttonSig,
+    value, writeSlider,
+
+    -- ** Layout
+    hor, ver, space, sca, padding, margin, 
+    -- ** Properties
+    props,
+    Prop(..), BorderType(..), BoxType(..), Color(..),
+    FontType(..), Emphasis(..), 
+    SliderType(..), TextType(..), 
+    ButtonType, ButtonTypeVal(..),
+    Orient(..), KnobType(..)
 ) where
 
 import Data.Default

@@ -1,5 +1,9 @@
 module Csound.Exp.Widget where
 
+import Control.Applicative(liftA2)
+
+import Csound.BoxModel(Rect(..))
+
 import Csound.Exp.Gui
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
@@ -31,6 +35,10 @@ noInner = return ()
 
 newtype Widget a b = Widget { unWidget :: GE (GuiNode, Writer a, Reader b, Inner) }
 
+instance Functor (Widget a) where
+    fmap f (Widget x) = Widget $ fmap 
+        (\(gui, writer, reader, inner) -> (gui, writer, fmap f reader, inner)) x
+
 type Sink   a = Widget a ()
 type Source a = Widget () a
 type Display  = Widget () ()
@@ -39,7 +47,7 @@ widget :: Widget a b -> GE (Gui, Writer a, Reader b)
 widget a = do 
     (gui, writer, reader, inner) <- unWidget a
     appendToGui gui inner
-    return (GuiVar $ guiNodeHandle gui, writer, reader)
+    return (fromGuiHandle $ guiNodeHandle gui, writer, reader)
 
 mkWidgetWith :: GE (Gui, Writer a, Reader b, Inner) -> Widget a b
 mkWidgetWith elems = Widget $ do
@@ -74,20 +82,77 @@ mkDisplay = mkWidget . fmap (\gui -> (gui, noWrite, noRead))
 -----------------------------------------------------------------------------  
 -- primitive elements
 
-slider :: Label -> Widget Sig Sig
-slider label = Widget $ do
+singleOut :: Elem -> Source Sig 
+singleOut el = Widget $ do
     (var, handle) <- newGuiVar
-    return (GuiNode (sliderElem [var, guiHandleToVar handle] label) handle, setVal handle, readVar var, noInner)
+    return ( GuiNode (fromElem [var, guiHandleToVar handle] el) handle
+           , noWrite
+           , readVar var
+           , noInner )
 
-btn :: Label -> Source (Evt ()) 
-btn label = Widget $ do
+count :: Diap -> Step -> Maybe Step -> Double -> Source Sig
+count diap step1 mStep2 v0 = singleOut $ Count diap step1 mStep2 v0
+
+joy :: Span -> Span -> (Double, Double) -> Source (Sig, Sig)
+joy sp1 sp2 v0 = Widget $ do
+    (var1, handle1) <- newGuiVar
+    (var2, handle2) <- newGuiVar
+    let outs = [var1, var2, guiHandleToVar handle1, guiHandleToVar handle2]
+    return ( GuiNode (fromElem outs (Joy sp1 sp2 v0)) handle1
+           , noWrite
+           , liftA2 (,) (readVar var1) (readVar var2)
+           , noInner)
+
+knob :: Span -> Double -> Source Sig
+knob sp v0 = singleOut $ Knob sp v0
+
+roller :: Span -> Step -> Double -> Source Sig
+roller sp step v0 = singleOut $ Roller sp step v0
+
+slider :: Span -> Double -> Source Sig
+slider sp v0 = singleOut $ Slider sp v0
+
+text :: Diap -> Step -> Double -> Source Sig
+text diap step v0 = singleOut $ Text diap step v0
+
+-- write slider
+
+writeSlider :: Span -> Double -> Widget Sig Sig
+writeSlider sp v0 = Widget $ do
     (var, handle) <- newGuiVar
-    return (GuiNode (btnElem [var, guiHandleToVar handle] label) handle, noWrite, fmap sigToEvt $ readVar var, noInner)
+    return ( GuiNode (fromElem [var, guiHandleToVar handle] (Slider sp v0)) handle
+           , setVal handle
+           , readVar var
+           , noInner )    
 
-text :: String -> Sink Sig 
-text name = Widget $ do
+box :: String -> Display
+box label = Widget $ do
     (_, handle) <- newGuiVar
-    return $ (GuiNode (textElem [guiHandleToVar handle] name) handle, printk2 handle, noRead, noInner)
+    return $ ( GuiNode (fromElem [guiHandleToVar handle] (Box label)) handle
+             , noWrite
+             , noRead
+             , noInner )
+
+button :: Source (Evt ())
+button = fmap sigToEvt buttonSig
+
+buttonSig :: Source Sig
+buttonSig = singleOut Button
+
+butBank :: Int -> Int -> Source (Evt D)
+butBank xn yn = fmap snaps $ butBankSig xn yn
+
+butBankSig :: Int -> Int -> Source Sig 
+butBankSig xn yn = singleOut $ ButBank xn yn
+
+value :: Double -> Sink Sig 
+value v = Widget $ do
+    (_, handle) <- newGuiVar
+    return $ ( GuiNode (fromElem [guiHandleToVar handle] (Value v)) handle
+             , printk2 handle
+             , noRead
+             , noInner )
+
 
 -- writers
 
