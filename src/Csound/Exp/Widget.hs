@@ -39,9 +39,9 @@ instance Functor (Widget a) where
     fmap f (Widget x) = Widget $ fmap 
         (\(gui, writer, reader, inner) -> (gui, writer, fmap f reader, inner)) x
 
-type Sink   a = Widget a ()
-type Source a = Widget () a
-type Display  = Widget () ()
+type Sink   a = GE (Gui, Writer a)
+type Source a = GE (Gui, Reader a)
+type Display  = GE Gui
 
 widget :: Widget a b -> GE (Gui, Writer a, Reader b)
 widget a = do 
@@ -55,35 +55,35 @@ mkWidgetWith elems = Widget $ do
     (gui, writer, reader, inner) <- elems
     return (GuiNode gui n, writer, reader, inner)
 
-sink :: Widget a b -> GE (Gui, Writer a)
+sink :: Widget a b -> Sink a
 sink = fmap (\(gui, writer, _) -> (gui, writer)) . widget
 
-source :: Widget a b -> GE (Gui, Reader b)
+source :: Widget a b -> Source b
 source = fmap (\(gui, _, reader) -> (gui, reader)) . widget
 
-display :: Widget a b -> GE Gui
+display :: Widget a b -> Display
 display = fmap (\(gui, _, _) -> gui) . widget
 
-mkDisplayWith :: GE (Gui, Inner) -> Display 
+mkDisplayWith :: GE (Gui, Inner) -> Widget () () 
 mkDisplayWith = mkWidgetWith . fmap (\(gui, inner) -> (gui, noWrite, noRead, inner))
     
 mkWidget :: GE (Gui, Writer a, Reader b) -> Widget a b
 mkWidget = mkWidgetWith . fmap (\(a, b, c) -> (a, b, c, noInner))
 
-mkSink :: GE (Gui, Writer a) -> Sink a
+mkSink :: GE (Gui, Writer a) -> Widget a ()
 mkSink = mkWidget . fmap (\(gui, writer) -> (gui, writer, noRead))
 
-mkSource :: GE (Gui, Reader b) -> Source b
+mkSource :: GE (Gui, Reader b) -> Widget () b
 mkSource = mkWidget . fmap (\(gui, reader) -> (gui, noWrite, reader))
     
-mkDisplay :: GE Gui -> Display
+mkDisplay :: GE Gui -> Widget () ()
 mkDisplay = mkWidget . fmap (\gui -> (gui, noWrite, noRead))
 
 -----------------------------------------------------------------------------  
 -- primitive elements
 
 singleOut :: Elem -> Source Sig 
-singleOut el = Widget $ do
+singleOut el = source $ Widget $ do
     (var, handle) <- newGuiVar
     return ( GuiNode (fromElem [var, guiHandleToVar handle] el) handle
            , noWrite
@@ -94,7 +94,7 @@ count :: Diap -> Step -> Maybe Step -> Double -> Source Sig
 count diap step1 mStep2 v0 = singleOut $ Count diap step1 mStep2 v0
 
 joy :: Span -> Span -> (Double, Double) -> Source (Sig, Sig)
-joy sp1 sp2 v0 = Widget $ do
+joy sp1 sp2 v0 = source $ Widget $ do
     (var1, handle1) <- newGuiVar
     (var2, handle2) <- newGuiVar
     let outs = [var1, var2, guiHandleToVar handle1, guiHandleToVar handle2]
@@ -117,8 +117,8 @@ text diap step v0 = singleOut $ Text diap step v0
 
 -- write slider
 
-writeSlider :: Span -> Double -> Widget Sig Sig
-writeSlider sp v0 = Widget $ do
+writeSlider :: Span -> Double -> GE (Gui, Writer Sig, Reader Sig)
+writeSlider sp v0 = widget $ Widget $ do
     (var, handle) <- newGuiVar
     return ( GuiNode (fromElem [var, guiHandleToVar handle] (Slider sp v0)) handle
            , setVal handle
@@ -126,33 +126,35 @@ writeSlider sp v0 = Widget $ do
            , noInner )    
 
 box :: String -> Display
-box label = Widget $ do
+box label = display $ Widget $ do
     (_, handle) <- newGuiVar
     return $ ( GuiNode (fromElem [guiHandleToVar handle] (Box label)) handle
              , noWrite
              , noRead
              , noInner )
 
+onSource :: (a -> b) -> Source a -> Source b
+onSource f = fmap $ \(gui, reader) -> (gui, fmap f reader) 
+
 button :: Source (Evt ())
-button = fmap sigToEvt buttonSig
+button = onSource sigToEvt buttonSig
 
 buttonSig :: Source Sig
 buttonSig = singleOut Button
 
 butBank :: Int -> Int -> Source (Evt D)
-butBank xn yn = fmap snaps $ butBankSig xn yn
+butBank xn yn = onSource snaps $ butBankSig xn yn
 
 butBankSig :: Int -> Int -> Source Sig 
 butBankSig xn yn = singleOut $ ButBank xn yn
 
 value :: Double -> Sink Sig 
-value v = Widget $ do
+value v = sink $ Widget $ do
     (_, handle) <- newGuiVar
     return $ ( GuiNode (fromElem [guiHandleToVar handle] (Value v)) handle
              , printk2 handle
              , noRead
              , noInner )
-
 
 -- writers
 
