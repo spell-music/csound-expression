@@ -31,11 +31,12 @@ type Step = Double
 
 data Color = Color Int Int Int
 
-data FontType   = Helvetica | Courier | Times | Symbol | Screen | Dingbats
-data Emphasis   = NoEmphasis | Italic | Bold | BoldItalic
-data KnobType   = ThreeD (Maybe Int) | Pie | Clock | Flat
-data SliderType = Fill | Engraved | Nice | Upbox 
-data TextType   = NormalText | NoDrag | NoEdit
+data FontType       = Helvetica | Courier | Times | Symbol | Screen | Dingbats
+data Emphasis       = NoEmphasis | Italic | Bold | BoldItalic
+data KnobType       = ThreeD (Maybe Int) | Pie | Clock | Flat
+data SliderType     = Fill | Engraved | Nice
+data TextType       = NormalText | NoDrag | NoEdit
+data Material       = NoPlastic | Plastic
 
 data BoxType    
     = FlatBox | UpBox | DownBox | ThinUpBox | ThinDownBox 
@@ -49,11 +50,7 @@ data BorderType
     = NoBorder | DownBoxBorder | UpBoxBorder | EngravedBorder 
     | EmbossedBorder | BlackLine | ThinDown | ThinUp
 
-data ButtonType = ButtonType
-    { isPlastic     :: Bool
-    , buttonTypeVal :: ButtonTypeVal }
-
-data ButtonTypeVal = NormalButton | LightButton | CheckButton | RoundButton
+data ButtonType = NormalButton | LightButton | CheckButton | RoundButton
 
 defFontSize :: Int
 defFontSize = 15
@@ -63,9 +60,9 @@ instance Default Emphasis       where def = NoEmphasis
 instance Default SliderType     where def = Fill
 instance Default KnobType       where def = Flat
 instance Default TextType       where def = NormalText
-instance Default ButtonType     where def = ButtonType False def
-instance Default ButtonTypeVal  where def = NormalButton
+instance Default ButtonType     where def = NormalButton
 instance Default BoxType        where def = FlatBox
+instance Default Material       where def = Plastic
 
 data Elem 
     = GuiVar GuiHandle 
@@ -88,6 +85,7 @@ data Elem
 data Prop
     = SetBorder BorderType
     | SetLabel String
+    | SetMaterial Material
     | SetBoxType BoxType
     | SetColor1 Color | SetColor2 Color | SetTextColor Color
     | SetFontSize Int | SetFontType FontType | SetEmphasis Emphasis
@@ -157,14 +155,16 @@ guiMap = IM.fromList . fmap (\(GuiNode elem (GuiHandle n)) -> (n, elem))
 restoreTree :: GuiMap -> Gui -> Gui
 restoreTree m x = Gui $ (unGui x) >>= rec
     where rec elem = case elemContent elem of
-            GuiVar h -> unGui $ m IM.! unGuiHandle h
+            GuiVar h -> unGui $ restoreTree m $ m IM.! unGuiHandle h
             _        -> return elem
 
 
 drawGui :: Win -> P.Doc
 drawGui w = onPanel (winTitle w) (winRect w) $ 
-    renderAbsScene $ Box.draw (winRect w) $ unGui $ winGui w
+    renderAbsScene $ Box.draw (withZeroOffset $ winRect w) $ unGui $ winGui w
     where
+        withZeroOffset r = r { px = 0, py = 0 }
+
         renderAbsScene = Box.cascade drawPrim P.empty P.vcat setProps def
             where setProps ps = appEndo $ mconcat $ fmap (Endo . setPropCtx) ps
 
@@ -195,6 +195,7 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
     where
         f = fWithLabel (getLabel ctx)
         fWithLabel label name args = P.ppMoOpc (fmap P.ppVar outs) name ((P.text $ show $ label) : args)
+        fNoLabel name args = P.ppMoOpc (fmap P.ppVar outs) name args
         frame = frameBy rect
         frameBy x = fmap int [width x, height x, px x, py x]       
         noDisp = int (-1)
@@ -229,7 +230,16 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
         -- FLknob
         drawKnob span _ = f "FLknob" $ 
             drawSpan span ++ [getKnobType ctx, noDisp] 
-            ++ frame ++ getKnobCursorSize ctx            
+            ++ fmap int knobFrame ++ getKnobCursorSize ctx            
+            where 
+                knobFrame
+                    | w < h     = [w, x, y + d]
+                    | otherwise = [h, x + d, y]
+                h = height rect
+                w = width rect
+                x = px rect
+                y = py rect
+                d = div (abs $ h - w) 2 
 
         -- FLroller
         drawRoller (Span d s) step _ = f "FLroller" $
@@ -263,7 +273,7 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
                   splitText = undefined
     
         -- FLbutBank
-        drawButBank xn yn = f "FLbutBank" $ 
+        drawButBank xn yn = fNoLabel "FLbutBank" $ 
             [getButtonType ctx, int xn, int yn] ++ frame ++ [noOpc] 
 
         -- FLbutton
@@ -281,6 +291,7 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
 data PropCtx = PropCtx 
     { ctxBorder       :: Maybe BorderType
     , ctxLabel        :: Maybe String
+    , ctxMaterial     :: Maybe Material
     , ctxBoxType      :: Maybe BoxType
     , ctxColor1       :: Maybe Color
     , ctxColor2       :: Maybe Color
@@ -297,12 +308,13 @@ data PropCtx = PropCtx
 instance Default PropCtx where
     def = PropCtx Nothing Nothing Nothing Nothing Nothing Nothing
                   Nothing Nothing Nothing Nothing Nothing Nothing
-                  Nothing Nothing
+                  Nothing Nothing Nothing
    
 setPropCtx :: Prop -> PropCtx -> PropCtx 
 setPropCtx p x = case p of
             SetBorder       a -> x { ctxBorder = Just a }
             SetLabel        a -> x { ctxLabel  = Just a }
+            SetMaterial     a -> x { ctxMaterial = Just a }
             SetBoxType      a -> x { ctxBoxType = Just a }
             SetColor1       a -> x { ctxColor1 = Just a }
             SetColor2       a -> x { ctxColor2 = Just a }
@@ -359,7 +371,7 @@ getRollerType defOrient ctx = int $ case getOrient defOrient ctx of
     Ver -> 2
     
 getSliderType :: Orient -> PropCtx -> Doc
-getSliderType defOrient ctx = int $ 
+getSliderType defOrient ctx = int $ appMaterial ctx $ 
     case (getOrient defOrient ctx, maybeDef $ ctxSliderType ctx) of
         (Hor, Fill)         -> 1
         (Ver, Fill)         -> 2
@@ -367,8 +379,6 @@ getSliderType defOrient ctx = int $
         (Ver, Engraved)     -> 4
         (Hor, Nice)         -> 5
         (Ver, Nice)         -> 6
-        (Hor, Upbox)        -> 7
-        (Ver, Upbox)        -> 8
 
 getTextType :: PropCtx -> Doc
 getTextType = intProp ctxTextType $ \x -> case x of  
@@ -403,13 +413,66 @@ getFontType ctx = int $
         (Dingbats, _)                   -> 16
        
 getButtonType :: PropCtx -> Doc
-getButtonType = intProp ctxButtonType $ \x -> 
-    onPlastic (isPlastic x) $ case buttonTypeVal x of
+getButtonType ctx = ($ ctx) $ intProp ctxButtonType $ \x -> 
+    appMaterial ctx $ case x of
         NormalButton    -> 1
         LightButton     -> 2
         CheckButton     -> 3
         RoundButton     -> 4   
-    where onPlastic x 
-            | x         = ( + 20)
-            | otherwise = id
+
+appMaterial :: PropCtx -> Int -> Int
+appMaterial ctx = case maybeDef $ ctxMaterial ctx of
+    Plastic   -> (+ 20)
+    NoPlastic -> id
+    
+-----------------------------------------------------------------
+-- handy shortcuts
+    
+setProp :: Prop -> Gui -> Gui
+setProp p = props [p]
+
+setBorder :: BorderType -> Gui -> Gui
+setBorder = setProp . SetBorder
+
+setLabel :: String -> Gui -> Gui
+setLabel = setProp . SetLabel
+
+setMaterial :: Material -> Gui -> Gui
+setMaterial = setProp . SetMaterial
+
+setBoxType :: BoxType -> Gui -> Gui
+setBoxType = setProp . SetBoxType
+
+setColor1 :: Color -> Gui -> Gui
+setColor1 = setProp . SetColor1
+
+setColor2 :: Color -> Gui -> Gui
+setColor2 = setProp . SetColor2
+
+setTextColor :: Color -> Gui -> Gui
+setTextColor = setProp . SetTextColor
+
+setFontSize :: Int -> Gui -> Gui
+setFontSize = setProp . SetFontSize
+
+setFontType :: FontType -> Gui -> Gui
+setFontType = setProp . SetFontType
+
+setEmphasis :: Emphasis -> Gui -> Gui
+setEmphasis = setProp . SetEmphasis
+
+setSliderType :: SliderType -> Gui -> Gui
+setSliderType = setProp . SetSliderType
+
+setTextType :: TextType -> Gui -> Gui
+setTextType = setProp . SetTextType
+
+setButtonType :: ButtonType -> Gui -> Gui
+setButtonType = setProp . SetButtonType
+
+setOrient :: Orient -> Gui -> Gui
+setOrient = setProp . SetOrient
+
+setKnobType :: KnobType -> Gui -> Gui
+setKnobType = setProp . SetKnobType
 

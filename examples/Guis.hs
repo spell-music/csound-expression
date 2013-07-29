@@ -4,23 +4,27 @@ import Control.Applicative
 
 import Csound.Base
 
+unit = Span (Diap 0 1) Linear
+
 linenWidget :: Source Sig
-linenWidget = mkSource $ do
-    (g1, r1) <- source $ slider "rise time"
-    (g2, r2) <- source $ slider "decay time"
+linenWidget = source $ mkSource $ do
+    (g1, r1) <- slider unit 0.5
+    (g2, r2) <- slider unit 0.5
     let out = liftA2 fun r1 r2        
-    return (Comp [g1, g2], out)
+    return (ver [g1, g2], out)
     where fun a b = linseg [0, a', 1, idur - a' - b', 1, b', 0]
                 where a' = idur * ir a
                       b' = idur * ir b  
-
+{-
 adder :: Display
 adder = mkDisplayWith $ do
-    (ga, ina)   <- source $ slider "a"
-    (gb, inb)   <- source $ slider "b"
-    (gres, res) <- sink   $ text "res"
+    (ga, ina)   <- slider "a"
+    (gb, inb)   <- slider "b"
+    (gres, res) <- value "res"
     return (Comp [ga, gb, gres], 
             res =<< liftA2 (+) ina inb)
+-}
+
 
 instr :: SE Sig -> D -> SE Sig
 instr env cps = do
@@ -28,17 +32,28 @@ instr env cps = do
     return $ 0.5 * e * osc (sig cps)
 
 pureTone () = 0.7 * osc 440 
-
-
-main = writeCsd "tmp.csd" $ do
-    (g1, vol) <- source $ slider "vol"    
-    (g2, wr)  <- sink $ text "val"
-    res <- schedule pureTone $ fmap (\x -> (0.5, x))$ (metroE 1)
     
-    g <- display $ mkDisplayWith $ return (Comp [g1, g2], everyNth 0.4 wr res) 
+u = fmap (props [SetSliderType Fill] . fst) $ slider unit 0.5
+v = fmap fst $ knob unit 0.5
+r = fmap fst $ roller unit 0.001 0.01
+c1 = fmap fst $ count (Diap 0 10) 1 Nothing 1
+c2 = fmap fst $ count (Diap 0 10) 1 (Just 2) 1
+b = fmap (setLabel "push me" . fst) button
+bb = fmap fst $ butBank 5 1
+
+main = dac $ do
+    g1 <- u
+    g2 <- u
+    g3 <- u
+    g4 <- r
+    g5 <- c1 
+    g6 <- c2
+    g7 <- b
+    g8 <- bb
+
+    let g = ver [sca 0.5 $ setLabel "hi there" g1, g7, hor [setLabel "common" g1, g4, g8]]
+    
     runFl g
+    return ()
+--    schedule (instr env) $ fmap (const (1, 440)) $ metroE (1/5)
 
-    return $ fmap (res * ) vol 
-
-
-everyNth d wr sig = runEvt (metroE d) $ const $ wr sig

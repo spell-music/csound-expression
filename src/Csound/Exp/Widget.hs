@@ -18,7 +18,7 @@ runWin :: Win -> GE ()
 runWin w = saveGuiRoot w
 
 runFl :: Gui -> GE ()
-runFl g = runWin (Win "" (Rect 50 50 300 300) g)
+runFl g = runWin (Win "" (Rect 50 50 800 600) g)
 
 type Reader a = SE a
 type Writer a = a -> SE ()

@@ -388,15 +388,24 @@ module Csound.Base(
     -- ** Properties
     props,
     Prop(..), BorderType(..), BoxType(..), Color(..),
+    Rect(..), Span(..), Diap(..), ScaleType(..),
     FontType(..), Emphasis(..), 
-    SliderType(..), TextType(..), 
-    ButtonType, ButtonTypeVal(..),
-    Orient(..), KnobType(..)
+    Material(..),
+    SliderType(..), TextType(..), ButtonType(..),
+    Orient(..), KnobType(..),
+
+    -- *** Setters
+    setBorder, setLabel, setMaterial, setBoxType,
+    setColor1, setColor2, setTextColor,
+    setFontSize, setFontType, setEmphasis,
+    setSliderType, setTextType, setButtonType,
+    setOrient, setKnobType
 ) where
 
 import Data.Default
 import Data.Boolean
 import Csound.Air 
+import Csound.BoxModel(Rect(..))
 
 import Csound.Exp
 import Csound.Exp.Cons
