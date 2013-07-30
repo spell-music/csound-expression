@@ -73,7 +73,7 @@ data Offset = Offset
     } deriving (Show)
 
 instance Default Offset where
-    def = Offset 20 20
+    def = Offset 25 25
 
 appendContext :: Monoid ctx => ctx -> Scene ctx a -> Scene ctx a
 appendContext ctx x = case x of

@@ -88,6 +88,14 @@ singleOut el = source $ Widget $ do
            , readVar var
            , noInner )
 
+singleIn :: Elem -> Sink Sig 
+singleIn el = sink $ Widget $ do
+    (_, handle) <- newGuiVar
+    return $ ( GuiNode (fromElem [guiHandleToVar handle] el) handle
+             , printk2 handle
+             , noRead
+             , noInner )
+
 count :: Diap -> Step -> Maybe Step -> Double -> Source Sig
 count diap step1 mStep2 v0 = singleOut $ Count diap step1 mStep2 v0
 
@@ -140,6 +148,12 @@ button = onSource sigToEvt buttonSig
 buttonSig :: Source Sig
 buttonSig = singleOut Button
 
+toggle :: Source (Evt D)
+toggle = onSource snaps toggleSig
+
+toggleSig :: Source Sig
+toggleSig = singleOut Toggle
+
 butBank :: Int -> Int -> Source (Evt D)
 butBank xn yn = onSource snaps $ butBankSig xn yn
 
@@ -147,12 +161,10 @@ butBankSig :: Int -> Int -> Source Sig
 butBankSig xn yn = singleOut $ ButBank xn yn
 
 value :: Double -> Sink Sig 
-value v = sink $ Widget $ do
-    (_, handle) <- newGuiVar
-    return $ ( GuiNode (fromElem [guiHandleToVar handle] (Value v)) handle
-             , printk2 handle
-             , noRead
-             , noInner )
+value v = singleIn (Value v)
+
+meter :: Span -> Double -> Sink Sig
+meter sp v = singleIn (Slider sp v)
 
 -- writers
 

@@ -9,7 +9,7 @@ module Csound.Exp.Event(
     oneOf, freqOneOf, freqAccum, randDs, randInts, range, listAt,   
     every,
     -- * instrument invocation
-    stepper, schedule, toggle, 
+    stepper, schedule, scheduleUntil, 
     scheduleHold, autoOff    
 ) where
 
@@ -169,8 +169,8 @@ scheduleInstr instrId evt = execSE $
   
 -- | Triggers an instrument with first event stream and stops 
 -- it when event happens on the second event stream.
-toggle :: (CsdTuple a, Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt a -> Evt c -> GE (NoSE b)
-toggle instr onEvt offEvt = do
+scheduleUntil :: (CsdTuple a, Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt a -> Evt c -> GE (NoSE b)
+scheduleUntil instr onEvt offEvt = do
     (reader, writer) <- appendRef
     instrId <- saveSourceInstr $ trigExp writer instr 
     saveAlwaysOnInstr $ scheduleToggleInstr instrId onEvt offEvt

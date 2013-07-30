@@ -316,7 +316,7 @@ module Csound.Base(
     oneOf, freqOneOf, freqAccum, randDs, randInts, range, listAt,   
     every,
     -- *** Instrument invocation
-    schedule, toggle,
+    schedule, scheduleUntil,
 
     -- ** Rendering
     -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
@@ -380,8 +380,8 @@ module Csound.Base(
     count, joy, knob, roller, slider, text,
 
     -- *** Other widgets
-    box, butBank, button, butBankSig, buttonSig,
-    value, writeSlider,
+    box, butBank, button, toggle, butBankSig, buttonSig, toggleSig,
+    value, meter, writeSlider,
 
     -- ** Layout
     hor, ver, space, sca, padding, margin, 

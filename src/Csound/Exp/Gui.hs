@@ -78,7 +78,8 @@ data Elem
     -- other widgets  
     | Box String
     | ButBank Int Int
-    | Button 
+    | Button
+    | Toggle 
     | Value Double
     | Vkeybd
 
@@ -177,7 +178,7 @@ drawGui w = onPanel (winTitle w) panelRect $
             P.ppProc "FLpanelEnd" []]
     
 drawPrim :: PropCtx -> Rect -> ElemWithOuts -> P.Doc
-drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
+drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
     -- valuators
     Count  diap step1 step2 initVal -> drawCount diap step1 step2 initVal
     Joy    span1 span2 initVal      -> drawJoy span1 span2 initVal
@@ -190,12 +191,19 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
     Box text                        -> drawBox text 
     ButBank xn yn                   -> drawButBank xn yn 
     Button                          -> drawButton 
+    Toggle                          -> drawToggle
     Value initVal                   -> drawValue initVal
     Vkeybd                          -> drawVkeybd 
 
     -- error
     GuiVar guiHandle                -> orphanGuiVar guiHandle
     where
+        rect = clearSpaceForLabel $ rectWithoutLabel
+        clearSpaceForLabel a
+            | label == ""   = a
+            | otherwise     = a { height = height a - yLabelBox (getIntFontSize ctx) }
+            where label = getLabel ctx
+
         f = fWithLabel (getLabel ctx)
         fWithLabel label name args = P.ppMoOpc (fmap P.ppVar outs) name ((P.text $ show $ label) : args)
         fNoLabel name args = P.ppMoOpc (fmap P.ppVar outs) name args
@@ -279,8 +287,10 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
         drawButBank xn yn = fNoLabel "FLbutBank" $ 
             [getButtonType ctx, int xn, int yn] ++ frame ++ [noOpc] 
 
-        -- FLbutton
+        -- FLbutton's
         drawButton = f "FLbutton" $ [int 1, int 0, getButtonType ctx] ++ frame ++ [noOpc]
+        
+        drawToggle = f "FLbutton" $ [int 1, int 0, getToggleType ctx] ++ frame ++ [noOpc]
 
         -- FLvalue
         drawValue _ = f "FLvalue" frame 
@@ -392,8 +402,13 @@ getTextType = intProp ctxTextType $ \x -> case x of
 getBoxType :: PropCtx -> Doc
 getBoxType = intProp ctxBoxType $ succ . fromEnum
 
+
+
 getFontSize :: PropCtx -> Doc 
-getFontSize ctx = int $ maybe defFontSize id $ ctxFontSize ctx
+getFontSize  = int . getIntFontSize 
+
+getIntFontSize :: PropCtx -> Int
+getIntFontSize ctx = maybe defFontSize id $ ctxFontSize ctx
 
 getFontType :: PropCtx -> Doc
 getFontType ctx = int $ 
@@ -416,9 +431,12 @@ getFontType ctx = int $
         (Dingbats, _)                   -> 16
        
 getButtonType :: PropCtx -> Doc
-getButtonType ctx = ($ ctx) $ intProp ctxButtonType $ \x -> 
+getButtonType ctx = int $ appMaterial ctx 1
+       
+getToggleType :: PropCtx -> Doc
+getToggleType ctx = ($ ctx) $ intProp ctxButtonType $ \x -> 
     appMaterial ctx $ case x of
-        NormalButton    -> 1
+        NormalButton    -> 2
         LightButton     -> 2
         CheckButton     -> 3
         RoundButton     -> 4   
@@ -519,6 +537,7 @@ bestElemSizes orient x = case x of
 
     ButBank xn yn   -> (xn * 80, yn * 25)
     Button          -> (80, 25) 
+    Toggle          -> (80, 25) 
     Value   _       -> (100, 20)
     Vkeybd          -> (1280, 240)
     
@@ -536,6 +555,9 @@ xBox, yBox :: Int -> Int -> Int
 xBox fontSize xn = undefined
 
 yBox fontSize yn = undefined
+
+yLabelBox :: Int -> Int
+yLabelBox fontSize = fontSize - 5
 
 ------------------------------------------------------------
 -- error messages
