@@ -68,14 +68,14 @@ mkDisplayWith = mkWidgetWith . fmap (\(gui, inner) -> (gui, noWrite, noRead, inn
 mkWidget :: GE (Gui, Writer a, Reader b) -> Widget a b
 mkWidget = mkWidgetWith . fmap (\(a, b, c) -> (a, b, c, noInner))
 
-mkSink :: GE (Gui, Writer a) -> Widget a ()
-mkSink = mkWidget . fmap (\(gui, writer) -> (gui, writer, noRead))
+mkSink :: GE (Gui, Writer a) -> Sink a
+mkSink = sink . mkWidget . fmap (\(gui, writer) -> (gui, writer, noRead))
 
-mkSource :: GE (Gui, Reader b) -> Widget () b
-mkSource = mkWidget . fmap (\(gui, reader) -> (gui, noWrite, reader))
+mkSource :: GE (Gui, Reader b) -> Source b
+mkSource = source . mkWidget . fmap (\(gui, reader) -> (gui, noWrite, reader))
     
-mkDisplay :: GE Gui -> Widget () ()
-mkDisplay = mkWidget . fmap (\gui -> (gui, noWrite, noRead))
+mkDisplay :: GE Gui -> Display
+mkDisplay = display . mkWidget . fmap (\gui -> (gui, noWrite, noRead))
 
 -----------------------------------------------------------------------------  
 -- primitive elements

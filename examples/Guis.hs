@@ -7,7 +7,7 @@ import Csound.Base
 unit = Span (Diap 0 1) Linear
 
 linenWidget :: Source Sig
-linenWidget = source $ mkSource $ do
+linenWidget = mkSource $ do
     (g1, r1) <- slider unit 0.5
     (g2, r2) <- slider unit 0.5
     let out = liftA2 fun r1 r2        
