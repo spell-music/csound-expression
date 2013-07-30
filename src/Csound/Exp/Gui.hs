@@ -208,6 +208,7 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
         fWithLabel label name args = P.ppMoOpc (fmap P.ppVar outs) name ((P.text $ show $ label) : args)
         fNoLabel name args = P.ppMoOpc (fmap P.ppVar outs) name args
         frame = frameBy rect
+        frameWithoutLabel = frameBy rectWithoutLabel
         frameBy x = fmap int [width x, height x, px x, py x]       
         noDisp = int (-1)
         noOpc  = int (-1)
@@ -272,25 +273,17 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
         -- other widgets
         
         -- FLbox
-        drawBox text = (frameBox P.$$ ) $ 
-            P.vcat $ fmap (uncurry phi) $ splitText rect text
-            where phi r label = fWithLabel label "FLbox" $ 
-                    [ int 1, getFontType ctx, getFontSize ctx] ++ frameBy r
-
-                  frameBox = fWithLabel "" "FLbox" $
-                    [ getBoxType ctx, int 1, int 1 ] ++ frame
-
-                  splitText :: Rect -> String -> [(Rect, String)]
-                  splitText = undefined
-    
+        drawBox text = fWithLabel text "FLbox" $
+            [ getBoxType ctx, getFontType ctx, getFontSize ctx ] ++ frameWithoutLabel
+        
         -- FLbutBank
         drawButBank xn yn = fNoLabel "FLbutBank" $ 
-            [getButtonType ctx, int xn, int yn] ++ frame ++ [noOpc] 
+            [getButtonType ctx, int xn, int yn] ++ frameWithoutLabel ++ [noOpc] 
 
         -- FLbutton's
-        drawButton = f "FLbutton" $ [int 1, int 0, getButtonType ctx] ++ frame ++ [noOpc]
+        drawButton = f "FLbutton" $ [int 1, int 0, getButtonType ctx] ++ frameWithoutLabel ++ [noOpc]
         
-        drawToggle = f "FLbutton" $ [int 1, int 0, getToggleType ctx] ++ frame ++ [noOpc]
+        drawToggle = f "FLbutton" $ [int 1, int 0, getToggleType ctx] ++ frameWithoutLabel ++ [noOpc]
 
         -- FLvalue
         drawValue _ = f "FLvalue" frame 
@@ -531,7 +524,7 @@ bestElemSizes orient x = case x of
 
     -- other widgets  
     Box     text    -> 
-        let symbolsPerLine = 40
+        let symbolsPerLine = 60
             numOfLines = succ $ div (length text) symbolsPerLine
         in  (xBox 15 symbolsPerLine, yBox 15 numOfLines)            
 
@@ -552,9 +545,9 @@ bestElemSizes orient x = case x of
 
 xBox, yBox :: Int -> Int -> Int
 
-xBox fontSize xn = undefined
+xBox fontSize xn = round $ fromIntegral fontSize * (0.4 :: Double) * fromIntegral (1 + xn)
 
-yBox fontSize yn = undefined
+yBox fontSize yn = (fontSize + 8) * (1 + yn)
 
 yLabelBox :: Int -> Int
 yLabelBox fontSize = fontSize - 5

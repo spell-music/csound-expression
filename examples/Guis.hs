@@ -39,7 +39,10 @@ r = fmap fst $ roller unit 0.001 0.01
 c1 = fmap fst $ count (Diap 0 10) 1 Nothing 1
 c2 = fmap fst $ count (Diap 0 10) 1 (Just 2) 1
 b = fmap (setLabel "push me" . fst) button
-bb = fmap fst $ butBank 5 1
+bb = fmap fst $ butBank 5 3
+
+d = fmap (setBoxType BorderBox) $ box $ t ++ t ++ t
+    where t = " Hello everybody, let's look at some cool text in the box "
 
 main = dac $ do
     g1 <- u
@@ -50,8 +53,10 @@ main = dac $ do
     g6 <- c2
     g7 <- b
     g8 <- bb
+    g9 <- d
 
-    let g = ver [sca 0.5 $ setLabel "hi there" g1, g7, hor [setLabel "common" g1, g4, g8]]
+--    let g = ver [sca 0.5 $ setLabel "hi there" g1, hor [g9, g7, sca 2 g9], hor [setLabel "common" g1, g9, g8]]
+    let g = hor [ver [g9, g9, g8, g4], g9, g9, ver [g9, g9]]
     
     runFl g
     return ()
