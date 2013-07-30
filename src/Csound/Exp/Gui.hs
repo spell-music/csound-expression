@@ -101,7 +101,7 @@ type LowGui = Box.Scene [Prop] ElemWithOuts
 
 data Win = Win 
     { winTitle :: String 
-    , winRect  :: Rect
+    , winRect  :: Maybe Rect
     , winGui   :: Gui }
 
 data GuiNode = GuiNode
@@ -160,9 +160,12 @@ restoreTree m x = Gui $ (unGui x) >>= rec
 
 
 drawGui :: Win -> P.Doc
-drawGui w = onPanel (winTitle w) (winRect w) $ 
-    renderAbsScene $ Box.draw (withZeroOffset $ winRect w) $ unGui $ winGui w
+drawGui w = onPanel (winTitle w) panelRect $ 
+    renderAbsScene $ Box.draw (withZeroOffset $ panelRect) $ unGui $ winGui w
     where
+        panelRect = maybe (shiftBy 50 $ bestRect $ winGui w) id $ winRect w
+            where shiftBy n r = r { px = n + px r, py = n + py r }
+
         withZeroOffset r = r { px = 0, py = 0 }
 
         renderAbsScene = Box.cascade drawPrim P.empty P.vcat setProps def
@@ -191,7 +194,7 @@ drawPrim ctx rect (ElemWithOuts outs elem) = case elem of
     Vkeybd                          -> drawVkeybd 
 
     -- error
-    GuiVar guiHandle        -> error $ "orphan handle: " ++ (show $ unGuiHandle $ guiHandle)
+    GuiVar guiHandle                -> orphanGuiVar guiHandle
     where
         f = fWithLabel (getLabel ctx)
         fWithLabel label name args = P.ppMoOpc (fmap P.ppVar outs) name ((P.text $ show $ label) : args)
@@ -475,4 +478,68 @@ setOrient = setProp . SetOrient
 
 setKnobType :: KnobType -> Gui -> Gui
 setKnobType = setProp . SetKnobType
+
+------------------------------------------------------------------
+-- best rectangles for the elements
+--
+
+bestRect :: Gui -> Rect
+bestRect 
+    = Box.boundingRect 
+    . mapWithOrient (\curOrient x -> uncurry noShiftRect $ bestElemSizes curOrient $ elemContent x)
+    . unGui
+    where noShiftRect w h = Rect { px = 0, py = 0, width = w, height = h }
+
+mapWithOrient :: (Orient -> a -> b) -> Box.Scene ctx a -> Box.Scene ctx b
+mapWithOrient f = iter Hor
+    where 
+        iter curOrient x = case x of
+            Box.Prim a          -> Box.Prim $ f curOrient a
+            Box.Space           -> Box.Space
+            Box.Scale d a       -> Box.Scale d $ iter curOrient a
+            Box.Hor offs as     -> Box.Hor offs $ fmap (iter Hor) as
+            Box.Ver offs as     -> Box.Ver offs $ fmap (iter Ver) as
+            Box.Context ctx a   -> Box.Context ctx $ iter curOrient a
+            
+bestElemSizes :: Orient -> Elem -> (Int, Int)
+bestElemSizes orient x = case x of
+    -- valuators
+    Count   _ _ _ _ -> (200, 30)
+    Joy     _ _ _   -> (400, 400)  
+    Knob    _ _     -> (200, 200)
+    Roller  _ _ _   -> inHor (300, 30)
+    Slider  _ _     -> inHor (500, 30)
+    Text    _ _ _   -> (150, 30)
+
+    -- other widgets  
+    Box     text    -> 
+        let symbolsPerLine = 40
+            numOfLines = succ $ div (length text) symbolsPerLine
+        in  (xBox 15 symbolsPerLine, yBox 15 numOfLines)            
+
+    ButBank xn yn   -> (xn * 80, yn * 25)
+    Button          -> (80, 25) 
+    Value   _       -> (100, 20)
+    Vkeybd          -> (1280, 240)
+    
+    -- error
+    GuiVar h        -> orphanGuiVar h
+    where inHor (a, b) = case orient of
+            Hor -> (a, b)
+            Ver -> (b, a)
+
+------------------------------------------------------------
+-- FLbox font coefficients
+
+xBox, yBox :: Int -> Int -> Int
+
+xBox fontSize xn = undefined
+
+yBox fontSize yn = undefined
+
+------------------------------------------------------------
+-- error messages
+
+orphanGuiVar :: GuiHandle -> a
+orphanGuiVar (GuiHandle n) = error $ "orphan GuiHandle: " ++ show n
 

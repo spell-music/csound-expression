@@ -2,8 +2,6 @@ module Csound.Exp.Widget where
 
 import Control.Applicative(liftA2)
 
-import Csound.BoxModel(Rect(..))
-
 import Csound.Exp.Gui
 import Csound.Exp.Wrapper
 import Csound.Exp.SE
@@ -18,7 +16,7 @@ runWin :: Win -> GE ()
 runWin w = saveGuiRoot w
 
 runFl :: Gui -> GE ()
-runFl g = runWin (Win "" (Rect 50 50 800 600) g)
+runFl g = runWin (Win "" Nothing g)
 
 type Reader a = SE a
 type Writer a = a -> SE ()

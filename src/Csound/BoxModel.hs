@@ -3,7 +3,7 @@ module Csound.BoxModel(
     Rect(..), Offset(..), AbsScene(..), Scene(..),        
     draw,
     hor, ver, sca, margin, padding, space, prim,
-    appendContext, cascade
+    appendContext, cascade, boundingRect
 ) where
 
 import Control.Monad.Trans.State.Strict
@@ -169,4 +169,37 @@ cascade onElem onEmptyScene onGroup onCtx ctx x = case x of
     Group as    -> onGroup (fmap (rec ctx) as)
     Ctx c a     -> rec (onCtx c ctx) a
     where rec = cascade onElem onEmptyScene onGroup onCtx
+
+-----------------------------------------------
+-- calculate bounding rect
+
+zeroRect :: Rect
+zeroRect = Rect 0 0 0 0
+
+boundingRect :: Scene ctx Rect -> Rect
+boundingRect x = case x of
+    Prim a      -> a
+    Space       -> zeroRect
+    Scale d a   -> scaleRect d $ boundingRect a
+    Hor ofs as  -> appHorOffset (length as) ofs $ horMerge $ fmap boundingRect as    
+    Ver ofs as  -> appVerOffset (length as) ofs $ verMerge $ fmap boundingRect as    
+    Context _ a -> boundingRect a
+    where
+        appHorOffset n offset r = r { width  = appOffset n offset (width r)
+                                    , height = appOffset 1 offset (height r) }
+
+        appVerOffset n offset r = r { height = appOffset n offset (height r)
+                                    , width  = appOffset 1 offset (width r) }
+
+        appOffset n offset a = a
+              + 2 * offsetOuter offset 
+              + (max (n - 1) 0) * offsetInner offset
+
+        horMerge = foldr iter zeroRect
+            where iter r1 r2 = r1 { width  = width r1 + width r2
+                                  , height = max (height r1) (height r2) }
+
+        verMerge = foldr iter zeroRect
+            where iter r1 r2 = r1 { height = height r1 + height r2
+                                  , width  = max (width r1) (width r2) }
 
