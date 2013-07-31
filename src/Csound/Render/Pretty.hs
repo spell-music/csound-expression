@@ -1,5 +1,6 @@
 module Csound.Render.Pretty (
-    Doc, int, double, text, empty, ($$), vcat, vcatMap, clearSpace,
+    Doc, int, double, text, empty, ($$), hcat, vcat, vcatMap, clearSpace,
+    punctuate, comma,
     verbatimLines,
 
     binaries, unaries, funcs,

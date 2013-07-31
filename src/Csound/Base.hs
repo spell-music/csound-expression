@@ -338,9 +338,8 @@ module Csound.Base(
     --
     -- TODO (you can send me your definitions)
 
-   
     -- ** Opcodes    
-    -- | Some colors to paint our soundscapes.
+    -- | Some colours to paint our soundscapes.
     module Csound.Opcode,
     
     -- ** Patterns
@@ -377,7 +376,7 @@ module Csound.Base(
     -- ** Widgets
     
     -- *** Valuators
-    count, joy, knob, roller, slider, text,
+    count, countSig, joy, knob, roller, slider, text,
 
     -- *** Other widgets
     box, butBank, button, toggle, butBankSig, buttonSig, toggleSig,
@@ -387,7 +386,7 @@ module Csound.Base(
     hor, ver, space, sca, padding, margin, 
     -- ** Properties
     props,
-    Prop(..), BorderType(..), BoxType(..), Color(..),
+    Prop(..), BorderType(..), BoxType(..), Color,
     Rect(..), Span(..), Diap(..), ScaleType(..),
     FontType(..), Emphasis(..), 
     Material(..),
@@ -396,7 +395,7 @@ module Csound.Base(
 
     -- *** Setters
     setBorder, setLabel, setMaterial, setBoxType,
-    setColor1, setColor2, setTextColor,
+    setColor1, setColor2, setColors, setTextColor,
     setFontSize, setFontType, setEmphasis,
     setSliderType, setTextType, setButtonType,
     setOrient, setKnobType

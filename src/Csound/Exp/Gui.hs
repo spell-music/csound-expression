@@ -3,17 +3,24 @@ module Csound.Exp.Gui where
 import Prelude hiding(elem, span)
 
 import Data.Default
+import Data.Maybe(isNothing)
 import Data.Monoid
+
+import Data.Colour
+import Data.Colour.Names(white, gray)
+import Data.Colour.SRGB
 
 import qualified Data.IntMap as IM
 import qualified Csound.Render.Pretty as P
-import Csound.Render.Pretty(Doc, int, double)
+import Csound.Render.Pretty(Doc, int, double, vcat, hcat, punctuate, comma)
 
 import Csound.Exp hiding (P)
 import qualified Csound.BoxModel as Box
 import Csound.BoxModel(Rect(..))
 
 newtype GuiHandle = GuiHandle { unGuiHandle :: Int }
+
+type Color = Colour Double
 
 data Orient = Hor | Ver
 
@@ -29,14 +36,14 @@ data ScaleType = Linear | Exponential
 
 type Step = Double
 
-data Color = Color Int Int Int
-
 data FontType       = Helvetica | Courier | Times | Symbol | Screen | Dingbats
 data Emphasis       = NoEmphasis | Italic | Bold | BoldItalic
 data KnobType       = ThreeD (Maybe Int) | Pie | Clock | Flat
 data SliderType     = Fill | Engraved | Nice
 data TextType       = NormalText | NoDrag | NoEdit
 data Material       = NoPlastic | Plastic
+data LabelType      = NormalLabel | NoLabel | SymbolLabel 
+                    | ShadowLabel | EngravedLabel | EmbossedLabel
 
 data BoxType    
     = FlatBox | UpBox | DownBox | ThinUpBox | ThinDownBox 
@@ -63,24 +70,29 @@ instance Default TextType       where def = NormalText
 instance Default ButtonType     where def = NormalButton
 instance Default BoxType        where def = FlatBox
 instance Default Material       where def = Plastic
+instance Default LabelType      where def = NormalLabel
+
+data InitMe = InitMe 
+    { initHandle :: Var
+    , initValue  :: Double }
 
 data Elem 
     = GuiVar GuiHandle 
     
     -- valuators
-    | Count  Diap Step (Maybe Step) Double
-    | Joy    Span Span (Double, Double)
-    | Knob   Span Double
-    | Roller Span Step Double
-    | Slider Span Double
-    | Text   Diap Step Double
+    | Count  Diap Step (Maybe Step)
+    | Joy    Span Span
+    | Knob   Span
+    | Roller Span Step
+    | Slider Span
+    | Text   Diap Step
 
     -- other widgets  
     | Box String
     | ButBank Int Int
     | Button
     | Toggle 
-    | Value Double
+    | Value
     | Vkeybd
 
 data Prop
@@ -95,6 +107,7 @@ data Prop
     | SetButtonType ButtonType 
     | SetOrient Orient
     | SetKnobType KnobType
+    | SetLabelType LabelType
 
 newtype Gui = Gui { unGui :: LowGui }
 
@@ -111,15 +124,16 @@ data GuiNode = GuiNode
 
 data ElemWithOuts = ElemWithOuts 
     { elemOuts      :: [Var]
+    , elemInits     :: [InitMe]
     , elemContent   :: Elem }
 
 type ElemOuts = [Var]
 
-fromElem :: ElemOuts -> Elem -> Gui
-fromElem as el = Gui $ Box.prim (ElemWithOuts as el)
+fromElem :: ElemOuts -> [InitMe] -> Elem -> Gui
+fromElem outs inits el = Gui $ Box.prim (ElemWithOuts outs inits el)
 
 fromGuiHandle :: GuiHandle -> Gui
-fromGuiHandle = Gui . Box.prim . ElemWithOuts [] . GuiVar 
+fromGuiHandle = Gui . Box.prim . ElemWithOuts [] [] . GuiVar 
 
 onLowGuis :: ([LowGui] -> LowGui) -> ([Gui] -> Gui)
 onLowGuis f = Gui . f . fmap unGui
@@ -177,26 +191,39 @@ drawGui w = onPanel (winTitle w) panelRect $
             body,
             P.ppProc "FLpanelEnd" []]
     
-drawPrim :: PropCtx -> Rect -> ElemWithOuts -> P.Doc
-drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
+drawPrim :: PropCtx -> Rect -> ElemWithOuts -> Doc
+drawPrim ctx rect elem = vcat 
+    [ drawElemDef ctx rect elem
+    , drawAppearance ctx elem
+    , drawInitVal elem ]
+
+drawAppearance :: PropCtx -> ElemWithOuts -> Doc
+drawAppearance ctx el = maybe P.empty (flip flSetAll ctx)
+    $ getPropHandle $ elemOuts el
+
+drawInitVal :: ElemWithOuts -> Doc
+drawInitVal = vcat . fmap flSetVal_i . elemInits 
+
+drawElemDef :: PropCtx -> Rect -> ElemWithOuts -> Doc
+drawElemDef ctx rectWithoutLabel el = case elemContent el of
     -- valuators
-    Count  diap step1 step2 initVal -> drawCount diap step1 step2 initVal
-    Joy    span1 span2 initVal      -> drawJoy span1 span2 initVal
-    Knob   span initVal             -> drawKnob span initVal
-    Roller span step initVal        -> drawRoller span step initVal
-    Slider span initVal             -> drawSlider span initVal
-    Text   diap step initVal        -> drawText diap step initVal
+    Count  diap step1 step2 -> drawCount diap step1 step2
+    Joy    span1 span2      -> drawJoy span1 span2 
+    Knob   span             -> drawKnob span 
+    Roller span step        -> drawRoller span step 
+    Slider span             -> drawSlider span 
+    Text   diap step        -> drawText diap step 
 
     -- other widgets  
-    Box text                        -> drawBox text 
-    ButBank xn yn                   -> drawButBank xn yn 
-    Button                          -> drawButton 
-    Toggle                          -> drawToggle
-    Value initVal                   -> drawValue initVal
-    Vkeybd                          -> drawVkeybd 
+    Box text                -> drawBox text 
+    ButBank xn yn           -> drawButBank xn yn 
+    Button                  -> drawButton 
+    Toggle                  -> drawToggle
+    Value                   -> drawValue 
+    Vkeybd                  -> drawVkeybd 
 
     -- error
-    GuiVar guiHandle                -> orphanGuiVar guiHandle
+    GuiVar guiHandle        -> orphanGuiVar guiHandle
     where
         rect = clearSpaceForLabel $ rectWithoutLabel
         clearSpaceForLabel a
@@ -205,8 +232,8 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
             where label = getLabel ctx
 
         f = fWithLabel (getLabel ctx)
-        fWithLabel label name args = P.ppMoOpc (fmap P.ppVar outs) name ((P.text $ show $ label) : args)
-        fNoLabel name args = P.ppMoOpc (fmap P.ppVar outs) name args
+        fWithLabel label name args = P.ppMoOpc (fmap P.ppVar $ elemOuts el) name ((P.text $ show $ label) : args)
+        fNoLabel name args = P.ppMoOpc (fmap P.ppVar $ elemOuts el) name args
         frame = frameBy rect
         frameWithoutLabel = frameBy rectWithoutLabel
         frameBy x = fmap int [width x, height x, px x, py x]       
@@ -221,7 +248,7 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
         -- valuators
 
         -- FLcount
-        drawCount diap step1 mStep2 _ = f "FLcount" $
+        drawCount diap step1 mStep2 = f "FLcount" $
             [ imin diap, imax diap
             , double step1, double step2
             , int itype ] 
@@ -233,14 +260,14 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
                     Nothing -> (step1, 2)
 
         -- FLjoy
-        drawJoy (Span dX sX) (Span dY sY) _ = f "FLjoy" $
+        drawJoy (Span dX sX) (Span dY sY) = f "FLjoy" $
             [ imin dX, imax dX, imin dY, imax dY
             , getScale sX, getScale sY
             , noDisp, noDisp 
-            ] ++ frame ++ [noOpc]
+            ] ++ frame
 
         -- FLknob
-        drawKnob span _ = f "FLknob" $ 
+        drawKnob span = f "FLknob" $ 
             drawSpan span ++ [getKnobType ctx, noDisp] 
             ++ fmap int knobFrame ++ getKnobCursorSize ctx            
             where 
@@ -254,19 +281,19 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
                 d = div (abs $ h - w) 2 
 
         -- FLroller
-        drawRoller (Span d s) step _ = f "FLroller" $
+        drawRoller (Span d s) step = f "FLroller" $
             [ imin d, imax d, double step
             , getScale s, getRollerType (getDefOrient rect) ctx, noDisp
             ] ++ frame
 
         -- FLslider
-        drawSlider span _ = f "FLslider" $ 
+        drawSlider span = f "FLslider" $ 
             drawSpan span 
             ++ [getSliderType (getDefOrient rect) ctx, noDisp] 
             ++ frame
 
         -- FLtext
-        drawText diap step _ = f "FLtext" $ 
+        drawText diap step = f "FLtext" $ 
             [imin diap, imax diap, double step, getTextType ctx] ++ frame
 
         -----------------------------------------------------------------------
@@ -286,7 +313,7 @@ drawPrim ctx rectWithoutLabel (ElemWithOuts outs elem) = case elem of
         drawToggle = f "FLbutton" $ [int 1, int 0, getToggleType ctx] ++ frameWithoutLabel ++ [noOpc]
 
         -- FLvalue
-        drawValue _ = f "FLvalue" frame 
+        drawValue = f "FLvalue" frame 
 
         -- FLvkeybd
         drawVkeybd = fWithLabel "" "FLvkeybd" frame  
@@ -298,6 +325,7 @@ data PropCtx = PropCtx
     { ctxBorder       :: Maybe BorderType
     , ctxLabel        :: Maybe String
     , ctxMaterial     :: Maybe Material
+    , ctxLabelType    :: Maybe LabelType
     , ctxBoxType      :: Maybe BoxType
     , ctxColor1       :: Maybe Color
     , ctxColor2       :: Maybe Color
@@ -314,13 +342,14 @@ data PropCtx = PropCtx
 instance Default PropCtx where
     def = PropCtx Nothing Nothing Nothing Nothing Nothing Nothing
                   Nothing Nothing Nothing Nothing Nothing Nothing
-                  Nothing Nothing Nothing
+                  Nothing Nothing Nothing Nothing
    
 setPropCtx :: Prop -> PropCtx -> PropCtx 
 setPropCtx p x = case p of
             SetBorder       a -> x { ctxBorder = Just a }
             SetLabel        a -> x { ctxLabel  = Just a }
             SetMaterial     a -> x { ctxMaterial = Just a }
+            SetLabelType    a -> x { ctxLabelType = Just a }
             SetBoxType      a -> x { ctxBoxType = Just a }
             SetColor1       a -> x { ctxColor1 = Just a }
             SetColor2       a -> x { ctxColor2 = Just a }
@@ -350,6 +379,15 @@ getScale :: ScaleType -> Doc
 getScale x = int $ case x of
     Linear      -> 0
     Exponential -> -1
+
+getLabelType :: PropCtx -> Doc
+getLabelType = intProp ctxLabelType $ \x -> case x of
+    NormalLabel     -> 0
+    NoLabel         -> 1
+    SymbolLabel     -> 2
+    ShadowLabel     -> 3
+    EngravedLabel   -> 4
+    EmbossedLabel   -> 5
 
 getDefOrient :: Rect -> Orient
 getDefOrient r 
@@ -395,8 +433,6 @@ getTextType = intProp ctxTextType $ \x -> case x of
 getBoxType :: PropCtx -> Doc
 getBoxType = intProp ctxBoxType $ succ . fromEnum
 
-
-
 getFontSize :: PropCtx -> Doc 
 getFontSize  = int . getIntFontSize 
 
@@ -428,17 +464,33 @@ getButtonType ctx = int $ appMaterial ctx 1
        
 getToggleType :: PropCtx -> Doc
 getToggleType ctx = ($ ctx) $ intProp ctxButtonType $ \x -> 
-    appMaterial ctx $ case x of
+    reactOnNoPlasticForRoundBug $ appMaterial ctx $ case x of
         NormalButton    -> 2
         LightButton     -> 2
         CheckButton     -> 3
         RoundButton     -> 4   
+    where reactOnNoPlasticForRoundBug x = case x of
+            24 -> 4
+            _  -> x
+
 
 appMaterial :: PropCtx -> Int -> Int
 appMaterial ctx = case maybeDef $ ctxMaterial ctx of
     Plastic   -> (+ 20)
     NoPlastic -> id
-    
+  
+getColor1, getColor2, getTextColor :: PropCtx -> Doc
+
+getColor1       = genGetColor gray  ctxColor1
+getColor2       = genGetColor white ctxColor2
+getTextColor    = genGetColor black ctxTextColor
+
+genGetColor :: Color -> (PropCtx -> Maybe Color) -> PropCtx -> Doc
+genGetColor defColor select ctx = colorToDoc $ maybe defColor id $ select ctx
+    where colorToDoc col = hcat $ punctuate comma 
+            $ fmap (channelToDoc col) [channelRed, channelGreen, channelBlue]        
+          channelToDoc col chn = int $ fromEnum $ chn $ toSRGB24 $ col  
+
 -----------------------------------------------------------------
 -- handy shortcuts
     
@@ -451,6 +503,9 @@ setBorder = setProp . SetBorder
 setLabel :: String -> Gui -> Gui
 setLabel = setProp . SetLabel
 
+setLabelType :: LabelType -> Gui -> Gui
+setLabelType = setProp . SetLabelType
+
 setMaterial :: Material -> Gui -> Gui
 setMaterial = setProp . SetMaterial
 
@@ -462,6 +517,9 @@ setColor1 = setProp . SetColor1
 
 setColor2 :: Color -> Gui -> Gui
 setColor2 = setProp . SetColor2
+
+setColors :: Color -> Color -> Gui -> Gui
+setColors primary secondary = setColor1 primary . setColor2 secondary
 
 setTextColor :: Color -> Gui -> Gui
 setTextColor = setProp . SetTextColor
@@ -515,12 +573,12 @@ mapWithOrient f = iter Hor
 bestElemSizes :: Orient -> Elem -> (Int, Int)
 bestElemSizes orient x = case x of
     -- valuators
-    Count   _ _ _ _ -> (200, 30)
-    Joy     _ _ _   -> (400, 400)  
-    Knob    _ _     -> (200, 200)
-    Roller  _ _ _   -> inHor (300, 30)
-    Slider  _ _     -> inHor (500, 30)
-    Text    _ _ _   -> (150, 30)
+    Count   _ _ _   -> (150, 25)
+    Joy     _ _     -> (300, 300)  
+    Knob    _       -> (150, 150)
+    Roller  _ _     -> inVer (250, 25)
+    Slider  _       -> inVer (450, 25)
+    Text    _ _     -> (150, 30)
 
     -- other widgets  
     Box     text    -> 
@@ -528,17 +586,17 @@ bestElemSizes orient x = case x of
             numOfLines = succ $ div (length text) symbolsPerLine
         in  (xBox 15 symbolsPerLine, yBox 15 numOfLines)            
 
-    ButBank xn yn   -> (xn * 80, yn * 25)
-    Button          -> (80, 25) 
-    Toggle          -> (80, 25) 
-    Value   _       -> (100, 20)
+    ButBank xn yn   -> (xn * 70, yn * 25)
+    Button          -> (70, 25) 
+    Toggle          -> (70, 25) 
+    Value           -> (90, 20)
     Vkeybd          -> (1280, 240)
     
     -- error
     GuiVar h        -> orphanGuiVar h
-    where inHor (a, b) = case orient of
-            Hor -> (a, b)
-            Ver -> (b, a)
+    where inVer (a, b) = case orient of
+            Ver -> (a, b)
+            Hor -> (b, a)
 
 ------------------------------------------------------------
 -- FLbox font coefficients
@@ -553,8 +611,47 @@ yLabelBox :: Int -> Int
 yLabelBox fontSize = fontSize - 5
 
 ------------------------------------------------------------
+-- set properties
+
+flSetAll :: Var -> PropCtx -> Doc
+flSetAll handle ctx = P.vcat $ fmap (\f -> f handle ctx)
+    [ flSetColor, flSetColor2, flSetTextColor
+    , flSetTextSize, flSetTextType, flSetFont ]
+
+flSetColor, flSetColor2, flSetTextColor, flSetTextSize, flSetTextType,     
+    flSetFont :: Var -> PropCtx -> Doc
+
+flSetProp :: String 
+    -> (PropCtx -> Maybe a) 
+    -> (PropCtx -> Doc) 
+    -> Var -> PropCtx -> Doc
+flSetProp name isDef select handle ctx 
+    | isNothing $ isDef ctx = P.empty
+    | otherwise             = P.ppProc name [select ctx, P.ppVar handle]    
+
+flSetColor        = flSetProp "FLsetColor"        ctxColor1       getColor1
+flSetColor2       = flSetProp "FLsetColor2"       ctxColor2       getColor2
+flSetTextColor    = flSetProp "FLsetTextColor"    ctxTextColor    getTextColor
+flSetTextSize     = flSetProp "FLsetTextSize"     (const $ Just (15 :: Int)) getFontSize
+flSetTextType     = flSetProp "FLsetTextType"     ctxLabelType    getLabelType
+flSetFont         = flSetProp "FLsetFont"         ctxFontType     getFontType
+
+flSetVal_i :: InitMe -> Doc
+flSetVal_i (InitMe handle v0) = P.ppProc "FLsetVal_i" [double v0, P.ppVar handle]
+
+------------------------------------------------------------
+-- extract handle.Hor
+
+getPropHandle :: [Var] -> Maybe Var
+getPropHandle xs = case xs of
+    [] -> Nothing
+    _  -> Just (last xs)
+
+------------------------------------------------------------
 -- error messages
 
 orphanGuiVar :: GuiHandle -> a
 orphanGuiVar (GuiHandle n) = error $ "orphan GuiHandle: " ++ show n
+
+
 
