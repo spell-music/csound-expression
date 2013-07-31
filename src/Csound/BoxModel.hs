@@ -32,7 +32,7 @@ data AbsScene ctx a
     = Elem Rect a
     | EmptyScene 
     | Group [AbsScene ctx a]
-    | Ctx ctx (AbsScene ctx a)
+    | Ctx Rect ctx (AbsScene ctx a)
     deriving (Show)
      
 instance Monoid (AbsScene ctx a) where
@@ -73,7 +73,9 @@ data Offset = Offset
     } deriving (Show)
 
 instance Default Offset where
-    def = Offset 20 20
+    def = Offset 
+            { offsetOuter = 5
+            , offsetInner = 25 }
 
 appendContext :: Monoid ctx => ctx -> Scene ctx a -> Scene ctx a
 appendContext ctx x = case x of
@@ -106,10 +108,11 @@ draw :: Rect -> Scene ctx a -> AbsScene ctx a
 draw rect x = case x of
     Space  -> mempty
     Prim a -> Elem rect a
-    Scale d a -> draw (scaleRect d rect) a
+    Scale _ a -> draw rect a  -- ^ no need to scale the rect we use 
+                              -- scaling factor in the groups (hor/ver)
     Hor off as -> composite (horRects rect) off as
     Ver off as -> composite (verRects rect) off as
-    Context ctx a -> Ctx ctx (draw rect a)
+    Context ctx a -> Ctx rect ctx (draw rect a)
     where 
         composite getRects off as = mconcat $ zipWith draw (getRects off $ factors as) (fmap stripScale as)
    
@@ -138,10 +141,6 @@ intervals off total scales = evalState (mapM next scales') (start total')
 withoutMargin :: Offset -> Interval -> Interval
 withoutMargin off a = Interval (start a + offsetOuter off) (leng a - 2 * offsetOuter off)
 
-scaleRect :: Double -> Rect -> Rect
-scaleRect d (Rect x y w h)  = Rect (f x) (f y) (f w) (f h)
-    where f a = round $ d * fromIntegral a
-
 factors :: [Scene a b] -> [Double]
 factors = fmap factor
     where factor = maybe 1 fst . maybeScale
@@ -161,14 +160,15 @@ cascade ::
        (totalCtx -> Rect -> a -> res) 
     -> res 
     -> ([res] -> res)
+    -> (Rect -> ctx -> res -> res)
     -> (ctx -> totalCtx -> totalCtx)
     -> totalCtx -> AbsScene ctx a -> res
-cascade onElem onEmptyScene onGroup onCtx ctx x = case x of
+cascade onElem onEmptyScene onGroup onCtx updateCtx ctx x = case x of
     Elem r a    -> onElem ctx r a
     EmptyScene  -> onEmptyScene
     Group as    -> onGroup (fmap (rec ctx) as)
-    Ctx c a     -> rec (onCtx c ctx) a
-    where rec = cascade onElem onEmptyScene onGroup onCtx
+    Ctx r c a   -> onCtx r c $ rec (updateCtx c ctx) a
+    where rec = cascade onElem onEmptyScene onGroup onCtx updateCtx
 
 -----------------------------------------------
 -- calculate bounding rect
@@ -180,7 +180,7 @@ boundingRect :: Scene ctx Rect -> Rect
 boundingRect x = case x of
     Prim a      -> a
     Space       -> zeroRect
-    Scale d a   -> scaleRect d $ boundingRect a
+    Scale _ a   -> boundingRect a
     Hor ofs as  -> appHorOffset (length as) ofs $ horMerge $ fmap boundingRect as    
     Ver ofs as  -> appVerOffset (length as) ofs $ verMerge $ fmap boundingRect as    
     Context _ a -> boundingRect a

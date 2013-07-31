@@ -64,7 +64,7 @@ main = dac $ do
     g10 <- j
     g11 <- tb
 
-    let g = setTextColor C.azure $ hor [sca 1.5 $ f $ ver [sca 1.5 $ setTextColor C.green $ ver [setLabel "Amplitude" g1, setLabel "Frequency" g2], g5, g6], g7, setTextColor C.azure $ ver [f $ setTextColor C.blue $ setButtonType RoundButton g11]]
+    let g = setTextColor C.azure $ hor [sca 3 $ sca 1.5 $ f $ ver [setLabel "Amplitude" g1, setLabel "Frequency" g2, hor [g5, g6]], setBorder ThinDown $ ver [g7, setTextColor C.azure $ ver [f $ setTextColor C.blue $ setButtonType RoundButton g11], sca 2 space ]]
     
     runFl g
     return ()

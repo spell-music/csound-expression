@@ -2,6 +2,7 @@ module Csound.Exp.Gui where
 
 import Prelude hiding(elem, span)
 
+import Control.Applicative((<|>))
 import Data.Default
 import Data.Maybe(isNothing)
 import Data.Monoid
@@ -56,6 +57,7 @@ data BoxType
 data BorderType
     = NoBorder | DownBoxBorder | UpBoxBorder | EngravedBorder 
     | EmbossedBorder | BlackLine | ThinDown | ThinUp
+    deriving (Enum)
 
 data ButtonType = NormalButton | LightButton | CheckButton | RoundButton
 
@@ -95,9 +97,17 @@ data Elem
     | Value
     | Vkeybd
 
+data Props = Props 
+    { propsBorder   :: Maybe BorderType
+    , otherProps    :: [Prop] }
+
+instance Monoid Props where
+    mempty = Props Nothing []
+    mappend a b = Props { propsBorder = (propsBorder a) <|> (propsBorder b)
+                        , otherProps  = mappend (otherProps a) (otherProps b) }
+    
 data Prop
-    = SetBorder BorderType
-    | SetLabel String
+    = SetLabel String
     | SetMaterial Material
     | SetBoxType BoxType
     | SetColor1 Color | SetColor2 Color | SetTextColor Color
@@ -111,7 +121,7 @@ data Prop
 
 newtype Gui = Gui { unGui :: LowGui }
 
-type LowGui = Box.Scene [Prop] ElemWithOuts
+type LowGui = Box.Scene Props ElemWithOuts
 
 data Win = Win 
     { winTitle :: String 
@@ -160,7 +170,10 @@ margin :: Int -> Gui -> Gui
 margin n = onLowGui1 (Box.margin n)
 
 props :: [Prop] -> Gui -> Gui
-props ps = onLowGui1 (Box.appendContext ps)
+props ps = onLowGui1 (Box.appendContext (Props Nothing ps))
+
+setBorder :: BorderType -> Gui -> Gui
+setBorder a = onLowGui1 (Box.appendContext (Props (Just a) []))
 
 type GuiMap = IM.IntMap Gui
 
@@ -173,7 +186,6 @@ restoreTree m x = Gui $ (unGui x) >>= rec
             GuiVar h -> unGui $ restoreTree m $ m IM.! unGuiHandle h
             _        -> return elem
 
-
 drawGui :: Win -> P.Doc
 drawGui w = onPanel (winTitle w) panelRect $ 
     renderAbsScene $ Box.draw (withZeroOffset $ panelRect) $ unGui $ winGui w
@@ -183,8 +195,18 @@ drawGui w = onPanel (winTitle w) panelRect $
 
         withZeroOffset r = r { px = 0, py = 0 }
 
-        renderAbsScene = Box.cascade drawPrim P.empty P.vcat setProps def
-            where setProps ps = appEndo $ mconcat $ fmap (Endo . setPropCtx) ps
+        renderAbsScene = Box.cascade drawPrim P.empty P.vcat onCtx setProps def
+            where
+                setProps ps = appEndo $ mconcat $ fmap (Endo . setPropCtx) (otherProps ps)
+                
+                onCtx r ps res = maybe res (\borderType -> drawBorder borderType r res) (propsBorder ps)
+                
+        drawBorder borderType rect a = vcat 
+            [ P.ppProc "FLgroup" $ ((P.text $ show "") : frame) ++ [borderAsInt borderType]
+            , a
+            , P.ppProc "FLgroupEnd" []]
+            where borderAsInt = int . fromEnum
+                  frame = fmap int [width rect, height rect, px rect, py rect]                             
 
         onPanel title rect body = P.vcat [
             P.ppProc "FLpanel" [P.text $ show title, P.int $ width rect, P.int $ height rect],
@@ -228,7 +250,7 @@ drawElemDef ctx rectWithoutLabel el = case elemContent el of
         rect = clearSpaceForLabel $ rectWithoutLabel
         clearSpaceForLabel a
             | label == ""   = a
-            | otherwise     = a { height = height a - yLabelBox (getIntFontSize ctx) }
+            | otherwise     = a { height = max 20 $ height a - yLabelBox (getIntFontSize ctx) }
             where label = getLabel ctx
 
         f = fWithLabel (getLabel ctx)
@@ -322,8 +344,7 @@ drawElemDef ctx rectWithoutLabel el = case elemContent el of
 -- cascading context, here we group properties by type
 
 data PropCtx = PropCtx 
-    { ctxBorder       :: Maybe BorderType
-    , ctxLabel        :: Maybe String
+    { ctxLabel        :: Maybe String
     , ctxMaterial     :: Maybe Material
     , ctxLabelType    :: Maybe LabelType
     , ctxBoxType      :: Maybe BoxType
@@ -342,11 +363,10 @@ data PropCtx = PropCtx
 instance Default PropCtx where
     def = PropCtx Nothing Nothing Nothing Nothing Nothing Nothing
                   Nothing Nothing Nothing Nothing Nothing Nothing
-                  Nothing Nothing Nothing Nothing
+                  Nothing Nothing Nothing 
    
 setPropCtx :: Prop -> PropCtx -> PropCtx 
 setPropCtx p x = case p of
-            SetBorder       a -> x { ctxBorder = Just a }
             SetLabel        a -> x { ctxLabel  = Just a }
             SetMaterial     a -> x { ctxMaterial = Just a }
             SetLabelType    a -> x { ctxLabelType = Just a }
@@ -497,9 +517,6 @@ genGetColor defColor select ctx = colorToDoc $ maybe defColor id $ select ctx
 setProp :: Prop -> Gui -> Gui
 setProp p = props [p]
 
-setBorder :: BorderType -> Gui -> Gui
-setBorder = setProp . SetBorder
-
 setLabel :: String -> Gui -> Gui
 setLabel = setProp . SetLabel
 
@@ -573,12 +590,12 @@ mapWithOrient f = iter Hor
 bestElemSizes :: Orient -> Elem -> (Int, Int)
 bestElemSizes orient x = case x of
     -- valuators
-    Count   _ _ _   -> (150, 25)
-    Joy     _ _     -> (300, 300)  
-    Knob    _       -> (150, 150)
-    Roller  _ _     -> inVer (250, 25)
-    Slider  _       -> inVer (450, 25)
-    Text    _ _     -> (150, 30)
+    Count   _ _ _   -> (150, 35)
+    Joy     _ _     -> (350, 350)  
+    Knob    _       -> (200, 200)
+    Roller  _ _     -> inVer (300, 35)
+    Slider  _       -> inVer (500, 35)
+    Text    _ _     -> (150, 35)
 
     -- other widgets  
     Box     text    -> 
@@ -586,10 +603,10 @@ bestElemSizes orient x = case x of
             numOfLines = succ $ div (length text) symbolsPerLine
         in  (xBox 15 symbolsPerLine, yBox 15 numOfLines)            
 
-    ButBank xn yn   -> (xn * 70, yn * 25)
-    Button          -> (70, 25) 
-    Toggle          -> (70, 25) 
-    Value           -> (90, 20)
+    ButBank xn yn   -> (xn * 80, yn * 35)
+    Button          -> (80, 35) 
+    Toggle          -> (80, 35) 
+    Value           -> (100, 35)
     Vkeybd          -> (1280, 240)
     
     -- error
