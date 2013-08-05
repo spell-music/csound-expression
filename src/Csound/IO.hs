@@ -1,8 +1,18 @@
 module Csound.IO (
+    -- * Options
+    -- | We can set some csound options.
+    Channel, CtrlId, CsdOptions(..), module Data.Default,
+
+    -- * Rendering
     renderCsd, renderCsdBy, 
-    writeCsd, writeCsdBy, playCsd, playCsdBy, 
-    dac, dacBy,
+    writeCsd, writeCsdBy, 
+    
+    -- * Playing the sound
+    playCsd, playCsdBy, 
     mplayer, mplayerBy, totem, totemBy,
+
+    -- * Live performance
+    dac, dacBy,
 ) where
 
 
@@ -10,7 +20,7 @@ import System.Cmd(system)
 import Data.Default
 
 import Csound.Exp.GE(GE)
-import Csound.Exp.Options(CsdOptions)
+import Csound.Exp.Options
 import Csound.Render(render)
 import Csound.Exp.Tuple(Out)
 

@@ -76,14 +76,30 @@ Library
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
+
         Csound.Air
+
+        Csound.Types
         Csound.Tab
-        Csound.LowLevel
+        Csound.IO
+
+        Csound.Control
+        Csound.Control.Mix
+        Csound.Control.Evt
+        Csound.Control.Midi
+
+        Csound.Gui
+        Csound.Gui.Widget
+        Csound.Gui.Props
+        Csound.Gui.Layout
+        
         Csound.Opcode
         Csound.Opcode.Basic
         Csound.Opcode.Advanced
         Csound.Opcode.Data
         Csound.Opcode.Interaction           
+
+        Csound.LowLevel
   Other-Modules:
         Csound.Exp        
         Csound.Exp.Wrapper
@@ -104,8 +120,6 @@ Library
         Csound.Exp.EventList
        
         Csound.BoxModel
-
-        Csound.IO
 
         Csound.Tfm.DeduceTypes       
         Csound.Tfm.UnfoldMultiOuts

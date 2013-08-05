@@ -232,198 +232,39 @@ module Csound.Base(
     -- * Lots of wonderful real-time examples by Iain McCurdy: <http://iainmccurdy.org/csound.html>
     --
     -- * Outdated but short manual on Csound <http://cara.gsu.edu/courses/csound_users_seminar/csound/3.46/CsIntro.html>
-   
-    -- * Types
-    Val, arity,
-    
-    -- ** Constants     
-    -- | A constant value doesn't change while instrument is playing a note.
-    -- Only constants can be passed as arguments to the instruments.
-    D, Str,
-    withInits,
-    
-    -- ** Tables
-    -- | In Csound tables can be treated as primitive values. They can be passed to instruments in the score events.
-    -- There are limited set of functions which you can use to make new tables. Look at the following module for details:
-    module Csound.Tab,
-    
-    -- ** Signals
-    -- | Signals can be audio or control rate. Rate is derived from the code.
-    -- If there are rate-collisions, values will be converted to the right rates.    
-    -- For example, if you are trying to apply an opcode that expects control
-    -- rate signal to some audio rate signal, the signal will be downsampled behind the scenes.
-    Sig, Spec,
-   
-    -- ** Booleans
-    -- | Use functions from the module "Data.Boolean" to make boolean expressions.
-    BoolSig, BoolD,  
-    ifTuple, caseTuple, guardedTuple,
-    ifArg, caseArg, guardedArg,
-    module Data.Boolean,
 
-    -- ** Side effects
-    SE,    
+    -- * What's next?
 
-    -- ** Tuples
-    CsdTuple,
-    
-    -- *** Multiple outputs helpers
-    -- | Functions to help the type checker specify the number of outputs (for opcodes like 'Csound.Opcodes.Data.diskin2').
-    -- For example,
-    -- 
-    -- > (left, right) = ar2 $ diskin2 (str "cool-sound.wav") 1
+    -- | Now you can learn about:
     --
-    -- Without 'Csound.Base.ar2' we have to specify the type of the output explicitly.
-    ar1, ar2, ar4, ar6, ar8,
-
-    -- ** Converters
-    ToSig(..), ar, kr, ir, sig, double, int, str,          
-        
-    -- * Making a sound
-    
-    -- | Let's make some noise. Sound is build from special container of values from the class 'Csound.Base.Out'.
-    Out,
-    
-    -- ** Handy short-cuts
-    Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
-     
-    -- ** Scores
-    -- | We can define an instrument and tell it to play some notes.
-    Arg(..), ArgMethods, makeArgMethods,
-    Mix, sco, mix, CsdEvent, CsdEventList(..), CsdSco(..),
-    runMix,
-    
-    -- ** Effects
-    effect, effectS,
-    
-    -- ** Globals
-    GE,
-
-    -- ** Midi
-    -- | We can define a midi-instrument. Then we can trigger the instrument with a midi-keyboard.
-    Msg, midi, pgmidi,
-
-    -- ** Events
-    -- | We can trigger instruments with events.
-    Evt(..), Bam, Snap,
-    -- *** Event converters
-    boolToEvt, evtToBool, sigToEvt, 
-    -- *** Main functions
-    filterE, accumE, accumSE, 
-    filterAccumE, filterAccumSE, 
-    snapshot, snaps, stepper, 
-    cycleE, iterateE, repeatE, appendE, mappendE,
-    oneOf, freqOneOf, freqAccum, randDs, randInts, range, listAt,   
-    every,
-    -- *** Instrument invocation
-    schedule, scheduleUntil,
-
-    -- ** Rendering
-    -- | Now we are ready to create a csound-file. The function 'renderCsd' creates a 'String' that
-    -- contains the description of our music. We can save it to a file and compile it with our @csound@
-    -- wizard. 
-    renderCsd, writeCsd, playCsd, dac,
-    
-    -- *** Players (Linux)
-    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
-    mplayer, totem, 
-    
-    -- *** Players (Windows)
-    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    -- * main types of the library ("Csound.Types")
     --
-    -- TODO (you can send me your definitions)
-
-    -- *** Players (OS X)
-    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
+    -- * how to define an instrument and invoke it ("Csound.Control")
     --
-    -- TODO (you can send me your definitions)
+    -- * how to render the csound code and listen the sound or make a live performance ("Csound.IO")
+    --
+    -- * what sound units are ready to use ("Csound.Air" and "Csound.Opcode")
+    --
+    -- * how to twick the parameters during performance with sliders, knobs or buttons ("Csound.Gui")
 
-    -- ** Opcodes    
-    -- | Some colours to paint our soundscapes.
+    module Csound.Types, 
+    module Csound.Control,
+    module Csound.IO,
     module Csound.Opcode,
-    
-    -- ** Patterns
-    -- | Frequently used combinations of opcodes.
     module Csound.Air,        
-
-    -- ** Options
-    -- | We can set some csound options.
-    Channel, CtrlId, CsdOptions(..), module Data.Default,
-        
-    renderCsdBy, writeCsdBy, playCsdBy, dacBy,  
+    module Csound.Gui
     
-    -- *** Players (Linux)
-    -- | Handy short-cuts for function 'Csound.Base.playCsdBy'.
-    mplayerBy, totemBy,
-    
-    
-    -- *** Players (Windows)
-    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
-    --
-    -- TODO (you can send me your definitions)
-
-    -- *** Players (OS X)
-    -- | Handy short-cuts for function 'Csound.Base.playCsd'.
-    --
-    -- TODO (you can send me your definitions)
-    
-    -- * Gui
-    Gui, Win(..), Widget, Sink, Source, Display,
-    widget, sink, source, display,
-    mkWidget, mkSource, mkSink, mkDisplayWith,
-    runFl, runWin, runWins,
-
-    -- ** Widgets
-    
-    -- *** Valuators
-    count, countSig, joy, knob, roller, slider, text,
-
-    -- *** Other widgets
-    box, butBank, button, toggle, butBankSig, buttonSig, toggleSig,
-    value, meter, writeSlider,
-
-    -- ** Layout
-    hor, ver, space, sca, padding, margin, 
-    -- ** Properties
-    props,
-    Prop(..), BorderType(..), BoxType(..), Color,
-    Rect(..), Span(..), Diap(..), ScaleType(..),
-    FontType(..), Emphasis(..), 
-    Material(..),
-    SliderType(..), TextType(..), ButtonType(..),
-    Orient(..), KnobType(..),
-
-    -- *** Setters
-    setBorder, setLabel, setMaterial, setBoxType,
-    setColor1, setColor2, setColors, setTextColor,
-    setFontSize, setFontType, setEmphasis,
-    setSliderType, setTextType, setButtonType,
-    setOrient, setKnobType
 ) where
 
 import Data.Default
-import Data.Boolean
 import Csound.Air 
-import Csound.BoxModel(Rect(..))
 
-import Csound.Exp
-import Csound.Exp.Cons
-import Csound.Exp.Wrapper
-import Csound.Exp.Tuple
-import Csound.Exp.Arg
-import Csound.Tab
-import Csound.Exp.Logic
-import Csound.Exp.GE
-import Csound.Exp.SE
+import Csound.Types
+import Csound.Control
+
 import Csound.Exp.Options
-import Csound.Exp.Mix
-import Csound.Exp.EventList
-import Csound.Exp.Event
-
-import Csound.Exp.Gui
-import Csound.Exp.Widget
+import Csound.Gui
 
 import Csound.Opcode
 import Csound.IO
-
 

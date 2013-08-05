@@ -108,7 +108,7 @@ draw :: Rect -> Scene ctx a -> AbsScene ctx a
 draw rect x = case x of
     Space  -> mempty
     Prim a -> Elem rect a
-    Scale _ a -> draw rect a  -- ^ no need to scale the rect we use 
+    Scale _ a -> draw rect a  -- no need to scale the rect we use 
                               -- scaling factor in the groups (hor/ver)
     Hor off as -> composite (horRects rect) off as
     Ver off as -> composite (verRects rect) off as
