@@ -3,7 +3,7 @@ module Csound.BoxModel(
     Rect(..), Offset(..), AbsScene(..), Scene(..),        
     draw,
     hor, ver, sca, margin, padding, space, prim,
-    appendContext, cascade, boundingRect
+    appendContext, cascade, boundingRect, zeroRect
 ) where
 
 import Control.Monad.Trans.State.Strict
@@ -14,7 +14,8 @@ data Interval = Interval
     { start :: Int
     , leng  :: Int 
     } deriving (Show)
-    
+   
+-- | A rectangle.
 data Rect = Rect 
     { px        :: Int
     , py        :: Int

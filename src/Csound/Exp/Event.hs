@@ -1,6 +1,6 @@
 {-# Language TypeFamilies, FlexibleContexts, TupleSections #-}
 module Csound.Exp.Event(
-    Evt(..), Trig, Snap, Bam, readSnap,
+    Evt(..), Snap, Bam, readSnap,
     -- * core funs
     boolToEvt, evtToBool, sigToEvt, filterE, 
     accumE, accumSE, filterAccumSE, filterAccumE, snapshot, snaps,
@@ -13,21 +13,22 @@ import Data.Monoid
 import Data.Boolean
 
 import Csound.Exp
+import Csound.Exp.GE
 import Csound.Exp.Wrapper
 import Csound.Exp.Logic
 import Csound.Exp.Tuple
 import Csound.Exp.Arg
-import Csound.Exp.GE
 import Csound.Exp.SE
 import Csound.Exp.Ref
 import Csound.Exp.Instr
-import Csound.Exp.Numeric
 
 import Csound.Render.Channel(event, instrOn, instrOff, ihold, turnoff, follow, changed)
 
+-- | An action for the event stream
 type Bam a = a -> SE ()
-type Trig = Evt ()
 
+-- | Event stream of type a is an action (@a -> SE ()@) that we trigger 
+-- when an event happens.
 newtype Evt a = Evt { runEvt :: Bam a -> SE () }
 
 -- | Converts booleans to events.
@@ -75,6 +76,9 @@ filterAccumSE s0 update evt = Evt $ \bam -> do
         when (toBoolSig isOn) $ bam b
         writeSt s2
 
+-- | Accumulator with filtering. It can skip the events from the event stream.
+-- If the third element of the triple equals to 1 then we should include the
+-- event in the resulting stream. If the element equals to 0 we skip the event.
 filterAccumE :: (CsdTuple s) => s -> (a -> s -> (BoolD, b, s)) -> Evt a -> Evt b
 filterAccumE s0 update = filterAccumSE s0 $ \a s -> return $ update a s
 
@@ -89,6 +93,8 @@ toBoolSig (BoolD expr) = BoolSig expr
 readSnap :: (CsdTuple (Snap a), CsdTuple a) => a -> Snap a
 readSnap = toCsdTuple . fromCsdTuple
 
+-- | Constructs an event stream that contains values from the
+-- given signal. Events happens only when the signal changes.
 snaps :: Sig -> Evt D
 snaps asig = snapshot const asig trig
     where trig = sigToEvt $ changed [asig]
@@ -96,6 +102,21 @@ snaps asig = snapshot const asig trig
 -------------------------------------------------------------------
 -- snap 
 
+-- | A snapshot of the signal. It converts a type of the signal to the 
+-- type of the value in the given moment. Instances:
+--
+--
+-- > type instance Snap D   = D
+-- > type instance Snap Str = Str
+-- > type instance Snap Tab = Tab
+-- >
+-- > type instance Snap Sig = D
+-- > 
+-- > type instance Snap (a, b) = (Snap a, Snap b)
+-- > type instance Snap (a, b, c) = (Snap a, Snap b, Snap c)
+-- > type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
+-- > type instance Snap (a, b, c, d, e) = (Snap a, Snap b, Snap c, Snap d, Snap e)
+-- > type instance Snap (a, b, c, d, e, f) = (Snap a, Snap b, Snap c, Snap d, Snap e, Snap f)
 type family Snap a :: *
 
 type instance Snap D   = D
@@ -107,10 +128,15 @@ type instance Snap Sig = D
 type instance Snap (a, b) = (Snap a, Snap b)
 type instance Snap (a, b, c) = (Snap a, Snap b, Snap c)
 type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
+type instance Snap (a, b, c, d, e) = (Snap a, Snap b, Snap c, Snap d, Snap e)
+type instance Snap (a, b, c, d, e, f) = (Snap a, Snap b, Snap c, Snap d, Snap e, Snap f)
 
 --------------------------------------------------
 --
 
+-- | Converts an event to boolean signal. It forgets
+-- everything about the event values. Signal equals to one when 
+-- an event happens and zero otherwise.
 evtToBool :: Evt a -> SE BoolSig
 evtToBool evt = do
     var <- newLocalVar Kr (double 0)
@@ -131,8 +157,10 @@ stepper v0 evt = do
 scheduleHold :: (CsdTuple a, Arg a, Out b, Out (NoSE b)) => (a -> b) -> Evt a -> GE (NoSE b)
 scheduleHold instr evt = schedule instr $ fmap (-1, ) evt
 
-autoOff :: (Out a) => a -> SE a
-autoOff a = do
+-- | This action turns of an instrument when signal equals to zero for
+-- a long ehough time (the first argument is responsible for the time period in seconds).
+autoOff :: (Out a) => D -> a -> SE a
+autoOff dt a = do
     ihold 
     b <- trig
     when b
@@ -143,7 +171,6 @@ autoOff a = do
         -- we should turn the instrument off
         trig = fmap (( <* eps) . kr . flip follow dt . l2) $ toOut a
 
-        dt = 3
         eps = 1e-5
 
         -- square root norm

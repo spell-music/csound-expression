@@ -27,6 +27,9 @@ import Csound.Exp.Options
 import Csound.Exp.EventList
 import Csound.Exp.Ref
 
+-- | Special type that represents a scores of sound signals.
+-- If an instrument is triggered with the scores the result is wrapped
+-- in the value of this type. 
 newtype Mix a = Mix { unMix :: GE M } 
 
 data M 
@@ -150,6 +153,7 @@ rescaleCsdEventM (start, dur, evt) = (start, dur, phi evt)
 -----------------------------------------------------------------------------------
 -- render scores
 
+-- | Renders a scores to global variable that contains a resulting sound signals.
 runMix :: (Out (NoSE a), Out a, CsdSco f) => f (Mix a) -> GE (NoSE a)
 runMix sigs = do    
     saveDuration (csdEventListDur events)

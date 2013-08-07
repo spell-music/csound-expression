@@ -5,7 +5,7 @@ module Csound.Render.Options(
 import Csound.Exp(InstrId(..))
 import Csound.Exp.Options
 import Csound.Exp.GE
-import Csound.Exp.Gui(Win, drawGui)
+import Csound.Exp.Gui(Panel, drawGui)
 import Csound.Exp.SE(execSE)
 import Csound.Render.Pretty
 import Csound.Render.Instr(renderInstrBody)
@@ -16,8 +16,8 @@ renderFlags = text . flags
 
 type Nchnls = Int
 
-renderInstr0 :: Nchnls -> [MidiAssign] -> [Global] -> [Win] -> CsdOptions -> Doc
-renderInstr0 nchnls massignTable globalVars wins opt = ppInstr0 $ [
+renderInstr0 :: Nchnls -> [MidiAssign] -> [Global] -> [Panel] -> CsdOptions -> Doc
+renderInstr0 nchnls massignTable globalVars panels opt = ppInstr0 $ [
     stmt "sr"    $ sampleRate opt,
     stmt "ksmps" $ blockSize opt,
     stmt "nchnls" nchnls,   
@@ -33,8 +33,8 @@ renderInstr0 nchnls massignTable globalVars wins opt = ppInstr0 $ [
           stmtInitc7 (chn, ctl, val) = ppProc "initc7" [int chn, int ctl, double val]
             
           guiStmt 
-            | null wins = empty 
-            | otherwise = (vcat $ fmap drawGui wins) $$ text "FLrun"
+            | null panels = empty 
+            | otherwise   = (vcat $ fmap drawGui panels) $$ text "FLrun"
   
 renderMidiAssign :: MidiAssign -> Doc
 renderMidiAssign a = ppProc opcode $ [int $ midiAssignChannel a, int $ instrIdCeil $ midiAssignInstr a] ++ auxParams

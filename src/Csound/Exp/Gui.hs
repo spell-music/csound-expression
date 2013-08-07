@@ -1,4 +1,31 @@
-module Csound.Exp.Gui where
+module Csound.Exp.Gui (
+    Panel(..), Win(..), GuiNode(..), GuiHandle(..), Gui(..),
+    Elem(..), InitMe(..),
+    restoreTree, guiMap, mapGuiOnPanel, fromElem, fromGuiHandle,
+    drawGui,
+
+    -- * Layout
+    hor, ver, space, sca, horSca, verSca, 
+    padding, margin,
+    -- * Props
+    props, forceProps,
+    Prop(..), BorderType(..), Color,
+    Rect(..), FontType(..), Emphasis(..), 
+    Material(..), Orient(..), LabelType(..),
+    -- ** Setters
+    -- | Handy short-cuts for the function @props@.
+    setBorder, setLabel, setMaterial, setLabelType,
+    setColor1, setColor2, setColors, setTextColor,
+    setFontSize, setFontType, setEmphasis, setOrient,
+
+    -- * Widgets
+    Diap(..), Step, ScaleType(..), Span(..),
+    KnobType(..), setKnobType,
+    SliderType(..), setSliderType,
+    TextType(..), setTextType,
+    BoxType(..), setBoxType,
+    ButtonType(..), setButtonType
+) where
 
 import Prelude hiding(elem, span)
 
@@ -21,14 +48,23 @@ import Csound.BoxModel(Rect(..))
 
 newtype GuiHandle = GuiHandle { unGuiHandle :: Int }
 
+-- | The Csound colours. 
 type Color = Colour Double
 
+-- | The orientation of the widget (slider, roller). This property is 
+-- never needs to be set in practice. If this property is not set then 
+-- default orientation is calculated from the bounding box of the widget.
+-- If the width is greater than the height then we need to use a horizontal
+-- widget otherwise it should be a vertical one.
 data Orient = Hor | Ver
 
+-- | A value span is a diapason of the value and a type 
+-- of the scale (can be linear or exponential).
 data Span = Span 
     { spanDiap  :: Diap
     , spanScale :: ScaleType }
 
+-- | The diapason of the continuous value.
 data Diap = Diap 
     { diapMin   :: Double 
     , diapMax   :: Double }
@@ -42,10 +78,15 @@ data Emphasis       = NoEmphasis | Italic | Bold | BoldItalic
 data KnobType       = ThreeD (Maybe Int) | Pie | Clock | Flat
 data SliderType     = Fill | Engraved | Nice
 data TextType       = NormalText | NoDrag | NoEdit
+
+-- | The type of the material of the element. It affects sliders and buttons.
 data Material       = NoPlastic | Plastic
+
+-- | Some values are not implemented on the Csound level.
 data LabelType      = NormalLabel | NoLabel | SymbolLabel 
                     | ShadowLabel | EngravedLabel | EmbossedLabel
 
+-- | The type of the box. Some values are not implemented on the Csound level.
 data BoxType    
     = FlatBox | UpBox | DownBox | ThinUpBox | ThinDownBox 
     | EngravedBox | EmbossedBox | BorderBox | ShadowBox
@@ -59,6 +100,13 @@ data BorderType
     | EmbossedBorder | BlackLine | ThinDown | ThinUp
     deriving (Enum)
 
+-- | The type of the button. It affects toggle buttons and button banks.
+--
+-- In Csound buttons and toggle buttons
+-- are constructed with the same function (but with different button types). 
+-- But in this library they are contructed by different functions (@button@ and @toggle@). 
+-- Normal button is a plain old button, but other values specify toggle buttons.
+-- So this property doesn't affect the buttons (since they could be only normal buttons).
 data ButtonType = NormalButton | LightButton | CheckButton | RoundButton
 
 defFontSize :: Int
@@ -105,7 +153,8 @@ instance Monoid Props where
     mempty = Props Nothing []
     mappend a b = Props { propsBorder = (propsBorder a) <|> (propsBorder b)
                         , otherProps  = mappend (otherProps a) (otherProps b) }
-    
+
+-- | Properties of the widgets.
 data Prop
     = SetLabel String
     | SetMaterial Material
@@ -119,9 +168,17 @@ data Prop
     | SetKnobType KnobType
     | SetLabelType LabelType
 
+-- | A visual representation of the GUI-element.
 newtype Gui = Gui { unGui :: LowGui }
 
 type LowGui = Box.Scene Props ElemWithOuts
+
+data Panel 
+    = Single Win
+    | Tabs 
+        { tabsTitle     :: String 
+        , tabsRect      :: Maybe Rect
+        , tabsContent   :: [Win] }
 
 data Win = Win 
     { winTitle :: String 
@@ -145,32 +202,91 @@ fromElem outs inits el = Gui $ Box.prim (ElemWithOuts outs inits el)
 fromGuiHandle :: GuiHandle -> Gui
 fromGuiHandle = Gui . Box.prim . ElemWithOuts [] [] . GuiVar 
 
+mapGuiOnPanel :: (Gui -> Gui) -> Panel -> Panel
+mapGuiOnPanel f x = case x of
+    Single w            -> Single $ mapWin w
+    Tabs title rect ws  -> Tabs title rect $ fmap mapWin ws
+    where mapWin a = a{ winGui = f $ winGui a  }
+
 onLowGuis :: ([LowGui] -> LowGui) -> ([Gui] -> Gui)
 onLowGuis f = Gui . f . fmap unGui
 
 onLowGui1 :: (LowGui -> LowGui) -> (Gui -> Gui)
 onLowGui1 f = Gui . f . unGui 
 
+-- | Horizontal groupping of the elements. All elements are 
+-- placed in the stright horizontal line and aligned by Y-coordinate
+-- and height.
 hor :: [Gui] -> Gui
 hor = onLowGuis Box.hor 
 
+-- | Vertical groupping of the elements. All elements are 
+-- placed in the stright vertical line and aligned by X-coordinate
+-- and width.
 ver :: [Gui] -> Gui
 ver = onLowGuis Box.ver
 
+-- | An empty space.
 space :: Gui
 space = Gui Box.space
 
+-- | Scales an element within the group. It depends on the type
+-- of the alignment (horizontal or vertical) which side of the bounding
+-- box is scaled. If it's a horizontal group then the width is scaled
+-- and height is scaled otherwise.
+--
+-- Every element in the group has a scaling factor. By 
+-- default it equals to one. During rendering all scaling factors are summed
+-- and divided on the sum of all factors. So that factors become weights 
+-- or proportions. This process is called normalization. 
+-- Scaling one element affects not only this element but 
+-- all other elements in the group! 
+--
+-- An example:
+--
+-- One element is twice as large as the other two:
+--
+-- > hor [a, b, sca 2 c]
+--
+-- Why is it so? Let's look at the hidden scaling factors:
+--
+-- > hor [sca 1 a, sca 1 b, sca 2 c]
+--
+-- During rendering we scale all the scaling fators so that
+-- total sum equals to one:
+--
+-- > hor [sca 0.25 a, sca 0.25 b, sca 0.5 c]
 sca :: Double -> Gui -> Gui
 sca d = onLowGui1 (Box.sca d)
 
+-- | Weighted horizontal grouping. 
+-- It takes a list of scaling factors and elements.
+horSca :: [(Double, Gui)] -> Gui
+horSca ps = hor $ fmap (uncurry sca) ps
+
+-- | Weighted vertical grouping. 
+-- It takes a list of scaling factors and elements.
+verSca :: [(Double, Gui)] -> Gui
+verSca ps = ver $ fmap (uncurry sca) ps
+
+-- | Sets the padding of the element. How much empty space
+-- to reserve outside the element.
 padding :: Int -> Gui -> Gui
 padding n = onLowGui1 (Box.padding n)
 
+-- | Sets the margin of the element. How much empty space
+-- to reserve between the elements within the group. It affects
+-- only compound elements.
 margin :: Int -> Gui -> Gui
 margin n = onLowGui1 (Box.margin n)
 
+-- | Sets the properties for a GUI element.
 props :: [Prop] -> Gui -> Gui
 props ps = onLowGui1 (Box.appendContext (Props Nothing ps))
+
+-- | Sets the properties for a GUI element on all levels.
+forceProps :: [Prop] -> Gui -> Gui
+forceProps = error "forceProps: TODO"
 
 setBorder :: BorderType -> Gui -> Gui
 setBorder a = onLowGui1 (Box.appendContext (Props (Just a) []))
@@ -186,13 +302,59 @@ restoreTree m x = Gui $ (unGui x) >>= rec
             GuiVar h -> unGui $ restoreTree m $ m IM.! unGuiHandle h
             _        -> return elem
 
-drawGui :: Win -> P.Doc
-drawGui w = onPanel (winTitle w) panelRect $ 
-    renderAbsScene $ Box.draw (withZeroOffset $ panelRect) $ unGui $ winGui w
-    where
-        panelRect = maybe (shiftBy 50 $ bestRect $ winGui w) id $ winRect w
-            where shiftBy n r = r { px = n + px r, py = n + py r }
+drawGui :: Panel -> Doc
+drawGui x = onPanel (panelTitle x) boundingRect $ case x of
+    Single w    -> drawWin boundingRect w
+    Tabs _ _ ws -> case ws of 
+        [] -> P.empty
+        _  -> vcat $ fmap (uncurry drawTab) tabsRs        
+    where boundingRect = panelRect (fmap fst tabsRs) x
+          tabsRs = tabsRects x  
+    
+          onPanel title rect body = P.vcat [
+             P.ppProc "FLpanel" [P.text $ show title, P.int $ width rect, P.int $ height rect],
+             body,
+             P.ppProc "FLpanelEnd" []]
 
+panelTitle :: Panel -> String
+panelTitle x = case x of
+    Single w        -> winTitle w
+    Tabs title _ _  -> title
+
+panelRect :: [Rect] -> Panel -> Rect
+panelRect rs x = case x of
+    Single w        -> winBoundingRect w
+    Tabs _ mrect _  -> case rs of
+        [] -> Box.zeroRect
+        _  -> maybe (foldr boundingRect (head rs) rs) id mrect
+    where boundingRect a b = Rect { px = x1, py = y1, width = x2 - x1, height = y2 - y1 }
+              where x1 = min (px a) (px b)
+                    y1 = min (py a) (py b)
+                    x2 = max (px a + width a) (px b + width b) 
+                    y2 = max (py a + height a) (py b + height b)                 
+
+tabsRects :: Panel -> [(Rect, Win)]
+tabsRects x = case x of
+    Single _    -> []
+    Tabs _ _ ws -> zip (fmap winBoundingRect ws) ws
+
+winBoundingRect :: Win -> Rect
+winBoundingRect w = maybe (shiftBy 50 $ bestRect $ winGui w) id $ winRect w
+    where shiftBy n r = r { px = n + px r, py = n + py r }      
+
+drawTab :: Rect -> Win -> Doc
+drawTab r w = group (winTitle w) r $ drawWin r w
+    where group title rect body = vcat 
+            [ P.ppProc "FLgroup" $ (P.text $ show title) : rectToFrame rect
+            , body
+            , P.ppProc "FLgroupEnd" []]
+       
+rectToFrame :: Rect -> [Doc]
+rectToFrame rect = fmap int [width rect, height rect, px rect, py rect]                             
+
+drawWin :: Rect -> Win -> Doc
+drawWin panelBoundingRect w = renderAbsScene $ Box.draw (withZeroOffset $ panelBoundingRect) $ unGui $ winGui w
+    where
         withZeroOffset r = r { px = 0, py = 0 }
 
         renderAbsScene = Box.cascade drawPrim P.empty P.vcat onCtx setProps def
@@ -206,13 +368,8 @@ drawGui w = onPanel (winTitle w) panelRect $
             , a
             , P.ppProc "FLgroupEnd" []]
             where borderAsInt = int . fromEnum
-                  frame = fmap int [width rect, height rect, px rect, py rect]                             
-
-        onPanel title rect body = P.vcat [
-            P.ppProc "FLpanel" [P.text $ show title, P.int $ width rect, P.int $ height rect],
-            body,
-            P.ppProc "FLpanelEnd" []]
-    
+                  frame = rectToFrame rect   
+                
 drawPrim :: PropCtx -> Rect -> ElemWithOuts -> Doc
 drawPrim ctx rect elem = vcat 
     [ drawElemDef ctx rect elem
@@ -669,6 +826,4 @@ getPropHandle xs = case xs of
 
 orphanGuiVar :: GuiHandle -> a
 orphanGuiVar (GuiHandle n) = error $ "orphan GuiHandle: " ++ show n
-
-
 

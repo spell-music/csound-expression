@@ -1,3 +1,8 @@
+-- | The module contains functions that invoke instruments. 
+-- An instrument is a function that converts notes ('Csound.Control.Arg')
+-- to signals ('Csound.Control.Outs'). We can trigger an instrument with
+-- scores ('Csound.Control.Mix'), with event stream ('Csound.Control.Evt')
+-- or with midi messages ('Csound.Control.Midi').
 module Csound.Control(    
     -- * Instrument
 
@@ -12,7 +17,7 @@ module Csound.Control(
     Arg(..), ArgMethods, makeArgMethods,
 
     -- * Invocation
-    GE, runMix, schedule, scheduleUntil,
+    GE, runMix, schedule, scheduleUntil, scheduleHold,
 
     -- * Sound sources
     module Csound.Control.Mix,
@@ -25,7 +30,7 @@ import Csound.Exp.Arg
 import Csound.Exp.Wrapper(Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps)
 import Csound.Exp.GE(GE)
 import Csound.Exp.Mix(runMix)
-import Csound.Exp.Event(schedule, scheduleUntil)
+import Csound.Exp.Event(schedule, scheduleUntil, scheduleHold)
 
 -- re-exports
 import Csound.Control.Mix

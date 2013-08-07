@@ -17,7 +17,7 @@ module Csound.Exp.GE(
 
     Globals(..), Global(..), GlobalVarType(..), initGlobals, newGlobalVar, clearGlobals,
     
-    newGuiVar, appendToGui, newGuiHandle, guiHandleToVar, saveGuiRoot, getWins,
+    newGuiVar, appendToGui, newGuiHandle, guiHandleToVar, saveGuiRoot, getPanels,
     guiInstrExp
 ) where
 
@@ -39,10 +39,14 @@ import Csound.Exp.EventList(CsdEvent)
 import Csound.Exp.Wrapper
 import Csound.Exp.Options
 import Csound.Exp.SE
-import Csound.Exp.Gui(Win(..), GuiNode, GuiHandle(..), restoreTree, guiMap)
+import Csound.Exp.Gui(Panel, GuiNode, GuiHandle(..), restoreTree, guiMap, mapGuiOnPanel)
 
 import Csound.Tfm.Tab
 
+-- | GE stands for Global side Effect. It's side effect that happens 
+-- on the global level. We have another type for side effects. It's 'Csound.Types.SE'.
+-- They happen within an instrument. Often this type is used to represent the output sound
+-- signals or GUI-widgets.
 newtype GE a = GE { unGE :: ReaderT CsdOptions (StateT History IO) a }
 
 instance Functor GE where
@@ -238,7 +242,7 @@ data Guis = Guis
     { guiStateNewId     :: Int
     , guiStateInstr     :: SE ()
     , guiStateToDraw    :: [GuiNode] 
-    , guiStateRoots     :: [Win] }
+    , guiStateRoots     :: [Panel] }
 
 instance Default Guis where 
     def = Guis 0 (return ()) [] []
@@ -262,15 +266,15 @@ appendToGui gui act = modifyGuis $ \st -> st
     { guiStateToDraw = gui : guiStateToDraw st
     , guiStateInstr  = guiStateInstr st >> act }
 
-saveGuiRoot :: Win -> GE ()
+saveGuiRoot :: Panel -> GE ()
 saveGuiRoot g = modifyGuis $ \st -> 
     st { guiStateRoots = g : guiStateRoots st }
 
 bumpGuiStateId :: Guis -> (Int, Guis)
 bumpGuiStateId s = (guiStateNewId s, s{ guiStateNewId = succ $ guiStateNewId s })
 
-getWins :: History -> [Win]
-getWins h = fmap (\w -> w { winGui = restoreTree m (winGui w) }) $ guiStateRoots $ guis h 
+getPanels :: History -> [Panel]
+getPanels h = fmap (mapGuiOnPanel (restoreTree m)) $ guiStateRoots $ guis h 
     where m = guiMap $ guiStateToDraw $ guis h
 
 --------------------------------------------------------
@@ -304,8 +308,8 @@ newGlobalVarOnGlobals rate a s =
           g = Global v a
 
 newGlobalVar :: Val a => Rate -> a -> GE Var
-newGlobalVar rate initVal = mkNewGlobalVar rate ty
-    where ty = GlobalVarType AppendOnly ClearableVar (Just $ toE initVal)
+newGlobalVar rate v0 = mkNewGlobalVar rate ty
+    where ty = GlobalVarType AppendOnly ClearableVar (Just $ toE v0)
 
 mkNewGlobalVar :: Rate -> GlobalVarType -> GE Var
 mkNewGlobalVar rate gVarType = withHistory $ \h -> 

@@ -1,21 +1,22 @@
+-- | Properties that specify the appearance of the GUI elements. 
+-- The specification is inspired by CSS. All properties
+-- are set in the cascade manner. For example, if you want to change the font type
+-- for all elements you should set this poperty only for the top-most GUI element.
+-- If the property is set on the lower level it wins versus property that is set on the 
+-- higher level. 
 module Csound.Gui.Props (
     -- * Properties
-    props,
-    Prop(..), BorderType(..), BoxType(..), Color,
-    Rect(..), Span(..), Diap(..), ScaleType(..),
-    FontType(..), Emphasis(..), 
-    Material(..),
-    SliderType(..), TextType(..), ButtonType(..),
-    Orient(..), KnobType(..),
+    props, forceProps,
+    Prop(..), BorderType(..), Color,
+    Rect(..), FontType(..), Emphasis(..), 
+    Material(..), Orient(..), 
 
     -- * Setters
-    setBorder, setLabel, setMaterial, setBoxType,
+    -- | Handy short-cuts for the function @props@.
+    setBorder, setLabel, setMaterial, 
     setColor1, setColor2, setColors, setTextColor,
-    setFontSize, setFontType, setEmphasis,
-    setSliderType, setTextType, setButtonType,
-    setOrient, setKnobType
+    setFontSize, setFontType, setEmphasis, setOrient
 ) where
 
-import Csound.BoxModel(Rect(..))
 import Csound.Exp.Gui
 

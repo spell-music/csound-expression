@@ -3,7 +3,7 @@
 -- it to me by email and I will include it here.
 --
 -- All opcodes are defined without initialisation arguments. If you want to supply the auxiliary arguments
--- use the function 'Csound.Base.withInits'.
+-- use the function 'Csound.Types.withInits' or 'Csound.Types.withDs'.
 module Csound.Opcode (
     module Csound.Opcode.Basic,
     module Csound.Opcode.Advanced,

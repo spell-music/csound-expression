@@ -33,7 +33,7 @@ renderHistory numOfChnls options history = ppCsdFile
     -- flags
     (renderFlags options) 
     -- instr 0
-    (renderInstr0 numOfChnls (midis history) (globalsSoFar $ globals history) (getWins $ history) options)
+    (renderInstr0 numOfChnls (midis history) (globalsSoFar $ globals history) (getPanels $ history) options)
     -- orchestra
     (renderOrc $ instrs history)
     -- scores
