@@ -74,6 +74,14 @@ Description:
     * Good library for composition. Right now only one is supported (see temporal-csound package on hackage).
     It brings together temporal-music-notation and csound-expression packages.
     It's used to make the process of score-writing more convenient.
+    .
+    Acknowledgements (I'd like to mention those who supported me a lot with their music and ideas):
+    .
+    * music: entertainment for the braindead, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, loscil, boards of canada,
+    Hozan Yamamoto, Tony Scott and Shinichi Yuize. 
+    .
+    * ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
+    .
    
 Extra-Source-Files : 
     examples/README.txt

@@ -20,6 +20,3 @@
 
 * under dharma license
 
-* ackn (tech): Conal Elliott, Oleg Kiselyov, Gabriel Gonzalez, Rich Hickey, Paul Hudak, Csound's community
-
-* ackn (music): entertainment for the braindead, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, loscil, boards of canada
