@@ -1,4 +1,4 @@
--- The Heartbeat by Julie Friedman (without crackle)
+-- | The Heartbeat by Julie Friedman (without crackle)
 --
 -- requires temporal-csound
 --
@@ -70,7 +70,10 @@ chorusel amp cps rise dec = (ar1, ar2)
           ar1 = 0.5 * (asig1 + asig3)
           ar2 = 0.5 * (asig2 + asig3)          
                     
-          f9 phs = oscil 1 phs $ sines [0.28, 1, 0.74, 0.66, 0.78, 0.48, 0.05, 0.33, 0.12, 0.08, 0.01, 0.54, 0.19, 0.08, 0.05, 0.16, 0.01, 0.11, 0.3, 0.02, 0.2] 
+          f9 phs = oscil 1 phs $ sines 
+                        [ 0.28, 1, 0.74, 0.66, 0.78, 0.48, 0.05, 0.33, 0.12
+                        , 0.08, 0.01, 0.54, 0.19, 0.08, 0.05, 0.16, 0.01
+                        , 0.11, 0.3, 0.02, 0.2] 
           
 instr1 :: D -> Sig2
 instr1 amp = (a, a)
@@ -86,7 +89,7 @@ instrChorusel (cps, pan, a, b) = chorusel cps pan a b
 instrCrackle :: D -> Sig2
 instrCrackle cps = crackle (0.5::D) cps 12 20
 
-scoBeat = sco instr1 $ delay 2 $ loop 32 $ line [0.25 *| lineMap temp [0.5, 0.3], rest 1.5]
+scoBeat = sco instr1 $ delay 2 $ loop 32 $ line [0.25 *| lineTemp [0.5, 0.3], rest 1.5]
 
 scoPluck = sco instrPluck $ delay 8 $ line $ take n $ zipWith (\amp pan -> 0.5 *| temp (amp, pan)) 
     ([0, (v/40) .. v] ++ repeat v) (cycle [0.2, 0.8])
@@ -107,7 +110,7 @@ scoCrackle = sco instrCrackle $ chord [
     event 8 100,
     delay 13 $ event 5 50]   
    
-main = mplayer $ chord [
+main = dac $ runMix $ chord [
     scoBeat, 
     scoChorusel, 
     scoPluck, 

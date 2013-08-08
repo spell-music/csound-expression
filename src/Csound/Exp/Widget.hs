@@ -129,18 +129,18 @@ singleIn output v0 el = do
 
 -- | A variance on the function 'Csound.Gui.Widget.count', but it produces 
 -- a signal of piecewise constant function. 
-countSig :: Diap -> Step -> Maybe Step -> Double -> Source Sig
-countSig diap step1 mStep2 v0 = singleOut (Just v0) $ Count diap step1 mStep2
+countSig :: ValDiap -> ValStep -> Maybe ValStep -> Double -> Source Sig
+countSig diap step1 mValStep2 v0 = singleOut (Just v0) $ Count diap step1 mValStep2
 
 -- | Allows the user to increase/decrease a value with mouse 
 -- clicks on a corresponding arrow button. Output is an event stream that contains 
 -- values when counter changes.
 -- 
--- > count diapason fineStep maybeCoarseStep initValue 
+-- > count diapason fineValStep maybeCoarseValStep initValue 
 -- 
 -- doc: http://www.csounds.com/manual/html/FLcount.html
-count :: Diap -> Step -> Maybe Step -> Double -> Source (Evt D)
-count diap step1 mStep2 v0 = mapSource snaps $ countSig diap step1 mStep2 v0
+count :: ValDiap -> ValStep -> Maybe ValStep -> Double -> Source (Evt D)
+count diap step1 mValStep2 v0 = mapSource snaps $ countSig diap step1 mValStep2 v0
 
 -- | It is a squared area that allows the user to modify two output values 
 -- at the same time. It acts like a joystick. 
@@ -148,7 +148,7 @@ count diap step1 mStep2 v0 = mapSource snaps $ countSig diap step1 mStep2 v0
 -- > joy valueSpanX valueSpanY (initX, initY) 
 --
 -- doc: <http://www.csounds.com/manual/html/FLjoy.html>
-joy :: Span -> Span -> (Double, Double) -> Source (Sig, Sig)
+joy :: ValSpan -> ValSpan -> (Double, Double) -> Source (Sig, Sig)
 joy sp1 sp2 (x, y) = do
     (var1, handle1) <- newGuiVar
     (var2, handle2) <- newGuiVar
@@ -165,7 +165,7 @@ joy sp1 sp2 (x, y) = do
 -- > knob valueSpan initValue
 --
 -- doc: <http://www.csounds.com/manual/html/FLknob.html>
-knob :: Span -> Double -> Source Sig
+knob :: ValSpan -> Double -> Source Sig
 knob sp v0 = singleOut (Just v0) $ Knob sp
 
 -- | FLroller is a sort of knob, but put transversally. 
@@ -173,7 +173,7 @@ knob sp v0 = singleOut (Just v0) $ Knob sp
 -- > roller valueSpan step initVal
 --
 -- doc: <http://www.csounds.com/manual/html/FLroller.html>
-roller :: Span -> Step -> Double -> Source Sig
+roller :: ValSpan -> ValStep -> Double -> Source Sig
 roller sp step v0 = singleOut (Just v0) $ Roller sp step
 
 -- | FLslider puts a slider into the corresponding container.
@@ -181,7 +181,7 @@ roller sp step v0 = singleOut (Just v0) $ Roller sp step
 -- > slider valueSpan initVal 
 --
 -- doc: <http://www.csounds.com/manual/html/FLslider.html>
-slider :: Span -> Double -> Source Sig
+slider :: ValSpan -> Double -> Source Sig
 slider sp v0 = singleOut (Just v0) $ Slider sp
 
 -- | FLtext allows the user to modify a parameter value by directly typing 
@@ -190,7 +190,7 @@ slider sp v0 = singleOut (Just v0) $ Slider sp
 -- > text diapason step initValue 
 --
 -- doc: <http://www.csounds.com/manual/html/FLtext.html>
-text :: Diap -> Step -> Double -> Source Sig
+text :: ValDiap -> ValStep -> Double -> Source Sig
 text diap step v0 = singleOut (Just v0) $ Text diap step 
 
 -- | A FLTK widget that displays text inside of a box.
@@ -255,7 +255,7 @@ value v = singleIn printk2 (Just v) Value
 -- | A slider that serves as indicator. It consumes values instead of producing.
 --
 -- > meter valueSpan initValue
-meter :: Span -> Double -> Sink Sig
+meter :: ValSpan -> Double -> Sink Sig
 meter sp v = singleIn setVal (Just v) (Slider sp)
 
 -- Outputs

@@ -40,7 +40,7 @@
 --
 -- Widgets can be simple and compound. Simple widgets are primitive elements
 -- (sliders, knobs, rollers, buttons). We have a special constructors that 
--- produce simple widgets (see "Csound.Gui.Widget"). Compund widgets glue together
+-- produce simple widgets (see "Csound.Gui.Widget"). Compound widgets glue together
 -- several widgets. That is the view contains several elements and all of them 
 -- involved in the logic of the widget.
 --

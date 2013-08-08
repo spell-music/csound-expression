@@ -1,17 +1,22 @@
+-- | Test for different types of events.
 module Main where
 
 import Csound.Base
 import Data.Monoid
 
+-- | Outputs the drummy sound.
 pureTone :: (D, D) -> SE Sig
 pureTone (amp, cps) = do
     printi [amp, cps]
     return $ env * sig amp * osc (sig cps)
     where env = expseg [1, idur, 1e-6]
 
+-- | Just prints the argument on the screen.
 echo :: D -> SE ()
 echo a = printi [a]
 
+
+-- | A single metronome (four beats per second).
 src = metroE 4
 
 e1, e2, e3, e4, e5, e6, e7, e8 :: Evt D
@@ -39,7 +44,7 @@ e7 = randInts (0, 10) src
 
 e8 = oneOf [100, 200, 300] src
 
-e9 = avgSum $ freqOneOf [(0.1, 0), (0.9, 1)] src
+e9 = avgSum $ freqOf [(0.1, 0), (0.9, 1)] src
 
 avgSum :: Evt D -> Evt D
 avgSum = accumE (0, 0) $ \a (s, n) ->     
@@ -57,9 +62,10 @@ e10 = fmap (\x -> (0.5, x)) $ filterE (>* 110) $ mconcat
 
 -----------------------
 
-res = schedule echo $ fmap (\a -> (0.1, a)) $ e4
+res e = schedule echo $ fmap (\a -> (0.1, a)) $ e
 
-resSnd = schedule pureTone $ fmap (\a -> (0.1, a)) $ e10
+-- output with sound
+resSnd e = schedule pureTone $ fmap (\a -> (0.1, a)) e
 
-main = dac res
+main = dac $ resSnd e10
 

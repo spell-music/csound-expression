@@ -55,10 +55,39 @@ Description:
     * Set Csound flags with meaningful (well-typed) values. Derive as much as you can from the context.
     .
     * Optimization of the memory allocation (liveness analysis).
+    .
+    Requirements (for Csound and Haskell users):
+    .
+    *   GHC - haskell compiler. This library uses GHC-specific features (<www.haskell.org/ghc>).
+    .
+    *   cabal-install to install haskell packages (<www.haskell.org/cabal>).
+    .
+    *   Csound compiler (version 5.13 or higher). You must get it installed on your system.
+    Since we are going to generate the csound code we need to compile it to sound somehow.
+    We can find out how to install the Csound on <www.csounds.com>. 
+    To test whether csound is installed open the command line and type:
+    .
+    > csound
+    .
+    It should print a long message with version and available flags and libraries.
+    .
+    * Good library for composition. Right now only one is supported (see temporal-csound package on hackage).
+    It brings together temporal-music-notation and csound-expression packages.
+    It's used to make the process of score-writing more convenient.
    
 Extra-Source-Files : 
+    examples/README.txt
+    
     examples/Test.hs
     examples/Heartbeat.hs
+    
+    examples/Color.hs
+    examples/Gm.hs
+    examples/Tibetan.hs
+
+    examples/Midi.hs
+    examples/Events.hs
+    examples/Guis.hs
 
 Homepage:        https://github.com/anton-k/csound-expression
 Bug-Reports:     https://github.com/anton-k/csound-expression/issues

@@ -1,7 +1,7 @@
 -- |  Constructors
 module Csound.Exp.Cons (
     Spec1, Specs,
-    withInits,
+    withInits, withDs, withD, withTab,
     bi,
     spec1, specs,
     opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11, opc12,
@@ -11,16 +11,31 @@ module Csound.Exp.Cons (
 import qualified Data.Map as M(fromList)
 
 import Csound.Exp
-import Csound.Exp.Wrapper(Sig, Val(..), tfm, pref, onExp)
+import Csound.Exp.Wrapper(Sig, D, Val(..), tfm, pref, onExp)
 import Csound.Exp.Tuple(CsdTuple, fromCsdTuple, multiOuts)
 
 -- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
 --
 -- > oscil 0.5 440 sinWave `withInits` (0.5 :: D)
 withInits :: (Val a, CsdTuple inits) => a -> inits -> Sig
-withInits a b = fromE $ onExp phi $ toE a
+withInits a b = genWithInits a (fromCsdTuple b)
+
+-- | A special case of @withInits@. Here all inits are numbers. 
+withDs :: (Val a) => a -> [D] -> Sig
+withDs a ds = genWithInits a (fmap toE ds)
+
+-- | Appends an init value which is a number.
+withD :: Val a => a -> D -> Sig
+withD a d = genWithInits a [toE d]
+
+-- | Appends an init value which is a table.
+withTab :: Val a => a -> Tab -> Sig
+withTab a t = genWithInits a [toE t]
+
+genWithInits :: (Val a) => a -> [E] -> Sig
+genWithInits a es = fromE $ onExp phi $ toE a
     where phi x = case x of
-            Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr $ fromCsdTuple b))
+            Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr es))
             _        -> x
 
 ------------------------------------------------

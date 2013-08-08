@@ -7,7 +7,10 @@ module Csound.Air (
     
     -- ** Unipolar
     unipolar, uosc, uoscBy, usaw, usq, utri, -- upulse, uramp,
-    
+   
+    -- * Envelopes
+    onIdur, lindur, expdur,
+
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
     
@@ -29,9 +32,10 @@ module Csound.Air (
 ) where
 
 import Csound.Exp(Tab)
-import Csound.Exp.Wrapper(Sig, Spec, sig, kr, Cps)
+import Csound.Exp.Wrapper(Sig, D, Spec, sig, kr, Cps, Ksig)
 import Csound.Exp.SE
-import Csound.Opcode(idur, oscil3, pvscross, 
+import Csound.Opcode(idur, oscil3, pvscross,
+    linseg, expseg,
     atone, tone, areson, reson,
     buthp, butbp, butlp, butbr)
 import Csound.Tab(sines)
@@ -126,6 +130,32 @@ upulse a = unipolar . pulse a
 uramp :: Sig -> Sig -> Sig
 uramp a = unipolar . ramp a
 -}
+
+--------------------------------------------------------------------------
+-- envelopes
+
+-- | Makes time intervals relative to the note's duration. So that:
+--
+-- > [a, t1, b, t2, c]
+--
+-- becomes: 
+--
+-- > [a, t1 * idur, b, t2 * idur, c]
+onIdur :: [D] -> [D]
+onIdur xs = case xs of
+    a:b:as -> a : b * idur : onIdur as
+    _ -> xs
+
+-- | The opcode 'Csound.Opcode.linseg' with time intervals 
+-- relative to the total duration of the note.
+lindur :: [D] -> Ksig
+lindur = linseg . onIdur
+
+-- | The opcode 'Csound.Opcode.expseg' with time intervals 
+-- relative to the total duration of the note.
+expdur :: [D] -> Ksig
+expdur = expseg . onIdur
+
 --------------------------------------------------------------------------
 -- filters
 

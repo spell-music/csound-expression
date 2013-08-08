@@ -19,7 +19,7 @@ module Csound.Exp.Gui (
     setFontSize, setFontType, setEmphasis, setOrient,
 
     -- * Widgets
-    Diap(..), Step, ScaleType(..), Span(..),
+    ValDiap(..), ValStep, ValScaleType(..), ValSpan(..),
     KnobType(..), setKnobType,
     SliderType(..), setSliderType,
     TextType(..), setTextType,
@@ -60,18 +60,18 @@ data Orient = Hor | Ver
 
 -- | A value span is a diapason of the value and a type 
 -- of the scale (can be linear or exponential).
-data Span = Span 
-    { spanDiap  :: Diap
-    , spanScale :: ScaleType }
+data ValSpan = ValSpan 
+    { valSpanDiap  :: ValDiap
+    , valSpanScale :: ValScaleType }
 
 -- | The diapason of the continuous value.
-data Diap = Diap 
-    { diapMin   :: Double 
-    , diapMax   :: Double }
+data ValDiap = ValDiap 
+    { valDiapMin   :: Double 
+    , valDiapMax   :: Double }
 
-data ScaleType = Linear | Exponential
+data ValScaleType = Linear | Exponential
 
-type Step = Double
+type ValStep = Double
 
 data FontType       = Helvetica | Courier | Times | Symbol | Screen | Dingbats
 data Emphasis       = NoEmphasis | Italic | Bold | BoldItalic
@@ -130,12 +130,12 @@ data Elem
     = GuiVar GuiHandle 
     
     -- valuators
-    | Count  Diap Step (Maybe Step)
-    | Joy    Span Span
-    | Knob   Span
-    | Roller Span Step
-    | Slider Span
-    | Text   Diap Step
+    | Count  ValDiap ValStep (Maybe ValStep)
+    | Joy    ValSpan ValSpan
+    | Knob   ValSpan
+    | Roller ValSpan ValStep
+    | Slider ValSpan
+    | Text   ValDiap ValStep
 
     -- other widgets  
     | Box String
@@ -418,28 +418,28 @@ drawElemDef ctx rectWithoutLabel el = case elemContent el of
         frameBy x = fmap int [width x, height x, px x, py x]       
         noDisp = int (-1)
         noOpc  = int (-1)
-        drawSpan (Span diap scale) = [imin diap, imax diap, getScale scale]
+        drawSpan (ValSpan diap scale) = [imin diap, imax diap, getScale scale]
    
-        imin = double . diapMin
-        imax = double . diapMax
+        imin = double . valDiapMin
+        imax = double . valDiapMax
 
         -----------------------------------------------------------------------
         -- valuators
 
         -- FLcount
-        drawCount diap step1 mStep2 = f "FLcount" $
+        drawCount diap step1 mValStep2 = f "FLcount" $
             [ imin diap, imax diap
             , double step1, double step2
             , int itype ] 
             ++ frame ++ [noOpc]
-            where (step2, itype) = case mStep2 of
+            where (step2, itype) = case mValStep2 of
                     -- type 1 FLcount with 2 steps
                     Just n  -> (n, 1)
                     -- type 2 FLcount with a single step
                     Nothing -> (step1, 2)
 
         -- FLjoy
-        drawJoy (Span dX sX) (Span dY sY) = f "FLjoy" $
+        drawJoy (ValSpan dX sX) (ValSpan dY sY) = f "FLjoy" $
             [ imin dX, imax dX, imin dY, imax dY
             , getScale sX, getScale sY
             , noDisp, noDisp 
@@ -460,7 +460,7 @@ drawElemDef ctx rectWithoutLabel el = case elemContent el of
                 d = div (abs $ h - w) 2 
 
         -- FLroller
-        drawRoller (Span d s) step = f "FLroller" $
+        drawRoller (ValSpan d s) step = f "FLroller" $
             [ imin d, imax d, double step
             , getScale s, getRollerType (getDefOrient rect) ctx, noDisp
             ] ++ frame
@@ -552,7 +552,7 @@ maybeDef = maybe def id
 intProp :: Default a => (PropCtx -> Maybe a) -> (a -> Int) -> (PropCtx -> Doc)
 intProp select convert = int . convert . maybeDef . select 
 
-getScale :: ScaleType -> Doc
+getScale :: ValScaleType -> Doc
 getScale x = int $ case x of
     Linear      -> 0
     Exponential -> -1

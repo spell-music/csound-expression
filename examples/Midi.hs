@@ -31,4 +31,9 @@ main = writeCsd "tmp.csd" $ midi 1 midiInstr
 --  * odac - output to dac
 --  * Ma   - listen to midi on all channels
 --
--- > csound tmp.csd -oadc -Ma
+-- > csound -oadc -Ma tmp.csd
+--
+-- If we don't have a midi device we can test this example
+-- with virtual midi-keyboard by setting the flag -+rtmidi=virtual. 
+--
+-- > csound -odac -Ma -+rtmidi=virtual tmp.csd

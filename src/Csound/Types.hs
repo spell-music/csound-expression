@@ -5,7 +5,12 @@ module Csound.Types (
     -- | A constant value doesn't change while instrument is playing a note.
     -- Only constants can be passed as arguments to the instruments.
     D, Str,
-    withInits,
+    -- ** Initialization.
+    -- | In csound we can initialize the sound units with auxiliary arguments.
+    -- So the number of arguments in Csound can vary. It's not idiomatic in Haskell. 
+    -- Instead we can append the initialization arguments to the signal which happens to
+    -- be the result of the opcode (or sound unit).
+    withInits, withDs, withD, withTab,
     
     -- * Tables
     -- | In Csound tables can be treated as primitive values. They can be passed to instruments in the score events.
@@ -53,6 +58,6 @@ import Csound.Exp.Wrapper
 import Csound.Exp.Tuple
 import Csound.Exp.Logic
 import Csound.Exp.SE
-import Csound.Exp.Cons(withInits)
+import Csound.Exp.Cons(withInits, withDs, withD, withTab)
 import Csound.Tab
 

@@ -24,7 +24,7 @@ csdEventContent (_, _, a) = a
 csdEventTotalDur :: CsdEvent a -> Double
 csdEventTotalDur (start, dur, _) = start + dur
 
--- | Class that represents Csound scores. All functions that use score are defined
+-- | A class that represents Csound scores. All functions that use score are defined
 -- in terms of this class. If you want to use your own score representation, just define
 -- two methods of the class.
 class CsdSco f where    
@@ -34,9 +34,9 @@ class CsdSco f where
     singleCsdEvent ::  CsdEvent a -> f a
 
 -- | 'Csound.Base.CsdEventList' is a canonical representation of the Csound scores.
--- Scores is a list of events and we should know the total duration of the scores.
+-- A scores is a list of events and we should know the total duration of the scores.
 -- It's not meant to be used directly. We can use a better alternative. More convenient
--- type that belongs to 'Csound.Base.CsdSco' type class.
+-- type that belongs to 'Csound.Base.CsdSco' type class (see temporal-csound package).
 data CsdEventList a = CsdEventList
     { csdEventListDur   :: Double
     , csdEventListNotes :: [CsdEvent a] 

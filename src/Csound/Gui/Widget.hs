@@ -5,7 +5,7 @@
 -- other functions.
 module Csound.Gui.Widget (
     -- * Common properties 
-    Diap(..), Step, ScaleType(..), Span(..),
+    ValDiap(..), ValStep, ValScaleType(..), ValSpan(..),
     -- * Valuators
     count, countSig, joy, 
     knob, KnobType(..), setKnobType,

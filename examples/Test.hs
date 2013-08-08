@@ -15,15 +15,11 @@ myOsc cps = oscili 1 cps (sines [1])
 -- We use @sig@ to convert a constant value to signal and then plug it in the osc unit. 
 -- We make it a bit quieter by multiplying with 0.5.
 pureTone :: D -> Sig
-pureTone cps = 0.5 * (myOsc $ sig cps)
+pureTone cps = 0.4 * (myOsc $ sig cps)
 
--- Let's trigger the instrument from the score section.
--- It plays a single note that starts at 1 and lasts for 3 seconds and 
--- triggers the instrument 'instr' with frequency of 440 (Hz).
--- A function 'temp' always creates a note that starts right away and 
--- lasts for 1 second. Then we can 'stretch' this note or 'delay' it.
-res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
+-- Let's trigger the instrument from the score section. It plays three notes.
+res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 1, 330), (2, 2, 220)]
 
 -- Renders generated csd-file to the "tmp.csd".
 main :: IO ()
-main = writeCsd "tmp.csd" $ runMix res
+main = dac $ runMix res

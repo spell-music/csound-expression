@@ -25,7 +25,7 @@ import Csound.Render.Channel(random)
 ----------------------------------------------------------------------
 -- higher level evt-funs
 
--- | Constructs an event stream that contains an infinite repeatition
+-- | Constructs an event stream that contains an infinite repetition
 -- values from the given list. When an event happens this function takes 
 -- the next value from the list, if there is no values left it starts
 -- from the beggining of the list.
@@ -51,7 +51,7 @@ atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as
 range :: (D, D) -> Evt b -> Evt D
 range (xMin, xMax) = iterateE xMin $ \x -> ifB (succ x >=* xMax) xMin (succ x)
 
--- | An event stream of the integers taken from the given diapasone.
+-- | An event stream of the integers taken from the given diapason.
 randInts :: (D, D) -> Evt b -> Evt D
 randInts (xMin, xMax) = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ rnd
     where rnd = fmap (intD . readSnap) $ random (sig $ intD xMin) (sig $ intD xMax)
@@ -101,7 +101,7 @@ type Rnds a = [(D, a)]
 
 -- | Constructs an event stream that contains values from the
 -- given list which are taken in the random order. In the list we specify
--- not only values but the frequencies of occurence. Sum of the frequencies 
+-- not only values but the frequencies of occurrence. Sum of the frequencies 
 -- should be equal to one.
 freqOf :: (CsdTuple a, Arg a) => Rnds a -> Evt b -> Evt a
 freqOf rnds evt = fmap (takeByWeight accs vals) $ randDs evt 
@@ -122,7 +122,7 @@ accumWeightList = go 0
 -- | This function combines the functions 'Csound.Control.Evt.accumE' and
 -- 'Csound.Control.Evt.freqOf'. We transform the values of the event stream
 -- with stateful function that produce not just values but the list of values
--- with frequencies of occurence. We apply this function to the current state
+-- with frequencies of occurrence. We apply this function to the current state
 -- and the value and then at random pick one of the values.
 freqAccum :: (CsdTuple s, CsdTuple (b, s), Arg (b, s)) 
     => s -> (a -> s -> Rnds (b, s)) -> Evt a -> Evt b 
