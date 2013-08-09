@@ -197,6 +197,7 @@ data LowTab = LowTab
     { lowTabSize    :: Int
     , lowTabGen     :: Int
     , lowTabArgs    :: [Double]
+    , lowTabFile    :: Maybe String
     } deriving (Show, Eq, Ord)
 
 -- Table that can have relative size (to be defined from the renderer settings).
@@ -232,6 +233,7 @@ data TabArgs
     = ArgsPlain [Double]
     -- or relative to the table size (used for tables that implement interpolation)
     | ArgsRelative [Double]
+    | FileAccess String [Double]
     deriving (Show, Eq, Ord)
 
 

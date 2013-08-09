@@ -106,7 +106,8 @@ ppPrim x = case x of
     PrimTab f -> error $ "i'm lost table, please substitute me (" ++ (show f) ++ ")" 
     
 ppTab :: LowTab -> Doc
-ppTab (LowTab size n xs) = text "gen" <> int n <+> int size <+> (hsep $ map double xs)
+ppTab (LowTab size n xs mfile) = text "gen" <> int n <+> int size <+> file <+> (hsep $ map double xs)
+    where file = maybe empty (text . show) mfile
  
 ppIf :: Doc -> Doc -> Doc -> Doc
 ppIf p t e = p <+> char '?' <+> t <+> char ':' <+> e
@@ -134,6 +135,7 @@ ppTabDef ft tabId = char 'f'
     <+> int 0 
     <+> (int $ lowTabSize ft)
     <+> (int $ lowTabGen ft) 
+    <+> (maybe empty (text . show) $ lowTabFile ft)
     <+> (hsep $ map double $ lowTabArgs ft)
 
 ppStrset :: String -> Int -> Doc

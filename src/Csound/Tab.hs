@@ -11,7 +11,10 @@ module Csound.Tab (
 
     -- * Fill table with numbers
     doubles,
-    
+   
+    -- * Read from files
+    wavs, mp3s,
+
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
     sines, sines3, sines2, partials, sines4, buzzes,
@@ -65,7 +68,7 @@ module Csound.Tab (
     -- * Identifiers for GEN-routines
     
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
-    idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels
+    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels
 ) where
 
 import Data.Default
@@ -73,6 +76,17 @@ import Csound.Exp
 import Csound.Tfm.Tab(updateTabSize)
 
 import qualified Data.IntMap as IM
+
+
+wavs :: String -> Double -> Int -> Tab
+wavs filename skiptime channel = Tab (SizePlain 0) idWavs 
+    (FileAccess filename [skiptime, format, fromIntegral $ channel])
+    where format = 0
+
+mp3s :: String -> Double -> Tab
+mp3s filename skiptime = Tab (SizePlain 0) idMp3s 
+    (FileAccess filename [skiptime, format])
+    where format = 0
 
 -- | Sets different table size for different GEN-routines. 
 --
@@ -383,10 +397,11 @@ skipNorm x = case x of
 
 
 
-idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
+idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
 
 -- Human readable Csound identifiers for GEN-routines
 
+idWavs = 1
 idDoubles = 2
 idSines = 10
 idSines3 = 9
@@ -404,3 +419,4 @@ idChebs1 = 13
 idChebs2 = 14
 idBessels = 12
 
+idMp3s = 49

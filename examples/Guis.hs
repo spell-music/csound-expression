@@ -57,4 +57,4 @@ main = dac $ do
 
     let g = setTextColor C.azure $ hor [sca 3 $ sca 1.5 $ f $ ver [setLabel "Amplitude" g1, setLabel "Frequency" g2, hor [g5, g6]], setBorder ThinDown $ ver [g7, setTextColor C.azure $ ver [f $ setTextColor C.blue $ setButtonType RoundButton g11], sca 2 space ]]
    
-    panel (ver [g, hor [g7, g7]])
+    panel (ver [sca 4 g, hor [g7, g7]])

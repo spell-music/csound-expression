@@ -131,17 +131,18 @@ definePrimTab n x = case x of
 
 -- set all relative parameters to absolute. 
 defineTab :: TabFi -> Tab -> LowTab
-defineTab tabFi tab = LowTab size (tabGen tab) args
+defineTab tabFi tab = LowTab size (tabGen tab) args file
     where size = defineTabSize (getTabSizeBase tabFi tab) (tabSize tab)
-          args = defineTabArgs size (tabArgs tab)
+          (args, file) = defineTabArgs size (tabArgs tab)
 
 getTabSizeBase :: TabFi -> Tab -> Int
 getTabSizeBase tf tab = IM.findWithDefault (tabFiBase tf) (tabGen tab) (tabFiGens tf)
 
-defineTabArgs :: Int -> TabArgs -> [Double] 
+defineTabArgs :: Int -> TabArgs -> ([Double], Maybe String)
 defineTabArgs size args = case args of
-    ArgsPlain as -> as 
-    ArgsRelative as -> fromRelative size as
+    ArgsPlain as -> (as, Nothing)
+    ArgsRelative as -> (fromRelative size as, Nothing)
+    FileAccess filename as -> (as, Just filename)
     where fromRelative n as = substEvens (mkRelative n $ getEvens as) as
           getEvens xs = case xs of
             [] -> []
