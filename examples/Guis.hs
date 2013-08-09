@@ -1,4 +1,4 @@
--- | Test for GUI-elements. For a time being this example is a total mess.
+-- | Test for GUI-elements. Right now this example is a total mess.
 module Main where
 
 import qualified Data.Colour.Names as C
@@ -56,5 +56,5 @@ main = dac $ do
     g11 <- tb
 
     let g = setTextColor C.azure $ hor [sca 3 $ sca 1.5 $ f $ ver [setLabel "Amplitude" g1, setLabel "Frequency" g2, hor [g5, g6]], setBorder ThinDown $ ver [g7, setTextColor C.azure $ ver [f $ setTextColor C.blue $ setButtonType RoundButton g11], sca 2 space ]]
-    
-    panel g
+   
+    panel (ver [g, hor [g7, g7]])

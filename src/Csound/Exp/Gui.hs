@@ -303,18 +303,34 @@ restoreTree m x = Gui $ (unGui x) >>= rec
             _        -> return elem
 
 drawGui :: Panel -> Doc
-drawGui x = onPanel (panelTitle x) boundingRect $ case x of
-    Single w    -> drawWin boundingRect w
-    Tabs _ _ ws -> case ws of 
+drawGui x = case x of
+    Single w    -> panel boundingRect $ drawWin (withWinMargin boundingRect) w
+    Tabs _ _ ws -> panel tabPanelRect $ case ws of 
         [] -> P.empty
-        _  -> vcat $ fmap (uncurry drawTab) tabsRs        
+        _  -> onTabs mainTabRect $ vcat $ fmap (uncurry $ drawTab shift) tabsRs        
     where boundingRect = panelRect (fmap fst tabsRs) x
           tabsRs = tabsRects x  
+          (mainTabRect, shift) = mainTabRectAndShift boundingRect
     
-          onPanel title rect body = P.vcat [
-             P.ppProc "FLpanel" [P.text $ show title, P.int $ width rect, P.int $ height rect],
-             body,
-             P.ppProc "FLpanelEnd" []]
+          tabPanelRect = Rect 
+            { px = 100
+            , py = 100
+            , width = width mainTabRect + 20
+            , height = height mainTabRect + 20 
+            }
+
+          panel = onPanel (panelTitle x)
+
+          onPanel title rect body = P.vcat 
+            [ P.ppProc "FLpanel" [P.text $ show title, P.int $ width rect, P.int $ height rect]
+            , body
+            , P.ppProc "FLpanelEnd" []]
+
+          onTabs rect body = P.vcat 
+            [ P.ppProc "FLtabs" $ rectToFrame rect
+            , body
+            , P.ppProc "FLtabsEnd" []]
+            
 
 panelTitle :: Panel -> String
 panelTitle x = case x of
@@ -327,11 +343,24 @@ panelRect rs x = case x of
     Tabs _ mrect _  -> case rs of
         [] -> Box.zeroRect
         _  -> maybe (foldr boundingRect (head rs) rs) id mrect
-    where boundingRect a b = Rect { px = x1, py = y1, width = x2 - x1, height = y2 - y1 }
-              where x1 = min (px a) (px b)
-                    y1 = min (py a) (py b)
-                    x2 = max (px a + width a) (px b + width b) 
-                    y2 = max (py a + height a) (py b + height b)                 
+    where boundingRect a b = Rect { px = x1, py = y1, width = x2 - x1, height = y2 - y1 }
+              where x1 = min (px a) (px b)
+                    y1 = min (py a) (py b)
+                    x2 = max (px a + width a) (px b + width b) 
+                    y2 = max (py a + height a) (py b + height b)   
+
+mainTabRectAndShift :: Rect -> (Rect, (Int, Int))
+mainTabRectAndShift r = (res, (dx, dy))
+    where res = Rect 
+            { px     = 5
+            , py     = 5    
+            , width  = px r + width r + 10
+            , height = py r + height r + yBox 15 2 + 10
+            } 
+          dx = 10
+          dy = yBox 15 2 + 10
+    
+
 
 tabsRects :: Panel -> [(Rect, Win)]
 tabsRects x = case x of
@@ -342,33 +371,36 @@ winBoundingRect :: Win -> Rect
 winBoundingRect w = maybe (shiftBy 50 $ bestRect $ winGui w) id $ winRect w
     where shiftBy n r = r { px = n + px r, py = n + py r }      
 
-drawTab :: Rect -> Win -> Doc
-drawTab r w = group (winTitle w) r $ drawWin r w
+drawTab :: (Int, Int) -> Rect -> Win -> Doc
+drawTab shift r w = group (winTitle w) r $ drawWin (withRelWinMargin $ shiftRect shift r) w
     where group title rect body = vcat 
             [ P.ppProc "FLgroup" $ (P.text $ show title) : rectToFrame rect
             , body
             , P.ppProc "FLgroupEnd" []]
+
+          shiftRect (dx, dy) rect = rect 
+            { px = dx + px rect
+            , py = dy + py rect }
        
 rectToFrame :: Rect -> [Doc]
 rectToFrame rect = fmap int [width rect, height rect, px rect, py rect]                             
 
 drawWin :: Rect -> Win -> Doc
-drawWin panelBoundingRect w = renderAbsScene $ Box.draw (withZeroOffset $ panelBoundingRect) $ unGui $ winGui w
+drawWin rect w = renderAbsScene $ Box.draw rect $ unGui $ winGui w
     where
-        withZeroOffset r = r { px = 0, py = 0 }
-
         renderAbsScene = Box.cascade drawPrim P.empty P.vcat onCtx setProps def
             where
                 setProps ps = appEndo $ mconcat $ fmap (Endo . setPropCtx) (otherProps ps)
                 
                 onCtx r ps res = maybe res (\borderType -> drawBorder borderType r res) (propsBorder ps)
-                
-        drawBorder borderType rect a = vcat 
-            [ P.ppProc "FLgroup" $ ((P.text $ show "") : frame) ++ [borderAsInt borderType]
-            , a
-            , P.ppProc "FLgroupEnd" []]
-            where borderAsInt = int . fromEnum
-                  frame = rectToFrame rect   
+
+drawBorder :: BorderType -> Rect -> Doc -> Doc
+drawBorder borderType rect a = vcat 
+    [ P.ppProc "FLgroup" $ ((P.text $ show "") : frame) ++ [borderAsInt borderType]
+    , a
+    , P.ppProc "FLgroupEnd" []]
+    where borderAsInt = int . fromEnum
+          frame = rectToFrame rect   
                 
 drawPrim :: PropCtx -> Rect -> ElemWithOuts -> Doc
 drawPrim ctx rect elem = vcat 
@@ -726,13 +758,38 @@ setKnobType = setProp . SetKnobType
 -- best rectangles for the elements
 --
 
+winMargin :: Int
+winMargin = 10
+     
+appendWinMargin :: Rect -> Rect
+appendWinMargin r = r 
+    { width  = 2 * winMargin + width r
+    , height = 2 * winMargin + height r 
+    }
+
+withWinMargin :: Rect -> Rect
+withWinMargin r = r 
+    { px = winMargin
+    , py = winMargin 
+    , height = height r - 2 * winMargin
+    , width  = width  r - 2 * winMargin 
+    }
+
+withRelWinMargin :: Rect -> Rect
+withRelWinMargin r = r 
+    { px = winMargin + px r
+    , py = winMargin + py r
+    , height = height r - 2 * winMargin
+    , width  = width  r - 2 * winMargin 
+    }
+
 bestRect :: Gui -> Rect
 bestRect 
-    = Box.boundingRect 
+    = appendWinMargin . Box.boundingRect 
     . mapWithOrient (\curOrient x -> uncurry noShiftRect $ bestElemSizes curOrient $ elemContent x)
     . unGui
     where noShiftRect w h = Rect { px = 0, py = 0, width = w, height = h }
-
+        
 mapWithOrient :: (Orient -> a -> b) -> Box.Scene ctx a -> Box.Scene ctx b
 mapWithOrient f = iter Hor
     where 
@@ -777,9 +834,9 @@ bestElemSizes orient x = case x of
 
 xBox, yBox :: Int -> Int -> Int
 
-xBox fontSize xn = round $ fromIntegral fontSize * (0.4 :: Double) * fromIntegral (1 + xn)
+xBox fontSize xn = round $ fromIntegral fontSize * (0.6 :: Double) * fromIntegral (1 + xn)
 
-yBox fontSize yn = (fontSize + 8) * (1 + yn)
+yBox fontSize yn = (fontSize + 12) * (1 + yn)
 
 yLabelBox :: Int -> Int
 yLabelBox fontSize = fontSize - 5

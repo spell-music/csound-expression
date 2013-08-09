@@ -54,6 +54,7 @@ avgSum = accumE (0, 0) $ \a (s, n) ->
 
 -- mask
 
+e10 :: Evt (D, D)
 e10 = fmap (\x -> (0.5, x)) $ filterE (>* 110) $ mconcat 
     [ every 0 [5,7] $ repeatE 330 src
     , every 3 [11] $ repeatE 550 src

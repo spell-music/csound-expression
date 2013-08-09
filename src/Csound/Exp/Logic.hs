@@ -124,41 +124,44 @@ caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (t
 
 -- booleans for inits
 
+i :: Val a => a -> a
+i = setRate Ir
+
 instance Boolean BoolD where
-    true = boolOp0 TrueOp
-    false = boolOp0 FalseOp
+    true = boolOp0I TrueOp
+    false = boolOp0I FalseOp
     notB = onE1 notE
-    (&&*) = boolOp2 And
-    (||*) = boolOp2 Or
+    (&&*) = boolOp2I And
+    (||*) = boolOp2I Or
 
 type instance BooleanOf D = BoolD
 
 instance IfB D where
-    ifB = condExp
+    ifB = condExpI
     
 instance EqB D where
-    (==*) = boolOp2 Equals
-    (/=*) = boolOp2 NotEquals
+    (==*) = boolOp2I Equals
+    (/=*) = boolOp2I NotEquals
     
 instance OrdB D where
-    (<*) = boolOp2 Less
-    (>*) = boolOp2 Greater
-    (<=*) = boolOp2 LessEquals
-    (>=*) = boolOp2 GreaterEquals
+    (<*) = boolOp2I Less
+    (>*) = boolOp2I Greater
+    (<=*) = boolOp2I LessEquals
+    (>=*) = boolOp2I GreaterEquals
 
 -- booleans for tables
 
 type instance BooleanOf Tab = BoolD
 
 instance IfB Tab where
-    ifB = condExp
+    ifB = condExpI
 
 -- booleans for strings
 
 type instance BooleanOf Str = BoolD
 
 instance IfB Str where
-    ifB = condExp
+    ifB = condExpI
 
 newtype BoolArg = BoolArg { unBoolArg :: [E] }
 
@@ -192,6 +195,9 @@ caseArg a bs other = fromBoolArg $ caseB a (fmap (second toBoolArg) bs) (toBoolA
 
 boolExp :: a -> [b] -> PreInline a b
 boolExp = PreInline
+
+condExpI :: (Val bool, Val a) => bool -> a -> a -> a
+condExpI p t e = i $ condExp (i p) (i t) (i e)
 
 condExp :: (Val bool, Val a) => bool -> a -> a -> a
 condExp p t e = fromE $ mkCond (condInfo p) (toE t) (toE e)
@@ -229,8 +235,14 @@ boolOps op as = noRate $ ExpBool $ boolExp op $ fmap toPrimOr as
 boolOp0 :: Val a => CondOp -> a
 boolOp0 op = boolOps op []
 
+boolOp0I :: Val a => CondOp -> a
+boolOp0I op = i $ boolOp0 op
+
 boolOp2 :: (Val a1, Val a2, Val b) => CondOp -> a1 -> a2 -> b
 boolOp2 op a b = boolOps op $ map (setRate Kr) [toE a, toE b]
+
+boolOp2I :: (Val a1, Val a2, Val b) => CondOp -> a1 -> a2 -> b
+boolOp2I op a b = i $ boolOps op $ map (setRate Ir) [toE a, toE b]
 
 -----------------------------------------------------------------------------
 -- no support for not in csound so we perform not-elimination

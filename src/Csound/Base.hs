@@ -215,6 +215,8 @@ module Csound.Base(
     
     -- | You can find many examples at:
     --
+    -- * Examples in the archive with the source code of the library.
+    --
     -- * A translation of the Amsterdam catalog of Csound computer instruments: <https://github.com/anton-k/amsterdam>
     --
     -- * Csound expression Tutorial at (TODO).

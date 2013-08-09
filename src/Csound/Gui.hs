@@ -53,7 +53,7 @@ module Csound.Gui (
     widget, sink, source, display,
     
     -- * Panels
-    panel, tabs, panels, panelBy, tabsBy,
+    panel, panels, panelBy,
 
     -- * Re-exports
     module Csound.Gui.Layout,
