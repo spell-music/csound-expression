@@ -12,7 +12,7 @@ import Data.Default
 import Data.Fix(Fix(..), cata)
 import Data.Fix.Cse(fromDag, cse)
 
-import Csound.Exp hiding (Var)
+import Csound.Exp hiding (Var, varType)
 import Csound.Exp.Wrapper(getRates, isMultiOutSignature)
 
 import Csound.Tfm.DeduceTypes
@@ -91,7 +91,7 @@ unfoldSpec = UnfoldMultiOuts getSelector' getParentTypes'
 coherentRates :: Rate -> Rate -> Bool
 coherentRates to from = case (to, from) of
     (a, b)  | a == b    -> True
-    (Xr, _)             -> True             
+    (Xr, _)             -> True   
     (Kr, Ir)            -> True
     _                   -> False
 
@@ -111,9 +111,11 @@ deduceRate desiredRates expr = case ratedExpExp expr of
                     Just _ -> r1
                     Nothing -> r1
     
-    ExpNum _ -> case maximum desiredRates of
-        Xr -> Ar
-        r -> r
+    ExpNum _ -> case ratedExpRate expr of
+        Just r  -> r
+        Nothing -> case maximum desiredRates of
+            Xr -> Ar
+            r -> r
     
     Select rate _ _ -> rate
     If _ _ _ -> head $ filter (/= Xr) $ sort desiredRates   
@@ -143,10 +145,19 @@ rateExp curRate expr = case expr of
     where ratesFromSignature rate signature = case signature of
               SingleRate table -> table M.! rate
               MultiRate _ rs   -> rs
+
+          condRate :: Exp Int -> Exp RatedVar
           condRate = fmap (fmap (ratedVar r))  
               where r = max curRate Kr -- Kr
-          
 
+          substXr :: Exp RatedVar -> Exp RatedVar
+          substXr = fmap (fmap phi)
+            where 
+                phi v = case varType v of
+                    Xr  -> v { varType = Ar }
+                    _   -> v
+            
+         
 mergeWithPrimOrBy :: (a -> b -> c) -> [PrimOr a] -> [b] -> [PrimOr c]
 mergeWithPrimOrBy cons = zipWith (\primOr b -> fmap (flip cons b) primOr)
 

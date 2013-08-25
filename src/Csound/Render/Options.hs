@@ -11,9 +11,13 @@ import Csound.Render.Pretty
 import Csound.Render.Instr(renderInstrBody)
 import Csound.Render.Channel(chnUpdateStmt)
 
-renderFlags :: CsdOptions -> Doc
-renderFlags = text . flags
-
+renderFlags :: [MidiAssign] -> CsdOptions -> Doc
+renderFlags ms = reactOnMidi ms . text . flags
+    where 
+        reactOnMidi xs    
+            | null xs   = id
+            | otherwise = (text "-Ma" <+>)
+            
 type Nchnls = Int
 
 renderInstr0 :: Nchnls -> [MidiAssign] -> [Global] -> [Panel] -> CsdOptions -> Doc

@@ -35,14 +35,14 @@ data GetType ty
     = NoConversion ty 
     -- If there is a conversion we look for a fresh identifier by map 
     -- (map converts mismatched type to fresh identifier)
-    | ConversionLookup (M.Map ty Int)
+    | ConversionLookup (Var ty) (M.Map ty Int)
 
 type TypeMap ty = IM.IntMap (GetType ty)
 
-lookupVar :: Ord a => TypeMap a -> Var a -> Var a
+lookupVar :: (Show a, Ord a) => TypeMap a -> Var a -> Var a
 lookupVar m (Var i r) = case m IM.! i of
-    NoConversion     ty -> Var i ty
-    ConversionLookup f  -> Var (f M.! r) r
+    NoConversion     ty        -> Var i ty
+    ConversionLookup noConv f  -> maybe noConv (flip Var r) $ M.lookup r f 
 
 -- Statement: assignment, like
 --    leftHandSide = RightHandSide( arguments )
@@ -87,7 +87,7 @@ data TypeGraph f a = TypeGraph
 -- due to converters. If there are converters we have to insert new statements and substitute identifiers
 -- with new ones. That's why we convert variables to variables in the processLine. 
 --
-deduceTypes :: (Ord a, T.Traversable f) => TypeGraph f a -> [Stmt f Int] -> ([Stmt f (Var a)], Int)
+deduceTypes :: (Show a, Ord a, T.Traversable f) => TypeGraph f a -> [Stmt f Int] -> ([Stmt f (Var a)], Int)
 deduceTypes spec as = runST $ do
     freshIds <- newSTRef n
     typeRequests <- initTypeRequests n
@@ -112,7 +112,7 @@ mkGetType typesToConvert curVar freshIds
     | null typesToConvert = return (NoConversion $ varType curVar, [])
     | otherwise = do
         ids <- nextIds n freshIds
-        return (ConversionLookup $ M.fromList $ (varType curVar, varId curVar) : (zip typesToConvert ids), 
+        return (ConversionLookup curVar $ M.fromList (zip typesToConvert ids), 
                 zipWith (\i t -> Convert curVar (Var i t)) ids typesToConvert)
     where n = length typesToConvert    
 

@@ -22,8 +22,8 @@ module Csound.Opcode.Basic(
 
     -----------------------------------------------------
     -- * Envelopes
-    linseg, expseg, linsegr, expsegr,
-    lpshold, loopseg, looptseg,    
+    linseg, expseg, transeg, linsegr, expsegr, transegr,
+    lpshold, loopseg, loopxseg, looptseg, loopsegp,
     linen, linenr, envlpx, 
     
     -----------------------------------------------------
@@ -451,39 +451,91 @@ expsegr xs relDur relVal = kr $ opcs "expsegr" ([
     (a, repeat i),
     (k, repeat i)]) (xs ++ [relDur, relVal])
 
--- | Generate control signal consisting of held segments delimited by two or more specified points. The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate. 
+-- | Constructs a user-definable envelope.
+--
+-- > ares transeg ia, idur, itype, ib [, idur2] [, itype] [, ic] ...
+-- > kres transeg ia, idur, itype, ib [, idur2] [, itype] [, ic] ...
+--
+-- doc: <http://www.csounds.com/manual/html/transeg.html>
+transeg :: [D] -> Ksig
+transeg = kr . opcs "transeg" [ 
+    (a, repeat i),
+    (k, repeat i)]
+
+-- | Constructs a user-definable envelope. It is the same as transeg, with an extended release segment.
+--
+-- > ares transeg ia, idur, itype, ib [, idur2] [, itype] [, ic] ...
+-- > kres transeg ia, idur, itype, ib [, idur2] [, itype] [, ic] ...
+--
+-- doc: <http://www.csounds.com/manual/html/transegr.html>
+transegr :: [D] -> D -> D -> Ksig
+transegr xs relDur relVal = kr $ opcs "transegr" ([
+    (a, repeat i),
+    (k, repeat i)]) (xs ++ [relDur, relVal])
+
+-- | Generate control signal consisting of held segments delimited 
+-- by two or more specified points. The entire envelope is looped at kfreq rate. 
+-- Each parameter can be varied at k-rate. 
 --
 -- > ksig lpshold kfreq, ktrig, ktime0, kvalue0  [, ktime1] [, kvalue1] \
 -- >       [, ktime2] [, kvalue2] [...]
 --
 -- doc: <http://www.csounds.com/manual/html/lpshold.html>
 
-lpshold :: Sig -> Sig -> [Sig] -> Ksig
-lpshold = mkLps "lpshold"
+lpshold :: Sig -> Sig -> D -> [Sig] -> Ksig
+lpshold = mkLpsWithPhase "lpshold"
 
--- | Generate control signal consisting of linear segments delimited by two or more specified points. The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate. 
+-- | Generate control signal consisting of linear segments delimited by two or
+-- more specified points. The entire envelope is looped at kfreq rate.
+-- Each parameter can be varied at k-rate. 
 --
 -- > ksig loopseg kfreq, ktrig, iphase, ktime0, kvalue0 [, ktime1] [, kvalue1] \
 -- >       [, ktime2] [, kvalue2] [...]
 --
 -- doc: <http://www.csounds.com/manual/html/loopseg.html>
+loopseg :: Sig -> Sig -> D -> [Sig] -> Ksig
+loopseg = mkLpsWithPhase "loopseg"
 
-loopseg :: Sig -> Sig -> [Sig] -> Ksig
-loopseg = mkLps "loopseg"
+-- | Generate control signal consisting of exponential segments delimited by two or
+-- more specified points. The entire envelope is looped at kfreq rate.
+-- Each parameter can be varied at k-rate.
+--
+-- > ksig loopxseg kfreq, ktrig, iphase, ktime0, kvalue0 [, ktime1] [, kvalue1] \
+-- >       [, ktime2] [, kvalue2] [...]
+--
+-- doc: <http://www.csounds.com/manual/html/loopxseg.html>
+loopxseg :: Sig -> Sig -> D -> [Sig] -> Ksig
+loopxseg = mkLpsWithPhase "loopxseg"
 
--- | Generate control signal consisting of controllable exponential segments or linear segments delimited by two or more specified points. 
+-- | Generate control signal consisting of controllable exponential segments 
+-- or linear segments delimited by two or more specified points. 
 -- The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate. 
 --
 -- > ksig looptseg kfreq, ktrig, ktime0, kvalue0, ktype0, [, ktime1] [, kvalue1] [,ktype1] \
 -- >       [, ktime2] [, kvalue2] [,ktype2] [...][, ktimeN] [, kvalueN]
 --
 -- doc: <http://www.csounds.com/manual/html/looptseg.html>
-
 looptseg :: Sig -> Sig -> [Sig] -> Ksig
 looptseg = mkLps "looptseg"
 
 mkLps :: Name -> Sig -> Sig -> [Sig] -> Ksig
 mkLps name kfreq ktrig kvals = kr $ opcs name signature $ kfreq:ktrig:kvals
+    where signature = [(k, repeat k)]
+
+mkLpsWithPhase :: Name -> Sig -> Sig -> D -> [Sig] -> Ksig
+mkLpsWithPhase name kfreq ktrig iphase kvals = kr $ opcs name signature $ (toE kfreq) : (toE ktrig) : (toE iphase) : (fmap toE kvals)
+    where signature = [(k, k : k : i : repeat k)]
+
+-- | Generate control signal consisiting of linear segments delimited by 
+-- two or more specified points. The entire envelope can be looped at 
+-- time-variant rate. Each segment coordinate can also be varied at k-rate.
+--
+-- > ksig loopsegp  kphase, kvalue0, kdur0, kvalue1 \
+-- >      [, kdur1, ... , kdurN-1, kvalueN]
+--
+-- doc: <http://www.csounds.com/manual/html/loopsegp.html>
+loopsegp :: Sig -> [Sig] -> Ksig
+loopsegp kphase xs = kr $ opcs "loopsegp" signature (kphase : xs) 
     where signature = [(k, repeat k)]
 
 -- | Apply a stright line rise and decay pattern to an imput amp signal.

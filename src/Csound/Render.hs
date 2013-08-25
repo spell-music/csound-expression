@@ -31,7 +31,7 @@ render opt ge = fmap (show . renderHistory (nchnls ge) opt) $ flip execGE opt $ 
 renderHistory :: Int -> CsdOptions -> History -> Doc
 renderHistory numOfChnls options history = ppCsdFile 
     -- flags
-    (renderFlags options) 
+    (renderFlags (midis history) options) 
     -- instr 0
     (renderInstr0 numOfChnls (midis history) (globalsSoFar $ globals history) (getPanels $ history) options)
     -- orchestra

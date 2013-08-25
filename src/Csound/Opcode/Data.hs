@@ -422,7 +422,7 @@ conv :: Nums a => NumOp -> a -> a
 conv op arg = noRate $ ExpNum $ PreInline op [toPrimOr $ toE arg]
 
 convKr :: Nums a => NumOp -> a -> a
-convKr op arg = conv op $ phi arg
+convKr op arg = phi $ conv op $ phi arg
     where phi
             | isSig arg = setRate Kr 
             | otherwise = id

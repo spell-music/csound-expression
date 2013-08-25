@@ -9,7 +9,7 @@ module Csound.Air (
     unipolar, uosc, uoscBy, usaw, usq, utri, -- upulse, uramp,
    
     -- * Envelopes
-    onIdur, lindur, expdur,
+    onIdur, lindur, expdur, linendur,
 
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
@@ -21,7 +21,7 @@ module Csound.Air (
     blp, bhp, bbp, bbr,
     
     -- * Patterns
-    once, several, sine, mean,
+    once, several, sine, cosine, mean,
     
     -- ** Series
     hase, whase,
@@ -35,10 +35,10 @@ import Csound.Exp(Tab)
 import Csound.Exp.Wrapper(Sig, D, Spec, sig, kr, Cps, Ksig)
 import Csound.Exp.SE
 import Csound.Opcode(idur, oscil3, pvscross,
-    linseg, expseg,
+    linseg, expseg, linen,
     atone, tone, areson, reson,
     buthp, butbp, butlp, butbr)
-import Csound.Tab(sines)
+import Csound.Tab(sines, buzzes)
 
 --------------------------------------------------------------------------
 -- oscillators
@@ -156,6 +156,12 @@ lindur = linseg . onIdur
 expdur :: [D] -> Ksig
 expdur = expseg . onIdur
 
+-- | The opcode 'Csound.Opcode.linen' with time intervals relative to the total duration of the note. Total time is set to the value of idur.
+--
+-- > linendur asig rise decay
+linendur :: Sig -> D -> D -> Sig
+linendur asig ris dec = linen asig (ris * idur) idur (dec * idur)
+
 --------------------------------------------------------------------------
 -- filters
 
@@ -216,6 +222,10 @@ bbr freq band a = butbr a freq band
 -- | Table for pure sine wave.
 sine :: Tab
 sine = sines [1]
+
+-- | Table for pure cosine wave.
+cosine :: Tab
+cosine = buzzes 1 []
 
 -- | Reads table once during the note length. 
 once :: Tab -> Sig
