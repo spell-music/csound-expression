@@ -2,7 +2,7 @@
 module Csound.Exp.SE(
     Outs,
     SE(..), LocalHistory(..), 
-    se, se_, stmtOnly, runSE, execSE, 
+    se, se_, stripSE, stmtOnly, runSE, execSE, 
     writeVar, readVar, readOnlyVar, initVar, appendVar, appendVarBy, 
     newLocalVar
 ) where
@@ -64,6 +64,9 @@ se a = SE $ state $ \s ->
 
 se_ :: E -> SE ()
 se_ = fmap (const ()) . (se :: E -> SE E)
+
+stripSE :: SE a -> a
+stripSE (SE a) = evalState a def
 
 stmtOnly :: Exp E -> SE ()
 stmtOnly stmt = se_ $ fromE $ noRate stmt

@@ -18,7 +18,7 @@ module Csound.Opcode.Basic(
 
     -----------------------------------------------------
     -- * Random and Noise generators    
-    rand, randi, randh, rnd31, random, randomi, randomh, pinkish, noise, pinkish', noise',
+    rand, randi, randh, rnd31, random, randomi, randomh, pinkish, noise, pinkish', noise', jitter, jitter2, jspline,
 
     -----------------------------------------------------
     -- * Envelopes
@@ -54,7 +54,7 @@ module Csound.Opcode.Basic(
     port, portk,
 
     -- ** Other filters
-    moogladder, vcomb, bqrez, comb,
+    moogladder, vcomb, bqrez, comb, moogvcf, moogvcf2,
 
     -----------------------------------------------------
     -- * Reverb
@@ -399,6 +399,34 @@ noise a1 a2 = se $ opc2 "noise" [(a, [x, k])] a1 a2
 
 noise' :: Amp -> Sig -> Sig
 noise' = opc2 "noise" [(a, [x, k])]
+
+-- | Generates a segmented line whose segments are randomly generated. 
+--
+-- > kout jitter kamp, kcpsMin, kcpsMax
+--
+-- doc: <http://www.csounds.com/manual/html/jitter.html>
+
+jitter :: Sig -> Sig -> Sig -> SE Sig
+jitter a1 a2 a3 = se $ opc3 "jitter" [(k, [k, k, k])] a1 a2 a3
+
+-- | Generates a segmented line with user-controllable random segments.
+--
+-- > kout jitter2 ktotamp, kamp1, kcps1, kamp2, kcps2, kamp3, kcps3
+--
+-- doc: <http://www.csounds.com/manual/html/jitter2.html>
+
+jitter2 :: Sig -> [Sig] -> SE Sig
+jitter2 k1 kks = se $ opcs "jitter2" [(k, repeat k)] $ k1 : kks
+
+-- | A jitter-spline generator.
+--
+-- > aout jspline xamp, kcpsMin, kcpsMax
+-- > kout jspline kamp, kcpsMin, kcpsMax
+--
+-- doc: <http://www.csounds.com/manual/html/jspline.html>
+
+jspline :: Sig -> Sig -> Sig -> SE Sig
+jspline a1 a2 a3 = se $ opc3 "jspline" [(k, [k, k, k])] a1 a2 a3
 
 --------------------------------------------------
 -- envelopes
@@ -772,6 +800,25 @@ areson = mkFilter2 "areson"
 butbp  = mkFilter2 "butbp"
 butbr  = mkFilter2 "butbr"
 moogladder = mkFilter2 "moogladder"
+
+-- | A digital emulation of the Moog diode ladder filter configuration.
+--
+-- > ares moogvcf asig, xfco, xres [,iscale, iskip]
+-- 
+-- doc: <http://www.csounds.com/manual/html/moogvcf.html>
+
+moogvcf :: Sig -> Sig -> Sig -> Sig
+moogvcf = opc3 "moogvcf" [(a, [x, x, i, i])]
+
+-- | A digital emulation of the Moog diode ladder filter configuration.
+--
+-- > ares moogvcf2 asig, xfco, xres [,iscale, iskip]
+-- 
+-- doc: <http://www.csounds.com/manual/html/moogvcf2.html>
+
+moogvcf2 :: Sig -> Sig -> Sig -> Sig
+moogvcf2 = opc3 "moogvcf2" [(a, [x, x, i, i])]
+
 
 -- | Variably reverberates an input signal with a “colored” frequency response. 
 --

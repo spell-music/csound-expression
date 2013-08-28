@@ -1,7 +1,7 @@
 -- |  Constructors
 module Csound.Exp.Cons (
     Spec1, Specs,
-    withInits, withDs, withD, withTab,
+    withInits, withDs, withD, withTab, withSeed,
     bi,
     spec1, specs,
     opcs, opc0, opc1, opc2, opc3, opc4, opc5, opc6, opc7, opc8, opc9, opc10, opc11, opc12,
@@ -13,6 +13,7 @@ import qualified Data.Map as M(fromList)
 import Csound.Exp
 import Csound.Exp.Wrapper(Sig, D, Val(..), tfm, pref, onExp)
 import Csound.Exp.Tuple(CsdTuple, fromCsdTuple, multiOuts)
+import Csound.Exp.SE(SE, stripSE)
 
 -- | Appends initialisation arguments. It's up to you to supply arguments with the right types. For example:
 --
@@ -37,6 +38,14 @@ genWithInits a es = fromE $ onExp phi $ toE a
     where phi x = case x of
             Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr es))
             _        -> x
+
+-- | Applies a seed to the random value. 
+-- It's equivalent to the @withD@ but it has a special 
+-- meaning of canceling the side effect. When random
+-- opcode is provided with seed value it's no longer
+-- contains a side effect so we don't need to restrict it.
+withSeed :: SE Sig -> D -> Sig
+withSeed expr seed = stripSE expr `withD` seed
 
 ------------------------------------------------
 -- constructor for simple arithmetic operators

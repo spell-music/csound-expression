@@ -10,7 +10,7 @@ module Csound.Types (
     -- So the number of arguments in Csound can vary. It's not idiomatic in Haskell. 
     -- Instead we can append the initialization arguments to the signal which happens to
     -- be the result of the opcode (or sound unit).
-    withInits, withDs, withD, withTab,
+    withInits, withDs, withD, withTab, withSeed,
     
     -- * Tables
     -- | In Csound tables can be treated as primitive values. They can be passed to instruments in the score events.
@@ -58,6 +58,6 @@ import Csound.Exp.Wrapper
 import Csound.Exp.Tuple
 import Csound.Exp.Logic
 import Csound.Exp.SE
-import Csound.Exp.Cons(withInits, withDs, withD, withTab)
+import Csound.Exp.Cons(withInits, withDs, withD, withTab, withSeed)
 import Csound.Tab
 
