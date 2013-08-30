@@ -53,7 +53,8 @@ module Csound.Tab (
     -- * Polynomials    
     polys, chebs1, chebs2, bessels,
     
-    -- 
+    -- * Windows
+    wins, WinType(..), 
 
     -- * Low level Csound definition.
     gen,
@@ -68,9 +69,10 @@ module Csound.Tab (
     -- * Identifiers for GEN-routines
     
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
-    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels
+    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels, idWins
 ) where
 
+import Data.Maybe(listToMaybe)
 import Data.Default
 import Csound.Exp
 import Csound.Tfm.Tab(updateTabSize)
@@ -339,6 +341,39 @@ chebs1 xint xamp hs = plains idChebs1 (xint : xamp : hs)
 chebs2 :: Double -> Double -> [Double] -> Tab
 chebs2 xint xamp hs = plains idChebs2 (xint : xamp : hs)
 
+data WinType 
+    = Hamming | Hanning | Bartlett | Blackman
+    | Harris | Gaussian Double | Kaiser Double
+    | RectWin | SyncWin
+
+winTypeId :: WinType -> Double
+winTypeId x = case x of
+    Hamming     -> 1
+    Hanning     -> 2
+    Bartlett    -> 3
+    Blackman    -> 4
+    Harris      -> 5
+    Gaussian _  -> 6
+    Kaiser _    -> 7
+    RectWin     -> 8
+    SyncWin     -> 9
+
+winOptParam :: WinType -> Maybe Double
+winOptParam x = case x of
+    Gaussian a  -> Just a
+    Kaiser a    -> Just a
+    _           -> Nothing
+
+winMaxParam :: [Double] -> Maybe Double
+winMaxParam = listToMaybe 
+
+wins :: WinType -> [Double] -> Tab
+wins ty maxs = gen idWins (winTypeId ty : params)
+    where params = case (winMaxParam maxs, winOptParam ty) of
+            (Nothing, Nothing) -> []
+            (Nothing, Just x)  -> [1, x]
+            (Just x,  Nothing) -> [x]
+            (Just x, Just y)   -> [x, y]
 
 -- | Creates a table of doubles (It's f-table in Csound).
 -- Arguments are:
@@ -397,7 +432,7 @@ skipNorm x = case x of
 
 
 
-idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels :: Int
+idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels, idWins :: Int
 
 -- Human readable Csound identifiers for GEN-routines
 
@@ -418,5 +453,6 @@ idPolys = 3
 idChebs1 = 13
 idChebs2 = 14
 idBessels = 12
+idWins = 20
 
 idMp3s = 49
