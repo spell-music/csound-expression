@@ -36,7 +36,7 @@ module Csound.Opcode.Basic(
     delayr, delayw, deltap, deltapi, deltap3, deltapx, deltapxw,
     
     -- Variable delays
-    vdelay, vdelayx, vdelayxw, vdel_k,
+    vdelay, vdelay3, vdelayx, vdelayxw, vdel_k,
 
     -----------------------------------------------------
     -- * Filters
@@ -645,6 +645,14 @@ delayk = opc2 "delayk" [(k, [k, i, i])]
 -- doc: <http://www.csounds.com/manual/html/vdelay.html>
 vdelay :: Sig -> Sig -> D -> Sig
 vdelay = opc3 "vdelay" [(a, [a, a, i, i])]
+
+-- | vdelay3 is experimental. It is the same as vdelay except that it uses cubic interpolation.  
+--
+-- > ares vdelay3 asig, adel, imaxdel [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/vdelay3.html>
+vdelay3 :: Sig -> Sig -> D -> Sig
+vdelay3 = opc3 "vdelay3" [(a, [a, a, i, i])]
 
 -- | A variable delay opcode with high quality interpolation. 
 --
