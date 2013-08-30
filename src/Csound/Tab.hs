@@ -53,8 +53,9 @@ module Csound.Tab (
     -- * Polynomials    
     polys, chebs1, chebs2, bessels,
     
-    -- * Windows
-    wins, WinType(..), 
+    -- * Windows  
+    winHamming, winHanning,  winBartlett, winBlackman,
+    winHarris, winGaussian, winKaiser, winRectangle, winSync,
 
     -- * Low level Csound definition.
     gen,
@@ -340,6 +341,21 @@ chebs1 xint xamp hs = plains idChebs1 (xint : xamp : hs)
 -- * [h0, h1, h2, ...] -- relative strength of the partials
 chebs2 :: Double -> Double -> [Double] -> Tab
 chebs2 xint xamp hs = plains idChebs2 (xint : xamp : hs)
+
+winHamming, winHanning, winBartlett, winBlackman,
+    winHarris, winRectangle, winSync :: [Double] -> Tab
+
+winGaussian, winKaiser :: Double -> [Double] -> Tab
+
+winHamming      = wins Hamming
+winHanning      = wins Hanning
+winBartlett     = wins Bartlett
+winBlackman     = wins Blackman
+winHarris       = wins Harris
+winRectangle    = wins RectWin
+winSync         = wins SyncWin
+winGaussian     = wins . Gaussian
+winKaiser       = wins . Kaiser
 
 data WinType 
     = Hamming | Hanning | Bartlett | Blackman
