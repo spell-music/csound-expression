@@ -29,11 +29,14 @@ module Csound.Opcode.Basic(
     -----------------------------------------------------
     -- * Delays
 
-    -- ** Audio delays
-    vdelay, vdelayx, vdelayxw,
+    -- ** Fixed delays
+    delaySig, delay1, delayk,
+    
+    -- ** Delay lines
     delayr, delayw, deltap, deltapi, deltap3, deltapx, deltapxw,
-
-    -- ** Control delays
+    
+    -- Variable delays
+    vdelay, vdelayx, vdelayxw, vdel_k,
 
     -----------------------------------------------------
     -- * Filters
@@ -55,6 +58,7 @@ module Csound.Opcode.Basic(
 
     -- ** Other filters
     moogladder, vcomb, bqrez, comb, moogvcf, moogvcf2,
+    resonr, resonx, resony, resonz, 
 
     -----------------------------------------------------
     -- * Reverb
@@ -608,6 +612,32 @@ envlpx a1 a2 a3 a4 a5 a6 a7 = opc7 "envlpx" [
 ----------------------------------------------------
 -- audio delays
 
+-- | Delays an input signal by some time interval. 
+-- Name is changed to prevent name collisions with 
+-- score arrangment functions.
+--
+-- > ares delay asig, idlt [, iskip] 
+--
+-- doc: <http://www.csounds.com/manual/html/delay.html>
+delaySig :: Sig -> D -> Sig
+delaySig = opc2 "delay" [(a, [a, i, i])]
+
+-- | Delays an input signal by one sample
+--
+-- > ares delay1 asig [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/delay1.html>
+delay1 :: Sig -> Sig
+delay1 = opc1 "delay1" [(a, [a, i])]
+
+-- | k-rate delay opcodes 
+--
+-- > kr delayk   ksig, idel[, imode]
+--
+-- doc: <http://www.csounds.com/manual/html/delayk.html>
+delayk :: Sig -> D -> Sig
+delayk = opc2 "delayk" [(k, [k, i, i])]
+
 -- | This is an interpolating variable time delay, it is not very different from the existing implementation (deltapi), it is only easier to use. 
 --
 -- > ares vdelay asig, adel, imaxdel [, iskip]
@@ -631,6 +661,14 @@ vdelayx = opc4 "vdelayx" [(a, [a, a, i, i, i])]
 -- doc: <http://www.csounds.com/manual/html/vdelayxw.html>
 vdelayxw :: Sig -> Sig -> D -> D -> Sig
 vdelayxw = opc4 "vdelayxw" [(a, [a, a, i, i, i])]
+
+-- | Delays an input signal by one sample
+--
+-- > kr vdel_k   ksig, kdel, imdel[, imode]
+--
+-- doc: <http://www.csounds.com/manual/html/delay1.html>
+vdel_k :: Sig -> Sig -> D -> Sig
+vdel_k = opc3 "vdel_k" [(k, [k, k, i, i])]
 
 ----------------------------------------------------
 -- delay lines
@@ -859,6 +897,49 @@ port = opc2 "port" [(k, [k, i, i])]
 -- doc: <http://www.csounds.com/manual/html/portk.html>
 portk :: Sig -> Sig -> Sig
 portk = opc2 "portk" [(k, [k, k, i])]
+
+-- | Implementations of a second-order, two-pole two-zero bandpass filter 
+-- with variable frequency response.
+--
+-- > ares resonr asig, kcf, kbw [, iscl] [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/resonr.html>
+resonr :: Sig -> Sig -> Sig -> Sig
+resonr = opc3 "resonr" [(a, [a, k, k, i, i])]
+
+-- | resonx is equivalent to a filters consisting of
+-- more layers of reson with the same arguments, 
+-- serially connected. Using a stack of a larger 
+-- number of filters allows a sharper cutoff. 
+-- They are faster than using a larger number instances 
+-- in a Csound orchestra of the old opcodes, because 
+-- only one initialization and k- cycle are needed at 
+-- time and the audio loop falls entirely inside the 
+-- cache memory of processor.
+--
+-- > ares resonx asig, kcf, kbw [, inumlayer] [, iscl] [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/resonx.html>
+resonx :: Sig -> Sig -> Sig -> Sig
+resonx = opc3 "resonx" [(a, [a, k, k, i, i, i])]
+
+-- | A bank of second-order bandpass filters, connected in parallel.
+--
+-- > ares resony asig, kbf, kbw, inum, ksep [, isepmode] [, iscl] [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/resony.html>
+resony :: Sig -> Sig -> Sig -> D -> Sig -> Sig
+resony = opc5 "resony" [(a, [k, k, i, k, i, i])]
+
+-- | Implementations of a second-order, two-pole 
+-- two-zero bandpass filter with variable frequency 
+-- response.
+--
+-- > ares resonz asig, kcf, kbw [, iscl] [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/resonz.html>
+resonz :: Sig -> Sig -> Sig -> Sig
+resonz = opc3 "resonz" [(a, [a, k, k, i, i])]
 
 ---------------------------------------------------
 -- reverberation
