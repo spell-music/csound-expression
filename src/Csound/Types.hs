@@ -32,7 +32,7 @@ module Csound.Types (
     module Data.Boolean,
     
     -- * Side effects
-    SE,    
+    SE, SERef(..), newSERef, sensorsSE,    
 
     -- * Tuples
     CsdTuple,
@@ -58,6 +58,7 @@ import Csound.Exp.Wrapper
 import Csound.Exp.Tuple
 import Csound.Exp.Logic
 import Csound.Exp.SE
+import Csound.Exp.Ref
 import Csound.Exp.Cons(withInits, withDs, withD, withTab, withSeed)
 import Csound.Tab
 

@@ -87,5 +87,3 @@ sensorsSE a = do
         writer x = zipWithM_ writeVar vs (fromCsdTuple x)
     return (reader, writer)
     
-
-
