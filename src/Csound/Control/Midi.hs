@@ -3,7 +3,7 @@ module Csound.Control.Midi (
     Msg, midi, pgmidi, 
     
     -- * Reading midi note parameters
-    cpsmidi, ampmidi, pchbend, aftouch,
+    cpsmidi, ampmidi, ampCps, pchbend, aftouch,
 
     -- * Midi-controls
     ctrl7      
@@ -16,6 +16,10 @@ import Csound.LowLevel
 
 -----------------------------------------------------
 -- * MIDI
+
+-- | Queries amplitude and frequency of the midi message.
+ampCps :: Msg -> (D, D)
+ampCps msg = (ampmidi msg, cpsmidi msg)
 
 -- ** Opcodes For Use In MIDI-Triggered Instruments
 

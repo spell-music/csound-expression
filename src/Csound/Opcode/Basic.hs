@@ -18,7 +18,7 @@ module Csound.Opcode.Basic(
 
     -----------------------------------------------------
     -- * Random and Noise generators    
-    rand, randi, randh, rnd31, random, randomi, randomh, pinkish, noise, pinkish', noise', jitter, jitter2, jspline,
+    rand, randi, randh, rnd31, rnd31D, random, randomD, randomi, randomh, pinkish, noise, pinkish', noise', jitter, jitter2, jspline,
 
     -----------------------------------------------------
     -- * Envelopes
@@ -331,6 +331,18 @@ rnd31 a1 a2 = se $ opc2 "rnd31" [
     (k, [k, k, i]),
     (i, [i, i, i])] a1 a2
 
+
+-- | 31-bit bipolar random opcodes with controllable distribution. These units are portable, i.e. using the same seed 
+-- value will generate the same random sequence on all systems. The distribution of --generated random numbers can be varied at k-rate. 
+--
+-- > ix rnd31 iscl, irpow [, iseed]
+--
+-- doc: <http://www.csounds.com/manual/html/rnd31.html> 
+
+rnd31D :: D -> D -> SE D
+rnd31D a1 a2 = se $ opc2 "rnd31" [
+    (i, [i, i, i])] a1 a2
+
 -- | Generates is a controlled pseudo-random number series between min and max values. 
 --
 -- > ax random kscl, krpow
@@ -345,6 +357,15 @@ random a1 a2 = se $ opc2 "random" [
     (k, [k, k]),
     (i, [i, i])] a1 a2
 
+-- | Generates is a controlled pseudo-random number series between min and max values. 
+--
+-- > ix random iscl, irpow
+--
+-- doc: <http://www.csounds.com/manual/html/random.html> 
+
+randomD :: D -> D -> SE D
+randomD a1 a2 = se $ opc2 "random" [
+    (i, [i, i])] a1 a2
 -- | Generates a user-controlled random number series with interpolation between each new number. 
 --
 -- > ares randomi kmin, kmax, xcps [,imode] [,ifirstval]

@@ -73,7 +73,6 @@ module Csound.Tab (
     idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels, idWins
 ) where
 
-import Data.Maybe(listToMaybe)
 import Data.Default
 import Csound.Exp
 import Csound.Tfm.Tab(updateTabSize)
@@ -343,24 +342,22 @@ chebs2 :: Double -> Double -> [Double] -> Tab
 chebs2 xint xamp hs = plains idChebs2 (xint : xamp : hs)
 
 winHamming, winHanning, winBartlett, winBlackman,
-    winHarris, winRectangle, winSync :: [Double] -> Tab
+    winHarris, winGaussian, winKaiser, winRectangle, winSync :: [Double] -> Tab
 
-winGaussian, winKaiser :: Double -> [Double] -> Tab
 
 winHamming      = wins Hamming
 winHanning      = wins Hanning
 winBartlett     = wins Bartlett
 winBlackman     = wins Blackman
 winHarris       = wins Harris
-winRectangle    = wins RectWin
-winSync         = wins SyncWin
-winGaussian     = wins . Gaussian
-winKaiser       = wins . Kaiser
+winRectangle    = wins Rectangle
+winSync         = wins Sync
+winGaussian     = wins Gaussian
+winKaiser       = wins Kaiser
 
 data WinType 
     = Hamming | Hanning | Bartlett | Blackman
-    | Harris | Gaussian Double | Kaiser Double
-    | RectWin | SyncWin
+    | Harris | Gaussian | Kaiser | Rectangle | Sync
 
 winTypeId :: WinType -> Double
 winTypeId x = case x of
@@ -369,27 +366,13 @@ winTypeId x = case x of
     Bartlett    -> 3
     Blackman    -> 4
     Harris      -> 5
-    Gaussian _  -> 6
-    Kaiser _    -> 7
-    RectWin     -> 8
-    SyncWin     -> 9
-
-winOptParam :: WinType -> Maybe Double
-winOptParam x = case x of
-    Gaussian a  -> Just a
-    Kaiser a    -> Just a
-    _           -> Nothing
-
-winMaxParam :: [Double] -> Maybe Double
-winMaxParam = listToMaybe 
+    Gaussian    -> 6
+    Kaiser      -> 7
+    Rectangle   -> 8
+    Sync        -> 9
 
 wins :: WinType -> [Double] -> Tab
-wins ty maxs = gen idWins (winTypeId ty : params)
-    where params = case (winMaxParam maxs, winOptParam ty) of
-            (Nothing, Nothing) -> []
-            (Nothing, Just x)  -> [1, x]
-            (Just x,  Nothing) -> [x]
-            (Just x, Just y)   -> [x, y]
+wins ty params = gen idWins (winTypeId ty : params)
 
 -- | Creates a table of doubles (It's f-table in Csound).
 -- Arguments are:

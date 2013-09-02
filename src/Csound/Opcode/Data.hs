@@ -201,8 +201,6 @@ mkTable name = opc2 name [
 
 mkTableD :: Name -> D -> Tab -> D
 mkTableD name = opc2 name [
-    (a, a:rest),
-    (k, k:rest),
     (i, i:rest)]
     where rest = [i, i, i]
 
