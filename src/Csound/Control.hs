@@ -8,7 +8,7 @@ module Csound.Control(
 
     -- | Let's make some noise. Sound is build from special container of values from the class 'Csound.Base.Out'.
     -- ** Output
-    Out,
+    Out(mapOut, pureOut, bindOut, accumOut), traverseOut, 
     
     -- *** Handy short-cuts
     Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps,
@@ -25,7 +25,7 @@ module Csound.Control(
     module Csound.Control.Midi
 ) where
 
-import Csound.Exp.Tuple(Out)
+import Csound.Exp.Tuple(Out(..), traverseOut)
 import Csound.Exp.Arg
 import Csound.Exp.Wrapper(Sig2, Sig3, Sig4, Ksig, Amp, Cps, Iamp, Icps)
 import Csound.Exp.GE(GE)

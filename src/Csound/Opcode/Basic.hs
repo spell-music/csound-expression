@@ -2,7 +2,7 @@
 module Csound.Opcode.Basic(
     -----------------------------------------------------
     -- * Global constants
-    idur, zeroDbfs, getSampleRate, getBlockSize,
+    idur, zeroDbfs, getSampleRate, getBlockSize, getControlRate,
 
     -----------------------------------------------------
     -- * Oscillators and phasors
@@ -119,6 +119,9 @@ getSampleRate = (setRate Ir :: E -> D) $ readOnlyVar (VarVerbatim Ir "sr")
 -- | Reads @ksmps@ value.
 getBlockSize :: D
 getBlockSize = (setRate Ir :: E -> D) $ readOnlyVar (VarVerbatim Ir "ksmps")
+
+getControlRate :: D
+getControlRate = getSampleRate / getBlockSize
 
 -----------------------------------------------------
 -- Standard Oscillators

@@ -26,7 +26,7 @@ renderInstr0 nchnls massignTable globalVars panels opt = ppInstr0 $ [
     stmt "ksmps" $ blockSize opt,
     stmt "nchnls" nchnls,   
     stmt "0dbfs" 1,
-    maybe empty stmtSeed $ seed opt,
+    maybe empty stmtSeed $ setSeed opt,
     renderInstrBody $ execSE $ initGlobals globalVars,
     vcat $ fmap stmtInitc7 (initc7 opt),
     vcat $ fmap renderMidiAssign massignTable,

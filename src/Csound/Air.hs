@@ -19,26 +19,38 @@ module Csound.Air (
     
     -- ** Butterworth filters
     blp, bhp, bbp, bbr,
-    
+
+    -- ** Balanced filters
+    -- | Applies filter and balances the output by the input signal.
+    lpb, hpb, bpb, brb, blpb, bhpb, bbpb, bbrb,
+
     -- * Patterns
-    once, several, sine, cosine, mean,
+    once, onceBy, several, oscLins, oscElins, oscExps, oscEexps, oscLine, mean,
+    gain, vibrato, randomPitch, chorus, resons, resonsBy, hase, whase,
+
+    -- ** List functions
+    odds, evens,
+
+    -- ** Tables
+    sine, cosine, sigmoid,  
     
-    -- ** Series
-    hase, whase,
-    haseS, whaseS,
-    
+    -- ** Instruments
+    toInstr, toMidi, toInstrD, toMidiD,
+
     -- ** Crossfade
     cfd, cfds, cfdSpec, cfdsSpec
+
 ) where
 
-import Csound.Exp(Tab)
-import Csound.Exp.Wrapper(Sig, D, Spec, sig, kr, Cps, Ksig)
-import Csound.Exp.SE
+import Data.List(intersperse)
+
+import Csound.Types
 import Csound.Opcode(idur, oscil3, pvscross,
-    linseg, expseg, linen,
+    linseg, expseg, linen, loopseg, looptseg,
     atone, tone, areson, reson,
-    buthp, butbp, butlp, butbr)
-import Csound.Tab(sines, buzzes)
+    buthp, butbp, butlp, butbr, balance, randh)
+import Csound.Control(Out(..))
+import Csound.Control.Midi(Msg, ampCps)
 
 --------------------------------------------------------------------------
 -- oscillators
@@ -215,9 +227,58 @@ bbp freq band a = butbp a freq band
 bbr :: Sig -> Sig -> Sig -> Sig 
 bbr freq band a = butbr a freq band
 
+-- Balanced filters
+
+balance1 :: (Sig -> Sig -> Sig) -> (Sig -> Sig -> Sig)
+balance1 f = \cfq asig -> balance (f cfq asig) asig
+
+balance2 :: (Sig -> Sig -> Sig -> Sig) -> (Sig -> Sig -> Sig -> Sig)
+balance2 f = \cfq bw asig -> balance (f cfq bw asig) asig
+
+-- | Balanced low-pass filter.
+lpb :: Sig -> Sig -> Sig
+lpb = balance1 lp
+
+-- | Balanced high-pass filter.
+hpb :: Sig -> Sig -> Sig
+hpb = balance1 hp
+
+-- | Balanced band-pass filter.
+bpb :: Sig -> Sig -> Sig -> Sig
+bpb = balance2 bp
+
+-- | Balanced band-reject filter.
+brb :: Sig -> Sig -> Sig -> Sig
+brb = balance2 br
+
+-- | Balanced butterworth low-pass filter.
+blpb :: Sig -> Sig -> Sig
+blpb = balance1 blp
+
+-- | Balanced butterworth high-pass filter.
+bhpb :: Sig -> Sig -> Sig
+bhpb = balance1 bhp
+
+-- | Balanced butterworth band-pass filter.
+bbpb :: Sig -> Sig -> Sig -> Sig
+bbpb = balance2 bbp
+
+-- | Balanced butterworth band-reject filter.
+bbrb :: Sig -> Sig -> Sig -> Sig
+bbrb = balance2 bbr
 
 --------------------------------------------------------------------------
 -- patterns
+
+-- | Selects odd elements from the list.
+odds :: [a] -> [a]
+odds as = fmap snd $ filter fst $ zip (cycle [True, False]) as 
+
+-- | Selects even elements from the list.
+evens :: [a] -> [a]
+evens as 
+    | null as   = []
+    | otherwise = odds $ tail as
 
 -- | Table for pure sine wave.
 sine :: Tab
@@ -227,13 +288,70 @@ sine = sines [1]
 cosine :: Tab
 cosine = buzzes 1 []
 
+-- | Table for sigmoid wave.
+sigmoid :: Tab
+sigmoid = sines4 [(0.5, 0.5, 270, 0.5)]
+
 -- | Reads table once during the note length. 
-once :: Tab -> Sig
-once a = kr $ oscil3 1 (1 / sig idur) a
+once :: Tab -> Ksig
+once = onceBy idur
+
+-- | Reads table once during a given period of time. 
+onceBy :: D -> Tab -> Ksig
+onceBy dt tab = kr $ oscBy tab (1 / sig dt) 
 
 -- | Reads table several times during the note length.  
 several :: Tab -> Sig -> Sig
 several tab rate = kr $ oscil3 1 (rate / sig idur) tab
+
+-- | Loops over line segments with the given rate.
+--
+-- > oscLins [a, durA, b, durB, c, durC ..] cps
+--
+-- where 
+--
+-- * @a@, @b@, @c@ ... -- values
+--
+-- * durA, durB, durC -- durations of the segments relative to the current frequency.
+oscLins :: [D] -> Sig -> Ksig
+oscLins points cps = loopseg cps 0 0 (fmap sig points) 
+
+-- | Loops over equally spaced line segments with the given rate.
+--
+-- > oscElins [a, b, c] === oscLins [a, 1, b, 1, c]
+oscElins :: [D] -> Sig -> Ksig
+oscElins points = oscLins (intersperse 1 points)
+
+-- | 
+--
+-- > oscLine a b cps
+--
+-- Goes from @a@ to @b@ and back by line segments. One period is equal to @2 / cps@ so that one period is passed by @1/cps@ seconds.
+oscLine :: D -> D -> Sig -> Ksig
+oscLine a b cps = oscElins [a, b, a] (cps / 2)
+
+-- | Loops over exponential segments with the given rate.
+--
+-- > oscLins [a, durA, typeA, b, durB, typeB, c, durC, typeC ..] cps
+--
+-- where 
+--
+-- * @a@, @b@, @c@ ... -- values
+--
+-- * durA, durB, durC -- durations of the segments relative to the current frequency.
+--
+-- * typeA, typeB, typeC, ... -- shape of the envelope. If the value is 0 then the shap eis linear; otherwise it is an concave exponential (positive type) or a convex exponential (negative type).
+oscExps :: [D] -> Sig -> Ksig
+oscExps points cps = looptseg cps 0 (fmap sig points)
+
+-- | Loops over equally spaced exponential segments with the given rate.
+--
+-- > oscLins [a, typeA, b, typeB, c, typeC ..] === oscLins [a, 1, typeA, b, 1, typeB, c, 1, typeC ..]
+oscEexps :: [D] -> Sig -> Ksig
+oscEexps points = oscExps (insertOnes points)
+    where insertOnes xs = case xs of
+            a:b:as  -> a:1:b:insertOnes as
+            _       -> xs
 
 -- | Mean value.
 mean :: Fractional a => [a] -> a
@@ -242,21 +360,45 @@ mean xs = sum xs / (fromIntegral $ length xs)
 -- | Harmonic series. Takes a function that transforms the signal by some parameter
 -- and the list of parameters. It constructs the series of transformers and sums them
 -- at the end with equal strength.
-hase :: (a -> Sig -> Sig) -> [a] -> Sig -> Sig
-hase f as x = mean $ fmap (( $ x) . f) as
+hase :: Out out => (p -> Sig -> out) -> [p] -> Sig -> out
+hase f as x = accumOut mean $ fmap (( $ x) . f) as
 
 -- | Harmonic series, but now you can specify the weights of the final sum.
-whase :: (a -> Sig -> Sig) -> [(Sig, a)] -> Sig -> Sig
-whase f as x = sum $ fmap (\(weight, param) -> weight * f param x) as
+whase :: Out out => (a -> Sig -> out) -> [(Sig, a)] -> Sig -> out
+whase f as x = accumOut sum $ fmap (\(weight, param) -> mapOut (weight * ) $ f param x) as
 
--- | Harmonic series for functions with side effects.
-haseS :: (a -> Sig -> SE Sig) -> [a] -> Sig -> SE Sig
-haseS mf as x = fmap mean $ mapM (\param -> mf param x) as
+-- | Adds vibrato to the sound unit. Sound units is a function that takes in a frequency. 
+vibrato :: Sig -> Sig -> (Sig -> a) -> (Sig -> a)
+vibrato vibDepth vibRate f cps = f (cps * (1 + kvib))
+    where kvib = vibDepth * kr (osc vibRate) 
 
--- | Weighted harmonic series for functions with side effects.
-whaseS :: (a -> Sig -> SE Sig) -> [(Sig, a)] -> Sig -> SE Sig
-whaseS mf as x = fmap sum $ mapM (\(weight, param) -> fmap (weight * ) (mf param x)) as
+-- | Adds a random vibrato to the sound unit. Sound units is a function that takes in a frequency. 
+randomPitch :: Sig -> Sig -> (Sig -> a) -> (Sig -> SE a)
+randomPitch rndAmp rndCps f cps = fmap go $ randh (cps * rndAmp) rndCps
+    where go krand = f (cps + krand)
 
+-- | Chorus takes a list of displacments from the base frequencies and a sound unit.
+-- Output is mean of signals with displacments that is applied to the base frequency. 
+chorus :: Out a => [Sig] -> (Sig -> a) -> Sig -> a
+chorus ks f = \cps -> accumOut mean $ fmap (f . (+ cps)) ks
+
+-- | Applies a gain to the signals. Multiplies all signals with the given signal.
+gain :: Out a => Sig -> a -> a
+gain env = mapOut (env *)
+
+-- | Applies a resonator to the signals. A resonator is
+-- a list of band pass filters. A list contains the parameters for the filters:
+--
+-- > [(centerFrequency, bandWidth)]
+resons :: Out a => [(Sig, Sig)] -> a -> a
+resons = resonsBy bp
+
+-- | A resonator with user defined band pass filter.
+-- Warning: a filter takes in a center frequency, band width and the signal.
+-- The signal comes last (this order is not standard in the Csound but it's more
+-- convinient to use with Haskell).
+resonsBy :: Out a => (Sig -> Sig -> Sig -> Sig) -> [(Sig, Sig)] -> a -> a
+resonsBy filt ps asig = accumOut mean $ fmap (flip mapOut asig . uncurry filt) ps
 
 -- | Crossfade.
 --
@@ -286,4 +428,23 @@ cfdSpec coeff a b = pvscross a b (1 - coeff) coeff
 cfdsSpec :: [Sig] -> [Spec] -> Spec
 cfdsSpec = genCfds undefined cfdSpec
 
+-- | Instruments
+
+-- | Creates a simple instrument from the sound unit. Instrument
+-- takes in an amplitude and a frequency.
+toInstr :: Out a => (Cps -> a) -> ((D, D) -> a)
+toInstr f = \(amp, cps) -> mapOut ( * sig amp) $ f (sig cps)
+
+-- | Creates a midi instrument from the sound unit. 
+toMidi :: Out a => (Cps -> a) -> (Msg -> a)
+toMidi f = toInstr f . ampCps
+    
+-- | Creates a simple instrument from the sound unit. Instrument
+-- takes in an amplitude and a frequency. The frequency is a constant value.
+toInstrD :: Out a => (Icps -> a) -> ((D, D) -> a)
+toInstrD f = \(amp, cps) -> mapOut ( * sig amp) $ f cps
+
+-- | Creates a midi instrument from the sound unit. The frequency is a constant value.
+toMidiD :: Out a => (Icps -> a) -> (Msg -> a)
+toMidiD f = toInstrD f . ampCps
     

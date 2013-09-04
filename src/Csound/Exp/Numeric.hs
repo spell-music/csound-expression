@@ -84,9 +84,8 @@ instance Enum E where
     succ = (+1)
     pred = \x -> x - 1
     toEnum = fromDouble . fromIntegral
-    fromEnum = undefined
-    enumFrom a = a : enumFrom (a+1)
-    
+    fromEnum = error "fromEnum is not defined for Csound values" 
+    enumFrom a = a : enumFrom (a+1)    
     enumFromThen a b = a : enumFromThen (a + b) b
      
     enumFromTo a b = case (toNumOpt a, toNumOpt b) of
@@ -98,7 +97,7 @@ instance Enum E where
         _ -> enumError "[a, b .. c]"
     
     
-instance Real E where toRational = undefined
+instance Real E where toRational = error "instance of the Real is not defined for Csound values. It's here only for other classes."
         
 instance Integral E where
     quot a b = intE $ (intE a) / (intE b)
@@ -107,7 +106,7 @@ instance Integral E where
     div a b = intE $ a - mod a b / b
     quotRem a b = (quot a b, rem a b)
     divMod a b = (div a b, mod a b)
-    toInteger = undefined    
+    toInteger = error "toInteger is not defined for Csound values"
 
 onConst :: Val b => (a -> E) -> (a -> b)
 onConst f = fromE . f 
@@ -115,12 +114,12 @@ onConst f = fromE . f
 -------------------------------------------
 -- wrappers
 
-instance Real Sig where  toRational = undefined
-instance Ord  Sig where  compare    = undefined
-instance Eq   Sig where  (==)       = undefined
-instance Real D   where  toRational = undefined
-instance Ord  D   where  compare    = undefined
-instance Eq   D   where  (==)       = undefined
+instance Real Sig where  toRational = error "toRatinal is undefined for Sig"
+instance Ord  Sig where  compare    = error "Class Ord is not defined for Sig. Use methods from the module Data.Boolean"
+instance Eq   Sig where  (==)       = error "Equality is not defined for Sig. Use methods from module Data.Boolean"
+instance Real D   where  toRational = error"toRational is not defined for D"
+instance Ord  D   where  compare    = error "Class Ord is not defined for D. Use methods from module Data.Boolean"
+instance Eq   D   where  (==)       = error "Equality is not defined for D. Use methods from module Data.Boolean"
 
 instance Enum Sig where
     succ = onE1 succ
@@ -212,7 +211,7 @@ instance Num Sig where
     negate = onE1 negate
     fromInteger = onConst fromInteger
     abs = onE1 abs
-    signum = onE1 signum
+    signum = error "Signum is not defined for Sig" 
 
 instance Num D where
     (+) = onE2 (+)
@@ -221,7 +220,7 @@ instance Num D where
     negate = onE1 negate
     fromInteger = onConst fromInteger
     abs = onE1 abs
-    signum = onE1 signum
+    signum = error "Signum is not defined for D"
 
 instance Fractional Sig where
     (/) = onE2 (/)

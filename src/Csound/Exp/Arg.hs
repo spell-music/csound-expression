@@ -1,7 +1,7 @@
 -- | instrument p-arguments
 module Csound.Exp.Arg(        
     Arg(..), arg, toNote, arity, 
-    ArgMethods, toArg, makeArgMethods,
+    ArgMethods, toArg, makeArgMethods
 ) where
 
 import Control.Applicative
@@ -44,7 +44,7 @@ makeArgMethods to from = ArgMethods {
     toNote_ = toNote . from,
     arity_ = const $ arity $ proxy to }
     where proxy :: (a -> b) -> a
-          proxy = undefined
+          proxy = const $ error "i'm a stupid proxy, fix me"
 
 -- | Describes all Csound values that can be used in the score section. 
 -- Instruments are triggered with the values from this type class.

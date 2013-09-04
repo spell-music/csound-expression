@@ -12,17 +12,17 @@ type Channel = Int
 -- > instance Default CsdOptions where
 -- >     def = CsdOptions 
 -- >             { flags = "-d"           -- suppress ftable printing
--- >             , sampleRate  = 44100
--- >             , blockSize = 64
--- >             , seed = Nothing
--- >             , initc7 = []
--- >             , tabFi = fineFi 13 [(idLins, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
+-- >             , sampleRate   = 44100
+-- >             , blockSize    = 64
+-- >             , setSeed      = Nothing
+-- >             , initc7       = []
+-- >             , tabFi        = fineFi 13 [(idLins, 10), (idExps, 10), (idConsts, 8)] } -- all tables have 8192 points but tables for linear, exponential and constant segments. 
 
 data CsdOptions = CsdOptions 
     { flags         :: String       
     , sampleRate    :: Int          
     , blockSize     :: Int          
-    , seed          :: Maybe Int    
+    , setSeed       :: Maybe Int    
     , initc7        :: [(Channel, CtrlId, Double)]
     , tabFi         :: TabFi
     }
@@ -32,7 +32,7 @@ instance Default CsdOptions where
             { flags = "-d"
             , sampleRate  = 44100
             , blockSize = 64
-            , seed = Nothing
+            , setSeed = Nothing
             , initc7 = []
             , tabFi = fineFi 13 [(idLins, 10), (idExps, 10), (idConsts, 8)] }
 

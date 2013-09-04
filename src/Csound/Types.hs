@@ -22,8 +22,11 @@ module Csound.Types (
     -- If there are rate-collisions, values will be converted to the right rates.    
     -- For example, if you are trying to apply an opcode that expects control
     -- rate signal to some audio rate signal, the signal will be downsampled behind the scenes.
-    Sig, Spec,
-   
+    Sig, Spec, 
+
+    -- ** Aliases
+    Amp, Cps, Iamp, Icps, Ksig, Sig2, Sig3, Sig4,
+
     -- * Booleans
     -- | Use functions from the module "Data.Boolean" to make boolean expressions.
     BoolSig, BoolD,  
@@ -36,7 +39,7 @@ module Csound.Types (
 
     -- * Tuples
     CsdTuple,
-    
+        
     -- ** Multiple outputs helpers
     -- | Functions to help the type checker specify the number of outputs (for opcodes like 'Csound.Opcodes.Data.diskin2').
     -- For example,

@@ -5,15 +5,16 @@
 module Csound.Exp.Tuple(
     CsdTuple(..), 
     fromCsdTuple, toCsdTuple, arityCsdTuple, ratesCsdTuple, defCsdTuple,
-    Out(..), multiOuts, outArity,
+    Out(..), traverseOut, multiOuts, outArity,
     -- * Helpers for multiple outputs opcodes (like diskin2)
     ar1, ar2, ar4, ar6, ar8
 ) where
 
 
-import Control.Applicative(liftA2)
+import Control.Applicative(liftA2, (<$>), (<*>))
 import Control.Monad(join)
 import Data.Default
+import Data.List
 import Data.Monoid
 
 import Csound.Exp
@@ -66,6 +67,14 @@ class (Monoid (NoSE a), CsdTuple (NoSE a)) => Out a where
     type NoSE a :: *
     toOut :: a -> SE [Sig]
     fromOut :: [Sig] -> a
+
+    mapOut  :: (Sig -> Sig) -> (a -> a)
+    pureOut :: Sig -> a
+    bindOut :: a -> (Sig -> SE Sig) -> SE a
+    accumOut :: ([Sig] -> Sig) -> [a] -> a
+    
+traverseOut :: Out a => (Sig -> SE Sig) -> [a] -> SE [a]
+traverseOut f = mapM (flip bindOut f)
 
 outArity :: Out a => a -> Int
 outArity a = arityCsdTuple (proxy a)
@@ -154,45 +163,107 @@ instance Out () where
     toOut = const (return [])
     fromOut = const ()
 
+    mapOut = const id
+    pureOut = const ()
+    bindOut a _ = return a    
+    accumOut _ = const ()
+
 instance Out Sig where
     type NoSE Sig = Sig
     toOut = return . return
-    fromOut = head  
+    fromOut = head 
+
+    mapOut = ($)
+    pureOut = id
+    bindOut = flip ($)
+    accumOut = id
 
 instance (Monoid a, Out a, CsdTuple a) => Out (SE a) where
     type NoSE (SE a) = a
     toOut = join . fmap toOut
     fromOut = return . fromOut
 
+    mapOut f a = fmap (mapOut f) a 
+    pureOut = return . pureOut
+    bindOut a f = fmap (\x -> bindOut x f) a
+    accumOut f as = fmap (accumOut f) $ sequence as
 
 instance (CsdTuple a, CsdTuple b, Out a, Out b) => Out (a, b) where
     type NoSE (a, b) = (NoSE a, NoSE b)
     toOut (a, b) = liftA2 (++) (toOut a) (toOut b)
     fromOut = toCsdTuple . fmap toE
+
+    mapOut f (a, b) = (mapOut f a, mapOut f b)
+    pureOut a = (pureOut a, pureOut a)
+    bindOut (a, b) f =  (,) <$> bindOut a f <*> bindOut b f
+    accumOut f xs = (accumOut f a, accumOut f b)
+        where (a, b) = unzip xs
+
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, Out a, Out b, Out c) => Out (a, b, c) where
     type NoSE (a, b, c) = (NoSE a, NoSE b, NoSE c)
     toOut = toOut . split3;     fromOut = toCsdTuple . fmap toE
+
+    mapOut f (a, b, c) = (mapOut f a, mapOut f b, mapOut f c)
+    pureOut a = (pureOut a, pureOut a, pureOut a)
+    bindOut (a, b, c) f =  (,,) <$> bindOut a f <*> bindOut b f <*> bindOut c f
+    accumOut f xs = (accumOut f a, accumOut f b, accumOut f c)
+        where (a, b, c) = unzip3 xs
     
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, Out a, Out b, Out c, Out d) => Out (a, b, c, d) where
     type NoSE (a, b, c, d) = (NoSE a, NoSE b, NoSE c, NoSE d)
     toOut = toOut . split4;    fromOut = toCsdTuple . fmap toE
     
+    mapOut f (a, b, c, d) = (mapOut f a, mapOut f b, mapOut f c, mapOut f d)
+    pureOut a = (pureOut a, pureOut a, pureOut a, pureOut a)
+    bindOut (a, b, c, d) f =  (,,,) <$> bindOut a f <*> bindOut b f <*> bindOut c f <*> bindOut d f
+    accumOut f xs = (accumOut f a, accumOut f b, accumOut f c, accumOut f d)
+        where (a, b, c, d) = unzip4 xs
+    
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, Out a, Out b, Out c, Out d, Out e) => Out (a, b, c, d, e) where
     type NoSE (a, b, c, d, e) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e)
     toOut = toOut . split5;    fromOut = toCsdTuple . fmap toE
-   
+    
+    mapOut f (a, b, c, d, e) = (mapOut f a, mapOut f b, mapOut f c, mapOut f d, mapOut f e)
+    pureOut a = (pureOut a, pureOut a, pureOut a, pureOut a, pureOut a)
+    bindOut (a, b, c, d, e) f =  (,,,,) <$> bindOut a f <*> bindOut b f <*> bindOut c f <*> bindOut d f <*> bindOut e f
+    accumOut f xs = (accumOut f a, accumOut f b, accumOut f c, accumOut f d, accumOut f e)
+        where (a, b, c, d, e) = unzip5 xs
+    
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, Out a, Out b, Out c, Out d, Out e, Out f) => Out (a, b, c, d, e, f) where
     type NoSE (a, b, c, d, e, f) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f)
     toOut = toOut . split6;    fromOut = toCsdTuple . fmap toE
     
+    mapOut f (a, b, c, d, e, ff) = (mapOut f a, mapOut f b, mapOut f c, mapOut f d, mapOut f e, mapOut f ff)
+    pureOut a = (pureOut a, pureOut a, pureOut a, pureOut a, pureOut a, pureOut a)
+    bindOut (a, b, c, d, e, ff) f =  (,,,,,) <$> bindOut a f <*> bindOut b f <*> bindOut c f <*> bindOut d f <*> bindOut e f <*> bindOut ff f
+    accumOut f xs = (accumOut f a, accumOut f b, accumOut f c, accumOut f d, accumOut f e, accumOut f ff)
+        where (a, b, c, d, e, ff) = unzip6 xs
+    
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, Out a, Out b, Out c, Out d, Out e, Out f, Out g) => Out (a, b, c, d, e, f, g) where
     type NoSE (a, b, c, d, e, f, g) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g)
     toOut = toOut . split7;    fromOut = toCsdTuple . fmap toE
-    
+
+    mapOut f (a, b, c, d, e, ff, g) = (mapOut f a, mapOut f b, mapOut f c, mapOut f d, mapOut f e, mapOut f ff, mapOut f g)
+    pureOut a = (pureOut a, pureOut a, pureOut a, pureOut a, pureOut a, pureOut a, pureOut a)
+    bindOut (a, b, c, d, e, ff, g) f =  (,,,,,,) <$> bindOut a f <*> bindOut b f <*> bindOut c f <*> bindOut d f <*> bindOut e f <*> bindOut ff f <*> bindOut g f
+    accumOut f xs = (accumOut f a, accumOut f b, accumOut f c, accumOut f d, accumOut f e, accumOut f ff, accumOut f g)
+        where (a, b, c, d, e, ff, g) = unzip7 xs
+        
 instance (CsdTuple a, CsdTuple b, CsdTuple c, CsdTuple d, CsdTuple e, CsdTuple f, CsdTuple g, CsdTuple h, Out a, Out b, Out c, Out d, Out e, Out f, Out g, Out h) => Out (a, b, c, d, e, f, g, h) where
     type NoSE (a, b, c, d, e, f, g, h) = (NoSE a, NoSE b, NoSE c, NoSE d, NoSE e, NoSE f, NoSE g, NoSE h)
     toOut = toOut . split8;    fromOut = toCsdTuple . fmap toE
+   
+    mapOut f (a, b, c, d, e, ff, g, h) = (mapOut f a, mapOut f b, mapOut f c, mapOut f d, mapOut f e, mapOut f ff, mapOut f g, mapOut f h)
+    pureOut a = (pureOut a, pureOut a, pureOut a, pureOut a, pureOut a, pureOut a, pureOut a, pureOut a)
+    bindOut (a, b, c, d, e, ff, g, h) f =  (,,,,,,,) <$> bindOut a f <*> bindOut b f <*> bindOut c f <*> bindOut d f <*> bindOut e f <*> bindOut ff f <*> bindOut g f <*> bindOut h f
+    accumOut f xs = (accumOut f a, accumOut f b, accumOut f c, accumOut f d, accumOut f e, accumOut f ff, accumOut f g, accumOut f h)
+        where (a, b, c, d, e, ff, g, h) = unzip8 xs
+
+unzip8 :: [(a, b, c, d, e, f, g, h)] -> ([a], [b], [c], [d], [e], [f], [g], [h])
+unzip8 xs = (a, b, c, d, e, f, g, h)
+    where (a, rest) = unzip $ fmap split8 xs
+          (b, c, d, e, f, g, h) = unzip7 rest
 
 -- missing tuple monoids
 
