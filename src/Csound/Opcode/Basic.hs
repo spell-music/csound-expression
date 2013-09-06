@@ -8,7 +8,9 @@ module Csound.Opcode.Basic(
     -- * Oscillators and phasors
 
     -- ** Standard Oscillators
-    oscils, poscil, poscil3, oscil, oscili, oscil3, oscil1i,
+    oscils, poscil, poscil3, oscil, 
+    oscili, oscil3, oscil1i,
+    osciln,
 
     -- ** Dynamic Sprectrum Oscillators
     buzz, gbuzz, mpulse, vco, vco2,  
@@ -22,6 +24,14 @@ module Csound.Opcode.Basic(
 
     -----------------------------------------------------
     -- * Envelopes
+    --
+    -- | Warning: all enveloping functions hold the last value. So you don't need to write:
+    --
+    -- > linseg [0, 0.5, 1, 1, 1]
+    --
+    -- To hold the value. It's the same as just
+    --
+    -- > linseg [0, 0.5, 1]
     linseg, expseg, transeg, linsegr, expsegr, transegr,
     lpshold, loopseg, loopxseg, looptseg, loopsegp,
     linen, linenr, envlpx, 
@@ -55,6 +65,9 @@ module Csound.Opcode.Basic(
 
     -- ** Filters For Smoothing Control Signals
     port, portk,
+    
+    -- ** Physics
+    mode, streson,
 
     -- ** Other filters
     moogladder, vcomb, bqrez, comb, moogvcf, moogvcf2,
@@ -195,6 +208,14 @@ poscil3 = oscGen "poscil3"
 -- doc: <http://www.csounds.com/manual/html/oscil1i.html>
 oscil1i :: D -> Amp -> D -> Tab -> Sig
 oscil1i = opc4 "oscil1i" [(k, [i, k, i, i])]
+
+-- | Accesses table values at a user-defined frequency.
+--
+-- > ares osciln kamp, ifrq, ifn, itimes
+--
+-- doc: <http://www.csounds.com/manual/html/osciln.html>
+osciln :: Sig -> D -> Tab -> D -> Sig
+osciln = opc4 "osciln" [(a, [k,i,i,i])]
 
 -----------------------------------------------------
 -- Dynamic Sprectrum Oscillators
@@ -459,6 +480,14 @@ jspline a1 a2 a3 = se $ opc3 "jspline" [(k, [k, k, k])] a1 a2 a3
 --------------------------------------------------
 -- envelopes
 
+holdLastValue :: [D] -> [D] 
+holdLastValue xs = xs ++ [1, fin] 
+    where fin = last xs
+
+holdLastValueForTranseg :: [D] -> [D] 
+holdLastValueForTranseg xs = xs ++ [1, 0, fin] 
+    where fin = last xs
+
 -- | Trace a series of line segments between specified points. 
 --
 -- > ares linseg ia, idur1, ib [, idur2] [, ic] [...]
@@ -468,7 +497,7 @@ jspline a1 a2 a3 = se $ opc3 "jspline" [(k, [k, k, k])] a1 a2 a3
 linseg :: [D] -> Ksig
 linseg = kr . opcs "linseg" [
     (a, repeat i),
-    (k, repeat i)]
+    (k, repeat i)] . holdLastValue
 
 -- | Trace a series of line segments between specified points including a release segment. 
 --
@@ -480,7 +509,7 @@ linseg = kr . opcs "linseg" [
 linsegr :: [D] -> D -> D -> Ksig
 linsegr xs relDur relVal = kr $ opcs "linsegr" ([
     (a, repeat i),
-    (k, repeat i)]) (xs ++ [relDur, relVal])
+    (k, repeat i)]) (holdLastValue xs ++ [relDur, relVal])
 
 
 -- | Trace a series of exponential segments between specified points.
@@ -493,7 +522,7 @@ linsegr xs relDur relVal = kr $ opcs "linsegr" ([
 expseg :: [D] -> Ksig
 expseg = kr . opcs "expseg" [
     (a, repeat i),
-    (k, repeat i)]
+    (k, repeat i)] . holdLastValue
 
 -- | Trace a series of exponential segments between specified points including a release segment. 
 --
@@ -505,7 +534,7 @@ expseg = kr . opcs "expseg" [
 expsegr :: [D] -> D -> D -> Ksig
 expsegr xs relDur relVal = kr $ opcs "expsegr" ([
     (a, repeat i),
-    (k, repeat i)]) (xs ++ [relDur, relVal])
+    (k, repeat i)]) (holdLastValue xs ++ [relDur, relVal])
 
 -- | Constructs a user-definable envelope.
 --
@@ -516,7 +545,7 @@ expsegr xs relDur relVal = kr $ opcs "expsegr" ([
 transeg :: [D] -> Ksig
 transeg = kr . opcs "transeg" [ 
     (a, repeat i),
-    (k, repeat i)]
+    (k, repeat i)] . holdLastValueForTranseg
 
 -- | Constructs a user-definable envelope. It is the same as transeg, with an extended release segment.
 --
@@ -527,7 +556,7 @@ transeg = kr . opcs "transeg" [
 transegr :: [D] -> D -> D -> Ksig
 transegr xs relDur relVal = kr $ opcs "transegr" ([
     (a, repeat i),
-    (k, repeat i)]) (xs ++ [relDur, relVal])
+    (k, repeat i)]) (holdLastValueForTranseg xs ++ [relDur, relVal])
 
 -- | Generate control signal consisting of held segments delimited 
 -- by two or more specified points. The entire envelope is looped at kfreq rate. 
@@ -851,6 +880,7 @@ butbp :: Sig -> Sig -> Sig -> Sig
 -- doc: <http://www.csounds.com/manual/html/butterbr.html>
 butbr :: Sig -> Sig -> Sig -> Sig
 
+
 -- | Moogladder is an new digital implementation of the Moog ladder filter based on the work of 
 -- Antti Huovilainen, described in the paper "Non-Linear Digital Implementation of the Moog Ladder Filter" (Proceedings of DaFX04, Univ of Napoli). 
 -- This implementation is probably a more accurate digital representation of the original analogue filter.
@@ -973,7 +1003,34 @@ resony = opc5 "resony" [(a, [k, k, i, k, i, i])]
 resonz :: Sig -> Sig -> Sig -> Sig
 resonz = opc3 "resonz" [(a, [a, k, k, i, i])]
 
----------------------------------------------------
+--------------------------------------------------
+-- physics filters
+
+-- | A filter that simulates a mass-spring-damper system.
+--
+-- Filters the incoming signal with the specified resonance frequency 
+-- and quality factor. It can also be seen as a signal generator for 
+-- high quality factor, with an impulse for the excitation.
+-- You can combine several modes to built complex instruments such as bells or guitar tables.
+--
+-- > aout mode ain, kfreq, kQ [, iskip]
+--
+-- doc: <http://www.csounds.com/manual/html/mode.html>
+mode :: Sig -> Sig -> Sig -> Sig
+mode = opc3 "mode" [(a, [a, k, k, i])]
+
+-- |  A string resonator with variable fundamental frequency.
+--
+-- An audio signal is modified by a string resonator with variable fundamental frequency.
+--
+-- > ares streson asig, kfr, ifdbgain
+--
+-- doc: <http://www.csounds.com/manual/html/streson.html>
+streson :: Sig -> Sig -> D -> Sig
+streson = opc3 "streson" [(a, [a, k, i])]
+
+
+--------------------------------------------------
 -- reverberation
 
 -- | freeverb is a stereo reverb unit based on Jezar's public domain C++ sources, composed of eight parallel 

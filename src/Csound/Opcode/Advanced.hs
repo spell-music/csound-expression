@@ -45,7 +45,7 @@ module Csound.Opcode.Advanced (
     -- * Physical Models and FM Instruments
 
     -- ** Waveguide Physical Modelling
-    streson, pluck, repluck, wgbow, wgbowedbar, wgbrass,
+    pluck, repluck, wgbow, wgbowedbar, wgbrass,
     wgclar, wgflute, wgpluck, wgpluck2, wguide1, wguide2,
 
     -- ** FM Instrument Models
@@ -583,14 +583,6 @@ pvsmooth = opc3 "pvsmooth" [(f, [f,k,k])]
 
 -----------------------------------------------------
 -- ** Waveguide Physical Modelling
-
--- | An audio signal is modified by a string resonator with variable fundamental frequency. 
---
--- > ares streson asig, kfr, ifdbgain
---
--- doc: <http://www.csounds.com/manual/html/streson.html>
-streson :: Sig -> Sig -> D -> Sig
-streson = opc3 "streson" [(a, [a,k,i])]
 
 -- | Audio output is a naturally decaying plucked string or drum sound based on the Karplus-Strong algorithms. 
 --

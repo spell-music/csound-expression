@@ -142,6 +142,7 @@ defineTabArgs :: Int -> TabArgs -> ([Double], Maybe String)
 defineTabArgs size args = case args of
     ArgsPlain as -> (as, Nothing)
     ArgsRelative as -> (fromRelative size as, Nothing)
+    ArgsGen16 as -> (formRelativeGen16 size as, Nothing)
     FileAccess filename as -> (as, Just filename)
     where fromRelative n as = substEvens (mkRelative n $ getEvens as) as
           getEvens xs = case xs of
@@ -157,7 +158,21 @@ defineTabArgs size args = case args of
             
           mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as
             where s = fromIntegral n / sum as
-            
+          
+          -- special case. subst relatives for Gen16
+          formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
+
+          getGen16 xs = case xs of
+            _:durN:_:rest    -> durN : getGen16 rest
+            _                -> xs
+
+          substGen16 durs xs = case (durs, xs) of 
+            ([], as) -> as
+            (_, [])  -> []
+            (d:ds, valN:_:typeN:rest)   -> valN : d : (typeN * d) : substGen16 ds rest
+            (_, _)   -> xs
+
+
 
 defineTabSize :: Int -> TabSize -> Int
 defineTabSize base x = case x of

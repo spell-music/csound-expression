@@ -10,6 +10,8 @@ module Csound.Air (
    
     -- * Envelopes
     onIdur, lindur, expdur, linendur,
+    onDur, lindurBy, expdurBy, linendurBy,
+    once, onceBy, several, oscLins, oscElins, oscExps, oscEexps, oscLine, fadeIn, fadeOut, 
 
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
@@ -25,8 +27,7 @@ module Csound.Air (
     lpb, hpb, bpb, brb, blpb, bhpb, bbpb, bbrb,
 
     -- * Patterns
-    once, onceBy, several, oscLins, oscElins, oscExps, oscEexps, oscLine, mean,
-    gain, vibrato, randomPitch, chorus, resons, resonsBy, hase, whase,
+    mean, gain, vibrato, randomPitch, chorus, resons, resonsBy, modes, hase, whase, dryWet,
 
     -- ** List functions
     odds, evens,
@@ -46,9 +47,10 @@ import Data.List(intersperse)
 
 import Csound.Types
 import Csound.Opcode(idur, oscil3, pvscross,
-    linseg, expseg, linen, loopseg, looptseg,
-    atone, tone, areson, reson,
-    buthp, butbp, butlp, butbr, balance, randh)
+    linseg, expseg, linen, loopseg, looptseg, linsegr,
+    atone, tone, areson, reson, mode,
+    buthp, butbp, butlp, butbr, balance, randh,
+    getSampleRate)
 import Csound.Control(Out(..))
 import Csound.Control.Midi(Msg, ampCps)
 
@@ -148,14 +150,24 @@ uramp a = unipolar . ramp a
 
 -- | Makes time intervals relative to the note's duration. So that:
 --
--- > [a, t1, b, t2, c]
+-- > onIdur [a, t1, b, t2, c]
 --
 -- becomes: 
 --
 -- > [a, t1 * idur, b, t2 * idur, c]
 onIdur :: [D] -> [D]
-onIdur xs = case xs of
-    a:b:as -> a : b * idur : onIdur as
+onIdur = onDur idur
+
+-- | Makes time intervals relative to the note's duration. So that:
+--
+-- > onDur dt [a, t1, b, t2, c]
+--
+-- becomes: 
+--
+-- > [a, t1 * dt, b, t2 * dt, c]
+onDur :: D -> [D] -> [D]
+onDur dur xs = case xs of
+    a:b:as -> a : b * dur : onDur dur as
     _ -> xs
 
 -- | The opcode 'Csound.Opcode.linseg' with time intervals 
@@ -168,11 +180,38 @@ lindur = linseg . onIdur
 expdur :: [D] -> Ksig
 expdur = expseg . onIdur
 
+-- | The opcode 'Csound.Opcode.linseg' with time intervals 
+-- relative to the total duration of the note given by the user.
+lindurBy :: D -> [D] -> Ksig
+lindurBy dt = linseg . onDur dt
+
+-- | The opcode 'Csound.Opcode.expseg' with time intervals 
+-- relative to the total duration of the note given by the user.
+expdurBy :: D -> [D] -> Ksig
+expdurBy dt = expseg . onDur dt
+
 -- | The opcode 'Csound.Opcode.linen' with time intervals relative to the total duration of the note. Total time is set to the value of idur.
 --
 -- > linendur asig rise decay
 linendur :: Sig -> D -> D -> Sig
-linendur asig ris dec = linen asig (ris * idur) idur (dec * idur)
+linendur = linendurBy idur
+
+-- | The opcode 'Csound.Opcode.linen' with time intervals relative to the total duration of the note. Total time is set to the value of
+-- the first argument.
+--
+-- > linendurBy dt asig rise decay
+linendurBy :: D -> Sig -> D -> D -> Sig
+linendurBy dt asig ris dec = linen asig (ris * dt) dt (dec * dt)
+
+        
+-- | Fades in with the given attack time.
+fadeIn :: D -> Sig
+fadeIn att = linseg [0, att, 1]
+
+-- | Fades out with the given attack time.
+fadeOut :: D -> Sig
+fadeOut dec = linsegr [1] dec 0
+
 
 --------------------------------------------------------------------------
 -- filters
@@ -397,8 +436,49 @@ resons = resonsBy bp
 -- Warning: a filter takes in a center frequency, band width and the signal.
 -- The signal comes last (this order is not standard in the Csound but it's more
 -- convinient to use with Haskell).
-resonsBy :: Out a => (Sig -> Sig -> Sig -> Sig) -> [(Sig, Sig)] -> a -> a
+resonsBy :: Out a => (cps -> bw -> Sig -> Sig) -> [(cps, bw)] -> a -> a
 resonsBy filt ps asig = accumOut mean $ fmap (flip mapOut asig . uncurry filt) ps
+
+-- | Mixes dry and wet signals. 
+--
+-- > dryWet ratio effect asig
+--
+-- * @ratio@ - of dry signal to wet
+--
+-- * @effect@ - means to wet the signal
+--
+-- * @asig@ -- processed signal
+dryWet :: Sig -> (Sig -> Sig) -> Sig -> Sig
+dryWet k eff asig = k * asig + (1 - k) * eff asig
+
+
+-- | Chain of mass-spring-damping filters.
+--
+-- > modes params baseCps exciter 
+--
+-- * params - a list of pairs @(resonantFrequencyRatio, filterQuality)@
+--
+-- * @baseCps@ - base frequency of the resonator
+--
+-- * exciter - an impulse that starts a resonator.
+modes :: [(Sig, Sig)] -> Sig -> Sig -> Sig
+modes = relResonsBy (\cf q asig -> mode asig cf q)
+
+relResonsBy :: (Sig -> a -> Sig -> Sig) -> [(Sig, a)] -> Sig -> Sig -> Sig
+relResonsBy resonator ms baseCps pulse = gain (recip normFactor) $ sum $ fmap (\(cf, q) -> harm cf q pulse) ms
+    where 
+        -- limit modal frequency to prevent explosions by 
+        -- skipping if the maximum value is exceeded (with a little headroom)
+        gate :: Sig -> Sig
+        gate cps = ifB (sig getSampleRate >* pi * cps) 1 0        
+
+        normFactor = sum $ fmap (gate . (* baseCps) . fst) ms
+
+                                    -- an ugly hack to make filter stable for forbidden values)
+        harm cf q x = g * resonator (1 - g + g * cps) q x
+            where cps = cf * baseCps
+                  g   = gate cps  
+
 
 -- | Crossfade.
 --

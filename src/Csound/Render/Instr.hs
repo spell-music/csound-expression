@@ -118,7 +118,9 @@ deduceRate desiredRates expr = case ratedExpExp expr of
             r -> r
     
     Select rate _ _ -> rate
-    If _ _ _ -> head $ filter (/= Xr) $ sort desiredRates   
+    If _ _ _ -> case head $ sort desiredRates of
+        Xr -> Ar
+        r  -> r
     ReadVar v -> varRate v
     _  -> Xr    
     where tfmNoRate name rates tab = case sort rates of
@@ -131,14 +133,14 @@ rateExp curRate expr = case expr of
     ExpPrim (P n) | curRate == Sr -> ExpPrim (PString n)
     Tfm i xs -> Tfm i $ mergeWithPrimOrBy (flip ratedVar) xs (ratesFromSignature curRate (infoSignature i))
     Select rate pid a -> Select rate pid (fmap (ratedVar Xr) a)    
-    If _ _ _ -> condRate expr
-    ExpNum _ -> fmap (fmap (ratedVar curRate)) expr    
+    If p t e -> If (rec2 condRate p) (rec1 curRate t) (rec1 curRate e) 
+    ExpNum _ -> rec2 curRate expr    
     ReadVar v -> ReadVar v
-    WriteVar v a -> WriteVar v $ fmap (ratedVar (varRate v)) a
-    InitVar v a -> InitVar v $ fmap (ratedVar (varRate v)) a
+    WriteVar v a -> WriteVar v $ rec1 (varRate v) a
+    InitVar v a -> InitVar v $ rec1 (varRate v) a
     ExpPrim p -> ExpPrim p
-    IfBegin _ -> condRate expr
-    ElseIfBegin _ -> condRate expr
+    IfBegin _ -> rec2 condRate expr
+    ElseIfBegin _ -> rec2 condRate expr
     ElseBegin -> ElseBegin
     IfEnd -> IfEnd
     EmptyExp -> EmptyExp    
@@ -146,18 +148,14 @@ rateExp curRate expr = case expr of
               SingleRate table -> table M.! rate
               MultiRate _ rs   -> rs
 
-          condRate :: Exp Int -> Exp RatedVar
-          condRate = fmap (fmap (ratedVar r))  
-              where r = max curRate Kr -- Kr
+          condRate :: Rate
+          condRate = max Kr curRate -- Kr
+          
+          rec2 r = fmap (fmap (ratedVar r))  
+          rec1 r = fmap (ratedVar r)
 
-          substXr :: Exp RatedVar -> Exp RatedVar
-          substXr = fmap (fmap phi)
-            where 
-                phi v = case varType v of
-                    Xr  -> v { varType = Ar }
-                    _   -> v
-            
-         
+          
+
 mergeWithPrimOrBy :: (a -> b -> c) -> [PrimOr a] -> [b] -> [PrimOr c]
 mergeWithPrimOrBy cons = zipWith (\primOr b -> fmap (flip cons b) primOr)
 

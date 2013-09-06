@@ -233,6 +233,8 @@ data TabArgs
     = ArgsPlain [Double]
     -- or relative to the table size (used for tables that implement interpolation)
     | ArgsRelative [Double]
+    -- GEN 16 uses unusual interpolation scheme, so we need a special case
+    | ArgsGen16 [Double]
     | FileAccess String [Double]
     deriving (Show, Eq, Ord)
 

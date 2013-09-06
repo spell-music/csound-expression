@@ -46,9 +46,9 @@ module Csound.Tab (
     -- > lins [0, 1, 1, 3, 0]
     --
     -- all these expressions are equivalent. 
-    consts, lins, cubes, exps, splines,    
+    consts, lins, cubes, exps, splines, startEnds,
     -- ** Equally spaced interpolants
-    econsts, elins, ecubes, eexps, esplines,
+    econsts, elins, ecubes, eexps, esplines, estartEnds,
 
     -- * Polynomials    
     polys, chebs1, chebs2, bessels,
@@ -61,7 +61,7 @@ module Csound.Tab (
     gen,
     
     -- * Modify tables
-    skipNorm, setSize, setDegree, guardPoint, gp,
+    skipNorm, forceNorm, setSize, setDegree, guardPoint, gp,
     
     -- ** Handy shortcuts        
     -- | handy shortcuts for the function 'setDegree'.
@@ -70,7 +70,9 @@ module Csound.Tab (
     -- * Identifiers for GEN-routines
     
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
-    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels, idWins
+    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2
+    , idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes
+    , idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins
 ) where
 
 import Data.Default
@@ -125,21 +127,25 @@ insertOnes xs = case xs of
     a:[] -> [a]
     a:as -> a : 1 : insertOnes as
 
-
-tableSizes :: [Int]
-tableSizes = [res | a <- twos, b <- twos1, res <- [a, b]]
-    where twos  = fmap (2 ^) [(0::Int) .. ]
-          twos1 = fmap ( +1) twos  
-
 findTableSize :: Int -> Int
-findTableSize n = head $ dropWhile (< n) tableSizes
+findTableSize n
+    | isPowerOfTwo n        = n
+    | isPowerOfTwo (n - 1)  = n
+    | otherwise             = -n
+    
+isPowerOfTwo :: Int -> Bool
+isPowerOfTwo a 
+    | null zeroes   = False
+    | otherwise     = all ( == 0) zeroes
+    where zeroes = fmap (flip mod 2) $ takeWhile (> 1) $ iterate (\x -> div x 2) a
 
 -- loadFile :: Int -> String -> Double -> Tab
 
 -- | Table contains all provided values 
 -- (table is extended to contain all values and to be of the power of 2 or the power of two plus one).
+-- (by default it skips normalization).
 doubles :: [Double] -> Tab
-doubles as = setSize (findTableSize n) $ plains idDoubles as
+doubles as = skipNorm $ setSize (findTableSize n) $ plains idDoubles as
     where n = length as
 
 -- | Segments of the exponential curves.
@@ -251,7 +257,39 @@ consts = interp idConsts
 -- > consts [a, 1, b, 1, c, ...]
 econsts :: [Double] -> Tab
 econsts = consts . insertOnes
-    
+   
+-- | Creates a table from a starting value to an ending value.
+--
+-- > startEnds [val1, dur1, type1, val2, dur2, type2, val3, ... typeX, valN]
+--
+-- * val1, val2 ... -- end points of the segments
+--
+-- * dur1, dur2 ... -- durations of the segments
+--
+-- * type1, type2 ... -- if 0, a straight line is produced. If non-zero, then it creates the following curve, for dur steps:
+--
+-- > beg + (end - beg) * (1 - exp( i*type)) / (1 - exp(type * dur))
+-- 
+-- * beg, end - end points of the segment
+--
+-- * dur - duration of the segment
+startEnds :: [Double] -> Tab
+startEnds as = Tab def idStartEnds (ArgsGen16 as)
+
+-- | Equally spaced interpolation for the function @startEnds@
+--
+-- > estartEnds [val1, type1, val2, typ2, ...]
+--
+-- is the same as
+--
+-- > estartEnds [val1, 1, type1, val2, 1, type2, ...]
+estartEnds :: [Double] -> Tab
+estartEnds = startEnds . insertOnes16
+    where 
+        insertOnes16 xs = case xs of
+            a:b:as  -> a : 1 : b : insertOnes16 as
+            _       -> xs
+
 type PartialNumber = Double
 type PartialStrength = Double
 type PartialPhase = Double
@@ -429,9 +467,17 @@ skipNorm x = case x of
     TabExp _ -> error "you can skip normalization only for primitive tables (made with gen-routines)"
     primTab  -> primTab{ tabGen = negate $ abs $ tabGen primTab }
 
+-- | Force normalization (sets table size to positive value).
+-- Might be useful to restore normalization for table 'Csound.Tab.doubles'.
+forceNorm :: Tab -> Tab
+forceNorm x = case x of
+    TabExp _ -> error "you can force normalization only for primitive tables (made with gen-routines)"
+    primTab  -> primTab{ tabGen = abs $ tabGen primTab }
+    
 
-
-idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines,  idPolys, idChebs1, idChebs2, idBessels, idWins :: Int
+idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, idPartials, 
+    idSines4, idBuzzes, idConsts, idLins, idCubes, idExps, idSplines, 
+    idStartEnds, idPolys, idChebs1, idChebs2, idBessels, idWins :: Int
 
 -- Human readable Csound identifiers for GEN-routines
 
@@ -447,6 +493,7 @@ idConsts = 17
 idLins = 7
 idCubes = 6
 idExps = 5
+idStartEnds = 16
 idSplines = 8 
 idPolys = 3
 idChebs1 = 13
