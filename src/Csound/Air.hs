@@ -11,7 +11,8 @@ module Csound.Air (
     -- * Envelopes
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,
-    once, onceBy, several, oscLins, oscElins, oscExps, oscEexps, oscLine, fadeIn, fadeOut, 
+    once, onceBy, several, oscLins, oscElins, oscExps, oscEexps, oscLine, 
+    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades,
 
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
@@ -47,7 +48,8 @@ import Data.List(intersperse)
 
 import Csound.Types
 import Csound.Opcode(idur, oscil3, pvscross,
-    linseg, expseg, linen, loopseg, looptseg, linsegr,
+    linseg, expseg, linen, loopseg, looptseg, 
+    linsegr, expsegr,
     atone, tone, areson, reson, mode,
     buthp, butbp, butlp, butbr, balance, randh,
     getSampleRate)
@@ -211,6 +213,26 @@ fadeIn att = linseg [0, att, 1]
 -- | Fades out with the given attack time.
 fadeOut :: D -> Sig
 fadeOut dec = linsegr [1] dec 0
+        
+-- | Fades in by exponent with the given attack time.
+expFadeIn :: D -> Sig
+expFadeIn att = expseg [0.0001, att, 1]
+
+-- | Fades out by exponent with the given attack time.
+expFadeOut :: D -> Sig
+expFadeOut dec = expsegr [1] dec 0.0001
+
+-- | A combination of fade in and fade out.
+--
+-- > fades attackDuration decayDuration
+fades :: D -> D -> Sig
+fades att dec = fadeIn att * fadeOut dec
+
+-- | A combination of exponential fade in and fade out.
+--
+-- > expFades attackDuration decayDuration
+expFades :: D -> D -> Sig
+expFades att dec = expFadeIn att * expFadeOut dec
 
 
 --------------------------------------------------------------------------

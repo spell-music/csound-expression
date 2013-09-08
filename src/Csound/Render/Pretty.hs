@@ -109,8 +109,14 @@ ppTab :: LowTab -> Doc
 ppTab (LowTab size n xs mfile) = text "gen" <> int n <+> int size <+> file <+> (hsep $ map double xs)
     where file = maybe empty (text . show) mfile
  
-ppIf :: Doc -> Doc -> Doc -> Doc
-ppIf p t e = p <+> char '?' <+> t <+> char ':' <+> e
+ppIf :: Doc -> Doc -> Doc -> Doc -> Doc
+ppIf res p t e = vcat 
+    [ text "if" <+> p <+> text "then"
+    , text "    " <> res <+> char '=' <+> t
+    , text "else"
+    , text "    " <> res <+> char '=' <+> e
+    , text "endif" 
+    ]
 
 ppStrget :: Doc -> Int -> Doc
 ppStrget out n = ppOpc out "strget" [char 'p' <> int n]
@@ -265,7 +271,7 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     Tfm info [a, b] | isInfix  info -> tab $ res $= binary (infoName info) a b
     Tfm info xs                     -> tab $ ppOpc res (infoName info) xs
     ConvertRate to from x           -> tab $ ppConvertRate res to from x
-    If info t e                     -> tab $ res $= ppIf (ppCond info) t e
+    If info t e                     -> tab $ ppIf res (ppCond info) t e
     ExpNum (PreInline op as)        -> tab $ res $= ppNumOp op as
     WriteVar v a                    -> tab $ ppVar v $= a
     InitVar v a                     -> tab $ ppOpc (ppVar v) "init" [a]
