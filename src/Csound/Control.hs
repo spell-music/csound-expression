@@ -1,2 +1,7 @@
-module Csound.Control where
+module Csound.Control(
+    module Csound.Control.SE        
+) where
+
+import Csound.Control.SE        
+
 

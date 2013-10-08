@@ -125,6 +125,7 @@ Library
         Csound.Control.Mix
         Csound.Control.Evt
         Csound.Control.Midi
+        Csound.Control.SE
 
 --        Csound.Gui
 --        Csound.Gui.Widget
