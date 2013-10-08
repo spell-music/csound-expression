@@ -109,8 +109,8 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, containers, array, transformers, wl-pprint, stable-maps >= 0.0.3.3, process,
-        data-default, Boolean >= 0.1.0, data-fix, data-fix-cse, colour
+        base >= 4, base < 5, process, data-default, Boolean >= 0.1.0,
+        csound-expression-typed, csound-expression-opcodes-typed
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
@@ -126,49 +126,11 @@ Library
         Csound.Control.Evt
         Csound.Control.Midi
 
-        Csound.Gui
-        Csound.Gui.Widget
-        Csound.Gui.Props
-        Csound.Gui.Layout
-        
-        Csound.Opcode
-        Csound.Opcode.Basic
-        Csound.Opcode.Advanced
-        Csound.Opcode.Data
-        Csound.Opcode.Interaction           
+--        Csound.Gui
+--        Csound.Gui.Widget
+--        Csound.Gui.Props
+--        Csound.Gui.Layout
 
-        Csound.LowLevel
+--        Csound.LowLevel
   Other-Modules:
-        Csound.Exp        
-        Csound.Exp.Wrapper
-        Csound.Exp.GE
-        Csound.Exp.SE
-        Csound.Exp.Ref
-        Csound.Exp.Cons
-        Csound.Exp.Logic
-        Csound.Exp.Numeric       
-        Csound.Exp.Arg
-        Csound.Exp.Tuple
-        Csound.Exp.Mix
-        Csound.Exp.Event
-        Csound.Exp.Instr
-        Csound.Exp.Gui
-        Csound.Exp.Widget
-        Csound.Exp.Options
-        Csound.Exp.EventList
-       
-        Csound.BoxModel
-
-        Csound.Tfm.DeduceTypes       
-        Csound.Tfm.UnfoldMultiOuts
-        Csound.Tfm.Tab       
-        Csound.Tfm.Tuple
-
-        Csound.Render
-        Csound.Render.Pretty
-        Csound.Render.Options
-        Csound.Render.Instr
-        Csound.Render.Channel
-      
-
 
