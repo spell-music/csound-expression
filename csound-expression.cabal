@@ -120,6 +120,7 @@ Library
         Csound.Types
         Csound.Tab
         Csound.IO
+        Csound.Options
 
         Csound.Control
         Csound.Control.Mix
