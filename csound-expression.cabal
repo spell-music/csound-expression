@@ -123,9 +123,8 @@ Library
         Csound.Options
 
         Csound.Control
-        Csound.Control.Mix
         Csound.Control.Evt
-        Csound.Control.Midi
+        Csound.Control.Instr
         Csound.Control.SE
 
 --        Csound.Gui

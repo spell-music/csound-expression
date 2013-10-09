@@ -2,9 +2,6 @@
 module Csound.Control.Evt(
     Evt(..), Bam, 
 
-    -- * Triggering the events
-    trig, sched, schedHarp, autoOff,
-
     -- * Core functions
     boolToEvt, evtToBool, sigToEvt, stepper,
     filterE, accumSE, accumE, filterAccumE, filterAccumSE,
