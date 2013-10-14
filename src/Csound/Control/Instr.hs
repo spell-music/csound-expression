@@ -6,7 +6,7 @@ module Csound.Control.Instr(
     CsdSco(..), Mix, sco, mix, eff, CsdEventList(..), CsdEvent, 
 
     -- * Midi
-    Msg, Channel, MidiInstr(..), midi, midin, pgmidi,
+    Msg, Channel, MidiInstr(..), midi, midin, pgmidi, ampCps,
     -- ** Reading midi note parameters
     cpsmidi, ampmidi,
 
@@ -88,7 +88,7 @@ pgmidi :: MidiInstr a => Maybe Int -> Channel -> a -> NoSE (FunOut a)
 pgmidi mn chn instr = T.pgmidi mn chn (fromMidiInstr instr)
 
 ampCps :: Msg -> (D, D)
-ampCps msg = (ampmidi msg, cpsmidi msg)
+ampCps msg = (ampmidi msg 1, cpsmidi msg)
 
 -- midi instruments
 

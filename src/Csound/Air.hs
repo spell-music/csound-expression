@@ -1,10 +1,6 @@
 module Csound.Air (
     -- * Basic waveforms
-    osc, saw, isaw, pulse, sqr, tri, blosc,
-
-    -- * Opcodes
-    module Csound.Typed.Opcode
-            
+    osc, saw, isaw, pulse, sqr, tri, blosc
 ) where
 
 import Csound.Typed

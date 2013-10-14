@@ -51,12 +51,12 @@ range (xMin, xMax) = iterateE xMin $ \x -> ifB ((x + 1) >=* xMax) xMin (x + 1)
 
 -- | An event stream of the integers taken from the given diapason.
 randInts :: (D, D) -> Evt b -> Evt D
-randInts (xMin, xMax) = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ rnd
-    where rnd = fmap (intD . readSnap) $ random (sig $ intD xMin) (sig $ intD xMax)
+randInts (xMin, xMax) = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ getRnd
+    where getRnd = fmap (int' . readSnap) $ random (sig $ int' xMin) (sig $ int' xMax)
 
 -- | An event stream of the random values in the interval @(0, 1)@.
 randDs :: Evt b -> Evt D
-randDs = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ fmap readSnap $ random 0 1 
+randDs = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ fmap readSnap $ random (0::D) 1 
 
 -- | When something happens on the given event stream resulting
 -- event stream contains an application of some unary function to the 
@@ -128,7 +128,7 @@ freqAccum s0 f = accumSE s0 $ \a s ->
     let rnds = f a s
         accs = accumWeightList $ fmap fst rnds
         vals = fmap snd rnds
-    in  fmap (takeByWeight accs vals . readSnap) $ random 0 1
+    in  fmap (takeByWeight accs vals . readSnap) $ random (0 :: D) 1
 
 -- | Specialization of the function 'Csound.Control.Evt.masked'. 
 --

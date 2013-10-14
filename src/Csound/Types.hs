@@ -1,7 +1,7 @@
 module Csound.Types(
     -- * Primitive types    
     Sig, D, Tab, Str, Spec,     
-    BoolSig, BoolD, Val(..),
+    BoolSig, BoolD, Val(..), SigOrD,
 
     -- ** Constructors
     double, int, str, idur,
@@ -10,8 +10,7 @@ module Csound.Types(
     ar, kr, ir, sig,
     
     -- ** Numeric functions
-    quotSig, remSig, divSig, modSig, ceilSig, floorSig, roundSig, intSig, fracSig,
-    quotD, remD, divD, modD, ceilD, floorD, roundD, intD, fracD,        
+    quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
     boolSig,        
