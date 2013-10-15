@@ -419,7 +419,7 @@ modes :: [(Sig, Sig)] -> Sig -> Sig -> Sig
 modes = relResonsBy (\cf q asig -> mode asig cf q)
 
 relResonsBy :: (Sig -> a -> Sig -> Sig) -> [(Sig, a)] -> Sig -> Sig -> Sig
-relResonsBy resonator ms baseCps apulse = gain (recip normFactor) $ sum $ fmap (\(cf, q) -> harm cf q apulse) ms
+relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(cf, q) -> harm cf q apulse) ms
     where 
         -- limit modal frequency to prevent explosions by 
         -- skipping if the maximum value is exceeded (with a little headroom)
