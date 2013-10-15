@@ -1,19 +1,33 @@
 module Csound.Types(
     -- * Primitive types    
-    Sig, D, Tab, Str, Spec,     
+    Sig, D, Tab, Str, Spec, Wspec,    
     BoolSig, BoolD, Val(..), SigOrD,
 
     -- ** Constructors
-    double, int, str, idur,
+    double, int, str, 
+    
+    -- ** Constants
+    idur, getSampleRate, getControlRate, getBlockSize,
 
     -- ** Converters
     ar, kr, ir, sig,
-    
+
     -- ** Numeric functions
     quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
     boolSig,        
+
+    -- ** Aliases 
+    -- | Handy for functions that return tuples to specify the utput type
+    --
+    -- > (aleft, aright) = ar2 $ diskin2 "file.wav" 1
+    -- 
+    -- or
+    --
+    -- > asig = ar1 $ diskin2 "file.wav" 1
+    Sig2, Sig4, Sig6, Sig8,
+    ar1, ar2, ar4, ar6, ar8,
 
     -- * Tuples
     Tuple(..), makeTupleMethods,
@@ -33,4 +47,9 @@ module Csound.Types(
 ) where
 
 import Csound.Typed.Types
+
+type Sig2 = (Sig, Sig)
+type Sig4 = (Sig, Sig, Sig, Sig)
+type Sig6 = (Sig, Sig, Sig, Sig, Sig, Sig)
+type Sig8 = (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
 
