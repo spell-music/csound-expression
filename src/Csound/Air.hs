@@ -27,13 +27,16 @@ module Csound.Air (
     lpb, hpb, bpb, brb, blpb, bhpb, bbpb, bbrb,
 
     -- * Patterns
-    mean, gainOut, vibrate, randomPitch, chorus, resons, resonsBy, modes, hase, whase, dryWet,
+    mean, gainOut, vibrate, randomPitch, chorus, resons, resonsBy, modes, hase, whase, dryWet,    
 
     -- ** List functions
     odds, evens,
 
     -- ** Crossfade
-    cfd, cfds, cfdSpec, cfdsSpec
+    cfd, cfds, cfdSpec, cfdsSpec,
+
+    -- * Other
+    reverbsc1
 
 ) where
 
@@ -462,4 +465,10 @@ cfdSpec coeff a b = pvscross a b (1 - coeff) coeff
 cfdsSpec :: [Sig] -> [Spec] -> Spec
 cfdsSpec = genCfds undefined cfdSpec
 
+-- | Mono version of the opcode reverbsc
+--
+-- > reverbsc1 asig feedbackLevel cutOffFreq
+reverbsc1 :: Sig -> Sig -> Sig -> Sig
+reverbsc1 x k co = 0.5 * (a + b)
+    where (a, b) = ar2 $ reverbsc x x k co
 
