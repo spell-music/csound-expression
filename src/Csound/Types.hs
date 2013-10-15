@@ -13,7 +13,7 @@ module Csound.Types(
     ar, kr, ir, sig,
 
     -- ** Init values
-    withInits, withDs, withSigs, 
+    withInits, withDs, withSigs, withTabs, 
     withD, withSig, withTab, withSeed,
 
     -- ** Numeric functions
