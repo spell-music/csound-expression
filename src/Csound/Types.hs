@@ -12,11 +12,15 @@ module Csound.Types(
     -- ** Converters
     ar, kr, ir, sig,
 
+    -- ** Init values
+    withInits, withDs, withSigs, 
+    withD, withSig, withTab, withSeed,
+
     -- ** Numeric functions
     quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
-    boolSig,        
+    boolSig, 
 
     -- ** Aliases 
     -- | Handy for functions that return tuples to specify the utput type
@@ -31,6 +35,8 @@ module Csound.Types(
 
     -- * Tuples
     Tuple(..), makeTupleMethods,
+    -- *** Logic functions
+    ifTuple, guardedTuple, caseTuple, 
     
     -- * Instruments    
 
@@ -41,6 +47,8 @@ module Csound.Types(
 
     -- ** Arguments
     Arg(..), makeArgMethods,
+    -- *** Logic functions
+    ifArg, guardedArg, caseArg,
 
     -- ** Outputs
     Out, mapOut, pureOut, bindOut, accumOut, traverseOut

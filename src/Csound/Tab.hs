@@ -17,7 +17,7 @@ module Csound.Tab (
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
-    sines, sines3, sines2, partials, sines4, buzzes,
+    sines, sines3, sines2, sines1, sines4, buzzes,
     -- ** Special cases
     sine, cosine, sigmoid,
 
@@ -283,8 +283,8 @@ sines :: [PartialStrength] -> Tab
 sines = plains idSines
 
 -- | Just like 'Csound.Tab.sines2' but partial strength is set to one.
-partials :: [PartialNumber] -> Tab
-partials xs = sines2 $ zip xs (repeat 1)
+sines1 :: [PartialNumber] -> Tab
+sines1 xs = sines2 $ zip xs (repeat 1)
 
 -- | Just like 'Csound.Tab.sines3' but phases are set to zero.
 sines2 :: [(PartialNumber, PartialStrength)] -> Tab
