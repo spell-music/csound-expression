@@ -30,6 +30,11 @@ module Csound.IO (
 
     -- * Live performance
     dac, dacBy,
+   
+    -- * Render procedures
+    renderCsd_, renderCsdBy_, 
+    writeCsd_, writeCsdBy_, 
+    dac_, dacBy_
 ) where
 
 import System.Cmd(system)
@@ -37,19 +42,19 @@ import Data.Default
 import Csound.Typed
 
 -- | Renders Csound file.
-renderCsd :: (Out a) => a -> IO String
+renderCsd :: (Sigs a) => SE a -> IO String
 renderCsd = renderOut
 
 -- | Renders Csound file with options.
-renderCsdBy :: (Out a) => Options -> a -> IO String
+renderCsdBy :: (Sigs a) => Options -> SE a -> IO String
 renderCsdBy opt as = renderOutBy opt as
 
 -- | Render Csound file and save it to the give file.
-writeCsd :: (Out a) => String -> a -> IO ()
+writeCsd :: (Sigs a) => String -> SE a -> IO ()
 writeCsd file csd = writeFile file =<< renderCsd csd
 
 -- | Render Csound file with options and save it to the give file.
-writeCsdBy :: (Out a) => Options -> String -> a -> IO ()
+writeCsdBy :: (Sigs a) => Options -> String -> SE a -> IO ()
 writeCsdBy opt file csd = writeFile file =<< renderCsdBy opt csd
 
 -- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
@@ -59,11 +64,11 @@ writeCsdBy opt file csd = writeFile file =<< renderCsdBy opt csd
 -- Produces files @file.csd@ (with 'Csound.Render.Mix.renderCsd') and @file.wav@ (with @csound@) and then invokes:
 --
 -- > program "file.wav"
-playCsd :: (Out a) => (String -> IO ()) -> String -> a -> IO ()
+playCsd :: (Sigs a) => (String -> IO ()) -> String -> SE a -> IO ()
 playCsd = playCsdBy def
 
 -- | Works just like 'Csound.Render.Mix.playCsd' but you can supply csound options.
-playCsdBy :: (Out a) => Options -> (String -> IO ()) -> String -> a -> IO ()
+playCsdBy :: (Sigs a) => Options -> (String -> IO ()) -> String -> SE a -> IO ()
 playCsdBy opt player file csd = do
     writeCsdBy opt fileCsd csd
     _ <- system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
@@ -72,7 +77,7 @@ playCsdBy opt player file csd = do
     where fileCsd = file ++ ".csd"
           fileWav = file ++ ".wav"  
 
-simplePlayCsdBy :: (Out a) => Options -> String -> String -> a -> IO ()
+simplePlayCsdBy :: (Sigs a) => Options -> String -> String -> SE a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
     where phi file = do
             _ <- system $ player ++ " " ++ file
@@ -81,11 +86,11 @@ simplePlayCsdBy opt player = playCsdBy opt phi
 
 -- | Renders csound code to file @tmp.csd@ and plays it with @-odac@ option
 -- (sound output goes to soundcard in real time).
-dac :: (Out a) => a -> IO ()
+dac :: (Sigs a) => SE a -> IO ()
 dac = dacBy def
 
 -- | 'Csound.Base.dac' with options.
-dacBy :: (Out a) => Options -> a -> IO ()
+dacBy :: (Sigs a) => Options -> SE a -> IO ()
 dacBy opt csd = do
     writeCsdBy opt "tmp.csd" csd
     _ <- system $ "csound -odac " ++ "tmp.csd" 
@@ -95,18 +100,49 @@ dacBy opt csd = do
 -- players
 
 -- | Renders to tmp.csd and tmp.wav and plays with mplayer.
-mplayer :: (Out a) => a -> IO ()
+mplayer :: (Sigs a) => SE a -> IO ()
 mplayer = mplayerBy def
 
 -- | Renders to tmp.csd and tmp.wav and plays with mplayer.
-mplayerBy :: (Out a) => Options -> a -> IO ()
+mplayerBy :: (Sigs a) => Options -> SE a -> IO ()
 mplayerBy opt = simplePlayCsdBy opt "mplayer" "tmp"
 
 -- | Renders to tmp.csd and tmp.wav and plays with totem player.
-totem :: (Out a) => a -> IO ()
+totem :: (Sigs a) => SE a -> IO ()
 totem = totemBy def
 
 -- | Renders to tmp.csd and tmp.wav and plays with totem player.
-totemBy :: (Out a) => Options -> a -> IO ()
+totemBy :: (Sigs a) => Options -> SE a -> IO ()
 totemBy opt = simplePlayCsdBy opt "totem" "tmp"
+
+-----------------------------------------------------------------------------
+--
+-- | Renders Csound file.
+renderCsd_ :: SE () -> IO String
+renderCsd_ = renderOut_
+
+-- | Renders Csound file with options.
+renderCsdBy_ :: Options -> SE () -> IO String
+renderCsdBy_ opt as = renderOutBy_ opt as
+
+-- | Render Csound file and save it to the give file.
+writeCsd_ :: String -> SE () -> IO ()
+writeCsd_ file csd = writeFile file =<< renderCsd_ csd
+
+-- | Render Csound file with options and save it to the give file.
+writeCsdBy_ :: Options -> String -> SE () -> IO ()
+writeCsdBy_ opt file csd = writeFile file =<< renderCsdBy_ opt csd
+
+-- | Renders csound code to file @tmp.csd@ and plays it with @-odac@ option
+-- (sound output goes to soundcard in real time).
+dac_ :: SE () -> IO ()
+dac_ = dacBy_ def
+
+-- | 'Csound.Base.dac' with options.
+dacBy_ :: Options -> SE () -> IO ()
+dacBy_ opt csd = do
+    writeCsdBy_ opt "tmp.csd" csd
+    _ <- system $ "csound -odac " ++ "tmp.csd" 
+    return ()
+
 

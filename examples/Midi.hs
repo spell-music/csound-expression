@@ -21,19 +21,8 @@ pureTone (amp, cps) = 0.5 * sig amp * env * (myOsc $ sig cps)
 -- Let's create a midi instrument. It takes a special value of type Msg
 -- that contains midi parameters.
 midiInstr :: Msg -> Sig
-midiInstr msg = pureTone (ampmidi msg, cpsmidi msg)
+midiInstr msg = pureTone $ ampCps msg
 
--- Renders generated csd-file to the "tmp.csd".
 main :: IO ()
-main = writeCsd "tmp.csd" $ midi 1 midiInstr 
+main = dac $ midi midiInstr 
 
--- We can compile with flags 
---  * odac - output to dac
---  * Ma   - listen to midi on all channels
---
--- > csound -oadc -Ma tmp.csd
---
--- If we don't have a midi device we can test this example
--- with virtual midi-keyboard by setting the flag -+rtmidi=virtual. 
---
--- > csound -odac -Ma -+rtmidi=virtual tmp.csd

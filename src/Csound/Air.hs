@@ -27,7 +27,7 @@ module Csound.Air (
     lpb, hpb, bpb, brb, blpb, bhpb, bbpb, bbrb,
 
     -- * Patterns
-    mean, gainOut, vibrate, randomPitch, chorus, resons, resonsBy, modes, hase, whase, dryWet,    
+    mean, vibrate, randomPitch, chorus, resons, resonsBy, modes, dryWet,    
 
     -- ** List functions
     odds, evens,
@@ -353,15 +353,6 @@ oscEexps points = oscExps (insertOnes points)
 mean :: Fractional a => [a] -> a
 mean xs = sum xs / (fromIntegral $ length xs)
 
--- | Harmonic series. Takes a function that transforms the signal by some parameter
--- and the list of parameters. It constructs the series of transformers and sums them
--- at the end with equal strength.
-hase :: Out out => (p -> Sig -> out) -> [p] -> Sig -> out
-hase f as x = accumOut mean $ fmap (( $ x) . f) as
-
--- | Harmonic series, but now you can specify the weights of the final sum.
-whase :: Out out => (a -> Sig -> out) -> [(Sig, a)] -> Sig -> out
-whase f as x = accumOut sum $ fmap (\(weight, param) -> mapOut (weight * ) $ f param x) as
 
 -- | Adds vibrato to the sound unit. Sound units is a function that takes in a frequency. 
 vibrate :: Sig -> Sig -> (Sig -> a) -> (Sig -> a)
@@ -373,28 +364,25 @@ randomPitch :: Sig -> Sig -> (Sig -> a) -> (Sig -> SE a)
 randomPitch rndAmp rndCps f cps = fmap go $ randh (cps * rndAmp) rndCps
     where go krand = f (cps + krand)
 
+
 -- | Chorus takes a list of displacments from the base frequencies and a sound unit.
 -- Output is mean of signals with displacments that is applied to the base frequency. 
-chorus :: Out a => [Sig] -> (Sig -> a) -> Sig -> a
-chorus ks f = \cps -> accumOut mean $ fmap (f . (+ cps)) ks
-
--- | Applies a gain to the signals. Multiplies all signals with the given signal.
-gainOut :: Out a => Sig -> a -> a
-gainOut env = mapOut (env *)
+chorus :: Fractional a => [Sig] -> (Sig -> a) -> Sig -> a
+chorus ks f = \cps -> mean $ fmap (f . (+ cps)) ks
 
 -- | Applies a resonator to the signals. A resonator is
 -- a list of band pass filters. A list contains the parameters for the filters:
 --
 -- > [(centerFrequency, bandWidth)]
-resons :: Out a => [(Sig, Sig)] -> a -> a
+resons :: [(Sig, Sig)] -> Sig -> Sig
 resons = resonsBy bp
 
 -- | A resonator with user defined band pass filter.
 -- Warning: a filter takes in a center frequency, band width and the signal.
 -- The signal comes last (this order is not standard in the Csound but it's more
 -- convinient to use with Haskell).
-resonsBy :: Out a => (cps -> bw -> Sig -> Sig) -> [(cps, bw)] -> a -> a
-resonsBy filt ps asig = accumOut mean $ fmap (flip mapOut asig . uncurry filt) ps
+resonsBy :: (cps -> bw -> Sig -> Sig) -> [(cps, bw)] -> Sig -> Sig
+resonsBy filt ps asig = mean $ fmap (( $ asig) . uncurry filt) ps
 
 -- | Mixes dry and wet signals. 
 --

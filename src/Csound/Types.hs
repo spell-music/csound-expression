@@ -34,7 +34,7 @@ module Csound.Types(
     ar1, ar2, ar4, ar6, ar8,
 
     -- * Tuples
-    Tuple(..), makeTupleMethods,
+    Tuple(..), makeTupleMethods, Unit, unit,
     -- *** Logic functions
     ifTuple, guardedTuple, caseTuple, 
     
@@ -46,12 +46,12 @@ module Csound.Types(
     -- > (Arg a, Out b) => a -> b
 
     -- ** Arguments
-    Arg(..), makeArgMethods,
+    Arg,
     -- *** Logic functions
     ifArg, guardedArg, caseArg,
 
     -- ** Outputs
-    Out, mapOut, pureOut, bindOut, accumOut, traverseOut
+    Sigs
 ) where
 
 import Csound.Typed.Types
