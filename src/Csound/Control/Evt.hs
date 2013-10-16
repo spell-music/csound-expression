@@ -6,6 +6,9 @@ module Csound.Control.Evt(
     boolToEvt, evtToBool, sigToEvt, stepper,
     filterE, accumSE, accumE, filterAccumE, filterAccumSE,
     Snap, snapshot, snaps, readSnap,
+    
+    -- * Opcodes
+    metroE, changedE, triggerE, 
 
     -- * Higher-level event functions
     cycleE, iterateE, repeatE, appendE, mappendE,
@@ -19,6 +22,18 @@ import Data.Boolean
 
 import Csound.Typed
 import Csound.Typed.Opcode
+
+-- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
+metroE :: Sig -> Evt ()
+metroE = sigToEvt . metro
+
+-- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
+changedE :: [Sig] -> Evt ()
+changedE = sigToEvt . changed
+
+-- | Behaves like 'Csound.Opcode.Basic.trigger', but returns an event stream.
+triggerE :: Sig -> Sig -> Sig -> Evt ()
+triggerE a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 
 ----------------------------------------------------------------------
 -- higher level evt-funs
