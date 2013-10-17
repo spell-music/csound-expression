@@ -58,8 +58,8 @@ e10 :: Evt (D, D)
 e10 = fmap (\x -> (0.5, x)) $ filterE (>* 110) $ mconcat 
     [ every 0 [5,7] $ repeatE 330 src
     , every 3 [11] $ repeatE 550 src
-    , every 2 [2] $ repeatE 440 src
-    , every 0 [4, 1, 3] $ repeatE 220 src]
+    , randSkip 0.5 $ every 2 [2] $ repeatE 440 src
+    , randSkip 0.7 $ every 0 [4, 1, 3] $ repeatE 220 src]
 
 -----------------------
 
@@ -68,5 +68,5 @@ res e = sched_ echo $ fmap (\a -> (0.1, a)) $ e
 -- output with sound
 resSnd e = sched pureTone $ fmap (\a -> (0.1, a)) e
 
-main = dac_ $ res e1
+main = writeCsd "tmp.csd" $ return $ resSnd e10
 

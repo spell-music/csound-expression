@@ -2,7 +2,7 @@
 module Csound.Control.Instr(
     -- * Mix
     CsdSco(..), Mix, sco, mix, eff, CsdEventList(..), CsdEvent, 
-    sco_, mix_,
+    sco_, mix_, mixBy, 
 
     -- * Midi
     Msg, Channel, midi, midin, pgmidi, ampCps,
@@ -12,7 +12,8 @@ module Csound.Control.Instr(
 
     -- * Evt            
     trig, sched, schedHarp, autoOff,
-    trig_, sched_
+    trig_, sched_,
+    trigBy, schedBy, schedHarpBy
 ) where
 
 import Csound.Typed
