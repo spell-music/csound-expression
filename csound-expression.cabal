@@ -119,6 +119,7 @@ Library
 
         Csound.Types
         Csound.Tab
+        Csound.SigSpace
         Csound.IO
         Csound.Options
 

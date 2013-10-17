@@ -32,9 +32,6 @@ module Csound.Air (
     -- ** List functions
     odds, evens,
 
-    -- ** Crossfade
-    cfd, cfds, cfdSpec, cfdsSpec,
-
     -- * Other
     reverbsc1
 
@@ -425,33 +422,6 @@ relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(
                   g   = gate cps  
 
 
--- | Crossfade.
---
--- > cfd coeff sig1 sig2
---
--- If coeff equals 0 then we get the first signal and if it equals 1 we get the second signal.
-cfd :: Sig -> Sig -> Sig -> Sig
-cfd coeff a b = (1 - coeff) * a + coeff * b
-  
-genCfds :: a -> (Sig -> a -> a -> a) -> [Sig] -> [a] -> a
-genCfds zero mixFun cs xs = case xs of
-    []   -> zero
-    a:as -> foldl (\x f -> f x) a $ zipWith mix' cs as 
-    where mix' c a b = mixFun c b a
-  
--- | Generic crossfade for n coefficients and n+1 signals.
---
--- > cfds coeffs sigs
-cfds :: [Sig] -> [Sig] -> Sig
-cfds = genCfds 0 cfd
-
--- | Spectral crossfade.
-cfdSpec :: Sig -> Spec -> Spec -> Spec
-cfdSpec coeff a b = pvscross a b (1 - coeff) coeff
-
--- | Generic spectral crossfade.
-cfdsSpec :: [Sig] -> [Spec] -> Spec
-cfdsSpec = genCfds undefined cfdSpec
 
 -- | Mono version of the opcode reverbsc
 --
