@@ -4,7 +4,7 @@ module Csound.Control.Evt(
 
     -- * Core functions
     boolToEvt, evtToBool, sigToEvt, stepper,
-    filterE, accumSE, accumE, filterAccumE, filterAccumSE,
+    filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
     Snap, snapshot, snaps, readSnap,
     
     -- * Opcodes
@@ -12,7 +12,9 @@ module Csound.Control.Evt(
 
     -- * Higher-level event functions
     cycleE, iterateE, repeatE, appendE, mappendE,
-    oneOf, freqOf, freqAccum, randDs, randInts, range, listAt,   
+    oneOf, freqOf, freqAccum, 
+    randDs, randInts, randSkip, randSkipBy, 
+    range, listAt,   
     every, masked        
 ) where
 
@@ -72,6 +74,22 @@ randInts (xMin, xMax) = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ getRnd
 -- | An event stream of the random values in the interval @(0, 1)@.
 randDs :: Evt b -> Evt D
 randDs = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ fmap readSnap $ random (0::D) 1 
+
+-- | Skips elements at random.
+--
+-- > randSkip prob
+--
+-- where @prob@ is probability of includinng the element in the output stream. 
+randSkip :: D -> Evt a -> Evt a
+randSkip d = filterSE (const $ fmap (<=* d) $ random (0::D) 1)
+
+-- | Skips elements at random.
+--
+-- > randSkip probFun
+--
+-- It behaves just like @randSkip@, but probability depends on the value.
+randSkipBy :: (a -> D) -> Evt a -> Evt a
+randSkipBy d = filterSE (\x -> fmap (<=* d x) $ random (0::D) 1)
 
 -- | When something happens on the given event stream resulting
 -- event stream contains an application of some unary function to the 
