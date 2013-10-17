@@ -63,10 +63,10 @@ e10 = fmap (\x -> (0.5, x)) $ filterE (>* 110) $ mconcat
 
 -----------------------
 
-res e = sched echo $ fmap (\a -> (0.1, a)) $ e
+res e = sched_ echo $ fmap (\a -> (0.1, a)) $ e
 
 -- output with sound
 resSnd e = sched pureTone $ fmap (\a -> (0.1, a)) e
 
-main = dac $ resSnd e10
+main = dac_ $ res e1
 
