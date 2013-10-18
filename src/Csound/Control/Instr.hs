@@ -11,9 +11,22 @@ module Csound.Control.Instr(
     cpsmidi, ampmidi,
 
     -- * Evt            
-    trig, sched, schedHarp, autoOff,
+    trig, sched, schedHarp,
     trig_, sched_,
-    trigBy, schedBy, schedHarpBy
+    trigBy, schedBy, schedHarpBy,
+
+    -- * Non-overloaded funs
+    
+    -- ** Mix
+    sco', eff',
+    -- ** Midi
+    midi', midin', pgmidi',
+    -- ** Evt 
+    trig', sched', schedHarp', 
+    trigBy', schedBy', schedHarpBy', 
+
+    -- * Overload
+    Instr(..), MidiInstr(..), AmpInstr(..), CpsInstr(..)
 ) where
 
 import Csound.Typed
