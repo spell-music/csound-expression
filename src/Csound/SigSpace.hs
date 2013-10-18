@@ -11,8 +11,8 @@ class Num a => SigSpace a where
     mapSig  :: (Sig -> Sig)    -> a -> a
     bindSig :: (Sig -> SE Sig) -> a -> SE a
 
-mulSig :: SigSpace a => Sig -> a -> a
-mulSig k = mapSig (k * )
+mul :: SigSpace a => Sig -> a -> a
+mul k = mapSig (k * )
 
 -- | Crossfade.
 --
@@ -20,7 +20,7 @@ mulSig k = mapSig (k * )
 --
 -- If coeff equals 0 then we get the first signal and if it equals 1 we get the second signal.
 cfd :: SigSpace a => Sig -> a -> a -> a
-cfd coeff a b = (1 - coeff) `mulSig` a + coeff `mulSig` b
+cfd coeff a b = (1 - coeff) `mul` a + coeff `mul` b
   
 genCfds :: a -> (Sig -> a -> a -> a) -> [Sig] -> [a] -> a
 genCfds zero mixFun cs xs = case xs of
@@ -45,7 +45,7 @@ cfdsSpec = genCfds undefined cfdSpec
 
 -- | Weighted sum.
 wsum :: SigSpace a => [(Sig, a)] -> a
-wsum = sum . fmap (uncurry mulSig)
+wsum = sum . fmap (uncurry mul)
 
 instance SigSpace Sig where
     mapSig = id
@@ -81,10 +81,6 @@ instance SigSpace (SE (Sig, Sig, Sig, Sig)) where
 
 -----------------------------------------------------
 -- numeric instances
-
--- | Prefix multiplication.
-mul :: Num a => a -> a -> a
-mul = (*)
 
 -- Num
 
