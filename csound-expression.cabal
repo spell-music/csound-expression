@@ -128,6 +128,7 @@ Library
         Csound.Control.Instr
         Csound.Control.SE
 
+
 --        Csound.Gui
 --        Csound.Gui.Widget
 --        Csound.Gui.Props
@@ -135,4 +136,8 @@ Library
 
 --        Csound.LowLevel
   Other-Modules:
+        Csound.Control.Overload
+        Csound.Control.Overload.Instr
+        Csound.Control.Overload.MidiInstr
+        Csound.Control.Overload.SpecInstr
 

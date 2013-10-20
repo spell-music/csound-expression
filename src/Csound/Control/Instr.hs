@@ -15,22 +15,13 @@ module Csound.Control.Instr(
     trig_, sched_,
     trigBy, schedBy, schedHarpBy,
 
-    -- * Non-overloaded funs
-    
-    -- ** Mix
-    sco', eff',
-    -- ** Midi
-    midi', midin', pgmidi',
-    -- ** Evt 
-    trig', sched', schedHarp', 
-    trigBy', schedBy', schedHarpBy', 
-
     -- * Overload
     Instr(..), MidiInstr(..), AmpInstr(..), CpsInstr(..)
 ) where
 
 import Csound.Typed
 import Csound.Typed.Opcode
+import Csound.Control.Overload
 
 --------------------------------------------------------------------------
 -- midi
