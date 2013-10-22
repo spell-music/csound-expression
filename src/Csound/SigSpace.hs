@@ -1,16 +1,22 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language FlexibleInstances #-}
-module Csound.SigSpace where
+module Csound.SigSpace(
+    SigSpace(..), mul, 
+    cfd, cfds, cfdSpec, cfdsSpec, 
+    wsum        
+) where
 
 import Control.Applicative
 
 import Csound.Typed
 import Csound.Typed.Opcode(pvscross)
 
+-- | A class for easy way to process the outputs of the instruments.
 class Num a => SigSpace a where
     mapSig  :: (Sig -> Sig)    -> a -> a
     bindSig :: (Sig -> SE Sig) -> a -> SE a
 
+-- | Scaling the sound.
 mul :: SigSpace a => Sig -> a -> a
 mul k = mapSig (k * )
 
@@ -41,7 +47,6 @@ cfdSpec coeff a b = pvscross a b (1 - coeff) coeff
 -- | Generic spectral crossfade.
 cfdsSpec :: [Sig] -> [Spec] -> Spec
 cfdsSpec = genCfds undefined cfdSpec
-
 
 -- | Weighted sum.
 wsum :: SigSpace a => [(Sig, a)] -> a

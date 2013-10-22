@@ -11,6 +11,7 @@ ampCps msg = (ampmidi msg 1, (cpsmidi msg))
 
 -------------------------------------------------------------------------------
 
+-- | Converts a value to the midi-instrument. It's used with the functions 'Csound.Base.midi', 'Csound.Base.midin'.
 class MidiInstr a where
     type MidiInstrOut a :: *
 

@@ -7,6 +7,9 @@ import Control.Arrow(first, second)
 
 import Csound.Typed
 
+-- | Constructs a drum-like instrument.
+-- Drum like instrument has a single argument that 
+-- signifies an amplitude.
 class AmpInstr a where
     type AmpInstrOut a :: *
     onAmp :: a -> D -> SE (AmpInstrOut a)
@@ -61,6 +64,8 @@ instance AmpInstr (Sig, Sig) where
 
 ------------------------------------------------------------------------
 
+-- | Constructs a simple instrument that takes in a tuple of two arguments.
+-- They are amplitude and the frequency (in Hz or cycles per second).
 class CpsInstr a where
     type CpsInstrOut a :: *
     onCps :: a -> (D, D) -> SE (CpsInstrOut a)

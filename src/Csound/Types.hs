@@ -1,10 +1,31 @@
+-- | The Csound types.
+--
+-- There are several primitive types:
+--
+-- * @Sig@ - signals
+--
+-- * @D@ - numbers
+--
+-- * @Str@ - strings
+--
+-- * @Tab@ - 1-dimensional arrays
+--
+-- * @Spec@ and @Wspec@ - sound spectrums
+--
+--  A signal is a stream of numbers. Signals carry sound or time varied 
+--  control values. Numbers are constants. 1-dimensional arrays contain some useful
+--  data which is calculated at the initial run of the program.
+--
+-- There is only one compound type. It's a tuple of Csound values. The empty tuple
+-- is signified with special type called @Unit@. 
+--
 module Csound.Types(
     -- * Primitive types    
     Sig, D, Tab, Str, Spec, Wspec,    
     BoolSig, BoolD, Val(..), SigOrD,
 
     -- ** Constructors
-    double, int, str, 
+    double, int, text, 
     
     -- ** Constants
     idur, getSampleRate, getControlRate, getBlockSize,

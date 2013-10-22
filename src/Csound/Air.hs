@@ -1,16 +1,22 @@
 module Csound.Air (
     -- * Basic waveforms
-    
+    -- | Basic waveforms that are used most often. A waveform function take in a time varied frequency (in Hz).
+
     -- ** Bipolar
     osc, oscBy, saw, isaw, pulse, sqr, tri, blosc,
 
     -- ** Unipolar
-    unipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
+    unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
 
     -- * Envelopes
+
+    -- ** Relative duration
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,
-    once, onceBy, several, oscLins, oscElins, oscExps, oscEexps, oscLine, 
+    once, onceBy, several, 
+    -- ** Looping envelopes
+    oscLins, oscElins, oscExps, oscEexps, oscLine, 
+    -- ** Faders
     fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades,
 
     -- * Filters
@@ -48,9 +54,11 @@ import Csound.Tab(sine)
 -------------------------------------------------------------------
 -- waveforms
 
+-- | A pure tone (sine wave).
 osc :: Sig -> Sig
 osc cps = oscil3 1 cps sine
 
+-- | An oscillator with user provided waveform.
 oscBy :: Tab -> Sig -> Sig
 oscBy tb cps = oscil3 1 cps tb
 
@@ -59,6 +67,10 @@ oscBy tb cps = oscil3 1 cps tb
 -- | Turns a bipolar sound (ranges from -1 to 1) to unipolar (ranges from 0 to 1)
 unipolar :: Sig -> Sig
 unipolar a = 0.5 + 0.5 * a
+
+-- | Turns an unipolar sound (ranges from 0 to 1) to bipolar (ranges from -1 to 1)
+bipolar :: Sig -> Sig
+bipolar a = 2 * a - 1
 
 -- | Unipolar pure tone.
 uosc :: Sig -> Sig
@@ -319,7 +331,7 @@ oscElins points = oscLins (intersperse 1 points)
 --
 -- > oscLine a b cps
 --
--- Goes from @a@ to @b@ and back by line segments. One period is equal to @2 / cps@ so that one period is passed by @1/cps@ seconds.
+-- Goes from @a@ to @b@ and back by line segments. One period is equal to @2\/cps@ so that one period is passed by @1\/cps@ seconds.
 oscLine :: D -> D -> Sig -> Sig
 oscLine a b cps = oscElins [a, b, a] (cps / 2)
 
@@ -423,7 +435,7 @@ relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(
 
 
 
--- | Mono version of the opcode reverbsc
+-- | Mono version of the cool reverberation opcode reverbsc.
 --
 -- > reverbsc1 asig feedbackLevel cutOffFreq
 reverbsc1 :: Sig -> Sig -> Sig -> Sig

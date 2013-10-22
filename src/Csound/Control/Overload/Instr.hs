@@ -4,7 +4,8 @@ module Csound.Control.Overload.Instr(
 ) where
 
 import Csound.Typed
- 
+
+-- | Converts a value to the instrument that is used with the functions 'Csound.Base.sco' or 'Csound.Base.eff'.
 class Instr a where
     type InstrIn  a :: *
     type InstrOut a :: *

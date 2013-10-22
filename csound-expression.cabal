@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       2.0.0
+Version:       3.0.0
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -21,43 +21,16 @@ Description:
     .
     Key principles
     .
-    * Keep it simple and compact.
+    * Keep it simple and compact (as functional as possible).
     .
-    * Try to hide low level csound's wiring as much as we can (no ids for ftables, instruments, global variables).
+    * Make it open (No dependency on Score-generation libraries. Score (or list of events) 
+    is represented with type class. You can use your favorite Score-generation library 
+    if you provide an instance for the CsdSco type class. 
+    Currently there is support for temporal-music-notation library (see temporal-csound package). 
     .
-    * Don't describe the whole csound in all it's generality but give the user some handy tools
-    to play with sound.
+    How to install (for Csound and Haskell users)
     .
-    * No distinction between audio and control rates on the type level. Derive all rates from the context.
-    If the user plugs signal to an opcode that expects an audio rate signal the argument is converted to the right rate.
-    .  
-    * Watch out for side-effects. There is a special type called 'SE'. It functions as 'IO' in Haskell.     
-    .
-    * Less typing, more music. Use short names for all types. Make library so that all expressions can be
-    built without type annotations. Make it simple for the compiler to derive all types. Don't use complex type classes.
-    . 
-    * Make low level opcode definitions simple. Let user define his own opcodes (if they are missing).
-    .
-    * Ensure that output signal is limited by amplitude. Csound can produce signals with HUGE amplitudes. Little typo can damage your ears 
-    and your speakers. In generated code all signals are clipped by 0dbfs value. 0dbfs is set to 1. Just as in Pure Data. So 1 is absolute maximum value
-    for amplitude. 
-    . 
-    * No dependency on Score-generation libraries. Score (or list of events) is represented with type class. You can use your favorite Score-generation library if you provide an instance for the CsdSco type class. Currently there is support for temporal-music-notation library (see temporal-csound package).
-    .
-    For the future
-    .        
-    * Make composable guis. Just plug the slider in the opcode and see it on the screen. Interactive instruments should be easy to make.
-    .
-    * Remove score/instrument barrier. Let instrument play a score within a note and trigger
-    other instruments. 
-    .
-    * Timing of events. User can set the beat rate and align events by beat events.
-    .
-    * Set Csound flags with meaningful (well-typed) values. Derive as much as you can from the context.
-    .
-    * Optimization of the memory allocation (liveness analysis).
-    .
-    Requirements (for Csound and Haskell users):
+    To use the library we need:
     .
     *   GHC - haskell compiler. This library uses GHC-specific features (<www.haskell.org/ghc>).
     .
@@ -72,9 +45,9 @@ Description:
     .
     It should print a long message with version and available flags and libraries.
     .
-    * Good library for composition. Right now only one is supported (see temporal-csound package on hackage).
-    It brings together temporal-music-notation and csound-expression packages.
-    It's used to make the process of score-writing more convenient.
+    If everything is installed to install the library we can open the command line terminal and type:
+    .
+    > cabal install csound-expression
     .
     Acknowledgements (I'd like to mention those who supported me a lot with their music and ideas):
     .

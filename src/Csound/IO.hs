@@ -4,9 +4,9 @@
 -- How are we going to get the sound out of Haskell code? 
 -- Instruments are ready and we have written all the scores for them. 
 -- Now, it's time to use the rendering functions. We can render haskell expressions
--- to Csound code. A rendering function takes a value that represents a sound ('Csound.Control.GE')
+-- to Csound code. A rendering function takes a value that represents a sound (it's a tuple of signals)
 -- and produces a string with Csound code. It can take a value that represents 
--- the flags for the csound compiler and global settings ('Csound.IO.Options'). 
+-- the flags for the csound compiler and global settings ('Csound.Options'). 
 -- Then we can save this string to file and convert it to sound with csound compiler
 --
 -- > csound -o music.wav music.csd
@@ -31,7 +31,10 @@ module Csound.IO (
     mplayer, mplayerBy, totem, totemBy,
 
     -- * Live performance
-    dac, dacBy
+    dac, dacBy, vdac, vdacBy,
+
+    -- * Render and run
+    csd, csdBy
 ) where
 
 import System.Cmd(system)
@@ -53,26 +56,62 @@ instance RenderCsd (SE ()) where
 instance RenderCsd Sig where
     renderCsdBy opt a = render opt (return a)
 
-instance (Sigs a, Sigs b) => RenderCsd (a, b) where
+instance RenderCsd (Sig, Sig) where
     renderCsdBy opt a = render opt (return a)
 
-instance (Sigs a, Sigs b, Sigs c) => RenderCsd (a, b, c) where
+instance RenderCsd (Sig, Sig, Sig, Sig) where
     renderCsdBy opt a = render opt (return a)
 
-instance (Sigs a, Sigs b, Sigs c, Sigs d) => RenderCsd (a, b, c, d) where
+instance RenderCsd (Sig, Sig, Sig, Sig, Sig, Sig) where
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) where
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd 
+    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) ) where  
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd 
+    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) ) where  
     renderCsdBy opt a = render opt (return a)
 
 instance RenderCsd (SE Sig) where
     renderCsdBy opt a = render opt a
 
-instance (Sigs a, Sigs b) => RenderCsd (SE (a, b)) where
+instance RenderCsd (SE (Sig, Sig)) where
     renderCsdBy opt a = render opt a
 
-instance (Sigs a, Sigs b, Sigs c) => RenderCsd (SE (a, b, c)) where
+instance RenderCsd (SE (Sig, Sig, Sig, Sig)) where
     renderCsdBy opt a = render opt a
 
-instance (Sigs a, Sigs b, Sigs c, Sigs d) => RenderCsd (SE (a, b, c, d)) where
+instance RenderCsd (SE (Sig, Sig, Sig, Sig, Sig, Sig)) where
     renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)) where
+    renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE 
+    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) )) where  
+    renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE 
+    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) )) where  
+    renderCsdBy opt a = render opt a
+
+instance (Sigs a, Sigs b) => RenderCsd (a -> b) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
+    renderCsdBy opt f = renderEffBy opt f
 
 -- | Renders Csound file.
 renderCsd :: RenderCsd a => a -> IO String
@@ -80,11 +119,11 @@ renderCsd = renderCsdBy def
 
 -- | Render Csound file and save it to the give file.
 writeCsd :: RenderCsd a => String -> a -> IO ()
-writeCsd file csd = writeFile file =<< renderCsd csd
+writeCsd file a = writeFile file =<< renderCsd a
 
 -- | Render Csound file with options and save it to the give file.
 writeCsdBy :: RenderCsd a => Options -> String -> a -> IO ()
-writeCsdBy opt file csd = writeFile file =<< renderCsdBy opt csd
+writeCsdBy opt file a = writeFile file =<< renderCsdBy opt a
 
 -- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
 -- 
@@ -98,8 +137,8 @@ playCsd = playCsdBy def
 
 -- | Works just like 'Csound.Render.Mix.playCsd' but you can supply csound options.
 playCsdBy :: (RenderCsd a) => Options -> (String -> IO ()) -> String -> a -> IO ()
-playCsdBy opt player file csd = do
-    writeCsdBy opt fileCsd csd
+playCsdBy opt player file a = do
+    writeCsdBy opt fileCsd a
     _ <- system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
     player fileWav
     return ()
@@ -120,12 +159,35 @@ dac = dacBy def
 
 -- | 'Csound.Base.dac' with options.
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
-dacBy opt csd = do
-    writeCsdBy opt "tmp.csd" csd
+dacBy opt a = do
+    writeCsdBy opt "tmp.csd" a
     _ <- system $ "csound -odac " ++ "tmp.csd" 
     return ()
 
---------------------------------------------------------
+-- | Output to dac with virtual midi keyboard.
+vdac :: (RenderCsd a) => a -> IO ()
+vdac = dacBy (setVirtual def) 
+
+-- | Output to dac with virtual midi keyboard with specified options.
+vdacBy :: (RenderCsd a) => Options -> a -> IO ()
+vdacBy opt = dacBy (setVirtual opt) 
+
+setVirtual :: Options -> Options 
+setVirtual a = a { csdFlags = (csdFlags a) { rtmidi = Just VirtualMidi, midiRT = m { midiDevice = Just "0" } } }
+    where m = midiRT $ csdFlags a
+
+-- | Renders to file @tmp.csd@ and invokes the csound on it.
+csd :: (RenderCsd a) => a -> IO ()
+csd = csdBy def
+
+-- | Renders to file @tmp.csd@ and invokes the csound on it.
+csdBy :: (RenderCsd a) => Options -> a -> IO ()
+csdBy options a = do
+    writeCsdBy options "tmp.csd" a
+    _ <- system $ "csound tmp.csd" 
+    return ()
+
+----------------------------------------------------------
 -- players
 
 -- | Renders to tmp.csd and tmp.wav and plays with mplayer.

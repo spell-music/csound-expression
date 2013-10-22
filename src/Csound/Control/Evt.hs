@@ -5,7 +5,7 @@ module Csound.Control.Evt(
     -- * Core functions
     boolToEvt, evtToBool, sigToEvt, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
-    Snap, snapshot, snaps, readSnap,
+    Snap, snapshot, snaps,
     
     -- * Opcodes
     metroE, changedE, triggerE, 
