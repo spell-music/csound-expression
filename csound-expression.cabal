@@ -66,6 +66,7 @@ Extra-Source-Files :
     examples/Color.hs
     examples/Gm.hs
     examples/Tibetan.hs
+    examples/Wind.hs
 
     examples/Midi.hs
     examples/Events.hs
