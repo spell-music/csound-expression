@@ -18,11 +18,13 @@ pureTone :: (D, D) -> Sig
 pureTone (amp, cps) = 0.5 * sig amp * env * (myOsc $ sig cps)
     where env = linsegr [0, 0.2, 1, 1, 0.5] 1.5 0
 
--- Let's create a midi instrument. It takes a special value of type Msg
--- that contains midi parameters.
-midiInstr :: Msg -> Sig
-midiInstr msg = pureTone $ ampCps msg
-
+-- Renders generated csd-file to the "tmp.csd" and runs it with flags 
+-- for real time output and listening for the midi events from all devices.
 main :: IO ()
-main = dac $ midi midiInstr 
+main = dac $ midi $ onMsg pureTone
+
+-- If we don't have any midi devices 
+-- we can try with virtual midi:
+
+-- main = vdac $ midi $ onMsg pureTone
 

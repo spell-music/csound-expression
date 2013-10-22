@@ -89,30 +89,30 @@ instrChorusel (cps, pan, a, b) = chorusel cps pan a b
 instrCrackle :: D -> Sig2
 instrCrackle cps = crackle (0.5::D) cps 12 20
 
-scoBeat = sco instr1 $ delay 2 $ loop 32 $ line [0.25 *| lineTemp [0.5, 0.3], rest 1.5]
+scoBeat = sco (onArg instr1) $ del 2 $ loop 32 $ mel [0.25 *| melTemp [0.5, 0.3], rest 1.5]
 
-scoPluck = sco instrPluck $ delay 8 $ line $ take n $ zipWith (\amp pan -> 0.5 *| temp (amp, pan)) 
-    ([0, (v/40) .. v] ++ repeat v) (cycle [0.2, 0.8])
+scoPluck = sco (onArg instrPluck) $ del 8 $ mel $ take n $ zipWith (\amp pan -> 0.5 *| temp (amp, pan)) 
+    (fmap double $ [0, (v/40) .. v] ++ repeat v) (cycle [0.2, 0.8])
     where v = 0.6
           dur = 65
           n = floor $ (dur - 8)/0.5
  
-scoChorusel = sco instrChorusel $ chord $ unroll =<< [
+scoChorusel = sco (onArg instrChorusel) $ har $ unroll =<< [
     (0, 15, (0.4, [7, 7.07, 6, 8], 10, 5)),
     (18, 17, (0.27, [6, 7, 7.07, 8.02, 8.03, 5], 9, 6)),
     (34, 21, (0.35, [6], 8, 8)),
     (40, 15, (0.35, [6.07], 7, 7)),
     (48, 7,  (0.35, [7.05], 3.5, 3.5)),
     (55, 10, (0.35, [7, 8, 7.07, 6], 5, 8))]
-    where unroll (t, dur, (amp, cps, rise, dec)) = [delay t $ stretch dur $ temp (amp, c, rise, dec) | c <- cps]
+    where unroll (t, dur, (amp, cps, rise, dec)) = [del t $ str dur $ temp (amp, c, rise, dec) | c <- cps]
     
-scoCrackle = sco instrCrackle $ chord [
-    event 8 100,
-    delay 13 $ event 5 50]   
+scoCrackle = sco (onArg instrCrackle) $ har [
+    str 8 $ temp 100,
+    del 13 $ str 5 $ temp 50]   
    
-main = dac $ runMix $ chord [
-    scoBeat, 
-    scoChorusel, 
-    scoPluck, 
-    scoCrackle]
+main = dac $ mix $ har [
+   scoBeat, 
+   scoChorusel,
+   scoPluck
+   ]
 

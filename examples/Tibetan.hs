@@ -27,7 +27,7 @@ tibetan (amp, cps, rise, dec) = fmap (\x -> pureTibetan (amp, cps, x, rise, dec)
 
 pureTibetan :: (D, D, D, D, D) -> Sig
 pureTibetan (amp, cps, off, rise, dec) = mean $ fmap partial $ 0 : offs ++ (fmap negate offs)
-    where offs = [1 .. 4]
+    where offs = fmap int [1 .. 4]
           partial rat = linen (sig amp) rise idur dec * oscBy wave (sig $ cps + off * rat)   
           wave = ifB (cps <* 230) (waveBy 5) (ifB (cps <* 350) (waveBy 3) (waveBy 1))
           waveBy n = sines $ [0.3, 0, 0, 0] ++ replicate n 0.1
@@ -60,7 +60,7 @@ w = Wait
 instance Num Act where    
     fromInteger = Tone . fromInteger
 
-type N = (Double, Double, Iamp, Icps, D, D)
+type N = (Double, Double, D, D, D, D)
 
 
 data St = St 
@@ -143,14 +143,14 @@ acts :: [Act]
 acts = concat $ replicate 2 $ [1, 1, 5, 2, 5, 7, 5, 1, 1, 3, 5, 3, 1, 1, 1, 5, 1, 5, 6, 3, 2, 1, 1, 5, 1, 6, 4, 5, 1, 1]
 
     
-note (start, dur, amp, cps, rise, dec) = delay start $ stretch dur $ 
+note (start, dur, amp, cps, rise, dec) = del start $ str dur $ 
                 temp (amp, cps, rise, dec)
 
-globalEffect =  mix (effect $ blp 5000 . (0.3 * )) . mix rever
+globalEffect =  eff (bindSig $ return . blp 5000 . (0.3 * )) . eff rever
 
-res2 ns = chord [res ns, delay 13 $ res ns] 
+res2 ns = har [res ns, del 13 $ res ns] 
 
-res ns = sco tibetan $ chord $ fmap note ns
+res ns = sco tibetan $ har $ fmap note ns
 
 rever x = do
     _ <- delayr 3
@@ -165,14 +165,14 @@ rever x = do
 -- blurp
 
 blurpVol = 0.5
-introDur = 80
+introDur = 15
 
-toStereo = mix $ \x -> (x, x)
+toStereo = eff $ \x -> return (x, x)
 
 introBlurp = toStereo $ sco blurp $ introDur *| temp (0.7 * blurpVol)
 
-blurpSco = toStereo $ line [rest 100, cone 15 0.7, rest 120, cone 10 0.4]
-    where cone dt v = mix (\x -> linen x (0.25 * idur) idur (0.25 * idur)) $ sco blurp $ dt *| temp (v * blurpVol)
+blurpSco = toStereo $ mel [rest 100, cone 15 0.7, rest 120, cone 10 0.4]
+    where cone dt v = eff (\x -> return $ linen x (0.25 * idur) idur (0.25 * idur)) $ sco blurp $ dt *| temp (v * blurpVol)
 
 ------------------------------------------------------------
 -- stars
@@ -194,8 +194,8 @@ starChord       = [0, 1, 2, 4, 7]
 
 starSco = sco blue $
     flip evalState starParams $ traverse addParam $ 
-    takeS starLength $ chord $ zipWith3 phi starInitDelays starPeriods starChord
-    where phi del period note = delay del $ loop 200 $ chord [4 *| temp (double $ id2cps 2 note), rest period] 
+    takeS starLength $ har $ zipWith3 phi starInitDelays starPeriods starChord
+    where phi dt period note = del dt $ loop 200 $ har [4 *| temp (double $ id2cps 2 note), rest period] 
 
           addParam cps = state $ \((amp, lfo, harm, sweep) : params) -> 
             ((amp, cps, lfo, harm, sweep), params) 
@@ -204,13 +204,13 @@ starSco = sco blue $
 
 main = do
     notes <- run acts
-    dac $ runMix $ chord 
+    dac $ mix $ har 
         [ introBlurp
-        , delay (introDur * 0.70) $ chord 
-            [ globalEffect $ chord 
+        , del (introDur * 0.70) $ har 
+            [ globalEffect $ har 
                 [res2 notes
-                , delay starTotalDelay $ starSco
-                , delay (3 * starTotalDelay) $ starSco]
+                , del starTotalDelay $ starSco
+                , del (3 * starTotalDelay) $ starSco]
             , blurpSco
             ]]
                 

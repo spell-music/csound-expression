@@ -9,6 +9,7 @@ bass (amp, cps) = sig amp * once env * osc (sig cps)
 pluckSynth (amp, cps1, cps2) = 0.5 * sig amp * once env * pluck 1 (sig cps1) cps2 def 3
     where env = eexps [1, 0.004]
 
+marimbaSynth :: (D, D) -> Sig
 marimbaSynth (amp, cps) = a6
     where
         bias = 0.11
@@ -52,13 +53,14 @@ phasing (amp, cps) = aout
 
         aout  = mean [afilt, asum]
 
-blurp amp = aosc
+blurp amp = do
+    cps <- acps
+    return $ 0.1 * sig amp * osc cps 
     where
         dec = linseg [11, idur * 0.75, 11, idur * 0.25, 0]
         kgate = kr $ oscil 1 dec (elins [1, 0, 0])
-        anoise = noise' 11000 {-(sig $ 100 * cps)-} 0.99
-        acps = samphold anoise kgate
-        aosc = 0.1 * sig amp * osc acps 
+        anoise = noise 11000 0.99
+        acps = fmap (flip samphold kgate) anoise
  
 
 wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) = 
@@ -138,7 +140,7 @@ blue (amp, cps, lfoCps, harmNum, sweepRate) = fmap aout k1
 i2 t0 dt amp cps lfoCps harmNum sweepRate = 
     t0 +| (dt *| temp (amp, cps, lfoCps, harmNum, sweepRate))
 
-blueSco = sco blue $ chord 
+blueSco = sco blue $ har 
     [ i2 0 4 0.5 440 23 10 0.72
     , i2 0 4 0.5 330 20 6  0.66
     ]
@@ -156,7 +158,7 @@ black (amp, cps, filterSweepStart, filterSweepEnd, bandWidth) =
 i4 t0 dt amp cps filt0 filt1 bw =
     t0 +| (dt *| temp (amp, cps, filt0, filt1, bw))
 
-blackSco = stretch 1.5 $ sco black $ chord 
+blackSco = str 1.5 $ sco black $ har 
     [ i4 0 1 0.7 220 6000 30 10
     , i4 0 1 0.7 330 8000 20 6
     ]

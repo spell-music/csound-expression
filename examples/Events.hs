@@ -23,7 +23,7 @@ e1, e2, e3, e4, e5, e6, e7, e8 :: Evt D
 
 e1 = cycleE (fmap int [1 .. 5]) src
 
-e2 = iterateE 0 (+1) src
+e2 = iterateE 0 (+ 1) src
 
 e3 = fmap (flip mod' 4) e2
 
@@ -55,18 +55,18 @@ avgSum = accumE (0, 0) $ \a (s, n) ->
 -- mask
 
 e10 :: Evt (D, D)
-e10 = fmap (\x -> (0.5, x)) $ filterE (>* 110) $ mconcat 
+e10 = withDur 0.5 $ filterE (>* 110) $ mconcat 
     [ every 0 [5,7] $ repeatE 330 src
     , every 3 [11] $ repeatE 550 src
-    , randSkip 0.5 $ every 2 [2] $ repeatE 440 src
-    , randSkip 0.7 $ every 0 [4, 1, 3] $ repeatE 220 src]
+    , every 2 [2] $ repeatE 440 src
+    , every 0 [4, 1, 3] $ repeatE 220 src]
 
 -----------------------
 
-res e = sched_ echo $ fmap (\a -> (0.1, a)) $ e
+res e = sched_ echo $ withDur 0.1 e
 
 -- output with sound
-resSnd e = sched pureTone $ fmap (\a -> (0.1, a)) e
+resSnd e = sched pureTone $ withDur 0.1 e
 
-main = writeCsd "tmp.csd" $ return $ resSnd e10
+main = dac $ resSnd e10
 

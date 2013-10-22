@@ -22,4 +22,4 @@ res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 1, 330), (2, 2, 220)]
 
 -- Renders generated csd-file to the "tmp.csd".
 main :: IO ()
-main = dac $ return $ mix res
+main = dac $ mix res

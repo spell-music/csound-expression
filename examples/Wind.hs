@@ -28,9 +28,9 @@ wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) =
 -- | This example shows the flexibility of the Haskell. Here we can
 -- write the scores in the manner of the native Csound style.
 i21 t0 dt amp bandRise bandDec freqRise freqDec pan winds = 
-    delay t0 $ dt *| temp (amp, bandRise, bandDec, freqRise, freqDec, pan, winds)
+    del t0 $ dt *| temp (amp, bandRise, bandDec, freqRise, freqDec, pan, winds)
 
-windRes = sco wind $ chord 
+windRes = sco (onArg wind) $ har
     [ i21  0    12   60   500  0    555  111  0     0.2
     , i21  4    8    70   400  0    444  111  0.3   0.6
     , i21  6    8    75   300  0    333  111  0.7   0.7
@@ -68,5 +68,5 @@ windRes = sco wind $ chord
     ]
 
 -- | Let's repeat everything 10 times and add the sustain for 2 seconds per note.
-main = dac $ runMix $ sustain 2 $ loop 10 windRes
+main = dac $ mix $ sustain 2 $ loop 10 windRes
 

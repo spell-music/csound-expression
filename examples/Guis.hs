@@ -1,4 +1,5 @@
--- | Test for GUI-elements. Right now this example is a total mess.
+-- | Test for GUI-elements. Right now this example is a total mess and shouldn't work.
+-- see you in the next version...
 module Main where
 
 import qualified Data.Colour.Names as C
