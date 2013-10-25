@@ -68,5 +68,5 @@ res e = sched_ echo $ withDur 0.1 e
 -- output with sound
 resSnd e = sched pureTone $ withDur 0.1 e
 
-main = dac $ resSnd e10
+main = dac $ res e7
 

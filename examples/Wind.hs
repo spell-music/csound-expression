@@ -68,5 +68,5 @@ windRes = sco (onArg wind) $ har
     ]
 
 -- | Let's repeat everything 10 times and add the sustain for 2 seconds per note.
-main = dac $ mix $ sustain 2 $ loop 10 windRes
+main = totem $ mix $ sustain 2 $ loop 3 windRes
 
