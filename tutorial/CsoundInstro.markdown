@@ -10,10 +10,6 @@ get a lot of music dsp-algorithms ready to be used. It's written in C.
 So it's very efficient. It's driven by text, so we can generate it. 
 Csound's community is very friendly (what a coincidence!). 
 Csound is very well documented.
-    
-    
-Making music with Csound
----------------------------------------
         
 We don't need to know Csound to use this library 
 but it's helpful to know the main features of the Csound.
@@ -28,233 +24,358 @@ What does it mean? It means that description of the music is divided in two part
     
 An instrument is something that listens to notes and converts them to signals. 
 Note is a tuple: (instrument name, start time, duration, parameters). Parameters cell is
-a tuple of primitive types: numbers (`D`), strings (`Str`) and tables or arrays of numbers (`Tab`).
+a tuple of primitive types: numbers (`D`), strings (`Str`) and tables 
+or arrays of numbers (`Tab`).
+
+## Instruments
+
+An instrument is represented with function that takes a tuple of primitive
+values (`Arg`) and converts it to the tuple of signals (`Sigs`) wrapped in the type `SE`:
+    
+~~~
+(Arg a, Sigs b) => a -> SE b
+~~~
+
+The `SE` means Side Effect. It's like `IO`-monad but for Csound.
+
+## Events
+
+With instruments we can convert the bunch of notes to the plain signals.
+There are several ways to do it. We can trigger an instrument:
+
+* With score
+
+* With event stream
+
+* With midi-device
+
+### The Score
+
+The score is a list of events with some predefined total duration.
+An event is a tripple that contains:
+
+~~~
+(t0, dt, args)
+~~~
+
+Where `t0` is a start time, `dt` is a duration of the event, `args` is
+a list of arguments for the instrument. 
+The Score is represented with the type:
+
+~~~
+data CsdEventList a = CsdEventList
+    { csdEventListDur       :: Double
+    , csdEventListNotes     :: CsdEvent a }
+    
+type CsdEvent a = (Double, Double, a)
+~~~
+
+The start time and duration are in seconds. To invoke an instrument
+with Score we can use the functions:
+
+~~~
+sco :: (CsdSco f, Arg a, Sigs b) => (a -> SE b)  -> f a -> f (Mix b)
+mix :: (CsdSco f, Sigs a) => f (Mix a) -> a
+~~~
+
+The type `CsdEventList` is not to be used directly. 
+It's a canonical representation of the Csound score. 
+We should use something more higher level. That's why 
+we don't see it in the signatures. It's referenced indirectly 
+with type class `CsdSco`. The types fron the class `CsdSco`
+are things that can be converted to the canonical representation.
+
+~~~
+class CsdSco f where
+    toCsdEventList :: f a -> CsdEventList a
+    singleCsdEvent :: CsdEvent a -> f a
+~~~
+
+The method `toCsdEventList` converts a given score representation 
+to the canonical one. The method `singleCsdEvent` constructs a scores 
+that contains only one event. it lasts for one second.
+
+The function `sco` applies an instrument to the score and 
+produces the score of signals. Then we can apply the function
+mix` to get the mixed signal.
 
 Scores are very simple yet powerful. Csound handles polyphony for us. If we trigger
 several notes at the same time on the same instrument we get three instances of the same
 instrument running in parallel. It's very cool feature (not so easy thing to do with Pd).
 
-But main strength lies in the Orchestra section. Here we can define the timbres for
-our musical journey. Csound is mostly for making strange sounds. How can we do it?
-We do it with instruments. An instrument is a sequence of statements that define a flow-graph
-for our sound waves. For an instrument we can use predefined sound generators 
-and transformers (`Csound.Opcode` and `Csound.Air`).
+### The event stream
 
-Score/Orchestra division stays in this library too. We can define an instrument of the type
-    
-~~~
-(Arg a, Sigs b) => a -> SE b
-~~~
-    
-An instrument is something that converts arguments-like things (tuple of primitive values) 
-to output-like things (tuple of signals) and it probably produces some side effects along the 
-way (the result is wrapped in the `SE`-monad).
+An event stream is something that produces the notes. 
+The score contains the predefined notes but event stream
+can produce the in real time. 
 
-When we are done with the orchestra section we can trigger the instruments 
-with the function `sco`
+The event stream is represented with the type:
+
+~~~
+newtype Evt a = Evt { runEvt :: Boom a -> SE () }
+
+type Boom a = a -> SE ()
+~~~
+
+An event stream is a function that takes a procedure of
+type `a -> SE ()` and applies it to all events in the stream.
+
+We have some primitive constructors:
+
+~~~
+metroE :: Sig -> Evt ()
+~~~
+
+It takes a frequency of the repetition. An empty tuple happens every now and then.
+We can process the events with functions:
+
+~~~
+repeatE :: a -> Evt b -> Evt a
+filterE :: (a -> BoolD) -> Evt a -> Evt a
+cycleE  :: Arg a => [a] -> Evt b -> Evt a
+oneOf   :: Arg a => [a] -> Evt b -> Evt a
+...
+~~~
+
+For examle, we can substitute all the events with the constant value (`repeatE`),
+filter an event stream with predicate or repeat elements in the list (`cycleE`) or
+take elements at random (`oneOf`). There are many more functions.
+
+The `BoolD` is a Csound boolean value. It's instance of the type classes from
+the package `Boolean`. There is another boolean type `BoolSig` for the signals
+of boolean values.
+
+We can trigger instruments on the event streams with functions:
+
+~~~
+trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
+sched :: (Arg a, sigs b) => (a -> SE b) -> Evt (D, a)    -> b
+~~~
+
+The function `trig` applies an instrument to the event stream of notes.
+A note contains a delay of the event, the event duration and the arguments
+for the instrument. The function `sched` is the same as `trig` but
+all events happen immediately. 
+
+### The Midi devices
+
+We can trigger an instrument with midi devices:
+
+~~~
+midi   :: (Sigs a) => (Msg -> SE a) -> a
+midin  :: (Sigs a) => Int -> (Msg -> SE a) -> a
+pgmidi :: (Sigs a) => Int -> Maybe Int -> (Msg -> SE a) -> a
+~~~
+
+The function `midi` starts to listen for the midi-messages (`Msg`)
+on all channels. With function `midin` we can specify the concrete
+channel (it's an integer from 1 to 16). The function `pgmidi` is
+for assigning an instrument to the midi-programm (the first argument) 
+and possible channel (the second argument).
+
+We can query midi-messages for amplitude, frequency and other parameters
+(we can see the complete list in the module `Csound.Opcode.RealtimeMIDI`):
+
+~~~
+cpsmidi :: Msg -> D
+ampmidi :: Msg -> D -> D
+...
+~~~
+
+
+## Flags and options
+    
+Music is defined in two parts. They are Orchestra and Scores. 
+But there is a third one. It's used to set the global settings 
+like sample rate or control rate values (block size). In this library you
+can set the initial values with `Csound.Options`.
+    
+## Features and quirks
+    
+### Audio and control rates
+    
+Csound has made a revolution in electronic music technology. 
+It introduced two types of signals. They are audio rate and control rate signals. 
+The audio rate signals is what we hear and control rate
+signals is what changes the parameters of sound. Control rate 
+is smaller then audio rate. It speeds up performance dramatically. 
+Let's look at one of the sound units (they are called opcodes)
     
 ~~~
-sco :: (Arg a, Sigs b, CsdSco f) => (a -> SE b) -> f a -> f (Mix b)
-~~~
-    
-It takes an instrument and the bunch of notes for this instrument. Bunch of notes is represented with @f@-container.
-It's parametrized with note type. f belongs to the type class 'Csound.Base.CsdSco'. 
-This library lets you use your own representation of scores. The default one is
-'Csound.Base.CsdEventList'. It is close to the Csound native representation of the scores (so it is not very
-convinient to use it). You can use a package temporal-csound as an alternative. 
-    --
-The output looks scary but let's try to understand it by bits:
-    --
-* @CsdSco f => f a@ - you can think of it as a container of some values of type @a@ (every value of type @a@ 
-starts at some time and lasts for some time in seconds)
-    --
-* @Mix a@ - is an output of Csound instrument it can be one or several signals ('Csound.Base.Sig' or 'Csound.Base.CsdTuple'). 
-    --
-* @NoSE a@ - it's a tricky part of the output. 'NoSE' means literaly 'no SE'. It tells to the type checker that it can skip 
-the 'Csound.Base.SE' wrapper from the type 'a' so that @SE a@ becomes just @a@ or @SE (a, SE b, c)@ becomes @(a, b, c)@. 
-Why should it be? I need 'SE' to deduce the order of the
-opcodes that have side effects. I need it within one instrument. But when instrument is rendered I no longer need 'SE' type. 
-So 'NoSE' lets me drop it from the output type. 
-    --
-    --
-If you got used to Csound you can ask -- where is the instrument name in the score? No need to worry about names 
-they are generated automatically.
-    --
-In Csound to apply some effect one must use the global variables. There are some instruments that produce signals and write them to
-the global variables and there is an instrument that functions as mixer. It's turned on for the whole piece and it reads the global
-variables and applies the effects to the sound and finally writes it to the file or to the speakers. In this library it's very easy
-to apply an effect to the outputs of the instruments. There is a function 'Csound.Base.mix':
-    --
-> mix :: (Out a, Out b, CsdSco f) => (a -> b) -> f (Mix a) -> f (Mix (NoSE a))
-    --
-Looks like the function 'Csound.Base.sco'. But now the first argument is an effect. It takes not a note but a signal (or a tuple of signals)
-and gives back some signal. The second argument holds the sound that we'd like to apply the effect to. With this function we can apply reverb or
-adjust the gain levels or apply some envelope, any valid csound transformation will do. 
-    
-** Flags and options
-    
-| Music is defined in two parts. They are Orchestra and Scores. But there is a third one. It's used
-to set the global settings like sample rate or control rate values (block size). In this library you
-can set the initial values with 'Csound.Base.CsdOptions'.
-    
-** Features and quirks
-    
-*** Audio and control rates
-    
-| Csound has made a revolution in electronic music technology. It introduced two types of signals.
-They are audio rate and control rate signals. The audio rate signals is what we hear and control rate
-signals is what changes the parameters of sound. Control rate is smaller then audio rate. It speeds
-up performance dramatically. Let's look at one of the sound units (they are called opcodes)
-    --
-> ares buthp asig, kfreq [, iskip]
-    --
-It's a butterworth high pass filter as it defined in the Csound. a-sig - means sig at audio rate.
-k-freq means freq at control rate (for historical reasons it is k not c). iskip means skip at i-rate.
-i-rate means init time rate. It is when an instruments instance is initialized to play a note. i-rate
-values stays the same for the whole note. So we can see that signal is filtered at audio rate but
-the center frequency of the filter changes at the control rate. In this library I've merged the 
-two types together ('Csound.Base.Sig'). If you plug a signal into kfreq we can infer that you want this
-signal to be control rate. In Csound some opcodes exist go in pairs. One that produces audio signals
-and one that produces control rate signals. By default if there is no constraint for the signal it is rendered
-at the audio rate except for those units that produce sound envelopes (like 'Csound.Opcode.Basic.linseg').    
-    --
-You can change this behaviour with functions 'Csound.Base.ar' and 'Csound.Base.kr'. They set the signal-like things to
-audio or control rate. For instance if you want your envelope to run
+ares buthp asig, kfreq [, iskip]
+~~~   
+
+It's a butterworth high pass filter as it defined in the Csound. 
+a-sig - means sig at audio rate. k-freq means freq at control rate 
+(for historical reasons it is k not c). iskip means skip at i-rate.
+i-rate means init time rate. It is when an instruments instance 
+is initialized to play a note. i-rate values stays the same for 
+the whole note. So we can see that signal is filtered at audio rate but
+the center frequency of the filter changes at the control rate. 
+In this library the types are merged together (`Sig`). 
+If you plug a signal into `kfreq` we can infer that you want this
+signal to be control rate. In Csound some opcodes exist go in pairs. 
+One that produces audio signals and one that produces control rate signals. 
+By default if there is no constraint for the signal it is rendered
+at the audio rate except for those units that produce sound envelopes 
+(like `linseg` or `expseg`).  
+
+You can change this behaviour with functions `ar` and 'kr'. 
+They set the signal-like things to audio or control rate. For 
+instance if you want your envelope to run
 at control rate, write:
-    --
-> env = ar $ linseg [0, idur/2, 1, idur/2, 0]
+
+~~~
+env = ar $ linseg [0, idur/2, 1, idur/2, 0]
+~~~   
+
+### Table size
     
-*** Table size
+For speed table size should be the power of two or power of two plus 
+one (all tables for oscillators). In this library you can specify the 
+relative size (see `Csound.Options`). I've tried to hide the size 
+definition to make sings easier.     
     
-| For speed table size should be the power of two or power of two plus one (all tables for oscillators). 
-In this library you can specify the relative size (see 'Csound.Base.CsdOptions').
-I've tried to hide the size definition to make sings easier.     
+## How to read the Csound docs
     
-** How to read the Csound docs
-    
-| You'd better get acquainted with Csound docs. Docs are very good. How to read them? For instance you want to use an oscillator with cubic interpolation 
-so you dig into the "Csound.Opcode.Basic" and find the function:
-    --
-> oscil3 :: Sig -> Sig -> Tab -> Sig
-    --
-From Hackage we can guess that it takes two signals and table and returns a signal. It's a clue but a vogue one.
+You'd better get acquainted with Csound docs. Docs are very good. 
+How to read them? For instance you want to use an oscillator 
+with cubic interpolation. So you dig into the `Csound.Opcode.SignalGenerators` 
+and find the function:
+
+~~~
+oscil3 :: Sig -> Sig -> Tab -> Sig
+~~~   
+
+From Hackage we can guess that it takes two signals and table 
+and returns a signal. It's a clue but a vogue one.
 Let's read along, in the docs you can see a short description (taken from Csound docs):
-    --
-> oscil3 reads table ifn sequentially and repeatedly at a frequency xcps. 
-> The amplitude is scaled by xamp. Cubic interpolation is applied for table look up from internal phase values. 
+
+~~~
+oscil3 reads table ifn sequentially and repeatedly at a frequency xcps. 
+The amplitude is scaled by xamp. Cubic interpolation is applied 
+for table look up from internal phase values. 
+~~~
 
 and here is the Csound types (the most useful part of it)  
-    --
+
+~~~
 > ares oscil3 xamp, xcps, ifn [, iphs]
 > kres oscil3 kamp, kcps, ifn [, iphs]
-    --
-We see a two versions of the opcode. For audio and control rate signals. By default first is rendered
-if we don't plug it in something that expects control rates. It's all about rates, but what can we find out
-about the arguments?
+~~~    
 
-First letter signifies the type of the argument and the rest is the name. We can see that first signal is amp with x rate.
-and the second one is cps with x rate. We can guess that amp is the amplitude and cps is cycles per second. This unit
-reads the table with given amplitude (it is a signal) and frequency (it is a signal too). Or we can just read about it
+We see a two versions of the opcode. For audio and control rate signals. 
+By default first is rendered if we don't plug it in something that expects 
+control rates. It's all about rates, but what can we find out about the arguments?
+
+First letter signifies the type of the argument and the rest is the name. 
+We can see that first signal is amp with x rate. and the second one is 
+cps with x rate. We can guess that amp is the amplitude and cps is cycles 
+per second. This unit reads the table with given amplitude (it is a signal) 
+and frequency (it is a signal too). Or we can just read about it
 in the docs if we follow the link that comes at the very last line in the comments:
-    --
-* doc: <http://www.csounds.com/manual/html/oscil3.html>
 
-I've said about a-, k- and i-rates. But what is the x-rate? Is it about X-files or something? X means a-rate or k-rate.
-You can use both of them for this argument. Let's go through all types that you can find:
-    --
-* asig -- audio rate ('Csound.Base.Sig')
-    --
-* ksig -- control rate ('Csound.Base.Sig')
-    --
-* xsig -- audio or control rate ('Csound.Base.Sig')
-    --
-* inum -- constant number ('Csound.Base.D')
-    --
-* ifn -- table ('Csound.Tab.Tab'). They are called functional tables in Csound.
-    --
-* Sfile -- string, probably a file name ('Csound.Base.Str')
-    --
-* fsrc -- spectrum ('Csound.Base.Spec'). Yes, you can mess with sound in the space domain.   
-    --
-Often you will see the auxiliary arguments, user can skip them in Csound. So we can do it in Haskell too.
-But what if we want to supply them? We can use the function 'Csound.Base.withInits' for this purpose.
+~~~
+doc: <http://www.csounds.com/manual/html/oscil3.html>
+~~~
 
+We now about a-, k- and i-rates. But what is the x-rate? Is it about X-files 
+or something? X means a-rate or k-rate. You can use both of them for 
+this argument. Let's go through all types that you can find:
+
+
+* `asig` -- audio rate (`Sig`)
+
+* `ksig` -- control rate (`Sig`)
+    
+* `xsig` -- audio or control rate (`Sig`)
+    
+* `inum` -- constant number (`D`)
+    
+* `ifn` -- table or 1D-array (`Tab`). They are called functional tables in Csound.
+    
+* Sfile -- string, probably a file name (`Str`)
+    
+* fsrc -- spectrum (`Spec`). Yes, you can mess with sound in the space domain.   
+    
+Often you will see the auxiliary arguments, user can skip them in Csound. 
+So we can do it in Haskell too. But what if we want to supply them? 
+We can use the function `withInits` for this purpose.
        
-** Example (a concert A)
+## Example (a concert A)
     
-|
-> module Main where
-> 
-> -- imports everything
-> import Csound.Base
-> 
-> -- Let's define a simple sound unit that 
-> -- reads in cycles the table that contains a single sine partial.
-> -- oscil1 is the standard oscillator with linear interpolation.
-> -- 1 - means the amplitude, cps - is cycles per second and the last argument
-> -- is the table that we want to read. 
-> myOsc :: Sig -> Sig
-> myOsc cps = oscili 1 cps (sines [1])
-> 
-> -- Let's define a simple instrument that plays a sound on the specified frequency.
-> -- We use sig to convert a constant value to signal and then plug it in the osc unit. 
-> -- We make it a bit quieter by multiplying with 0.5.
-> pureTone :: D -> Sig
-> pureTone cps = 0.5 * (myOsc $ sig cps)
-> 
-> -- Let's trigger the instrument from the score section.
-> -- It plays a three notes. One starts at 0 and lasts for one second with frequency of 440,
-> -- another one starts at 1 second and lasts for 2 seconds, and the last note lasts for 2 seconds
-> -- at the frequency 220 Hz. 
-> res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
-> 
-> -- Renders generated csd-file to the "tmp.csd".
-> main :: IO ()
-> main = writeCsd "tmp.csd" $ runMix res
-    --
-Now you can invoke Csound on tmp.csd and listen to the result with your favourite player.
-    --
-> csound tmp.csd -o a.wav  
-    --
-That's it @csound@ is a separate program that we have to run to compile our csd-files to sounds.
-We can listen to the sound as it runs. It can be configured with flags.
+~~~haskell
+module Main where
+
+-- imports everything
+import Csound.Base
+
+-- Let's define a simple sound unit that 
+-- reads in cycles the table that contains a single sine partial.
+-- oscil1 is the standard oscillator with linear interpolation.
+-- 1 - means the amplitude, cps - is cycles per second and the last argument
+-- is the table that we want to read. 
+myOsc :: Sig -> Sig
+myOsc cps = oscili 1 cps (sines [1])
+
+-- Let's define a simple instrument that plays a sound on the specified frequency.
+-- We use sig to convert a constant value to signal and then plug it in the osc unit. 
+-- We make it a bit quieter by multiplying with 0.5.
+pureTone :: D -> SE Sig
+pureTone cps = return $ 0.5 * (myOsc $ sig cps)
+
+-- Let's trigger the instrument from the score section.
+-- It plays a three notes. One starts at 0 and lasts for one second with frequency of 440,
+-- another one starts at 1 second and lasts for 2 seconds, and the last note lasts for 2 seconds
+-- at the frequency 220 Hz. 
+res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
+
+-- Renders generated csd-file to the "tmp.csd", invokes the csound on it 
+-- and directs the sound to speakers.
+main :: IO ()
+main = dac $ mix res
+~~~
+
+## More examples
     
-** More examples
-    
-| You can find many examples at:
-    --
+You can find many examples at:
+   
 * Examples in the archive with the source code of the library.
-    --
-* A translation of the Amsterdam catalog of Csound computer instruments: <https://github.com/anton-k/amsterdam>
-    --
+    
+* A translation of the 
+    [Amsterdam catalog of Csound computer instruments](https://github.com/anton-k/amsterdam)
+    
 * Csound expression Tutorial at (TODO).
         
-** References
+## References
     
-| Got interested in Csound? Csound is very well documented. There are good tutorials, read about it at:
+Got interested in Csound? Csound is very well documented. 
+There are good tutorials, read about it at:
    
-* Reference manual: <http://www.csounds.com/manual/html/index.html >
+* [Reference manual](http://www.csounds.com/manual/html/index.html)
     --
-* Floss tutorials: <http://en.flossmanuals.net/csound/>
+* [Floss tutorials](http://en.flossmanuals.net/csound/)
     --
-* Amsterdam catalog of Csound computer instruments: <http://www.codemist.co.uk/AmsterdamCatalog/>
+* [Amsterdam catalog of Csound computer instruments](http://www.codemist.co.uk/AmsterdamCatalog/)
     --
-* Lots of wonderful real-time examples by Iain McCurdy: <http://iainmccurdy.org/csound.html>
+* Lots of wonderful real-time examples by [Iain McCurdy](http://iainmccurdy.org/csound.html)
     --
-* Outdated but short manual on Csound <http://cara.gsu.edu/courses/csound_users_seminar/csound/3.46/CsIntro.html>
+* Outdated but short [manual on Csound](http://cara.gsu.edu/courses/csound_users_seminar/csound/3.46/CsIntro.html)
 
-* What's next?
+## What's next?
 
-| Now you can learn about:
-    --
-* main types of the library ("Csound.Types")
-    --
-* how to define an instrument and invoke it ("Csound.Control")
-    --
-* how to render the csound code and listen the sound or make a live performance ("Csound.IO")
-    --
-* what sound units are ready to use ("Csound.Air" and "Csound.Opcode")
-    --
-* how to twick the parameters during performance with sliders, knobs or buttons ("Csound.Gui")
+Now you can learn about:
+    
+* main types of the library (`Csound.Types`)
+    
+* how to define an instrument and invoke it (`Csound.Control`)
+    
+* how to render the csound code and listen the sound or make a live performance (`Csound.IO`)
+    
+* what sound units are ready to use (`Csound.Air` and `Csound.Opcode` 
+    re-exported by `Csound.Base`)
+    
+* how to twick the parameters during performance 
+    with sliders, knobs or buttons (`Csound.Gui`) -- TODO
 
 
