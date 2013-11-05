@@ -74,7 +74,7 @@ module Csound.Control.Instr(
     -- (after the invokation of the instrument). All notes are rescaled all the
     -- way down the Score-structure. 
     CsdSco(..), Mix, sco, mix, eff, CsdEventList(..), CsdEvent, 
-    sco_, mix_, mixBy, 
+    mixLoop, sco_, mix_, mixLoop_, mixBy, 
 
     -- * Midi
     Msg, Channel, midi, midin, pgmidi, ampCps,
@@ -97,6 +97,8 @@ import Csound.Typed
 import Csound.Typed.Opcode
 import Csound.Control.Overload
 
+import Csound.Control.Evt(metroE, repeatE)
+
 --------------------------------------------------------------------------
 -- midi
 
@@ -108,4 +110,23 @@ ampCps msg = (ampmidi msg 1, cpsmidi msg)
 -- > withDur dur events === fmap (\x -> (dur, x)) events
 withDur :: D -> Evt a -> Evt (D, a)
 withDur dt = fmap $ \x -> (dt, x) 
+
+
+-- | Mixes the scores and plays them in the loop.
+mixLoop :: (CsdSco f, Sigs a) => f (Mix a) -> a
+mixLoop a = sched instr $ withDur dur $ repeatE unit $ metroE $ sig $ 1 / dur
+    where 
+        notes = toCsdEventList a
+        dur   = double $ csdEventListDur notes
+
+        instr _ = return $ mix notes
+
+-- | Mixes the procedures and plays them in the loop.
+mixLoop_ :: (CsdSco f) => f (Mix Unit) -> SE ()
+mixLoop_ a = sched_ instr $ withDur dur $ repeatE unit $ metroE $ sig $ 1 / dur
+    where 
+        notes = toCsdEventList a
+        dur   = double $ csdEventListDur notes
+
+        instr _ = mix_ notes
 

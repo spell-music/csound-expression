@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       3.0.0
+Version:       3.0.1
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -93,7 +93,7 @@ Library
   Ghc-Options:    -Wall
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0,
-        csound-expression-typed, csound-expression-opcodes-typed
+        csound-expression-typed, csound-expression-opcodes
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base

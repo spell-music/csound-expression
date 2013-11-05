@@ -18,8 +18,8 @@ pureTone :: D -> SE Sig
 pureTone cps = return $ 0.4 * (myOsc $ sig cps)
 
 -- Let's trigger the instrument from the score section. It plays three notes.
-res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 1, 330), (2, 2, 220)]
+res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 1, 330), (2, 1, 220)]
 
 -- Renders generated csd-file to the "tmp.csd".
 main :: IO ()
-main = dac $ mix res
+main = dac $ mixLoop res

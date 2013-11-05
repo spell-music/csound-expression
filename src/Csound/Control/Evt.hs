@@ -111,7 +111,7 @@ repeatE a = fmap (const a)
 --
 -- When value @a@ happens with @evt@, the resulting event stream contains
 -- a value (z `f` a) and in the next time @z@ equals to this value.
-appendE :: Tuple a => a -> (a -> a -> a) => Evt a -> Evt a
+appendE :: Tuple a => a -> (a -> a -> a) -> Evt a -> Evt a
 appendE empty append = accumE empty phi
     where phi a s = let s1 = s `append` a in (s1, s1)
 
