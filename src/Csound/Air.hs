@@ -42,8 +42,9 @@ module Csound.Air (
     odds, evens,
 
     -- * Widgets
+    setTitle,
     AdsrBound(..), AdsrInit(..),
-    linAdsr, expAdsr,
+    linAdsr, expAdsr,    
 
     -- * Other
     reverbsc1
@@ -54,7 +55,7 @@ import Data.List(intersperse)
 import Data.Boolean
 
 import Csound.Typed
-import Csound.Typed.Opcode
+import Csound.Typed.Opcode hiding (display)
 import Csound.Typed.Gui
 
 import Csound.Tab(sine)
@@ -460,6 +461,12 @@ reverbsc1 x k co = 0.5 * (a + b)
 ----------------------------------------------------------------------
 -- Widgets
 
+-- | Appends a title to a group of widgets.
+setTitle :: String -> Gui -> SE Gui
+setTitle name g = display $ do
+    gTitle <- box name
+    return $ ver [sca 0.01 gTitle, g]
+
 data AdsrBound = AdsrBound
     { attBound  :: Double
     , decBound  :: Double
@@ -487,8 +494,13 @@ genAdsr mkAdsr name b inits = source $ do
     (gdec, dec) <- knob "D" (linSpan 0 $ decBound b) (decInit inits)
     (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits) 
     (grel, rel) <- knob "R" (linSpan 0 $ relBound b) (relInit inits)
-    gTitle      <- box name
-    let val = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
-    let gui = ver [sca 0.05 gTitle, hor [gatt, gdec, gsus, grel]]
+    let val   = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
+    let gadsr = hor [gatt, gdec, gsus, grel]
+
+    gui <- if null name
+        then return gadsr
+        else do
+            gTitle <- box name
+            return $ ver [sca 0.05 gTitle, gadsr]
     return (gui, val)
 
