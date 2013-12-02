@@ -32,11 +32,18 @@ module Csound.Air (
     -- | Applies filter and balances the output by the input signal.
     lpb, hpb, bpb, brb, blpb, bhpb, bbpb, bbrb,
 
+    -- ** Specific filters
+    mlp,
+
     -- * Patterns
     mean, vibrate, randomPitch, chorus, resons, resonsBy, modes, dryWet,    
 
     -- ** List functions
     odds, evens,
+
+    -- * Widgets
+    AdsrBound(..), AdsrInit(..),
+    linAdsr, expAdsr,
 
     -- * Other
     reverbsc1
@@ -48,6 +55,7 @@ import Data.Boolean
 
 import Csound.Typed
 import Csound.Typed.Opcode
+import Csound.Typed.Gui
 
 import Csound.Tab(sine)
 
@@ -284,6 +292,12 @@ bbpb = balance2 bbp
 bbrb :: Sig -> Sig -> Sig -> Sig
 bbrb = balance2 bbr
 
+-- | Moog's low-pass filter.
+--
+-- > mlp centerFrequency qResonance signal
+mlp :: Sig -> Sig -> Sig -> Sig
+mlp cf q asig = moogladder asig cf q
+
 --------------------------------------------------------------------------
 -- patterns
 
@@ -441,4 +455,40 @@ relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(
 reverbsc1 :: Sig -> Sig -> Sig -> Sig
 reverbsc1 x k co = 0.5 * (a + b)
     where (a, b) = ar2 $ reverbsc x x k co
+
+
+----------------------------------------------------------------------
+-- Widgets
+
+data AdsrBound = AdsrBound
+    { attBound  :: Double
+    , decBound  :: Double
+    , relBound  :: Double }
+
+data AdsrInit = AdsrInit
+    { attInit   :: Double
+    , decInit   :: Double
+    , susInit   :: Double
+    , relInit   :: Double }
+
+expEps :: Double
+expEps = 0.00001
+
+linAdsr :: String -> AdsrBound -> AdsrInit -> Source Sig
+linAdsr = genAdsr $ \a d s r -> linsegr [0, a, 1, d, s] r 0
+
+expAdsr :: String -> AdsrBound -> AdsrInit -> Source Sig
+expAdsr = genAdsr $ \a d s r -> expsegr [double expEps, a, 1, d, s] r (double expEps)
+
+genAdsr :: (D -> D -> D -> D -> Sig)
+    -> String -> AdsrBound -> AdsrInit -> Source Sig
+genAdsr mkAdsr name b inits = source $ do
+    (gatt, att) <- knob "A" (linSpan 0 $ attBound b) (attInit inits)
+    (gdec, dec) <- knob "D" (linSpan 0 $ decBound b) (decInit inits)
+    (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits) 
+    (grel, rel) <- knob "R" (linSpan 0 $ relBound b) (relInit inits)
+    gTitle      <- box name
+    let val = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
+    let gui = ver [sca 0.05 gTitle, hor [gatt, gdec, gsus, grel]]
+    return (gui, val)
 
