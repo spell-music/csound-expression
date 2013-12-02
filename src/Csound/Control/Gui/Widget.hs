@@ -11,7 +11,7 @@ module Csound.Control.Gui.Widget (
     count, countSig, joy, 
     knob, KnobType(..), setKnobType,
     roller, 
-    slider, SliderType(..), setSliderType,
+    slider, sliderBank, SliderType(..), setSliderType,
     numeric, TextType(..), setTextType,
 
     -- * Other widgets
