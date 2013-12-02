@@ -111,11 +111,10 @@ Library
         Csound.Control.Instr
         Csound.Control.SE
 
-
---        Csound.Gui
---        Csound.Gui.Widget
---        Csound.Gui.Props
---        Csound.Gui.Layout
+        Csound.Control.Gui
+        Csound.Control.Gui.Widget
+        Csound.Control.Gui.Props
+        Csound.Control.Gui.Layout
 
 --        Csound.LowLevel
   Other-Modules:

@@ -9,11 +9,15 @@ module Csound.Control(
     module Csound.Control.Evt,
     -- * Instruments
     -- | Invoking the instruments
-    module Csound.Control.Instr
+    module Csound.Control.Instr,
+    -- * Gui
+    -- | Interactive controllers
+    module Csound.Control.Gui
 ) where
 
 import Csound.Control.SE        
 import Csound.Control.Evt
 import Csound.Control.Instr
+import Csound.Control.Gui
 
 
