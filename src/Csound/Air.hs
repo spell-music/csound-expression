@@ -42,7 +42,6 @@ module Csound.Air (
     odds, evens,
 
     -- * Widgets
-    setTitle,
     AdsrBound(..), AdsrInit(..),
     linAdsr, expAdsr,    
 
@@ -461,12 +460,6 @@ reverbsc1 x k co = 0.5 * (a + b)
 ----------------------------------------------------------------------
 -- Widgets
 
--- | Appends a title to a group of widgets.
-setTitle :: String -> Gui -> SE Gui
-setTitle name g = display $ do
-    gTitle <- box name
-    return $ ver [sca 0.01 gTitle, g]
-
 data AdsrBound = AdsrBound
     { attBound  :: Double
     , decBound  :: Double
@@ -495,12 +488,6 @@ genAdsr mkAdsr name b inits = source $ do
     (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits) 
     (grel, rel) <- knob "R" (linSpan expEps $ relBound b) (relInit inits)
     let val   = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
-    let gadsr = hor [gatt, gdec, gsus, grel]
-
-    gui <- if null name
-        then return gadsr
-        else do
-            gTitle <- box name
-            return $ ver [sca 0.05 gTitle, gadsr]
+    gui <- setTitle name $ hor [gatt, gdec, gsus, grel]
     return (gui, val)
 
