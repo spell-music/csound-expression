@@ -45,9 +45,9 @@ readMatrix xn yn as = transp $ take (xn * yn) $ as ++ repeat (head as)
             where (a, b) = splitAt y qs
 
 -- | A radio button. It takes a list of values with labels.
-radioButton :: Arg a => String -> [(String, a)] -> Source (Evt a)
-radioButton title as = source $ do
-    (g, ind) <- butBank1 "" 1 (length as) 
+radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
+radioButton title as initVal = source $ do
+    (g, ind) <- butBank1 "" 1 (length as) (0, initVal)
     gnames   <- mapM box names
     let val = listAt vals ind    
     gui <- setTitle title $ padding 0 $ hor [sca 0.15 g, ver gnames]
@@ -55,18 +55,18 @@ radioButton title as = source $ do
     where (names, vals) = unzip as
 
 -- | A matrix of values.
-matrixButton :: Arg a => String -> Int -> Int -> [a] -> Source (Evt a)
-matrixButton name xn yn vals = source $ do
-    (gui, ind) <- butBank1 name xn yn 
+matrixButton :: Arg a => String -> Int -> Int -> [a] -> (Int, Int) -> Source (Evt a)
+matrixButton name xn yn vals initVal = source $ do
+    (gui, ind) <- butBank1 name xn yn initVal
     let val = listAt allVals ind
     return (gui, val)
     where allVals = readMatrix xn yn vals
 
 -- | Radio button that returns functions. Useful for picking a waveform or type of filter.
-funnyRadio :: Tuple b => String -> [(String, a -> b)] -> Source (a -> b)
-funnyRadio name as = source $ do
-    (gui, ind) <- radioButton name $ zip names (fmap int [0 ..])
-    contInd <- stepper 0 $ fmap sig ind
+funnyRadio :: Tuple b => String -> [(String, a -> b)] -> Int -> Source (a -> b)
+funnyRadio name as initVal = source $ do
+    (gui, ind) <- radioButton name (zip names (fmap int [0 ..])) initVal
+    contInd <- stepper (sig $ int initVal) $ fmap sig ind
     let instr x = guardedTuple (
                 zipWith (\n f -> (contInd ==* (sig $ int n), f x)) [0 ..] funs
             ) (head funs x)
@@ -74,14 +74,15 @@ funnyRadio name as = source $ do
     where (names, funs) = unzip as
 
 -- | Matrix of functional values.
-funnyMatrix :: Tuple b => String -> Int -> Int -> [(a -> b)] -> Source (a -> b)
-funnyMatrix name xn yn funs = source $ do
-    (gui, ind) <- butBank1 name xn yn
-    contInd <- stepper 0 $ fmap sig ind
+funnyMatrix :: Tuple b => String -> Int -> Int -> [(a -> b)] -> (Int, Int) -> Source (a -> b)
+funnyMatrix name xn yn funs initVal@(x0, y0) = source $ do
+    (gui, ind) <- butBank1 name xn yn initVal
+    contInd <- stepper flattenInitVal $ fmap sig ind
     let instr x = guardedTuple (
                 zipWith (\n f -> (contInd ==* (sig $ int n), f x)) [0 ..] allFuns
             ) (head allFuns x)
     return (gui, instr)
-    where allFuns = readMatrix xn yn funs
-
+    where 
+        allFuns = readMatrix xn yn funs
+        flattenInitVal = sig $ int $ y0 + x0 * yn
 

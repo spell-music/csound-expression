@@ -494,12 +494,14 @@ genAdsr mkAdsr name b inits = source $ do
     return (gui, val)
 
 -- | A widget with four standard waveforms: pure tone, triangle, square and sawtooth.
-classicWaves :: String -> Source (Sig -> Sig)
-classicWaves name = funnyRadio name 
+-- The last parameter is a default waveform (it's set at init time).
+classicWaves :: String -> Int -> Source (Sig -> Sig)
+classicWaves name initVal = funnyRadio name 
     [ ("osc", osc)
     , ("tri", tri)
     , ("sqr", sqr)
     , ("saw", saw)]
+    initVal
 
 
 
