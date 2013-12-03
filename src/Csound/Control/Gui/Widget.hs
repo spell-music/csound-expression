@@ -18,6 +18,7 @@ module Csound.Control.Gui.Widget (
     box, BoxType(..), setBoxType,
     button, ButtonType(..), setButtonType, 
     toggle, butBank, buttonSig, toggleSig, butBankSig,
+    butBank1, butBankSig1,
     value, meter
 ) where
 

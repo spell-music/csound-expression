@@ -478,7 +478,7 @@ data AdsrInit = AdsrInit
     , susInit   :: Double
     , relInit   :: Double }
 
-expEps :: Double
+expEps :: Fractional a => a
 expEps = 0.00001
 
 linAdsr :: String -> AdsrBound -> AdsrInit -> Source Sig
@@ -490,10 +490,10 @@ expAdsr = genAdsr $ \a d s r -> expsegr [double expEps, a, 1, d, s] r (double ex
 genAdsr :: (D -> D -> D -> D -> Sig)
     -> String -> AdsrBound -> AdsrInit -> Source Sig
 genAdsr mkAdsr name b inits = source $ do
-    (gatt, att) <- knob "A" (linSpan 0 $ attBound b) (attInit inits)
-    (gdec, dec) <- knob "D" (linSpan 0 $ decBound b) (decInit inits)
+    (gatt, att) <- knob "A" (linSpan expEps $ attBound b) (attInit inits)
+    (gdec, dec) <- knob "D" (linSpan expEps $ decBound b) (decInit inits)
     (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits) 
-    (grel, rel) <- knob "R" (linSpan 0 $ relBound b) (relInit inits)
+    (grel, rel) <- knob "R" (linSpan expEps $ relBound b) (relInit inits)
     let val   = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
     let gadsr = hor [gatt, gdec, gsus, grel]
 
