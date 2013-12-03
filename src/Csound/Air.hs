@@ -43,7 +43,8 @@ module Csound.Air (
 
     -- * Widgets
     AdsrBound(..), AdsrInit(..),
-    linAdsr, expAdsr,    
+    linAdsr, expAdsr, 
+    classicWaves,
 
     -- * Other
     reverbsc1
@@ -56,6 +57,7 @@ import Data.Boolean
 import Csound.Typed
 import Csound.Typed.Opcode hiding (display)
 import Csound.Typed.Gui
+import Csound.Control.Gui(funnyRadio)
 
 import Csound.Tab(sine)
 
@@ -490,4 +492,14 @@ genAdsr mkAdsr name b inits = source $ do
     let val   = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
     gui <- setTitle name $ hor [gatt, gdec, gsus, grel]
     return (gui, val)
+
+-- | A widget with four standard waveforms: pure tone, triangle, square and sawtooth.
+classicWaves :: String -> Source (Sig -> Sig)
+classicWaves name = funnyRadio name 
+    [ ("osc", osc)
+    , ("tri", tri)
+    , ("sqr", sqr)
+    , ("saw", saw)]
+
+
 
