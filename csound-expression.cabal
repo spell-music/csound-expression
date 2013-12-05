@@ -80,6 +80,7 @@ Extra-Source-Files :
     examples/Midi.hs
     examples/Events.hs
     examples/Guis.hs
+    examples/DubBass.hs
 
 Homepage:        https://github.com/anton-k/csound-expression
 Bug-Reports:     https://github.com/anton-k/csound-expression/issues

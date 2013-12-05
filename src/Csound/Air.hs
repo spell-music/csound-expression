@@ -45,6 +45,7 @@ module Csound.Air (
     AdsrBound(..), AdsrInit(..),
     linAdsr, expAdsr, 
     classicWaves,
+    masterVolume, masterVolumeKnob,
 
     -- * Other
     reverbsc1
@@ -503,5 +504,11 @@ classicWaves name initVal = funnyRadio name
     , ("saw", saw)]
     initVal
 
+-- | Slider for master volume
+masterVolume :: Source Sig
+masterVolume = slider "master" uspan 0.5
 
+-- | Knob for master volume
+masterVolumeKnob :: Source Sig
+masterVolumeKnob = knob "master" uspan 0.5
 
