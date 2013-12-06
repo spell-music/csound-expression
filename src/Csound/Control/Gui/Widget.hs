@@ -17,7 +17,7 @@ module Csound.Control.Gui.Widget (
     -- * Other widgets
     box, BoxType(..), setBoxType,
     button, ButtonType(..), setButtonType, 
-    toggle, butBank, buttonSig, toggleSig, butBankSig,
+    toggle, butBank, toggleSig, butBankSig,
     butBank1, butBankSig1, 
     radioButton, matrixButton, funnyRadio, funnyMatrix,
     value, meter,
