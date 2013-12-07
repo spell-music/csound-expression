@@ -5,7 +5,7 @@ module Csound.Control.Evt(
     -- * Core functions
     boolToEvt, evtToBool, sigToEvt, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
-    Snap, snapshot, snaps,
+    Snap, snapshot, snaps, sync, syncBpm,
     
     -- * Opcodes
     metroE, changedE, triggerE, 
@@ -19,7 +19,7 @@ module Csound.Control.Evt(
 ) where
 
 import Data.Monoid
-
+import Data.Default
 import Data.Boolean
 
 import Csound.Typed
@@ -36,6 +36,10 @@ changedE = sigToEvt . changed
 -- | Behaves like 'Csound.Opcode.Basic.trigger', but returns an event stream.
 triggerE :: Sig -> Sig -> Sig -> Evt ()
 triggerE a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
+
+-- | the sync function but time is measured in beats per minute.
+syncBpm :: (Default a, Tuple a) => D -> Evt a -> Evt a
+syncBpm dt = sync (dt / 60)
 
 ----------------------------------------------------------------------
 -- higher level evt-funs
