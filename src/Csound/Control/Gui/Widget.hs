@@ -22,7 +22,9 @@ module Csound.Control.Gui.Widget (
     radioButton, matrixButton, funnyRadio, funnyMatrix,
     value, meter,
     -- * Transformers
-    setTitle
+    setTitle,
+    -- * Keyboard
+    KeyEvt(..), Key(..), keyIn
 ) where
 
 import Data.List(transpose)

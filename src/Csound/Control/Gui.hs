@@ -54,6 +54,7 @@ module Csound.Control.Gui (
     
     -- * Panels
     panel, panels, panelBy,
+    keyPanel, keyPanels, keyPanelBy,
 
     -- * Re-exports
     module Csound.Control.Gui.Layout,
