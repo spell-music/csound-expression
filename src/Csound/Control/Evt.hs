@@ -5,13 +5,14 @@ module Csound.Control.Evt(
     -- * Core functions
     boolToEvt, evtToBool, sigToEvt, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
-    Snap, snapshot, snaps, sync, syncBpm,
+
+    Snap, snapshot, snaps, sync, syncBpm, 
     
     -- * Opcodes
     metroE, changedE, triggerE, 
 
     -- * Higher-level event functions
-    cycleE, iterateE, repeatE, appendE, mappendE,
+    cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle,
     oneOf, freqOf, freqAccum, 
     randDs, randInts, randSkip, randSkipBy, 
     range, listAt,   
@@ -21,6 +22,7 @@ module Csound.Control.Evt(
 import Data.Monoid
 import Data.Default
 import Data.Boolean
+import Data.Tuple
 
 import Csound.Typed
 import Csound.Typed.Opcode
@@ -40,6 +42,17 @@ triggerE a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 -- | the sync function but time is measured in beats per minute.
 syncBpm :: (Default a, Tuple a) => D -> Evt a -> Evt a
 syncBpm dt = sync (dt / 60)
+
+-- | Splits event stream on two streams with predicate.
+partitionE :: (a -> BoolD) -> Evt a -> (Evt a, Evt a)
+partitionE p evts = (a, b)
+    where 
+        a = filterE p          evts
+        b = filterE (notB . p) evts
+
+-- | Splits a toggle event stream on on-events and off-events.
+splitToggle :: Evt D -> (Evt D, Evt D)
+splitToggle = swap . partitionE (==* 0)
 
 ----------------------------------------------------------------------
 -- higher level evt-funs

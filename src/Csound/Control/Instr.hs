@@ -83,8 +83,8 @@ module Csound.Control.Instr(
     cpsmidi, ampmidi,
 
     -- * Evt            
-    trig, sched, schedHarp,
-    trig_, sched_, 
+    trig, sched, schedHarp, schedUntil, schedToggle,
+    trig_, sched_, schedUntil_, 
     trigBy, schedBy, schedHarpBy,
     withDur,
 
@@ -97,7 +97,7 @@ import Csound.Typed
 import Csound.Typed.Opcode
 import Csound.Control.Overload
 
-import Csound.Control.Evt(metroE, repeatE)
+import Csound.Control.Evt(metroE, repeatE, splitToggle)
 
 --------------------------------------------------------------------------
 -- midi
@@ -129,4 +129,32 @@ mixLoop_ a = sched_ instr $ withDur dur $ repeatE unit $ metroE $ sig $ 1 / dur
         dur   = double $ csdEventListDur notes
 
         instr _ = mix_ notes
+
+
+-- | Invokes an instrument with first event stream and 
+-- holds the note until the second event stream is active.
+schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
+schedUntil instr onEvt offEvt = sched instr' $ withDur (-1) onEvt
+    where 
+        instr' x = do 
+            res <- instr x
+            runEvt offEvt $ const $ turnoff
+            return res
+
+-- | Invokes an instrument with toggle event stream (1 stands for on and 0 stands for off).
+schedToggle :: (Sigs b) => SE b -> Evt D -> b
+schedToggle res evt = schedUntil instr on off
+    where 
+        instr = const res
+        (on, off) = splitToggle evt
+
+-- | Invokes an instrument with first event stream and 
+-- holds the note until the second event stream is active.
+schedUntil_ :: (Arg a) => (a -> SE ()) -> Evt a -> Evt c -> SE ()
+schedUntil_ instr onEvt offEvt = sched_ instr' $ withDur (-1) onEvt
+    where 
+        instr' x = do 
+            res <- instr x
+            runEvt offEvt $ const $ turnoff
+            return res
 
