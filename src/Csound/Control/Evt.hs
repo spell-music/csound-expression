@@ -26,15 +26,15 @@ import Csound.Typed
 import Csound.Typed.Opcode
 
 -- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
-metroE :: Sig -> Evt ()
+metroE :: Sig -> Evt Unit 
 metroE = sigToEvt . metro
 
 -- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
-changedE :: [Sig] -> Evt ()
+changedE :: [Sig] ->  Evt Unit
 changedE = sigToEvt . changed
 
 -- | Behaves like 'Csound.Opcode.Basic.trigger', but returns an event stream.
-triggerE :: Sig -> Sig -> Sig -> Evt ()
+triggerE :: Sig -> Sig -> Sig -> Evt Unit 
 triggerE a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 
 -- | the sync function but time is measured in beats per minute.
