@@ -79,7 +79,6 @@ Extra-Source-Files :
 
     examples/Midi.hs
     examples/Events.hs
-    examples/Guis.hs
     examples/DubBass.hs
 
     examples/Gui/Button.hs      
