@@ -644,4 +644,72 @@ or
 Prelude Csound Csound.Catalog> vdac $ mul 0.15 $ bayAtNight $ midi $ onMsg (mul (fades 1 2) . stringPad 1)
 ~~~
 
+Gui elements
+---------------------------------
+
+With Gui elements (`Csound.control.Gui`) we can update 
+the synth paramters online. There are sliders, knobs, numeric fields, rollers. 
+The Gui element contains three parts:
+
+~~~
+SE (Gui, Input a, Output a)
+
+Gui                     -- visual representation of the element
+Input  a = a            -- reads  the current value 
+Output a = a -> SE ()   -- writes the value to the element
+~~~
+
+Some elements can only read values (no ountput), some of the can only show 
+the values (no input), some of them are static elements (no inputs and outputs).  
+
+Let's create a siple pure tone sound and update volume and frequency
+with sliders:
+
+~~~
+import Csound.Base
+
+main = dac $ do
+    (gVol, vol) <- slider "volume"    (linSpan 0 1) 0.5
+    (gCps, cps) <- slider "frequency" (expSpan 100 1000) 440
+    panel $ ver [gVol, gCps]
+    return $ vol * osc cps
+~~~
+
+The function slider expects a label, value diapason and initial value.
+It returns a pair of visual representation and the current value:
+
+~~~
+type Source a = SE (Gui, Input a)
+
+slider :: String -> ValSpan -> Double -> Source a
+~~~
+
+First, we create to sliders for volume and frequency:
+
+~~~~
+    (gVol, vol) <- slider "volume"    (linSpan 0 1)      0.5
+    (gCps, cps) <- slider "frequency" (expSpan 100 1000) 440
+~~~
+
+The first has linear diapason from 0 to 1 (linSpan) and the
+second has exponential diapason from (expSpan). 
+Then we place our GUI elements on the screen. we
+create a panel that contains the elements with vertical placement:
+
+~~~
+    panel $ ver [gVol, gCps]
+~~~
+
+The sliders are automatically aligned. We can find the other layout
+function in the module `Csound.Control.Gui.Layout`. We 
+can modify the appearance of the elements with functions
+from the module `Csound.Control.Props`.
+
+At the end we return the signal that depends on 
+the values of the GUI elements:
+
+~~~
+    return $ vol * osc cps
+~~~
+
 

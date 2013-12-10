@@ -6,7 +6,7 @@ module Csound.Air (
     osc, oscBy, saw, isaw, pulse, sqr, tri, blosc,
 
     -- ** Unipolar
-    unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
+    unipolar, bipolar, on, uon, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
 
     -- * Envelopes
 
@@ -114,6 +114,20 @@ upulse = unipolar . pulse
 -- | Unipolar band-limited oscillator.
 ublosc :: Tab -> Sig -> Sig
 ublosc tb = unipolar . blosc tb
+
+-- rescaling
+
+-- | Rescaling of the bipolar signal (-1, 1) -> (a, b)
+-- 
+-- > on a b biSig
+on :: Sig -> Sig -> Sig -> Sig
+on a b x = uon a b $ unipolar x 
+
+-- | Rescaling of the unipolar signal (0, 1) -> (a, b)
+-- 
+-- > on a b uniSig
+uon :: Sig -> Sig -> Sig -> Sig
+uon a b x = a + (b - a) * x
 
 --------------------------------------------------------------------------
 -- envelopes

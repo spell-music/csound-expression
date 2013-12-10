@@ -24,7 +24,7 @@ module Csound.Control.Gui.Widget (
     -- * Transformers
     setTitle,
     -- * Keyboard
-    KeyEvt(..), Key(..), keyIn
+    KeyEvt(..), Key(..), keyIn, charOn, charOff
 ) where
 
 import Data.List(transpose)
@@ -87,4 +87,14 @@ funnyMatrix name xn yn funs initVal@(x0, y0) = source $ do
     where 
         allFuns = readMatrix xn yn funs
         flattenInitVal = sig $ int $ y0 + x0 * yn
+
+
+-- | Shortcut for press 'CharKey' events.
+charOn :: Char -> Evt Unit
+charOn  = keyIn . Press   . CharKey
+
+-- | Shortcut for release 'CharKey' events.
+charOff :: Char -> Evt Unit
+charOff = keyIn . Release . CharKey
+
 
