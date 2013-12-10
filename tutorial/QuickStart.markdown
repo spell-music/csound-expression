@@ -288,7 +288,7 @@ contains some primitive scalar csound-values (they are not signals).
 The most simple event stream is created with the function `metroE`:
 
 ~~~
-metroE :: Sig -> Evt ()
+metroE :: Sig -> Evt Unit
 ~~~
 
 It creates a stream of repeating events. the first argument is 
@@ -711,5 +711,43 @@ the values of the GUI elements:
 ~~~
     return $ vol * osc cps
 ~~~
+
+Keyboard events
+-------------------------
+
+We can listen for the keyboard events with functions: `keyIn`, `charOn`, `charOff`.
+
+~~~
+data KeyEvt = Press Key | Release key
+data Key = CharKey Char | F1 | F2 | ... | LeftShift | RightShift | ...
+
+keyIn   :: KeyEvt -> Evt Unit
+charOn  :: Char -> Evt Unit
+charOff :: Char -> Evt Unit
+~~~
+
+`charOn` and `charOff` are handy shortcuts for
+
+~~~
+charOn  = keyIn . Press   . CharKey
+charOff = keyIn . Release . CharKey
+~~~
+
+For example, we can trigger the note with key 'a':
+
+~~~
+instr _ = return $ mul (fades 0.5 1) $ osc 440
+
+res = schedUntil instr (charOn 'a') (charOff 'a')
+
+main = dac res
+~~~
+
+The `schedUntil` funtion triggers the instrument with
+the first event stream and holds the notes while 
+the second event stream is silent.
+
+
+
 
 
