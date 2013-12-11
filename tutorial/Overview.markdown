@@ -149,8 +149,13 @@ eff     :: (CsdSco f, Sigs a, Sigs b) => (a -> SE b) -> f (Mix a) -> f (Mix b)
 
 -- event stream contains duration of the note
 sched   :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
+
 -- event stream contains delay time and duration of the note
 trig    :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
+
+-- triggers an instrument with the first event
+-- stream and holds the note while the second event stream is silent
+schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
 ~~~
 
 ## Rendering the Csound files
@@ -187,7 +192,7 @@ To specify the options we use the rendering functions with suffix `By`:
 ~~~
 options = mconcat [setRates 44800 64, setDac, setAdc]
 
-main = cvsdBy options asignal
+main = csdBy options asignal
 ~~~
 
 The most common options:
@@ -246,5 +251,97 @@ har  :: [Score a] -> Score a
 loop :: Int -> Score a -> Score a
 ~~~
 
+## GUI
 
+Main elements:
+
+~~~
+--        Label     Diapason   Init      Result   
+--                  of the     value
+--                  value
+
+knob   :: String -> ValSpan -> Double -> Source Sig
+slider :: String -> ValSpan -> Double -> Source Sig
+
+button :: String -> Source (Evt Unit)
+toggle :: String -> Source (Evt D)
+
+--                      Label     Alternatives     Id of the
+--                                                 default
+--                                                 value 
+radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
+
+-- shows a static text
+box    :: String -> Display
+~~~
+
+Creating value spans:
+
+Linear and exponential spans with the give bounds:
+
+~~~
+linSpan :: Double -> Double -> ValSpan
+expSpan :: Double -> Double -> ValSpan
+~~~
+
+The linear unit span:
+
+~~~
+uspan :: ValSpan
+uspan = linSpan 0 1
+~~~
+
+### Layout
+
+~~~
+-- horizontal placement
+hor :: [Gui] -> Gui
+
+-- vertical placement
+ver :: [Gui] -> Gui
+
+-- scaling of the element within the group
+-- (element is contained in the horizontal 
+-- or vertical container)
+sca :: Double -> Gui -> Gui
+~~~
+
+### Creating a windows with GUIs
+
+Creates a single window
+
+~~~
+panel :: Gui -> SE ()
+~~~
+
+Creates a single window that is listening for keyboard events
+
+~~~
+keyPanel :: Gui -> SE ()
+~~~
+
+Creates a single windows and we can specify title and size of the window:
+
+~~~
+panelBy :: String -> Maybe Rect -> Gui -> SE ()
+~~~
+
+## Keyboard events
+
+~~~
+data KeyEvt = Press Key | Release Key
+data Key = CharKey | F1 | F2 | ...
+
+keyIn   :: KeyEvt -> Evt Unit
+~~~
+
+Press and release a simple key:
+
+~~~
+charOn  :: Char   -> Evt Unit
+charOff :: Char   -> Evt Unit
+~~~
+
+We should create a window to be able to listen on keyboard events
+with the function `keyPanel` or `keyPanelBy`.
 
