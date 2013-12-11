@@ -48,15 +48,7 @@ Key principles
 * Set Csound flags with meaningful (well-typed) values. 
         Derive as much as you can from the context.
 
-For the future
---------------------------
-        
-* Make composable guis. Just plug the slider in the opcode and see it on the screen. Interactive instruments should be easy to make.
-
-* Timing of events. User can set the beat rate and align events by beat events.
-
-* Optimization of the memory allocation (liveness analysis).
-
+* Composable guis. Interactive instruments should be easy to make.
 
 Installation guide
 ===========================
@@ -81,6 +73,13 @@ It should print a long message with version and available flags and libraries.
 * Good library for composition. Right now only one is supported (see temporal-csound package on hackage).
     It brings together temporal-music-notation and csound-expression packages.
     It's used to make the process of score-writing more convenient.
+
+Tutorials and examples
+===========================
+
+* [Tutorials](https://github.com/anton-k/csound-expression/tree/master/tutorial)
+
+* [Examples](https://github.com/anton-k/csound-expression/tree/master/examples)
 
 
 Acknowledgements 
