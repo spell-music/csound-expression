@@ -1,13 +1,23 @@
+-- | Plays standard waveforms: pure tone, triangle, square and sawtooth.
 module Waves where
 
 import Csound.Base
 
-import Data.Colour.Names(white, gray, yellow)
-
 main = vdac $ do
+    -- Creates a master volume slider.
     (gvol, vol) <- masterVolume
+
+    -- We use a standard element to experiment with four classic waveforms.
+    -- The return value of the widget is a function that takes a frequency
+    -- and returns the signal.
     (gw, f) <- classicWaves "waves" 0
-    let instr x = vol * f x
-    panel $ ver [hor [sca 0.1 gvol, gw]]
-    return $ midi $ onMsg instr
+
+    -- Let's create a simple instrument that uses the waveform.
+    let instr x = fades 0.1 0.1 * f x
+
+    -- Places elements on window aligned horizontally.
+    panel $ hor [sca 0.1 gvol, gw]
+
+    -- Triggers the instrument with midi keyboard.
+    return $ mul vol $ midi $ onMsg instr
 

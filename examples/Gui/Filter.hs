@@ -1,3 +1,5 @@
+-- | Development of the example Osc.hs (see it first). 
+-- Now oscillators are equipped with filter.
 module Filter where
 
 import Csound.Base
@@ -5,10 +7,11 @@ import Csound.Base
 import Osc(OscInit(..), moogOscs)
 
 data FilterInit = FilterInit 
-    { filterInitResonance :: Double
-    , filterInitFreq      :: Double
-    , filterInitRange     :: Double }
+    { filterInitResonance :: Double     -- the Q
+    , filterInitFreq      :: Double     -- the minimum of the center frequency
+    , filterInitRange     :: Double }   -- center frequency range
 
+-- | A moog like filter with ADSR-envelope for center frequency.
 moogFilter :: String -> Sig -> FilterInit -> Source (Sig -> Sig)
 moogFilter name env (FilterInit initQ initCfq initRange) = source $ do
     (gq, q) <- knob "resonance" uspan initQ 
