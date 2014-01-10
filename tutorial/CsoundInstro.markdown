@@ -2,7 +2,7 @@ Introduction to Csound for Haskell users
 =====================================================
     
 We are going to make electronic music. But what is Csound? 
-And why should we use it? [Csound](http://www.csounds.com) is a domain specific programming language. 
+And why should we use it? [Csound](http://www.csounds.com/) is a domain specific programming language. 
 It helps you to define synthesizers and make some music with them. 
 Csound was born in 1985 (a bit older than Haskell) at MIT by Barry Vercoe. 
 It's widely used in the academia. It has a long history. So with Csound we 
