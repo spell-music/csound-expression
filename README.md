@@ -1,6 +1,6 @@
 
 
-Let's make music with text! We can use [Csound](www.csounds.com) to describe our music. Csound has 
+Let's make music with text! We can use [Csound](http://www.csounds.com/) to describe our music. Csound has 
 so [many](http://www.csounds.com/manual/html/PartOpcodesOverview.html) fantastic sound generators.
 It's very efficient. But sometimes Csound is too low level. So many details: integer identifiers for instruments 
 and arrays, should I use control rate or audio rate signals, lack of abstractions, no nested expressions and it has limited set of types. 
@@ -55,13 +55,13 @@ Installation guide
 
 Requirements (for Csound and Haskell users):
 
-*   [GHC](www.haskell.org/ghc) - haskell compiler. This library uses GHC-specific features.
+*   [GHC](http://www.haskell.org/ghc/) - haskell compiler. This library uses GHC-specific features.
 
-*   [cabal-install](www.haskell.org/cabal) to install haskell packages.
+*   [cabal-install](http://www.haskell.org/cabal/) to install haskell packages.
 
-*   [Csound](www.csounds.com) compiler (version 5.13 or higher). You must get it installed on your system.
+*   [Csound](http://www.csounds.com/) compiler (version 5.13 or higher). You must get it installed on your system.
     Since we are going to generate the csound code we need to compile it to sound somehow.
-    We can find out how to install the Csound [here](www.csounds.com). 
+    We can find out how to install the Csound [here](http://www.csounds.com/). 
     To test whether csound is installed open the command line and type:
 
 ~~~
