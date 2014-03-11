@@ -1,3 +1,6 @@
+-- | Originally coded in Csound by Jacob Joaquin
+--
+-- http://codehop.com/2011/07/
 module Main where
 
 import Csound
@@ -20,7 +23,7 @@ dspb = 0.45
 instr (coeff, cps) = return $ wobbly (sig spb) (sig coeff) (sig $ cpspch cps)
 
 
-main = dac $ mix $ str (dspb * 2) $ sco instr $ melMap temp $ 
+main = totem $ mix $ str (dspb * 2) $ sco instr $ melMap temp $ 
     [ (2, 6.04)
     , (1/3, 7.04)
     , (2, 6.04)

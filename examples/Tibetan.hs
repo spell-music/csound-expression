@@ -140,7 +140,7 @@ run as = fmap concat $ fmap (evalState (mapM turtle as)) initSt
     where initSt = fmap (St initRepeat initWait initSpan) $ fmap (randomRs (0, 1)) newStdGen
    
 acts :: [Act]
-acts = concat $ replicate 2 $ [1, 1, 5, 2, 5, 7, 5, 1, 1, 3, 5, 3, 1, 1, 1, 5, 1, 5, 6, 3, 2, 1, 1, 5, 1, 6, 4, 5, 1, 1]
+acts = concat $ replicate 1 $ [1, 1, 5, 2, 5, 7, 5, 1, 1, 3, 5, 3, 1, 1, 5, 1 ]
 
     
 note (start, dur, amp, cps, rise, dec) = del start $ str dur $ 
@@ -171,13 +171,13 @@ toStereo = eff $ \x -> return (x, x)
 
 introBlurp = toStereo $ sco blurp $ introDur *| temp (0.7 * blurpVol)
 
-blurpSco = toStereo $ mel [rest 100, cone 15 0.7, rest 120, cone 10 0.4]
+blurpSco = toStereo $ mel [rest 100, cone 15 0.7, rest 60, cone 10 0.4]
     where cone dt v = eff (\x -> return $ linen x (0.25 * idur) idur (0.25 * idur)) $ sco blurp $ dt *| temp (v * blurpVol)
 
 ------------------------------------------------------------
 -- stars
 
-starLength      = 2.5 * 60
+starLength      = 60
 starParams      = zip4 starVolumes starLfos starHarms starSweeps
 
 starVolume      = 0.3
@@ -195,7 +195,7 @@ starChord       = [0, 1, 2, 4, 7]
 starSco = sco blue $
     flip evalState starParams $ traverse addParam $ 
     takeS starLength $ har $ zipWith3 phi starInitDelays starPeriods starChord
-    where phi dt period note = del dt $ loop 200 $ har [4 *| temp (double $ id2cps 2 note), rest period] 
+    where phi dt period note = del dt $ loop 70 $ har [4 *| temp (double $ id2cps 2 note), rest period] 
 
           addParam cps = state $ \((amp, lfo, harm, sweep) : params) -> 
             ((amp, cps, lfo, harm, sweep), params) 
@@ -204,7 +204,7 @@ starSco = sco blue $
 
 main = do
     notes <- run acts
-    dac $ mix $ har 
+    totem $ mix $ har 
         [ introBlurp
         , del (introDur * 0.70) $ har 
             [ globalEffect $ har 
