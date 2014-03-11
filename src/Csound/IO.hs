@@ -37,7 +37,9 @@ module Csound.IO (
     csd, csdBy
 ) where
 
-import System.Cmd(system)
+import System.Process
+import Control.Exception
+
 import Data.Default
 import Csound.Typed
 
@@ -139,7 +141,7 @@ playCsd = playCsdBy def
 playCsdBy :: (RenderCsd a) => Options -> (String -> IO ()) -> String -> a -> IO ()
 playCsdBy opt player file a = do
     writeCsdBy opt fileCsd a
-    _ <- system $ "csound -o " ++ fileWav ++ " " ++ fileCsd
+    runWithUserInterrupt $ "csound -o " ++ fileWav ++ " " ++ fileCsd
     player fileWav
     return ()
     where fileCsd = file ++ ".csd"
@@ -148,9 +150,7 @@ playCsdBy opt player file a = do
 simplePlayCsdBy :: (RenderCsd a) => Options -> String -> String -> a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
     where phi file = do
-            _ <- system $ player ++ " " ++ file
-            return ()
-            
+            runWithUserInterrupt $ player ++ " " ++ file
 
 -- | Renders csound code to file @tmp.csd@ and plays it with @-odac@ option
 -- (sound output goes to soundcard in real time).
@@ -161,8 +161,7 @@ dac = dacBy def
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt a = do
     writeCsdBy opt "tmp.csd" a
-    _ <- system $ "csound -odac " ++ "tmp.csd" 
-    return ()
+    runWithUserInterrupt $ "csound -odac " ++ "tmp.csd" 
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()
@@ -184,8 +183,7 @@ csd = csdBy def
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
     writeCsdBy options "tmp.csd" a
-    _ <- system $ "csound tmp.csd" 
-    return ()
+    runWithUserInterrupt $ "csound tmp.csd" 
 
 ----------------------------------------------------------
 -- players
@@ -206,4 +204,16 @@ totem = totemBy def
 totemBy :: (RenderCsd a) => Options -> a -> IO ()
 totemBy opt = simplePlayCsdBy opt "totem" "tmp"
 
+----------------------------------------------------------
+-- handle user interrupts
+
+runWithUserInterrupt :: String -> IO ()
+runWithUserInterrupt cmd = do
+    pid <- runCommand cmd
+    catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
+    where
+        onUserInterrupt :: ProcessHandle -> AsyncException -> IO ()
+        onUserInterrupt pid x = case x of 
+            UserInterrupt -> terminateProcess pid >> throw x
+            e             -> throw e
 
