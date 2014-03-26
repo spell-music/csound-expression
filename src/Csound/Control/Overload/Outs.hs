@@ -3,10 +3,13 @@
         FlexibleInstances, 
         FlexibleContexts #-}
 module Csound.Control.Overload.Outs(
-    Outs(..)        
+    Outs(..), onArg       
 ) where
 
 import Csound.Typed
+
+onArg :: Outs b => (a -> b) -> (a -> SE (SigOuts b))
+onArg f = toOuts . f
 
 class Sigs (SigOuts a) => Outs a where
     type SigOuts a :: *
