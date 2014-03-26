@@ -47,8 +47,10 @@ module Csound.Air (
     classicWaves,
     masterVolume, masterVolumeKnob,
 
-    -- * Other
-    reverbsc1
+    -- * Reverbs
+    reverbsc1, rever1, rever2, reverTime,
+    smallRoom, smallHall, largeHall,
+    smallRoom2, smallHall2, largeHall2
 
 ) where
 
@@ -526,3 +528,46 @@ masterVolume = slider "master" uspan 0.5
 masterVolumeKnob :: Source Sig
 masterVolumeKnob = knob "master" uspan 0.5
 
+---------------------------------------------------------------------------
+-- Reverbs
+
+-- | Reverb with given time.
+reverTime :: Sig -> Sig -> Sig
+reverTime dt a =  nreverb a dt 0.3 
+
+-- | Mono reverb (based on reverbsc)
+--
+-- > rever1 feedback asig
+rever1 :: Sig -> Sig -> (Sig, Sig)
+rever1 fbk a = reverbsc a a fbk 12000
+
+-- | Mono reverb (based on reverbsc)
+--
+-- > rever2 feedback asigLeft asigRight
+rever2 :: Sig -> Sig -> Sig -> (Sig, Sig)
+rever2 fbk a1 a2 = (a1 + wa1, a2 + wa2)
+	where (wa1, wa2) = reverbsc a1 a2 fbk 12000
+
+-- | Mono reverb for small room.
+smallRoom :: Sig -> (Sig, Sig)
+smallRoom = rever1 0.6
+
+-- | Mono reverb for small hall.
+smallHall :: Sig -> (Sig, Sig)
+smallHall = rever1 0.8
+
+-- | Mono reverb for large hall.
+largeHall :: Sig -> (Sig, Sig)
+largeHall = rever1 0.9
+
+-- | Stereo reverb for small room.
+smallRoom2 :: Sig -> Sig -> (Sig, Sig)
+smallRoom2 = rever2 0.6
+
+-- | Stereo reverb for small hall.
+smallHall2 :: Sig -> Sig -> (Sig, Sig)
+smallHall2 = rever2 0.8
+
+-- | Stereo reverb for large hall.
+largeHall2 :: Sig -> Sig -> (Sig, Sig)
+largeHall2 = rever2 0.9

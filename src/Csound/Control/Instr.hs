@@ -90,7 +90,7 @@ module Csound.Control.Instr(
 
     -- * Overload
     -- | Converters to make it easier a construction of the instruments.
-    Instr(..), MidiInstr(..), AmpInstr(..), CpsInstr(..)
+    Outs(..), MidiInstr(..), AmpInstr(..), CpsInstr(..)
 ) where
 
 import Csound.Typed

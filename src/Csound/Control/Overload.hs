@@ -1,8 +1,8 @@
 module Csound.Control.Overload(
-    Instr(..), MidiInstr(..), AmpInstr(..), CpsInstr(..)        
+    Outs(..), MidiInstr(..), AmpInstr(..), CpsInstr(..)        
 ) where
 
-import Csound.Control.Overload.Instr
+import Csound.Control.Overload.Outs
 import Csound.Control.Overload.MidiInstr
 import Csound.Control.Overload.SpecInstr
 
