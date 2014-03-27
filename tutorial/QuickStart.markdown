@@ -569,10 +569,11 @@ in the type `SE`. Often we can lift the instrument on the fly
 with methods from the special classes:
 
 ~~~
-class Instr a where
-    type InstrOut a :: *
-    type InstrIn  a :: *
-    onArg :: a -> InstrIn a -> SE (InstrOut a)   
+class Outs a where
+    type SigOuts a :: *
+    toOuts :: a -> SE (SigOuts a)
+    
+onArg :: Outs b => (a -> b) -> (a -> SE (SigOuts b))   
 
 class CpsInstr a where
     type CpsInstrOut a :: *

@@ -70,9 +70,16 @@ Requirements (for Csound and Haskell users):
 
 It should print a long message with version and available flags and libraries.
 
-* Good library for composition. Right now only one is supported (see temporal-csound package on hackage).
+* Good library for composition. Right now only one is 
+    supported (see [temporal-csound](http://hackage.haskell.org/package/temporal-csound) package on hackage).
     It brings together temporal-music-notation and csound-expression packages.
     It's used to make the process of score-writing more convenient.
+
+**WARNING**: the library works best within ghci. The real-time sound rendering function dac spawns
+    a child process in the background which may continue to execute after you stop the main process that runs the programm.
+    It's not so in vim but it happens in the Sublime Editor and when you invoke runhaskell. So the best
+    is to write you program in the separate file and then load it in the ghci and invoke the function main (which
+    runs the sound rendering with the function dac).
 
 Tutorials and examples
 ===========================
