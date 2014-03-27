@@ -49,8 +49,8 @@ module Csound.Air (
 
     -- * Reverbs
     reverbsc1, rever1, rever2, reverTime,
-    smallRoom, smallHall, largeHall,
-    smallRoom2, smallHall2, largeHall2
+    smallRoom, smallHall, largeHall, magicCave,
+    smallRoom2, smallHall2, largeHall2, magicCave2
 
 ) where
 
@@ -560,6 +560,10 @@ smallHall = rever1 0.8
 largeHall :: Sig -> (Sig, Sig)
 largeHall = rever1 0.9
 
+-- | The magic cave reverb (mono).
+magicCave :: Sig -> (Sig, Sig)
+magicCave = rever1 0.99
+
 -- | Stereo reverb for small room.
 smallRoom2 :: Sig -> Sig -> (Sig, Sig)
 smallRoom2 = rever2 0.6
@@ -571,3 +575,7 @@ smallHall2 = rever2 0.8
 -- | Stereo reverb for large hall.
 largeHall2 :: Sig -> Sig -> (Sig, Sig)
 largeHall2 = rever2 0.9
+
+-- | The magic cave reverb (stereo).
+magicCave2 :: Sig -> Sig -> (Sig, Sig)
+magicCave2 = rever2 0.99
