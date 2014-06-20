@@ -120,7 +120,7 @@ There is even better way to read sound files. What if we have a short drum loop
 and we want to mix it with harmony. We need only 10 minutes of it. We can do it like this:
 
 ~~~
-Prelude Csound.Base> dac $ takeSnd (10 * 60) $ loopSnd "drum.wav" + loopSnd "harmony.mp3"
+Prelude Csound.Base> dac $ takeSnd (10 * 60) $ loopSnd "drum.wav" + (mul 0.5 $ loopSnd "harmony.mp3")
 ~~~
 
 Let's review the functions:
@@ -128,11 +128,13 @@ Let's review the functions:
 ~~~
 loopSnd :: String -> (Sig, Sig)
 takeSnd :: Sigs a => Double -> a -> a
+mul     :: SigSpace a => Sig -> a -> a
 ~~~
 
 The function `loopSnd` repeats endlessly a given file (note that it's important
 to write the files with extensions. Wav files and mp3s a treated differently
 the dicision is based on the file extension). 
+The function `mul` scales the tuples of signals with a scalar signal. 
 
 The `takeSnd` turncates the sound to the given amount of seconds.
 
