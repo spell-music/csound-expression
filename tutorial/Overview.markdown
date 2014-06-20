@@ -80,6 +80,25 @@ and cut off frequency of the low pass filter (usually it's 10000).
 
 ## Reading the files
 
+
+~~~
+readSnd :: String -> (Sig, Sig)  -- read once
+loopSnd :: String -> (Sig, Sig)  -- read in loop
+loopSndBy :: D -> String -> (Sig, Sig) -- read in loop with given period (in seconds)
+~~~
+
+If we have a wav (or aiff) file we can read it with the given speed (the first argument):
+
+~~~
+readWav :: Sig -> String -> (Sig, Sig)
+loopWav :: Sig -> String -> (Sig, Sig)
+~~~
+
+Note that speed is a Signal and can vary with time. Use negative
+values to read in reverse. When speed equals one it's normal reading.
+
+Low-level functions:
+
 ~~~
 mp3in   :: Tuple a => Str -> a
 diskin2 :: Tuple a => Str -> Sig -> a
@@ -157,6 +176,17 @@ trig    :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
 -- stream and holds the note while the second event stream is silent
 schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
 ~~~
+
+## Turncating/repeating the signal
+
+~~~
+takeSnd   :: Sigs a => Double -> a -> a   
+repeatSnd :: Sigs a => D      -> a -> a
+~~~
+
+With `takeSnd` we can turncate the signals to the given amount of seconds.
+We use only first `n`-seconds from the signals. The `repeatSnd` repeats
+the signal with the given period.
 
 ## Rendering the Csound files
 

@@ -116,6 +116,27 @@ The function `mp3in` takes a Csound-string with the filename and produces a soun
 The function `ar2` forces the output to be a pair of signals. The function `text`
 converts the Haskell strings to Csound strings.
 
+There is even better way to read sound files. What if we have a short drum loop
+and we want to mix it with harmony. We need only 10 minutes of it. We can do it like this:
+
+~~~
+Prelude Csound.Base> dac $ takeSnd (10 * 60) $ loopSnd "drum.wav" + loopSnd "harmony.mp3"
+~~~
+
+Let's review the functions:
+
+~~~
+loopSnd :: String -> (Sig, Sig)
+takeSnd :: Sigs a => Double -> a -> a
+~~~
+
+The function `loopSnd` repeats endlessly a given file (note that it's important
+to write the files with extensions. Wav files and mp3s a treated differently
+the dicision is based on the file extension). 
+
+The `takeSnd` turncates the sound to the given amount of seconds.
+
+
 Primitive types
 --------------------
 
