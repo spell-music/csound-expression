@@ -1,4 +1,4 @@
-module Csound.Air (
+module Csound.Air (        
     -- * Basic waveforms
     -- | Basic waveforms that are used most often. A waveform function take in a time varied frequency (in Hz).
 
@@ -35,6 +35,19 @@ module Csound.Air (
     -- ** Specific filters
     mlp,
 
+    -- * Sound files playback
+
+    -- ** Stereo
+    readSnd, loopSnd, loopSndBy, 
+    readWav, loopWav, 
+    
+    -- ** Mono
+    readSnd1, loopSnd1, loopSndBy1, 
+    readWav1, loopWav1, 
+    
+    -- ** Utility
+    takeSnd, repeatSnd, lengthSnd, toMono, segments,
+
     -- * Patterns
     mean, vibrate, randomPitch, chorus, resons, resonsBy, modes, dryWet,    
 
@@ -54,13 +67,15 @@ module Csound.Air (
 
 ) where
 
-import Data.List(intersperse)
+import Data.List(intersperse, isSuffixOf)
 import Data.Boolean
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (display)
 import Csound.Typed.Gui
 import Csound.Control.Gui(funnyRadio)
+import Csound.Control.Evt(metroE)
+import Csound.Control.Instr(withDur)
 
 import Csound.Tab(sine)
 
@@ -316,6 +331,67 @@ bbrb = balance2 bbr
 -- > mlp centerFrequency qResonance signal
 mlp :: Sig -> Sig -> Sig -> Sig
 mlp cf q asig = moogladder asig cf q
+
+--------------------------------------------------------------------------
+-- sound files playback
+
+takeSnd :: Sigs a => Double -> a ->  a
+takeSnd dt asig = mix $ sco (const $ return $ asig) (CsdEventList dt [(0, dt, unit)])
+
+repeatSnd :: Sigs a => D -> a -> a
+repeatSnd dt asig = sched (const $ return asig) $ segments dt
+
+isMp3 :: String -> Bool
+isMp3 name = ".mp3" `isSuffixOf` name
+
+toMono :: (Sig, Sig) -> Sig
+toMono (a, b) = 0.5 * a + 0.5 * b
+
+lengthSnd :: String -> D
+lengthSnd fileName
+    | isMp3 fileName	= mp3len $ text fileName
+    | otherwise			= filelen $ text fileName
+
+segments :: D -> Evt (D, Unit)
+segments dt = withDur dt $ metroE (sig $ recip dt)
+
+-- Stereo
+
+readSnd :: String -> (Sig, Sig)
+readSnd fileName
+	| isMp3 fileName = mp3in (text fileName)		
+	| otherwise      = diskin2 (text fileName) 1
+
+loopSndBy :: D -> String -> (Sig, Sig)
+loopSndBy dt fileName = repeatSnd dt $ readSnd fileName
+
+loopSnd :: String -> (Sig, Sig)
+loopSnd fileName = loopSndBy (lengthSnd fileName) fileName
+
+readWav :: Sig -> String -> (Sig, Sig)
+readWav speed fileName = diskin2 (text fileName) speed
+
+loopWav :: Sig -> String -> (Sig, Sig)
+loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
+
+-- Mono
+
+readSnd1 :: String -> Sig
+readSnd1 fileName 
+    | isMp3 fileName = toMono $ readSnd fileName
+    | otherwise      = diskin2 (text fileName) 1
+
+loopSndBy1 :: D -> String -> Sig
+loopSndBy1 dt fileName = repeatSnd dt $ readSnd1 fileName
+
+loopSnd1 :: String -> Sig
+loopSnd1 fileName = loopSndBy1 (lengthSnd fileName) fileName
+
+readWav1 :: Sig -> String -> Sig
+readWav1 speed fileName = diskin2 (text fileName) speed
+
+loopWav1 :: Sig -> String -> Sig
+loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
 
 --------------------------------------------------------------------------
 -- patterns
