@@ -45,7 +45,7 @@ Prelude Csound.Base>
 We can play a sine wave with 440 Hz:
 
 ~~~ 
-Prelude Csound.Base> dac $ osc 440
+> dac $ osc 440
 ~~~
 
 Pressing Ctrl+C stops the sound. The expression `osc 440` makes the sine wave and
@@ -56,7 +56,7 @@ Let's modify the signal. It has a constant amplitude envelope but we can change 
 with `linseg` function. 
 
 ~~~
-Prelude Csound.Base> dac $ linseg [0, 1, 1, 3, 0] * osc 440
+> dac $ linseg [0, 1, 1, 3, 0] * osc 440
 ~~~
 
 The function `linseg` creates a signal of linear segments
@@ -74,34 +74,34 @@ and finally goes to zero in 3 seconds.
 Let's add a 5% vibrato to the sound:
 
 ~~~
-Prelude Csound.Base> dac $ linseg [0, 1, 1, 3, 0] * osc (440 * (1 + 0.05 * osc 5))
+> dac $ linseg [0, 1, 1, 3, 0] * osc (440 * (1 + 0.05 * osc 5))
 ~~~
 
 We can factor out the envelope and apply it to the amplitude and the vibrato:
 
 ~~~
-Prelude Csound.Base> let env = linseg [0, 1, 1, 3, 0]
-Prelude Csound.Base> dac $ env * osc (440 * (1 + 0.05 * env * osc 5))
+> let env = linseg [0, 1, 1, 3, 0]
+> dac $ env * osc (440 * (1 + 0.05 * env * osc 5))
 ~~~
 
 We can apply an envelope to any parameter. Let's make a slide, and change 
 the waveform to sawtooth:
 
 ~~~
-Prelude Csound.Base> dac $ env * saw (220 + 220 * env)
+> dac $ env * saw (220 + 220 * env)
 ~~~
 
 We can play a tone with three odd harmonics:
 
 
 ~~~
-Prelude Csound.Base> dac $ env * oscBy (sines [1, 0, 0.5, 0, 0.25]) 440
+> dac $ env * oscBy (sines [1, 0, 0.5, 0, 0.25]) 440
 ~~~
 
 We can play an mp3 file:
 
 ~~~
-Prelude Csound.Base> dac $ ar2 $ mp3in $ text "/home/anton/listen/The Kinks-Waterloo Sunset.mp3"
+> dac $ ar2 $ mp3in $ text "/home/anton/listen/The Kinks-Waterloo Sunset.mp3"
 ~~~
 
 We used the functions:
@@ -120,7 +120,7 @@ There is even better way to read sound files. What if we have a short drum loop
 and we want to mix it with harmony. We need only 10 minutes of it. We can do it like this:
 
 ~~~
-Prelude Csound.Base> dac $ takeSnd (10 * 60) $ loopSnd "drum.wav" + (mul 0.5 $ loopSnd "harmony.mp3")
+> dac $ takeSnd (10 * 60) $ loopSnd "drum.wav" + (mul 0.5 $ loopSnd "harmony.mp3")
 ~~~
 
 Let's review the functions:
@@ -207,7 +207,7 @@ si wrapped in the `SE`. The type `SE` is a `Functor`, `Applicative` and `Monad`
 so we can use the standard functions to process it:
 
 ~~~
-Prelude Csound.Base> dac $ fmap (env * ) $ noise 1 0
+> dac $ fmap (env * ) $ noise 1 0
 ~~~
 
 Midi
@@ -224,7 +224,7 @@ The type `Msg` signifies the midi-messages, the type class `Sigs`
 contains all tuples of signals. Let's make a simple midi instrument:
 
 ~~~
-Prelude Csound.Base> let instr msg = return $ 0.5 * sig (ampmidi msg 1) * fades 0.01 0.5 * osc (sig $ cpsmidi msg)
+> let instr msg = return $ 0.5 * sig (ampmidi msg 1) * fades 0.01 0.5 * osc (sig $ cpsmidi msg)
 ~~~
 
 The `fades` function adds fade in and fade out phases to the signal with
@@ -235,14 +235,14 @@ The function `sig` converts numbers to signals.
 Now we can play it with the function `midi`:
 
 ~~~
-Prelude Csound.Base> dac $ midi instr
+> dac $ midi instr
 ~~~
 
 If we don't have a hardware midi-device we can use a virtual midi-keyboard.
 To do it we need to use `vdac` in place of `dac`:
 
 ~~~
-Prelude Csound.Base> vdac $ midi instr
+> vdac $ midi instr
 ~~~
 
 The function `midi` takes a mid-instrument and starts to listen 
@@ -258,13 +258,13 @@ sawtooth on the second one? We can just add the resulting signals.
 First let's take a waveform as a parameter for the instrument:
 
 ~~~
-Prelude Csound.Base> let instr f msg = return $ 0.5 * sig (ampmidi msg 1) * fades 0.01 0.5 * f (sig $ cpsmidi msg)
+> let instr f msg = return $ 0.5 * sig (ampmidi msg 1) * fades 0.01 0.5 * f (sig $ cpsmidi msg)
 ~~~
 
 Now let's set up everything and add some reverb:
 
 ~~~
-Prelude Csound.Base> vdac $ 0.5 * nreverb ((midin 1 $ instr osc) + (midin 2 $ instr saw)) 1 0.2
+> vdac $ 0.5 * nreverb ((midin 1 $ instr osc) + (midin 2 $ instr saw)) 1 0.2
 ~~~
 
 The example shows that applying the effect is as simple as applying a function.
@@ -283,7 +283,7 @@ The only one method `onMsg` takes something and converts it to midi-instruments.
 We can define an instrument from the wave form:
 
 ~~~
-Prelude Csound.Base> vdac $ midi $ onMsg osc
+> vdac $ midi $ onMsg osc
 ~~~
 
 Here the method takes a function that converts a frequency to signal.
@@ -318,7 +318,7 @@ It creates a stream of repeating events. the first argument is
 the frequency of the repetition (in Hz). Let's create a stream of notes:
 
 ~~~
-Prelude Csound.Base> let notes = fmap (const 440) $ metroE 2
+> let notes = fmap (const 440) $ metroE 2
 ~~~
 
 Now we can trigger the instrument on the stream with the function `sched`:
@@ -336,13 +336,13 @@ the parameter for the instrument.
 Let's create a simple instrument:
 
 ~~~
-Prelude Csound.Base> let instr x = return $ 0.5 * osc (sig x)
+> let instr x = return $ 0.5 * osc (sig x)
 ~~~
 
 And triger the notes:
 
 ~~~
-Prelude Csound.Base> dac $ sched instr $ withDur 0.25 notes
+> dac $ sched instr $ withDur 0.25 notes
 
 <interactive>:63:34:
     Couldn't match type `Integer' with `D'
@@ -358,7 +358,7 @@ We've got an error message about using `Integer` in place of `D`.
 Let's look at the type of the `notes`:
 
 ~~~
-Prelude Csound.Base> :t notes
+> :t notes
 notes :: Evt Integer
 ~~~
  
@@ -366,15 +366,15 @@ The `ghci` converts numeric literals to integers, but we need a csound integer.
 Let's give the `ghci` a hint:
 
 ~~~
-Prelude Csound.Base> let notes = fmap (const (440::D)) $ metroE 2
-Prelude Csound.Base> :t notes
+> let notes = fmap (const (440::D)) $ metroE 2
+> :t notes
 notes :: Evt D
 ~~~
 
 Now we can invoke the instrument and hear the result:
 
 ~~~
-Prelude Csound.Base> dac $ sched instr $ withDur 0.25 notes
+> dac $ sched instr $ withDur 0.25 notes
 ~~~
 
 The function `withDur` appends a constant value for the duration of the note
@@ -382,13 +382,13 @@ to all events on the stream. Let's make out events more intersting.
 We can play a list of events in the loop and make it faster:
 
 ~~~
-Prelude Csound.Base> let notes = cycleE [440::D, 330, 220] $ metroE 4
+> let notes = cycleE [440::D, 330, 220] $ metroE 4
 ~~~
 
 Or we can play them at random and skip some elements with the inverse of the given frequency:
 
 ~~~
-Prelude Csound.Base> let notes = randSkip 0.75 $ oneOf [440::D, 330, 220] $ metroE 4
+> let notes = randSkip 0.75 $ oneOf [440::D, 330, 220] $ metroE 4
 ~~~
 
 Event streams are monoids. We can merge two event streams together with 
@@ -396,7 +396,7 @@ the function `mappend`. Let's merge two streams. One plays a note 440 every 3
 beat and another plays a 330 every 7 beat.
 
 ~~~
-Prelude Csound.Base> let notes = let m = metroE 4 in (mappend (every 0 [2] $ repeatE (440 :: D) m) (every 0 [7] $ repeatE 330 m))
+> let notes = let m = metroE 4 in (mappend (every 0 [2] $ repeatE (440 :: D) m) (every 0 [7] $ repeatE 330 m))
 ~~~
 
 We used the functions:
@@ -420,7 +420,7 @@ Score
 We can play a list of notes. 
 
 ~~~
-Prelude Csound.Base> let notes = CsdEventList 4 [(0, 1, 440::D), (1, 1, 220), (2, 2, 330)]
+> let notes = CsdEventList 4 [(0, 1, 440::D), (1, 1, 220), (2, 2, 330)]
 ~~~
 
 The type `CsdEventList` contains the total duration of the scores
@@ -428,7 +428,7 @@ and the list of triplets: `(startTime, duration, instrumentArguments)`.
 Now we can trigger the instrument:
 
 ~~~
-Prelude Csound.Base> dac $ mix $ sco instr notes
+> dac $ mix $ sco instr notes
 ~~~
 
 The functions:
@@ -503,7 +503,7 @@ a function that can not exceed the value of 1. It's clipped before
 it's send to the speakers. We can scale the sound to remove the distortion:
 
 ~~~
-Prelude Csound> dac $ 0.5 * (mix $ sco instr notes)
+> dac $ 0.5 * (mix $ sco instr notes)
 ~~~
 
 What if we don't want or tune to fade out?
@@ -511,7 +511,7 @@ We can apply an effect to it. First let's define
 a fader instrument. It takes a signal and multiplies
 it with an linear envelope:
 ~~~
-Prelude Csound> let fader x = return $ linseg [1, idur * 0.5, 1, idur * 0.5, 0] * x
+> let fader x = return $ linseg [1, idur * 0.5, 1, idur * 0.5, 0] * x
 ~~~
 
 The constant `idur` is the hack that let's us querry the total duration of the note.
@@ -528,7 +528,7 @@ eff :: (Sigs a, Sigs b, CsdSco f) => (a -> SE b) -> f (Mix a) -> f (Mix b)
 It applies the effect to the unmixed list of sounds:
 
 ~~~
-Prelude Csound> dac $ mix $ eff fader $ sco instr notes
+> dac $ mix $ eff fader $ sco instr notes
 ~~~
 
 Offline rendering
@@ -542,7 +542,7 @@ We can render the file without playing (the function `csd`) and
 specify the wav-file as the output in the options.
 
 ~~~
-Prelude Csound> csdBy (setOutput "tmp.wav") $ mix $ eff fader $ sco instr notes
+> csdBy (setOutput "tmp.wav") $ mix $ eff fader $ sco instr notes
 ~~~
 
 It saves the file to the `tmp.csd` with output set to `tmp.wav` 
@@ -551,14 +551,14 @@ and renders it with `csound`. The `csound` then creates a wav-file.
 And now we can listen to it in the player:
 
 ~~~
-Prelude Csound> :!mplayer tmp.wav
+> :!mplayer tmp.wav
 ~~~
 
 There are shortcut functions for Linux-users: `mplayer`, `totem`.
 They save the output to file and invoke the given media-player on it.
 
 ~~~
-Prelude Csound> mplayer $ mix $ eff fader $ sco instr notes
+> mplayer $ mix $ eff fader $ sco instr notes
 ~~~
 
 Adaptors
@@ -611,9 +611,9 @@ The method `onArg` unifies the pure and non pure instruments.
 We can use it like this:
 
 ~~~
-Prelude Csound> let notes = temp (440 :: D)
-Prelude Csound> let instr cps = osc $ sig cps
-Prelude Csound> dac $ mix $ sco (onArg instr) notes
+> let notes = temp (440 :: D)
+> let instr cps = osc $ sig cps
+> dac $ mix $ sco (onArg instr) notes
 ~~~
 
 Now we don't need to wrap the output in the type `SE` with the method `return`.
@@ -623,8 +623,8 @@ and frequency as input. For example, we can convert to this type of instrument
 a waveform:
 
 ~~~
-Prelude Csound> let notes = temp (0.5 :: D, 440 :: D)
-Prelude Csound> dac $ mix $ sco (onCps osc) notes
+> let notes = temp (0.5 :: D, 440 :: D)
+> dac $ mix $ sco (onCps osc) notes
 ~~~
 
 The method `onAmp` defines the instruments that take only an amplitude.
@@ -632,9 +632,9 @@ They are drum sounds or noises. It can construct instruments from constants
 by scaling the sound with the input amplitude.
 
 ~~~
-Prelude Csound> let notes = str 0.25 $ loop 4 $ mel [temp (0.5::D), rest 1]
-Prelude Csound> let instr = noise 1 0
-Prelude Csound> dac $ mix $ sco (onAmp instr) notes
+> let notes = str 0.25 $ loop 4 $ mel [temp (0.5::D), rest 1]
+> let instr = noise 1 0
+> dac $ mix $ sco (onAmp instr) notes
 ~~~
 
 Catalog of the instruments
@@ -659,13 +659,13 @@ Prelude Csound Csound.Catalog> vdac $ mul 0.3 $ midi $ onMsg (mul (fades 0.01 3)
 or
 
 ~~~
-Prelude Csound Csound.Catalog> vdac $ mul 0.5 $ midi $ onMsg (mul (fades 0.01 3) . delayedString)
+> vdac $ mul 0.5 $ midi $ onMsg (mul (fades 0.01 3) . delayedString)
 ~~~
 
 or
 
 ~~~
-Prelude Csound Csound.Catalog> vdac $ mul 0.15 $ bayAtNight $ midi $ onMsg (mul (fades 1 2) . stringPad 1)
+> vdac $ mul 0.15 $ bayAtNight $ midi $ onMsg (mul (fades 1 2) . stringPad 1)
 ~~~
 
 Gui elements
