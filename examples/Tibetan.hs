@@ -17,7 +17,7 @@ import Control.Applicative hiding ((<*))
 
 import System.Random
 
-import Csound 
+import Csound hiding (N)
 import Color(blurp, blue)
 
 -- | A pure tibetan instrument with randomized parameters.
@@ -204,7 +204,7 @@ starSco = sco blue $
 
 main = do
     notes <- run acts
-    totem $ mix $ har 
+    dac $ mix $ har 
         [ introBlurp
         , del (introDur * 0.70) $ har 
             [ globalEffect $ har 

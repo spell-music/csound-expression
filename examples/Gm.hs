@@ -2,7 +2,7 @@
 -- | Accords in just intonation Gm with 14/8 beat.
 module Main where
 
-import Csound
+import Csound hiding (N)
 
 import Color(marimbaSynth)
 
