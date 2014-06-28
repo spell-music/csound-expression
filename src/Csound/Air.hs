@@ -51,6 +51,9 @@ module Csound.Air (
     -- * Signal manipulation
     takeSnd, delaySnd, segmentSnd, repeatSnd, toMono,
 
+    -- * Spectral functions
+    toSpec, fromSpec, mapSpec, scaleSpec, addSpec,
+
     -- * Patterns
     mean, vibrate, randomPitch, chorus, resons, resonsBy, modes, dryWet,    
 
@@ -426,6 +429,34 @@ readWav1 speed fileName = diskin2 (text fileName) speed
 -- | The mono variant of the function @loopWav@.
 loopWav1 :: Sig -> String -> Sig
 loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
+
+--------------------------------------------------------------------------
+-- spectral functions
+
+-- | Converts signal to spectrum.
+toSpec :: Sig -> Spec
+toSpec asig = pvsanal asig 1024 256 1024 1
+
+-- | Converts spectrum to signal.
+fromSpec :: Spec -> Sig
+fromSpec = pvsynth
+
+-- | Applies a transformation to the spectrum of the signal.
+mapSpec :: (Spec -> Spec) -> Sig -> Sig
+mapSpec f = fromSpec . f . toSpec
+
+-- | Scales all frequencies. Usefull for transposition. 
+-- For example, we can transpose a signal by the given amount of semitones: 
+--
+-- > scaleSpec (semitone 1) asig
+scaleSpec :: Sig -> Sig -> Sig
+scaleSpec k = mapSpec $ \x -> pvscale x k
+
+-- | Adds given amount of Hz to all frequencies.
+--
+-- > addSpec hz asig
+addSpec :: Sig -> Sig -> Sig
+addSpec hz = mapSpec $ \x -> pvshift x hz 0
 
 --------------------------------------------------------------------------
 -- patterns

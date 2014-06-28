@@ -23,8 +23,9 @@
 module Csound.IO (    
     -- * Rendering
     RenderCsd(..),
-    renderCsd,  
+    renderCsd, setDur, 
     writeCsd, writeCsdBy, 
+    writeSnd, writeSndBy,
     
     -- * Playing the sound
     playCsd, playCsdBy, 
@@ -115,6 +116,9 @@ instance (Sigs a, Sigs b) => RenderCsd (a -> b) where
 instance (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
     renderCsdBy opt f = renderEffBy opt f
 
+setDur :: RenderCsd a => D -> a -> a
+setDur = undefined
+
 -- | Renders Csound file.
 renderCsd :: RenderCsd a => a -> IO String
 renderCsd = renderCsdBy def
@@ -126,6 +130,17 @@ writeCsd file a = writeFile file =<< renderCsd a
 -- | Render Csound file with options and save it to the give file.
 writeCsdBy :: RenderCsd a => Options -> String -> a -> IO ()
 writeCsdBy opt file a = writeFile file =<< renderCsdBy opt a
+
+-- | Render Csound file and save result sound to the wav-file.
+writeSnd :: RenderCsd a => String -> a -> IO ()
+writeSnd = writeSndBy def
+
+-- | Render Csound file with options and save result sound to the wav-file.
+writeSndBy :: RenderCsd a => Options -> String -> a -> IO ()
+writeSndBy opt file a = do
+    writeCsdBy opt fileCsd a
+    runWithUserInterrupt $ "csound -o " ++ file ++ " " ++ fileCsd
+    where fileCsd = "tmp.csd"    
 
 -- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
 -- 
