@@ -9,9 +9,10 @@ module Csound.Control.Evt(
     Snap, snapshot, snaps, sync, syncBpm, 
     
     -- * Opcodes
-    metroE, changedE, triggerE, 
+    metroE, impulseE, changedE, triggerE, loadbang, impulse,
 
     -- * Higher-level event functions
+    eventList,
     cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle,
     oneOf, freqOf, freqAccum, 
     randDs, randInts, randSkip, randSkipBy, 
@@ -30,6 +31,24 @@ import Csound.Typed.Opcode
 -- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
 metroE :: Sig -> Evt Unit 
 metroE = sigToEvt . metro
+
+-- | Fires a single event right now.
+--
+-- > loadbang = pulseE 0
+loadbang :: Evt Unit
+loadbang = impulseE 0
+
+-- | Fires a single true value in the given time ahead.
+impulse :: D -> Sig 
+impulse dt = mpulse 1 0 `withD` dt
+
+-- | Fires a single event in the given time ahead.
+impulseE :: D -> Evt Unit
+impulseE = sigToEvt . impulse
+
+-- | Makes an event stream from list of events.
+eventList :: [(D, D, a)] -> Evt [(D, D, a)]
+eventList es = fmap (const es) loadbang
 
 -- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
 changedE :: [Sig] ->  Evt Unit

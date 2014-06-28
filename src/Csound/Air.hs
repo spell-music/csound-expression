@@ -46,7 +46,10 @@ module Csound.Air (
     readWav1, loopWav1, 
     
     -- ** Utility
-    takeSnd, repeatSnd, lengthSnd, toMono, segments,
+    lengthSnd, segments,
+
+    -- * Signal manipulation
+    takeSnd, delaySnd, segmentSnd, repeatSnd, toMono,
 
     -- * Patterns
     mean, vibrate, randomPitch, chorus, resons, resonsBy, modes, dryWet,    
@@ -74,8 +77,8 @@ import Csound.Typed
 import Csound.Typed.Opcode hiding (display)
 import Csound.Typed.Gui
 import Csound.Control.Gui(funnyRadio)
-import Csound.Control.Evt(metroE)
-import Csound.Control.Instr(withDur)
+import Csound.Control.Evt(metroE, eventList)
+import Csound.Control.Instr(withDur, sched)
 
 import Csound.Tab(sine)
 
@@ -332,64 +335,95 @@ bbrb = balance2 bbr
 mlp :: Sig -> Sig -> Sig -> Sig
 mlp cf q asig = moogladder asig cf q
 
+
 --------------------------------------------------------------------------
--- sound files playback
+-- Signal manipulation
 
-takeSnd :: Sigs a => Double -> a ->  a
-takeSnd dt asig = mix $ sco (const $ return $ asig) (CsdEventList dt [(0, dt, unit)])
+-- | Takes only given amount (in seconds) from the signal (the rest is silence).
+takeSnd :: Sigs a => D -> a -> a
+takeSnd dt asig = trigs (const $ return asig) $ eventList [(0, dt, unit)]
 
+-- | Delays signals by the given amount (in seconds).
+delaySnd :: Sigs a => D -> a -> a
+delaySnd dt asig = trigs (const $ return asig) $ eventList [(dt, -1, unit)]
+
+-- | Delays a signal by the first argument and takes only second argument amount
+-- of signal (everything is measured in seconds).
+segmentSnd ::Sigs a => D -> D -> a -> a
+segmentSnd del dur asig = trigs (const $ return asig) $ eventList [(del, dur, unit)]
+
+-- | Repeats the signal with the given period.
 repeatSnd :: Sigs a => D -> a -> a
 repeatSnd dt asig = sched (const $ return asig) $ segments dt
+
+--------------------------------------------------------------------------
+-- sound files playback
 
 isMp3 :: String -> Bool
 isMp3 name = ".mp3" `isSuffixOf` name
 
+-- | Converts stereosignal to mono with function mean.
 toMono :: (Sig, Sig) -> Sig
 toMono (a, b) = 0.5 * a + 0.5 * b
 
+-- | Length in seconds of the sound file.
 lengthSnd :: String -> D
 lengthSnd fileName
     | isMp3 fileName	= mp3len $ text fileName
     | otherwise			= filelen $ text fileName
 
+-- | Produces repeating segments with the given time in seconds.
 segments :: D -> Evt (D, Unit)
 segments dt = withDur dt $ metroE (sig $ recip dt)
 
 -- Stereo
 
+-- | Reads stereo signal from the sound-file (wav or mp3 or aiff).
 readSnd :: String -> (Sig, Sig)
 readSnd fileName
 	| isMp3 fileName = mp3in (text fileName)		
 	| otherwise      = diskin2 (text fileName) 1
 
+-- | Reads stereo signal from the sound-file (wav or mp3 or aiff)
+-- and loops it with the given period (in seconds).
 loopSndBy :: D -> String -> (Sig, Sig)
 loopSndBy dt fileName = repeatSnd dt $ readSnd fileName
 
+-- | Reads stereo signal from the sound-file (wav or mp3 or aiff)
+-- and loops it with the file length.
 loopSnd :: String -> (Sig, Sig)
 loopSnd fileName = loopSndBy (lengthSnd fileName) fileName
 
+-- | Reads the wav file with the given speed (if speed is 1 it's a norma playback).
+-- We can use negative speed to read file in reverse.
 readWav :: Sig -> String -> (Sig, Sig)
 readWav speed fileName = diskin2 (text fileName) speed
 
+-- | Reads th wav file and loops over it.
 loopWav :: Sig -> String -> (Sig, Sig)
 loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
 
 -- Mono
 
+-- | The mono variant of the function @readSnd@.
 readSnd1 :: String -> Sig
 readSnd1 fileName 
     | isMp3 fileName = toMono $ readSnd fileName
     | otherwise      = diskin2 (text fileName) 1
 
+-- | The mono variant of the function @loopSndBy@.
 loopSndBy1 :: D -> String -> Sig
 loopSndBy1 dt fileName = repeatSnd dt $ readSnd1 fileName
 
+-- | The mono variant of the function @loopSnd@.
 loopSnd1 :: String -> Sig
 loopSnd1 fileName = loopSndBy1 (lengthSnd fileName) fileName
 
+-- | The mono variant of the function @readWav@.
 readWav1 :: Sig -> String -> Sig
 readWav1 speed fileName = diskin2 (text fileName) speed
 
+-- | The mono variant of the function @loopWav@.
 loopWav1 :: Sig -> String -> Sig
 loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
 
