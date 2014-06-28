@@ -2,6 +2,7 @@ module Csound.Options(
     Options(..),
 
     -- * Shortcuts
+    setDur,
     setRates, setBufs, setGain, setJack,
     setOutput, setInput, 
     setDac, setAdc, setDacBy, setAdcBy, setThru,

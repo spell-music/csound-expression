@@ -23,7 +23,7 @@
 module Csound.IO (    
     -- * Rendering
     RenderCsd(..),
-    renderCsd, setDur, 
+    renderCsd, 
     writeCsd, writeCsdBy, 
     writeSnd, writeSndBy,
     
@@ -115,9 +115,6 @@ instance (Sigs a, Sigs b) => RenderCsd (a -> b) where
 
 instance (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
     renderCsdBy opt f = renderEffBy opt f
-
-setDur :: RenderCsd a => D -> a -> a
-setDur = undefined
 
 -- | Renders Csound file.
 renderCsd :: RenderCsd a => a -> IO String
