@@ -113,6 +113,7 @@ scoCrackle = sco (onArg instrCrackle) $ har [
 main = dac $ mix $ har [
    scoBeat, 
    scoChorusel,
-   scoPluck
+   scoPluck,
+   rest 0
    ]
 
