@@ -8,7 +8,12 @@ module Csound.Air (
     -- ** Unipolar
     unipolar, bipolar, on, uon, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
 
+    -- * Noise
+    rndh, urndh, rndi, urndi, whiteNoise, pinkNoise,
+
     -- * Envelopes
+
+    leg, xeg,
 
     -- ** Relative duration
     onIdur, lindur, expdur, linendur,
@@ -19,18 +24,17 @@ module Csound.Air (
     -- ** Faders
     fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades,
 
+    -- * Low frequency oscillators
+    Lfo, lfo,
+
     -- * Filters
     -- | Arguemnts are inversed to get most out of curruing. First come parameters and the last one is the signal.
     
     -- ** Simple filters
-    lp, hp, bp, br,
+    lp, hp, bp, br, alp,
     
     -- ** Butterworth filters
     blp, bhp, bbp, bbr,
-
-    -- ** Balanced filters
-    -- | Applies filter and balances the output by the input signal.
-    lpb, hpb, bpb, brb, blpb, bhpb, bbpb, bbrb,
 
     -- ** Specific filters
     mlp,
@@ -52,10 +56,10 @@ module Csound.Air (
     takeSnd, delaySnd, segmentSnd, repeatSnd, toMono,
 
     -- * Spectral functions
-    toSpec, fromSpec, mapSpec, scaleSpec, addSpec,
+    toSpec, fromSpec, mapSpec, scaleSpec, addSpec, scalePitch,
 
     -- * Patterns
-    mean, vibrate, randomPitch, chorus, resons, resonsBy, modes, dryWet,    
+    mean, vibrate, randomPitch, chorusPitch, resons, resonsBy, modes, dryWet,    
 
     -- ** List functions
     odds, evens,
@@ -66,10 +70,27 @@ module Csound.Air (
     classicWaves,
     masterVolume, masterVolumeKnob,
 
-    -- * Reverbs
+    -- Effects
+    
+    -- ** Reverbs
     reverbsc1, rever1, rever2, reverTime,
     smallRoom, smallHall, largeHall, magicCave,
-    smallRoom2, smallHall2, largeHall2, magicCave2
+    smallRoom2, smallHall2, largeHall2, magicCave2,
+
+    -- ** Delays
+    echo, fdelay, fvdelay, fvdelays, funDelays,
+
+    -- ** Distortion
+    distortion,
+
+    -- ** Chorus
+    chorus,
+
+    -- ** Flanger
+    flange,
+
+    -- ** Phase
+    phase1, harmPhase, powerPhase
 
 ) where
 
@@ -77,13 +98,13 @@ import Data.List(intersperse, isSuffixOf)
 import Data.Boolean
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (display)
+import Csound.Typed.Opcode hiding (display, lfo)
 import Csound.Typed.Gui
 import Csound.Control.Gui(funnyRadio)
 import Csound.Control.Evt(metroE, eventList)
 import Csound.Control.Instr(withDur, sched)
 
-import Csound.Tab(sine)
+import Csound.Tab(sine, sines4)
 
 -------------------------------------------------------------------
 -- waveforms
@@ -153,7 +174,50 @@ uon :: Sig -> Sig -> Sig -> Sig
 uon a b x = a + (b - a) * x
 
 --------------------------------------------------------------------------
+-- noise
+
+-- | Constant random signal. It updates random numbers with given frequency.
+--
+-- > constRnd freq 
+rndh :: Sig -> SE Sig
+rndh = randh 1
+
+-- | Linear random signal. It updates random numbers with given frequency.
+--
+-- > rndi freq 
+rndi :: Sig -> SE Sig
+rndi = randi 1
+
+-- | Unipolar @rndh@
+urndh :: Sig -> SE Sig
+urndh = fmap unipolar . rndh
+
+-- | Unipolar @rndi@
+urndi :: Sig -> SE Sig
+urndi = fmap unipolar . rndi
+
+-- | White noise.
+whiteNoise :: SE Sig 
+whiteNoise = noise 1 0
+
+-- | Pink noise.
+pinkNoise :: SE Sig
+pinkNoise = pinkish 1
+
+--------------------------------------------------------------------------
 -- envelopes
+
+-- | Linear adsr envelope generator with release
+--
+-- > leg attack decay sustain release
+leg :: D -> D -> D -> D -> Sig
+leg = madsr
+
+-- | Exponential adsr envelope generator with release
+--
+-- > xeg attack decay sustain release
+xeg :: D -> D -> D -> D -> Sig
+xeg = mxadsr 
 
 -- | Makes time intervals relative to the note's duration. So that:
 --
@@ -240,31 +304,49 @@ expFades :: D -> D -> Sig
 expFades att dec = expFadeIn att * expFadeOut dec
 
 --------------------------------------------------------------------------
--- filters
+-- lfo
 
--- | High-pass filter.
+-- | Low frequency oscillator
+type Lfo = Sig
+
+-- | Low frequency oscillator
 --
--- > hp cutoff sig
-hp :: Sig -> Sig -> Sig
-hp = flip atone
+-- > lfo shape depth rate
+lfo :: (Sig -> Sig) -> Sig -> Sig -> Sig
+lfo shape depth rate = depth * shape rate
+
+--------------------------------------------------------------------------
+-- filters
 
 -- | Low-pass filter.
 --
--- > lp cutoff sig
-lp :: Sig -> Sig -> Sig
-lp = flip tone
+-- > lp cutoff resonance sig
+lp :: Sig -> Sig -> Sig -> Sig
+lp cf q a = bqrez a cf q
+
+-- | High-pass filter.
+--
+-- > hp cutoff resonance sig
+hp :: Sig -> Sig -> Sig -> Sig
+hp cf q a = bqrez a cf q `withD` 1
 
 -- | Band-pass filter.
 --
--- > bp cutoff bandwidth sig
+-- > bp cutoff resonance sig
 bp :: Sig -> Sig -> Sig -> Sig
-bp freq band a = reson a freq band
+bp cf q a = bqrez a cf q `withD` 2
 
--- | Band-regect filter.
+-- | Band-reject filter.
 --
--- > br cutoff bandwidth sig
-br :: Sig -> Sig -> Sig -> Sig 
-br freq band a = areson a freq band
+-- > br cutoff resonance sig
+br :: Sig -> Sig -> Sig -> Sig
+br cf q a = bqrez a cf q `withD` 3
+
+-- | All-pass filter.
+--
+-- > alp cutoff resonance sig
+alp :: Sig -> Sig -> Sig -> Sig
+alp cf q a = bqrez a cf q `withD` 4
 
 -- Butterworth filters
 
@@ -292,45 +374,6 @@ bbp freq band a = butbp a freq band
 bbr :: Sig -> Sig -> Sig -> Sig 
 bbr freq band a = butbr a freq band
 
--- Balanced filters
-
-balance1 :: (Sig -> Sig -> Sig) -> (Sig -> Sig -> Sig)
-balance1 f = \cfq asig -> balance (f cfq asig) asig
-
-balance2 :: (Sig -> Sig -> Sig -> Sig) -> (Sig -> Sig -> Sig -> Sig)
-balance2 f = \cfq bw asig -> balance (f cfq bw asig) asig
-
--- | Balanced low-pass filter.
-lpb :: Sig -> Sig -> Sig
-lpb = balance1 lp
-
--- | Balanced high-pass filter.
-hpb :: Sig -> Sig -> Sig
-hpb = balance1 hp
-
--- | Balanced band-pass filter.
-bpb :: Sig -> Sig -> Sig -> Sig
-bpb = balance2 bp
-
--- | Balanced band-reject filter.
-brb :: Sig -> Sig -> Sig -> Sig
-brb = balance2 br
-
--- | Balanced butterworth low-pass filter.
-blpb :: Sig -> Sig -> Sig
-blpb = balance1 blp
-
--- | Balanced butterworth high-pass filter.
-bhpb :: Sig -> Sig -> Sig
-bhpb = balance1 bhp
-
--- | Balanced butterworth band-pass filter.
-bbpb :: Sig -> Sig -> Sig -> Sig
-bbpb = balance2 bbp
-
--- | Balanced butterworth band-reject filter.
-bbrb :: Sig -> Sig -> Sig -> Sig
-bbrb = balance2 bbr
 
 -- | Moog's low-pass filter.
 --
@@ -458,6 +501,10 @@ scaleSpec k = mapSpec $ \x -> pvscale x k
 addSpec :: Sig -> Sig -> Sig
 addSpec hz = mapSpec $ \x -> pvshift x hz 0
 
+-- | Scales frequency in semitones.
+scalePitch :: Sig -> Sig -> Sig
+scalePitch n = scaleSpec (semitone n)
+
 --------------------------------------------------------------------------
 -- patterns
 
@@ -550,8 +597,8 @@ randomPitch rndAmp rndCps f cps = fmap go $ randh (cps * rndAmp) rndCps
 
 -- | Chorus takes a list of displacments from the base frequencies and a sound unit.
 -- Output is mean of signals with displacments that is applied to the base frequency. 
-chorus :: Fractional a => [Sig] -> (Sig -> a) -> Sig -> a
-chorus ks f = \cps -> mean $ fmap (f . (+ cps)) ks
+chorusPitch :: Fractional a => [Sig] -> (Sig -> a) -> Sig -> a
+chorusPitch ks f = \cps -> mean $ fmap (f . (+ cps)) ks
 
 -- | Applies a resonator to the signals. A resonator is
 -- a list of band pass filters. A list contains the parameters for the filters:
@@ -720,3 +767,96 @@ largeHall2 = rever2 0.9
 -- | The magic cave reverb (stereo).
 magicCave2 :: Sig -> Sig -> (Sig, Sig)
 magicCave2 = rever2 0.99
+
+-- Delays
+
+-- | The simplest delay with feedback. Arguments are: delay length and decay ratio.
+--
+-- > echo delayLength ratio
+echo :: D -> Sig -> Sig -> SE Sig
+echo len fb = fdelay len fb 1
+
+-- | Delay with feedback. 
+--
+-- > fdelay maxDelayLength delayLength decayRatio
+fdelay :: D -> Sig -> Sig -> Sig -> SE Sig
+fdelay len = fvdelay len (sig len)
+
+
+-- | Delay with feedback. 
+--
+-- > fdelay maxDelayLength delayLength feedbackLevel decayRatio
+fvdelay :: D -> Sig -> Sig -> Sig -> Sig -> SE Sig
+fvdelay len dt fb mx a = do
+	_ <- delayr len
+	aDel <- deltap3 dt
+	delayw $ a + fb * aDel
+	return $ a + (aDel * mx)
+
+-- | Multitap delay. Arguments are: max delay length, list of pairs @(delayLength, decayRatio)@,
+-- balance of mixed signal with processed signal.
+--
+-- > fdelay maxDelayLength  delays balance asig
+fvdelays :: D -> [(Sig, Sig)] -> Sig -> Sig -> SE Sig
+fvdelays len dtArgs mx a = funDelays len (zip dts fs) mx a
+	where 
+		(dts, fbks) = unzip dtArgs
+		fs = map (*) fbks
+
+
+-- | Generic multitap delay. It's just like @fvdelays@ but instead of constant feedbackLevel 
+-- it expects a function for processing a delayed signal on the tap.
+--
+-- > fdelay maxDelayLength  delays balance asig
+funDelays :: D -> [(Sig, Sig -> Sig)] -> Sig -> Sig -> SE Sig
+funDelays len dtArgs mx a = do
+	_ <- delayr len
+	aDels <- mapM deltap3 dts
+	delayw $ a + sum (zipWith ($) fs aDels)
+	return $ a + mx * sum aDels 
+	where (dts, fs) = unzip dtArgs
+
+-- Distortion
+
+-- | Distortion. 
+--
+-- > distort distLevel asig
+distortion :: Sig -> Sig -> Sig
+distortion pre asig = distort1 asig pre 0.5 0 0 `withD` 1
+
+-- Chorus
+
+-- | Chorus.
+--
+-- > chorus depth rate balance asig
+chorus :: Sig -> Sig -> Sig -> Sig -> SE Sig
+chorus depth rate mx asig = do
+	_ <- delayr 1.2
+	adelSig <- deltap3 (0.03 * depth * oscBy fn (3 * rate) + 0.01)
+	delayw asig
+	return $ ntrpol asig adelSig mx
+	where fn = sines4 [(0.5, 1, 180, 1)] -- U-shape parabola
+
+-- Flanger
+
+-- | Flanger. Lfo depth ranges in 0 to 1.
+--
+-- flanger lfo feedback balance asig
+flange :: Lfo -> Sig -> Sig -> Sig -> Sig
+flange alfo fbk mx asig = ntrpol asig (flanger asig ulfo fbk) mx
+	where ulfo = 0.0001 + 0.02 * unipolar alfo
+
+-- Phaser
+
+-- | First order phaser.
+phase1 :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig
+phase1 ord alfo fbk mx asig = ntrpol asig (phaser1 asig (20 + unipolar alfo) ord fbk) mx  
+
+-- | Second order phaser. Sweeping gaps in the timbre are placed harmonicaly
+harmPhase :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+harmPhase ord alfo q sep fbk mx asig = ntrpol asig (phaser2 asig (20 + unipolar alfo) q ord 1 sep fbk) mx
+
+-- | Second order phaser. Sweeping gaps in the timbre are placed by powers of the base frequency.
+powerPhase :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+powerPhase ord alfo q sep fbk mx asig = ntrpol asig (phaser2 asig (20 + unipolar alfo) q ord 2 sep fbk) mx
+
