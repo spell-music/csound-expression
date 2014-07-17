@@ -26,6 +26,8 @@ Description:
     .
     * Introduction to Csound and library for Haskell users <http://github.com/anton-k/csound-expression/blob/master/tutorial/CsoundInstro.markdown>
     .
+    * Basics of sound synthesis with csound-expression <https://github.com/anton-k/csound-expression/blob/master/tutorial/SynthTutorial.md>
+    .
     * There are examples in the source code archive <http://github.com/anton-k/csound-expression/tree/master/examples>. 
     .
     Key principles
