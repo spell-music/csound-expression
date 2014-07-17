@@ -9,7 +9,7 @@ module Csound.Air (
     unipolar, bipolar, on, uon, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
 
     -- * Noise
-    rndh, urndh, rndi, urndi, whiteNoise, pinkNoise,
+    rndh, urndh, rndi, urndi, white, pink,
 
     -- * Envelopes
 
@@ -197,12 +197,12 @@ urndi :: Sig -> SE Sig
 urndi = fmap unipolar . rndi
 
 -- | White noise.
-whiteNoise :: SE Sig 
-whiteNoise = noise 1 0
+white :: SE Sig 
+white = noise 1 0
 
 -- | Pink noise.
-pinkNoise :: SE Sig
-pinkNoise = pinkish 1
+pink :: SE Sig
+pink = pinkish 1
 
 --------------------------------------------------------------------------
 -- envelopes
