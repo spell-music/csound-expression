@@ -595,10 +595,16 @@ randomPitch rndAmp rndCps f cps = fmap go $ randh (cps * rndAmp) rndCps
     where go krand = f (cps + krand)
 
 
--- | Chorus takes a list of displacments from the base frequencies and a sound unit.
--- Output is mean of signals with displacments that is applied to the base frequency. 
-chorusPitch :: Fractional a => [Sig] -> (Sig -> a) -> Sig -> a
-chorusPitch ks f = \cps -> mean $ fmap (f . (+ cps)) ks
+-- | Chorus takes a number of copies, chorus width and wave shape.
+chorusPitch :: Int -> Sig -> (Sig -> Sig) -> Sig -> Sig
+chorusPitch n wid = phi dts
+    where
+        phi :: [Sig] -> (Sig -> Sig) -> Sig -> Sig
+        phi ks f = \cps -> mean $ fmap (f . (+ cps)) ks
+
+        dts = fmap (\x -> - wid + fromIntegral x * dt) [0 .. n-1] 
+
+        dt = 2 * wid / fromIntegral n
 
 -- | Applies a resonator to the signals. A resonator is
 -- a list of band pass filters. A list contains the parameters for the filters:
