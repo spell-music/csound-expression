@@ -6,15 +6,15 @@ Let's explore the sound synthesis with Haskell. We are going to
 study the subtractive synthesis. In subtractive synthesis we start with a complex waveform
 and then filter it and apply cool effects. That's how we make
 interesting instruments with subtractive synthesis. Let's look at
-the basic strucutre of synthesizer.
+the basic structure of synthesizer.
 
-Basic strucutre of synthesizer
+Basic structure of synthesizer
 ---------------------------------------------
 
 Let's imagine that we have a piano midi controller. When we press the key
 we get the pitch (what note do we press) and volume (how hard do we press it).
 So the input is the volume and pitch. An instrument converts it to the sound wave.
-The sound wave should naturaly respond to the input parameters. When we hit harder
+The sound wave should naturally respond to the input parameters. When we hit harder
 it should be louder and when we press the lower notes it should be lower in
 pitch and possibly richer in timbre. 
 
@@ -54,7 +54,7 @@ Amplifier or gain (VCA)
 Processor of effects (FX)
 
 : 	With effects we can make the sound cool and shiny. It can be delay, reverb,
-	flanger, chorus, vocoder, distortion, name your fav effect.
+	flanger, chorus, vocoder, distortion, name your favourite effect.
 
 
 Units to make our sounds alive (we can substitute the dumb static numbers with
@@ -68,13 +68,13 @@ Low frequency generator (LFO)
 
 Envelope generator (EG)
 
-:   An envelope creates a picewise function (linear or exponential). It slowly varies in time.
+:   An envelope creates a piecewise function (linear or exponential). It slowly varies in time.
     We can describe the steady changes with EG's. It's often used to 
     control the volume of the sound. For example the sound can start from the
     maximum volume and then it fades out gradually. 
 
 Enough with theory! Let's move on to practice! 
-Let's load the csound-expression to the impreter and define
+Let's load the csound-expression to the REPL and define
 the basic virtual midi instrument:
 
 ~~~
@@ -105,7 +105,7 @@ The most simple is sine wave or pure tone. It represents the sine function. Let'
 In csound-expression the pure sine is generated with function `osc`.
 
 ~~~
-inseert the picture of pure tone
+insert the picture of pure tone
 ~~~
 
 It starts to scream harshly when you press several notes. It happens
@@ -113,7 +113,7 @@ due to distortion. Every signal is clipped to the amplitude of 1.
 The function `osc` generates waves of the amplitude 1. So when we press
 a single note it's fine. No distortion takes place. But when we press
 several notes it starts to scream because we add several waves and the amplitude
-goes beyond 1 and clipping reslults in distortion and leads to the harsh sound.
+goes beyond 1 and clipping results in distortion and leads to the harsh sound.
 If we want to press several keys we can scale the output sound:
 
 ~~~
@@ -121,7 +121,7 @@ If we want to press several keys we can scale the output sound:
 ~~~
 
 Pure tone contains only one partial in the spectrum. It's the most naked sound.
-We can make it alittle bit more interesting with different waves. The next wave is
+We can make it a little bit more interesting with different waves. The next wave is
 triangle:
 
 ~~~
@@ -157,13 +157,13 @@ Now we can run the saw wave like this:
 ~~~
 
 We can make our waves a little bit more interesting with
-additive synthesis. We can add together several waves (smth that resembles harmonic series):
+additive synthesis. We can add together several waves (something that resembles harmonic series):
 
 ~~~
 run 0.15 $ \x -> saw x + 0.25 * sqr (2 * x) + 0.1 * tri (3 * x)
 ~~~
 
-Or we can introduce the hgher harmonics:
+Or we can introduce the higher harmonics:
 
 ~~~
 run 0.15 $ \x -> saw x + 0.25 * tri (7 * x) + 0.15 * tri (13 * x)
@@ -173,11 +173,11 @@ Gain
 ---------------------------------
 
 Gain or amplifier can change the amplitude of the sound. We already
-did it. When we scale the sound with number it's an examle of the gain.
+did it. When we scale the sound with number it's an example of the gain.
 But instead of scaling with number we can give the output a shape.
 That's where the envelope generators come in the play. 
 
-Dynamic chages
+Dynamic changes
 ---------------------------------
 
 To make our sounds more interesting we can vary it parameters in time.
@@ -188,7 +188,7 @@ That's how we change the volume in time.
 
 ### Envelope generator
 
-Envelope generatos produce piecewise functions. Most often they are linear or exponential.
+Envelope generators produce piecewise functions. Most often they are linear or exponential.
 In csound-expression we can produce piecewise functions with two function: `linseg` and `expseg`.
 
 ~~~
@@ -205,7 +205,7 @@ linseg [a, t_ab, b, t_bc, c, t_cd, d, ...]
 ~~~
 
 It constructs a function that starts with the value `a` then moves
-lineary to the value `b` for `t_ab` seconds, then goes from `b` to `c`
+linearly to the value `b` for `t_ab` seconds, then goes from `b` to `c`
 in `t_bc` seconds and so on. For example, let's construct the function that 
 starts at 0 then goes to 1 in 0.5 seconds, then proceeds to 0.5 in 2 seconds,
 and finally fades out to zero in 3 seconds:
@@ -222,7 +222,7 @@ linsegr, expsegr :: [D] -> D -> D -> Sig
 
 They take two additional parameters for release of the note. 
 Second argument is a time of the release and the last argument 
-is a finall value. All values for expsegr should be positive.
+is a final value. All values for expsegr should be positive.
 
 For example we can construct a saw that slowly fades out after
 release:
@@ -244,7 +244,7 @@ It's attack-decay-sustain-release envelope (ADSR). This shape
 consists of four stages: attack, decay, sustain and release.
 In the attack amplitude goes from 0 to 1, in the decay it goes
 from 1 to specified sustain level and after note's release it 
-fades out completley. 
+fades out completely. 
 
 Here is a definition:
 
@@ -262,7 +262,7 @@ mxadsr a d s r = expsegr [0.0001, a, 1, d, s] r, 0.0001
 ~~~
 
 The functions `madsr` and `mxadsr` are original csound functions.
-They are used so often so there are shortcuts `leg` and `xeg`.
+They are used so often so there are short-cuts `leg` and `xeg`.
 They are linear and exponential envelope generators.
 
 So we can express the previous example like this:
@@ -306,7 +306,7 @@ With EG's and LFO's we can make our instruments much more interesting.
 We can make them alive. They can control any parameter of the synth.
 We are aware of two types of control signals. We can alter pitch (vibrato)
 or result amplitude (amplitude envelope, tremolo). But there are many more
-parameters. Let's study new way of controling sound. Let's study brightness.
+parameters. Let's study new way of controlling sound. Let's study brightness.
 
 
 There is a special function to make the LFOs more explicit:
@@ -331,7 +331,7 @@ four standard types of filters:
 
 **High pass filter** (HP) attenuates all harmonics lower than a given center frequency.
 
-**Band pass filter** (BP) amplifies harmonics that are close to center freqeuncy and
+**Band pass filter** (BP) amplifies harmonics that are close to center frequency and
 attenuates all harmonics that are far away. 
 
 **Band reject filter** or notch filter (BR)  does the opposite to the BP-filter.
@@ -370,7 +370,7 @@ Let's create an envelope and apply it to the amplitude and center frequency:
 ~~~
 
 Normal values for resonance range from 1 to 100. We should carefully 
-adjust the scaling factor after filtering. Filters change the ovelrall vloume of the signal.
+adjust the scaling factor after filtering. Filters change the volume of the signal.
 
 We can align the center frequency with pitch. So that if we make pitch higher 
 the center frequency gets higher and we get more bright sounds:
@@ -408,7 +408,7 @@ environment.
 
 To apply effect to the sound we have to modify our runner function. 
 Right now all arguments control the sound that is produced with the 
-single note. But we want to alter the total sound that goues out of 
+single note. But we want to alter the total sound that goes out of 
 the instrument. It includes the mixed sound from all notes that are played.
 Let's modify our definition for function `run`:
 
@@ -452,7 +452,7 @@ Let's place our sound in the magic cave:
 run magicCave (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
-You can hear how drammatically an effect can change the sound.
+You can hear how dramatically an effect can change the sound.
 
 ### Delay
 
@@ -466,7 +466,7 @@ echo dt fb asig
 It takes the delay time, the ratio of signal attenuation (reflections will be weaker by this amount)
 and the input signal. Notice that the output is wrapped in the `SE`-monad. `SE` means side effect.
 It describes some nasty impure things. This function allocates the buffer of memory to hold
-the delayed signal. So thats why the output is effectful.
+the delayed signal. So thats why the output contains side-effects.
 
 Let's try it out:
 
@@ -480,7 +480,7 @@ Let's add some reverberation:
 run (fmap smallHall . echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
-We are using the `fmap` function to apply the next effect in chain to the effectfull value.
+We are using the `fmap` function to apply the next effect in chain to the value with side-effects.
 The `SE`-wrapper type is `Monad` and hence it's `Applicative` and `Functor`.
 
 The `echo` function is a specification of generic function:
@@ -500,7 +500,7 @@ fvdelay :: D -> Sig -> Sig -> Sig -> Sig -> SE Sig
 fvdelay maxDelTime delTime fbk mix asig
 ~~~
 
-It takes the mximum delay time and the delay time which is signal (it must be bounded by `maxDelTime`). 
+It takes the maximum delay time and the delay time which is signal (it must be bounded by `maxDelTime`). 
 Other arguments are the same.
 
 Multitap delays can be achieved with function
@@ -542,7 +542,7 @@ They represent the chorus rate and depth.
 
 #### Flanger
 
-The next two effects are useful for creating sinthetic sounds or
+The next two effects are useful for creating synthetic sounds or
 adding electronic flavour to the natural sounds.
 
 The flanger can be applied with function `flange`:
@@ -575,9 +575,9 @@ phase1 ord lfo fbk mx asig
 
 The arguments are: the order of phaser (an integer value, 
 it represents the number of all-pass filters in chain, 4 to 2000, the better is 8,
-the bigger the number the slower is algorythm), an lfo for 
-phase sweeps (depth is in range acoustic waves, smth around 5000 is good start, 
-the rate is smth between 0 and 20 Hz), amount of feedback, the balance between
+the bigger the number the slower is algorithm), an lfo for 
+phase sweeps (depth is in range acoustic waves, something around 5000 is good start, 
+the rate is something between 0 and 20 Hz), amount of feedback, the balance between
 pure and processed signals, the input signal.
 
 There are two more phasers:
@@ -588,7 +588,7 @@ harmPhase ord lfo q sep fbk mx asig = ...
 ~~~
 
 The arguments are: order of phaser, lfo-signal for frequency sweep, resonance of the filters (0 to 1),
-separation of the peaks, feedback level (0 to 1), blance level.
+separation of the peaks, feedback level (0 to 1), balance level.
 
 Noise
 --------------------------------
@@ -596,7 +596,7 @@ Noise
 We can make our sounds more interesting by introducing randomness.
 There are several ways to create random signals (including noise).
 
-We can create a sequence of random numbers that change lineary 
+We can create a sequence of random numbers that change linearly 
 with given frequency. Also this unit can be used as LFO.
 
 ~~~
@@ -621,7 +621,7 @@ Let's create a simple wind instrument:
 ~~~
 
 We filter the white noise with filter. The center frequency randomly varies
-abovethe certain threshold. Let's hear the wind:
+above the certain threshold. Let's hear the wind:
 
 ~~~
 run id (0.5 * fadeOut 1.5) instr
@@ -631,9 +631,9 @@ Complex waves
 --------------------------------
 
 Let's study how can we made our waveforms more interesting.
-We can apply several simpletechniqyes to achieve it.
+We can apply several simple techniques to achieve it.
 
-### Additive synth
+### Additive synthesis
 
 The simplest one is additive synthesis. We add two or more waveforms so
 that they form harmonic series.
@@ -647,7 +647,7 @@ that they form harmonic series.
 When several violins play in the orchestra the timbre is quite 
 different from the sound of the single violin. Though timbre of each
 instrument is roughly the same the result is different. It happens 
-from the slight detunenment of the instruments. We can recreate this 
+from the slight detunement of the instruments. We can recreate this 
 effect by stacking together several waveforms that are slightly detuned.
 It can be achieved with function:
 
@@ -656,8 +656,8 @@ chorusPitch :: Int -> Sig -> (Sig -> Sig) -> (Sig -> Sig)
 chorusPitch numberOfCopies chorusWidth wave = ...
 ~~~
 
-It takes the integer numberr of copies and chorus width.
-Chorus width specifies the radius of the detunenment.
+It takes the integer number of copies and chorus width.
+Chorus width specifies the radius of the detunement.
 
 ~~~
 > run id (0.25 * env) (chorusPitch 8 0.5 saw)
@@ -665,7 +665,7 @@ Chorus width specifies the radius of the detunenment.
 
 ### Ring modulation
 
-Ring modulation can add metalic flavour to the sound.
+Ring modulation can add metallic flavor to the sound.
 It multiplies the amplitude of the signal by LFO.
 
 ~~~
