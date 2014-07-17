@@ -217,7 +217,7 @@ leg = madsr
 --
 -- > xeg attack decay sustain release
 xeg :: D -> D -> D -> D -> Sig
-xeg = mxadsr 
+xeg a d s r = mxadsr a d (s + 0.00001) r
 
 -- | Makes time intervals relative to the note's duration. So that:
 --
