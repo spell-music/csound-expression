@@ -1,7 +1,7 @@
 -- | Test for different types of events.
 module Main where
 
-import Csound.Base
+import Csound.Base hiding (echo)
 import Data.Monoid
 
 -- | Outputs the drummy sound.
