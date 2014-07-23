@@ -1,0 +1,12 @@
+@@ -- means breaking compatibility
+
+3.3.2
+
+    Adds handy functions in Csound.Air
+    @@ switch to resonant filters: lp, hp, bp, br
+    effects: delays, flagers, phasers, distortions,
+    LFOs (lfo), and shortcuts for EGs leg, xeg (lin and exp ADSRs)
+    Noise funs: (white, pink, rndi, rndh)
+    @@ mv: chorus -> chorusPitch
+
+
