@@ -359,6 +359,19 @@ Now the sliders look to big we can change it with function `sca`:
 	...
 ~~~
 
+#### Numeric values
+
+Numeric creates a time varying signal like a slider. 
+But it's graphical representation is different. It's 
+a box with a number inside it. You can change the value by dragging
+the mouse from the box.
+
+~~~
+numeric :: String -> ValDiap -> ValStep -> Double -> Source Sig
+numeric tag valueDiapason valueStep initialValue
+~~~
+
+
 #### Buttons
 
 Let's create a switch button. We can use a `toggleSig` for it:
@@ -501,7 +514,82 @@ Let's redefine our previous example:
 }
 ~~~
 
+#### Meter
 
+We have studied a lot of sources. Is there any sink-widgets?
+The `meter` is the one. It let's us monitor the value of the signal:
+It shows the output as the slider:
+
+~~~
+> let sa = slider "a" (linSpan 1 10) 5
+> let sb = slider "b" (linSpan 1 10) 5
+> let res = setNumeric "a + b" (linDiap 2 20) 1 10
+> dac $ do { 
+	(ga, a) <- sa; 
+	(gb, b) <- sb; 
+	(gres, r) <- res; 
+	panel $ ver [ga, gb, gres]; 
+	r (a + b) 
+}
+~~~
+
+### Making reusable widgets
+
+We can make reusable widgets with functions:
+
+~~~
+sink    :: SE (Gui, Output a) -> Sink a
+source  :: SE (Gui, Input a) -> Source a
+display :: SE Gui -> Display
+~~~
+
+Let's make a reusable widget for a moog low-pass filter. 
+It's a producer or source. It's going to produce a 
+transformation `Sig -> Sig`:
+
+~~~
+import Csound.Base
+
+mlpWidget :: Source (Sig -> Sig)
+mlpWidget = source $ do
+	(gcfq, cfq) <- slider "center frequency" (expSpan 100 5000)  2000
+	(gq,   q)   <- slider "resonance"        (linSpan 0.01 0.9)  0.5	
+	return (ver [gcfq, gq], mlp cfq q)
+~~~
+
+Let's save this definition in the file and load it in ghci. 
+Now we can use it as a custom widget:
+
+~~~
+> dac $ do { 
+	(g, filt) <- mlpWidget; 
+	panel g; 
+	return $ mul 0.5 $ filt $ saw 220 
+}
+~~~
+
+Notice that a widget can produce a function as a value!
+
+Let's define another widget for saw-oscillator:
+
+~~~
+sawWidget :: Source Sig
+sawWidget = source $ do
+	(gamp, amp) <- slider "amplitude" (linSpan 0 1) 0.5	
+	(gcps, cps) <- slider "frequency" (expSpan 50 10000) 220
+	return (ver [gamp, gcps], amp * saw cps)	
+~~~
+
+Now let's use them together:
+
+~~~
+ dac $ do { 
+ 	(gw, wave) <- sawWidget; 
+ 	(gf, filt) <- mlpWidget; 
+ 	panel $ ver [gw, gf]; 
+ 	return $ filt wave 
+ }
+~~~
 
 Open sound control protocol (OSC)
 ------------------------------------
