@@ -97,4 +97,3 @@ charOn  = keyIn . Press   . CharKey
 charOff :: Char -> Evt Unit
 charOff = keyIn . Release . CharKey
 
-

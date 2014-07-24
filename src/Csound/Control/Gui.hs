@@ -51,6 +51,7 @@ module Csound.Control.Gui (
     Widget, Input, Output, Inner,
     Sink, Source, Display,
     widget, sink, source, display,
+    mapSource,
     
     -- * Panels
     panel, panels, panelBy,
@@ -62,9 +63,15 @@ module Csound.Control.Gui (
     module Csound.Control.Gui.Widget
 ) where
 
+import Control.Arrow(second)
+
 import Csound.Typed.Gui
 
 import Csound.Control.Gui.Layout
 import Csound.Control.Gui.Props
 import Csound.Control.Gui.Widget
 
+
+-- | Maps over the value of the source-widget.
+mapSource :: (a -> b) -> Source a -> Source b
+mapSource f = fmap (second f)
