@@ -210,8 +210,300 @@ the latter to `[0, 1]`.
 Basics of GUI
 ------------------------------------
 
+If we don't have real sliders and knobs we can use the virtual ones.
+It can be done easily with GUI-elements. Csound has support for GUI-widgets.
+GUI-widgets live in the module `Csound.Control.Gui`.
 
-Open sound protocol (OSC)
+Let's study how can we use them. First of all let's define the notion of
+widget. A widget is something that contains graphical representation 
+(what do we see on the screen) and behaviour (what can it do).
+
+A slider for instance is represented as a moving small line segment in the box. 
+It's a graphical representation of the slider. At the same time the slider can give us a time
+varying signal. It's behaviour of the slider. There are different types of behaviour.
+Some widgets can produce the values (like sliders or buttons). They are sources. 
+Some widgets can wait for the value (like text box that shows the value on the screen).
+They are sinks. Some widgets can do all this in the same time and some widgets can 
+do neither (like static text. It's only visible but it can not do anything).
+
+In the haskell type system we can express it like this:
+
+~~~
+data Gui    -- visual representation
+
+type Widget a b = SE (Gui, Output a, Input b, Inner)
+
+type Input a = a 				-- produces a value
+type Output a = a -> SE ()		-- waits for a value
+type Inner = SE ()				-- does smth useful
+
+type Sink a = SE (Gui, Output a)	-- value consumer
+type Source a = SE (Gui, Input a)   -- value producer
+type Display = SE Gui 				-- static element
+~~~
+
+Let's look at the definition of the slider:
+
+~~~
+slider :: String -> ValSpan -> Double -> Source Sig
+slider tag valueRange initValue
+~~~
+
+The slider expects a tag-name, value range and initial value.
+It produces a `Source`-widget that contains a signal.
+
+The value type specifies the value range and the type of
+the change of the value (it can be linear or exponential).
+
+~~~
+linSpan, expSpan :: Double -> Double -> ValSpan
+
+linSpan min max
+expSpan min max
+~~~
+
+Let's define a slider in the ghci:
+
+~~~
+> let vol = slider "volume" (linSpan 0 1) 0.5
+> dac $ do { (gui, v) <- vol; panel gui; return (v * osc 440) }
+~~~
+
+We can control the volume of the concert A note with the slider!
+To see the slider we have to place it on the window. That is why
+we used the function `pannel`:
+
+~~~
+pannel :: Gui -> SE ()
+~~~
+
+It creates a window and renders the graphical representation of
+the GUI on it. You can notice the strange quirk of the slider
+it updates the values in reverse. The top is lowest value
+and the bottom is for the highest value. It's strange implementation
+of the vertical sliders in the Csound. We can only take it for granted.
+
+Ok, ok. That it's good but how about using two sliders at the same time? 
+We can create the second slider and place it right beside the other with
+function `hor`. It groups a list of widgets and shows them side by side:
+
+~~~
+> let vol = slider "volume" (linSpan 0 1) 0.5
+> let pch = slider "pitch" (expSpan 20 3000) 440
+> dac $ do { (vgui, v) <- vol; (pgui, p) <- pch ; panel (hor [vgui, pgui]); return (v * osc p) }
+~~~
+
+Try to substitute `hor` for `ver` and see what happens.
+
+### The layout functions
+
+We can see how easy it's to use the `hor` and `ver`. Let's study all
+layout functions:
+
+~~~
+hor :: [Gui] -> Gui
+ver :: [Gui] -> Gui
+
+space :: Gui
+sca   :: Double -> Gui -> Gui
+
+padding :: Int -> Gui -> Gui
+margin  :: Int -> Gui -> Gui
+~~~
+
+The functions `hor` and `ver` are for horizontal and vertical grouping of the elements.
+The `space` creartes an empty space. The `sca`  can scale guis. The `margin` and `padding`
+are well .. mm .. for setting the margin and padding of the element in pixels.
+
+We can stack as many sliders as we want. Let's explore the low-pass filtering of 
+the saw waveform.
+
+~~~
+> let cfq = slider "center frequency" (expSpan 100 5000) 2000
+> let q = slider "resonance" (linSpan 0.1, 0.9) 0.5
+> dac $ do { 
+	(vgui, v) <- vol; 
+	(pgui, p) <- pch; 
+	(cgui, c) <- cfq; 
+	(qgui, qv) <- q; 
+	panel (ver [vgui, pgui, cgui, qgui]); 
+	return (v * mlp c qv (saw p)) 
+}
+~~~
+
+### Widgets
+
+#### Knobs
+
+There are many more widgets. Let's turn some dsliders in the knobs.
+The knob is a sort of circlular slider:
+
+~~~
+> let vol = knob "volume" (linSpan 0 1) 0.5
+> let pch = knob "pitch" (expSpan 20 3000) 440
+> dac $ do { 
+	(vgui, v) <- vol; 
+	(pgui, p) <- pch; 
+	(cgui, c) <- cfq; 
+	(qgui, qv) <- q; 
+	panel (ver [vgui, pgui, hor [cgui, qgui]]); 
+	return (v * mlp c qv (saw p)) 
+}
+~~~
+
+Now the sliders look to big we can change it with function `sca`:
+
+~~~
+	...
+	panel (ver [vgui, pgui, sca 1.5 $ hor [cgui, qgui]]); 
+	...
+~~~
+
+#### Buttons
+
+Let's create a switch button. We can use a `toggleSig` for it:
+
+~~~
+toggleSig :: String -> Source Sig
+~~~
+
+This function just creates a button that produces a signal that
+is 1 whenthe button is on and 0 when it's off.
+
+~~~
+> let switch = toggleSig "On/Off"
+> dac $ do { 
+	(sgui, sw) <- switch;
+	(vgui, v) <- vol; 
+	(pgui, p) <- pch; 
+	(cgui, c) <- cfq; 
+	(qgui, qv) <- q; 
+	panel (ver [vgui, pgui, hor [sgui, cgui, qgui]]); 
+	return (sw * v * mlp c qv (saw p)) 
+}
+~~~
+
+We can make the gradual change wit portamento:
+
+~~~
+...
+	return (port sw 0.7 * v * mlp c qv (saw p)) 
+...
+~~~
+
+Buttons can produce the event streams:
+
+~~~
+button :: String -> Source (Evt Unit)
+~~~
+
+The event stream `Evt a` is something that can apply a procedure of
+the type `a -> SE ()` to the value when it happens.
+
+There is a function:
+
+~~~
+runEvt :: Evt a -> (a -> SE ()) -> SE ()
+~~~
+
+Also event streams can trigger notes with:
+
+~~~
+trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
+sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
+~~~
+The function `trig` invokes an instrument `a -> SE b` when 
+the event happens. The note is a triple `(D, D, a)`. It's
+`(delayTime, durationTime, instrumentArgument)`. The function 
+`sched` is just like `trig` but delay time is set to zero
+for all events. So that we need only a pair in place of the triple.
+
+Let's create two buttons that play notes:
+
+~~~
+> let n1 = button "330"
+> let n2 = button "440"
+> let go x evt = sched (const $ instr x) (withDur 2 evt)
+> let instr x = return $ fades 0.1 0.5 * osc x
+>  dac $ do { 
+	(g1, p1) <- n1; 
+	(g2, p2) <- n2; 
+	panel $ hor [g1, g2]; 
+	return $ mul 0.25 $ go 330 p1 + go 440 p2 
+}
+~~~
+
+The new function `withDur` turns a single value into
+pair that contsans a furation of the note in the first cell.
+
+We can do it with a little bit more simple expression if we know
+that events are functors and monoids. With monoid's append we can get 
+a signle event stream that contains events from both event streams.
+
+Let's redefine our buttons:
+
+~~~
+> let n1 = mapSource (fmap (const (330 :: D))) $ button "330"
+> let n2 = mapSource (fmap (const (440 :: D))) $ button "440"
+~~~
+
+The function `mapSource` maps over the value of the producer widget.
+Right now every stream contains a value for the frequency with it.
+Let's merge two streams together and invoke the instrument on the
+single stream. The result should be the same:
+
+~~~
+> let instr x = return $ fades 0.1 0.5 * osc x
+> dac $ do { 
+	(g1, p1) <- n1; 
+	(g2, p2) <- n2; 
+	panel (hor [g1, g2]); 
+	return $ mul 0.25 $ sched (instr . sig) (withDur 2 $ p1 <> p2)   
+}
+~~~
+
+#### Box
+
+With boxes we can just show the user some message. 
+
+~~~
+box :: String -> Display 
+~~~
+
+Let's say something to the user. 
+
+~~~
+> dac $ do { 
+	gmsg <- box "Two buttons. Here we are."
+	(g1, p1) <- n1; 
+	(g2, p2) <- n2; 
+	panel (ver [gmsg, hor [g1, g2]]); 
+	return $ mul 0.25 $ sched (instr . sig) (withDur 2 $ p1 <> p2)   
+}
+~~~
+
+#### Radio-buttons
+
+Radio buttons let the user select a value from the set of choices.
+
+~~~
+radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
+~~~
+
+Let's redefine our previous example:
+
+~~~
+> let ns = radioButton "two notes" [("330", 330 :: D), ("440", 440)] 0
+> dac $ do { 
+	(gui, p) <- ns; 
+	panel gui; 
+	return $ mul 0.25 $ sched (instr . sig) (withDur 2 p) 
+}
+~~~
+
+
+
+Open sound control protocol (OSC)
 ------------------------------------
 
 TODO
