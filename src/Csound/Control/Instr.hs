@@ -81,7 +81,7 @@ module Csound.Control.Instr(
     midi_, midin_, pgmidi_,
     monoMsg, holdMsg, monoMsgn, holdMsgn, pgmonoMsg, pgholdMsg,
     -- ** Reading midi note parameters
-    cpsmidi, ampmidi,
+    cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
 
     -- * Evt  
 
@@ -105,7 +105,7 @@ module Csound.Control.Instr(
 import Data.Boolean
 
 import Csound.Typed
-import Csound.Typed.Opcode
+import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
 
 import Csound.Control.Evt(metroE, repeatE, splitToggle)
@@ -336,4 +336,23 @@ genHoldAmpCpsSig midiFun = do
 		instr hNote msg = do
 			writeSERef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)			
 
+--------------------------------------------------------------
+
+-- | Initialization of the midi control-messages.
+initc7 :: D -> D -> D -> SE ()
+initc7 = initMidiCtrl 
+
+-- | Initializes midi control and get the value in the specified range.
+midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
+midiCtrl7 chno ctrlno ival imin imax = do
+    initc7 chno ctrlno ival
+    return $ ctrl7 chno ctrlno imin imax
+    
+-- | Initializes midi control and get the value in the range (-1) to 1.
+midiCtrl :: D -> D -> D -> SE Sig
+midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
+    
+-- | Unipolar midiCtrl. Initializes midi control and get the value in the range 0 to 1.
+umidiCtrl :: D -> D -> D -> SE Sig
+umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
 

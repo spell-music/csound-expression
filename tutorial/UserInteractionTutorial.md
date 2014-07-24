@@ -180,6 +180,32 @@ initc7 chno ctrlId val 				-- value ranges from 0 to 1
 
 It sets the initial value for the midi control.
 
+~~~
+> let ctrl = 1
+> let out = fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 ctrl 50 5000) 0,5 (tri cps)) $ holdMsg 0.5
+> dac $ do { initc7 1 ctrl 0.5; out }
+~~~
+
+Unfortunately the function `initc7` doesn't work with virtual midi. It's only for real midi-devices.
+
+There are three more functions to make things more easy:
+
+~~~
+midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
+midiCtrl7 chanNum ctrlNum initVal min max
+~~~
+
+It combines the functions `ctrl7` and `initc7`. So that we don't have to 
+specify the same channel number and control number twice. 
+
+There are functions for specific ranges
+
+~~~
+midiCtrl, umidiCtrl :: D -> D -> D -> SE Sig
+~~~
+
+They are the same as midiCtrl7, but former sets the range to `[-1, 1]` and
+the latter to `[0, 1]`.
 
 Basics of GUI
 ------------------------------------
