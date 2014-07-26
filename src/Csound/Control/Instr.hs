@@ -80,10 +80,11 @@ module Csound.Control.Instr(
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
     monoMsg, holdMsg, monoMsgn, holdMsgn, pgmonoMsg, pgholdMsg,
-    -- * OSC
-    initOsc, listenOsc, sendOsc,
     -- ** Reading midi note parameters
     cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
+    
+    -- * OSC
+    initOsc, listenOsc, sendOsc,
 
     -- * Evt  
 
