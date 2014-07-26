@@ -79,6 +79,7 @@ module Csound.Control.Instr(
     -- * Midi
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
+    -- ** Mono-midi synth
     monoMsg, holdMsg, monoMsgn, holdMsgn, pgmonoMsg, pgholdMsg,
     -- ** Reading midi note parameters
     cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
