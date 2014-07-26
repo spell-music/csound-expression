@@ -80,6 +80,8 @@ module Csound.Control.Instr(
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
     monoMsg, holdMsg, monoMsgn, holdMsgn, pgmonoMsg, pgholdMsg,
+    -- * OSC
+    initOsc, listenOsc, sendOsc,
     -- ** Reading midi note parameters
     cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
 
@@ -105,7 +107,7 @@ module Csound.Control.Instr(
 import Data.Boolean
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (initc7)
+import Csound.Typed.Opcode hiding (initc7, oscInit, oscListen, oscSend)
 import Csound.Control.Overload
 
 import Csound.Control.Evt(metroE, repeatE, splitToggle)
@@ -355,4 +357,5 @@ midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
 -- | Unipolar midiCtrl. Initializes midi control and get the value in the range 0 to 1.
 umidiCtrl :: D -> D -> D -> SE Sig
 umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
+
 

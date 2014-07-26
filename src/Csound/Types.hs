@@ -41,7 +41,7 @@ module Csound.Types(
     quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
-    boolSig, when1, whens, 
+    boolSig, when1, whens, whileDo, untilDo,
 
     -- ** Aliases 
     -- | Handy for functions that return tuples to specify the utput type
