@@ -12,8 +12,9 @@ module Csound.Control.Evt(
     metroE, impulseE, changedE, triggerE, loadbang, impulse,
 
     -- * Higher-level event functions
-    eventList,
+    devt, eventList,
     cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle,
+    Rnds,
     oneOf, freqOf, freqAccum, 
     randDs, randInts, randSkip, randSkipBy, 
     range, listAt,   
@@ -27,6 +28,11 @@ import Data.Tuple
 
 import Csound.Typed
 import Csound.Typed.Opcode
+
+-- | Constant event stream. It produces the same value (the first argument)
+-- all the time.
+devt :: D -> Evt a -> Evt D
+devt d = fmap (const d)
 
 -- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
 metroE :: Sig -> Evt Unit 
