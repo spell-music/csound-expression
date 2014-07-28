@@ -664,4 +664,48 @@ We also specify the OSC-address (it's a path-like string) and type of the messag
 Jack-instruments
 ---------------------------------------
 
-TODO
+With Jack-interface (native for Linux, also there are ports for OSX and PC) 
+we can stream the output of one ptrogram to the input of another one. 
+With Jack we can use our Csound instruments in DAW-software 
+(like Ardour, Cubase, Abletone or BitWig).
+
+We can create Jack-instrument if we set the proper options.
+We have to set the name of the instrument:
+
+~~~
+setJack :: String -> Options
+setJack clientName
+~~~
+
+We have to set the proper rates (audio and cotrol rates)
+
+~~~
+setRates :: Int -> Int -> Options
+setRates sampleRate blockSize
+~~~
+
+Sample rate is a resolution of the output audio (typical values are 44100 or 48000).
+It should be the same as for the JACK.
+The block size is how many samples are in the control period.
+We have to process the control signals at the lower rate. The `blockSize`
+specifies the granularity of the control signals (typical values are 64, 128, 256).
+
+We have to set the hardware and software buffers (It's `B` and `b` flags in the Csound):
+
+~~~
+setBufs :: Int -> Int -> Options
+setBufs totalBufferSize  singlePeriodSize
+~~~
+
+To send or recieve the values from the JACK Csound uses the buffer.
+We have to define the size of the whole buffer (the first argument)
+and the one period of the buffer (it should be integer multiplier of
+the blockSize). 
+
+To set all these properties we need to use the Monoid instance for `Options`.
+We need to append all the options:
+
+~~~
+> options = mconcat [ setJack "anInstrument", setRates 44800 64, setBufs 192 64 ] 
+> dacBy options asig
+~~~
