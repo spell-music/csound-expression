@@ -94,6 +94,9 @@ We can make it more often:
 > dac $ sched instr $ withDur 0.1 $ metroE 5
 ~~~
 
+Functions for event stream
+--------------------------------------------------------
+
 Right now our instrument can play only single note,
 but let's make it a bit more interesting:
 
@@ -182,3 +185,38 @@ the period contains two periods which are the same.
 
 It's an easy way of combining loops or creating music
 that repeats in strange patterns.
+
+
+There are many more event stream functions you can 
+check them out in the 
+[docs](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-Control-Evt.html).
+
+
+Plural events
+----------------------------------------
+
+Every event can contain a list of events. There are
+plural versions of the instrument-triggering functions:
+
+~~~
+trigs    :: (Arg a, Sigs b) => (a -> SE b) -> Evt [(D, D, a)] -> b
+scheds   :: (Arg a, Sigs b) => (a -> SE b) -> Evt [(D, a)] -> b
+withDurs :: D -> Evt [a] -> Evt [(D, a)]
+~~~
+
+That's how we can play the sequence of major chords:
+
+~~~
+> let ch x = take 8 $ zipWith (\dt a -> (double dt, 0.2, a))  [0, 0.2 ..]  $ fmap (x * ) (cycle [1, 5/4, 3/2, 5/4])
+> let es = oneOf [220::D, 5 * 220 / 4, 330] $ metroE (1/2.5)
+> dac $ trigs instr $ fmap ch $ es
+~~~
+This sound is very primitive. But it's here just for illustration.
+We can plug in the cool sample in place of the pure sine.
+
+
+GUIs
+-------------------------------------------
+
+Lot's of GUI's a producing event streams. They are buttons, toggles, counters, radio buttons.
+You can check them out in the chapter on 'User interaction'.
