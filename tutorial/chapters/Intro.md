@@ -6,7 +6,9 @@ Csound-expression is a framework for creation of computer music.
 It's a Haskell library to make Csound much more friendly.
 It generates Csound files out of Haskell code.
 
-Csound is really awesome. It features unlimited polyphony, hundreds of synth-units 
+
+[Csound](http://www.csounds.com/) is an audio programming language. It is really awesome. 
+It features unlimited polyphony, hundreds of synth-units 
 including FM, granular synth, frequency domain transforms and many more.
 Midi and OSC control, compatible with JACK. With JACK it's easy to use with your DAW
 of choice. It can run on mobile devices and even in the web browser. 
@@ -142,10 +144,15 @@ Acknowledgements
 
 I'd like to mention those who supported me a lot with their music and ideas:
 
-* music: entertainment for the braindead, three pandas and the moon, odno no, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, 
-    loscil, boards of canada, Hozan Yamamoto, Tony Scott and Shinichi Yuize. 
+* **music**: [entertainment for the braindead](http://entertainmentforthebraindead.com/), 
+   [three pandas and the moon](https://soundcloud.com/three-pandas-and-the-moon), 
+   [odno no](http://odnono.ru/), [ann's'annat & alizbar](http://www.alizbar-harp.com/), 
+   [toe](http://toe.st/), [iamthemorning](http://iamthemorning.com/), [atoms for piece / radiohead](http://www.radiohead.com/deadairspace/), 
+    [loscil](http://www.kranky.net/artists/loscil.html), [boards of canada](http://boardsofcanada.com/vinyl-reissues/), [Hozan Yamamoto, Tony Scott and Shinichi Yuize](http://en.wikipedia.org/wiki/Music_for_Zen_Meditation). 
 
-* ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
+* **ideas**: [Conal Elliott](http://conal.net/), [Oleg Kiselyov](http://okmij.org/ftp/), 
+    [Paul Hudak](http://haskell.cs.yale.edu/people/paul-hudak/), [Gabriel Gonzalez](http://www.haskellforall.com/), 
+    [Rich Hickey](http://thechangelog.com/rich-hickeys-greatest-hits/) and Csound's community.
 
 
 ----------------------------------------------------
