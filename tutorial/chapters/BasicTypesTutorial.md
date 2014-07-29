@@ -477,8 +477,9 @@ ar3 :: (Sig, Sig, Sig) -> (Sig, Sig, Sig)
 ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
 ~~~
 
-Arguments (Arg)
--------------------------------------
+
+Csound notes (`CsdEventList`) and instrument's arguments (Arg)
+----------------------------------------------------------------
 
 
 The Signal space (SigSpace)
