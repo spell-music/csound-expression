@@ -220,3 +220,12 @@ GUIs
 
 Lot's of GUI's a producing event streams. They are buttons, toggles, counters, radio buttons.
 You can check them out in the chapter on 'User interaction'.
+
+
+----------------------------------------------------
+
+* <= [User interaction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/UserInteractionTutorial.md)
+
+* => [Scores](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ScoresTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

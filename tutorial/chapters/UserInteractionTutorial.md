@@ -709,3 +709,12 @@ We need to append all the options:
 > options = mconcat [ setJack "anInstrument", setRates 44800 64, setBufs 192 64 ] 
 > dacBy options asig
 ~~~
+
+
+----------------------------------------------------
+
+* <= [Basics of sound synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SynthTutorial.md)
+
+* => [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

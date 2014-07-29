@@ -20,18 +20,16 @@ Let's look at how we can create computer music with Haskell.
 
 * [Introduction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Intro.md)
 
-* Basic types
+* [Basic types](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md)
 
-* Rendering Csound files
+* [Rendering Csound files](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ProducingTheOutputTutorial.md)
 
-* Basics of sound synthesis
+* [Basics of sound synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SynthTutorial.md)
 
-* User interaction
+* [User interaction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/UserInteractionTutorial.md)
 
-* Events
+* [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
 
-* Scores
+* [Scores](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ScoresTutorial.md)
 
-* Real-world instruments show case
-
-* Overview of the library (most used functions)
+* [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/InstrumentsShowCase.md)

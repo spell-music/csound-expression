@@ -146,3 +146,12 @@ I'd like to mention those who supported me a lot with their music and ideas:
     loscil, boards of canada, Hozan Yamamoto, Tony Scott and Shinichi Yuize. 
 
 * ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
+
+
+----------------------------------------------------
+
+* <= [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
+
+* => [Basic types](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

@@ -671,3 +671,12 @@ It multiplies the amplitude of the signal by LFO.
 ~~~
 run id (0.25 * env) (mul (osc (30 * env)) . chorusPitch 8 0.5 saw)
 ~~~
+
+
+----------------------------------------------------
+
+* <= [Rendering Csound files](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ProducingTheOutputTutorial.md)
+
+* => [User interaction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/UserInteractionTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
