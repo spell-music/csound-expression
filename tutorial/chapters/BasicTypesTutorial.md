@@ -441,22 +441,145 @@ Special cases for harmonic series:
 sine, cosine, sigmoid :: Tab
 ~~~
 
+Side effects (SE)
+-------------------------------------
 
-Spectrums (Spec)
------------------------------------
+
 
 Tuples (Tuple)
 -------------------------------------
 
+Some of the Csound functions are producing several outputs.
+Then the output is represented with `Tuple`. It's a special
+type class that contains all tuples of csound values.
+
+There is a special case. The type `Unit`. It's Csound's alias
+for haskell's `()`-type. It's here for implementation reasons.
+
+We have already encountered the tuples when we have studied 
+the function `diskin2`. 
+
+~~~{.haskell}
+diskin2 :: Tuple a => Str -> Sig -> a
+~~~
+
+In csound the functions can produce varied amount of arguments.
+The number of arguments is specified right in the code. But Haskell
+is different. The function can produce only certain number of arguments.
+To relax this rule we can use the special type class `Tuples`. 
+Now we can return different number of arguments. But we have to 
+specify them with type signature. There are helpers to make it easier:
+
+~~~{.haskell}
+ar1 :: Sig -> Sig
+ar2 :: (Sig, Sig) -> (Sig, Sig)
+ar3 :: (Sig, Sig, Sig) -> (Sig, Sig, Sig)
+ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
+~~~
+
 Arguments (Arg)
 -------------------------------------
+
 
 The Signal space (SigSpace)
 ---------------------------------------
 
+We often want to transform the signal wich is wrapped 
+in the other type. It can be a monophonic signal. 
+If it's just a pure `Sig` then it's not that difficult.
+We can apply a function and get the ouptut. But what
+if the signal is stereo or what if it's wrapped in the `SE`.
+But it has a signal(s) that we want to process. We can use
+different combinations of the functions `fmap`. But there is
+a better way. 
+
+We can use the special type class `SigSpace`:
+
+~~~{.haskell}
+class Num a => SigSpace a where
+	mapSig :: (Sig -> Sig) -> a -> a
+	bindSig :: (Sig -> SE Sig) -> a -> SE a
+~~~
+
+It let's us apply signal transformation functions to values of 
+many different types. The one function that we have already seen is `mul`:
+
+~~~{.haskell}
+mul :: SigSpace a => Sig -> a -> a
+~~~
+
+It can scale the signal or many signals.
+
+There is another cool function. It's `cfd`:
+
+~~~{.haskell}
+cfd :: SigSpace a => Sig -> a -> a -> a
+~~~
+
+It's a crossfade between two signals. The first signal
+varies in range 0 to 1. It interpolates between second
+and third arguments.
+
+The `cfds` can operate on many signals. The first list
+length equals the second one minus one.
+
+~~~{.haskell}
+cfds :: SigSpace a => [Sig] -> [a] -> a
+~~~
+
+Another usefull function is 
+
+~~~{.haskell}
+wsum :: SigSpace a => [(Sig, a)] -> a
+~~~
+
+It's a weighted sum of signals. Can be usefull for mixing
+sounds from several sources.
+
 The signal outputs (Sigs)
 -------------------------------------
 
+It's a tuple of signals. It's for mono, stereo and other sound-outputs.
+
+~~~{.haskell}
+class Tuple a => Sigs a
+~~~
+
+Spectrums (Spec)
+-----------------------------------
+
+We can extract a spectrum from the signal. It's an advanced type. 
+The simplest function to create a spectrum is:
+
+~~~{.haskell}
+toSpec   :: Sig -> Spec
+fromSpec :: Spec -> Sig
+mapSpec  :: (Spec -> Spec) -> Sig -> Sig
+~~~
+
+With `Spec` we can apply spectral transformations to signal.
+we can create a vocoder effect with it for instance or scale a pitch
+or crossfade between severla timbres.
+
+We can interpolate between several spectrums:
+
+~~~{.haskell}
+cfdSpec :: Sig -> Spec -> Spec -> Spec
+cfdsSpec :: [Sig] -> [Spec] -> Spec
+~~~
+
+To scale the pitch there are handy shortcuts:
+
+~~~{.haskell}
+scaleSpec :: Sig -> Sig -> Sig
+scalePitch :: Sig -> Sig -> Sig
+~~~
+
+`ScaleSpec` scales the frequency of the signal in Hz ratios
+but `scalePitch` does it in semitones.
+
+If have a spectrum we can process it with many functions from the 
+module [Spectral processing](http://hackage.haskell.org/package/csound-expression-opcodes-0.0.0/docs/Csound-Typed-Opcode-SpectralProcessing.html).
 
 
 ----------------------------------------------------
