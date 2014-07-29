@@ -148,7 +148,7 @@ I'd like to mention those who supported me a lot with their music and ideas:
    [three pandas and the moon](https://soundcloud.com/three-pandas-and-the-moon), 
    [odno no](http://odnono.ru/), [ann's'annat & alizbar](http://www.alizbar-harp.com/), 
    [toe](http://toe.st/), [iamthemorning](http://iamthemorning.com/), [atoms for piece / radiohead](http://www.radiohead.com/deadairspace/), 
-    [loscil](http://www.kranky.net/artists/loscil.html), [boards of canada](http://boardsofcanada.com/vinyl-reissues/), [Hozan Yamamoto, Tony Scott and Shinichi Yuize](http://en.wikipedia.org/wiki/Music_for_Zen_Meditation). 
+    [loscil](http://www.loscil.ca/), [boards of canada](http://boardsofcanada.com/vinyl-reissues/), [Hozan Yamamoto, Tony Scott and Shinichi Yuize](http://en.wikipedia.org/wiki/Music_for_Zen_Meditation). 
 
 * **ideas**: [Conal Elliott](http://conal.net/), [Oleg Kiselyov](http://okmij.org/ftp/), 
     [Paul Hudak](http://haskell.cs.yale.edu/people/paul-hudak/), [Gabriel Gonzalez](http://www.haskellforall.com/), 
