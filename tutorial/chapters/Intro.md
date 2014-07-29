@@ -10,8 +10,7 @@ Csound is really awesome. It features unlimited polyphony, hundreds of synth-uni
 including FM, granular synth, frequency domain transforms and many more.
 Midi and OSC control, compatible with JACK. With JACK it's easy to use with your DAW
 of choice. It can run on mobile devices and even in the web browser. 
-It has the support for GUI-widgets. It can be used for simple daily 
-sound-file processing or for a full-blown live performances.
+It has the support for GUI-widgets.
 
 But Csound is clumsy. It's an old  C-style language. We can boost it with 
 functional programming. The Csound-expresion gives you eloquence of Haskell 
