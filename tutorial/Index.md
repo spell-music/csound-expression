@@ -29,17 +29,18 @@ by reactive programming. We can invoke the instruments with event streams.
 Event streams can be combined in the manner of reactive programming. 
 The GUI-widgets are producing the event streams as a control messages. 
 Moreover with Haskell we get all standard types and functions like 
-lists, maps, trees. It's a great way to organize functions and data.
+lists, maps, trees. It's a great way to organize code and data.
 
 Let's look at how we can create computer music with Haskell. 
 If you are a Csounder that stumbled upon this page and got interested then
 it's better to learn some Haskell. The basic level is enough to use 
-the library. I recommend the great book on the subject 
-[Learn you a Haskell for a Great Good](http://learnyouahaskell.com/) by Miran Lipovaca.
+the library. I recommend the book [Learn you a Haskell for a Great Good](http://learnyouahaskell.com/) by Miran Lipovaca.
+It's a great book with an elephant on the cover. It's a wonderfull introduction to the
+wisdom and miracles of the Haskell.
 
-* Instalation guide
+* Installation guide
 
-* 10 minutes guide for the impatient
+* Quickstart guide
 
 * Introduction to Csound for Haskell users
 
