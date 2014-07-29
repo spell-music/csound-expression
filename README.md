@@ -94,7 +94,7 @@ Acknowledgements
 
 I'd like to mention those who supported me a lot with their music and ideas:
 
-* music: entertainment for the braindead, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, 
+* music: entertainment for the braindead, three pandas and the moon, odno no, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, 
     loscil, boards of canada, Hozan Yamamoto, Tony Scott and Shinichi Yuize. 
 
 * ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
