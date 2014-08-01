@@ -15,7 +15,7 @@ of choice. It can run on mobile devices and even in the web browser.
 It has the support for GUI-widgets.
 
 But Csound is clumsy. It's an old  C-style language. We can boost it with 
-functional programming. The Csound-expresion gives you eloquence of Haskell 
+functional programming. The Csound-expression gives you eloquence of Haskell 
 combined with power of Csound.
 
 With the help of the library we can create our instruments on the fly. 
@@ -31,7 +31,7 @@ Let's look at how we can create computer music with Haskell.
 If you are a Csounder that stumbled upon this page and got interested then
 it's better to learn some Haskell. The basic level is enough to use 
 the library. I recommend the book [Learn you a Haskell for a Great Good](http://learnyouahaskell.com/) by Miran Lipovaca.
-It's a great book with an elephant on the cover. It's a wonderfull introduction to the
+It's a great book with an elephant on the cover. It's a wonderful introduction to the
 wisdom and miracles of the Haskell.
 
 Installation guide
@@ -45,7 +45,7 @@ When it's installed properly we can type in the terminal:
 > csound
 ~~~
 
-It will print the long message. Ubunut/Dbian users can install the csound with `apt-get`:
+It will print the long message. Ubuntu/Debian users can install the csound with `apt-get`:
 
 ~~~
 > sudo apt-get install csound csound-gui
@@ -87,7 +87,7 @@ on it and sends the output to speakers.
 
 **WARNING**: the library works best within `ghci`. The real-time sound rendering 
 function `dac` spawns a child process in the background which may continue 
-to execute after you stop the main process that runs the programm. 
+to execute after you stop the main process that runs the program. 
 It's not so in vim but it happens in the Sublime Editor and when you 
 invoke runhaskell. So the best is to write you program in the 
 separate file and then load it in the `ghci` and invoke the function 
