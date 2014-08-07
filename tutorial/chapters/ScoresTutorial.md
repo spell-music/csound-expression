@@ -173,9 +173,258 @@ Let's play the chord in the loop:
 The better scores with temporal-music-notation
 ------------------------------------------
 
+Notice how boring is the creation of the value for scores:
+
+~~~
+> CsdEventList 3 [(0, 1, 220), (1, 1, 330), (2, 1, 440)]
+~~~
+
+It's on purpose. The `CsdEventList` is not to be used directly. The user
+should seek for better alternatives. The `CsdEventList` is just a cannonical
+type and it does not provide any functions to make the construction
+of scores easier.
+
+In this section we are going to study an alternative. There is only one right now.
+There is an instance of `CsdSco` for the type `Score` from the package `temporal-music-notation`.
+The package defines handy function for building complex scores out of simpler ones.
+
+To use this package we have to install the package `temporal-csound`. 
+It defines the instance and provides some other usefull things. 
+
+~~~
+> :q
+leaving ghci...
+$ cabal-install temporal-csound
+~~~
+
+When everything is properly installed we can load in the interpreter
+the module `Csound`. 
+
+~~~
+$ ghci
+> :m +Csound
+~~~
+
+Let's study the main functions!
+
+### The basic functions
+
+The score is something that contains a list of notes and the total duration (in seconds).
+The note contains the time when it starts, the duration, and the parameter.
+
+The interesting thing is that we can build complex scores out of simple ones.
+there is a tiny set of functions to do it. The simplest functions are:
+
+~~~
+temp :: a -> Score a
+rest :: Dounle -> Score a
+~~~
+
+The function `temp` lifts the value to `Score`. It creates a `Score`
+that lasts for one second and contains a single note that starts right now
+and lasts for one second. The note contains the value that was given in 
+the first argument of the `temp`.
+
+The function `rest` creates a `Score` that contains no notes and lasts 
+for a given amount of time (in seconds).
+
+That's how we can build Scores out of simple values.
+Let's look at how we can combine the Scores.
+
+There are four simple functions:
+
+~~~
+str, del :: Double -> Score a -> Score a
+
+mel, har :: [Score a] -> Score a
+~~~
+
+The `str` is short for `stretch`. It stretches the notes in time domain.
+That's how we can make a single note that lasts for 2 seconds:
+
+~~~
+> str 2 $ temp "Hello"
+~~~
+
+The `del` is short for *delay*. It delays all events by the
+given amount of time.
+
+
+The two other functions can group the lists of scores. 
+The first one, `mel` is short for *melody*. It sequence 
+one note after another. The second one `har` is short for 
+`harmony`. It plays several Scores together.
+
+Let's arrange the list of letters one after another:
+
+~~~
+> mel $ fmap temp "Hello"
+~~~
+
+We can use the function `render` to see the list of events in the score:
+
+~~~
+> mapM_ print $ render $ mel $ fmap temp "Hello"
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'H'}
+Event {eventStart = 1.0, eventDur = 1.0, eventContent = 'e'}
+Event {eventStart = 2.0, eventDur = 1.0, eventContent = 'l'}
+Event {eventStart = 3.0, eventDur = 1.0, eventContent = 'l'}
+Event {eventStart = 4.0, eventDur = 1.0, eventContent = 'o'}
+~~~
+
+We can see that the start time was properly arranged.
+We can querry the duration of the scores with the function `dur`:
+
+~~~
+> dur $ mel $ fmap temp "Hello"
+5.0
+~~~
+
+Let's arrange the letters so that they are played in chord:
+
+~~~
+> dur $ har $ fmap temp "Hello"
+1.0
+> mapM_ print $ render $ har $ fmap temp "Hello"
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'H'}
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'e'}
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'l'}
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'l'}
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'o'}
+~~~
+
+We can see that every note starts at the same time and lasts
+the same amount of time. we can combine both results together:
+
+~~~
+> let e1 = mel $ fmap temp "Hello"
+> let e2 = har $ fmap temp "World"
+> dur $ mel [e1, str 4 e2]
+9.0
+~~~
+
+Nice thing is that score is a Functor:
+
+~~~
+> :m +Data.Char
+> mapM_ print $ render $ fmap toUpper $ mel [e1, str 4 e2]
+Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'H'}
+Event {eventStart = 1.0, eventDur = 1.0, eventContent = 'E'}
+Event {eventStart = 2.0, eventDur = 1.0, eventContent = 'L'}
+Event {eventStart = 3.0, eventDur = 1.0, eventContent = 'L'}
+Event {eventStart = 4.0, eventDur = 1.0, eventContent = 'O'}
+Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'W'}
+Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'O'}
+Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'R'}
+Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'L'}
+Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'D'}
+~~~
+
+But enough with strings let's play something.
+
+Let's create a scores:
+
+~~~
+> let notes = fmap temp [1, 5/4, 3/2, 2]
+> let n1 = mel notes
+> let n2 = har notes
+> let ns = fmap (double . (440 * )) $ str 0.5 $ mel [n1, str 4 n2]
+~~~
+
+Let's invoke it with an instrument:
+
+~~~
+> dac $ mul 0.15 $ mix $ sco (return . mul (fades 0.1 0.1) . osc . sig) ns 
+~~~
+
+The type `Score` is an instance of `CsdSco` so we can use it with 
+functions `sco` and `mix`. What's interesting we can combine the scores of
+signals:
+
+~~~
+> let q f = sco (return . mul (fades 0.1 0.1) . f . sig) ns
+> let q1 = q osc
+> let q2 = q saw
+> dac $ mul 0.1 $ mix $ mel [q1, q2]
+~~~
+
+We can use the functions `str`, `mel`, `har` and other before mixing.
+Even if they contain the signals.
+
+
+### Other useful functions
+
+Let's briefly study some other functions:
+
+Replicates the score N-times:
+
+~~~
+loop :: Int -> Score a -> Score a
+~~~
+
+Takes only a portion of the notes. It creates aclip
+that contains only notes that lie within a given interval:
+
+~~~
+slice :: Double -> Double -> Score a -> Score a
+~~~
+
+Filters the events:
+
+~~~
+filterEvents :: (Event Dur a -> Bool) -> Score a -> Score a
+~~~
+
+The package `temporal-music-notation` is not only for arragment of Scores.
+It defines the types for `Volume`, `Pitch` and `Note`. there are plenty of functions
+to make the creation of scores easy. The detailed study goes beyond the scope
+of this article but interested user can study the docs for the package.
+
 Composability of the sound signals
 ------------------------------------------
 
+What's interesting is that we can use all of the sound producing
+techniques together. The sound that is created with an instrument
+and event stream is just a signal. We can use it in our midi-device
+or in another instrument and then we can trigger it with scores. 
+The possibilities are infinite.
+
+Let's create a pulse of pure sines:
+
+~~~
+> let instr x = mul 0.5 $ 
+	sched (return . mlp 1500 0.6 . mul (fades 0.05 0.05) . osc . sig) $ 
+	withDur 0.2 $ devt x $  metroE 2
+~~~
+
+The result of the function `instr` is just a signal we can use
+it like any other signal. We can trigger the instrument with a midi device:
+
+~~~
+> vdac $ mul 0.5 $ midi $ onMsg instr
+~~~
+
+We can process it somehow:
+
+~~~
+> vdac $ mul 0.5 $ midi $ onMsg (mul (utri 0.5 * fades 0.1 1.5) . instr)
+~~~
+
+We can make our instrument little bit more interesting. We are going to 
+play pure major chords:
+
+~~~
+> let instr x = mul 0.25 $ 
+		sched (return . mlp 1500 0.6 . mul (fades 0.05 0.05) . osc . sig) $ 
+		withDur 0.2 $ fmap (* x) $ cycleE [1, 5/4, 3/2, 2] $  metroE 8
+~~~
+
+The midi instrument is the same:
+
+~~~
+> vdac $ mul 0.5 $ midi $ onMsg (mul (utri 0.5 * fades 0.1 1.5) . instr)
+~~~
+ 
 Instrument adapters
 -----------------------------------------
 
