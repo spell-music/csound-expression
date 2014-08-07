@@ -32,7 +32,7 @@ or arrays of numbers (`Tab`).
 An instrument is represented with function that takes a tuple of primitive
 values (`Arg`) and converts it to the tuple of signals (`Sigs`) wrapped in the type `SE`:
     
-~~~
+~~~haskell
 (Arg a, Sigs b) => a -> SE b
 ~~~
 
@@ -54,7 +54,7 @@ There are several ways to do it. We can trigger an instrument:
 The score is a list of events with some predefined total duration.
 An event is a tripple that contains:
 
-~~~
+~~~haskell
 (t0, dt, args)
 ~~~
 
@@ -62,7 +62,7 @@ Where `t0` is a start time, `dt` is a duration of the event, `args` is
 a list of arguments for the instrument. 
 The Score is represented with the type:
 
-~~~
+~~~haskell
 data CsdEventList a = CsdEventList
     { csdEventListDur       :: Double
     , csdEventListNotes     :: CsdEvent a }
@@ -73,7 +73,7 @@ type CsdEvent a = (Double, Double, a)
 The start time and duration are in seconds. To invoke an instrument
 with Score we can use the functions:
 
-~~~
+~~~haskell
 sco :: (CsdSco f, Arg a, Sigs b) => (a -> SE b)  -> f a -> f (Mix b)
 mix :: (CsdSco f, Sigs a) => f (Mix a) -> a
 ~~~
@@ -85,7 +85,7 @@ we don't see it in the signatures. It's referenced indirectly
 with type class `CsdSco`. The types fron the class `CsdSco`
 are things that can be converted to the canonical representation.
 
-~~~
+~~~haskell
 class CsdSco f where
     toCsdEventList :: f a -> CsdEventList a
     singleCsdEvent :: CsdEvent a -> f a
@@ -111,7 +111,7 @@ can produce the in real time.
 
 The event stream is represented with the type:
 
-~~~
+~~~haskell
 newtype Evt a = Evt { runEvt :: Boom a -> SE () }
 
 type Boom a = a -> SE ()
@@ -122,14 +122,14 @@ type `a -> SE ()` and applies it to all events in the stream.
 
 We have some primitive constructors:
 
-~~~
+~~~haskell
 metroE :: Sig -> Evt ()
 ~~~
 
 It takes a frequency of the repetition. An empty tuple happens every now and then.
 We can process the events with functions:
 
-~~~
+~~~haskell
 repeatE :: a -> Evt b -> Evt a
 filterE :: (a -> BoolD) -> Evt a -> Evt a
 cycleE  :: Arg a => [a] -> Evt b -> Evt a
@@ -147,7 +147,7 @@ of boolean values.
 
 We can trigger instruments on the event streams with functions:
 
-~~~
+~~~haskell
 trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
 sched :: (Arg a, sigs b) => (a -> SE b) -> Evt (D, a)    -> b
 ~~~
@@ -161,7 +161,7 @@ all events happen immediately.
 
 We can trigger an instrument with midi devices:
 
-~~~
+~~~haskell
 midi   :: (Sigs a) => (Msg -> SE a) -> a
 midin  :: (Sigs a) => Int -> (Msg -> SE a) -> a
 pgmidi :: (Sigs a) => Int -> Maybe Int -> (Msg -> SE a) -> a
@@ -176,7 +176,7 @@ and possible channel (the second argument).
 We can query midi-messages for amplitude, frequency and other parameters
 (we can see the complete list in the module `Csound.Opcode.RealtimeMIDI`):
 
-~~~
+~~~haskell
 cpsmidi :: Msg -> D
 ampmidi :: Msg -> D -> D
 ...
@@ -225,7 +225,7 @@ They set the signal-like things to audio or control rate. For
 instance if you want your envelope to run
 at control rate, write:
 
-~~~
+~~~haskell
 env = ar $ linseg [0, idur/2, 1, idur/2, 0]
 ~~~   
 
@@ -243,7 +243,7 @@ How to read them? For instance you want to use an oscillator
 with cubic interpolation. So you dig into the `Csound.Opcode.SignalGenerators` 
 and find the function:
 
-~~~
+~~~haskell
 oscil3 :: Sig -> Sig -> Tab -> Sig
 ~~~   
 
@@ -275,7 +275,7 @@ per second. This unit reads the table with given amplitude (it is a signal)
 and frequency (it is a signal too). Or we can just read about it
 in the docs if we follow the link that comes at the very last line in the comments:
 
-~~~
+~~~haskell
 doc: <http://www.csounds.com/manual/html/oscil3.html>
 ~~~
 
