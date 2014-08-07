@@ -1,5 +1,10 @@
 @@ -- means breaking compatibility
 
+4.0.0
+
+    Adds a Guide to the library, brand new leading page,
+    OSC-support, mono mode for midi, writing sound to files
+
 3.3.2
 
     Adds handy functions in Csound.Air
