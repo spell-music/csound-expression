@@ -38,18 +38,18 @@ Let's look at how we can create computer music with Haskell.
 
 Appendix:
 
-* [Quickstart guide]()
+* [Quickstart guide](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/appendix/QuickStart.markdown)
 
-* [Introduction to Csound for Haskellers]()
+* [Introduction to Csound for Haskellers](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/appendix/CsoundInstro.markdown)
 
-* [Overview of the library]()
+* [Overview of the library](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/appendix/Overview.markdown)
 
 -------------------------------------------------------------------
 
 WARNING: the library works best within ghci. The real-time sound rendering 
-function dac spawns a child process in the background which may continue 
+function `dac` spawns a child process in the background which may continue 
 to execute after you stop the main process that runs the programm. 
 It's not so in vim but it happens in the Sublime Editor and when you 
-invoke runhaskell. So the best is to write you program in the separate 
-file and then load it in the ghci and invoke the function main 
-(which runs the sound rendering with the function dac).
+invoke `runhaskell`. So the best is to write you program in the separate 
+file and then load it in the ghci and invoke the function `main`
+(which runs the sound rendering with the function `dac`).

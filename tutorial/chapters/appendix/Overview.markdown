@@ -375,3 +375,6 @@ charOff :: Char   -> Evt Unit
 We should create a window to be able to listen on keyboard events
 with the function `keyPanel` or `keyPanelBy`.
 
+------------------------------------------------------------------
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

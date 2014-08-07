@@ -771,7 +771,8 @@ The `schedUntil` funtion triggers the instrument with
 the first event stream and holds the notes while 
 the second event stream is silent.
 
+------------------------------------------------------------------
 
-
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
 
 

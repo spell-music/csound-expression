@@ -378,4 +378,7 @@ Now you can learn about:
 * how to twick the parameters during performance 
     with sliders, knobs or buttons (`Csound.Gui`) -- TODO
 
+------------------------------------------------------------------
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
 
