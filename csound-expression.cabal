@@ -12,53 +12,17 @@ Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
 
 Description:   
-    Let's make music with text! We can use Csound to describe our music. Csound has so many fantastic sound generators.
-    It's very efficient. But sometimes Csound is too low level. So many details: integer identifiers for instruments 
-    and arrays, should I use control rate or audio rate signals, lack of abstractions, no nested expressions and it has limited set of types. 
-    This library embeds Csound in Haskell. We can use powerful Csound's primitives and glue them
-    together with Haskell abstractions. The module "Csound.Base" exports all types and functions.
+    Welcome to the simplest textual synthesizer.
     .
-    Tutorials:
+    > dac $ osc 440
     .
-    * Quickstart guide <http://github.com/anton-k/csound-expression/blob/master/tutorial/QuickStart.markdown>
+    Csound-expression is a Haskell framework for computer music.
+    With the help of the library we can create our instruments on the fly. 
+    A few lines in the interpreter is enough to get the cool sound going
+    out of your speakers. It can be used for simple daily sound-file processing 
+    or for a full-blown live performances.
     .
-    * Overview of the library <http://github.com/anton-k/csound-expression/blob/master/tutorial/Overview.markdown>
-    .
-    * Introduction to Csound and library for Haskell users <http://github.com/anton-k/csound-expression/blob/master/tutorial/CsoundInstro.markdown>
-    .
-    * Basics of sound synthesis with csound-expression <https://github.com/anton-k/csound-expression/blob/master/tutorial/SynthTutorial.md>
-    .
-    * There are examples in the source code archive <http://github.com/anton-k/csound-expression/tree/master/examples>. 
-    .
-    Key principles
-    .
-    * Keep it simple and compact (as functional as possible).
-    .
-    * Make it open (No dependency on Score-generation libraries. Score (or list of events) 
-    is represented with type class. You can use your favorite Score-generation library 
-    if you provide an instance for the CsdSco type class. 
-    Currently there is support for temporal-music-notation library (see temporal-csound package). 
-    .
-    How to install (for Csound and Haskell users)
-    .
-    To use the library we need:
-    .
-    *   GHC - haskell compiler. This library uses GHC-specific features (<www.haskell.org/ghc>).
-    .
-    *   cabal-install to install haskell packages (<www.haskell.org/cabal>).
-    .
-    *   Csound compiler (version 5.13 or higher). You must get it installed on your system.
-    Since we are going to generate the csound code we need to compile it to sound somehow.
-    We can find out how to install the Csound on <www.csounds.com>. 
-    To test whether csound is installed open the command line and type:
-    .
-    > csound
-    .
-    It should print a long message with version and available flags and libraries.
-    .
-    If everything is installed to install the library we can open the command line terminal and type:
-    .
-    > cabal install csound-expression
+    Got interested? Check out the guide: <https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md>
     .
     Acknowledgements (I'd like to mention those who supported me a lot with their music and ideas):
     .
@@ -66,12 +30,6 @@ Description:
     Hozan Yamamoto, Tony Scott and Shinichi Yuize. 
     .
     * ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
-    .
-    WARNING: the library works best within ghci. The real-time sound rendering function dac spawns
-    a child process in the background which may continue to execute after you stop the main process that runs the programm.
-    It's not so in vim but it happens in the Sublime Editor and when you invoke runhaskell. So the best
-    is to write you program in the separate file and then load it in the ghci and invoke the function main (which
-    runs the sound rendering with the function dac). 
    
 Extra-Source-Files : 
     examples/README.txt
