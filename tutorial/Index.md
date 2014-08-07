@@ -34,11 +34,15 @@ Let's look at how we can create computer music with Haskell.
 
 * [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/InstrumentsShowCase.md)
 
-* [Appendix A: Quickstart guide]()
+-------------------------------------------------------------------
 
-* [Appendix B: Introduction to Csound for Haskellers]()
+Appendix:
 
-* [Appendix C: Overview of the library]()
+* [Quickstart guide]()
+
+* [Introduction to Csound for Haskellers]()
+
+* [Overview of the library]()
 
 -------------------------------------------------------------------
 
