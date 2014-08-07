@@ -633,6 +633,50 @@ Complex waves
 Let's study how can we made our waveforms more interesting.
 We can apply several simple techniques to achieve it.
 
+### Reading sound signals from files
+
+We can reuse the sound signals. The music is everywhere and we can
+take a somebody else's music as a start point.
+
+There are habdy functions for reading the sound from files:
+
+~~~
+readSnd :: String -> (Sig, Sig)
+loopSnd :: String -> (Sig, Sig)
+
+readSnd fileName = ...
+~~~
+
+The `readSnd` plays the file only once. The `loopSnd` repeats the file
+over and over again. There is another useful function:
+
+~~~
+loopSndBy :: D -> String -> (Sig, Sig)
+~~~
+
+It takes the duration of the loop-period as a first argument.
+
+These functions can read files in many formats including `wav` and `mp3`.
+If your sound sample is stored in the `wav` or `aiff` format we can
+read it with the given speed. The speed is a signal. It can change with time.
+We can create interesting effects with it:
+
+~~~
+loopWav :: Sig -> String -> (Sig, Sig)
+loopWav speed fileName = ...
+~~~
+
+The normal playback is a speed that equals `1`. We can play it in reverse
+if we set the speed to `-1`.
+
+The output is a stereo signal. If we want to force it to mono we can use the function:
+
+~~~
+toMono :: (Sig, Sig) -> Sig
+~~~
+
+It produces the mean of two signals.
+
 ### Additive synthesis
 
 The simplest one is additive synthesis. We add two or more waveforms so
