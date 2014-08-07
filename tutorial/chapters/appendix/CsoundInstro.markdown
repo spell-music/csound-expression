@@ -344,9 +344,7 @@ You can find many examples at:
     
 * A translation of the 
     [Amsterdam catalog of Csound computer instruments](https://github.com/anton-k/amsterdam)
-    
-* Csound expression Tutorial at (TODO).
-        
+       
 ## References
     
 Got interested in Csound? Csound is very well documented. 
@@ -361,22 +359,6 @@ There are good tutorials, read about it at:
 * Lots of wonderful real-time examples by [Iain McCurdy](http://iainmccurdy.org/csound.html)
     --
 * Outdated but short [manual on Csound](http://cara.gsu.edu/courses/csound_users_seminar/csound/3.46/CsIntro.html)
-
-## What's next?
-
-Now you can learn about:
-    
-* main types of the library (`Csound.Types`)
-    
-* how to define an instrument and invoke it (`Csound.Control`)
-    
-* how to render the csound code and listen the sound or make a live performance (`Csound.IO`)
-    
-* what sound units are ready to use (`Csound.Air` and `Csound.Opcode` 
-    re-exported by `Csound.Base`)
-    
-* how to twick the parameters during performance 
-    with sliders, knobs or buttons (`Csound.Gui`) -- TODO
 
 ------------------------------------------------------------------
 

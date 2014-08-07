@@ -339,7 +339,7 @@ sines :: [Double] -> Tab
 
 Let's rewrite the example:
 
-~~~
+~~~{.haskell}
 > let wave x = oscBy (sines [1, 0.5, 0.125]) x
 > vdac $ midi $ onMsg $ mul (fades 0.1 0.5) . wave
 ~~~

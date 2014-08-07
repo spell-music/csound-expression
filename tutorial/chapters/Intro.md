@@ -69,7 +69,7 @@ The first sound
 Let's start the `ghci` and load the main module `Csound.Base`. It exports
 all modules:
 
-~~~
+~~~haskell
 > ghci
 Prelude> :m +Csound.Base
 Prelude Csound.Base> 
@@ -77,7 +77,7 @@ Prelude Csound.Base>
 
 We can play a sine wave with 440 Hz:
 
-~~~ 
+~~~haskell
 > dac $ osc 440
 ~~~
 
