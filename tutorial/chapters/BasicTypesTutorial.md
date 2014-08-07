@@ -513,10 +513,10 @@ newSERef 		:: Tuple a => a -> SE (SERef a)
 newGlobalSERef  :: Tuple a => a -> SE (SERef a)
 ~~~
 
-They create a value of the type `SERef`:
+They take in an initial value and create a value of the type `SERef`:
 
 ~~~{.haskell}
-data SERef = SERef 
+data SERef a = SERef 
 	{ writeSERef :: a -> SE ()
 	, readSERef  :: SE a
 	}
