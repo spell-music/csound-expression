@@ -43,6 +43,19 @@ writeSnd :: RenderCsd a => String -> a -> IO ()
 writeSnd fileName csd = ...
 ~~~
 
+Let's write a 10 seconds of concert A (440 Hz). We can use it
+for tuning:
+
+~~~
+> writeSnd "A.wav" $ setDur 10 $ osc 440
+~~~
+
+The audio is going to be rendered offline. The good thing
+about offline rendering is that it can happen much faster.
+It depends on the complexity of the sound units. It's not limited
+with real-time constraints. So we can render a file with 30 minutes
+very quickly.
+
 Playing live
 ------------------------------------------------------
 

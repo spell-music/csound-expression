@@ -442,12 +442,91 @@ sine, cosine, sigmoid :: Tab
 ~~~
 
 Side effects (SE)
--------------------------------------
+------------------------------------------------
 
+The `SE`-type is for funcions that work with side effects.
+They can produce effectful value or can be used just for the 
+side effect. 
+
+For example every function that generates random numbers 
+uses the type `SE`.
+
+To get the white or pink noise we can use:
+
+~~~{.haskell}
+white :: SE Sig
+pink  :: SE Sig
+~~~
+
+Let's listen to the white noise:
+
+~~~{.haskell}
+> dac $ mul 0.5 $ white
+~~~
+
+We can get the random numbers with linear interpolation.
+The output values lie in the range of -1 to 1:
+
+~~~{.haskell}
+rndi :: Sig -> SE Sig
+~~~
+
+We can get the constant random numbers (it's like sample and hold
+function with random numbers):
+
+~~~{.haskell}
+rndh :: Sig -> SE Sig
+~~~
+
+We can use the random number generators as LFO.
+The `SE` is a `Functor`, `Applicative` and `Monad`.
+We rely on these properties to get the output:
+
+~~~{.haskell}
+> let instr lfo = 0.5 * saw (440 + lfo)
+> dac $ fmap instr (20 * rndi 5)
+~~~
+
+There are unipolar variants: `urndh` and `urndi`.
+The output ranges form 0 to 1 for them.
+
+Note that the function `dac` can work not only signals but
+also on the signals that are wrapped in the type `SE`.
+
+Mutable values
+-------------------------------------------------
+
+We can create mutable variables. It works just like
+the normal Haskell mutable variables. We can create
+a reference and the we should use the functions
+on the reference to read and write values.
+
+There are two types of the variables: local and global variables.
+The local variables are visible only within one Csound instrument.
+The global variables are visible everywhere.
+
+
+We can create a reference to the mutable variable with functions:
+
+~~~{.haskell}
+newSERef 		:: Tuple a => a -> SE (SERef a)
+newGlobalSERef  :: Tuple a => a -> SE (SERef a)
+~~~
+
+They create a value of the type `SERef`:
+
+~~~{.haskell}
+data SERef = SERef 
+	{ writeSERef :: a -> SE ()
+	, readSERef  :: SE a
+	}
+~~~
+
+We can write and read values from reference.
 
 
 Tuples (Tuple)
--------------------------------------
+-------------------------------------------------
 
 Some of the Csound functions are producing several outputs.
 Then the output is represented with `Tuple`. It's a special
@@ -476,11 +555,6 @@ ar2 :: (Sig, Sig) -> (Sig, Sig)
 ar3 :: (Sig, Sig, Sig) -> (Sig, Sig, Sig)
 ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
 ~~~
-
-
-Csound notes (`CsdEventList`) and instrument's arguments (Arg)
-----------------------------------------------------------------
-
 
 The Signal space (SigSpace)
 ---------------------------------------
