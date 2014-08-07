@@ -49,6 +49,10 @@ module Csound.Air (
     readSnd1, loopSnd1, loopSndBy1, 
     readWav1, loopWav1, 
     
+    -- * Writing sound files
+    SampleFormat(..),
+    writeSigs, writeWav, writeAiff, writeWav1, writeAiff1,
+
     -- ** Utility
     lengthSnd, segments,
 
@@ -472,6 +476,54 @@ readWav1 speed fileName = diskin2 (text fileName) speed
 -- | The mono variant of the function @loopWav@.
 loopWav1 :: Sig -> String -> Sig
 loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
+
+--------------------------------------------------------------------------
+-- writing sound files
+
+-- | The sample format.
+data SampleFormat 
+    = NoHeaderFloat32       -- ^ 32-bit floating point samples without header
+    | NoHeaderInt16         -- ^ 16-bit integers without header
+    | HeaderInt16           -- ^ 16-bit integers with a header. The header type depends on the render (-o) format
+    | UlawSamples           -- ^  u-law samples with a header
+    | Int16                 -- ^ 16-bit integers with a header
+    | Int32                 -- ^ 32-bit integers with a header 
+    | Float32               -- ^ 32-bit floats with a header
+    | Uint8                 -- ^ 8-bit unsigned integers with a header
+    | Int24                 -- ^ 24-bit integers with a header
+    | Float64               -- ^ 64-bit floats with a header
+    deriving (Eq, Ord, Enum)
+
+-- | Writes a sound signal to the file with the given format.
+-- It supports only four formats: Wav, Aiff, Raw and Ircam.
+writeSigs :: FormatType -> SampleFormat -> String -> [Sig] -> SE ()
+writeSigs fmt sample file = fout (text file) formatToInt 
+    where 
+        formatToInt = int $ formatTypeToInt fmt * 10 + fromEnum sample
+
+        formatTypeToInt :: FormatType -> Int
+        formatTypeToInt x = case x of
+            Wav   -> 1
+            Aiff  -> 2
+            Raw   -> 3
+            Ircam -> 4
+            _     -> error $ "Format " ++ (show x) ++ " is not supported in the writeSnd."
+
+-- | Writes wav files.
+writeWav :: String -> (Sig, Sig) -> SE ()
+writeWav file = writeSigs Wav Int16 file . \(a, b) -> [a, b]
+
+-- | Writes aiff files.
+writeAiff :: String -> (Sig, Sig) -> SE ()
+writeAiff file = writeSigs Aiff Int16 file . \(a, b) -> [a, b]
+
+-- | Writes mono signals to wav files.
+writeWav1 :: String -> Sig -> SE ()
+writeWav1 file = writeWav file . \x -> (x, x)
+
+-- | Writes mono signals to aiff files.
+writeAiff1 :: String -> Sig -> SE ()
+writeAiff1 file = writeAiff file . \x -> (x, x)
 
 --------------------------------------------------------------------------
 -- spectral functions

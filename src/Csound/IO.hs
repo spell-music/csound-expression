@@ -41,8 +41,11 @@ module Csound.IO (
 import System.Process
 import Control.Exception
 
+import Data.Monoid
 import Data.Default
 import Csound.Typed
+
+import Csound.Options(setSilent)
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy 
@@ -189,13 +192,14 @@ setVirtual a = a { csdFlags = (csdFlags a) { rtmidi = Just VirtualMidi, midiRT =
 
 -- | Renders to file @tmp.csd@ and invokes the csound on it.
 csd :: (RenderCsd a) => a -> IO ()
-csd = csdBy def
+csd = csdBy setSilent
 
 -- | Renders to file @tmp.csd@ and invokes the csound on it.
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
-    writeCsdBy options "tmp.csd" a
+    writeCsdBy (setSilent <> options) "tmp.csd" a
     runWithUserInterrupt $ "csound tmp.csd" 
+
 
 ----------------------------------------------------------
 -- players

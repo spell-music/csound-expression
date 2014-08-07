@@ -6,6 +6,7 @@ module Csound.Options(
     setRates, setBufs, setGain, setJack,
     setOutput, setInput, 
     setDac, setAdc, setDacBy, setAdcBy, setThru,
+    setSilent,
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for 
@@ -85,4 +86,8 @@ setAdcBy port = setInput name
 
 setThru :: Options
 setThru = mappend setDac setAdc
+
+-- | Sets the output to nosound.
+setSilent :: Options
+setSilent = (def { csdFlags = def { audioFileOutput = def { nosound = True } } })
 
