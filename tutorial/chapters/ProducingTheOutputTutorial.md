@@ -14,14 +14,14 @@ The csound-expression library at its core is a Csound file
 generator. The most basic thing it can do is to make
 as String that contains the Csound code.
 
-~~~
+~~~haskell
 renderCsd :: RenderCsd a => a -> IO String
 ~~~
 
 It takes something renderable and produces a `String`.
 We can write the String to the file with function:
 
-~~~
+~~~haskell
 writeCsd :: RenderCsd a => String -> a -> IO ()
 writeCsd fileName csd = ...
 ~~~
@@ -38,7 +38,7 @@ Saving the output to sound-file
 
 We can write the output to wav-file or aiff-file with function:
 
-~~~
+~~~haskell
 writeSnd :: RenderCsd a => String -> a -> IO ()
 writeSnd fileName csd = ...
 ~~~
@@ -46,7 +46,7 @@ writeSnd fileName csd = ...
 Let's write a 10 seconds of concert A (440 Hz). We can use it
 for tuning:
 
-~~~
+~~~haskell
 > writeSnd "A.wav" $ setDur 10 $ osc 440
 ~~~
 
@@ -61,7 +61,7 @@ Playing live
 
 We have already seen these functions. You can guess them:
 
-~~~
+~~~haskell
 dac  :: RenderCsd a => a -> IO ()
 vdac :: RenderCsd a => a -> IO ()
 ~~~
@@ -78,7 +78,7 @@ Playing the sound with player
 We can render the file to sound file and play it with soundplayer.
 Right now only Linux players are supported:
 
-~~~
+~~~haskell
 mplayer, totem :: RenderCsd a => a -> IO ()
 ~~~
 
@@ -93,13 +93,13 @@ But can we do anything else? Yes, we can.
 
 We can render the signals or tuples of signals.
 
-~~~
+~~~haskell
 Sig, (Sig, Sig), (Sig, Sig, Sig, Sig)
 ~~~
 
 They can be wrapped in the type `SE` (they can contain side effects)
 
-~~~
+~~~haskell
 SE Sig, SE (Sig, Sig), SE (Sig, Sig, Sig, Sig)
 ~~~
 
@@ -107,14 +107,14 @@ We can listen on the sound card ports for input signals.
 Yes, we can use the csound as a sound-effect. Then we render
 a function:
 
-~~~
+~~~haskell
 (Sigs a, Sigs b) => RenderCsd (a -> b)
 (Sigs a, Sigs b) => RenderCsd (a -> SE b)
 ~~~
 
 We can render a procedure:
 
-~~~
+~~~haskell
 SE ()
 ~~~
 
@@ -137,7 +137,7 @@ we need to alter the defaults. That's where the `Options` are handy.
 If we look at the module [Csound.IO](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-IO.html)
 we shortly notice that there are duplicate functions that ends with `By`
 
-~~~
+~~~haskell
 dacBy 		:: RenderCsd a => Options -> a -> IO ()
 writeCsdBy 	:: RenderCsd a => Options -> String -> a -> IO ()
 writeSndBy 	:: RenderCsd a => Options -> String -> a -> IO ()
@@ -152,7 +152,7 @@ functional tables, assign settings for JACK-instruments and so on.
 
 That's how we can alter the sound-rates:
 
-~~~
+~~~haskell
 > let opt = setRates 96000 64
 > writeSndBy opt result
 ~~~
@@ -169,7 +169,7 @@ We can use the default `Options` and alter only the things
 we need to alter without the need to redefine the other things.
 Let's see how we can combine different settings:
 
-~~~
+~~~haskell
 > let opt = setRates 96000 64 <> def { tabFi = coarseFi 15 }
 > writeSndBy opt result
 ~~~

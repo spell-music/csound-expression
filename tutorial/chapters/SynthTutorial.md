@@ -77,7 +77,7 @@ Enough with theory! Let's move on to practice!
 Let's load the csound-expression to the REPL and define
 the basic virtual midi instrument:
 
-~~~
+~~~haskell
 > ghci
 Prelude> :m +Csound.Base
 Prelude Csound.Base> let run f = vdac $ midi $ onMsg f
@@ -90,7 +90,7 @@ Wave generator defines the timbre content. What spectrum do we need in the sound
 There are four standard waveforms: sine, sawtooth, square and triangle.
 The standard waveforms are represented with functions:
 
-~~~
+~~~haskell
 osc, saw, sqr, tri :: Sig -> Sig
 ~~~
 
@@ -98,7 +98,7 @@ All functions take in a frequency (it can vary with time, so it's a signal).
 
 The most simple is sine wave or pure tone. It represents the sine function. Let's listen to it.
 
-~~~
+~~~haskell
 > run osc
 ~~~
 
@@ -116,7 +116,7 @@ several notes it starts to scream because we add several waves and the amplitude
 goes beyond 1 and clipping results in distortion and leads to the harsh sound.
 If we want to press several keys we can scale the output sound:
 
-~~~
+~~~haskell
 > run $ mul 0.25 . osc
 ~~~
 
@@ -124,19 +124,19 @@ Pure tone contains only one partial in the spectrum. It's the most naked sound.
 We can make it a little bit more interesting with different waves. The next wave is
 triangle:
 
-~~~
+~~~haskell
 > run $ mul 0.25 . tri
 ~~~
 
 Little bit more rich in harmonics is square wave:
 
-~~~
+~~~haskell
 > run $ mul 0.25 . sqr
 ~~~
 
 The most rich is a saw wave:
 
-~~~
+~~~haskell
 > run $ mul 0.25 . saw
 ~~~
 
@@ -146,26 +146,26 @@ We can see that we are goig to use the scaling all the time so why not
 to move it inside our runner function. Also we scale the pitch by 2
 to make pitch lower:
 
-~~~
+~~~haskell
 > let run k f = vdac $ midi $ onMsg (mul k . f . (/ 2))
 ~~~
 
 Now we can run the saw wave like this:
 
-~~~
+~~~haskell
 > run 0.25 saw
 ~~~
 
 We can make our waves a little bit more interesting with
 additive synthesis. We can add together several waves (something that resembles harmonic series):
 
-~~~
+~~~haskell
 run 0.15 $ \x -> saw x + 0.25 * sqr (2 * x) + 0.1 * tri (3 * x)
 ~~~
 
 Or we can introduce the higher harmonics:
 
-~~~
+~~~haskell
 run 0.15 $ \x -> saw x + 0.25 * tri (7 * x) + 0.15 * tri (13 * x)
 ~~~
 
@@ -191,7 +191,7 @@ That's how we change the volume in time.
 Envelope generators produce piecewise functions. Most often they are linear or exponential.
 In csound-expression we can produce piecewise functions with two function: `linseg` and `expseg`.
 
-~~~
+~~~haskell
 linseg, expseg :: [D] -> Sig
 ~~~
 
@@ -200,7 +200,7 @@ Here is an example:
 
 Let's look at the input list:
 
-~~~
+~~~haskell
 linseg [a, t_ab, b, t_bc, c, t_cd, d, ...]
 ~~~
 
@@ -210,13 +210,13 @@ in `t_bc` seconds and so on. For example, let's construct the function that
 starts at 0 then goes to 1 in 0.5 seconds, then proceeds to 0.5 in 2 seconds,
 and finally fades out to zero in 3 seconds:
 
-~~~
+~~~haskell
 linseg [0, 0.5, 1, 2, 0.5, 3, 0]
 ~~~
 
 There are two usefull functions for midi instruments: 
 
-~~~
+~~~haskell
 linsegr, expsegr :: [D] -> D -> D -> Sig
 ~~~
 
@@ -227,13 +227,13 @@ is a final value. All values for expsegr should be positive.
 For example we can construct a saw that slowly fades out after
 release:
 
-~~~
+~~~haskell
 run 0.25 $ \cps -> expsegr [0.001, 0.1, 1, 3, 0.5] 3 0.001 * saw cps 
 ~~~
 
 We can make a string-like sound with long fade in:
 
-~~~
+~~~haskell
 run 0.25 $ \cps -> linsegr [0.001, 1, 1, 3, 0.5] 3 0.001 * (tri cps + 0.5 * tri (2 * cps) + 0.1 * sqr (3 * cps))
 ~~~
 
@@ -248,7 +248,7 @@ fades out completely.
 
 Here is a definition:
 
-~~~
+~~~haskell
  adsr a d s r = linseg [0,      a, 1, d, s, r, 0]
 xadsr a d s r = expseg [0.0001, a, 1, d, s, r, 0.0001]
 ~~~
@@ -256,7 +256,7 @@ xadsr a d s r = expseg [0.0001, a, 1, d, s, r, 0.0001]
 There are two more function that wait for note release 
 (usefull with midi-instruments):
 
-~~~
+~~~haskell
  madsr a d s r = linsegr [0,      a, 1, d, s] r, 0
 mxadsr a d s r = expsegr [0.0001, a, 1, d, s] r, 0.0001
 ~~~
@@ -267,7 +267,7 @@ They are linear and exponential envelope generators.
 
 So we can express the previous example like this:
 
-~~~
+~~~haskell
 run 0.25 $ \cps -> leg 1 3 0.5 3 * saw cps
 ~~~
 
@@ -283,19 +283,19 @@ as a control signal.
 
 Let's use it for vibrato:
 
-~~~
+~~~haskell
 run 0.25 $ \cps -> leg 1 3 0.5 3 * saw (cps * (1 + 0.1 * osc 5))
 ~~~
 
 Or we can make a tremolo if we modify an amplitude:
 
-~~~
+~~~haskell
 run 0.25 $ \cps -> osc 5 * leg 1 3 0.5 3 * saw cps
 ~~~
 
 The lfo-frequency can change over time:
 
-~~~
+~~~haskell
 run 0.25 $ \cps -> osc (5 * leg 1 1 0.2 3) * leg 2 3 0.5 3 * saw cps
 ~~~
 
@@ -311,7 +311,7 @@ parameters. Let's study new way of controlling sound. Let's study brightness.
 
 There is a special function to make the LFOs more explicit:
 
-~~~
+~~~haskell
 type Lfo = Sig
 
 lfo :: (Sig -> Sig) -> Sig -> Sig -> Lfo
@@ -346,7 +346,7 @@ the stronger the filter.
 
 In csound-expression there are plenty of filters. Standard filters are:
 
-~~~
+~~~haskell
 lp, hp, bp, br :: Sig -> Sig -> Sig -> Sig
 ~~~
 
@@ -355,7 +355,7 @@ and the last argument is the signal to modify.
 
 There is an emulation of the moog low pass filter:
 
-~~~
+~~~haskell
 mlp :: Sig -> Sig -> Sig -> Sig 
 ~~~
 
@@ -364,7 +364,7 @@ The arguments are: central frequency, resonance, the input signal.
 We can change parameters in real-time with EG's and LFO's.
 Let's create an envelope and apply it to the amplitude and center frequency:
 
-~~~
+~~~haskell
 > let env = mxadsr 0.1 0.5 0.3 1
 > run (0.15 * env) (lp (1500 * env) 1.5 . saw)
 ~~~
@@ -375,25 +375,25 @@ adjust the scaling factor after filtering. Filters change the volume of the sign
 We can align the center frequency with pitch. So that if we make pitch higher 
 the center frequency gets higher and we get more bright sounds:
 
-~~~
+~~~haskell
 > run (0.15 * env) (\x -> lp (x + 500 * env) 3.5 $ saw x)
 ~~~
 
 We can make a waveform more interesting with new partials.
 
-~~~
+~~~haskell
 > run (0.1 * env) (\x -> lop (x + 2500 * env) 3.5 $ saw x + 0.3 * tri (3 * x) + 0.1 * tri (4 * x))
 ~~~
 
 We can apply an LFO to the resonance.
 
-~~~
+~~~haskell
 run (0.15 * env) (\x -> lop (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 Also we can apply LFO to the frequency:
 
-~~~
+~~~haskell
 run (0.15 * env) (\x -> lop (x + 500 * env) (7 + 3 * sqr 4) $ saw (x * (1 + 0.1 * osc 4)))
 ~~~
 
@@ -412,7 +412,7 @@ single note. But we want to alter the total sound that goes out of
 the instrument. It includes the mixed sound from all notes that are played.
 Let's modify our definition for function `run`:
 
-~~~
+~~~haskell
 let run eff k f = vdac $ eff $ midi $ onMsg (mul k . f . (/ 2))
 ~~~	
 
@@ -425,30 +425,30 @@ The first argument now applies some effect to the output signal.
 Reverb places the sound in some room, cave or hall.
 We can apply reverb with function `reverTime`:
 
-~~~
+~~~haskell
 reverTime :: Sig -> Sig -> Sig
 ~~~
 
 It expects the reverb time (in seconds) as a first argument and the signal as
 the second argument.
 
-~~~
+~~~haskell
 run (reverTime 1.5) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 There is also a function `rever1`:
 
-~~~
+~~~haskell
 rever1 :: Sig -> Sig -> (Sig, Sig)
 ~~~
 
 It's base on very cool csound unit `reverbsc`. It takes in feedback level (0 to 1)
 and input signal and produces the processed output. There are several ready to use
-shortcuts: `smallRoom`, `smallHall`, `largeRoom`, `largHall` and `magicCave`.
+shortcuts: `smallRoom`, `smallHall`, `lhaskellargeRoom`, `largHall` and `magicCave`.
 
 Let's place our sound in the magic cave:
 
-~~~
+~~~haskell
 run magicCave (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
@@ -458,7 +458,7 @@ You can hear how dramatically an effect can change the sound.
 
 Delay adds some echoes to the sound. the simplest function is `echo`:
 
-~~~
+~~~haskell
 echo :: D -> Sig -> Sig -> SE Sig
 echo dt fb asig
 ~~~
@@ -470,22 +470,22 @@ the delayed signal. So thats why the output contains side-effects.
 
 Let's try it out:
 
-~~~
+~~~haskell
 run (echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 Let's add some reverberation:
 
-~~~
+~~~haskell
 run (fmap smallHall . echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 We are using the `fmap` function to apply the next effect in chain to the value with side-effects.
 The `SE`-wrapper type is `Monad` and hence it's `Applicative` and `Functor`.
-
+haskell
 The `echo` function is a specification of generic function:
 
-~~~
+~~~haskell
 fdelay :: D -> Sig -> Sig -> Sig -> SE Sig
 fdelay len fbk mix asig
 ~~~
@@ -495,7 +495,7 @@ with processed one which is scaled by amount of `mix`) and the input signal.
 
 There is the last most generic function `fvdelay`. With it we can vary the delay time: 
 
-~~~
+~~~haskell
 fvdelay :: D -> Sig -> Sig -> Sig -> Sig -> SE Sig
 fvdelay maxDelTime delTime fbk mix asig
 ~~~
@@ -505,7 +505,7 @@ Other arguments are the same.
 
 Multitap delays can be achieved with function
 
-~~~
+~~~haskell
 fvdelays :: D -> [(Sig, Sig)] -> Sig -> Sig -> SE Sig
 fvdelays maxDelTime delTimeAndFbk  mix asig
 ~~~
@@ -516,9 +516,9 @@ The list holds tuples of delay times and attenuation ratio for each delay line.
 
 A distortion can make our sound scream. We can use the function 
 
-~~~
+~~~haskell
 distortion :: Sig -> Sig -> Sig
-distortion gain asig
+distortion gain asighaskell
 ~~~ 
 
 It takes a distortion level as first parameter. It ranges from 1 to infinity.
@@ -532,7 +532,7 @@ Let's review briefly some other cool effects.
 
 Chorus makes sound more natural by adding slightly transformed versions of the original sound:
 
-~~~
+~~~haskell
 chorus :: Sig -> Sig -> Sig -> SE Sig
 chorus rate depth asig
 ~~~
@@ -547,7 +547,7 @@ adding electronic flavour to the natural sounds.
 
 The flanger can be applied with function `flange`:
 
-~~~
+~~~haskell
 flange :: Lfo -> Sig -> Sig -> Sig -> Sig -> Sig
 flange lfo fbk mx asig
 ~~~
@@ -557,7 +557,7 @@ pure and processed signals and an input signal.
 
 Let's apply a flanger:
 
-~~~
+~~~haskell
 run (flange (lfo tri 0.9 0.05) 0.9 0.5) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
@@ -568,7 +568,7 @@ of all-pass filters. We can simulate a sweeping phase effect with phaser.
 
 There are three types of phasers. The simplest one is
 
-~~~
+~~~haskell
 phase1 :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig
 phase1 ord lfo fbk mx asig
 ~~~
@@ -582,7 +582,7 @@ pure and processed signals, the input signal.
 
 There are two more phasers:
 
-~~~
+~~~haskell
 harmPhase, powerPhase :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 harmPhase ord lfo q sep fbk mx asig = ...
 ~~~
@@ -599,7 +599,7 @@ There are several ways to create random signals (including noise).
 We can create a sequence of random numbers that change linearly 
 with given frequency. Also this unit can be used as LFO.
 
-~~~
+~~~haskell
 rnds, urnds :: Sig -> SE Sig
 
  rnds amplitude frequency
@@ -610,20 +610,20 @@ The urnds varies between 0 and 1. The rnds varies between -1 and 1.
 
 We can generate colored noises with: 
 
-~~~
+~~~haskell
 whiteNoise, pinkNoise :: SE Sig
 ~~~
 
 Let's create a simple wind instrument:
 
-~~~
+~~~haskell
 > let instr x = do { cfq <- 2000 * urnds 0.5; asig <- whiteNoise; return $ mlp (x + cfq) 0.6 asig }
 ~~~
 
 We filter the white noise with filter. The center frequency randomly varies
 above the certain threshold. Let's hear the wind:
 
-~~~
+~~~haskell
 run id (0.5 * fadeOut 1.5) instr
 ~~~
 
@@ -631,7 +631,7 @@ Complex waves
 --------------------------------
 
 Let's study how can we made our waveforms more interesting.
-We can apply several simple techniques to achieve it.
+We can apply several simple techniqhaskellues to achieve it.
 
 ### Reading sound signals from files
 
@@ -640,7 +640,7 @@ take a somebody else's music as a start point.
 
 There are habdy functions for reading the sound from files:
 
-~~~
+~~~haskell
 readSnd :: String -> (Sig, Sig)
 loopSnd :: String -> (Sig, Sig)
 
@@ -650,7 +650,7 @@ readSnd fileName = ...
 The `readSnd` plays the file only once. The `loopSnd` repeats the file
 over and over again. There is another useful function:
 
-~~~
+~~~haskell
 loopSndBy :: D -> String -> (Sig, Sig)
 ~~~
 
@@ -661,7 +661,7 @@ If your sound sample is stored in the `wav` or `aiff` format we can
 read it with the given speed. The speed is a signal. It can change with time.
 We can create interesting effects with it:
 
-~~~
+~~~haskell
 loopWav :: Sig -> String -> (Sig, Sig)
 loopWav speed fileName = ...
 ~~~
@@ -671,7 +671,7 @@ if we set the speed to `-1`.
 
 The output is a stereo signal. If we want to force it to mono we can use the function:
 
-~~~
+~~~haskell
 toMono :: (Sig, Sig) -> Sig
 ~~~
 
@@ -682,7 +682,7 @@ It produces the mean of two signals.
 The simplest one is additive synthesis. We add two or more waveforms so
 that they form harmonic series.
 
-~~~
+~~~haskell
 > run id (0.25 * env) (\x -> saw x + 0.5 * sqr (2 * x) + 0.15 * tri (3 * x))
 ~~~
 
@@ -695,7 +695,7 @@ from the slight detunement of the instruments. We can recreate this
 effect by stacking together several waveforms that are slightly detuned.
 It can be achieved with function:
 
-~~~
+~~~haskell
 chorusPitch :: Int -> Sig -> (Sig -> Sig) -> (Sig -> Sig)
 chorusPitch numberOfCopies chorusWidth wave = ...
 ~~~
@@ -703,7 +703,7 @@ chorusPitch numberOfCopies chorusWidth wave = ...
 It takes the integer number of copies and chorus width.
 Chorus width specifies the radius of the detunement.
 
-~~~
+~~~haskell
 > run id (0.25 * env) (chorusPitch 8 0.5 saw)
 ~~~
 
@@ -712,7 +712,7 @@ Chorus width specifies the radius of the detunement.
 Ring modulation can add metallic flavor to the sound.
 It multiplies the amplitude of the signal by LFO.
 
-~~~
+~~~haskell
 run id (0.25 * env) (mul (osc (30 * env)) . chorusPitch 8 0.5 saw)
 ~~~
 

@@ -5,7 +5,7 @@ There are many functions in the library. Let's list the most usefull ones:
 
 ## The converters:
 
-~~~
+~~~haskell
 double :: Double -> D
 int    :: Int    -> D
 text   :: String -> Str
@@ -16,7 +16,7 @@ sig    :: D -> Sig
 
 They convert the time varied frequency to the signal: 
 
-~~~
+~~~haskell
 osc :: Sig -> Sig       -- pure tone
 saw :: Sig -> Sig       -- sawtooth
 sqr :: Sig -> Sig       -- square wave
@@ -36,7 +36,7 @@ Release is a time to linger the signal after note is over
 time of the release and the final value. Exponential envelopes
 should be above zero (we can use the small numbers to imitate the zero)
 
-~~~
+~~~haskell
 linseg :: [D] -> Sig                -- linear envelope
 expseg :: [D] -> Sig                -- exponential envelope
 
@@ -52,7 +52,7 @@ the first parameter is cut-off frequency for `lp` and `hp`
 and the center frequency for `bp` and `br`. The second argument
 for `bp` and `br` is a band-width.
 
-~~~
+~~~haskell
 lp  :: Sig -> Sig -> Sig            -- low pass
 hp  :: Sig -> Sig -> Sig            -- high pass
 bp  :: Sig -> Sig -> Sig -> Sig     -- band pass
@@ -63,13 +63,13 @@ There are butterworth variants of the filters: `blp`, `bhp`, `bbp`, `bbr`.
 
 ## Reverberation
 
-~~~
+~~~haskell
 nreverb  :: Sig -> Sig -> Sig
 ~~~
 
 It takes a signal to process, the delay time and the speed of decay (0 to 1).
 
-~~~
+~~~haskell
 reverbsc :: Tuple a => Sig -> Sig -> Sig -> Sig -> a
 reverbsc aleft aright feedBackLevel cutOffFrequency
 ~~~
@@ -81,7 +81,7 @@ and cut off frequency of the low pass filter (usually it's 10000).
 ## Reading the files
 
 
-~~~
+~~~haskell
 readSnd :: String -> (Sig, Sig)  -- read once
 loopSnd :: String -> (Sig, Sig)  -- read in loop
 loopSndBy :: D -> String -> (Sig, Sig) -- read in loop with given period (in seconds)
@@ -89,7 +89,7 @@ loopSndBy :: D -> String -> (Sig, Sig) -- read in loop with given period (in sec
 
 If we have a wav (or aiff) file we can read it with the given speed (the first argument):
 
-~~~
+~~~haskell
 readWav :: Sig -> String -> (Sig, Sig)
 loopWav :: Sig -> String -> (Sig, Sig)
 ~~~
@@ -99,7 +99,7 @@ values to read in reverse. When speed equals one it's normal reading.
 
 Low-level functions:
 
-~~~
+~~~haskell
 mp3in   :: Tuple a => Str -> a
 diskin2 :: Tuple a => Str -> Sig -> a
 ~~~
@@ -110,7 +110,7 @@ the speed of the playback.
 
 ## Constructing the arrays
 
-~~~
+~~~haskell
 sines :: [Double] -> Tab    -- list of the partials to sine harmonics 
 lins  :: [Double] -> Tab    -- array of linear segments 
                             -- (parameters are like in `linseg`)
@@ -124,7 +124,7 @@ The first parameter is the amplitude, the second one is beta
 for the low pass filter (-1 to 1) for the function `noise`, and the frequency of the
 random values for the function `randi`.
 
-~~~
+~~~haskell
 noise   :: Sig -> Sig -> SE Sig     -- white noise
 randi   :: Sig -> Sig -> SE Sig     -- random linear segments
 pinkish :: Sig -> SE Sig            -- pink noise
@@ -136,7 +136,7 @@ Defined in the module `Csound.Control.Evt`
 
 The event stream `Evt` is a `Functor` and `Monoid`
 
-~~~
+~~~haskell
 metroE   :: Sig -> Evt ()
 filterE  :: (a -> BoolD) -> Evt a -> Evt a
 repeatE  :: a -> Evt b -> Evt a
@@ -147,7 +147,7 @@ randSkip :: D -> Evt a -> Evt a
 
 ## Invoking the instruments
 
-~~~
+~~~haskell
 -- renderes the midi instrument    
 midi    :: Sigs a => (Msg -> SE a) -> a         
 
@@ -179,7 +179,7 @@ schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
 
 ## Turncating/repeating the signal
 
-~~~
+~~~haskell
 takeSnd   :: Sigs a => Double -> a -> a   
 repeatSnd :: Sigs a => D      -> a -> a
 ~~~
@@ -195,7 +195,7 @@ Defined in the module `Csound.IO`
 The type class `RenderCsd` contains the sings that can be rendered to file.
 It's something that produces the sound or triggers the csound procedures.
 
-~~~
+~~~haskell
 -- plays a signal in real time 
 dac     :: RenderCsd a => a -> IO ()            
 
@@ -219,7 +219,7 @@ concatenate partially defined options and get more specified ones.
 
 To specify the options we use the rendering functions with suffix `By`:
 
-~~~
+~~~haskell
 options = mconcat [setRates 44800 64, setDac, setAdc]
 
 main = csdBy options asignal
@@ -227,7 +227,7 @@ main = csdBy options asignal
 
 The most common options:
 
-~~~
+~~~haskell
 -- sets the sample rate and the block size
 setRates :: Int -> Int -> Options
 
@@ -255,7 +255,7 @@ setThru = mappend setDac setAdc
 
 Defined in the module `Temporal.Music.Score` from the package `temporal-music-notation`:
 
-~~~
+~~~haskell
 -- Constructs a score with the single note (it lasts for one second)
 temp :: a -> Score a
 
@@ -285,7 +285,7 @@ loop :: Int -> Score a -> Score a
 
 Main elements:
 
-~~~
+~~~haskell
 --        Label     Diapason   Init      Result   
 --                  of the     value
 --                  value
@@ -309,21 +309,21 @@ Creating value spans:
 
 Linear and exponential spans with the give bounds:
 
-~~~
+~~~haskell
 linSpan :: Double -> Double -> ValSpan
 expSpan :: Double -> Double -> ValSpan
 ~~~
 
 The linear unit span:
 
-~~~
+~~~haskell
 uspan :: ValSpan
 uspan = linSpan 0 1
 ~~~
 
 ### Layout
 
-~~~
+~~~haskell
 -- horizontal placement
 hor :: [Gui] -> Gui
 
@@ -340,25 +340,25 @@ sca :: Double -> Gui -> Gui
 
 Creates a single window
 
-~~~
+~~~haskell
 panel :: Gui -> SE ()
 ~~~
 
 Creates a single window that is listening for keyboard events
 
-~~~
+~~~haskell
 keyPanel :: Gui -> SE ()
 ~~~
 
 Creates a single windows and we can specify title and size of the window:
 
-~~~
+~~~haskell
 panelBy :: String -> Maybe Rect -> Gui -> SE ()
 ~~~
 
 ## Keyboard events
 
-~~~
+~~~haskell
 data KeyEvt = Press Key | Release Key
 data Key = CharKey | F1 | F2 | ...
 
@@ -367,7 +367,7 @@ keyIn   :: KeyEvt -> Evt Unit
 
 Press and release a simple key:
 
-~~~
+~~~haskell
 charOn  :: Char   -> Evt Unit
 charOff :: Char   -> Evt Unit
 ~~~

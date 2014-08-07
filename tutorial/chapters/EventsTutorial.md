@@ -10,7 +10,7 @@ All these tasks can be solved with event streams.
 The event stream is something that can trigger the 
 given procedure when new event happens:
 
-~~~
+~~~haskell
 type Bam a = a -> SE ()
 data Evt a = Evt { runEvt :: Bam a -> SE () }
 ~~~
@@ -20,7 +20,7 @@ then bams (or booms) with it. So if we have the event stream
 we can execute some callback on it. Let's look at the simple event
 streams:
 
-~~~
+~~~haskell
 metroE :: Sig -> Evt Unit
 ~~~
 
@@ -30,15 +30,15 @@ The function `metroE`  produces the event stream of units
 that happen all the time with given frequency. If we want the 
 event to happen twice a second we can type in:
 
-~~~
-> metroE 2 
+~~~haskell
+> metroE 2 haskell
 ~~~
 
 
 An event stream is a `Functor`. We can map it with the function `fmap`.
 Also there are usefull functions:
 
-~~~
+~~~haskell
 filterE :: (a -> BoolD) -> Evt a -> Evt a
 appendE :: Tuple a => a -> (a -> a -> a) -> Evt a -> Evt a
 ~~~
@@ -49,7 +49,7 @@ Also the event stream is a monoid. An empty stream is a unit and
 the merge of two event streams is `mappend`. So with `mappen` we
 can merge two streams together like this:
 
-~~~
+~~~haskell
 > metroE 0.5 <> metroE 10
 ~~~
 
@@ -60,7 +60,7 @@ Triggering the instruments with events
 If we have an event stream we can trigger an instrument with it.
 There are functions:
 
-~~~
+~~~haskell
 trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
 sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
 ~~~
@@ -72,7 +72,7 @@ for all events. So that we need only a pair in place of the triple.
 
 It's usefull to know one another function:
 
-~~~
+~~~haskell
 withDur :: D -> Evt a -> Evt (D, a)
 withDur dt = fmap (dt,)
 ~~~
@@ -82,14 +82,14 @@ It can be useful with function `sched`.
 
 Let's create a steady pulse of 440's:
 
-~~~
+~~~haskell
 > let instr _ = return $ fades 0.1 0.1 * osc 440
 > dac $ mul 0.5 $ sched instr $ withDur 0.5 $ metroE 1
 ~~~
 
 We can make it more often:
-
-~~~
+haskell
+~~~haskell
 > let instr _ = return $ fades 0.01 0.01 * osc 440
 > dac $ sched instr $ withDur 0.1 $ metroE 5
 ~~~
@@ -100,7 +100,7 @@ Functions for event stream
 Right now our instrument can play only single note,
 but let's make it a bit more interesting:
 
-~~~
+~~~haskell
 > let instr x = return $ fades 0.01 0.01 * osc (sig x)
 ~~~
 
@@ -113,13 +113,13 @@ some of them.
 The `cycleE` can repeat the values in the list.
 Let's play an A major chord all the time:
 
-~~~
+~~~haskell
 > dac $ sched instr $ withDur 0.3 $ cycleE (fmap (440 * ) [1, 5/4, 3/2, 2]) $ metroE 2
 ~~~
 
 With `oneOf` we can play values from the list at random:
 
-~~~
+~~~haskell
 > dac $ sched instr $ withDur 0.3 $ oneOf (fmap (440 * ) [1, 5/4, 3/2, 2]) $ metroE 2
 ~~~
 
@@ -127,7 +127,7 @@ With `freqOf` we can specify the frequencies of the individual events.
 The total sum of the frequencies should be equal to 1. All frequencies
 should be positive.
 
-~~~
+~~~haskell
 type Rnds a = [(D, a)]
 
 freqOf :: (Tuple a, Arg a) => Rnds a -> Evt b -> Evt a
@@ -136,14 +136,14 @@ freqOf :: (Tuple a, Arg a) => Rnds a -> Evt b -> Evt a
 The `devt` is a simple function that can help to construct
 the event streams of constant values
  
-~~~ 
+~~~haskell 
 devt :: D -> Evt a -> Evt D
 devt d = fmap (const d)
 ~~~
 
 The function `every` is usefull for drum-patterns.
 
-~~~
+~~~haskell
 every :: (Tuple a, Arg a) => Int -> [Int] -> Evt a -> Evt a
 every tickToSkip repeatTicks
 ~~~
@@ -157,7 +157,7 @@ then it skips the number of events minus one. Then the next period starts.
 Let's create a simple metronome. We've got a one note for main bit
 and three same notes for other bits:
 
-~~~
+~~~haskell
 > let t = metroE 3
 > let e1 = devt 440 $ every 0 [4] t
 > let e2 = devt 220 $ every 1 [1,1,1] t
@@ -171,7 +171,7 @@ in the bit. They are arranged in sequence 3-4-3-4.
 We are going to use the 440 Hz for main bit. The 330 Hz for
 the start of every period. The 220 for secondary beats.
 
-~~~
+~~~haskell
 > let t = metroE 3
 > let e1 = devt 440 $ every 0 [14] t
 > let e2 = devt 330 $ every 3 [4,3,4] t
@@ -198,7 +198,7 @@ Plural events
 Every event can contain a list of events. There are
 plural versions of the instrument-triggering functions:
 
-~~~
+~~~haskell
 trigs    :: (Arg a, Sigs b) => (a -> SE b) -> Evt [(D, D, a)] -> b
 scheds   :: (Arg a, Sigs b) => (a -> SE b) -> Evt [(D, a)] -> b
 withDurs :: D -> Evt [a] -> Evt [(D, a)]
@@ -206,11 +206,12 @@ withDurs :: D -> Evt [a] -> Evt [(D, a)]
 
 That's how we can play the sequence of major chords:
 
-~~~
+~~~haskell
 > let ch x = take 8 $ zipWith (\dt a -> (double dt, 0.2, a))  [0, 0.2 ..]  $ fmap (x * ) (cycle [1, 5/4, 3/2, 5/4])
 > let es = oneOf [220::D, 5 * 220 / 4, 330] $ metroE (1/2.5)
 > dac $ trigs instr $ fmap ch $ es
 ~~~
+
 This sound is very primitive. But it's here just for illustration.
 We can plug in the cool sample in place of the pure sine.
 

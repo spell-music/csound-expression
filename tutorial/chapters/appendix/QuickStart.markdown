@@ -8,14 +8,14 @@ Let's install everything. First thing we need is a
 [csound compiler](http://www.csounds.com/resources/downloads/).
 When it's installed properly we can type in the terminal:
 
-~~~
+~~~haskell
 > csound
 ~~~
 
 
 It will print the long message. Ubunut/Dbian users can install the csound with `apt-get`:
 
-~~~
+~~~haskell
 > sudo apt-get install csound csound-gui
 ~~~
 
@@ -23,7 +23,7 @@ Next thing is a working Haskell environment with `ghc` and `cabal-install`
 It can be installed with [Haskell Platform](http://www.haskell.org/platform/).
 If it works to install the `csound-expression` we can type in the terminal:
 
-~~~
+~~~haskell
 > cabal install csound-expression
 ~~~
 
@@ -36,7 +36,7 @@ The first sound
 Let's start the `ghci` and load the main module `Csound.Base`. It exports
 all modules:
 
-~~~
+~~~haskell
 > ghci
 Prelude> :m +Csound.Base
 Prelude Csound.Base> 
@@ -44,7 +44,7 @@ Prelude Csound.Base>
 
 We can play a sine wave with 440 Hz:
 
-~~~ 
+~~~haskell 
 > dac $ osc 440
 ~~~
 
@@ -55,13 +55,13 @@ on it and sends the output to speakers.
 Let's modify the signal. It has a constant amplitude envelope but we can change it 
 with `linseg` function. 
 
-~~~
+~~~haskell
 > dac $ linseg [0, 1, 1, 3, 0] * osc 440
 ~~~
 
 The function `linseg` creates a signal of linear segments
 
-~~~
+~~~haskell
 linseg [a, durA, b, durB, c, durC, ...]
 ~~~
 
@@ -73,13 +73,13 @@ and finally goes to zero in 3 seconds.
 
 Let's add a 5% vibrato to the sound:
 
-~~~
+~~~haskell
 > dac $ linseg [0, 1, 1, 3, 0] * osc (440 * (1 + 0.05 * osc 5))
 ~~~
 
 We can factor out the envelope and apply it to the amplitude and the vibrato:
 
-~~~
+~~~haskell
 > let env = linseg [0, 1, 1, 3, 0]
 > dac $ env * osc (440 * (1 + 0.05 * env * osc 5))
 ~~~
@@ -87,26 +87,26 @@ We can factor out the envelope and apply it to the amplitude and the vibrato:
 We can apply an envelope to any parameter. Let's make a slide, and change 
 the waveform to sawtooth:
 
-~~~
+~~~haskell
 > dac $ env * saw (220 + 220 * env)
 ~~~
 
 We can play a tone with three odd harmonics:
 
 
-~~~
+~~~haskell
 > dac $ env * oscBy (sines [1, 0, 0.5, 0, 0.25]) 440
 ~~~
 
 We can play an mp3 file:
 
-~~~
+~~~haskell
 > dac $ ar2 $ mp3in $ text "/home/anton/listen/The Kinks-Waterloo Sunset.mp3"
 ~~~
 
 We used the functions:
 
-~~~
+~~~haskell
 ar2   :: (Sig, Sig) -> (Sig, Sig)
 text  :: String -> Str 
 mp3in :: Tuple a => Str -> a
@@ -119,13 +119,13 @@ converts the Haskell strings to Csound strings.
 There is even better way to read sound files. What if we have a short drum loop
 and we want to mix it with harmony. We need only 10 minutes of it. We can do it like this:
 
-~~~
+~~~haskell
 > dac $ takeSnd (10 * 60) $ loopSnd "drum.wav" + (mul 0.5 $ loopSnd "harmony.mp3")
 ~~~
 
 Let's review the functions:
 
-~~~
+~~~haskell
 loopSnd :: String -> (Sig, Sig)
 takeSnd :: Sigs a => Double -> a -> a
 mul     :: SigSpace a => Sig -> a -> a
@@ -144,7 +144,7 @@ Primitive types
 
 Let's take a look at the types of the functions:
 
-~~~
+~~~haskell
 osc :: Sig -> Sig
 saw :: Sig -> Sig
 oscBy :: Tab -> Sig -> Sig
@@ -198,7 +198,7 @@ Functions that produce a random values or procedures are wrapped
 in the special type `SE` (or *side effect*). Let's look at the white noise
 signature:
 
-~~~
+~~~haskell
 noise :: Sig -> Sig -> SE Sig
 ~~~
 
@@ -206,7 +206,7 @@ It takes an amplitude and the beta of low pass filter and returns a signal that
 si wrapped in the `SE`. The type `SE` is a `Functor`, `Applicative` and `Monad`
 so we can use the standard functions to process it:
 
-~~~
+~~~haskell
 > dac $ fmap (env * ) $ noise 1 0
 ~~~
 
@@ -216,14 +216,14 @@ Midi
 We can make a sound in real time with midi keyboard.
 Midi instrument has the type:
 
-~~~
+~~~haskell
 instr :: Sigs a => Msg -> SE a
 ~~~
 
 The type `Msg` signifies the midi-messages, the type class `Sigs`
 contains all tuples of signals. Let's make a simple midi instrument:
 
-~~~
+~~~haskell
 > let instr msg = return $ 0.5 * sig (ampmidi msg 1) * fades 0.01 0.5 * osc (sig $ cpsmidi msg)
 ~~~
 
@@ -234,14 +234,14 @@ The function `sig` converts numbers to signals.
 
 Now we can play it with the function `midi`:
 
-~~~
+~~~haskell
 > dac $ midi instr
 ~~~
 
 If we don't have a hardware midi-device we can use a virtual midi-keyboard.
 To do it we need to use `vdac` in place of `dac`:
 
-~~~
+~~~haskell
 > vdac $ midi instr
 ~~~
 
@@ -249,7 +249,7 @@ The function `midi` takes a mid-instrument and starts to listen
 on all channels for the events. If we want to specify the concrete channel 
 we should use the funtion `midin`:
 
-~~~
+~~~haskell
 midin :: Sigs a => Int -> (Msg -> SE a) -> a
 ~~~
 
@@ -257,13 +257,13 @@ What if we want to play a pure tone on the first channel and the
 sawtooth on the second one? We can just add the resulting signals.
 First let's take a waveform as a parameter for the instrument:
 
-~~~
+~~~haskell
 > let instr f msg = return $ 0.5 * sig (ampmidi msg 1) * fades 0.01 0.5 * f (sig $ cpsmidi msg)
 ~~~
 
 Now let's set up everything and add some reverb:
 
-~~~
+~~~haskell
 > vdac $ 0.5 * nreverb ((midin 1 $ instr osc) + (midin 2 $ instr saw)) 1 0.2
 ~~~
 
@@ -272,7 +272,7 @@ The example shows that applying the effect is as simple as applying a function.
 We can use a shortcut in defining the midi-instrument. 
 There is a class that converts expressions to midi-instruments:
 
-~~~
+~~~haskell
 class MidiInstr a where
     type MidiInstrOut a :: *
 
@@ -282,7 +282,7 @@ class MidiInstr a where
 The only one method `onMsg` takes something and converts it to midi-instruments.
 We can define an instrument from the wave form:
 
-~~~
+~~~haskell
 > vdac $ midi $ onMsg osc
 ~~~
 
@@ -294,7 +294,7 @@ on the amount of the amplitude taken from the midi message.
 The type class `MidiInstr` contains many useful instances. You can convert
 anything that expects an amplitude and frequency and produces the tuple of signals:
 
-~~~
+~~~haskell
 (D, D) -> Sig
 (D, D) -> SE Sig
 (D, D) -> (Sig, Sig)
@@ -310,20 +310,20 @@ contains some primitive scalar csound-values (they are not signals).
 
 The most simple event stream is created with the function `metroE`:
 
-~~~
+~~~haskell
 metroE :: Sig -> Evt Unit
 ~~~
 
 It creates a stream of repeating events. the first argument is 
 the frequency of the repetition (in Hz). Let's create a stream of notes:
 
-~~~
+~~~haskell
 > let notes = fmap (const 440) $ metroE 2
 ~~~
 
 Now we can trigger the instrument on the stream with the function `sched`:
 
-~~~
+~~~haskell
 sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
 ~~~
 
@@ -335,13 +335,13 @@ the parameter for the instrument.
 
 Let's create a simple instrument:
 
-~~~
+~~~haskell
 > let instr x = return $ 0.5 * osc (sig x)
 ~~~
 
 And triger the notes:
 
-~~~
+~~~haskell
 > dac $ sched instr $ withDur 0.25 notes
 
 <interactive>:63:34:
@@ -357,7 +357,7 @@ And triger the notes:
 We've got an error message about using `Integer` in place of `D`.
 Let's look at the type of the `notes`:
 
-~~~
+~~~haskell
 > :t notes
 notes :: Evt Integer
 ~~~
@@ -365,7 +365,7 @@ notes :: Evt Integer
 The `ghci` converts numeric literals to integers, but we need a csound integer.
 Let's give the `ghci` a hint:
 
-~~~
+~~~haskell
 > let notes = fmap (const (440::D)) $ metroE 2
 > :t notes
 notes :: Evt D
@@ -373,7 +373,7 @@ notes :: Evt D
 
 Now we can invoke the instrument and hear the result:
 
-~~~
+~~~haskell
 > dac $ sched instr $ withDur 0.25 notes
 ~~~
 
@@ -381,13 +381,13 @@ The function `withDur` appends a constant value for the duration of the note
 to all events on the stream. Let's make out events more intersting.
 We can play a list of events in the loop and make it faster:
 
-~~~
+~~~haskell
 > let notes = cycleE [440::D, 330, 220] $ metroE 4
 ~~~
 
 Or we can play them at random and skip some elements with the inverse of the given frequency:
 
-~~~
+~~~haskell
 > let notes = randSkip 0.75 $ oneOf [440::D, 330, 220] $ metroE 4
 ~~~
 
@@ -395,13 +395,13 @@ Event streams are monoids. We can merge two event streams together with
 the function `mappend`. Let's merge two streams. One plays a note 440 every 3
 beat and another plays a 330 every 7 beat.
 
-~~~
+~~~haskell
 > let notes = let m = metroE 4 in (mappend (every 0 [2] $ repeatE (440 :: D) m) (every 0 [7] $ repeatE 330 m))
 ~~~
 
 We used the functions:
 
-~~~
+~~~haskell
 repeatE :: a -> Evt b -> Evt a              -- repeats the same event
 every   :: Int -> [Int] -> Evt a -> Evt a   -- skips events from the stream 
                                             -- in beat patterns
@@ -419,7 +419,7 @@ Score
 
 We can play a list of notes. 
 
-~~~
+~~~haskell
 > let notes = CsdEventList 4 [(0, 1, 440::D), (1, 1, 220), (2, 2, 330)]
 ~~~
 
@@ -427,13 +427,13 @@ The type `CsdEventList` contains the total duration of the scores
 and the list of triplets: `(startTime, duration, instrumentArguments)`. 
 Now we can trigger the instrument:
 
-~~~
+~~~haskell
 > dac $ mix $ sco instr notes
 ~~~
 
 The functions:
 
-~~~
+~~~haskell
 sco :: (Arg a, Sigs b, CsdSco f) => (a -> SE b) -> f a -> f (Mix b)
 mix :: (Sigs a, CsdSco f) => f (Mix a) -> a
 ~~~
@@ -450,13 +450,13 @@ To use our favourite library we should make in instance for the type class `CsdS
 There is an instance for the type `Score` from the library `temporal-music-notation`.
 It's in the separate package `temporal-csound`. We can install it with cabal-install: 
 
-~~~
+~~~haskell
 > cabal install temporal-csound
 ~~~
 
 Now we can load the csound with module `Csound`:
 
-~~~
+~~~haskell
 > ghci
 Prelude> :m +Csound
 ~~~
@@ -464,7 +464,7 @@ Prelude> :m +Csound
 It reexports the module `Csound.Base` and brings the definition of the instance 
 for `CsdSco` in the scope. There are seven main functions to remember:
 
-~~~
+~~~haskell
 -- Constructs a score with the single note (it lasts for one second)
 temp :: a -> Score a
 
@@ -492,7 +492,7 @@ loop :: Int -> Score a -> Score a
 
 Let's make a simple tune:
 
-~~~
+~~~haskell
 Prelude Csound> let ns = fmap temp [220, 330, 440::D]
 Prelude Csound> let notes = str 0.25 $ mel [loop 2 (mel ns), har ns]
 Prelude Csound> dac $ mix $ sco instr notes
@@ -502,7 +502,7 @@ We can hear the distortion in the final chord. A sound signal is
 a function that can not exceed the value of 1. It's clipped before
 it's send to the speakers. We can scale the sound to remove the distortion:
 
-~~~
+~~~haskell
 > dac $ 0.5 * (mix $ sco instr notes)
 ~~~
 
@@ -510,7 +510,8 @@ What if we don't want or tune to fade out?
 We can apply an effect to it. First let's define
 a fader instrument. It takes a signal and multiplies
 it with an linear envelope:
-~~~
+
+~~~haskell
 > let fader x = return $ linseg [1, idur * 0.5, 1, idur * 0.5, 0] * x
 ~~~
 
@@ -521,13 +522,13 @@ and then reduces it to zero in the second one.
 
 Now we can use the `eff` function:
 
-~~~
+~~~haskell
 eff :: (Sigs a, Sigs b, CsdSco f) => (a -> SE b) -> f (Mix a) -> f (Mix b)
 ~~~
 
 It applies the effect to the unmixed list of sounds:
 
-~~~
+~~~haskell
 > dac $ mix $ eff fader $ sco instr notes
 ~~~
 
@@ -541,7 +542,7 @@ in the media player. we can take a closer look at some details.
 We can render the file without playing (the function `csd`) and
 specify the wav-file as the output in the options.
 
-~~~
+~~~haskell
 > csdBy (setOutput "tmp.wav") $ mix $ eff fader $ sco instr notes
 ~~~
 
@@ -550,14 +551,14 @@ and renders it with `csound`. The `csound` then creates a wav-file.
 
 And now we can listen to it in the player:
 
-~~~
+~~~haskell
 > :!mplayer tmp.wav
 ~~~
 
 There are shortcut functions for Linux-users: `mplayer`, `totem`.
 They save the output to file and invoke the given media-player on it.
 
-~~~
+~~~haskell
 > mplayer $ mix $ eff fader $ sco instr notes
 ~~~
 
@@ -570,7 +571,7 @@ variants of the output. But often we want to process the output as
 a single signal. The output is always a container of signals.
 To simplify this task there is a class `SigSpace`:
 
-~~~
+~~~haskell
 class SigSpace a where
     mapSig  :: (Sig -> Sig) -> a -> a
     bindSig :: (Sig -> SE Sig) -> a -> SE a
@@ -579,7 +580,7 @@ class SigSpace a where
 With method from this class we can easily apply the effects to the
 different types of the output. There is a very often used special case:
 
-~~~
+~~~haskell
 mul :: SigSpace a => Sig -> a -> a
 mul k = mapSig ( * k)
 ~~~
@@ -591,7 +592,7 @@ that invoke instruments require them to return a result that is wrapped
 in the type `SE`. Often we can lift the instrument on the fly
 with methods from the special classes:
 
-~~~
+~~~haskell
 class Outs a where
     type SigOuts a :: *
     toOuts :: a -> SE (SigOuts a)
@@ -610,7 +611,7 @@ class AmpInstr a where
 The method `onArg` unifies the pure and non pure instruments.
 We can use it like this:
 
-~~~
+~~~haskell
 > let notes = temp (440 :: D)
 > let instr cps = osc $ sig cps
 > dac $ mix $ sco (onArg instr) notes
@@ -622,7 +623,7 @@ The method `onCps` defines the instruments that take an amplitude
 and frequency as input. For example, we can convert to this type of instrument
 a waveform:
 
-~~~
+~~~haskell
 > let notes = temp (0.5 :: D, 440 :: D)
 > dac $ mix $ sco (onCps osc) notes
 ~~~
@@ -631,7 +632,7 @@ The method `onAmp` defines the instruments that take only an amplitude.
 They are drum sounds or noises. It can construct instruments from constants
 by scaling the sound with the input amplitude.
 
-~~~
+~~~haskell
 > let notes = str 0.25 $ loop 4 $ mel [temp (0.5::D), rest 1]
 > let instr = noise 1 0
 > dac $ mix $ sco (onAmp instr) notes
@@ -643,13 +644,13 @@ Catalog of the instruments
 We can find many pre-defined instruments in the package `csound-catalog`.
 Let's install it:
 
-~~~
+~~~haskell
 > cabal install csound-catalog
 ~~~
 
 Let's try it in the interpreter:
 
-~~~
+~~~haskell
 > ghci
 Prelude> :m +Csound
 Prelude> :m +Csound.Catalog
@@ -658,13 +659,13 @@ Prelude Csound Csound.Catalog> vdac $ mul 0.3 $ midi $ onMsg (mul (fades 0.01 3)
 
 or
 
-~~~
+~~~haskell
 > vdac $ mul 0.5 $ midi $ onMsg (mul (fades 0.01 3) . delayedString)
 ~~~
 
 or
 
-~~~
+~~~haskell
 > vdac $ mul 0.15 $ bayAtNight $ midi $ onMsg (mul (fades 1 2) . stringPad 1)
 ~~~
 
@@ -675,7 +676,7 @@ With Gui elements (`Csound.control.Gui`) we can update
 the synth paramters online. There are sliders, knobs, numeric fields, rollers. 
 The Gui element contains three parts:
 
-~~~
+~~~haskell
 SE (Gui, Input a, Output a)
 
 Gui                     -- visual representation of the element
@@ -689,7 +690,7 @@ the values (no input), some of them are static elements (no inputs and outputs).
 Let's create a siple pure tone sound and update volume and frequency
 with sliders:
 
-~~~
+~~~haskell
 import Csound.Base
 
 main = dac $ do
@@ -702,7 +703,7 @@ main = dac $ do
 The function slider expects a label, value diapason and initial value.
 It returns a pair of visual representation and the current value:
 
-~~~
+~~~haskell
 type Source a = SE (Gui, Input a)
 
 slider :: String -> ValSpan -> Double -> Source a
@@ -710,7 +711,7 @@ slider :: String -> ValSpan -> Double -> Source a
 
 First, we create to sliders for volume and frequency:
 
-~~~~
+~~~haskell
     (gVol, vol) <- slider "volume"    (linSpan 0 1)      0.5
     (gCps, cps) <- slider "frequency" (expSpan 100 1000) 440
 ~~~
@@ -720,7 +721,7 @@ second has exponential diapason from (expSpan).
 Then we place our GUI elements on the screen. we
 create a panel that contains the elements with vertical placement:
 
-~~~
+~~~haskell
     panel $ ver [gVol, gCps]
 ~~~
 
@@ -732,7 +733,7 @@ from the module `Csound.Control.Props`.
 At the end we return the signal that depends on 
 the values of the GUI elements:
 
-~~~
+~~~haskell
     return $ vol * osc cps
 ~~~
 
@@ -741,7 +742,7 @@ Keyboard events
 
 We can listen for the keyboard events with functions: `keyIn`, `charOn`, `charOff`.
 
-~~~
+~~~haskell
 data KeyEvt = Press Key | Release key
 data Key = CharKey Char | F1 | F2 | ... | LeftShift | RightShift | ...
 
@@ -752,14 +753,14 @@ charOff :: Char -> Evt Unit
 
 `charOn` and `charOff` are handy shortcuts for
 
-~~~
+~~~haskell
 charOn  = keyIn . Press   . CharKey
 charOff = keyIn . Release . CharKey
 ~~~
 
 For example, we can trigger the note with key 'a':
 
-~~~
+~~~haskell
 instr _ = return $ mul (fades 0.5 1) $ osc 440
 
 res = schedUntil instr (charOn 'a') (charOff 'a')

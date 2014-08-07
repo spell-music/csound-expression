@@ -15,7 +15,7 @@ possibly some control data (to change the parameters of the synth).
 
 The midi-msg is represented with opaque type:
 
-~~~
+~~~haskell
 data Msg
 
 cpsmidi :: Msg -> D   		-- extract frequency (Hz)
@@ -29,13 +29,13 @@ We can extract amplitude and frequency (Hz) with function `ampCps`.
 The midi-intrument listens for message on the specified channel (It's 
 an integer from 1 to 16):
 
-~~~
+~~~haskell
 type Channel = Int
 ~~~
 
 The simplest function for midi instruments is:
 
-~~~
+~~~haskell
 midi :: Sigs a => (Msg -> SE a) -> a
 ~~~
 
@@ -44,7 +44,7 @@ A midi-instrument listens for messages on all channels.
 
 There are two more refined functions:
 
-~~~
+~~~haskell
 midin  :: Sigs a => Channel -> (Msg -> SE a) -> a
 pgmidi :: Sigs a => Maybe Int -> Channel -> (Msg -> SE a) -> a
 ~~~
@@ -58,7 +58,7 @@ We can specify a program with function `pgmidi`.
 If you have a real midi-keyboard connected to your computer (most often with USB)
 you can start to play along with it in csound-expression. Just type:
 
-~~~
+~~~haskell
 > ghci
 > :m +Csound.Base
 > let instr msg = return $ 0.25 * (fades 0.1 1) * (sig $ ampmidi msg 1) * saw (sig $ cpsmidi msg)
@@ -68,7 +68,7 @@ you can start to play along with it in csound-expression. Just type:
 If we don't have the midi-device we can test the instrument with virtual one.
 We need to use `vdac` in place of `dac`:
 
-~~~
+~~~haskell
 > vdac $ smallRoom $ midi instr
 ~~~
 
@@ -84,7 +84,7 @@ and convert it to signals and apply to the instrument. It's a typical pattern
 that repeats over and over again. There is a type class that converts functions
 to midi-instruments. It's called `MidiInstr`:
 
-~~~
+~~~haskell
 class MidiInstr a where
 	type MidiInstrOut a :: *
 	onMsg :: a -> Msg -> SE (MidiInstrOut a)
@@ -94,7 +94,7 @@ It converts a value of type `a` to midi-instrument.
 There are plenty of instances for this class. We can check them out
 in the docs. Among them we can find the instance for the type:
 
-~~~
+~~~haskell
 Sig -> Sig
 ~~~
 
@@ -103,7 +103,7 @@ is a wave-form. To convert it to midi-instrument we apply midi-frequency to it
 (it's converted to signal) and scale it with midi-amplitude. So we can redefine
 our instrument like this:
 
-~~~
+~~~haskell
 > let instr = onMsg $ mul (0.25 * fades 0.1 1) . saw
 > dac $ smallRoom $ midi instr
 ~~~
@@ -121,7 +121,7 @@ signals that we can use in the other instruments.
 
 There are two functions for this mode:
 
-~~~
+~~~haskell
 monoMsg     :: D -> D -> SE (Sig, Sig)
 monoMsg portamentoTime releaseTime
 
@@ -140,7 +140,7 @@ Time it takes for the note to fade out or fade in.
 
 Let's play with these functions:
 
-~~~
+~~~haskell
 > vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * tri cps) $ monoMsg 0.1 1
 > vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * tri cps) $ holdMsg 0.5 
 ~~~
@@ -155,7 +155,7 @@ to change parameters for the instruments during performance.
 
 We can use the function `ctrl7`:
 
-~~~
+~~~haskell
 ctrl7 :: D -> D -> D -> D -> Sig
 ctrl7 chno ctrlId imin imax
 ~~~
@@ -165,7 +165,7 @@ the identity number of control parameter, and two parameters for minimum
 and maximum of the output range. Let's apply the filter to the output of
 theprevious example:
 
-~~~
+~~~haskell
 > vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 1 50 5000) (ctrl7 1 2 0.1 0.9) (tri cps)) $ holdMsg 0.5
 ~~~
 
@@ -173,14 +173,14 @@ We can look at sound response to the filter parameters in real-time.
 
 Another function that is worth to mention is:
 
-~~~
+~~~haskell
 initc7 :: D -> D -> D -> SE ()
 initc7 chno ctrlId val 				-- value ranges from 0 to 1
 ~~~
 
 It sets the initial value for the midi control.
 
-~~~
+~~~haskell
 > let ctrl = 1
 > let out = fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 ctrl 50 5000) 0,5 (tri cps)) $ holdMsg 0.5
 > dac $ do { initc7 1 ctrl 0.5; out }
@@ -190,7 +190,7 @@ Unfortunately the function `initc7` doesn't work with virtual midi. It's only fo
 
 There are three more functions to make things more easy:
 
-~~~
+~~~haskell
 midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
 midiCtrl7 chanNum ctrlNum initVal min max
 ~~~
@@ -200,7 +200,7 @@ specify the same channel number and control number twice.
 
 There are functions for specific ranges
 
-~~~
+~~~haskell
 midiCtrl, umidiCtrl :: D -> D -> D -> SE Sig
 ~~~
 
@@ -228,7 +228,7 @@ do neither (like static text. It's only visible but it can not do anything).
 
 In the haskell type system we can express it like this:
 
-~~~
+~~~haskell
 data Gui    -- visual representation
 
 type Widget a b = SE (Gui, Output a, Input b, Inner)
@@ -244,7 +244,7 @@ type Display = SE Gui 				-- static element
 
 Let's look at the definition of the slider:
 
-~~~
+~~~haskell
 slider :: String -> ValSpan -> Double -> Source Sig
 slider tag valueRange initValue
 ~~~
@@ -255,7 +255,7 @@ It produces a `Source`-widget that contains a signal.
 The value type specifies the value range and the type of
 the change of the value (it can be linear or exponential).
 
-~~~
+~~~haskell
 linSpan, expSpan :: Double -> Double -> ValSpan
 
 linSpan min max
@@ -264,7 +264,7 @@ expSpan min max
 
 Let's define a slider in the ghci:
 
-~~~
+~~~haskell
 > let vol = slider "volume" (linSpan 0 1) 0.5
 > dac $ do { (gui, v) <- vol; panel gui; return (v * osc 440) }
 ~~~
@@ -273,7 +273,7 @@ We can control the volume of the concert A note with the slider!
 To see the slider we have to place it on the window. That is why
 we used the function `pannel`:
 
-~~~
+~~~haskell
 pannel :: Gui -> SE ()
 ~~~
 
@@ -287,7 +287,7 @@ Ok, ok. That it's good but how about using two sliders at the same time?
 We can create the second slider and place it right beside the other with
 function `hor`. It groups a list of widgets and shows them side by side:
 
-~~~
+~~~haskell
 > let vol = slider "volume" (linSpan 0 1) 0.5
 > let pch = slider "pitch" (expSpan 20 3000) 440
 > dac $ do { (vgui, v) <- vol; (pgui, p) <- pch ; panel (hor [vgui, pgui]); return (v * osc p) }
@@ -300,7 +300,7 @@ Try to substitute `hor` for `ver` and see what happens.
 We can see how easy it's to use the `hor` and `ver`. Let's study all
 layout functions:
 
-~~~
+~~~haskell
 hor :: [Gui] -> Gui
 ver :: [Gui] -> Gui
 
@@ -318,7 +318,7 @@ are well .. mm .. for setting the margin and padding of the element in pixels.
 We can stack as many sliders as we want. Let's explore the low-pass filtering of 
 the saw waveform.
 
-~~~
+~~~haskell
 > let cfq = slider "center frequency" (expSpan 100 5000) 2000
 > let q = slider "resonance" (linSpan 0.1, 0.9) 0.5
 > dac $ do { 
@@ -338,7 +338,7 @@ the saw waveform.
 There are many more widgets. Let's turn some dsliders in the knobs.
 The knob is a sort of circlular slider:
 
-~~~
+~~~haskell
 > let vol = knob "volume" (linSpan 0 1) 0.5
 > let pch = knob "pitch" (expSpan 20 3000) 440
 > dac $ do { 
@@ -353,7 +353,7 @@ The knob is a sort of circlular slider:
 
 Now the sliders look to big we can change it with function `sca`:
 
-~~~
+~~~haskell
 	...
 	panel (ver [vgui, pgui, sca 1.5 $ hor [cgui, qgui]]); 
 	...
@@ -366,7 +366,7 @@ But it's graphical representation is different. It's
 a box with a number inside it. You can change the value by dragging
 the mouse from the box.
 
-~~~
+~~~haskell
 numeric :: String -> ValDiap -> ValStep -> Double -> Source Sig
 numeric tag valueDiapason valueStep initialValue
 ~~~
@@ -376,14 +376,14 @@ numeric tag valueDiapason valueStep initialValue
 
 Let's create a switch button. We can use a `toggleSig` for it:
 
-~~~
+~~~haskell
 toggleSig :: String -> Source Sig
 ~~~
 
 This function just creates a button that produces a signal that
 is 1 whenthe button is on and 0 when it's off.
 
-~~~
+~~~haskell
 > let switch = toggleSig "On/Off"
 > dac $ do { 
 	(sgui, sw) <- switch;
@@ -398,7 +398,7 @@ is 1 whenthe button is on and 0 when it's off.
 
 We can make the gradual change wit portamento:
 
-~~~
+~~~haskell
 ...
 	return (port sw 0.7 * v * mlp c qv (saw p)) 
 ...
@@ -406,7 +406,7 @@ We can make the gradual change wit portamento:
 
 Buttons can produce the event streams:
 
-~~~
+~~~haskell
 button :: String -> Source (Evt Unit)
 ~~~
 
@@ -415,13 +415,13 @@ the type `a -> SE ()` to the value when it happens.
 
 There is a function:
 
-~~~
+~~~haskell
 runEvt :: Evt a -> (a -> SE ()) -> SE ()
 ~~~
 
 Also event streams can trigger notes with:
 
-~~~
+~~~haskell
 trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
 sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
 ~~~
@@ -433,7 +433,7 @@ for all events. So that we need only a pair in place of the triple.
 
 Let's create two buttons that play notes:
 
-~~~
+~~~haskell
 > let n1 = button "330"
 > let n2 = button "440"
 > let go x evt = sched (const $ instr x) (withDur 2 evt)
@@ -455,7 +455,7 @@ a signle event stream that contains events from both event streams.
 
 Let's redefine our buttons:
 
-~~~
+~~~haskell
 > let n1 = mapSource (fmap (const (330 :: D))) $ button "330"
 > let n2 = mapSource (fmap (const (440 :: D))) $ button "440"
 ~~~
@@ -465,7 +465,7 @@ Right now every stream contains a value for the frequency with it.
 Let's merge two streams together and invoke the instrument on the
 single stream. The result should be the same:
 
-~~~
+~~~haskell
 > let instr x = return $ fades 0.1 0.5 * osc x
 > dac $ do { 
 	(g1, p1) <- n1; 
@@ -479,13 +479,13 @@ single stream. The result should be the same:
 
 With boxes we can just show the user some message. 
 
-~~~
+~~~haskell
 box :: String -> Display 
 ~~~
 
 Let's say something to the user. 
 
-~~~
+~~~haskell
 > dac $ do { 
 	gmsg <- box "Two buttons. Here we are."
 	(g1, p1) <- n1; 
@@ -499,13 +499,13 @@ Let's say something to the user.
 
 Radio buttons let the user select a value from the set of choices.
 
-~~~
+~~~haskell
 radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
 ~~~
 
 Let's redefine our previous example:
 
-~~~
+~~~haskell
 > let ns = radioButton "two notes" [("330", 330 :: D), ("440", 440)] 0
 > dac $ do { 
 	(gui, p) <- ns; 
@@ -520,7 +520,7 @@ We have studied a lot of sources. Is there any sink-widgets?
 The `meter` is the one. It let's us monitor the value of the signal:
 It shows the output as the slider:
 
-~~~
+~~~haskell
 > let sa = slider "a" (linSpan 1 10) 5
 > let sb = slider "b" (linSpan 1 10) 5
 > let res = setNumeric "a + b" (linDiap 2 20) 1 10
@@ -537,7 +537,7 @@ It shows the output as the slider:
 
 We can make reusable widgets with functions:
 
-~~~
+~~~haskell
 sink    :: SE (Gui, Output a) -> Sink a
 source  :: SE (Gui, Input a) -> Source a
 display :: SE Gui -> Display
@@ -547,7 +547,7 @@ Let's make a reusable widget for a moog low-pass filter.
 It's a producer or source. It's going to produce a 
 transformation `Sig -> Sig`:
 
-~~~
+~~~haskell
 import Csound.Base
 
 mlpWidget :: Source (Sig -> Sig)
@@ -560,7 +560,7 @@ mlpWidget = source $ do
 Let's save this definition in the file and load it in ghci. 
 Now we can use it as a custom widget:
 
-~~~
+~~~haskell
 > dac $ do { 
 	(g, filt) <- mlpWidget; 
 	panel g; 
@@ -572,7 +572,7 @@ Notice that a widget can produce a function as a value!
 
 Let's define another widget for saw-oscillator:
 
-~~~
+~~~haskell
 sawWidget :: Source Sig
 sawWidget = source $ do
 	(gamp, amp) <- slider "amplitude" (linSpan 0 1) 0.5	
@@ -582,7 +582,7 @@ sawWidget = source $ do
 
 Now let's use them together:
 
-~~~
+~~~haskell
  dac $ do { 
  	(gw, wave) <- sawWidget; 
  	(gf, filt) <- mlpWidget; 
@@ -605,7 +605,7 @@ the type of the expected data.
 
 The port is an integer. The address is a path-like string:
 
-~~~
+~~~haskell
 "/foo/bar"
 "/note"
 ~~~
@@ -616,7 +616,7 @@ for character, double, float, 64-bit integer, 32-bit integer, and string.
 
 There are special type synonyms for all these terms:
 
-~~~
+~~~haskell
 type OscPort = Int
 type OscAddress = String
 type OscType = String
@@ -631,7 +631,7 @@ send them.
 To listen for the events we have to create a background process.
 It waits for messages on the given port:
 
-~~~
+~~~haskell
 initOsc :: OscPort -> OscRef
 initOsc port
 ~~~
@@ -639,7 +639,7 @@ initOsc port
 We can specify an integer port. It gives us a reference to the process
 which should be used in the function `listenOsc`:
 
-~~~
+~~~haskell
 listenOsc :: Tuple a => OscRef -> OscAddress -> OscType -> Evt a
 listenOsc ref addr type =
 ~~~
@@ -652,7 +652,7 @@ coming on the given port, address and have a certain type.
 
 To send OSC-messages we can use the function `sendOsc`:
 
-~~~
+~~~haskell
 sendOsc :: Tuple a => OscHost -> OscPort -> OscAddress -> OscType -> Evt a -> SE ()
 ~~~
 
@@ -672,14 +672,14 @@ With Jack we can use our Csound instruments in DAW-software
 We can create Jack-instrument if we set the proper options.
 We have to set the name of the instrument:
 
-~~~
+~~~haskell
 setJack :: String -> Options
 setJack clientName
 ~~~
 
 We have to set the proper rates (audio and cotrol rates)
 
-~~~
+~~~haskell
 setRates :: Int -> Int -> Options
 setRates sampleRate blockSize
 ~~~
@@ -692,7 +692,7 @@ specifies the granularity of the control signals (typical values are 64, 128, 25
 
 We have to set the hardware and software buffers (It's `B` and `b` flags in the Csound):
 
-~~~
+~~~haskell
 setBufs :: Int -> Int -> Options
 setBufs totalBufferSize  singlePeriodSize
 ~~~
@@ -705,7 +705,7 @@ the blockSize).
 To set all these properties we need to use the Monoid instance for `Options`.
 We need to append all the options:
 
-~~~
+~~~haskell
 > options = mconcat [ setJack "anInstrument", setRates 44800 64, setBufs 192 64 ] 
 > dacBy options asig
 ~~~
