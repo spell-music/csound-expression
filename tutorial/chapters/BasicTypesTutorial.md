@@ -14,7 +14,7 @@ updates it. It can see only one frame at the given time.
 Conceptually we can think that signal is a list of numbers.
 A signal is an instance of type class `Num`, `Fractional` and `Floating`. 
 So we can treat signals like numbers. We can create them with numeric
-constants, add them, mulyiply, subtract, divide, process with 
+constants, add them, multiply, subtract, divide, process with 
 trigonometric functions. 
 
 We assume that we are in ghci session and the module `Csound.Base` is loaded.
@@ -44,7 +44,7 @@ osc, saw, tri, sqr :: Sig -> Sig
 ~~~
 
 They produce sine, sawtooth, triangle and square waves. 
-The output is bandlimited (no aliasing beyond [Nyquist](http://en.wikipedia.org/wiki/Nyquist_frequency)). 
+The output is band limited (no aliasing beyond [Nyquist](http://en.wikipedia.org/wiki/Nyquist_frequency)). 
 The waveform function takes in a frequency (and it's also a signal) and produces
 a signal that contains wave of certain shape that is repeated with given frequency (in Hz).
 
@@ -80,22 +80,22 @@ We can adjust the volume of the sound by multiplying it:
 ~~~
 
 Here we used the special function `mul`. We could
-just use the normal haskell's `*`. But `mul` is more
-covinient. It can work not only for signals but for 
+just use the normal Haskell's `*`. But `mul` is more
+convenient. It can work not only for signals but for 
 tuples of signals (if we want a stereo playback) 
 or signals that contain side effects (wrapped in the monad).
-So the `mul` is preferrable.  
+So the `mul` is preferable.  
 
 Constant numbers (D)
 ----------------------------------------------
 
-Let's study two another usefull functions:
+Let's study two another useful functions:
 
 ~~~{.haskell}
 leg, xeg :: D -> D -> D -> D -> Sig
 ~~~
 
-They are **l**inear and e**x**ponential **e**nvelope **g**enerators.
+They are Linear and eXponential Envelope Generators.
 They create [ADSR-envelopes](http://en.wikipedia.org/wiki/Synthesizer#ADSR_envelope).
 
 They take in a four arguments. They are: 
@@ -108,7 +108,7 @@ They take in a four arguments. They are:
 
 * **release time**: how many seconds it takes to reach the zero after release. 
 
-We can notice the new type `D` in the signature. It's for constant **d**oubles.
+We can notice the new type `D` in the signature. It's for constant doubles.
 We can think that it's a normal value of type `Double`. It's a `Double` that is
 embedded in the Csound. From the point of implementation we don't calculate
 these doubles but use them to generate the Csound code.
@@ -133,8 +133,8 @@ Right now don't bother about the functions `midi` and `onMsg`.
 We are going to take a closer look at then in the chapter *User interaction*.
 That's how we plug in the midi-devices.
 
-The value of type `D` is just like a haskell's `Double`. We can do all the 
-double's operations on it. It's usefull to know how to convert doubles to `D`'s
+The value of type `D` is just like a Haskell's `Double`. We can do all the 
+Double's operations on it. It's useful to know how to convert doubles to `D`'s
 and how to convert `D`'s to signals:
 
 ~~~{.haskell}
@@ -178,7 +178,7 @@ fades   :: D -> D -> Sig
 fades fadeInTime fadeOutTime = ...
 ~~~
 
-They produce mre simple envelopes. The `fadeIn` rises
+They produce more simple envelopes. The `fadeIn` rises
 in the given amount of seconds form 0 to 1. The `fadeOut`
 does the opposite. It's 1 from the start and then it 
 fades out to zero in given amount of seconds but only
@@ -188,7 +188,7 @@ after release. The `fades` combines both functions.
 Strings (Str)
 -----------------------------------
 
-The friend of mine has made a wonderfull record in Ableton.
+The friend of mine has made a wonderful record in Ableton.
 I have a wav-file from her and want to beep-along with it.
 I can use a `diskin2` opcode for it:
 
@@ -247,7 +247,7 @@ Notice how simple is the combining midi-devices output
 with the regular signals. The function `midi` produces 
 a normal signal. We can use it anywhere. 
 
-There are usefull shortcuts that let us use a normal haskell strings:
+There are useful shortcuts that let us use a normal Haskell strings:
 
 ~~~{.haskell}
 readSnd :: String -> (Sig, Sig)
@@ -299,7 +299,7 @@ We have studied the four main waveform functions: `osc`, `tri`, `saw`, `sqr`.
 But what if we want to create our own waveform. How can we do it?
 
 What if we want not a pure sine but two more partials. We want
-a sume of sine partials and a first harmonic with the amplitude of 1
+a sum of sine partials and a first harmonic with the amplitude of 1
 the second is with 0.5 and the third is with 0.125.
 
 We can do it with `osc`:
@@ -365,14 +365,14 @@ It works like this:
 
 What is the size of the table? We can create the table of the given size.
 By default it's 8196. The more size the better is precision. 
-For efficiency reason the tables size in most cases shoult be 
-equal to some degree of 2. We can set the table size with one of the funcions:
+For efficiency reason the tables size in most cases should be 
+equal to some degree of 2. We can set the table size with one of the functions:
 
 ~~~{.haskell}
 lllofi, llofi, lofi, midfi, hifi, hhifi, hhhifi
 ~~~
 
-The `lllofi` is the lowest fidelity and the `hhhfi` is the higheest fidelity.
+The `lllofi` is the lowest fidelity and the `hhhfi` is the highest fidelity.
 
 We can set the size explicitly with:
 
@@ -382,7 +382,7 @@ setSize :: Int -> Tab -> Tab
 
 ### The guard point
 
-If you are not familliar with Csound's conventions you are pobably 
+If you are not familiar with Csound's conventions you are probably 
 not aware of the fact that for efficiency reasons Csound requires 
 that table size is equal to power of 2 or power of two plus one 
 which stands for guard point (you do need guard point if your intention 
@@ -408,7 +408,7 @@ We can write the specific numbers in the table if we want:
 doubles :: [Double] -> Tab
 ~~~
 
-Linear and epxponential segments:
+Linear and exponential segments:
 
 ~~~{.haskell}
 consts, lins, exps, cubes, splines :: [Double] -> Tab
@@ -444,7 +444,7 @@ sine, cosine, sigmoid :: Tab
 Side effects (SE)
 ------------------------------------------------
 
-The `SE`-type is for funcions that work with side effects.
+The `SE`-type is for functions that work with side effects.
 They can produce effectful value or can be used just for the 
 side effect. 
 
@@ -541,10 +541,10 @@ Tuples (Tuple)
 
 Some of the Csound functions are producing several outputs.
 Then the output is represented with `Tuple`. It's a special
-type class that contains all tuples of csound values.
+type class that contains all tuples of Csound values.
 
 There is a special case. The type `Unit`. It's Csound's alias
-for haskell's `()`-type. It's here for implementation reasons.
+for Haskell's `()`-type. It's here for implementation reasons.
 
 We have already encountered the tuples when we have studied 
 the function `diskin2`. 
@@ -553,7 +553,7 @@ the function `diskin2`.
 diskin2 :: Tuple a => Str -> Sig -> a
 ~~~
 
-In csound the functions can produce varied amount of arguments.
+In Csound the functions can produce varied amount of arguments.
 The number of arguments is specified right in the code. But Haskell
 is different. The function can produce only certain number of arguments.
 To relax this rule we can use the special type class `Tuples`. 
@@ -570,10 +570,10 @@ ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
 The Signal space (SigSpace)
 ---------------------------------------
 
-We often want to transform the signal wich is wrapped 
+We often want to transform the signal which is wrapped 
 in the other type. It can be a monophonic signal. 
 If it's just a pure `Sig` then it's not that difficult.
-We can apply a function and get the ouptut. But what
+We can apply a function and get the output. But what
 if the signal is stereo or what if it's wrapped in the `SE`.
 But it has a signal(s) that we want to process. We can use
 different combinations of the function `fmap`. But there is
@@ -619,7 +619,7 @@ Another usefull function is
 wsum :: SigSpace a => [(Sig, a)] -> a
 ~~~
 
-It's a weighted sum of signals. Can be usefull for mixing
+It's a weighted sum of signals. Can be useful for mixing
 sounds from several sources.
 
 The signal outputs (Sigs)
@@ -645,9 +645,9 @@ mapSpec  :: (Spec -> Spec) -> Sig -> Sig
 
 With `Spec` we can apply spectral transformations to signal.
 we can create a vocoder effect with it for instance or scale a pitch
-or crossfade between severla timbres.
+or crossfade between several timbres.
 
-We can interpolate between several spectrums:
+We can interpolate between several signals:
 
 ~~~{.haskell}
 cfdSpec :: Sig -> Spec -> Spec -> Spec

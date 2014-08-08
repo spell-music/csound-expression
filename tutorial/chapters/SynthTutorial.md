@@ -46,7 +46,7 @@ Synth has six main units:
 * **Amplifier or gain (VCA):** With gain we can adjust the volume of the sound (scale the amplitude).
 
 * **Processor of effects (FX):** With effects we can make the sound cool and shiny. It can be delay, reverb,
-	flanger, chorus, vocoder, distortion, name your favourite effect.
+	flanger, chorus, vocoder, distortion, name your favorite effect.
 
 Units to make our sounds alive (we can substitute the dumb static numbers with
 time varied signals that are generated with LFO's or EG's):
@@ -125,7 +125,7 @@ The most rich is a saw wave:
 
 All sounds are very 8-bit and computer-like. That's because they
 are static and contain no variance. But that's only beginning.
-We can see that we are goig to use the scaling all the time so why not
+We can see that we are going to use the scaling all the time so why not
 to move it inside our runner function. Also we scale the pitch by 2
 to make pitch lower:
 
@@ -205,7 +205,7 @@ linsegr, expsegr :: [D] -> D -> D -> Sig
 
 They take two additional parameters for release of the note. 
 Second argument is a time of the release and the last argument 
-is a final value. All values for expsegr should be positive.
+is a final value. All values for `expsegr` should be positive.
 
 For example we can construct a saw that slowly fades out after
 release:
@@ -244,7 +244,7 @@ There are two more function that wait for note release
 mxadsr a d s r = expsegr [0.0001, a, 1, d, s] r, 0.0001
 ~~~
 
-The functions `madsr` and `mxadsr` are original csound functions.
+The functions `madsr` and `mxadsr` are original Csound functions.
 They are used so often so there are short-cuts `leg` and `xeg`.
 They are linear and exponential envelope generators.
 
@@ -259,7 +259,7 @@ Let's study some fast changing ones.
 
 ### Low frequency oscillator
 
-Low frequency oscillator is just a wave form (osc, saw, sqr or tri)
+Low frequency oscillator is just a wave form (`osc`, `saw`, `sqr` or `tri`)
 with low frequency (0 to 20 Hz). It's inaudible when put directly
 to speakers but it can produce interesting results when it's used
 as a control signal.
@@ -301,7 +301,7 @@ lfo :: (Sig -> Sig) -> Sig -> Sig -> Lfo
 lfo shape depth rate = depth * shape rate 
 ~~~
 
-It takes the waveform shape, depth of the lfo and rate as arguments.
+It takes the waveform shape, depth of the LFO and rate as arguments.
 
 ### Setting the range for changes
 
@@ -351,7 +351,7 @@ We can control brightness of the sound with filters. A filter can
 amplify or attenuate some harmonics in the spectrum. There are 
 four standard types of filters: 
 
-**Low pass filter** (LP) attenates all harmonics higher than a given center frequency. 
+**Low pass filter** (LP) attenuates all harmonics higher than a given center frequency. 
 
 **High pass filter** (HP) attenuates all harmonics lower than a given center frequency.
 
@@ -377,7 +377,7 @@ lp, hp, bp, br :: Sig -> Sig -> Sig -> Sig
 The first parameter is center frequency, the second one is resonance 
 and the last argument is the signal to modify.
 
-There is an emulation of the moog low pass filter:
+There is an emulation of the Moog low pass filter:
 
 ~~~haskell
 mlp :: Sig -> Sig -> Sig -> Sig 
@@ -466,7 +466,7 @@ There is also a function `rever1`:
 rever1 :: Sig -> Sig -> (Sig, Sig)
 ~~~
 
-It's base on very cool csound unit `reverbsc`. It takes in feedback level (0 to 1)
+It's base on very cool Csound unit `reverbsc`. It takes in feedback level (0 to 1)
 and input signal and produces the processed output. There are several ready to use
 shortcuts: `smallRoom`, `smallHall`, `lhaskellargeRoom`, `largHall` and `magicCave`.
 
@@ -506,7 +506,6 @@ run (fmap smallHall . echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 +
 
 We are using the `fmap` function to apply the next effect in chain to the value with side-effects.
 The `SE`-wrapper type is `Monad` and hence it's `Applicative` and `Functor`.
-haskell
 The `echo` function is a specification of generic function:
 
 ~~~haskell
@@ -542,7 +541,7 @@ A distortion can make our sound scream. We can use the function
 
 ~~~haskell
 distortion :: Sig -> Sig -> Sig
-distortion gain asighaskell
+distortion gain asig
 ~~~ 
 
 It takes a distortion level as first parameter. It ranges from 1 to infinity.
@@ -567,7 +566,7 @@ They represent the chorus rate and depth.
 #### Flanger
 
 The next two effects are useful for creating synthetic sounds or
-adding electronic flavour to the natural sounds.
+adding electronic flavor to the natural sounds.
 
 The flanger can be applied with function `flange`:
 
@@ -576,7 +575,7 @@ flange :: Lfo -> Sig -> Sig -> Sig -> Sig -> Sig
 flange lfo fbk mx asig
 ~~~
 
-Where arguments are: an lfo signal, feedback level, balance level between 
+Where arguments are: an LFO signal, feedback level, balance level between 
 pure and processed signals and an input signal. 
 
 Let's apply a flanger:
@@ -599,7 +598,7 @@ phase1 ord lfo fbk mx asig
 
 The arguments are: the order of phaser (an integer value, 
 it represents the number of all-pass filters in chain, 4 to 2000, the better is 8,
-the bigger the number the slower is algorithm), an lfo for 
+the bigger the number the slower is algorithm), an LFO for 
 phase sweeps (depth is in range acoustic waves, something around 5000 is good start, 
 the rate is something between 0 and 20 Hz), amount of feedback, the balance between
 pure and processed signals, the input signal.
@@ -611,7 +610,7 @@ harmPhase, powerPhase :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 harmPhase ord lfo q sep fbk mx asig = ...
 ~~~
 
-The arguments are: order of phaser, lfo-signal for frequency sweep, resonance of the filters (0 to 1),
+The arguments are: order of phaser, LFO-signal for frequency sweep, resonance of the filters (0 to 1),
 separation of the peaks, feedback level (0 to 1), balance level.
 
 Noise
@@ -630,7 +629,7 @@ rnds, urnds :: Sig -> SE Sig
 urnds amplitude frequency
 ~~~
 
-The urnds varies between 0 and 1. The rnds varies between -1 and 1.
+The `urnds `varies between 0 and 1. The `rnds` varies between -1 and 1.
 
 We can generate colored noises with: 
 
@@ -655,14 +654,14 @@ Complex waves
 --------------------------------
 
 Let's study how can we made our waveforms more interesting.
-We can apply several simple techniqhaskellues to achieve it.
+We can apply several simple techniques to achieve it.
 
 ### Reading sound signals from files
 
 We can reuse the sound signals. The music is everywhere and we can
 take a somebody else's music as a start point.
 
-There are habdy functions for reading the sound from files:
+There are handy functions for reading the sound from files:
 
 ~~~haskell
 readSnd :: String -> (Sig, Sig)
@@ -715,7 +714,7 @@ that they form harmonic series.
 When several violins play in the orchestra the timbre is quite 
 different from the sound of the single violin. Though timbre of each
 instrument is roughly the same the result is different. It happens 
-from the slight detunement of the instruments. We can recreate this 
+from the slightly detuned sound of the instruments. We can recreate this 
 effect by stacking together several waveforms that are slightly detuned.
 It can be achieved with function:
 
@@ -747,7 +746,7 @@ to cover them all in depth in the short guide. But we can explore
 them. They reside in the separate package `csound-expression-opcodes` 
 that is re-exported by the module `Csound.Base`. Take a look in the docs.
 there are links to the originall Csound docs. Maybe you can find your
-own unique sound somewhere in this wonderfull forest of algorithms.
+own unique sound somewhere in this wonderful forest of algorithms.
 
 The modules `Csound.Typed.Opcode.SignalGenerators`, `Csound.Typed.Opcode.SignalModifiers` 
 and `Csound.Typed.Opcode.SpectralProcessing` are good place to start the journey.

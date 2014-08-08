@@ -2,7 +2,7 @@ Events
 ================================
 
 We can trigger instruments with midi. But what
-if we want to trigger the instrument with some repetetive
+if we want to trigger the instrument with some repetitive
 pattern of notes. Or what if we want the instrument
 play some notes at random from the list of given notes.
 
@@ -24,7 +24,7 @@ streams:
 metroE :: Sig -> Evt Unit
 ~~~
 
-The `Unit` is a csound-value for an empty tuple `()`. 
+The `Unit` is a Csound-value for an empty tuple `()`. 
 We have to introduce the special value for implementation reasons.
 The function `metroE`  produces the event stream of units
 that happen all the time with given frequency. If we want the 
@@ -36,14 +36,14 @@ event to happen twice a second we can type in:
 
 
 An event stream is a `Functor`. We can map it with the function `fmap`.
-Also there are usefull functions:
+Also there are useful functions:
 
 ~~~haskell
 filterE :: (a -> BoolD) -> Evt a -> Evt a
 appendE :: Tuple a => a -> (a -> a -> a) -> Evt a -> Evt a
 ~~~
 
-We can filter the events and we can accumulate some value uppon events.
+We can filter the events and we can accumulate some value upon events.
 
 Also the event stream is a monoid. An empty stream is a unit and
 the merge of two event streams is `mappend`. So with `mappen` we
@@ -70,7 +70,7 @@ the event happens. The note is a triple `(D, D, a)`. It's
 `sched` is just like `trig` but delay time is set to zero
 for all events. So that we need only a pair in place of the triple.
 
-It's usefull to know one another function:
+It's useful to know one another function:
 
 ~~~haskell
 withDur :: D -> Evt a -> Evt (D, a)
@@ -149,7 +149,7 @@ every tickToSkip repeatTicks
 ~~~
 
 The first argument specifies the number of ticks to skip.
-The second argument specifies a pettern of repetitions.
+The second argument specifies a pattern of repetitions.
 It's a list of integers. The integer is a number of ticks
 in the period. When period starts it triggers the single event
 then it skips the number of events minus one. Then the next period starts.
@@ -166,7 +166,7 @@ and three same notes for other bits:
 ~~~
 
 Let's create a metronome for a more complicated bit.
-It's an indian bit called Deepchandi. There are 14 tick's
+It's an Indian bit called Deepchandi. There are 14 tick's
 in the bit. They are arranged in sequence 3-4-3-4. 
 We are going to use the 440 Hz for main bit. The 330 Hz for
 the start of every period. The 220 for secondary beats.
@@ -180,7 +180,7 @@ the start of every period. The 220 for secondary beats.
 > dac $ sched instr $ withDur 0.1 $ es
 ~~~
 
-For the e3 we don't have to specify all 14 beats. Since
+For the `e3` we don't have to specify all 14 beats. Since
 the period contains two periods which are the same.
 
 It's an easy way of combining loops or creating music

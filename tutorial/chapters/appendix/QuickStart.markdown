@@ -13,7 +13,7 @@ When it's installed properly we can type in the terminal:
 ~~~
 
 
-It will print the long message. Ubunut/Dbian users can install the csound with `apt-get`:
+It will print the long message. Ubunut/Dbian users can install the Csound with `apt-get`:
 
 ~~~haskell
 > sudo apt-get install csound csound-gui
@@ -132,11 +132,11 @@ mul     :: SigSpace a => Sig -> a -> a
 ~~~
 
 The function `loopSnd` repeats endlessly a given file (note that it's important
-to write the files with extensions. Wav files and mp3s a treated differently
-the dicision is based on the file extension). 
+to write the files with extensions. Wav-files and mp3s a treated differently
+the decision is based on the file extension). 
 The function `mul` scales the tuples of signals with a scalar signal. 
 
-The `takeSnd` turncates the sound to the given amount of seconds.
+The `takeSnd` truncates the sound to the given amount of seconds.
 
 
 Primitive types
@@ -155,41 +155,23 @@ mp3in :: Tuple a -> Str -> a
 
 These functions almost all primitive types of the library. Let's look at the types:
 
-`Sig`
+* `Sig`:   a numeric signal (a stream of numbers)
 
-:   a numeric signal (a stream of numbers)
+* `D`:   a number
 
-`D`
+* `Str`:   a string
 
-:   a number
+* `Tab`:  an array of numbers (See the module `Csound.Tab` for constructors of the arrays)
 
-`Str`
+* `Spec`:  a spectrum of the signal
 
-:   a string
+* `Tuple`:   type class of tuples of csound values
 
-`Tab`
+* `Arg`:   type class of scalar csound values (they are not signals or spectrums)
 
-:   an array of numbers (See the module `Csound.Tab` for constructors of the arrays)
+* `Sigs`:  type class of tuples of signals.
 
-`Spec`
-
-:   a spectrum of the signal
-
-`Tuple`
-
-:   type class of tuples of csound values
-
-`Arg`
-
-:   type class of scalar csound values (they are not signals or spectrums)
-
-`Sigs`
-
-:   type class of tuples of signals.
-
-`Unit`
-
-:   the csound tuple of zero length. It's constructed with the function `unit`
+* `Unit`:   the csound tuple of zero length. It's constructed with the function `unit`
 
 Side effects
 --------------------------
@@ -203,7 +185,7 @@ noise :: Sig -> Sig -> SE Sig
 ~~~
 
 It takes an amplitude and the beta of low pass filter and returns a signal that
-si wrapped in the `SE`. The type `SE` is a `Functor`, `Applicative` and `Monad`
+is wrapped in the `SE`. The type `SE` is a `Functor`, `Applicative` and `Monad`
 so we can use the standard functions to process it:
 
 ~~~haskell
@@ -247,7 +229,7 @@ To do it we need to use `vdac` in place of `dac`:
 
 The function `midi` takes a mid-instrument and starts to listen 
 on all channels for the events. If we want to specify the concrete channel 
-we should use the funtion `midin`:
+we should use the function `midin`:
 
 ~~~haskell
 midin :: Sigs a => Int -> (Msg -> SE a) -> a
@@ -339,7 +321,7 @@ Let's create a simple instrument:
 > let instr x = return $ 0.5 * osc (sig x)
 ~~~
 
-And triger the notes:
+And trigger the notes:
 
 ~~~haskell
 > dac $ sched instr $ withDur 0.25 notes
@@ -378,7 +360,7 @@ Now we can invoke the instrument and hear the result:
 ~~~
 
 The function `withDur` appends a constant value for the duration of the note
-to all events on the stream. Let's make out events more intersting.
+to all events on the stream. Let's make out events more interesting.
 We can play a list of events in the loop and make it faster:
 
 ~~~haskell
@@ -438,14 +420,14 @@ sco :: (Arg a, Sigs b, CsdSco f) => (a -> SE b) -> f a -> f (Mix b)
 mix :: (Sigs a, CsdSco f) => f (Mix a) -> a
 ~~~
 
-The funciton `sco` takes an instrument and a list of notes and
+The function `sco` takes an instrument and a list of notes and
 converts it to the list of sounds. The function `mix` converts
 the list of sounds to the single sound. But what is the type class `CsdSco`?
 It's a generic type of the values that can be converted to the `CsdEventList`
 We can find out the complete definition in the module `Csound.Control.Instr`.
 
 The library `csound-expression` is meant to be open to any score-generation libraries.
-To use our favourite library we should make in instance for the type class `CsdSco`.
+To use our favorite library we should make in instance for the type class `CsdSco`.
 
 There is an instance for the type `Score` from the library `temporal-music-notation`.
 It's in the separate package `temporal-csound`. We can install it with cabal-install: 
@@ -515,8 +497,8 @@ it with an linear envelope:
 > let fader x = return $ linseg [1, idur * 0.5, 1, idur * 0.5, 0] * x
 ~~~
 
-The constant `idur` is the hack that let's us querry the total duration of the note.
-If you know the Csound it's equivallent to the argument `p3` of the instrument.
+The constant `idur` is the hack that let's us query the total duration of the note.
+If you know the Csound it's equivalent to the argument `p3` of the instrument.
 So the fader let's the signal to be unchanged for the first half of the note
 and then reduces it to zero in the second one.
 
@@ -535,8 +517,8 @@ It applies the effect to the unmixed list of sounds:
 Offline rendering
 -------------------
 
-Sometimes we can render the csound file to sound files much faster
-then real-time rendering. It's more convinient to listen to the result
+Sometimes we can render the Csound file to sound files much faster
+then real-time rendering. It's more convenient to listen to the result
 in the media player. we can take a closer look at some details.
 
 We can render the file without playing (the function `csd`) and
@@ -565,7 +547,7 @@ They save the output to file and invoke the given media-player on it.
 Adaptors
 --------------------
 
-Instrumwnts can return a tuple of signals or a single signal or
+Instruments can return a tuple of signals or a single signal or
 a tuple signals wrapped in the type `SE`. There are many different
 variants of the output. But often we want to process the output as 
 a single signal. The output is always a container of signals.
@@ -587,7 +569,7 @@ mul k = mapSig ( * k)
 
 It scales the output.
 
-Sometimes our intruments are pure functions. But all functions
+Sometimes our instruments are pure functions. But all functions
 that invoke instruments require them to return a result that is wrapped
 in the type `SE`. Often we can lift the instrument on the fly
 with methods from the special classes:
@@ -641,7 +623,7 @@ by scaling the sound with the input amplitude.
 Catalog of the instruments
 ------------------------------
 
-We can find many pre-defined instruments in the package `csound-catalog`.
+We can find many predefined instruments in the package `csound-catalog`.
 Let's install it:
 
 ~~~haskell
@@ -684,10 +666,10 @@ Input  a = a            -- reads  the current value
 Output a = a -> SE ()   -- writes the value to the element
 ~~~
 
-Some elements can only read values (no ountput), some of the can only show 
+Some elements can only read values (no output), some of the can only show 
 the values (no input), some of them are static elements (no inputs and outputs).  
 
-Let's create a siple pure tone sound and update volume and frequency
+Let's create a simple pure tone sound and update volume and frequency
 with sliders:
 
 ~~~haskell
@@ -768,7 +750,7 @@ res = schedUntil instr (charOn 'a') (charOff 'a')
 main = dac res
 ~~~
 
-The `schedUntil` funtion triggers the instrument with
+The `schedUntil` function triggers the instrument with
 the first event stream and holds the notes while 
 the second event stream is silent.
 

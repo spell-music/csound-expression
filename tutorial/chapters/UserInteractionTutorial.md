@@ -13,7 +13,7 @@ that expects a midi-message and produces sound output.
 A midi-message contains pitch and volume of the note and
 possibly some control data (to change the parameters of the synth).
 
-The midi-msg is represented with opaque type:
+The midi-message is represented with opaque type:
 
 ~~~haskell
 data Msg
@@ -72,7 +72,7 @@ We need to use `vdac` in place of `dac`:
 > vdac $ smallRoom $ midi instr
 ~~~
 
-We have created a simple saw-based instrument. The functio `fades` adds 
+We have created a simple saw-based instrument. The function `fades` adds 
 the attack and release phase for the instrument. It fades in with time of the
 first argument and fades out after release with time of the second argument.
 We used a lot the function `sig :: D -> Sig`. It's just a converter.
@@ -115,8 +115,8 @@ They are all tuples of `Sig` probably wrapped in the type `SE`.
 ### Continuous midi-instruments
 
 So far every midi-instrument has triggered the instrument in the separate note instance.
-In the end we get the sum of all notes. It's polyphonical mode. But what if we
-want to use synth in monophonical mode. So that frequency and amplitude are continuous
+In the end we get the sum of all notes. It's polyphonic mode. But what if we
+want to use synth in monophonic mode. So that frequency and amplitude are continuous
 signals that we can use in the other instruments. 
 
 There are two functions for this mode:
@@ -131,10 +131,10 @@ holdMsg portamentoTime
 
 Both of them produce amplitude and frequency as time varied signals.
 The former fades out when nothing is pressed and the latter holds the
-last value untill the next one is present. 
+last value until the next one is present. 
 
 The first argument for both of them is portamento time. It's
-time in second thatr it takes for transition from one value to another.
+time in second that it takes for transition from one value to another.
 The function `monoMsg` takes another parameter that specifies a release time.
 Time it takes for the note to fade out or fade in.
 
@@ -150,7 +150,7 @@ Midi-controls
 ------------------------------------
 
 If our midi-device has some sliders or knobs we can 
-send the control-messages. Controll messages allow us 
+send the control-messages. Control messages allow us 
 to change parameters for the instruments during performance.
 
 We can use the function `ctrl7`:
@@ -163,7 +163,7 @@ ctrl7 chno ctrlId imin imax
 It expects the channel number (where we listen for the control messages),
 the identity number of control parameter, and two parameters for minimum 
 and maximum of the output range. Let's apply the filter to the output of
-theprevious example:
+the previous example:
 
 ~~~haskell
 > vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 1 50 5000) (ctrl7 1 2 0.1 0.9) (tri cps)) $ holdMsg 0.5
@@ -226,7 +226,7 @@ Some widgets can wait for the value (like text box that shows the value on the s
 They are sinks. Some widgets can do all this in the same time and some widgets can 
 do neither (like static text. It's only visible but it can not do anything).
 
-In the haskell type system we can express it like this:
+In the Haskell type system we can express it like this:
 
 ~~~haskell
 data Gui    -- visual representation
@@ -312,7 +312,7 @@ margin  :: Int -> Gui -> Gui
 ~~~
 
 The functions `hor` and `ver` are for horizontal and vertical grouping of the elements.
-The `space` creartes an empty space. The `sca`  can scale guis. The `margin` and `padding`
+The `space` creates an empty space. The `sca`  can scale GUIs. The `margin` and `padding`
 are well .. mm .. for setting the margin and padding of the element in pixels.
 
 We can stack as many sliders as we want. Let's explore the low-pass filtering of 
@@ -335,8 +335,8 @@ the saw waveform.
 
 #### Knobs
 
-There are many more widgets. Let's turn some dsliders in the knobs.
-The knob is a sort of circlular slider:
+There are many more widgets. Let's turn some sliders into knobs.
+The knob is a sort of circular slider:
 
 ~~~haskell
 > let vol = knob "volume" (linSpan 0 1) 0.5
@@ -447,11 +447,11 @@ Let's create two buttons that play notes:
 ~~~
 
 The new function `withDur` turns a single value into
-pair that contsans a furation of the note in the first cell.
+pair that contsants a duration of the note in the first cell.
 
 We can do it with a little bit more simple expression if we know
-that events are functors and monoids. With monoid's append we can get 
-a signle event stream that contains events from both event streams.
+that events are functors and monoids. With Monoid's append we can get 
+a single event stream that contains events from both event streams.
 
 Let's redefine our buttons:
 
@@ -543,7 +543,7 @@ source  :: SE (Gui, Input a) -> Source a
 display :: SE Gui -> Display
 ~~~
 
-Let's make a reusable widget for a moog low-pass filter. 
+Let's make a reusable widget for a Moog low-pass filter. 
 It's a producer or source. It's going to produce a 
 transformation `Sig -> Sig`:
 
@@ -656,8 +656,8 @@ To send OSC-messages we can use the function `sendOsc`:
 sendOsc :: Tuple a => OscHost -> OscPort -> OscAddress -> OscType -> Evt a -> SE ()
 ~~~
 
-The Osc-messages are comming from the event-stream. We send them
-to the machine with given hostname (an empty string means the local machine).
+The Osc-messages are coming from the event-stream. We send them
+to the machine with given host name (an empty string means the local machine).
 We also specify the OSC-address (it's a path-like string) and type of the messages.
 
 
@@ -665,7 +665,7 @@ Jack-instruments
 ---------------------------------------
 
 With Jack-interface (native for Linux, also there are ports for OSX and PC) 
-we can stream the output of one ptrogram to the input of another one. 
+we can stream the output of one program to the input of another one. 
 With Jack we can use our Csound instruments in DAW-software 
 (like Ardour, Cubase, Abletone or BitWig).
 
@@ -677,7 +677,7 @@ setJack :: String -> Options
 setJack clientName
 ~~~
 
-We have to set the proper rates (audio and cotrol rates)
+We have to set the proper rates (audio and control rates)
 
 ~~~haskell
 setRates :: Int -> Int -> Options
@@ -697,12 +697,12 @@ setBufs :: Int -> Int -> Options
 setBufs totalBufferSize  singlePeriodSize
 ~~~
 
-To send or recieve the values from the JACK Csound uses the buffer.
+To send or receive the values from the JACK Csound uses the buffer.
 We have to define the size of the whole buffer (the first argument)
 and the one period of the buffer (it should be integer multiplier of
 the blockSize). 
 
-To set all these properties we need to use the Monoid instance for `Options`.
+To set all these properties we need to use the `Monoid` instance for `Options`.
 We need to append all the options:
 
 ~~~haskell

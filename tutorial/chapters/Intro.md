@@ -45,7 +45,7 @@ When it's installed properly we can type in the terminal:
 > csound
 ~~~
 
-It will print the long message. Ubuntu/Debian users can install the csound with `apt-get`:
+It will print the long message. Ubuntu/Debian users can install the Csound with `apt-get`:
 
 ~~~
 > sudo apt-get install csound csound-gui
@@ -89,7 +89,7 @@ on it and sends the output to speakers.
 function `dac` spawns a child process in the background which may continue 
 to execute after you stop the main process that runs the program. 
 It's not so in vim but it happens in the Sublime Editor and when you 
-invoke runhaskell. So the best is to write you program in the 
+invoke `runhaskell`. So the best is to write you program in the 
 separate file and then load it in the `ghci` and invoke the function 
 `main` (which runs the sound rendering with the function `dac` or
 another sound rendering function).
@@ -102,9 +102,9 @@ Here is an overview of the features:
 
 * Keep it simple and compact.
 
-* Try to hide low level csound's wiring as much as we can (no ids for ftables, instruments, global variables).
+* Try to hide low level Csound's wiring as much as we can (no ids for ftables, instruments, global variables).
 
-* Don't describe the whole csound in all it's generality 
+* Don't describe the whole Csound in all it's generality 
     but give the user some handy tools to play with sound.
 
 * No distinction between audio and control rates on the type level. 
@@ -136,7 +136,7 @@ Here is an overview of the features:
 * Set Csound flags with meaningful (well-typed) values. 
         Derive as much as you can from the context.
 
-* Composable guis. Interactive instruments should be easy to make.
+* Composable GUIs. Interactive instruments should be easy to make.
 
 
 Acknowledgements 

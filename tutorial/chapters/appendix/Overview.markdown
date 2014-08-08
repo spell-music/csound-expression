@@ -1,7 +1,7 @@
 Overview of the library
 ==================================
 
-There are many functions in the library. Let's list the most usefull ones:
+There are many functions in the library. Let's list the most useful ones:
 
 ## The converters:
 
@@ -32,7 +32,7 @@ There are unipolar variants of the waveforms (a unipolar signal varies from 0 to
 ## Envelopes:
 
 Release is a time to linger the signal after note is over
-(usefull with midi). Two additional parameters are:
+(useful with midi). Two additional parameters are:
 time of the release and the final value. Exponential envelopes
 should be above zero (we can use the small numbers to imitate the zero)
 
@@ -50,16 +50,16 @@ expsegr :: [D] -> D -> D -> Sig     -- exponential envelope
 Parameters: the last argument is always the signal to filter 
 the first parameter is cut-off frequency for `lp` and `hp`
 and the center frequency for `bp` and `br`. The second argument
-for `bp` and `br` is a band-width.
+is a band-width (resonance).
 
 ~~~haskell
-lp  :: Sig -> Sig -> Sig            -- low pass
-hp  :: Sig -> Sig -> Sig            -- high pass
+lp  :: Sig -> Sig -> Sig -> Sig     -- low pass
+hp  :: Sig -> Sig -> Sig -> Sig     -- high pass
 bp  :: Sig -> Sig -> Sig -> Sig     -- band pass
 br  :: Sig -> Sig -> Sig -> Sig     -- band reject
 ~~~
 
-There are butterworth variants of the filters: `blp`, `bhp`, `bbp`, `bbr`.
+There are Butterworth variants of the filters: `blp`, `bhp`, `bbp`, `bbr`.
 
 ## Reverberation
 

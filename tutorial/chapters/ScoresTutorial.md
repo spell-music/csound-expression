@@ -81,8 +81,8 @@ class Functor f => CsdSco f where
 	singleCsdEvent :: CsdEvent a -> f a
 ~~~
 
-The `CsdEventList` is a cannonical representation for the score-like types.
-The intention is to make the library open to many score-representatinons.
+The `CsdEventList` is a canonical representation for the score-like types.
+The intention is to make the library open to many score-representations.
 We should not force the user to use the most proper variant. We let it be
 whatever it's best for the user.
 
@@ -136,7 +136,7 @@ Let's play a chord:
 
 ### Processing the unmixed signals
 
-We can not process tyhe signals directly. If we want to apply an effect we 
+We can not process the signals directly. If we want to apply an effect we 
 need to use a function `eff`:
 
 ~~~haskell
@@ -180,7 +180,7 @@ Notice how boring is the creation of the value for scores:
 ~~~
 
 It's on purpose. The `CsdEventList` is not to be used directly. The user
-should seek for better alternatives. The `CsdEventList` is just a cannonical
+should seek for better alternatives. The `CsdEventList` is just a canonical
 type and it does not provide any functions to make the construction
 of scores easier.
 
@@ -189,7 +189,7 @@ There is an instance of `CsdSco` for the type `Score` from the package `temporal
 The package defines handy function for building complex scores out of simpler ones.
 
 To use this package we have to install the package `temporal-csound`. 
-It defines the instance and provides some other usefull things. 
+It defines the instance and provides some other useful things. 
 
 ~~~haskell
 > :q
@@ -273,7 +273,7 @@ Event {eventStart = 4.0, eventDur = 1.0, eventContent = 'o'}
 ~~~
 
 We can see that the start time was properly arranged.
-We can querry the duration of the scores with the function `dur`:
+We can query the duration of the scores with the function `dur`:
 
 ~~~haskell
 > dur $ mel $ fmap temp "Hello"
@@ -375,7 +375,7 @@ Filters the events:
 filterEvents :: (Event Dur a -> Bool) -> Score a -> Score a
 ~~~
 
-The package `temporal-music-notation` is not only for arragment of Scores.
+The package `temporal-music-notation` is not only for arrangement of Scores.
 It defines the types for `Volume`, `Pitch` and `Note`. there are plenty of functions
 to make the creation of scores easy. The detailed study goes beyond the scope
 of this article but interested user can study the docs for the package.
@@ -450,7 +450,7 @@ mul k = mapSig ( * k)
 
 It scales the output.
 
-Sometimes our intruments are pure functions. But all functions
+Sometimes our instruments are pure functions. But all functions
 that invoke instruments require them to return a result that is wrapped
 in the type `SE`. Often we can lift the instrument on the fly
 with methods from the special classes:
@@ -505,7 +505,7 @@ The sound processing procedures
 -----------------------------------------
 
 Sometimes we don't want to hear anything or play anything. 
-We just want the Csound to do something usefull. We can use it
+We just want the Csound to do something useful. We can use it
 as a sound processor. We can read the sound from the file transform it
 and save it to the file. 
 
@@ -521,9 +521,9 @@ We can just use the function
 csd :: RenderCsd a => a -> IO ()
 ~~~
 
-To invoke the csound on the rendered file. 
-Also we can render the procedure to the csound file and
-use the csound to invoke it. That's how we can skip the rendering step. 
+To invoke the Csound on the rendered file. 
+Also we can render the procedure to the Csound file and
+use the Csound to invoke it. That's how we can skip the rendering step. 
 
 Let's process a sound file. We can create a sound file that contains a pure tone:
 
@@ -539,7 +539,7 @@ writeWav1 :: String -> Sig -> SE ()
 writeWav1 fileName asig
 ~~~
 
-It writes mono signals to wav files. There is a function for stereo signals:
+It writes mono signals to wav-files. There is a function for stereo signals:
 
 ~~~haskell
 writeWav :: String -> (Sig, Sig) -> SE ()
@@ -547,7 +547,7 @@ writeWav fileName sigs
 ~~~
 
 Note how fast it was. We don't need to wait for the signal to be heard.
-We can produce a twenty minutes in just half a minute. It can be usefull
+We can produce a twenty minutes in just half a minute. It can be useful
 for generated ambient music. 
 
 Let's process this file and write the output to another file. 
