@@ -11,7 +11,7 @@ Csound-expression is a Haskell framework for computer music.
 With the help of the library we can create our instruments on the fly. 
 A few lines in the interpreter is enough to get the cool sound going
 out of your speakers. It can be used for simple daily sound-file processing 
-or for a full-blown live performances. It's available on [Hackage](http://hackage.haskell.org/package/csound-expression-3.3.2).
+or for a full-blown live performances. It's available on [Hackage](http://hackage.haskell.org/package/csound-expression-4.0.0).
 
 Let's look at how we can create computer music with Haskell. 
 
