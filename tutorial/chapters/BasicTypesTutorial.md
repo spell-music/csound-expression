@@ -162,7 +162,7 @@ should be positive (above 0 and not 0).
 There are two more generic functions for midi notes:
 
 ~~~{.haskell}
-linseg, expseg :: [D] -> D -> D -> Sig
+linsegr, expsegr :: [D] -> D -> D -> Sig
 ~~~
 
 The two last arguments are the release time and the final value for release stage. 
@@ -223,10 +223,10 @@ everything to mono with function.
 toMono :: (Sig, Sig) -> Sig
 ~~~
 
-The first argument of the `diskin2` is not a haske's `String`.
-It's a csound's string so it has a special name `Str`. It's just
+The first argument of the `diskin2` is not a Haskell's `String`.
+It's a Csound's string so it has a special name `Str`. It's just
 like `D`'s  for `Double`'s. We used a converter function to
-lift the Haskell string to csound one:
+lift the Haskell string to Csound one:
 
 ~~~{.haskell}
 text :: String -> Str
@@ -250,10 +250,10 @@ a normal signal. We can use it anywhere.
 There are usefull shortcuts that let us use a normal haskell strings:
 
 ~~~{.haskell}
-readSnd :: String -> (Sig, Sig)Source
-loopSnd :: String -> (Sig, Sig)Source
-loopSndBy :: D -> String -> (Sig, Sig)Source
-readWav :: Sig -> String -> (Sig, Sig)Source
+readSnd :: String -> (Sig, Sig)
+loopSnd :: String -> (Sig, Sig)
+loopSndBy :: D -> String -> (Sig, Sig)
+readWav :: Sig -> String -> (Sig, Sig)
 loopWav :: Sig -> String -> (Sig, Sig)
 ~~~
 
@@ -355,7 +355,7 @@ We can use the function:
 sines2 :: [(PartialNumber, PartialStrength)] -> Tab
 ~~~
 
-It's like this:
+It works like this:
 
 ~~~{.haskell}
 > let wave x = oscBy (sines2 [(1, 1), (3, 0.5), (7, 0.125), (11, 0.1)]) x
@@ -493,6 +493,17 @@ The output ranges form 0 to 1 for them.
 Note that the function `dac` can work not only signals but
 also on the signals that are wrapped in the type `SE`.
 
+Let's take a break and listen to the filtered pink noise:
+
+~~~haskell
+> dac $ mul 0.5 $ fmap (mlp (on 50 2500 $ tri 0.2) 0.3) $ pink 
+~~~
+
+The function `on` is usefull for mapping the range (-1, 1) to
+a different interval. In the expression `on 50 2500 $ tri 0.2`
+oscillation happens in the range `(50, 2500)`. There is another 
+usefull function `uon`. It's like `on` but it maps from the range `(0, 1)`.
+
 Mutable values
 -------------------------------------------------
 
@@ -565,7 +576,7 @@ If it's just a pure `Sig` then it's not that difficult.
 We can apply a function and get the ouptut. But what
 if the signal is stereo or what if it's wrapped in the `SE`.
 But it has a signal(s) that we want to process. We can use
-different combinations of the functions `fmap`. But there is
+different combinations of the function `fmap`. But there is
 a better way. 
 
 We can use the special type class `SigSpace`:

@@ -36,39 +36,26 @@ Velocity	+----------+     +--------+      +-------+     +--------+
 
 Synth has six main units:
 
-Wave generator (VCO)
-
-:	It defines the basic spectrum of the sound. It's often defines the pitch of the sound.
+* **Wave generator (VCO):** It defines the basic spectrum of the sound. It's often defines the pitch of the sound.
     We create the static sound waveform with the given pitch. Sometimes we produce the noise
     with it (for percussive sounds).
 
-Filter (VCF)
-
-:	Filter controls the brightness of the timbre. 
+* **Filter (VCF):**  Filter controls the brightness of the timbre. 
 	With filter we can vary the timbre in time or make it dynamic.
 
-Amplifier or gain (VCA)
+* **Amplifier or gain (VCA):** With gain we can adjust the volume of the sound (scale the amplitude).
 
-: 	With gain we can adjust the volume of the sound (scale the amplitude).
-
-Processor of effects (FX)
-
-: 	With effects we can make the sound cool and shiny. It can be delay, reverb,
+* **Processor of effects (FX):** With effects we can make the sound cool and shiny. It can be delay, reverb,
 	flanger, chorus, vocoder, distortion, name your favourite effect.
-
 
 Units to make our sounds alive (we can substitute the dumb static numbers with
 time varied signals that are generated with LFO's or EG's):
 
-Low frequency generator (LFO)
-
-: 	A low frequency oscillator generates waves at low frequency (0 to 50 Hz). 
+* **Low frequency generator (LFO):** A low frequency oscillator generates waves at low frequency (0 to 50 Hz). 
 	It's used to change the parameters of the other units in time.
 	LFO's are used to change parameters periodically.
 
-Envelope generator (EG)
-
-:   An envelope creates a piecewise function (linear or exponential). It slowly varies in time.
+* **Envelope generator (EG):** An envelope creates a piecewise function (linear or exponential). It slowly varies in time.
     We can describe the steady changes with EG's. It's often used to 
     control the volume of the sound. For example the sound can start from the
     maximum volume and then it fades out gradually. 
