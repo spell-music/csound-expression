@@ -6,7 +6,7 @@ And why should we use it? [Csound](http://www.csounds.com/) is a domain specific
 It helps you to define synthesizers and make some music with them. 
 Csound was born in 1985 (a bit older than Haskell) at MIT by Barry Vercoe. 
 It's widely used in the academia. It has a long history. So with Csound we 
-get a lot of music dsp-algorithms ready to be used. It's written in C.
+get a lot of music DSP-algorithms ready to be used. It's written in C.
 So it's very efficient. It's driven by text, so we can generate it. 
 Csound's community is very friendly (what a coincidence!). 
 Csound is very well documented.
@@ -52,7 +52,7 @@ There are several ways to do it. We can trigger an instrument:
 ### The Score
 
 The score is a list of events with some predefined total duration.
-An event is a tripple that contains:
+An event is a triple that contains:
 
 ~~~haskell
 (t0, dt, args)
@@ -82,7 +82,7 @@ The type `CsdEventList` is not to be used directly.
 It's a canonical representation of the Csound score. 
 We should use something more higher level. That's why 
 we don't see it in the signatures. It's referenced indirectly 
-with type class `CsdSco`. The types fron the class `CsdSco`
+with type class `CsdSco`. The types of the type class `CsdSco`
 are things that can be converted to the canonical representation.
 
 ~~~haskell
@@ -137,7 +137,7 @@ oneOf   :: Arg a => [a] -> Evt b -> Evt a
 ...
 ~~~
 
-For examle, we can substitute all the events with the constant value (`repeatE`),
+For example, we can substitute all the events with the constant value (`repeatE`),
 filter an event stream with predicate or repeat elements in the list (`cycleE`) or
 take elements at random (`oneOf`). There are many more functions.
 
@@ -170,7 +170,7 @@ pgmidi :: (Sigs a) => Int -> Maybe Int -> (Msg -> SE a) -> a
 The function `midi` starts to listen for the midi-messages (`Msg`)
 on all channels. With function `midin` we can specify the concrete
 channel (it's an integer from 1 to 16). The function `pgmidi` is
-for assigning an instrument to the midi-programm (the first argument) 
+for assigning an instrument to the midi-program (the first argument) 
 and possible channel (the second argument).
 
 We can query midi-messages for amplitude, frequency and other parameters
@@ -205,7 +205,7 @@ Let's look at one of the sound units (they are called opcodes)
 ares buthp asig, kfreq [, iskip]
 ~~~   
 
-It's a butterworth high pass filter as it defined in the Csound. 
+It's a Butterworth high pass filter as it defined in the Csound. 
 a-sig - means sig at audio rate. k-freq means freq at control rate 
 (for historical reasons it is k not c). iskip means skip at i-rate.
 i-rate means init time rate. It is when an instruments instance 

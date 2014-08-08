@@ -104,7 +104,7 @@ mp3in   :: Tuple a => Str -> a
 diskin2 :: Tuple a => Str -> Sig -> a
 ~~~
 
-The function `diskin2` reads only wav files. The additional parameter is
+The function `diskin2` reads only wav-files. The additional parameter is
 the speed of the playback.
 
 
@@ -128,6 +128,12 @@ random values for the function `randi`.
 noise   :: Sig -> Sig -> SE Sig     -- white noise
 randi   :: Sig -> Sig -> SE Sig     -- random linear segments
 pinkish :: Sig -> SE Sig            -- pink noise
+~~~
+
+Simplified noises:
+
+~~~haskell
+white, pink :: SE Sig
 ~~~
 
 ## Events
@@ -177,14 +183,14 @@ trig    :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
 schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
 ~~~
 
-## Turncating/repeating the signal
+## Truncating/repeating the signal
 
 ~~~haskell
 takeSnd   :: Sigs a => Double -> a -> a   
 repeatSnd :: Sigs a => D      -> a -> a
 ~~~
 
-With `takeSnd` we can turncate the signals to the given amount of seconds.
+With `takeSnd` we can truncate the signals to the given amount of seconds.
 We use only first `n`-seconds from the signals. The `repeatSnd` repeats
 the signal with the given period.
 
@@ -193,7 +199,7 @@ the signal with the given period.
 Defined in the module `Csound.IO`
 
 The type class `RenderCsd` contains the sings that can be rendered to file.
-It's something that produces the sound or triggers the csound procedures.
+It's something that produces the sound or triggers the Csound procedures.
 
 ~~~haskell
 -- plays a signal in real time 
@@ -231,7 +237,7 @@ The most common options:
 -- sets the sample rate and the block size
 setRates :: Int -> Int -> Options
 
--- sets the buffer sizes (the define the granylarity of the real-time performance)
+-- sets the buffer sizes (the define the granularity of the real-time performance)
 setBufs :: Int -> Int -> Options 
 
 -- where to direct the output
