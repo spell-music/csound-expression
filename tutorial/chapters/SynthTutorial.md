@@ -740,6 +740,18 @@ It multiplies the amplitude of the signal by LFO.
 run id (0.25 * env) (mul (osc (30 * env)) . chorusPitch 8 0.5 saw)
 ~~~
 
+### Diving deeper
+
+Csound contains thousands of audio algorithms. It's impossible
+to cover them all in depth in the short guide. But we can explore
+them. They reside in the separate package `csound-expression-opcodes` 
+that is re-exported by the module `Csound.Base`. Take a look in the docs.
+there are links to the originall Csound docs. Maybe you can find your
+own unique sound somewhere in this wonderfull forest of algorithms.
+
+The modules `Csound.Typed.Opcode.SignalGenerators`, `Csound.Typed.Opcode.SignalModifiers` 
+and `Csound.Typed.Opcode.SpectralProcessing` are good place to start the journey.
+
 
 ----------------------------------------------------
 
