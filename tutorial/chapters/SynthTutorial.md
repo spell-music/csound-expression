@@ -83,17 +83,13 @@ osc, saw, sqr, tri :: Sig -> Sig
 
 All functions take in a frequency (it can vary with time, so it's a signal).
 
-The most simple is sine wave or pure tone. It represents the sine function. Let's listen to it.
+The most simple is sine wave or pure tone. It represents the sine function. 
+In csound-expression the pure sine is generated with function `osc`. Let's listen to it.
 
 ~~~haskell
 > run osc
 ~~~
 
-In csound-expression the pure sine is generated with function `osc`.
-
-~~~
-insert the picture of pure tone
-~~~
 
 It starts to scream harshly when you press several notes. It happens
 due to distortion. Every signal is clipped to the amplitude of 1. 
@@ -306,6 +302,47 @@ lfo shape depth rate = depth * shape rate
 ~~~
 
 It takes the waveform shape, depth of the lfo and rate as arguments.
+
+### Setting the range for changes
+
+The LFOs are ranging in the interval (-1, 1). The EGs are ranging
+in the interval (0, 1). Often we want to change the range. 
+
+We can do t with simple arithmetic:
+
+From `(0, 1)` to `(a, b)`:
+
+~~~haskell
+> let y = a + b * x
+~~~
+
+Or from (-1, 1) to `(a, b)`:
+
+~~~haskell
+> let y = a + b * (x + 1) / 2
+~~~
+
+It happens so often that there are special functions that abstracts these patterns:
+
+From `(0, 1)` to `(a, b)`:
+
+~~~
+uon :: Sig -> Sig -> Sig -> Sig
+uon a b x = ...
+
+let y = uon a b x
+~~~ 
+
+Or from (-1, 1) to `(a, b)`:
+
+~~~
+on :: Sig -> Sig -> Sig -> Sig
+on a b x = ...
+
+let y = on a b x
+~~~
+
+The function `on` can be used with LFOs and `uon` can be used with EGs.
 
 Filter
 --------------------------------
