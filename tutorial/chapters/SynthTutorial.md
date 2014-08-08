@@ -326,7 +326,7 @@ It happens so often that there are special functions that abstracts these patter
 
 From `(0, 1)` to `(a, b)`:
 
-~~~
+~~~haskell
 uon :: Sig -> Sig -> Sig -> Sig
 uon a b x = ...
 
@@ -335,7 +335,7 @@ let y = uon a b x
 
 Or from (-1, 1) to `(a, b)`:
 
-~~~
+~~~haskell
 on :: Sig -> Sig -> Sig -> Sig
 on a b x = ...
 
