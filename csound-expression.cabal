@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       4.0.0
+Version:       4.1.0
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -84,6 +84,10 @@ Library
         Csound.Control.Evt
         Csound.Control.Instr
         Csound.Control.SE
+        
+        Csound.Control.Midi
+        Csound.Control.Osc
+        Csound.Control.Channel
 
         Csound.Control.Gui
         Csound.Control.Gui.Widget
