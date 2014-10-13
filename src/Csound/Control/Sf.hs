@@ -137,7 +137,7 @@ genSfKey play sf sustain vel key = mul env $ play vel key 1 1 sf
     where env = sfEnv sustain (vel / 127)
 
 genSfCps :: (Tuple a, SigSpace a) => SfFun a -> Sf -> D -> D -> D -> a
-genSfCps play sf sustain amp cps = mul env $ play (127 * amp) 0 1 (sig cps) sf `withD` 1 
+genSfCps play sf sustain amp cps = mul env $ play (127 * amp) (f2m cps) 1 (sig cps) sf `withD` 1 
     where env = sfEnv sustain amp 
 
 sfEnv :: D -> D -> Sig
@@ -145,4 +145,8 @@ sfEnv sustain amp = sig frac * env
     where 
         frac = amp / 7000
         env  = linsegr [0, 0.01, 1] sustain 0
+
+-- | frequency to midi
+f2m :: D -> D
+f2m cps = round' (12 * (log (cps / 220) / log 2) + 57)
 
