@@ -67,7 +67,7 @@ Library
   Ghc-Options:    -Wall
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0,
-        csound-expression-typed >= 0.0.5.4, csound-expression-opcodes
+        csound-expression-typed >= 0.0.5.4, csound-expression-opcodes >= 0.0.1
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
@@ -86,6 +86,7 @@ Library
         Csound.Control.SE
         
         Csound.Control.Midi
+        Csound.Control.Sf
         Csound.Control.Osc
         Csound.Control.Channel
 

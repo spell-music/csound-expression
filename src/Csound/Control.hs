@@ -16,6 +16,8 @@ module Csound.Control(
     -- * Midi
     -- | Interface with Midi.
     module Csound.Control.Midi,
+    -- | Playing Sf2 samples.
+    module Csound.Control.Sf,
     -- * Osc
     -- | Interface with Osc.
     module Csound.Control.Osc,
@@ -30,6 +32,7 @@ import Csound.Control.Instr
 import Csound.Control.Gui
 
 import Csound.Control.Midi
+import Csound.Control.Sf
 import Csound.Control.Osc
 import Csound.Control.Channel
 
