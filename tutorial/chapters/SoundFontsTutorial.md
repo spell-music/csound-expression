@@ -1,14 +1,14 @@
 
-Sound fonts
+SoundFonts
 ===========================
 
-With sound fonts it's very easy to turn your computer in synthesizer.
+With soundfonts it's very easy to turn your computer in synthesizer.
 A sound font encodes the timbre of the instrument with samples. 
-There are many free sound fonts with good level of quality.
+There are many free soundfonts with good level of quality.
 
 ## Midi
 
-We can read sound fonts that are encoded in sf2 format. 
+We can read soundfonts that are encoded in sf2 format. 
 The function `sfMsg` can turn sound font file in midi instrument:
 
 ~~~{.haskell}
@@ -16,7 +16,7 @@ The function `sfMsg` can turn sound font file in midi instrument:
 > vdac $ midi $ sfMsg sf 0.5
 ~~~
 
-We play the given the sound file `"rhodes.sf2"` at the bank `0` 
+We play the file `"rhodes.sf2"` at the bank `0` 
 with program `0`. The sound font can contain many instruments. 
 They are identified with the pair of integers: bank and program number.
 The second argument of the function `sfMsg` is sustain value of the instrument
@@ -38,7 +38,7 @@ with function `sfCps`:
 
 The arguments are:
 
-* a sound font preset. 
+* a soundfont preset. 
 
 * sustain. 
 
@@ -46,11 +46,19 @@ The arguments are:
 
 * the frequency in Hz.
 
-We can find a lot of sound fonts in the net. Some links to start:
+We can find a lot of soundfonts in the net. Some links to start:
 
 * [Hammer sound](http://www.hammersound.net/)
 
 * [Rhodes](http://learjeff.net/sf/sf.html)
 
 * [And many more](http://www.synthfont.com/links_to_soundfonts.html)
+
+----------------------------------------------------
+
+* <= [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
+
+* => [Scores](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ScoresTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
 
