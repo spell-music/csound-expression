@@ -89,6 +89,9 @@ tfmS f ra = Sam $ do
 setInfDur :: Sam -> Sam
 setInfDur = Sam . fmap (\a -> a { samDur = InfDur }) . unSam
 
+fromSig :: D -> Sig -> Sam
+fromSig dt a = Sam $ reader $ \bpm -> S (a, a) (Dur $ toSec bpm dt)
+
 sam :: String -> Sam
 sam fileName = Sam $ return $ S (readSnd fileName) (Dur $ lengthSnd fileName)
 
@@ -206,6 +209,12 @@ repBy dt = genLoop $ \bpm d asig -> repeatSnd (toSec bpm dt) asig
 reps :: Sig -> Sam -> Sam
 reps dt = genLoop $ \bpm d asig -> sched (const $ return asig) $ withDur d $ metroS bpm dt
 
+pat :: [D] -> Sam -> Sam 
+pat dts = genLoop $ \bpm d asig -> trigs (const $ return asig) $ fmap (const $ notes bpm d) $ metroS bpm (sig $ sum dts)
+	where 
+		notes bpm d = fmap (\t -> (toSec bpm t, d, unit)) $ durs		
+		durs = reverse $ snd $ foldl (\(count, res) a -> (a + count, count:res)) (0, []) dts
+
 wall :: D -> Sam -> Sam 
 wall dt = reps (sig hdt) . linEnv hdt hdt . lim dt
 	where hdt = 0.5 * dt
@@ -233,14 +242,35 @@ metroS bpm dt = metroE (recip $ toSecSig bpm dt)
 -------------------------------------
 -- test
 
-ra1 = rev "samples/Abstract Twinkle Chime Loop.wav"
+ra1 = rev "/home/anton/music/rr/samples/Abstract Twinkle Chime Loop.wav"
 
-a1 = sam "samples/Abstract Twinkle Chime Loop.wav"
-a2 = sam "samples/Abstract Pod Loop 01.wav" 
-x = sam "samples/Piano Blur 01.wav"
-rx = rev "samples/Piano Blur 01.wav"
+a1 = sam "/home/anton/music/rr/samples/Abstract Twinkle Chime Loop.wav"
+a2 = sam "/home/anton/music/rr/samples/Abstract Pod Loop 01.wav" 
+x = sam "/home/anton/music/rr/samples/Piano Blur 01.wav"
+rx = rev "/home/anton/music/rr/samples/Piano Blur 01.wav"
 y = repBy 4 $ linEnv 0.9 0.1 $ lim 1 x
 
 z = mean [mul 0.3 $ rep x, y]
 
-run = dac . toSig 120
+run = dac . toSig (110 * 4)
+
+
+res = rep $ flow $ fmap (lim $ 16 * 4) [res1, res2]
+
+res1 = mean [pat [3, 3, 2] q1, pat [4] q3, rep $ del 5 $ pat [1,1,3,3] q2, mul 0.7 $ pat [5] q4, del 3 $ pat [13] q5]
+	where
+		q x = fromSig 0.5 (mul (fades 0.01 0.1) $ osc x)
+		q1 = q 110
+		q2 = q 220
+		q3 = q 330
+		q4 = q 440
+		q5 = q 660
+
+res2 = mean [pat [3, 3, 2] q1, pat [4] q3, rep $ del 5 $ lim 3 $ pat [1] q2, mul 0.7 $ pat [5] q4, del 3 $ pat [13] q5]
+	where
+		q x = fromSig 0.5 (mul (fades 0.01 0.1) $ osc (x * 9 /8))
+		q1 = q 110
+		q2 = q 220
+		q3 = q 330
+		q4 = q 440
+		q5 = q 660
