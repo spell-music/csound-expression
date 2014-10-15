@@ -1,4 +1,24 @@
-module Try where
+{-# Language DeriveFunctor #-}
+module Sam
+{-
+(
+	Sample, Sam, Bpm, runSam, 
+	-- * Lifters
+	mapBpm, bindSam, bindBpm, liftSam,
+	-- * Constructors
+	fromSig, sam, rev, seg, revSeg,	
+	-- * Arrange
+	del, rest, flow, pick, pickBy, lim, atPch, 
+	-- * Arpeggio
+	arpUp, arpDown, arpOneOf, arpFreqOf,
+	-- * Envelopes
+	linEnv, expEnv, hatEnv, 
+	-- * Loops
+	rep, repBy, reps, pat, wall	
+
+) 
+-}
+where
 
 import Data.List(foldr1)
 
@@ -10,46 +30,50 @@ import Csound.Base
 
 todo = undefined
 
+type Sam = Sample Sig2
+
 data Dur = Dur D | InfDur
 
 type Bpm = D
 
-newtype Sam = Sam { unSam :: ReaderT Bpm SE S }
+newtype Sample a = Sam { unSam :: ReaderT Bpm SE (S a) 
+	} deriving (Functor)
 
-data S = S
-	{ samSig :: Sig2
-	, samDur :: Dur } 
+instance Applicative Sample where
+	pure = Sam . pure . pure
+	(Sam rf) <*> (Sam ra) = Sam $ liftA2 (<*>) rf ra
+
+data S a = S
+	{ samSig :: a
+	, samDur :: Dur 
+	} deriving (Functor)
+
+instance Applicative S where
+	pure a = S a InfDur
+	(S f df) <*> (S a da) = S (f a) $ case (df, da) of
+		(Dur df, Dur da) -> Dur $ maxB df da
+		_			     -> InfDur
 
 data EnvType = TrapLin D D | TrapExp D D | CosEnv
 
-instance Num Sam where
-	(+) = tfm2 (+)
-	(*) = tfm2 (*)
-	(-) = tfm2 (-)
-	negate = tfm negate
-	abs = tfm abs
-	signum = tfm signum
-	fromInteger n = Sam $ return $ S (fromInteger n) InfDur
+instance Num a => Num (Sample a) where
+	(+) = liftA2 (+)
+	(*) = liftA2 (*)
+	(-) = liftA2 (-)
+	negate = fmap negate
+	abs = fmap abs
+	signum = fmap signum
+	fromInteger = pure . fromInteger
 
-instance Fractional Sam where
-	recip = tfm recip
-	fromRational n = Sam $ return $ S (fromRational n) InfDur
+instance Fractional a => Fractional (Sample a) where
+	recip = fmap recip
+	fromRational = pure . fromRational
 
 
-instance SigSpace Sam where
-	mapSig f = tfm (mapSig f)
+instance SigSpace a => SigSpace (Sample a) where
+	mapSig f = fmap (mapSig f)
 	bindSig f (Sam a) = undefined
 
-onSig1 :: (Sig2 -> Sig2) -> S -> S
-onSig1 f a = a { samSig = f $ samSig a }
-
-onSig2 :: (Sig2 -> Sig2 -> Sig2) -> S -> S -> S
-onSig2 f a b = S asig dur
-	where 
-		asig = f (samSig a) (samSig b)
-		dur  = case (samDur a, samDur b) of
-					(Dur da, Dur db) -> Dur $ maxB da db
-					_                -> InfDur
 
 toSec :: Bpm -> D -> D
 toSec bpm a = a * 60 / bpm
@@ -57,21 +81,18 @@ toSec bpm a = a * 60 / bpm
 toSecSig :: Bpm -> Sig -> Sig
 toSecSig bpm a = a * 60 / sig bpm
 
-toSig :: Bpm -> Sam -> SE Sig2
-toSig bpm x = fmap samSig $ runReaderT (unSam x) bpm
+runSam :: Bpm -> Sam -> SE Sig2
+runSam bpm x = fmap samSig $ runReaderT (unSam x) bpm
 
 addDur :: D -> Dur -> Dur
 addDur d x = case x of
 	Dur a  -> Dur $ d + a
 	InfDur -> InfDur
 
-tfm :: (Sig2 -> Sig2) -> Sam -> Sam
-tfm f = Sam . fmap (\x -> x { samSig = f $ samSig x }) . unSam
+atPch :: Sig -> Sam -> Sam
+atPch k = mapSig (scalePitch k)
 
-tfm2 :: (Sig2 -> Sig2 -> Sig2) -> Sam -> Sam -> Sam
-tfm2 f a b = Sam $ liftA2 (onSig2 f) (unSam a) (unSam b)
-
-tfmBy :: (S -> Sig2) -> Sam -> Sam
+tfmBy :: (S Sig2 -> Sig2) -> Sam -> Sam
 tfmBy f = Sam . fmap (\x -> x { samSig = f x }) . unSam
 
 tfmR :: (Bpm -> Sig2 -> Sig2) -> Sam -> Sam
@@ -80,7 +101,7 @@ tfmR f ra = Sam $ do
 	a <- unSam ra
 	return $ a { samSig = f bpm $ samSig a }
 
-tfmS :: (Bpm -> S -> S) -> Sam -> Sam
+tfmS :: (Bpm -> S Sig2 -> S Sig2) -> Sam -> Sam
 tfmS f ra = Sam $ do
 	bpm <- ask
 	a <- unSam ra
@@ -112,8 +133,9 @@ readSegWav start end speed fileName = takeSnd (end - start) $ diskin2 (text file
 
 -- grainy :: 
 
-rest :: D -> Sam 
+rest :: D -> Sam
 rest dt = Sam $ reader $ \bpm -> S 0 (Dur $ toSec bpm dt)
+
 
 del :: D -> Sam -> Sam
 del dt = tfmS phi
@@ -189,6 +211,12 @@ expEnv = genEnv f
 			Dur d  -> expseg [zero, start, 1, maxB 0 (d - start - end), 1, end , zero]
 		zero = 0.00001
 
+hatEnv :: Sam -> Sam
+hatEnv = tfmBy f
+	where 
+		f a = flip mul (samSig a) $ case samDur a of
+			InfDur -> 1
+			Dur d  -> oscBy (polys 0 1 [0, 1, -1]) (1 / sig d)
 
 type LoopFun = D -> D -> Sig2 -> Sig2
 
@@ -216,7 +244,7 @@ pat dts = genLoop $ \bpm d asig -> trigs (const $ return asig) $ fmap (const $ n
 		durs = reverse $ snd $ foldl (\(count, res) a -> (a + count, count:res)) (0, []) dts
 
 wall :: D -> Sam -> Sam 
-wall dt = reps (sig hdt) . linEnv hdt hdt . lim dt
+wall dt = reps (sig hdt) . hatEnv . lim dt
 	where hdt = 0.5 * dt
 
 type Chord = [D]
@@ -252,7 +280,7 @@ y = repBy 4 $ linEnv 0.9 0.1 $ lim 1 x
 
 z = mean [mul 0.3 $ rep x, y]
 
-run = dac . toSig (110 * 4)
+run = dac . runSam (110 * 4)
 
 
 res = rep $ flow $ fmap (lim $ 16 * 4) [res1, res2]
@@ -274,3 +302,24 @@ res2 = mean [pat [3, 3, 2] q1, pat [4] q3, rep $ del 5 $ lim 3 $ pat [1] q2, mul
 		q3 = q 330
 		q4 = q 440
 		q5 = q 660
+
+	
+liftSam :: Sample (SE a) -> Sample a
+liftSam (Sam ra) = Sam $ do
+	a <- ra
+	lift $ fmap (\x -> a{ samSig = x}) $ samSig a
+
+mapBpm :: (Bpm -> Sig2 -> Sig2) -> Sam -> Sam
+mapBpm f (Sam ra) = Sam $ do
+	bpm <- ask
+	a <- ra
+	return $ a { samSig = f bpm $ samSig a }
+
+bindSam :: (Sig2 -> SE Sig2) -> Sam -> Sam
+bindSam f = liftSam . fmap f
+
+bindBpm :: (Bpm -> Sig2 -> SE Sig2) -> Sam -> Sam
+bindBpm f (Sam ra) = Sam $ do
+	bpm <- ask
+	a <- ra
+	lift $ fmap (\x -> a{ samSig = x}) $ f bpm $ samSig a
