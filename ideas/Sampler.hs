@@ -244,8 +244,11 @@ pat dts = genLoop $ \bpm d asig -> trigs (const $ return asig) $ fmap (const $ n
 		durs = reverse $ snd $ foldl (\(count, res) a -> (a + count, count:res)) (0, []) dts
 
 wall :: D -> Sam -> Sam 
-wall dt = reps (sig hdt) . hatEnv . lim dt
-	where hdt = 0.5 * dt
+wall dt a = mean [b, del hdt b]
+	where 
+		hdt = 0.5 * dt
+		f = reps (sig hdt) . hatEnv . lim dt
+		b = f a
 
 type Chord = [D]
 
@@ -271,6 +274,7 @@ metroS bpm dt = metroE (recip $ toSecSig bpm dt)
 -- test
 
 ra1 = rev "/home/anton/music/rr/samples/Abstract Twinkle Chime Loop.wav"
+ra2 = rev "/home/anton/music/rr/samples/Abstract Pod Loop 01.wav" 
 
 a1 = sam "/home/anton/music/rr/samples/Abstract Twinkle Chime Loop.wav"
 a2 = sam "/home/anton/music/rr/samples/Abstract Pod Loop 01.wav" 
