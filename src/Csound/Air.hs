@@ -40,15 +40,23 @@ module Csound.Air (
     mlp,
 
     -- * Sound files playback
-
+    
     -- ** Stereo
     readSnd, loopSnd, loopSndBy, 
     readWav, loopWav, readSegWav, 
+    tempoLoopWav, tempoReadWav,
     
     -- ** Mono
     readSnd1, loopSnd1, loopSndBy1, 
     readWav1, loopWav1, readSegWav1,
+    tempoLoopWav1, tempoReadWav1,
     
+    -- ** Read sound with RAM
+    -- 
+    -- Loads the sample in the table and plays it back from RAM. The sample should be short. The size of the table is limited.
+    -- It's up to 6 minutes for 44100 sample rate, 5 minutes for 48000 and 2.8 minutes for 96000.
+    LoopMode(..), ramSnd, ramSnd1, 
+
     -- * Writing sound files
     SampleFormat(..),
     writeSigs, writeWav, writeAiff, writeWav1, writeAiff1,
@@ -109,7 +117,8 @@ import Csound.Control.Evt(metroE, eventList)
 import Csound.Control.Instr(withDur, sched)
 
 import Csound.Types(Sig2)
-import Csound.Tab(sine, sines4)
+import Csound.Tab(sine, sines4, mp3s, wavs)
+import Csound.SigSpace(mapSig)
 
 -------------------------------------------------------------------
 -- waveforms
@@ -454,9 +463,18 @@ readWav speed fileName = diskin2 (text fileName) speed
 loopWav :: Sig -> String -> (Sig, Sig)
 loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
 
--- | Reads a segment from wav file.
+-- | Reads a segment from wav file. 
 readSegWav :: D -> D -> Sig -> String -> (Sig, Sig)
 readSegWav start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
+
+-- | Reads the wav file with the given speed (if speed is 1 it's a norma playback).
+-- We can use negative speed to read file in reverse. Scales the tempo with first argument.
+tempoReadWav :: Sig -> String -> (Sig, Sig)
+tempoReadWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ diskin2 (text fileName) speed
+
+-- | Reads th wav file and loops over it. Scales the tempo with first argument.
+tempoLoopWav :: Sig -> String -> (Sig, Sig)
+tempoLoopWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
 
 -- Mono
 
@@ -485,6 +503,34 @@ loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
 -- | Reads a segment from wav file.
 readSegWav1 :: D -> D -> Sig -> String -> Sig
 readSegWav1 start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
+
+-- | Reads the mono wav file with the given speed (if speed is 1 it's a norma playback).
+-- We can use negative speed to read file in reverse. Scales the tempo with first argument.
+tempoReadWav1 :: Sig -> String -> Sig
+tempoReadWav1 speed fileName = scaleSpec (1 / abs speed) $ readWav1 speed fileName
+
+-- | Reads th mono wav file and loops over it. Scales the tempo with first argument.
+tempoLoopWav1 :: Sig -> String -> Sig
+tempoLoopWav1 speed fileName = scaleSpec (1 / abs speed) $ loopWav1 speed fileName
+
+--------------------------------------------------------------------------
+-- With RAM
+
+data LoopMode = Once | Loop | Bounce
+    deriving (Show, Eq, Enum)
+
+-- | Loads the sample in the table. The sample should be short. The size of the table is limited.
+-- It's up to 6 minutes for 
+ramSnd :: LoopMode -> Sig -> String -> Sig2
+ramSnd loopMode speed file = loscil3 1 speed t `withDs` [1, int $ fromEnum loopMode]
+    where t 
+            | isMp3 file = mp3s file 0
+            | otherwise  = wavs file 0 0
+
+ramSnd1 :: LoopMode -> Sig -> String -> Sig
+ramSnd1 loopMode speed file 
+    | isMp3 file = (\(aleft, aright) -> 0.5 * (aleft + aright)) $ loscil3 1 speed (mp3s file 0) `withDs` [1, int $ fromEnum loopMode]
+    | otherwise  = loscil3 1 speed (wavs file 0 1) `withDs` [1, int $ fromEnum loopMode]
 
 --------------------------------------------------------------------------
 -- writing sound files
