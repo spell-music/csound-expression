@@ -6,6 +6,10 @@ module Csound.Tab (
     -- table once but you don't need the guard point if you read the table in many cycles, then the guard point is the the first point of your table).  
     Tab,
 
+    -- * Table querries
+
+    nsamp, ftlen, ftsr, ftchnls, ftcps,
+
     -- * Table granularity
     TabFi, fineFi, coarseFi,        
 

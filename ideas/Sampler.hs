@@ -72,8 +72,6 @@ instance Fractional a => Fractional (Sample a) where
 
 instance SigSpace a => SigSpace (Sample a) where
 	mapSig f = fmap (mapSig f)
-	bindSig f (Sam a) = undefined
-
 
 toSec :: Bpm -> D -> D
 toSec bpm a = a * 60 / bpm
@@ -116,6 +114,10 @@ fromSig dt a = Sam $ reader $ \bpm -> S (a, a) (Dur $ toSec bpm dt)
 sam :: String -> Sam
 sam fileName = Sam $ return $ S (readSnd fileName) (Dur $ lengthSnd fileName)
 
+sam1 :: String -> Sam
+sam1 fileName = Sam $ return $ S (let x = readSnd1 fileName in (x, x)) (Dur $ lengthSnd fileName)
+
+
 rev :: String -> Sam
 rev fileName = Sam $ return $ S (takeSnd len $ loopWav (-1) fileName) (Dur len)
 	where len = lengthSnd fileName
@@ -128,14 +130,22 @@ revSeg :: D -> D -> String -> Sam
 revSeg start end fileName = Sam $ return $ S (readSegWav start end (-1) fileName) (Dur len)
 	where len = end - start
 
-readSegWav :: D -> D -> Sig -> String -> (Sig, Sig)
-readSegWav start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
+rndSeg :: D -> D -> D -> String -> Sam
+rndSeg = genRndSeg 1
 
--- grainy :: 
+revRndSeg :: D -> D -> D -> String -> Sam
+revRndSeg = genRndSeg (-1)
+
+genRndSeg :: Sig -> D -> D -> D -> String -> Sam
+genRndSeg speed len start end fileName = Sam $ lift $ do
+	x <- random 0 1
+	let a = start + dl * x
+	let b = a + len
+	return $ S (readSegWav a b speed fileName) (Dur len)
+	where dl = end - len
 
 rest :: D -> Sam
 rest dt = Sam $ reader $ \bpm -> S 0 (Dur $ toSec bpm dt)
-
 
 del :: D -> Sam -> Sam
 del dt = tfmS phi
@@ -172,9 +182,6 @@ genPick pickFun dt as = Sam $ do
 	where getDur x = case x of
 			InfDur -> -1
 			Dur d  -> d
-
-atTuple :: (Tuple a) => [a] -> Sig -> a
-atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
 pick :: Sig -> [Sam] -> Sam
 pick = genPick oneOf
@@ -281,6 +288,12 @@ a2 = sam "/home/anton/music/rr/samples/Abstract Pod Loop 01.wav"
 x = sam "/home/anton/music/rr/samples/Piano Blur 01.wav"
 rx = rev "/home/anton/music/rr/samples/Piano Blur 01.wav"
 y = repBy 4 $ linEnv 0.9 0.1 $ lim 1 x
+
+piano = "/home/anton/music/rr/samples/Piano Blur 01.wav"
+pod = "/home/anton/music/rr/samples/Abstract Pod Loop 01.wav" 
+beat = "/home/anton/music/rr/samples/Java Gourd Fast 01.wav"
+mallet = "/home/anton/music/rr/samples/Shimmer Mallet 04.wav"
+beat2 = "/home/anton/x/sync/loop.wav"
 
 z = mean [mul 0.3 $ rep x, y]
 

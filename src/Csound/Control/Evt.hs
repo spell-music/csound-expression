@@ -16,7 +16,7 @@ module Csound.Control.Evt(
     cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle,
     Rnds,
     oneOf, freqOf, freqAccum, 
-    randDs, randInts, randSkip, randSkipBy, 
+    randDs, randList, randInts, randSkip, randSkipBy, 
     range, listAt,   
     every, masked        
 ) where
@@ -28,6 +28,7 @@ import Data.Tuple
 
 import Csound.Typed
 import Csound.Typed.Opcode
+import Csound.Types(atArg)
 
 -- | Constant event stream. It produces the same value (the first argument)
 -- all the time.
@@ -99,9 +100,6 @@ listAt vals evt
         within x = (x >=* 0) &&* (x <* len)
         len = int $ length vals
 
-atArg :: (Tuple a, Arg a) => [a] -> D -> a
-atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as)
-
 -- | 
 --
 -- > range (xMin, xMax) === cycleE [xMin .. pred xMax]
@@ -116,6 +114,12 @@ randInts (xMin, xMax) = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ getRnd
 -- | An event stream of the random values in the interval @(0, 1)@.
 randDs :: Evt b -> Evt D
 randDs = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ fmap readSnap $ random (0::D) 1 
+
+-- | An event stram of lists of random values in the interval @(0, 1)@.
+-- The first argument is the length of the each list.
+randList :: Int -> Evt b -> Evt [D]
+randList n = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ 
+    sequence $ replicate n $ fmap readSnap $ random (0::D) 1
 
 -- | Skips elements at random.
 --

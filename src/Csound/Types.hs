@@ -55,7 +55,7 @@ module Csound.Types(
     ar1, ar2, ar4, ar6, ar8,
 
     -- * Tuples
-    Tuple(..), makeTupleMethods, Unit, unit,
+    Tuple(..), makeTupleMethods, Unit, unit, atTuple,
     -- *** Logic functions
     ifTuple, guardedTuple, caseTuple, 
     
@@ -67,18 +67,27 @@ module Csound.Types(
     -- > (Arg a, Out b) => a -> b
 
     -- ** Arguments
-    Arg,
+    Arg, atArg,
     -- *** Logic functions
-    ifArg, guardedArg, caseArg,
+    ifArg, guardedArg, caseArg, 
 
     -- ** Outputs
     Sigs
 ) where
 
+import Data.Boolean
 import Csound.Typed.Types
 
 type Sig2 = (Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
 type Sig6 = (Sig, Sig, Sig, Sig, Sig, Sig)
 type Sig8 = (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+
+-- | Gets an init-rate value from the list by index.
+atArg :: (Tuple a, Arg a) => [a] -> D -> a
+atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as)
+
+-- | Gets an control/audio-rate value from the list by index.
+atTuple :: (Tuple a) => [a] -> Sig -> a
+atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 

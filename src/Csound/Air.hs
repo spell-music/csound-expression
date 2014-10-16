@@ -43,11 +43,11 @@ module Csound.Air (
 
     -- ** Stereo
     readSnd, loopSnd, loopSndBy, 
-    readWav, loopWav, 
+    readWav, loopWav, readSegWav, 
     
     -- ** Mono
     readSnd1, loopSnd1, loopSndBy1, 
-    readWav1, loopWav1, 
+    readWav1, loopWav1, readSegWav1,
     
     -- * Writing sound files
     SampleFormat(..),
@@ -108,6 +108,7 @@ import Csound.Control.Gui(funnyRadio)
 import Csound.Control.Evt(metroE, eventList)
 import Csound.Control.Instr(withDur, sched)
 
+import Csound.Types(Sig2)
 import Csound.Tab(sine, sines4)
 
 -------------------------------------------------------------------
@@ -453,6 +454,10 @@ readWav speed fileName = diskin2 (text fileName) speed
 loopWav :: Sig -> String -> (Sig, Sig)
 loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
 
+-- | Reads a segment from wav file.
+readSegWav :: D -> D -> Sig -> String -> (Sig, Sig)
+readSegWav start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
+
 -- Mono
 
 -- | The mono variant of the function @readSnd@.
@@ -476,6 +481,10 @@ readWav1 speed fileName = diskin2 (text fileName) speed
 -- | The mono variant of the function @loopWav@.
 loopWav1 :: Sig -> String -> Sig
 loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
+
+-- | Reads a segment from wav file.
+readSegWav1 :: D -> D -> Sig -> String -> Sig
+readSegWav1 start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
 
 --------------------------------------------------------------------------
 -- writing sound files
@@ -790,8 +799,8 @@ rever1 fbk a = reverbsc a a fbk 12000
 -- | Mono reverb (based on reverbsc)
 --
 -- > rever2 feedback asigLeft asigRight
-rever2 :: Sig -> Sig -> Sig -> (Sig, Sig)
-rever2 fbk a1 a2 = (a1 + wa1, a2 + wa2)
+rever2 :: Sig -> Sig2 -> Sig2
+rever2 fbk (a1, a2) = (a1 + wa1, a2 + wa2)
 	where (wa1, wa2) = reverbsc a1 a2 fbk 12000
 
 -- | Mono reverb for small room.
@@ -811,19 +820,19 @@ magicCave :: Sig -> (Sig, Sig)
 magicCave = rever1 0.99
 
 -- | Stereo reverb for small room.
-smallRoom2 :: Sig -> Sig -> (Sig, Sig)
+smallRoom2 :: Sig2 -> Sig2
 smallRoom2 = rever2 0.6
 
 -- | Stereo reverb for small hall.
-smallHall2 :: Sig -> Sig -> (Sig, Sig)
+smallHall2 :: Sig2 -> Sig2
 smallHall2 = rever2 0.8
 
 -- | Stereo reverb for large hall.
-largeHall2 :: Sig -> Sig -> (Sig, Sig)
+largeHall2 :: Sig2 -> Sig2
 largeHall2 = rever2 0.9
 
 -- | The magic cave reverb (stereo).
-magicCave2 :: Sig -> Sig -> (Sig, Sig)
+magicCave2 :: Sig2 -> Sig2
 magicCave2 = rever2 0.99
 
 -- Delays

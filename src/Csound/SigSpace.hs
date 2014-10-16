@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language FlexibleInstances #-}
 module Csound.SigSpace(
-    SigSpace(..), mul, 
+    SigSpace(..), BindSig(..), mul,
     cfd, cfds, cfdSpec, cfdsSpec, 
     wsum        
 ) where
@@ -14,6 +14,9 @@ import Csound.Typed.Opcode(pvscross)
 -- | A class for easy way to process the outputs of the instruments.
 class Num a => SigSpace a where
     mapSig  :: (Sig -> Sig)    -> a -> a
+
+-- | A class for easy way to process the outputs of the instruments.
+class SigSpace a => BindSig a where
     bindSig :: (Sig -> SE Sig) -> a -> SE a
 
 -- | Scaling the sound.
@@ -52,37 +55,29 @@ cfdsSpec = genCfds undefined cfdSpec
 wsum :: SigSpace a => [(Sig, a)] -> a
 wsum = sum . fmap (uncurry mul)
 
-instance SigSpace Sig where
-    mapSig = id
-    bindSig = id
+instance SigSpace Sig   where  mapSig = id
+instance BindSig  Sig   where  bindSig = id
 
-instance SigSpace (Sig, Sig) where
-    mapSig  f (a1, a2) = (f a1, f a2)
-    bindSig f (a1, a2) = (,) <$> f a1 <*> f a2
+instance SigSpace (Sig, Sig) where  mapSig  f (a1, a2) = (f a1, f a2)
+instance BindSig  (Sig, Sig) where  bindSig f (a1, a2) = (,) <$> f a1 <*> f a2
 
-instance SigSpace (Sig, Sig, Sig) where
-    mapSig  f (a1, a2, a3) = (f a1, f a2, f a3)
-    bindSig f (a1, a2, a3) = (,,) <$> f a1 <*> f a2 <*> f a3
+instance SigSpace (Sig, Sig, Sig) where mapSig  f (a1, a2, a3) = (f a1, f a2, f a3)
+instance BindSig  (Sig, Sig, Sig) where bindSig f (a1, a2, a3) = (,,) <$> f a1 <*> f a2 <*> f a3
 
-instance SigSpace (Sig, Sig, Sig, Sig) where
-    mapSig  f (a1, a2, a3, a4) = (f a1, f a2, f a3, f a4)
-    bindSig f (a1, a2, a3, a4) = (,,,) <$> f a1 <*> f a2 <*> f a3 <*> f a4
+instance SigSpace (Sig, Sig, Sig, Sig) where mapSig  f (a1, a2, a3, a4) = (f a1, f a2, f a3, f a4)
+instance BindSig  (Sig, Sig, Sig, Sig) where bindSig f (a1, a2, a3, a4) = (,,,) <$> f a1 <*> f a2 <*> f a3 <*> f a4
 
-instance SigSpace (SE Sig) where
-    mapSig  f = fmap (mapSig f)
-    bindSig f = fmap (bindSig f)
+instance SigSpace (SE Sig) where  mapSig  f = fmap (mapSig f)
+instance BindSig  (SE Sig) where  bindSig f = fmap (bindSig f)
 
-instance SigSpace (SE (Sig, Sig)) where
-    mapSig  f = fmap (mapSig f)
-    bindSig f = fmap (bindSig f)
+instance SigSpace (SE (Sig, Sig)) where mapSig  f = fmap (mapSig f)
+instance BindSig  (SE (Sig, Sig)) where bindSig f = fmap (bindSig f)
 
-instance SigSpace (SE (Sig, Sig, Sig)) where
-    mapSig  f = fmap (mapSig f)
-    bindSig f = fmap (bindSig f)
+instance SigSpace (SE (Sig, Sig, Sig)) where mapSig  f = fmap (mapSig f)
+instance BindSig  (SE (Sig, Sig, Sig)) where bindSig f = fmap (bindSig f)
 
-instance SigSpace (SE (Sig, Sig, Sig, Sig)) where
-    mapSig  f = fmap (mapSig f)
-    bindSig f = fmap (bindSig f)
+instance SigSpace (SE (Sig, Sig, Sig, Sig)) where mapSig  f = fmap (mapSig f)
+instance BindSig  (SE (Sig, Sig, Sig, Sig)) where bindSig f = fmap (bindSig f)
 
 -----------------------------------------------------
 -- numeric instances
@@ -286,5 +281,4 @@ instance Fractional (a -> (Sig, Sig, Sig)) where
 instance Fractional (a -> (Sig, Sig, Sig, Sig)) where
     (/) = liftA2 (/)
     fromRational = return . fromRational
-
 
