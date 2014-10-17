@@ -6,9 +6,9 @@ module Sampler (
 	-- * Constructors
 	sig1, sig2, infSig1, infSig2, rest,
 	-- ** Stereo
-	wav, wavr, seg, segr, rndWav, rndWavr, rndSeg, rndSegr,
+	wav, wavr, seg, segr, rndWav, rndWavr, rndSeg, rndSegr, ramWav,
 	-- ** Mono
-	wav1, wavr1, seg1, segr1, rndWav1, rndWavr1, rndSeg1, rndSegr1,	
+	wav1, wavr1, seg1, segr1, rndWav1, rndWavr1, rndSeg1, rndSegr1, ramWav1,	
 	-- * Envelopes
 	linEnv, expEnv, hatEnv, decEnv, riseEnv, edecEnv, eriseEnv,
 	-- * Arrange
@@ -17,11 +17,9 @@ module Sampler (
 	loop, rep1, rep, pat1, pat, wall,	
 	-- * Arpeggio
 	arpUp, arpDown, arpOneOf, arpFreqOf,
-	arpUp1, arpDown1, arpOneOf1, arpFreqOf1
-	-- * Generic loops
-	repBy, patBy,
+	arpUp1, arpDown1, arpOneOf1, arpFreqOf1,
 	-- * Chords
-	chMin, chMaj, chMin7, chMaj7, ch7
+	chTrans, chRot, chMin, chMaj, chLead, chMaj7, chMin7, ch7, chLead7, atMaj, atMin, atMaj7, atMin7
 ) where
 
 import Data.List(foldr1)
@@ -70,7 +68,6 @@ instance Num a => Num (Sample a) where
 instance Fractional a => Fractional (Sample a) where
 	recip = fmap recip
 	fromRational = pure . fromRational
-
 
 instance SigSpace a => SigSpace (Sample a) where
 	mapSig f = fmap (mapSig f)
@@ -166,6 +163,17 @@ genRndSeg speed len start end fileName = Sam $ lift $ do
 	return $ S (readSegWav a b speed fileName) (Dur len)
 	where dl = end - len
 
+-- | Reads a sample from the file in RAM.
+--
+-- > ramWav loopMode speed fileName
+ramWav :: LoopMode -> Sig -> String -> Sam
+ramWav mode speed fileName = Sam $ return $ S (ramSnd mode speed fileName) (Dur $ lengthSnd fileName)
+
+-- | Reads a sample from the mono file in RAM.
+--
+-- > ramWav1 loopMode speed fileName
+ramWav1 :: LoopMode -> Sig -> String -> Sam
+ramWav1 mode speed fileName = Sam $ return $ S (let x = ramSnd1 mode speed fileName in (x, x)) (Dur $ lengthSnd fileName)
 
 -- | Constructs sample from mono wav or aiff files.
 wav1 :: String -> Sam
@@ -391,14 +399,14 @@ pat1 dt = genLoop $ \bpm d asig -> sched (const $ return asig) $ withDur d $ met
 
 -- | Plays the sample at the given pattern of periods (in BPMs). The samples don't overlap.
 rep :: [D] -> Sam -> Sam 
-rep = undefined
-
+rep dts = genLoop $ \bpm d asig -> trigs (const $ return asig) $ fmap (const $ notes bpm d) $ metroS bpm (sig $ sum dts)
+	where 
+		notes bpm d = zipWith (\t dt-> (toSec bpm t, toSec bpm dt, unit)) (patDurs dts)	dts	 
+		
 -- | Plays the sample at the given pattern of periods (in BPMs). The overlapped samples are mixed together.
 pat :: [D] -> Sam -> Sam 
 pat dts = genLoop $ \bpm d asig -> trigs (const $ return asig) $ fmap (const $ notes bpm d) $ metroS bpm (sig $ sum dts)
-	where 
-		notes bpm d = fmap (\t -> (toSec bpm t, d, unit)) $ durs		
-		durs = reverse $ snd $ foldl (\(count, res) a -> (a + count, count:res)) (0, []) dts
+	where notes bpm d = fmap (\t -> (toSec bpm t, d, unit)) $ patDurs dts		
 
 -- | Constructs the wall of sound from the initial segment of the sample.
 -- The segment length is given in BPMs.
@@ -414,21 +422,172 @@ wall dt a = mean [b, del hdt b]
 -- | The tones of the chord.
 type Chord = [D]
 
+type Arp1Fun = Evt Unit -> Evt D
+
+arpInstr :: Sig2 -> D -> SE Sig2
+arpInstr asig k = return $ mapSig (scalePitch (sig k)) asig 
+
+patDurs :: [D] -> [D]
+patDurs dts = reverse $ snd $ foldl (\(count, res) a -> (a + count, count:res)) (0, []) dts
+
+genArp1 :: Arp1Fun -> Sig -> Sam -> Sam
+genArp1 arpFun dt = genLoop $ \bpm d asig -> 
+	sched (arpInstr asig) $ withDur d $ arpFun $ metroS bpm dt
+
+-- | Plays ascending arpeggio of samples.
 arpUp1 :: Chord -> Sig -> Sam -> Sam
-arpUp1 ch dt = genLoop $ \bpm d asig -> 
-	sched (\k -> return $ mapSig (scalePitch (sig k)) asig) $ withDur d $ cycleE ch $ metroS bpm dt
+arpUp1 = genArp1 . cycleE
 
+-- | Plays descending arpeggio of samples.
 arpDown1 :: Chord -> Sig -> Sam -> Sam
-arpDown1 ch = arpUp (reverse ch)
+arpDown1 ch = arpUp1 (reverse ch)
 
+-- | Plays arpeggio of samles with random notes from the chord.
 arpOneOf1 :: Chord -> Sig -> Sam -> Sam
-arpOneOf1 ch dt = genLoop $ \bpm d asig -> 
-	sched (\k -> return $ mapSig (scalePitch (sig k)) asig) $ withDur d $ oneOf ch $ metroS bpm dt
+arpOneOf1 = genArp1 . oneOf
 
+-- | Plays arpeggio of samles with random notes from the chord.
+-- We can assign the frequencies of the notes.
 arpFreqOf1 :: [D] -> Chord -> Sig -> Sam -> Sam
-arpFreqOf1 freqs ch dt = genLoop $ \bpm d asig -> 
-	sched (\k -> return $ mapSig (scalePitch (sig k)) asig) $ withDur d $ freqOf (zip freqs ch) $ metroS bpm dt
+arpFreqOf1 freqs ch = genArp1 (freqOf (zip freqs ch))
 
+genArp :: Arp1Fun -> [D] -> Sam -> Sam
+genArp arpFun dts = genLoop $ \bpm d asig -> trigs (arpInstr asig) $ fmap (notes bpm d) $ arpFun $ metroS bpm (sig $ sum dts)
+	where notes bpm d pchScale = fmap (\t -> (toSec bpm t, d, pchScale)) $ patDurs dts		
+
+-- | Plays ascending arpeggio of samples.
+arpUp :: Chord -> [D] -> Sam -> Sam
+arpUp = genArp . cycleE
+
+-- | Plays descending arpeggio of samples.
+arpDown :: Chord -> [D] -> Sam -> Sam
+arpDown ch = arpUp (reverse ch)
+
+-- | Plays arpeggio of samles with random notes from the chord.
+arpOneOf :: Chord -> [D] -> Sam -> Sam 
+arpOneOf = genArp . oneOf
+
+-- | Plays arpeggio of samles with random notes from the chord.
+-- We can assign the frequencies of the notes.
+arpFreqOf :: [D] -> Chord -> [D] -> Sam -> Sam
+arpFreqOf freqs ch = genArp (freqOf $ zip freqs ch)
 
 metroS bpm dt = metroE (recip $ toSecSig bpm dt)
 
+-- | A major chord.
+chMaj :: Chord
+chMaj = [0, 4, 7]
+
+-- | A minor chord
+chMin :: Chord
+chMin = [0, 3, 7]
+
+-- | A lead tone triad.
+chLead :: Chord
+chLead = [0, 3, 6]
+
+-- |  A dominant seventh chord.
+ch7 :: Chord
+ch7 = [0, 4, 7, 10]
+
+-- | A major seventh chord.
+chMaj7 :: Chord
+chMaj7 = [0, 4, 7, 11]
+
+-- | A minor seventh chord.
+chMin7 :: Chord
+chMin7 = [0, 3, 7, 10]
+
+-- | A lead tone seventh chord.
+chLead7 :: Chord
+chLead7 = [0, 3, 6, 10]
+
+chTrans :: D -> Chord -> Chord
+chTrans k = fmap (k + )
+
+-- | Rotates the chord.
+chRot :: Int -> Chord -> Chord
+chRot n = 
+	| n == 0    = id
+	| n < 0     = rotPos n
+	| otherwise = rotNeg (abs n)
+	where		
+		rotPos 1 xs = tail xs ++ [head xs + 12]
+		rotPos n xs = rotPos (n - 1) (rotPos 1 xs)
+
+		rotNeg 1 xs = (last xs - 12) : init xs
+		rotNeg n xs = rotNeg (n - 1) (rotNeg 1 xs)
+
+-- | Chord in major scale at the given note (if there are seven notes)
+atMaj :: Int -> Chord
+atMaj n = chTrans (int $ 12 * oct + inMaj tone) $ case tone of
+	0 -> chMaj
+	1 -> chMin
+	2 -> chMin
+	3 -> chMaj
+	4 -> chMaj
+	5 -> chMin
+	6 -> chLead
+	where (oct, tone) = octTone n
+
+-- | Chord in minor scale at the given note (if there are seven notes)
+atMin :: Int -> Chord
+atMin n = chTrans (int $ 12 * oct + inMin tone) $ case tone of
+	0 -> chMin
+	1 -> chLead
+	2 -> chMaj
+	3 -> chMin
+	4 -> chMin
+	5 -> chMaj
+	6 -> chMaj
+	where (oct, tone) = octTone n
+
+-- | Seventh chord in major scale at the given note (if there are seven notes)
+atMaj7 :: Int -> Chord
+atMaj7 n = chTrans (int $ 12 * oct + inMaj tone) $ case tone of
+	0 -> chMaj7
+	1 -> chMin7
+	2 -> chMin7
+	3 -> chMaj7
+	4 -> ch7
+	5 -> chMin7
+	6 -> chLead7
+	where (oct, tone) = octTone n
+
+-- | Seventh chord in minor scale at the given note (if there are seven notes)
+atMin7 :: Int -> Chord
+atMin7 n = chTrans (int $ 12 * oct + inMin tone) $ case tone of
+	0 -> chMin7
+	1 -> chLead7
+	2 -> chMaj7
+	3 -> chMin7
+	4 -> chMin7
+	5 -> chMaj7
+	6 -> ch7
+	where (oct, tone) = octTone n
+
+inMaj :: Int -> Int
+inMaj x = case x of
+	0 -> 0
+	1 -> 2
+	2 -> 4
+	3 -> 5
+	4 -> 7
+	5 -> 9
+	6 -> 11
+
+inMin :: Int -> Int
+inMin x = case x of
+	0 -> 0
+	1 -> 2
+	2 -> 3
+	3 -> 5
+	4 -> 7
+	5 -> 9
+	6 -> 10
+
+octTone :: Int -> (Int, Int)
+octTone n 
+	| n < 0     = (oct - 1, tone + 7)
+	| otherwise = (oct, tone)
+	where (oct, tone) = quotRem n 7
