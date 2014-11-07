@@ -73,6 +73,14 @@ Library
         Csound.Base
 
         Csound.Air
+        Csound.Air.Wave
+        Csound.Air.Envelope
+        Csound.Air.Filter
+        Csound.Air.Wav
+        Csound.Air.Spec
+        Csound.Air.Fx
+        Csound.Air.Live
+        Csound.Air.Misc
 
         Csound.Types
         Csound.Tab
