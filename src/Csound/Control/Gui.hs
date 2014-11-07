@@ -49,8 +49,8 @@ module Csound.Control.Gui (
     -- * Gui
     Gui, 
     Widget, Input, Output, Inner,
-    Sink, Source, Display,
-    widget, sink, source, display,
+    Sink, Source, Display, SinkSource,
+    widget, sink, source, display, sinkSource,
     mapSource,
     
     -- * Panels

@@ -891,14 +891,13 @@ echo len fb = fdelay len fb 1
 
 -- | Delay with feedback. 
 --
--- > fdelay maxDelayLength delayLength decayRatio
+-- > fdelay delayLength decayRatio balance
 fdelay :: D -> Sig -> Sig -> Sig -> SE Sig
 fdelay len = fvdelay len (sig len)
 
-
 -- | Delay with feedback. 
 --
--- > fdelay maxDelayLength delayLength feedbackLevel decayRatio
+-- > fdelay maxDelayLength delayLength feedback balance
 fvdelay :: D -> Sig -> Sig -> Sig -> Sig -> SE Sig
 fvdelay len dt fb mx a = do
 	_ <- delayr len

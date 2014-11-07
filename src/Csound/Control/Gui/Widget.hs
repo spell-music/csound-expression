@@ -21,6 +21,7 @@ module Csound.Control.Gui.Widget (
     butBank1, butBankSig1, 
     radioButton, matrixButton, funnyRadio, funnyMatrix,
     setNumeric, meter,
+    setToggle, setToggleSig,
     -- * Transformers
     setTitle,
     -- * Keyboard
