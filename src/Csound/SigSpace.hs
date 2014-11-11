@@ -12,7 +12,7 @@ import Csound.Typed
 import Csound.Typed.Opcode(pvscross)
 
 -- | A class for easy way to process the outputs of the instruments.
-class Num a => SigSpace a where
+class SigSpace a where
     mapSig  :: (Sig -> Sig)    -> a -> a
 
 -- | A class for easy way to process the outputs of the instruments.
@@ -28,7 +28,7 @@ mul k = mapSig (k * )
 -- > cfd coeff sig1 sig2
 --
 -- If coeff equals 0 then we get the first signal and if it equals 1 we get the second signal.
-cfd :: SigSpace a => Sig -> a -> a -> a
+cfd :: (Num a, SigSpace a) => Sig -> a -> a -> a
 cfd coeff a b = (1 - coeff) `mul` a + coeff `mul` b
   
 genCfds :: a -> (Sig -> a -> a -> a) -> [Sig] -> [a] -> a
@@ -40,7 +40,7 @@ genCfds zero mixFun cs xs = case xs of
 -- | Generic crossfade for n coefficients and n+1 signals.
 --
 -- > cfds coeffs sigs
-cfds :: SigSpace a => [Sig] -> [a] -> a
+cfds :: (Num a, SigSpace a) => [Sig] -> [a] -> a
 cfds = genCfds 0 cfd
 
 -- | Spectral crossfade.
@@ -52,7 +52,7 @@ cfdsSpec :: [Sig] -> [Spec] -> Spec
 cfdsSpec = genCfds undefined cfdSpec
 
 -- | Weighted sum.
-wsum :: SigSpace a => [(Sig, a)] -> a
+wsum :: (Num a, SigSpace a) => [(Sig, a)] -> a
 wsum = sum . fmap (uncurry mul)
 
 instance SigSpace Sig   where  mapSig = id

@@ -208,7 +208,7 @@ dryWetMix kmix = (kDry, kWet)
         kWet = kr $ table kmix iWet `withD` 1
         kDry = kr $ table kmix iDry `withD` 1
 
-fxWet :: SigSpace a => Sig -> a -> a -> a
+fxWet :: (Num a, SigSpace a) => Sig -> a -> a -> a
 fxWet mix ain aout = mul dry ain + mul wet aout
     where (dry, wet) = dryWetMix mix
 

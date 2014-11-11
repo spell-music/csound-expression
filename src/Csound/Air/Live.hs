@@ -42,6 +42,10 @@ import Csound.Air.Misc
 -- | The stereo signal processing function.
 type FxFun = Sig2 -> SE Sig2
 
+instance SigSpace FxFun where
+    mapSig f g = fmap (mapSig f) . g 
+
+
 -- | Widget that represents a mixer.
 mixer :: [(String, SE Sig2)] -> Source Sig2
 mixer = genMixer (ver, hor)
