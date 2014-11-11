@@ -1,12 +1,27 @@
 -- | The vital tools.
-module Csound.Air (        
+module Csound.Air (      
+    -- | The basic sound waves: pure sine, sawtooth, square, triangle, LFOs.
     module Csound.Air.Wave,
+
+    -- | Envelope generators.
     module Csound.Air.Envelope,  
+
+    -- | Filters
     module Csound.Air.Filter,      
+
+    -- | Sound file playback
     module Csound.Air.Wav,
-    module Csound.Air.Spec,  
+
+    -- | Spectral Processing
+    module Csound.Air.Spec, 
+
+    -- | Effects: reverbs, choruses, delays etc.
     module Csound.Air.Fx,  
+
+    -- | Widgets to make live performances.
     module Csound.Air.Live,  
+
+    -- | Other usefull stuff.
     module Csound.Air.Misc
 ) where
 

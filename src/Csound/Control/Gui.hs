@@ -51,11 +51,12 @@ module Csound.Control.Gui (
     Widget, Input, Output, Inner,
     Sink, Source, Display, SinkSource,
     widget, sink, source, display, sinkSource,
-    mapSource,
-    
+    mapSource, mapGuiSource, 
+    mhor, mver, msca,
+
     -- * Panels
-    panel, panels, panelBy,
-    keyPanel, keyPanels, keyPanelBy,
+    panel, win, panels, panelBy,
+    keyPanel, keyWin, keyPanels, keyPanelBy,
 
     -- * Re-exports
     module Csound.Control.Gui.Layout,
@@ -63,7 +64,7 @@ module Csound.Control.Gui (
     module Csound.Control.Gui.Widget
 ) where
 
-import Control.Arrow(second)
+import Csound.Typed
 
 import Csound.Typed.Gui
 
@@ -71,7 +72,12 @@ import Csound.Control.Gui.Layout
 import Csound.Control.Gui.Props
 import Csound.Control.Gui.Widget
 
+-- | Creates a window with the given name, size and content
+--
+-- > win name (width, height) gui
+win :: String -> (Int, Int) -> Gui -> SE ()
+win name (x, y) = panelBy name (Just $ Rect 0 0 x y)
 
--- | Maps over the value of the source-widget.
-mapSource :: (a -> b) -> Source a -> Source b
-mapSource f = fmap (second f)
+keyWin :: String -> (Int, Int) -> Gui -> SE ()
+keyWin name (x, y) = keyPanelBy name (Just $ Rect 0 0 x y)
+

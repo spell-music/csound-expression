@@ -1,7 +1,7 @@
 -- | Patterns
 module Csound.Air.Misc(
     mean, vibrate, randomPitch, chorusPitch, resons, resonsBy, modes, dryWet, 
-    once, onceBy, several, 
+    once, onceBy, several, fromMono,
     -- * List functions
     odds, evens
 ) where
@@ -117,3 +117,7 @@ relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(
         harm cf q x = g * resonator (1 - g + g * cps) q x
             where cps = cf * baseCps
                   g   = gate cps
+
+-- | Doubles the mono signal to get the stereo signal.
+fromMono :: Sig -> (Sig, Sig)
+fromMono a = (a, a)
