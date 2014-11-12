@@ -39,7 +39,7 @@ module Csound.IO (
 ) where
 
 import System.Process
-import Control.Exception
+import qualified Control.Exception as E
 
 import Data.Monoid
 import Data.Default
@@ -226,10 +226,10 @@ totemBy opt = simplePlayCsdBy opt "totem" "tmp"
 runWithUserInterrupt :: String -> IO ()
 runWithUserInterrupt cmd = do
     pid <- runCommand cmd
-    catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
+    E.catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
     where
-        onUserInterrupt :: ProcessHandle -> AsyncException -> IO ()
+        onUserInterrupt :: ProcessHandle -> E.AsyncException -> IO ()
         onUserInterrupt pid x = case x of 
-            UserInterrupt -> terminateProcess pid >> throw x
-            e             -> throw e
+            E.UserInterrupt -> terminateProcess pid >> E.throw x
+            e               -> E.throw e
 
