@@ -3,8 +3,7 @@ module Csound.Air.Envelope (
     leg, xeg,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
-    onDur, lindurBy, expdurBy, linendurBy,
-    once, onceBy, several, 
+    onDur, lindurBy, expdurBy, linendurBy,    
     -- * Looping envelopes
     oscLins, oscElins, oscExps, oscEexps, oscLine, 
     -- * Faders
