@@ -41,6 +41,7 @@ Extra-Source-Files :
     examples/Gm.hs
     examples/Tibetan.hs
     examples/Wind.hs
+    examples/Live.hs
 
     examples/Midi.hs
     examples/Events.hs
