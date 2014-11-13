@@ -126,7 +126,7 @@ and silently print them on the screen.
 Options
 ----------------------------------------------------
 
-We doesn't care much about sound rates for the output or 
+We don't care much about sound rates for the output or 
 what sound card to use or what size does internal sound buffers have.
 But if we do? 
 
