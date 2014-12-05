@@ -667,7 +667,7 @@ Jack-instruments
 With Jack-interface (native for Linux, also there are ports for OSX and PC) 
 we can stream the output of one program to the input of another one. 
 With Jack we can use our Csound instruments in DAW-software 
-(like Ardour, Cubase, Abletone or BitWig).
+(like Ardour, Cubase, Ableton or BitWig).
 
 We can create Jack-instrument if we set the proper options.
 We have to set the name of the instrument:
