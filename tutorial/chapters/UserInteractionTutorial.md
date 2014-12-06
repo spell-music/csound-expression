@@ -320,7 +320,7 @@ the saw waveform.
 
 ~~~haskell
 > let cfq = slider "center frequency" (expSpan 100 5000) 2000
-> let q = slider "resonance" (linSpan 0.1, 0.9) 0.5
+> let q = slider "resonance" (linSpan 0.1 0.9) 0.5
 > dac $ do { 
 	(vgui, v) <- vol; 
 	(pgui, p) <- pch; 
