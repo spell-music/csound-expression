@@ -438,8 +438,7 @@ Let's create two buttons that play notes:
 > let n1 = button "330"
 > let n2 = button "440"
 > let go x evt = sched (const $ instr x) (withDur 2 evt)
-> let instr x = return $ fades 0.1 0.5 * osc x
->  dac $ do { 
+> dac $ do { 
 	(g1, p1) <- n1; 
 	(g2, p2) <- n2; 
 	panel $ hor [g1, g2]; 
