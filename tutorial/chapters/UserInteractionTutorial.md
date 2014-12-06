@@ -377,14 +377,15 @@ numeric tag valueDiapason valueStep initialValue
 Let's create a switch button. We can use a `toggleSig` for it:
 
 ~~~haskell
-toggleSig :: String -> Source Sig
+toggleSig :: String -> Bool -> Source Sig
 ~~~
 
 This function just creates a button that produces a signal that
-is 1 whenthe button is on and 0 when it's off.
+is 1 whenthe button is on and 0 when it's off. The button is 
+initialized with value Bool.
 
 ~~~haskell
-> let switch = toggleSig "On/Off"
+> let switch = toggleSig "On/Off" true
 > dac $ do { 
 	(sgui, sw) <- switch;
 	(vgui, v) <- vol; 
