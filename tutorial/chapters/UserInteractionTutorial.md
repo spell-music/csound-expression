@@ -437,6 +437,7 @@ Let's create two buttons that play notes:
 ~~~haskell
 > let n1 = button "330"
 > let n2 = button "440"
+> let instr x = return $ fades 0.1 0.5 * osc x
 > let go x evt = sched (const $ instr x) (withDur 2 evt)
 > dac $ do { 
 	(g1, p1) <- n1; 
