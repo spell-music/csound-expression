@@ -377,14 +377,15 @@ numeric tag valueDiapason valueStep initialValue
 Let's create a switch button. We can use a `toggleSig` for it:
 
 ~~~haskell
-toggleSig :: String -> Source Sig
+toggleSig :: String -> Bool -> Source Sig
 ~~~
 
 This function just creates a button that produces a signal that
-is 1 whenthe button is on and 0 when it's off.
+is 1 whenthe button is on and 0 when it's off. The button is 
+initialized with value Bool.
 
 ~~~haskell
-> let switch = toggleSig "On/Off"
+> let switch = toggleSig "On/Off" true
 > dac $ do { 
 	(sgui, sw) <- switch;
 	(vgui, v) <- vol; 
@@ -436,9 +437,9 @@ Let's create two buttons that play notes:
 ~~~haskell
 > let n1 = button "330"
 > let n2 = button "440"
-> let go x evt = sched (const $ instr x) (withDur 2 evt)
 > let instr x = return $ fades 0.1 0.5 * osc x
->  dac $ do { 
+> let go x evt = sched (const $ instr x) (withDur 2 evt)
+> dac $ do { 
 	(g1, p1) <- n1; 
 	(g2, p2) <- n2; 
 	panel $ hor [g1, g2]; 
