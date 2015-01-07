@@ -3,7 +3,11 @@ module Csound.Air.Misc(
     mean, vibrate, randomPitch, chorusPitch, resons, resonsBy, modes, dryWet, 
     once, onceBy, several, fromMono,
     -- * List functions
-    odds, evens
+    odds, evens,
+    -- * Random functions
+    rndPan, rndPan2, rndVol, gaussVol, 
+    -- * Saving to file
+    writeHifi
 ) where
 
 import Data.Boolean
@@ -12,6 +16,10 @@ import Csound.Typed
 import Csound.Typed.Opcode
 import Csound.Air.Wave
 import Csound.Air.Filter
+import Csound.SigSpace
+import Csound.IO(writeSndBy)
+import Csound.Options(setRates)
+import Csound.Types(Sig2)
 
 --------------------------------------------------------------------------
 -- patterns
@@ -121,3 +129,38 @@ relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(
 -- | Doubles the mono signal to get the stereo signal.
 fromMono :: Sig -> (Sig, Sig)
 fromMono a = (a, a)
+
+
+-- | Random panning
+rndPan2 :: Sig2 -> SE Sig2
+rndPan2 (a, b) = rndPan $ mean [a, b]
+
+-- | Random panning
+rndPan :: Sig -> SE Sig2
+rndPan a = do   
+    return $ pan2 a (sig $ rnd (1 :: D))
+
+-- | Random volume (with gauss distribution)
+-- 
+-- > gaussVol radiusOfDistribution
+gaussVol :: SigSpace a => D -> a -> SE a
+gaussVol k a = do
+    level <- fmap ir $ gauss (sig k)
+    return $ mul (sig $ level + 1) a
+
+-- | Random volume
+-- 
+-- > gaussVol (minVolume, maxVolume)
+rndVol :: SigSpace a => (D, D) -> a -> SE a
+rndVol (kMin, kMax) a = do
+    let level = rnd (1 :: D)
+    return $ mul (sig $ kMin + (kMax - kMin) * level) a
+
+
+-- | Hi-fi output for stereo signals. Saves the stereo signal to file.
+-- The length of the file is defined in seconds.
+--
+-- > writeHifi fileLength fileName asig
+writeHifi :: D -> String -> SE Sig2 -> IO ()
+writeHifi n fileName a = writeSndBy (setRates 48000 10) fileName $ fmap (setDur $ n) a
+
