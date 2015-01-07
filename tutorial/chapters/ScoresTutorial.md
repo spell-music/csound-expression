@@ -217,7 +217,7 @@ there is a tiny set of functions to do it. The simplest functions are:
 
 ~~~haskell
 temp :: a -> Score a
-rest :: Dounle -> Score a
+rest :: Double -> Score a
 ~~~
 
 The function `temp` lifts the value to `Score`. It creates a `Score`
