@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language FlexibleInstances #-}
 module Csound.SigSpace(
-    SigSpace(..), BindSig(..), mul,
+    SigSpace(..), BindSig(..), mul, at,
     cfd, cfds, cfdSpec, cfdsSpec, 
     wsum        
 ) where
@@ -22,6 +22,10 @@ class SigSpace a => BindSig a where
 -- | Scaling the sound.
 mul :: SigSpace a => Sig -> a -> a
 mul k = mapSig (k * )
+
+-- | A shortcut for @mapSig@.
+at :: SigSpace a => (Sig -> Sig) -> a -> a
+at = mapSig
 
 -- | Crossfade.
 --

@@ -25,14 +25,27 @@ module Csound.Control.Gui.Widget (
     -- * Transformers
     setTitle,
     -- * Keyboard
-    KeyEvt(..), Key(..), keyIn, charOn, charOff
+    KeyEvt(..), Key(..), keyIn, charOn, charOff,
+
+    -- * Easy to use widgets
+    uknob, xknob, uslider, xslider,
+
+    -- * Number selectors
+    -- | Widgets for sample and hold functions
+    hnumbers, vnumbers,
+
+    -- * The 2D matrix of widgets
+    knobPad, togglePad, buttonPad, genPad
 ) where
+
+import Control.Monad
 
 import Data.List(transpose)
 import Data.Boolean
 
 import Csound.Typed.Gui
 import Csound.Typed.Types
+import Csound.Control.SE
 import Csound.Control.Evt(listAt)
 
 --------------------------------------------------------------------
@@ -98,3 +111,119 @@ charOn  = keyIn . Press   . CharKey
 charOff :: Char -> Evt Unit
 charOff = keyIn . Release . CharKey
 
+
+-- | Unipolar linear slider. The value belongs to the interval [0, 1].
+-- The argument is for initial value.
+uslider :: Double -> Source Sig
+uslider = slider "" (linSpan 0 1)
+
+-- | Unipolar linear knob. The value belongs to the interval [0, 1].
+-- The argument is for initial value.
+uknob :: Double -> Source Sig
+uknob = knob "" (linSpan 0 1)
+
+-- | Exponential slider (usefull for exploring frequencies or decibels). 
+--
+-- > xknob min max initVal
+--
+-- The value belongs to the interval [min, max].
+-- The last argument is for initial value.
+xslider :: Double -> Double -> Double -> Source Sig
+xslider a b initVal = slider "" (expSpan a b) initVal
+
+-- | Exponential knob (usefull for exploring frequencies or decibels). 
+--
+-- > xknob min max initVal
+--
+-- The value belongs to the interval [min, max].
+-- The last argument is for initial value.
+xknob :: Double -> Double -> Double -> Source Sig
+xknob a b initVal = knob "" (expSpan a b) initVal
+
+---------------------------------------------------------------
+-- sample and hold
+
+-- | The sample and hold widget. You can pick a value from the list of doubles.
+-- The original value is a head of the list (the first element).
+-- The visual grouping is horizontal (notice the prefix @h@).
+-- It's common to use it with function @selector@.
+hnumbers :: [Double] -> Source Sig
+hnumbers = genNumbers hor
+
+-- | The sample and hold widget. You can pick a value from the list of doubles.
+-- The original value is a head of the list (the first element).
+-- The visual grouping is vertical (notice the prefix @v@).
+-- It's common to use it with function @selector@.
+vnumbers :: [Double] -> Source Sig
+vnumbers = genNumbers ver
+
+genNumbers :: ([Gui] -> Gui) -> [Double] -> Source Sig
+genNumbers gx as@(d:ds) = source $ do
+    ref <- newGlobalSERef (sig $ double d)
+    (gs, evts) <- fmap unzip $ mapM (button . show) as
+    zipWithM_ (\x e -> runEvt e $ \_ -> writeSERef ref (sig $ double x)) as evts 
+    res <- readSERef ref
+    return (gx gs, res)
+
+
+-------------------------------------------------------------------
+-- 2D matrix of widgets
+
+-- | The matrix of unipolar knobs.
+--
+-- > knobPad columnNum rowNum names initVals 
+--
+-- It takes in the dimensions of matrix, the names (we can leave it empty 
+-- if names are not important) and list of init values.
+-- It returns a function that takes in indices and produces the signal in
+-- the corresponding cell.
+knobPad :: Int -> Int -> [String] -> [Double] -> Source (Int -> Int -> Sig)
+knobPad = genPad mkKnob 0.5
+    where mkKnob name = knob name uspan 
+
+-- | The matrix of toggle buttons.
+--
+-- > togglePad columnNum rowNum names initVals 
+--
+-- It takes in the dimensions of matrix, the names (we can leave it empty 
+-- if names are not important) and list of init values (on/off booleans).
+-- It returns a function that takes in indices and produces the event stream in
+-- the corresponding cell.
+togglePad :: Int -> Int -> [String] -> [Bool] -> Source (Int -> Int -> Evt D)
+togglePad = genPad toggle False
+
+-- | The matrix of buttons.
+--
+-- > buttonPad columnNum rowNum names
+--
+-- It takes in the dimensions of matrix, the names (we can leave it empty 
+-- if names are not important).
+-- It returns a function that takes in indices and produces the event stream in
+-- the corresponding cell.
+buttonPad :: Int -> Int -> [String] -> Source (Int -> Int -> Evt Unit)
+buttonPad width height names = genPad mkButton False width height names []
+    where mkButton name _ = button name
+
+-- | A generic constructor for matrixes of sound source widgets.
+-- It takes the constructor of the widget, a default initial value,
+-- the dimensions of the matrix, the list of names and the list of initial values.
+-- It produces the function that maps indices to corresponding values.
+genPad :: (String -> a -> Source b) -> a -> Int -> Int -> [String] -> [a] -> Source (Int -> Int -> b)
+genPad mk initVal width height names as = source $ do
+    (gui, vals) <- fmap reGroupCol $ mapM mkRow inits
+    let f x y = (vals !! y) !! x
+    return $ (gui, f)
+    where 
+        mkRow xs = fmap reGroupRow $ mapM (uncurry mk) xs
+        
+        inits = split height width $ zip (names ++ repeat "") (as ++ repeat initVal)
+
+        split m n xs = case m of
+            0 -> []
+            a -> (take n xs) : split (a - 1) n (drop n xs)
+
+        reGroupCol = reGroup ver
+        reGroupRow = reGroup hor
+
+        reGroup f as = (f xs, ys)
+            where (xs, ys) = unzip as

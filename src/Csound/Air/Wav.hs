@@ -24,7 +24,7 @@ module Csound.Air.Wav(
     lengthSnd, segments,
 
     -- * Signal manipulation
-    takeSnd, delaySnd, segmentSnd, repeatSnd, toMono
+    takeSnd, delaySnd, afterSnd, segmentSnd, repeatSnd, toMono
 ) where
 
 import Data.List(isSuffixOf)
@@ -59,6 +59,12 @@ segmentSnd del dur asig = trigs (const $ return asig) $ eventList [(del, dur, un
 -- | Repeats the signal with the given period.
 repeatSnd :: Sigs a => D -> a -> a
 repeatSnd dt asig = sched (const $ return asig) $ segments dt
+
+-- | Plays the first signal for some time (in seconds) and then switches to the next one.
+--
+-- > afterSnd dur sig1 sig2
+afterSnd :: (Num b, Sigs b) => D -> b -> b -> b
+afterSnd dt a b = takeSnd dt a + delaySnd dt b
 
 --------------------------------------------------------------------------
 -- sound files playback

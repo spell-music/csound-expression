@@ -17,6 +17,7 @@ module Csound.Air.Wave (
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
 import Csound.Tab(sine, sines4)
+import Csound.SigSpace
 
 -- | A pure tone (sine wave).
 osc :: Sig -> Sig
@@ -73,14 +74,14 @@ ublosc tb = unipolar . blosc tb
 -- | Rescaling of the bipolar signal (-1, 1) -> (a, b)
 -- 
 -- > on a b biSig
-on :: Sig -> Sig -> Sig -> Sig
-on a b x = uon a b $ unipolar x 
+on :: SigSpace a => Sig -> Sig -> a -> a
+on a b x = uon a b $ mapSig unipolar x 
 
 -- | Rescaling of the unipolar signal (0, 1) -> (a, b)
 -- 
 -- > on a b uniSig
-uon :: Sig -> Sig -> Sig -> Sig
-uon a b x = a + (b - a) * x
+uon :: SigSpace a => Sig -> Sig -> a -> a
+uon a b = mapSig (\x -> a + (b - a) * x) 
 
 --------------------------------------------------------------------------
 -- noise

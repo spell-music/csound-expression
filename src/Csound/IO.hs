@@ -44,6 +44,8 @@ import qualified Control.Exception as E
 import Data.Monoid
 import Data.Default
 import Csound.Typed
+import Csound.Types(Sig2, Sig4)
+import Csound.Control.Gui
 
 import Csound.Options(setSilent)
 
@@ -118,6 +120,47 @@ instance (Sigs a, Sigs b) => RenderCsd (a -> b) where
 
 instance (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
     renderCsdBy opt f = renderEffBy opt f
+
+instance RenderCsd (Source Sig) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                return asig
+
+instance RenderCsd (Source Sig2) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                return asig
+
+instance RenderCsd (Source Sig4) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                return asig
+
+instance RenderCsd (Source (SE Sig)) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                asig
+
+instance RenderCsd (Source (SE Sig2)) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                asig
+instance RenderCsd (Source (SE Sig4)) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                asig
 
 -- | Renders Csound file.
 renderCsd :: RenderCsd a => a -> IO String

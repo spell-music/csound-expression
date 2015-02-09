@@ -6,6 +6,8 @@ module Csound.Air.Misc(
     odds, evens,
     -- * Random functions
     rndPan, rndPan2, rndVol, gaussVol, 
+    -- * Choose signals
+    selector,
     -- * Saving to file
     writeHifi
 ) where
@@ -164,3 +166,9 @@ rndVol (kMin, kMax) a = do
 writeHifi :: D -> String -> SE Sig2 -> IO ()
 writeHifi n fileName a = writeSndBy (setRates 48000 10) fileName $ fmap (setDur $ n) a
 
+
+-- | It picks a signal from the list by integer index.
+-- The original value is taken from the head of the list (the first element).
+selector :: (Num a, SigSpace a) => [a] -> Sig -> a
+selector as k = sum $ zipWith choice [0..] as
+    where choice n a = mul (port (ifB (sig (int n) ==* k) 1 0) 0.02) a
