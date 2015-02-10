@@ -99,10 +99,10 @@ pgholdMsg pg n portTime = do
 	return (port amp portTime,  port cps portTime)
 
 
-genAmpCpsSig :: ((Msg -> SE Sig) -> Sig) -> SE (Sig, Sig, Sig)
+genAmpCpsSig :: ((Msg -> SE Sig) -> SE Sig) -> SE (Sig, Sig, Sig)
 genAmpCpsSig midiFun = do
 	ref <- newGlobalSERef ((0, 0) :: (Sig, Sig))
-	let status = midiFun (instr ref)
+	status <- midiFun (instr ref)
 	let resStatus = ifB (downsamp status ==* 0) 0 1
 	(amp, cps) <- readSERef ref
 	return (downsamp amp, downsamp cps, resStatus)

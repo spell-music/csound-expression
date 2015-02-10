@@ -27,7 +27,7 @@ import Csound.SigSpace
 -- Midi listens on all channels. It's useful to quickly
 -- test a sound font. The second argument is a sustain in seconds.
 -- How long it takes for the sound to decay.
-sf2 :: Sf -> D -> (Sig, Sig)
+sf2 :: Sf -> D -> SE (Sig, Sig)
 sf2 sf sust = midi $ sfMsg3 sf sust
 
 -----------------------------------
