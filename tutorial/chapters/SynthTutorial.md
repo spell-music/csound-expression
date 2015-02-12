@@ -798,13 +798,13 @@ The `urnds `varies between 0 and 1. The `rnds` varies between -1 and 1.
 We can generate colored noises with: 
 
 ~~~haskell
-whiteNoise, pinkNoise :: SE Sig
+white, pink :: SE Sig
 ~~~
 
 Let's create a simple wind instrument:
 
 ~~~haskell
-> let instr x = do { cfq <- 2000 * urnds 0.5; asig <- whiteNoise; return $ mlp (x + cfq) 0.6 asig }
+> let instr x = do { cfq <- 2000 * urnds 0.5; asig <- white; return $ mlp (x + cfq) 0.6 asig }
 ~~~
 
 We filter the white noise with filter. The center frequency randomly varies
