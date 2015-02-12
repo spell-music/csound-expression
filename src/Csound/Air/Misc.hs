@@ -9,14 +9,22 @@ module Csound.Air.Misc(
     -- * Choose signals
     selector,
     -- * Saving to file
-    writeHifi
+    writeHifi,
+
+    -- * Arpeggios
+    arpeggi, arpBy,
+
+    -- * GUI
+    lpJoy
 ) where
 
 import Data.Boolean
 
 import Csound.Typed
 import Csound.Typed.Opcode
+import Csound.Control.Gui
 import Csound.Air.Wave
+import Csound.Air.Envelope
 import Csound.Air.Filter
 import Csound.SigSpace
 import Csound.IO(writeSndBy)
@@ -172,3 +180,28 @@ writeHifi n fileName a = writeSndBy (setRates 48000 10) fileName $ fmap (setDur 
 selector :: (Num a, SigSpace a) => [a] -> Sig -> a
 selector as k = sum $ zipWith choice [0..] as
     where choice n a = mul (port (ifB (sig (int n) ==* k) 1 0) 0.02) a
+
+-- | Creates running arpeggios. 
+--
+-- > arpeggiBy ampWeights pitches instrument cps
+--
+-- It plays an instrument with fast sequence of notes. We can specify
+-- the pitches and amplitude weights of the notes as well as frequency of repetition.
+arpeggi :: SigSpace a => [Sig] -> [Sig] -> (Sig -> a) -> Sig -> a
+arpeggi = arpBy triSeq sqrSeq 
+
+-- | Creates running arpeggios. 
+--
+-- > arpeggiBy ampWave pitchwave ampWeights pitches instrument cps
+--
+-- It plays an instrument with fast sequence of notes. We can specify amplitude envelope wave, pitch envelope wave,
+-- the pitches and amplitude weights of the notes as well as frequency of repetition.
+arpBy :: SigSpace a => ([Sig] -> Sig -> Sig) -> ([Sig] -> Sig -> Sig) -> [Sig] -> [Sig] -> (Sig -> a) -> Sig -> a
+arpBy ampWave cpsWave amps cpss wave dt = mul (ampWave amps dt) $ wave $ cpsWave cpss dt
+
+
+
+-- | Low-pass filter pictured as joystick.
+-- Ox is for center frequency and Oy is for resonance.
+lpJoy :: Source (Sig -> Sig)
+lpJoy = lift1 (\(cps, res) -> mlp cps res) $ joy (expSpan 100 17000) (linSpan 0.05 0.95) (1400, 0.5)

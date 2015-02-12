@@ -344,6 +344,170 @@ let y = on a b x
 
 The function `on` can be used with LFOs and `uon` can be used with EGs.
 
+### Looping envelope generators
+
+Since the version 4.5 we can use a lot of looping envelope generators.
+They work as step sequencers. 
+
+Let's see how we can use LFO's to turn the sound in the patters of notes.
+Let's take a boring white noise and turn it in to equally spaced bursts:
+
+~~~haskell
+> dac $ mul (usqr 4) white
+~~~
+
+We have multiplied the noise with unipolar square wave. We can change the shape of envelope
+if we multiply the noise with sawtooth wave:
+
+~~~haskell
+> dac $ mul (usaw 4) white
+~~~
+
+We can reverse the envelope:
+
+~~~haskell
+> dac $ mul (1 - usaw 4) white
+~~~
+
+We can create a simple drum pattern this way:
+
+~~~haskell
+dac $ mul (usaw 2) white + mul (usqr 1 * (1 - usqr 4)) (return $ saw 50)
+~~~
+
+But the real drummer don't kicks all notes with the same volume we need
+a way to set accents. We can do it with special functions. 
+They take in a list of accents and they scale the unipolar LFO-wave.
+Let's look at `sqrs`. It creates a sequence of squares which are scaled
+with given pattern:
+
+~~~haskell
+> dac $ mul (sqrSeq [1, 0.5, 0.2, 0.5] 4) $ white
+~~~
+
+We can create another pattern for sawtooth wave:
+
+~~~haskell
+> let b1 = mul (sqrs [1, 0.5, 0.2, 0.5] 4) $ white
+> let b2 = mul (saws [0, 0, 1] 2) $ white
+> let b3 = return $ mul (tris [0, 0, 1, 0] 4) $ osc (sqrs [440, 330] 1)
+> dac $ b1 + b2 + b3
+~~~
+
+We can use these functions not only for amplitudes. We can
+control other parameters as well. Let's change the frequency 
+of the `b3`
+
+~~~haskell
+> let b3 = return $ mul (tris [0, 0, 1, 0] 4) $ osc (stepSeq [440, 330] 0.25)
+~~~
+
+The function `stepSeq` creates a sequence of constant segments. We can create arpeggiators this way:
+
+~~~haskell
+> dac $ tri (sqrSeq [220, 330, 440] 8)
+~~~
+
+We can change the volume:
+
+~~~haskell
+> dac $ mul (sawSeq [1, 0.5, 0.25, 1, 0.5, 0.2, 1, 0.7] 8) $ tri (sqrs [220, 330, 440, 330] 8)
+~~~
+
+Let's create a simple bass line:
+
+~~~haskell
+> dac $ mlp (400 + 1500 * uosc 0.2) 0.1 $ saw (stepSeq [50, 50 * 9/ 8, 50 * 6 / 5, 50 * 1.5, 50, 50 * 9 / 8] 1)
+~~~
+
+We are using the function `mlp`. It's a moog low pass filter (the arguments: cut off frequency, resonance and the signal). 
+We modulate the center frequency with LFO.
+
+There are many more functions. We can create looping adsr sequences with `legs` and `xegs`.
+We can loop over generic line segments with `linsegs` and `expsegs`. We can create 
+sample and hold envelopes with `sah`.
+
+### Using GUIs as control signals
+
+We can change parameters with UI-elements such as sliders and knobs. 
+it's not the place to discuss GUIs at length. But I can show you a couple of tricks.
+
+We have a simple audio wave:
+
+~~~haskell
+> dac $ mlp 1500 0.1 $ saw 110
+~~~
+
+It's  a filtered sawtooth wave. Let's plugin a slider to change the volume:
+
+~~~haskell
+> dac $ lift1 (\amp -> mul amp $ mlp 1500 0.1 $ saw 110) $ uknob 0.5
+~~~
+
+The `uknob` creates a slider that outputs a unipolar signal (it belongs to the interval `[0, 1]`).
+The argument is the initial value of the knob. The `lift1` maps over the value of the `knob`.
+The `uknob` returns not the signal itself but the slider and the GUI-element. With lift1 we
+can easily transform control signal to audio wave.
+
+What if we want to change the frequency? It's best to change the frequency with eXponential
+control signals (the change is not linear but exponential). we can use the function `xknob`:
+
+~~~haskell
+> dac $ hlift2 (\amp cps -> mul amp $ mlp 1500 0.1 $ saw cps) (uknob 0.5) (xknob 50 600 110)
+~~~
+
+The `xknob` takes in three values. They are the minimum and maximum values and the initial value.
+The `hlift2` can join two UI-control signals with functions. It aligns the visual representation
+horizontally. The `vlift2` aligns visuals vertically.
+
+Let's change the parameters of the filter with sliders:
+
+~~~haskell
+> dac $ vlift2 (\(amp, cps) (cflt, q)  -> mul amp $ mlp cflt q $ saw cps) 
+	(hlift2 (,) (uknob 0.5) (xknob 50 600 110)) 
+	(vlift2 (,) (xslider 250 7000 1500) (mul 0.95 $ uslider 0.5))
+~~~
+
+We can see the picture of the talking robot.
+The `uslider` and `xslider` work just like `uknob` and `xknob` but
+they lokk like sliders. Notice the scaling of the value of the second slider with `mul`.
+It's as simple as that.
+
+There are functions `hlift3`, `hlift4` and `hlift4` to combine more widgets.
+The `hlift2'`, `hlift3'` . Notice the last character also take in scaling parameters
+for visual objects. We can define four knobs with different sizes:
+
+~~~haskell
+> dac $ mul 0.5 $ hlift4' 8 4 2 1 
+	(\a b c d -> saw 50 + osc (50 + 3 * a) + osc (50 + 3 * b) + osc (50 + c) + osc (50 + d)) 
+	(uknob 0.5) (uknob 0.5) (uknob 0.5) (uknob 0.5)
+~~~
+
+Another usefull widget is ujoy. It creates a couple of signal which control xy
+coordinates on the plane:
+
+~~~haskell
+> dac $ lift1 (\(a, b) -> mlp (400 + a * 5000) (0.95 * b) $ saw 110) $ ujoy (0.5, 0.5)
+~~~
+
+To use exponential control signals wwe should try the function `joy`:
+
+~~~haskell
+joy :: ValSpan -> ValSpan -> (Double, Double) -> Source (Sig, Sig)
+~~~
+
+The `ValSpan` can be linear or exponential. Both functions take in minimum and maximum values:
+
+~~~haskell
+linSpan, expSpan :: Dounle -> Double -> ValSpan
+~~~
+
+Let's look at the simple example:
+
+~~~haskell
+> dac $ lift1 (\(amp, cps) -> amp * tri cps) $ joy (linSpan 0 1) (expSpan 50 600) (0.5, 110)
+~~~
+
 Filter
 --------------------------------
 

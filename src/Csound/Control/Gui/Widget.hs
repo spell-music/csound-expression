@@ -28,7 +28,8 @@ module Csound.Control.Gui.Widget (
     KeyEvt(..), Key(..), keyIn, charOn, charOff,
 
     -- * Easy to use widgets
-    uknob, xknob, uslider, xslider,
+    uknob, xknob, uslider, xslider, ujoy, 
+    hradio, vradio, hradioSig, vradioSig,
 
     -- * Number selectors
     -- | Widgets for sample and hold functions
@@ -140,6 +141,10 @@ xslider a b initVal = slider "" (expSpan a b) initVal
 xknob :: Double -> Double -> Double -> Source Sig
 xknob a b initVal = knob "" (expSpan a b) initVal
 
+-- | Unit linear joystick.
+ujoy :: (Double, Double) -> Source (Sig, Sig)
+ujoy = joy (linSpan 0 1) (linSpan 0 1)
+
 ---------------------------------------------------------------
 -- sample and hold
 
@@ -227,3 +232,41 @@ genPad mk initVal width height names as = source $ do
 
         reGroup f as = (f xs, ys)
             where (xs, ys) = unzip as
+
+
+-- | Horizontal radio group.
+hradio :: [String] -> Int -> Source (Evt D)
+hradio = radioGroup hor
+
+-- | Vertical radio group.
+vradio :: [String] -> Int -> Source (Evt D)
+vradio = radioGroup ver
+
+-- | Horizontal radio group.
+hradioSig :: [String] -> Int -> Source Sig
+hradioSig = radioGroupSig hor
+
+-- | Vertical radio group.
+vradioSig :: [String] -> Int -> Source Sig
+vradioSig = radioGroupSig ver
+
+radioGroup :: ([Gui] -> Gui) -> [String] -> Int -> Source (Evt D)
+radioGroup gcat names initVal = mapSource snaps $ radioGroupSig gcat names initVal
+
+radioGroupSig  :: ([Gui] -> Gui) -> [String] -> Int -> Source Sig
+radioGroupSig gcat names initVal = source $ do
+    (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
+    curRef <- newGlobalSERef (sig $ int initVal)
+    current <- readSERef curRef    
+    zipWithM_ (\w i -> w $ ifB (current ==* i) 1 0) writes ids
+    zipWithM_ (\r i -> runEvt (snaps r) $ \x -> do              
+        when1 (sig x ==* 1) $ do
+            writeSERef curRef i
+        when1 (sig x ==* 0 &&* current ==* i) $ do
+           writeSERef curRef i    
+        ) reads ids   
+
+    res <- readSERef curRef
+    return (gcat guis, res)
+    where        
+        ids = fmap (sig . int) [0 .. length names - 1]

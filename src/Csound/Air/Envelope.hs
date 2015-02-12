@@ -4,20 +4,22 @@ module Csound.Air.Envelope (
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,    
-    -- * Looping envelopes
-    oscLins, oscElins, oscExps, oscEexps, oscLine, 
-    linloop, exploop, sah, stepSeq,
-    sawSeq, isawSeq, sawExpSeq, isawExpSeq, sqrSeq, isqrSeq,
+    -- * Looping envelopes   
+    lpshold, loopseg, loopxseg, lpsholdBy, loopsegBy, loopxsegBy,
+    linloop, exploop, sah, stepSeq, 
+    triSeq, sqrSeq, sawSeq, isawSeq, xsawSeq, ixsawSeq, isqrSeq, xtriSeq,
 
     -- * Faders
-    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades,
+    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades
+
 ) where
 
 import Data.List(intersperse)
 
 import Csound.Typed
-import Csound.Typed.Opcode
-import Csound.Air.Misc
+import Csound.Typed.Opcode hiding (lpshold, loopseg, loopxseg)
+import qualified Csound.Typed.Opcode as C(lpshold, loopseg, loopxseg)
+import Csound.Air.Wave
 import Csound.Tab(lins, exps, gp)
 import Csound.Air.Wave(oscBy)
 
@@ -117,68 +119,11 @@ fades att dec = fadeIn att * fadeOut dec
 expFades :: D -> D -> Sig
 expFades att dec = expFadeIn att * expFadeOut dec
 
--- | Loops over line segments with the given rate.
---
--- > oscLins [a, durA, b, durB, c, durC ..] cps
---
--- where 
---
--- * @a@, @b@, @c@ ... -- values
---
--- * durA, durB, durC -- durations of the segments relative to the current frequency.
-oscLins :: [D] -> Sig -> Sig
-oscLins points cps = loopseg cps 0 0 (fmap sig points) 
-
--- | Loops over equally spaced line segments with the given rate.
---
--- > oscElins [a, b, c] === oscLins [a, 1, b, 1, c]
-oscElins :: [D] -> Sig -> Sig
-oscElins points = oscLins (intersperse 1 points)
-
--- | 
---
--- > oscLine a b cps
---
--- Goes from @a@ to @b@ and back by line segments. One period is equal to @2\/cps@ so that one period is passed by @1\/cps@ seconds.
-oscLine :: D -> D -> Sig -> Sig
-oscLine a b cps = oscElins [a, b, a] (cps / 2)
-
--- | Loops over exponential segments with the given rate.
---
--- > oscLins [a, durA, typeA, b, durB, typeB, c, durC, typeC ..] cps
---
--- where 
---
--- * @a@, @b@, @c@ ... -- values
---
--- * durA, durB, durC -- durations of the segments relative to the current frequency.
---
--- * typeA, typeB, typeC, ... -- shape of the envelope. If the value is 0 then the shap eis linear; otherwise it is an concave exponential (positive type) or a convex exponential (negative type).
-oscExps :: [D] -> Sig -> Sig
-oscExps points cps = looptseg cps 0 (fmap sig points)
-
--- | Loops over equally spaced exponential segments with the given rate.
---
--- > oscLins [a, typeA, b, typeB, c, typeC ..] === oscLins [a, 1, typeA, b, 1, typeB, c, 1, typeC ..]
-oscEexps :: [D] -> Sig -> Sig
-oscEexps points = oscExps (insertOnes points)
-    where insertOnes xs = case xs of
-            a:b:as  -> a:1:b:insertOnes as
-            _       -> xs
-
--- The step sequencer. It takes the length of the period and the list of doubles.
+-- The step sequencer. It takes the weights of constant steps and the frequency of repetition.
 -- It outputs the piecewise constant function with given values. Values are equally spaced
 -- and repeated with given rate.
-stepSeq :: Sig -> [D] -> Sig
-stepSeq dt as = oscLins (mkList as) (1 / dt)
-    where 
-        mkList xs = case xs of
-            []   -> [a1]
-            b:bs -> b : len : b : 0 : mkList bs
-        len = 1 / (int $ length as)
-        a1 = case as of
-            a:_ -> a
-            _   -> 0
+stepSeq :: [Sig] -> Sig -> Sig
+stepSeq as = lpshold (intersperseEnd 1 [1] as)
 
 -- | Sample and hold cyclic signal. It takes the list of
 --
@@ -189,24 +134,25 @@ stepSeq dt as = oscLins (mkList as) (1 / dt)
 -- the dta, dtb, dtc, are durations in seconds of constant segments.
 --
 -- The period of the repetition equals to the sum of all durations.
-sah :: [D] -> Sig
-sah = linloop . tfmList
+sah :: [Sig] -> Sig
+sah as = stepSeq as (1 / period)
     where 
-        tfmList xs = case xs of
-            [] -> []
-            [a] -> [a]
-            a:da:rest -> a : da : a : 0 : tfmList rest
+        period = sumDts as
+
+        sumDts xs = case xs of
+            a : dt : rest -> dt + sumDts rest
+            _ -> 0
 
 -- | It's just like @linseg@ but it loops over the envelope.
-linloop :: [D] -> Sig
-linloop = genLoop oscLins
+linloop :: [Sig] -> Sig
+linloop = genLoop loopseg . (++ [0])
 
 -- | It's just like @expseg@ but it loops over the envelope.
-exploop :: [D] -> Sig
-exploop = genLoop oscExps
+exploop :: [Sig] -> Sig
+exploop = genLoop loopxseg . (++ [0])
 
-genLoop :: ([D] -> Sig -> Sig) -> [D] -> Sig
-genLoop f as = f (tfmList as) (1 / sig len)
+genLoop :: ([Sig] -> Sig -> Sig) -> [Sig] -> Sig
+genLoop f as = f (tfmList as) (1 / len)
     where
         tfmList xs = case xs of
             [] -> []
@@ -220,60 +166,108 @@ genLoop f as = f (tfmList as) (1 / sig len)
                     [a] -> 0
                     a:b:rest -> b + go rest
 
-genSeq :: ([Double] -> Tab) -> ([Double] -> [Double]) -> [Double] -> Sig -> Sig
-genSeq mkTab mkList as cps = oscBy (skipNorm $ gp $ mkTab $ mkList as) (cps / (sig $ int $ length as))
+-- | Step sequencer with unipolar triangle.
+triSeq :: [Sig] -> Sig -> Sig
+triSeq as cps = genSeq loopseg triList as (2 * cps)
 
--- | A sawtooth step sequencer. The unipolar sawtooth wave with scaled teeth. The values for teeth 
--- are given in the first argument. They are repeated.
-sawSeq :: [Double] -> Sig -> Sig  
-sawSeq = genSeq lins mkList
-    where 
-        mkList xs = case xs of
-            []   -> []
-            a:as -> a : 1 : 0 : 0 : mkList as 
+-- | Step sequencer with unipolar square.
+sqrSeq :: [Sig] -> Sig -> Sig
+sqrSeq = genSeq stepSeq (intersperseEnd 0 [0])
 
--- | An inverted sawtooth step sequencer. It's like @sawSeq@ but a tooth starts from 0 and goes to the 1.
--- It's useful for creation of reversed envelopes.
-isawSeq :: [Double] -> Sig -> Sig  
-isawSeq = genSeq lins mkList
-    where 
-        mkList xs = case xs of
-            []   -> []
-            a:as -> 0 : 1 : a : 0 : mkList as 
+-- | Step sequencer with unipolar sawtooth.
+sawSeq :: [Sig] -> Sig -> Sig
+sawSeq = genSeq loopseg sawList
 
-expVal a 
-    | abs a < 0.0001 = (if (a < 0 ) then (-1) else 1) * 0.0001
-    | otherwise      = a
+-- | Step sequencer with unipolar inveted square.
+isqrSeq :: [Sig] -> Sig -> Sig
+isqrSeq = genSeq stepSeq ((0 : ) . intersperseEnd 0 [])
 
--- | An exponential saw step sequencer. It's like @sawSeq@ but
--- the rise is exponential instead of linear.
-sawExpSeq :: [Double] -> Sig -> Sig  
-sawExpSeq = genSeq exps mkList
-    where 
-        mkList xs = case fmap expVal xs of
-            []   -> []
-            a:as -> a : 1 : 0.0001 : 0 : mkList as 
+-- | Step sequencer with unipolar inveted sawtooth.
+isawSeq :: [Sig] -> Sig -> Sig
+isawSeq = genSeq loopseg isawList
 
--- | An inverted exponential saw step sequencer. It's like @sawSeq@ but
--- the rise is exponential instead of linear.
-isawExpSeq :: [Double] -> Sig -> Sig  
-isawExpSeq = genSeq exps mkList
-    where 
-        mkList xs = case fmap expVal xs of
-            []   -> []
-            a:as -> 0.0001 : 1 : a : 0 : mkList as 
+-- | Step sequencer with unipolar exponential sawtooth.
+xsawSeq :: [Sig] -> Sig -> Sig
+xsawSeq = genSeq loopxseg sawList
 
-sqrSeq :: [Double] -> Sig -> Sig  
-sqrSeq = genSeq lins mkList
-    where
-        mkList xs = case xs of
-            []   -> []
-            a:as -> a : 0.5 : a : 0 : 0 : 0.5 : 0 : 0 : mkList as 
+-- | Step sequencer with unipolar inverted exponential sawtooth.
+ixsawSeq :: [Sig] -> Sig -> Sig
+ixsawSeq = genSeq loopxseg isawList
 
-isqrSeq :: [Double] -> Sig -> Sig  
-isqrSeq = genSeq lins mkList
-    where
-        mkList xs = case xs of
-            []   -> []
-            a:as -> 0 : 0.5 : 0 : 0 : a : 0.5 : a : 0 : mkList as 
+-- | Step sequencer with unipolar exponential triangle.
+xtriSeq :: [Sig] -> Sig -> Sig
+xtriSeq as cps = genSeq loopxseg triList as (2 * cps)
 
+sawList xs = case xs of
+    []  -> []           
+    a:rest -> a : 1 : 0 : 0 : sawList rest
+        
+isawList xs = case xs of
+    []  -> []           
+    a:rest -> 0 : 1 : a : 0 : isawList rest
+
+triList xs = case xs of
+    [] -> [0, 0]
+    a:rest -> 0 : 1 : a : 1 : triList rest 
+
+------------------------------------------------------------------
+
+genSeq :: ([Sig] -> Sig -> Sig) -> ([Sig] -> [Sig]) -> [Sig] -> Sig -> Sig
+genSeq mkSeq go as cps = mkSeq (go as) (cps / len)
+    where len = sig $ int $ length as
+
+intersperseEnd :: a -> [a] -> [a] -> [a]
+intersperseEnd val end xs = case xs of
+    [] -> end
+    [a] -> a : end
+    a:as -> a : val : intersperseEnd val end as 
+
+------------------------------------------------------------------
+
+-- | Looping sample and hold envelope. The first argument is the list of pairs:
+--
+-- > [a, durA, b, durB, c, durc, ...]
+--
+-- It's a list of values and durations. The durations are relative
+-- to the period of repetition. The period is specified with the second argument.
+-- The second argument is the frequency of repetition measured in Hz.
+-- 
+-- > lpshold valDurs frequency
+lpshold :: [Sig] -> Sig -> Sig
+lpshold as cps = C.lpshold cps 0 0 as
+
+-- | Looping linear segments envelope. The first argument is the list of pairs:
+--
+-- > [a, durA, b, durB, c, durc, ...]
+--
+-- It's a list of values and durations. The durations are relative
+-- to the period of repetition. The period is specified with the second argument.
+-- The second argument is the frequency of repetition measured in Hz.
+-- 
+-- > loopseg valDurs frequency
+loopseg :: [Sig] -> Sig -> Sig
+loopseg as cps = C.loopseg cps 0 0 as
+
+-- | Looping exponential segments envelope. The first argument is the list of pairs:
+--
+-- > [a, durA, b, durB, c, durc, ...]
+--
+-- It's a list of values and durations. The durations are relative
+-- to the period of repetition. The period is specified with the second argument.
+-- The second argument is the frequency of repetition measured in Hz.
+-- 
+-- > loopxseg valDurs frequency
+loopxseg :: [Sig] -> Sig -> Sig
+loopxseg as cps = C.loopxseg cps 0 0 as
+
+-- | It's like lpshold but we can specify the phase of repetition (phase belongs to [0, 1]).
+lpsholdBy :: D -> [Sig] -> Sig -> Sig
+lpsholdBy phase as cps = C.lpshold cps 0 phase  as
+
+-- | It's like loopseg but we can specify the phase of repetition (phase belongs to [0, 1]).
+loopsegBy :: D -> [Sig] -> Sig -> Sig
+loopsegBy phase as cps = C.loopseg cps 0 phase  as
+
+-- | It's like loopxseg but we can specify the phase of repetition (phase belongs to [0, 1]).
+loopxsegBy :: D -> [Sig] -> Sig -> Sig
+loopxsegBy phase as cps = C.loopxseg cps 0 phase  as

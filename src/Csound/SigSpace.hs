@@ -2,7 +2,7 @@
 {-# Language FlexibleInstances #-}
 module Csound.SigSpace(
     SigSpace(..), BindSig(..), mul, at,
-    cfd, cfds, cfdSpec, cfdsSpec, 
+    cfd, cfd4, cfds, cfdSpec, cfdsSpec, 
     wsum        
 ) where
 
@@ -40,6 +40,22 @@ genCfds zero mixFun cs xs = case xs of
     []   -> zero
     a:as -> foldl (\x f -> f x) a $ zipWith mix' cs as 
     where mix' c a b = mixFun c b a
+
+-- | Bilinear interpolation for four signals.
+-- The signals are placed in the corners of the unit square.
+-- The first two signals are the xy coordinates in the square. 
+--
+-- > cfd4 x y a b c d
+--
+-- * (0, 0) is for a
+--
+-- * (1, 0) is for b
+--
+-- * (1, 1) is for c
+--
+-- * (0, 1) is for d
+cfd4 :: (Num a, SigSpace a) => Sig -> Sig -> a -> a -> a -> a -> a 
+cfd4 x y a b c d = sum $ zipWith mul [(1 - x) * (1 - y), x * (1 - y) , x * y, (1 - x) * y] [a, b, c, d]
   
 -- | Generic crossfade for n coefficients and n+1 signals.
 --

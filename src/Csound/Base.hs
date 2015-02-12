@@ -35,5 +35,5 @@ import Data.Boolean
 import Data.Default
 import Data.Monoid
     
-import Csound.Typed.Opcode hiding (button, display, space, lfo, initc7, ctrl7, oscInit, oscListen, oscSend)
+import Csound.Typed.Opcode hiding (button, display, space, lfo, initc7, ctrl7, oscInit, oscListen, oscSend, lpshold, loopseg, loopxseg)
 
