@@ -438,15 +438,15 @@ We have a simple audio wave:
 > dac $ mlp 1500 0.1 $ saw 110
 ~~~
 
-It's  a filtered sawtooth wave. Let's plugin a slider to change the volume:
+It's  a filtered sawtooth wave. Let's plugin a knob to change the volume:
 
 ~~~haskell
 > dac $ lift1 (\amp -> mul amp $ mlp 1500 0.1 $ saw 110) $ uknob 0.5
 ~~~
 
-The `uknob` creates a slider that outputs a unipolar signal (it belongs to the interval `[0, 1]`).
+The `uknob` creates a knob that outputs a unipolar signal (it belongs to the interval `[0, 1]`).
 The argument is the initial value of the knob. The `lift1` maps over the value of the `knob`.
-The `uknob` returns not the signal itself but the slider and the GUI-element. With lift1 we
+The `uknob` returns not the signal itself but the signal and the GUI-element. With lift1 we
 can easily transform control signal to audio wave.
 
 What if we want to change the frequency? It's best to change the frequency with eXponential
