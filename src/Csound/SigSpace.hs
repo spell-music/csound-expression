@@ -2,7 +2,7 @@
 {-# Language FlexibleInstances #-}
 module Csound.SigSpace(
     SigSpace(..), BindSig(..), mul, at,
-    cfd, cfd4, cfds, cfdSpec, cfdsSpec, 
+    cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, 
     wsum        
 ) where
 
@@ -66,6 +66,15 @@ cfds = genCfds 0 cfd
 -- | Spectral crossfade.
 cfdSpec :: Sig -> Spec -> Spec -> Spec
 cfdSpec coeff a b = pvscross a b (1 - coeff) coeff
+
+-- | Spectral bilinear crossfade (see @cfd4@).
+cfdSpec4 :: Sig -> Sig -> Spec -> Spec -> Spec -> Spec -> Spec
+cfdSpec4 x y a b c d = foldl1 
+    [ pvscale a ((1 - x) * (1 - y))
+    , pvscale b (x * (1 - y))
+    , pvscale c (x * y)
+    , pvscale d ((1 - x) * y)
+    ]
 
 -- | Generic spectral crossfade.
 cfdsSpec :: [Sig] -> [Spec] -> Spec
