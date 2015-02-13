@@ -745,6 +745,7 @@ We can interpolate between several signals:
 
 ~~~{.haskell}
 cfdSpec :: Sig -> Spec -> Spec -> Spec
+cfdSpec4 :: Sig -> Sig -> Spec -> Spec -> Spec -> Spec -> Spec
 cfdsSpec :: [Sig] -> [Spec] -> Spec
 ~~~
 
