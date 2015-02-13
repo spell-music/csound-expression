@@ -9,7 +9,10 @@ module Csound.Air.Filter(
     blp, bhp, bbp, bbr,
 
     -- * Specific filters
-    mlp
+    mlp,
+
+    -- * Making the smooth lines
+    slide
 ) where
 
 import Csound.Typed
@@ -77,3 +80,10 @@ bbr freq band a = butbr a freq band
 -- > mlp centerFrequency qResonance signal
 mlp :: Sig -> Sig -> Sig -> Sig
 mlp cf q asig = moogladder asig cf q
+
+
+-- | Produces smooth transitions between values in the signals.
+-- The first value defines a duration in seconds for a transition from one
+-- value to another in piecewise constant signals.
+slide :: Sig -> Sig -> Sig
+slide = flip portk

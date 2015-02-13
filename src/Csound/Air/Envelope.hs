@@ -6,8 +6,10 @@ module Csound.Air.Envelope (
     onDur, lindurBy, expdurBy, linendurBy,    
     -- * Looping envelopes   
     lpshold, loopseg, loopxseg, lpsholdBy, loopsegBy, loopxsegBy,
+    holdSeq, linSeq, expSeq,
     linloop, exploop, sah, stepSeq, 
-    triSeq, sqrSeq, sawSeq, isawSeq, xsawSeq, ixsawSeq, isqrSeq, xtriSeq,
+    constSeq, triSeq, sqrSeq, sawSeq, isawSeq, xsawSeq, ixsawSeq, isqrSeq, xtriSeq,
+    adsrSeq, xadsrSeq, adsrSeq_, xadsrSeq_,  
 
     -- * Faders
     fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades
@@ -22,6 +24,7 @@ import qualified Csound.Typed.Opcode as C(lpshold, loopseg, loopxseg)
 import Csound.Air.Wave
 import Csound.Tab(lins, exps, gp)
 import Csound.Air.Wave(oscBy)
+import Csound.Air.Filter(slide)
 
 -- | Linear adsr envelope generator with release
 --
@@ -125,6 +128,7 @@ expFades att dec = expFadeIn att * expFadeOut dec
 stepSeq :: [Sig] -> Sig -> Sig
 stepSeq as = lpshold (intersperseEnd 1 [1] as)
 
+
 -- | Sample and hold cyclic signal. It takes the list of
 --
 -- > [a, dta, b, dtb, c, dtc, ...]
@@ -165,6 +169,10 @@ genLoop f as = f (tfmList as) (1 / len)
                     []  -> 0
                     [a] -> 0
                     a:b:rest -> b + go rest
+
+-- | Sample and hold sequence. It outputs the looping sequence of constan elements.
+constSeq :: [Sig] -> Sig -> Sig
+constSeq = genSeq stepSeq id 
 
 -- | Step sequencer with unipolar triangle.
 triSeq :: [Sig] -> Sig -> Sig
@@ -224,6 +232,9 @@ intersperseEnd val end xs = case xs of
 
 ------------------------------------------------------------------
 
+smooth :: Sig -> Sig
+smooth = slide 0.001
+
 -- | Looping sample and hold envelope. The first argument is the list of pairs:
 --
 -- > [a, durA, b, durB, c, durc, ...]
@@ -234,7 +245,7 @@ intersperseEnd val end xs = case xs of
 -- 
 -- > lpshold valDurs frequency
 lpshold :: [Sig] -> Sig -> Sig
-lpshold as cps = C.lpshold cps 0 0 as
+lpshold as cps = smooth $ C.lpshold cps 0 0 as
 
 -- | Looping linear segments envelope. The first argument is the list of pairs:
 --
@@ -246,7 +257,7 @@ lpshold as cps = C.lpshold cps 0 0 as
 -- 
 -- > loopseg valDurs frequency
 loopseg :: [Sig] -> Sig -> Sig
-loopseg as cps = C.loopseg cps 0 0 as
+loopseg as cps = smooth $ C.loopseg cps 0 0 as
 
 -- | Looping exponential segments envelope. The first argument is the list of pairs:
 --
@@ -258,16 +269,120 @@ loopseg as cps = C.loopseg cps 0 0 as
 -- 
 -- > loopxseg valDurs frequency
 loopxseg :: [Sig] -> Sig -> Sig
-loopxseg as cps = C.loopxseg cps 0 0 as
+loopxseg as cps = smooth $ C.loopxseg cps 0 0 as
 
 -- | It's like lpshold but we can specify the phase of repetition (phase belongs to [0, 1]).
 lpsholdBy :: D -> [Sig] -> Sig -> Sig
-lpsholdBy phase as cps = C.lpshold cps 0 phase  as
+lpsholdBy phase as cps = smooth $ C.lpshold cps 0 phase  as
 
 -- | It's like loopseg but we can specify the phase of repetition (phase belongs to [0, 1]).
 loopsegBy :: D -> [Sig] -> Sig -> Sig
-loopsegBy phase as cps = C.loopseg cps 0 phase  as
+loopsegBy phase as cps = smooth $ C.loopseg cps 0 phase  as
 
 -- | It's like loopxseg but we can specify the phase of repetition (phase belongs to [0, 1]).
 loopxsegBy :: D -> [Sig] -> Sig -> Sig
-loopxsegBy phase as cps = C.loopxseg cps 0 phase  as
+loopxsegBy phase as cps = smooth $ C.loopxseg cps 0 phase  as
+
+-- | The looping ADSR envelope.
+--
+-- > xadsrSeq attack decay sustain release weights frequency
+--
+-- The sum of attack, decay, sustain and release time durations 
+-- should be equal to one.
+adsrSeq :: Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
+adsrSeq a d s r = linSeq (adsrList a d s r)
+
+-- | The looping exponential ADSR envelope. there is a fifth segment
+-- at the end of the envelope during which the envelope equals to zero.
+--
+-- > xadsrSeq attack decay sustain release weights frequency
+--
+-- The sum of attack, decay, sustain and release time durations 
+-- should be equal to one.
+xadsrSeq :: Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
+xadsrSeq a d s r = expSeq (adsrList a d s r)
+
+-- | The looping ADSR envelope with the rest at the end.
+--
+-- > adsrSeq attack decay sustain release rest weights frequency
+--
+-- The sum of attack, decay, sustain, release and rest time durations 
+-- should be equal to one.
+adsrSeq_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
+adsrSeq_ a d s r rest = linSeq (adsrList_ a d s r rest)
+
+-- | The looping exponential ADSR envelope. there is a fifth segment
+-- at the end of the envelope during which the envelope equals to zero.
+--
+-- > xadsrSeq_ attack decay sustain release rest weights frequency
+--
+-- The sum of attack, decay, sustain, release and rest time durations 
+-- should be equal to one.
+xadsrSeq_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
+xadsrSeq_ a d s r rest = expSeq (adsrList_ a d s r rest)
+
+adsrList :: Sig -> Sig -> Sig -> Sig -> [Sig]
+adsrList a d s r = [0, a, 1, d, s, 1 - (a + d + r), s, r, 0]
+
+adsrList_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Sig]
+adsrList_ a d s r rest = [0, a, 1, d, s, 1 - (a + d + r + rest), s, r, 0, rest, 0]
+
+-- | The looping sequence of constant segments.
+--
+-- > linSeg [a, durA, b, durB, c, durC, ...] [scale1, scale2, scale3] cps
+--
+-- The first argument is the list that specifies the shape of the looping wave.
+-- It's the alternating values and durations of transition from one value to another.
+-- The durations are relative to the period. So that lists
+--
+-- > [0, 0.5, 1, 0.5, 0]  and [0, 50, 1, 50, 0]
+--
+-- produce the same results. The second list is the list of scales for subsequent periods.
+-- Every value in the period is scaled with values from the second list.
+-- The last argument is the rate of repetition (Hz).
+holdSeq :: [Sig] -> [Sig] -> Sig -> Sig
+holdSeq = genSegSeq lpshold
+
+-- | The looping sequence of linear segments.
+--
+-- > linSeg [a, durA, b, durB, c, durC, ...] [scale1, scale2, scale3] cps
+--
+-- The first argument is the list that specifies the shape of the looping wave.
+-- It's the alternating values and durations of transition from one value to another.
+-- The durations are relative to the period. So that lists
+--
+-- > [0, 0.5, 1, 0.5, 0]  and [0, 50, 1, 50, 0]
+--
+-- produce the same results. The second list is the list of scales for subsequent periods.
+-- Every value in the period is scaled with values from the second list.
+-- The last argument is the rate of repetition (Hz).
+linSeq :: [Sig] -> [Sig] -> Sig -> Sig
+linSeq = genSegSeq loopseg
+
+-- | The looping sequence of exponential segments.
+--
+-- > expSeg [a, durA, b, durB, c, durC, ...] [scale1, scale2, scale3] cps
+--
+-- The first argument is the list that specifies the shape of the looping wave.
+-- It's the alternating values and durations of transition from one value to another.
+-- The durations are relative to the period. So that lists
+--
+-- > [0, 0.5, 1, 0.5, 0]  and [0, 50, 1, 50, 0]
+--
+-- produce the same results. The second list is the list of scales for subsequent periods.
+-- Every value in the period is scaled with values from the second list.
+-- The last argument is the rate of repetition (Hz).
+expSeq :: [Sig] -> [Sig] -> Sig -> Sig
+expSeq = genSegSeq loopxseg
+
+genSegSeq :: ([Sig] -> Sig -> Sig) -> [Sig] -> [Sig] -> Sig -> Sig
+genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) weights) (cps / len)
+    where 
+        len = sig $ int $ length weights
+        scaleVals xs k = case xs of
+            [] -> []
+            [a] -> [a * k]
+            a:da:rest -> (a * k) : da : scaleVals rest k    
+
+        groupSegs :: [[Sig]] -> [Sig]
+        groupSegs as = concat $ intersperse [0] as

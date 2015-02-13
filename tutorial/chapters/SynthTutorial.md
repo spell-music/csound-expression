@@ -378,7 +378,7 @@ dac $ mul (usaw 2) white + mul (usqr 1 * (1 - usqr 4)) (return $ saw 50)
 But the real drummer don't kicks all notes with the same volume we need
 a way to set accents. We can do it with special functions. 
 They take in a list of accents and they scale the unipolar LFO-wave.
-Let's look at `sqrs`. It creates a sequence of squares which are scaled
+Let's look at `sqrSeq`. It creates a sequence of squares which are scaled
 with given pattern:
 
 ~~~haskell
@@ -388,9 +388,9 @@ with given pattern:
 We can create another pattern for sawtooth wave:
 
 ~~~haskell
-> let b1 = mul (sqrs [1, 0.5, 0.2, 0.5] 4) $ white
-> let b2 = mul (saws [0, 0, 1] 2) $ white
-> let b3 = return $ mul (tris [0, 0, 1, 0] 4) $ osc (sqrs [440, 330] 1)
+> let b1 = mul (sqrSeq [1, 0.5, 0.2, 0.5] 4) $ white
+> let b2 = mul (sawSeq [0, 0, 1] 2) $ white
+> let b3 = return $ mul (triSeq [0, 0, 1, 0] 4) $ osc (sqrSeq [440, 330] 1)
 > dac $ b1 + b2 + b3
 ~~~
 
@@ -399,7 +399,7 @@ control other parameters as well. Let's change the frequency
 of the `b3`
 
 ~~~haskell
-> let b3 = return $ mul (tris [0, 0, 1, 0] 4) $ osc (stepSeq [440, 330] 0.25)
+> let b3 = return $ mul (triSeq [0, 0, 1, 0] 4) $ osc (stepSeq [440, 330] 0.25)
 ~~~
 
 The function `stepSeq` creates a sequence of constant segments. We can create arpeggiators this way:
@@ -411,7 +411,7 @@ The function `stepSeq` creates a sequence of constant segments. We can create ar
 We can change the volume:
 
 ~~~haskell
-> dac $ mul (sawSeq [1, 0.5, 0.25, 1, 0.5, 0.2, 1, 0.7] 8) $ tri (sqrs [220, 330, 440, 330] 8)
+> dac $ mul (sawSeq [1, 0.5, 0.25, 1, 0.5, 0.2, 1, 0.7] 8) $ tri (sqrSeq [220, 330, 440, 330] 8)
 ~~~
 
 Let's create a simple bass line:
@@ -423,9 +423,50 @@ Let's create a simple bass line:
 We are using the function `mlp`. It's a moog low pass filter (the arguments: cut off frequency, resonance and the signal). 
 We modulate the center frequency with LFO.
 
-There are many more functions. We can create looping adsr sequences with `legs` and `xegs`.
-We can loop over generic line segments with `linsegs` and `expsegs`. We can create 
-sample and hold envelopes with `sah`.
+There are many more functions. We can create looping adsr sequences with `adsrSeq` and `xadsrSeq`.
+We can loop over generic line segments with `linSeq` and `expSeq`. We can create 
+sample and hold envelopes with `sah`. We can find the functions in the module `Csound.Air.Envelope`.
+
+Let's create a simple beat with step sequencers. 
+The first line is the steady sound of kick drum:
+
+~~~haskell
+> let kick = osc (100 * linloop [1, 0.1, 0, 0.9, 0])
+> dac kick
+~~~
+
+The kick is a pure sine wave that is rapidly falls in pitch. We are using the function `linloop`
+to repeat the pitch changes. The `linloop` is just like `linseg` but it repeats over and over.
+Let's create a simple snare:
+
+~~~haskell
+> snare2 = at (hp 500 23) $ mul (sqrSeq [0, 0, 1, 0, 0, 0, 0.5, 0.2] 4) $ pink
+> dac $ return kick + snare
+~~~
+
+We use high pass filtered pink noise. We create the drum pattern with square waves. 
+The function `at` is the generic `map` for signal-like values:
+
+~~~haskell
+at :: (SigSpace a) => (Sig -> Sig) -> a -> a
+~~~
+
+We wrap the kick in the `SE` monad to add it to the snare wave.
+Let's add a hi-hat. The hi-hat is going to be filtered white noise
+with sequence of saw envelopes:
+
+~~~haskell
+> let hiHat = at (mlp 2500 0.1) $ mul (sawSeq [1, 0.5, 0.2, 0.5, 1, 0, 0, 0.5] 4) $ white
+> dac $ mul 0.5 $ return kick + snare + hiHat
+~~~
+
+Let's add some pitched sounds to make the sound more weird.
+Also we can make the kick louder:
+
+~~~haskell
+> let ticks = return $ mul (sqrSeq [0, 0, 0, 0, 1, 1] 8) $ osc 440
+> dac $ mul 0.3 $ return (mul 2.4 kick) + return ticks + snare + hiHat
+~~~
 
 ### Using GUIs as control signals
 
