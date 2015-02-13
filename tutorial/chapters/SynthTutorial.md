@@ -346,7 +346,7 @@ The function `on` can be used with LFOs and `uon` can be used with EGs.
 
 ### Looping envelope generators
 
-Since the version 4.5 we can use a lot of looping envelope generators.
+Since the version 4.3 we can use a lot of looping envelope generators.
 They work as step sequencers. 
 
 Let's see how we can use LFO's to turn the sound in the patters of notes.
@@ -395,24 +395,28 @@ We can create another pattern for sawtooth wave:
 ~~~
 
 We can use these functions not only for amplitudes. We can
-control other parameters as well. Let's change the frequency 
-of the `b3`
+control other parameters as well. 
+
+~~~
+> dac $ tri $ constSeq [220, 220 * 5/4, 330, 440] 8
+~~~
+
+The `constSeq` creates a sequence of constant segments. 
+The cool thing about wave sequencers is that the values in the
+sequence are signals. We can change them easily.
+
+~~~haskell
+> dac $ tri $ constSeq [220, 220 * 5/4, 330, constSeq [440, 220 * 4/ 3] 1] 8
+~~~
 
 ~~~haskell
 > let b3 = return $ mul (triSeq [0, 0, 1, 0] 4) $ osc (stepSeq [440, 330] 0.25)
 ~~~
 
-The function `stepSeq` creates a sequence of constant segments. We can create arpeggiators this way:
-
-~~~haskell
-> dac $ tri (sqrSeq [220, 330, 440] 8)
-~~~
-
-We can change the volume:
-
-~~~haskell
-> dac $ mul (sawSeq [1, 0.5, 0.25, 1, 0.5, 0.2, 1, 0.7] 8) $ tri (sqrSeq [220, 330, 440, 330] 8)
-~~~
+The function `stepSeq` creates a sequence of constant segments. The main difference 
+with `constSeq` is that all values are placed in a single period. The period 
+of `constSeq` is a single line but the period of `stepSeq` is the sequence of 
+const segments. We can create arpeggiators this way:
 
 Let's create a simple bass line:
 
