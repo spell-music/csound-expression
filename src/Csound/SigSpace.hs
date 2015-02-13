@@ -9,7 +9,7 @@ module Csound.SigSpace(
 import Control.Applicative
 
 import Csound.Typed
-import Csound.Typed.Opcode(pvscross)
+import Csound.Typed.Opcode(pvscross, pvscale, pvsmix)
 
 -- | A class for easy way to process the outputs of the instruments.
 class SigSpace a where
@@ -69,7 +69,7 @@ cfdSpec coeff a b = pvscross a b (1 - coeff) coeff
 
 -- | Spectral bilinear crossfade (see @cfd4@).
 cfdSpec4 :: Sig -> Sig -> Spec -> Spec -> Spec -> Spec -> Spec
-cfdSpec4 x y a b c d = foldl1 
+cfdSpec4 x y a b c d = foldl1 pvsmix
     [ pvscale a ((1 - x) * (1 - y))
     , pvscale b (x * (1 - y))
     , pvscale c (x * y)
