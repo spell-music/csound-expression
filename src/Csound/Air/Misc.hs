@@ -199,8 +199,6 @@ arpeggi = arpBy triSeq sqrSeq
 arpBy :: SigSpace a => ([Sig] -> Sig -> Sig) -> ([Sig] -> Sig -> Sig) -> [Sig] -> [Sig] -> (Sig -> a) -> Sig -> a
 arpBy ampWave cpsWave amps cpss wave dt = mul (ampWave amps dt) $ wave $ cpsWave cpss dt
 
-
-
 -- | Low-pass filter pictured as joystick.
 -- Ox is for center frequency and Oy is for resonance.
 lpJoy :: Source (Sig -> Sig)

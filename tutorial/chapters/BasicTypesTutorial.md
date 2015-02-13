@@ -504,6 +504,68 @@ a different interval. In the expression `on 50 2500 $ tri 0.2`
 oscillation happens in the range `(50, 2500)`. There is another 
 usefull function `uon`. It's like `on` but it maps from the range `(0, 1)`.
 
+The essence of the `SE Sig` type lies in the usage of random values.
+In the pure code we can not distinguish between these two expressions:
+
+~~~haskell
+x1 = let a = rndh 1 in a + a
+x2 = rndh 1 + rndh 1
+~~~ 
+
+For `x1` we want only one random value but
+for `x2` we want two random values.
+
+The value is just a tiny piece of code (we don't evaluate expressions
+but use them to generate csound code).
+The renderer performs common subexpression elimination.
+So the examples above would be rendered in the same code.
+
+We need to tell to the renderer when we want two random values.
+Here comes the SE monad (Side Effects for short).
+
+~~~haskell
+x1 = do
+  a <- rndh
+  return $ a + a
+
+x2 = do
+  a1 <- rndh
+  a2 <- rndh
+  return $ a1 + a2
+~~~
+
+The SE was introduced to express the randomness. 
+But then it was usefull to expres many other things.
+Procedures for instance. They don't produce signals
+but do smth usefull:
+
+~~~
+procedure :: SE ()
+~~~ 
+
+The `SE` is used for allocation of delay buffers in the functions.
+
+~~~haskell
+deltap3 :: Sig -> SE Sig
+delayr :: D -> SE Sig
+delayw :: Sig -> SE ()
+~~~
+
+The `deltap3` is used to allocate the delay line. After allocation
+we can read and write to delay lines with `delayr` and `delayw`.
+
+The `SE` is used for allocation of local or global variables (see the type `SERef`
+in the module `Csound.Control.SE`). 
+
+For convinience the `SE Sig` and `SE` of tuples of signals is instance of `Num`. 
+We can sum and multiply the signals wrpapped in the `SE`. That's code is ok:
+
+~~~haskell
+> dac $ white + 0.5 * pink
+> dac $ white + return (osc 440)
+~~~
+
+
 Mutable values
 -------------------------------------------------
 
@@ -587,6 +649,18 @@ class Num a => SigSpace a where
 	bindSig :: (Sig -> SE Sig) -> a -> SE a
 ~~~
 
+There are lots of instances. For signals, tuples of signals,
+tuples of signals wrapped in the `SE`, the signals that come 
+from UI-widgets such as knobs and sliders.
+
+If you are too lazy to write `mapSig` there is a shortcut `at` for you.
+It's the same as `mapSig`. That's how we can filter a noise. The `linseg`
+creates a stright line between the points `1500` and `250` that lasts for `5` seconds:
+
+~~~haskell
+> dac $ at (mlp (linseg [1500, 5, 250]) 0.1) $ white
+~~~
+
 It let's us apply signal transformation functions to values of 
 many different types. The one function that we have already seen is `mul`:
 
@@ -605,6 +679,26 @@ cfd :: SigSpace a => Sig -> a -> a -> a
 It's a crossfade between two signals. The first signal
 varies in range 0 to 1. It interpolates between second
 and third arguments.
+
+Also we can use bilinear interpolation with four signals
+
+~~~haskell
+cfd4 :: SigSpace a => Sig -> Sig -> a -> a -> a -> a -> a
+cfd4 x y asig1 asig2 asig3 asig4
+~~~
+
+We can imagine that we place four signals on the corners of the unipolar square.
+we can move within the square with `x` and `y` signals. The closer we get to the
+corner the more prominent becomes the signal that sits in the corner and other
+three become quiter. The corner to signal map is:
+
+* `(0, 0)` is for `asig1`
+
+* `(1, 0)` is for `asig2`
+
+* `(1, 1)` is for `asig3`
+
+* `(0, 1)` is for `asig4`
 
 The `cfds` can operate on many signals. The first list
 length equals the second one minus one.

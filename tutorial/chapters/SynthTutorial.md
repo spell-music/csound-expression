@@ -460,8 +460,7 @@ with sequence of saw envelopes:
 > dac $ mul 0.5 $ return kick + snare + hiHat
 ~~~
 
-Let's add some pitched sounds to make the sound more weird.
-Also we can make the kick louder:
+Let's add some pitched sounds. Also we can make the kick louder:
 
 ~~~haskell
 > let ticks = return $ mul (sqrSeq [0, 0, 0, 0, 1, 1] 8) $ osc 440
