@@ -232,7 +232,7 @@ on all channels for the events. If we want to specify the concrete channel
 we should use the function `midin`:
 
 ~~~haskell
-midin :: Sigs a => Int -> (Msg -> SE a) -> a
+midin :: Sigs a => Int -> (Msg -> SE a) -> SE a
 ~~~
 
 What if we want to play a pure tone on the first channel and the 
@@ -246,10 +246,12 @@ First let's take a waveform as a parameter for the instrument:
 Now let's set up everything and add some reverb:
 
 ~~~haskell
-> vdac $ 0.5 * nreverb ((midin 1 $ instr osc) + (midin 2 $ instr saw)) 1 0.2
+> vdac $ fmap (\asig -> 0.5 * nreverb asig 1 0.2) $ (midin 1 $ instr osc) + (midin 2 $ instr saw)
 ~~~
 
 The example shows that applying the effect is as simple as applying a function.
+But notice the use of `fmap`. We are applying the function to the signal
+that is wrapped in the SE. That's why we should use `fmap`.
 
 We can use a shortcut in defining the midi-instrument. 
 There is a class that converts expressions to midi-instruments:
@@ -648,7 +650,7 @@ or
 or
 
 ~~~haskell
-> vdac $ mul 0.15 $ bayAtNight $ midi $ onMsg (mul (fades 1 2) . stringPad 1)
+> vdac $ mul 0.15 $ fmap largeHall $ midi $ onMsg (mul (fades 1 2) . stringPad 1)
 ~~~
 
 Gui elements

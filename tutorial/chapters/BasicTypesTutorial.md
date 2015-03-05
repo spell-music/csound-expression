@@ -240,12 +240,12 @@ Ok, we are ready to play along with it:
 ~~~{.haskell}
 > let sample = toMono $ ar2 $ diskin2 (text "fuzzy.wav") 1
 > let meOnKeys = midi $ onMsg osc
-> vdac $ mul 0.5 $ meOnKeys + sample
+> vdac $ mul 0.5 $ meOnKeys + return sample
 ~~~
 
 Notice how simple is the combining midi-devices output
 with the regular signals. The function `midi` produces 
-a normal signal. We can use it anywhere. 
+a normal signal wrapped in SE-monad. We can use it anywhere.
 
 There are useful shortcuts that let us use a normal Haskell strings:
 

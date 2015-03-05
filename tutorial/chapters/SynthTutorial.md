@@ -645,7 +645,7 @@ the instrument. It includes the mixed sound from all notes that are played.
 Let's modify our definition for function `run`:
 
 ~~~haskell
-let run eff k f = vdac $ eff $ midi $ onMsg (mul k . f . (/ 2))
+let run eff k f = vdac $ (eff =<< ) $ midi $ onMsg (mul k . f . (/ 2))
 ~~~	
 
 The first argument now applies some effect to the output signal.
@@ -665,7 +665,7 @@ It expects the reverb time (in seconds) as a first argument and the signal as
 the second argument.
 
 ~~~haskell
-run (reverTime 1.5) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (return . reverTime 1.5) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 There is also a function `rever1`:
@@ -681,7 +681,7 @@ shortcuts: `smallRoom`, `smallHall`, `lhaskellargeRoom`, `largHall` and `magicCa
 Let's place our sound in the magic cave:
 
 ~~~haskell
-run magicCave (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (return . magicCave) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 You can hear how dramatically an effect can change the sound.
@@ -789,7 +789,7 @@ pure and processed signals and an input signal.
 Let's apply a flanger:
 
 ~~~haskell
-run (flange (lfo tri 0.9 0.05) 0.9 0.5) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (return . flange (lfo tri 0.9 0.05) 0.9 0.5) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 #### Phaser
@@ -914,7 +914,7 @@ The simplest one is additive synthesis. We add two or more waveforms so
 that they form harmonic series.
 
 ~~~haskell
-> run id (0.25 * env) (\x -> saw x + 0.5 * sqr (2 * x) + 0.15 * tri (3 * x))
+> run return (0.25 * env) (\x -> saw x + 0.5 * sqr (2 * x) + 0.15 * tri (3 * x))
 ~~~
 
 ### Stacking together several waveforms
@@ -935,7 +935,7 @@ It takes the integer number of copies and chorus width.
 Chorus width specifies the radius of the detunement.
 
 ~~~haskell
-> run id (0.25 * env) (chorusPitch 8 0.5 saw)
+> run return (0.25 * env) (chorusPitch 8 0.5 saw)
 ~~~
 
 ### Ring modulation
@@ -944,7 +944,7 @@ Ring modulation can add metallic flavor to the sound.
 It multiplies the amplitude of the signal by LFO.
 
 ~~~haskell
-run id (0.25 * env) (mul (osc (30 * env)) . chorusPitch 8 0.5 saw)
+run return (0.25 * env) (mul (osc (30 * env)) . chorusPitch 8 0.5 saw)
 ~~~
 
 ### Diving deeper

@@ -162,9 +162,9 @@ all events happen immediately.
 We can trigger an instrument with midi devices:
 
 ~~~haskell
-midi   :: (Sigs a) => (Msg -> SE a) -> a
-midin  :: (Sigs a) => Int -> (Msg -> SE a) -> a
-pgmidi :: (Sigs a) => Int -> Maybe Int -> (Msg -> SE a) -> a
+midi   :: (Sigs a) => (Msg -> SE a) -> SE a
+midin  :: (Sigs a) => Int -> (Msg -> SE a) -> SE a
+pgmidi :: (Sigs a) => Int -> Maybe Int -> (Msg -> SE a) -> SE a
 ~~~
 
 The function `midi` starts to listen for the midi-messages (`Msg`)
@@ -181,6 +181,9 @@ cpsmidi :: Msg -> D
 ampmidi :: Msg -> D -> D
 ...
 ~~~
+
+The second argument of `ampmidi` is a scaling factor
+or maximum value for amplitude.
 
 
 ## Flags and options

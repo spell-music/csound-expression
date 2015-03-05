@@ -155,11 +155,11 @@ randSkip :: D -> Evt a -> Evt a
 
 ~~~haskell
 -- renderes the midi instrument    
-midi    :: Sigs a => (Msg -> SE a) -> a         
+midi    :: Sigs a => (Msg -> SE a) -> SE a         
 
 -- renderes the midi instrument 
 -- on the given channel
-midin   :: Sigs a => Int -> (Msg -> SE a) -> a  
+midin   :: Sigs a => Int -> (Msg -> SE a) -> SE a  
 
 -- mix the signals from score
 mix     :: (CsdSco f, Sigs a) => f (Mix a) -> a 

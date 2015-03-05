@@ -36,7 +36,7 @@ type Channel = Int
 The simplest function for midi instruments is:
 
 ~~~haskell
-midi :: Sigs a => (Msg -> SE a) -> a
+midi :: Sigs a => (Msg -> SE a) -> SE a
 ~~~
 
 It creates a signal that is produced from the output of midi-instrument.
@@ -45,8 +45,8 @@ A midi-instrument listens for messages on all channels.
 There are two more refined functions:
 
 ~~~haskell
-midin  :: Sigs a => Channel -> (Msg -> SE a) -> a
-pgmidi :: Sigs a => Maybe Int -> Channel -> (Msg -> SE a) -> a
+midin  :: Sigs a => Channel -> (Msg -> SE a) -> SE a
+pgmidi :: Sigs a => Maybe Int -> Channel -> (Msg -> SE a) -> SE a
 ~~~
 
 They allow to specify a midi-channel and probably a midi-program.
@@ -62,14 +62,14 @@ you can start to play along with it in csound-expression. Just type:
 > ghci
 > :m +Csound.Base
 > let instr msg = return $ 0.25 * (fades 0.1 1) * (sig $ ampmidi msg 1) * saw (sig $ cpsmidi msg)
-> dac $ smallRoom $ midi instr
+> dac $ fmap smallRoom $ midi instr
 ~~~
 
 If we don't have the midi-device we can test the instrument with virtual one.
 We need to use `vdac` in place of `dac`:
 
 ~~~haskell
-> vdac $ smallRoom $ midi instr
+> vdac $ fmap smallRoom $ midi instr
 ~~~
 
 We have created a simple saw-based instrument. The function `fades` adds 
@@ -105,7 +105,7 @@ our instrument like this:
 
 ~~~haskell
 > let instr = onMsg $ mul (0.25 * fades 0.1 1) . saw
-> dac $ smallRoom $ midi instr
+> dac $ fmap smallRoom $ midi instr
 ~~~
 
 The function `mul` scales the signal-output like types.
@@ -125,7 +125,7 @@ There are two functions for this mode:
 monoMsg     :: D -> D -> SE (Sig, Sig)
 monoMsg portamentoTime releaseTime
 
-holdMsg :: D ->   -> SE (Sig, Sig) 
+holdMsg :: D -> SE (Sig, Sig) 
 holdMsg portamentoTime
 ~~~
 
