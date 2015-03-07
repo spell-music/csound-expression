@@ -1,15 +1,22 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language FlexibleInstances #-}
+{-# Language 
+        TypeFamilies, 
+        MultiParamTypeClasses, 
+        FlexibleInstances, 
+        FlexibleContexts #-}
 module Csound.SigSpace(
-    SigSpace(..), BindSig(..), mul, at,
+    SigSpace(..), BindSig(..), mul, At(..), bat,
     cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, 
     wsum        
 ) where
 
+import Control.Monad
 import Control.Applicative
 
 import Csound.Typed
-import Csound.Typed.Opcode(pvscross, pvscale, pvsmix)
+import Csound.Types
+import Csound.Control.Gui(Source, mapSource)
+import Csound.Typed.Opcode(pvscross, pvscale, pvsmix, balance)
 
 -- | A class for easy way to process the outputs of the instruments.
 class SigSpace a where
@@ -22,10 +29,6 @@ class SigSpace a => BindSig a where
 -- | Scaling the sound.
 mul :: SigSpace a => Sig -> a -> a
 mul k = mapSig (k * )
-
--- | A shortcut for @mapSig@.
-at :: SigSpace a => (Sig -> Sig) -> a -> a
-at = mapSig
 
 -- | Crossfade.
 --
@@ -107,6 +110,10 @@ instance BindSig  (SE (Sig, Sig, Sig)) where bindSig f = fmap (bindSig f)
 
 instance SigSpace (SE (Sig, Sig, Sig, Sig)) where mapSig  f = fmap (mapSig f)
 instance BindSig  (SE (Sig, Sig, Sig, Sig)) where bindSig f = fmap (bindSig f)
+
+instance SigSpace a => SigSpace (Source a) where
+    mapSig f = mapSource (mapSig f)
+
 
 -----------------------------------------------------
 -- numeric instances
@@ -310,4 +317,164 @@ instance Fractional (a -> (Sig, Sig, Sig)) where
 instance Fractional (a -> (Sig, Sig, Sig, Sig)) where
     (/) = liftA2 (/)
     fromRational = return . fromRational
+
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+
+class SigSpace b => At a b c where
+    type AtOut a b c :: *
+    at :: (a -> b) -> c -> AtOut a b c
+
+bat :: At Sig a b => (Sig -> a) -> b -> AtOut Sig a b
+bat f = at (\x -> mapSig ( `balance` x) $ f x)
+
+--------------------------------------
+-- for (Sig -> Sig)
+
+instance At Sig Sig Sig where
+    type AtOut Sig Sig Sig = Sig
+    at f a = f a
+
+instance At Sig Sig Sig2 where
+    type AtOut Sig Sig Sig2 = Sig2
+    at f a = mapSig f a
+
+instance At Sig Sig Sig3 where
+    type AtOut Sig Sig Sig3 = Sig3
+    at f a = mapSig f a
+
+instance At Sig Sig Sig4 where
+    type AtOut Sig Sig Sig4 = Sig4
+    at f a = mapSig f a
+
+instance At Sig Sig (SE Sig) where
+    type AtOut Sig Sig (SE Sig) = SE Sig
+    at f a = mapSig f a
+
+instance At Sig Sig (SE Sig2) where
+    type AtOut Sig Sig (SE Sig2) = SE Sig2
+    at f a = mapSig f a
+
+instance At Sig Sig (SE Sig3) where
+    type AtOut Sig Sig (SE Sig3) = SE Sig3
+    at f a = mapSig f a
+
+instance At Sig Sig (SE Sig4) where
+    type AtOut Sig Sig (SE Sig4) = SE Sig4
+    at f a = mapSig f a
+
+------------------------------------------------------
+-- for (Sig -> SE Sig)
+
+instance At Sig (SE Sig) Sig where
+    type AtOut Sig (SE Sig) Sig = SE Sig
+    at f a = f a
+
+instance At Sig (SE Sig) Sig2 where
+    type AtOut Sig (SE Sig) Sig2 = SE Sig2
+    at f a = bindSig f a
+
+instance At Sig (SE Sig) Sig3 where
+    type AtOut Sig (SE Sig) Sig3 = SE Sig3
+    at f a = bindSig f a
+
+instance At Sig (SE Sig) Sig4 where
+    type AtOut Sig (SE Sig) Sig4 = SE Sig4
+    at f a = bindSig f a
+
+instance At Sig (SE Sig) (SE Sig) where
+    type AtOut Sig (SE Sig) (SE Sig) = SE Sig
+    at f a = join $ bindSig f a
+
+instance At Sig (SE Sig) (SE Sig2) where
+    type AtOut Sig (SE Sig) (SE Sig2) = SE Sig2
+    at f a = join $ bindSig f a
+
+instance At Sig (SE Sig) (SE Sig3) where
+    type AtOut Sig (SE Sig) (SE Sig3) = SE Sig3
+    at f a = join $ bindSig f a
+
+instance At Sig (SE Sig) (SE Sig4) where
+    type AtOut Sig (SE Sig) (SE Sig4) = SE Sig4
+    at f a = join $ bindSig f a
+
+-----------------------------------------------------
+-- mono to stereo 
+
+instance At Sig Sig2 Sig where
+    type AtOut Sig Sig2 Sig = Sig2
+    at f a = f a
+
+instance At Sig Sig2 (SE Sig) where
+    type AtOut Sig Sig2 (SE Sig) = SE Sig2
+    at f a = fmap f a
+
+instance At Sig Sig2 Sig2 where
+    type AtOut Sig Sig2 Sig2 = Sig2
+    at f a = 0.5 * (f (fst a) + f (snd a))
+
+instance At Sig Sig2 (SE Sig2) where
+    type AtOut Sig Sig2 (SE Sig2) = SE Sig2
+    at f a = fmap (at f) a
+
+---------------------------------------------------------   
+
+instance (At Sig Sig a) => At Sig Sig (Source a) where
+    type AtOut Sig Sig (Source a) = Source (AtOut Sig Sig a)
+    at f a = mapSource (at f) a
+
+instance (At Sig (SE Sig) a) => At Sig (SE Sig) (Source a) where
+    type AtOut Sig (SE Sig) (Source a) = Source (AtOut Sig (SE Sig) a)
+    at f a = mapSource (at f) a
+
+---------------------------------------------------------   
+-- Sig2 -> Sig2
+
+fromMono a = (a, a)
+
+instance At Sig2 Sig2 Sig where
+    type AtOut Sig2 Sig2 Sig = Sig2
+    at f a = f $ fromMono a
+
+instance At Sig2 Sig2 Sig2 where
+    type AtOut Sig2 Sig2 Sig2 = Sig2
+    at f a = f a
+
+instance At Sig2 Sig2 (SE Sig) where
+    type AtOut Sig2 Sig2 (SE Sig) = SE Sig2
+    at f a = fmap (f . fromMono) a
+
+instance At Sig2 Sig2 (SE Sig2) where
+    type AtOut Sig2 Sig2 (SE Sig2) = SE Sig2
+    at f a = fmap f a
+
+---------------------------------------------
+-- Sig2 -> SE Sig2
+
+instance At Sig2 (SE Sig2) Sig where
+    type AtOut Sig2 (SE Sig2) Sig = SE Sig2
+    at f a = f $ fromMono a
+
+instance At Sig2 (SE Sig2) Sig2 where
+    type AtOut Sig2 (SE Sig2) Sig2 = SE Sig2
+    at f a = f a
+
+instance At Sig2 (SE Sig2) (SE Sig) where
+    type AtOut Sig2 (SE Sig2) (SE Sig) = SE Sig2
+    at f a = (f . fromMono) =<< a
+
+instance At Sig2 (SE Sig2) (SE Sig2) where
+    type AtOut Sig2 (SE Sig2) (SE Sig2) = SE Sig2
+    at f a = f =<< a
+
+---------------------------------------------------------   
+
+instance (At Sig2 Sig2 a) => At Sig2 Sig2 (Source a) where
+    type AtOut Sig2 Sig2 (Source a) = Source (AtOut Sig2 Sig2 a)
+    at f a = mapSource (at f) a
+
+instance (At Sig2 (SE Sig2) a) => At Sig2 (SE Sig2) (Source a) where
+    type AtOut Sig2 (SE Sig2) (Source a) = Source (AtOut Sig2 (SE Sig2) a)
+    at f a = mapSource (at f) a
+
 

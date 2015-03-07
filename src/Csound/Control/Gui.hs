@@ -81,8 +81,6 @@ import Csound.Control.Gui.Layout
 import Csound.Control.Gui.Props
 import Csound.Control.Gui.Widget
 
-import Csound.SigSpace(SigSpace(..))
-
 -- | Creates a window with the given name, size and content
 --
 -- > win name (width, height) gui
@@ -91,10 +89,6 @@ win name (x, y) = panelBy name (Just $ Rect 0 0 x y)
 
 keyWin :: String -> (Int, Int) -> Gui -> SE ()
 keyWin name (x, y) = keyPanelBy name (Just $ Rect 0 0 x y)
-
-instance SigSpace a => SigSpace (Source a) where
-    mapSig f = mapSource (mapSig f)
-
 
 ----------------------------------------------------------------------------------
 -- easy grouppings for GUIs

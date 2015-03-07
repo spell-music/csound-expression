@@ -47,7 +47,7 @@ loadbang = impulseE 0
 
 -- | Fires a single true value in the given time ahead.
 impulse :: D -> Sig 
-impulse dt = mpulse 1 0 `withD` dt
+impulse dt = downsamp (mpulse (sig $ getBlockSize) 0 `withD` dt) `withD` getBlockSize
 
 -- | Fires a single event in the given time ahead.
 impulseE :: D -> Evt Unit

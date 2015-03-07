@@ -9,6 +9,7 @@ module Csound.Air.Envelope (
     holdSeq, linSeq, expSeq,
     linloop, exploop, sah, stepSeq, 
     constSeq, triSeq, sqrSeq, sawSeq, isawSeq, xsawSeq, ixsawSeq, isqrSeq, xtriSeq,
+    pwSeq, ipwSeq, rampSeq, irampSeq, xrampSeq, ixrampSeq,
     adsrSeq, xadsrSeq, adsrSeq_, xadsrSeq_,  
 
     -- * Faders
@@ -176,7 +177,7 @@ constSeq = genSeq stepSeq id
 
 -- | Step sequencer with unipolar triangle.
 triSeq :: [Sig] -> Sig -> Sig
-triSeq as cps = genSeq loopseg triList as (2 * cps)
+triSeq as cps = genSeq loopseg triList as cps
 
 -- | Step sequencer with unipolar square.
 sqrSeq :: [Sig] -> Sig -> Sig
@@ -204,19 +205,77 @@ ixsawSeq = genSeq loopxseg isawList
 
 -- | Step sequencer with unipolar exponential triangle.
 xtriSeq :: [Sig] -> Sig -> Sig
-xtriSeq as cps = genSeq loopxseg triList as (2 * cps)
+xtriSeq as cps = genSeq loopxseg triList as (cps)
+
+-- | A sequence of unipolar waves with pulse width moulation (see upw).
+-- The first argument is a duty cycle in range 0 to 1.
+pwSeq :: Sig -> [Sig] -> Sig -> Sig
+pwSeq duty = genSeq lpshold (pwList duty)
+
+-- | A sequence of unipolar inverted waves with pulse width moulation (see upw).
+-- The first argument is a duty cycle in range 0 to 1.
+ipwSeq :: Sig -> [Sig] -> Sig -> Sig
+ipwSeq duty = genSeq lpshold (ipwList duty)
+
+-- | A sequence of unipolar triangle waves with ramp factor (see uramp).
+-- The first argument is a ramp factor cycle in range 0 to 1.
+rampSeq :: Sig -> [Sig] -> Sig -> Sig
+rampSeq duty xs = genSeq loopseg (rampList (head xs) duty) xs
+
+-- | A sequence of unipolar exponential triangle waves with ramp factor (see uramp).
+-- The first argument is a ramp factor cycle in range 0 to 1.
+xrampSeq :: Sig -> [Sig] -> Sig -> Sig
+xrampSeq duty xs = genSeq loopxseg (rampList (head xs) duty) xs
+
+-- | A sequence of unipolar inverted triangle waves with ramp factor (see uramp).
+-- The first argument is a ramp factor cycle in range 0 to 1.
+irampSeq :: Sig -> [Sig] -> Sig -> Sig
+irampSeq duty xs = genSeq loopseg (irampList (head xs) duty) xs
+
+-- | A sequence of unipolar inverted exponential triangle waves with ramp factor (see uramp).
+-- The first argument is a ramp factor cycle in range 0 to 1.
+ixrampSeq :: Sig -> [Sig] -> Sig -> Sig
+ixrampSeq duty xs = genSeq loopxseg (irampList (head xs) duty) xs
+
 
 sawList xs = case xs of
-    []  -> []           
+    []  -> []       
+    [a] -> a : 1 : 0 : []
     a:rest -> a : 1 : 0 : 0 : sawList rest
         
 isawList xs = case xs of
-    []  -> []           
+    []  -> []  
+    [a] -> 0 : 1 : a : []
     a:rest -> 0 : 1 : a : 0 : isawList rest
 
 triList xs = case xs of
     [] -> [0, 0]
     a:rest -> 0 : 1 : a : 1 : triList rest 
+
+pwList k xs = case xs of
+    []   -> []
+    a:as -> a : k : 0 : (1 - k) : pwList k as
+
+ipwList k xs = case xs of
+    []   -> []
+    a:as -> 0 : k : a : (1 - k) : ipwList k as
+
+rampList a1 duty xs = case xs of
+    [] -> []
+    [a] -> 0.5 * a : d1 : a : d1 : 0.5 * a : d2 : 0 : d2 : 0.5 * a1 : []
+    a:as -> 0.5 * a : d1 : a : d1 : 0.5 * a : d2 : 0 : d2 : rampList a1 duty as  
+    where 
+        d1 = duty / 2
+        d2 = (1 - duty) / 2
+
+irampList a1 duty xs = case xs of
+    [] -> []
+    [a] -> 0.5 * a : d1 : 0 : d1 : 0.5 * a : d2 : a : d2 : 0.5 * a1 : []
+    a:as -> 0.5 * a : d1 : 0 : d1 : 0.5 * a : d2 : a : d2 : rampList a1 duty as  
+    where 
+        d1 = duty / 2
+        d2 = (1 - duty) / 2
+
 
 ------------------------------------------------------------------
 
@@ -233,7 +292,10 @@ intersperseEnd val end xs = case xs of
 ------------------------------------------------------------------
 
 smooth :: Sig -> Sig
-smooth = slide 0.001
+smooth = flip portk 0.001
+
+fixEnd :: [Sig] -> [Sig]
+fixEnd = ( ++ [0])
 
 -- | Looping sample and hold envelope. The first argument is the list of pairs:
 --
@@ -257,7 +319,7 @@ lpshold as cps = smooth $ C.lpshold cps 0 0 as
 -- 
 -- > loopseg valDurs frequency
 loopseg :: [Sig] -> Sig -> Sig
-loopseg as cps = smooth $ C.loopseg cps 0 0 as
+loopseg as cps = smooth $ C.loopseg cps 0 0 (fixEnd as)
 
 -- | Looping exponential segments envelope. The first argument is the list of pairs:
 --
@@ -269,7 +331,7 @@ loopseg as cps = smooth $ C.loopseg cps 0 0 as
 -- 
 -- > loopxseg valDurs frequency
 loopxseg :: [Sig] -> Sig -> Sig
-loopxseg as cps = smooth $ C.loopxseg cps 0 0 as
+loopxseg as cps = smooth $ C.loopxseg cps 0 0 (fixEnd as)
 
 -- | It's like lpshold but we can specify the phase of repetition (phase belongs to [0, 1]).
 lpsholdBy :: D -> [Sig] -> Sig -> Sig
@@ -277,11 +339,11 @@ lpsholdBy phase as cps = smooth $ C.lpshold cps 0 phase  as
 
 -- | It's like loopseg but we can specify the phase of repetition (phase belongs to [0, 1]).
 loopsegBy :: D -> [Sig] -> Sig -> Sig
-loopsegBy phase as cps = smooth $ C.loopseg cps 0 phase  as
+loopsegBy phase as cps = smooth $ C.loopseg cps 0 phase (fixEnd as)
 
 -- | It's like loopxseg but we can specify the phase of repetition (phase belongs to [0, 1]).
 loopxsegBy :: D -> [Sig] -> Sig -> Sig
-loopxsegBy phase as cps = smooth $ C.loopxseg cps 0 phase  as
+loopxsegBy phase as cps = smooth $ C.loopxseg cps 0 phase (fixEnd as)
 
 -- | The looping ADSR envelope.
 --

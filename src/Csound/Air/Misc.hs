@@ -15,7 +15,10 @@ module Csound.Air.Misc(
     arpeggi, arpBy,
 
     -- * GUI
-    lpJoy
+    lpJoy,
+
+    -- * Function composition
+    funSeq, funPar
 ) where
 
 import Data.Boolean
@@ -203,3 +206,14 @@ arpBy ampWave cpsWave amps cpss wave dt = mul (ampWave amps dt) $ wave $ cpsWave
 -- Ox is for center frequency and Oy is for resonance.
 lpJoy :: Source (Sig -> Sig)
 lpJoy = lift1 (\(cps, res) -> mlp cps res) $ joy (expSpan 100 17000) (linSpan 0.05 0.95) (1400, 0.5)
+
+
+-- | Chains all functions in the list.
+funSeq :: [a -> a] -> a -> a
+funSeq = foldl (.) id
+
+-- | Applies all functions in the list to the given input
+-- and summs them up.
+funPar :: Num a => [a -> a] -> a -> a
+funPar fs a = sum $ fmap ($ a) fs
+

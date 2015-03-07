@@ -51,7 +51,7 @@ module Csound.Types(
     -- or
     --
     -- > asig = ar1 $ diskin2 "file.wav" 1
-    Sig2, Sig4, Sig6, Sig8,
+    Sig2, Sig3, Sig4, Sig6, Sig8,
     ar1, ar2, ar4, ar6, ar8,
 
     -- * Tuples
@@ -79,6 +79,7 @@ import Data.Boolean
 import Csound.Typed.Types
 
 type Sig2 = (Sig, Sig)
+type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
 type Sig6 = (Sig, Sig, Sig, Sig, Sig, Sig)
 type Sig8 = (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)

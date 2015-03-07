@@ -24,7 +24,7 @@ module Csound.Air.Wav(
     lengthSnd, segments,
 
     -- * Signal manipulation
-    takeSnd, delaySnd, afterSnd, segmentSnd, repeatSnd, toMono
+    takeSnd, delaySnd, afterSnd, lineSnd, loopLineSnd, segmentSnd, repeatSnd, toMono
 ) where
 
 import Data.List(isSuffixOf)
@@ -65,6 +65,19 @@ repeatSnd dt asig = sched (const $ return asig) $ segments dt
 -- > afterSnd dur sig1 sig2
 afterSnd :: (Num b, Sigs b) => D -> b -> b -> b
 afterSnd dt a b = takeSnd dt a + delaySnd dt b
+
+-- | Creates a sequence of signals. Each segment lasts for 
+-- fixed amount of time given in the first argument.
+lineSnd :: (Num a, Sigs a) => D -> [a] -> a
+lineSnd dt xs = foldr1 go xs
+    where
+        go a b = afterSnd dt a b
+
+-- | Creates a sequence of signals and loops over the sequence. 
+-- Each segment lasts for  fixed amount of time given in the first argument.
+loopLineSnd :: (Num a, Sigs a) => D -> [a] -> a
+loopLineSnd dt xs = repeatSnd (dt * (int $ length xs)) $ lineSnd dt xs
+
 
 --------------------------------------------------------------------------
 -- sound files playback

@@ -2,13 +2,16 @@
 -- A waveform function takes in a time varied frequency (in Hz).
 module Csound.Air.Wave (
 	 -- * Bipolar
-    osc, oscBy, saw, isaw, pulse, sqr, tri, blosc,
+    osc, oscBy, saw, isaw, pulse, sqr, pw, tri, ramp, blosc,
 
     -- * Unipolar
-    unipolar, bipolar, on, uon, uosc, uoscBy, usaw, uisaw, upulse, usqr, utri, ublosc,
+    unipolar, bipolar, on, uon, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
 
     -- * Noise
     rndh, urndh, rndi, urndi, white, pink,
+
+    -- * Frequency modulation
+    fosc,
 
     -- * Low frequency oscillators
     Lfo, lfo
@@ -68,6 +71,33 @@ upulse = unipolar . pulse
 -- | Unipolar band-limited oscillator.
 ublosc :: Tab -> Sig -> Sig
 ublosc tb = unipolar . blosc tb
+
+-- | Frequency modulation
+--
+-- > fosc carrierFreq modulatorFreq modIndex cps
+fosc :: Sig -> Sig -> Sig -> Sig -> Sig
+fosc car mod ndx cps = foscili 1 cps car mod ndx sine
+
+-- | Pulse width modulation (width range is 0 to 1)
+--
+-- > pw dutyCycle cps
+pw :: Sig -> Sig -> Sig
+pw duty cps = vco2 1 cps `withD` 2 `withSig` duty
+
+-- | Triangle wave with ramp factor (factor's range is 0 to 1)
+--
+-- > ramp factor cps
+ramp :: Sig -> Sig -> Sig
+ramp duty cps = vco2 1 cps `withD` 4 `withSig` (uon 0.01 0.99 $ duty)
+
+-- | Unipolar pulse width modulation wave.
+upw :: Sig -> Sig -> Sig
+upw duty cps = unipolar $ pw duty cps
+
+-- | Unipolar triangle wave with ram factor.
+uramp :: Sig -> Sig -> Sig
+uramp duty cps = unipolar $ ramp duty cps
+
 
 -- rescaling
 
