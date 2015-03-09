@@ -328,39 +328,8 @@ class SigSpace b => At a b c where
 bat :: At Sig a b => (Sig -> a) -> b -> AtOut Sig a b
 bat f = at (\x -> mapSig ( `balance` x) $ f x)
 
---------------------------------------
--- for (Sig -> Sig)
-
-instance At Sig Sig Sig where
-    type AtOut Sig Sig Sig = Sig
-    at f a = f a
-
-instance At Sig Sig Sig2 where
-    type AtOut Sig Sig Sig2 = Sig2
-    at f a = mapSig f a
-
-instance At Sig Sig Sig3 where
-    type AtOut Sig Sig Sig3 = Sig3
-    at f a = mapSig f a
-
-instance At Sig Sig Sig4 where
-    type AtOut Sig Sig Sig4 = Sig4
-    at f a = mapSig f a
-
-instance At Sig Sig (SE Sig) where
-    type AtOut Sig Sig (SE Sig) = SE Sig
-    at f a = mapSig f a
-
-instance At Sig Sig (SE Sig2) where
-    type AtOut Sig Sig (SE Sig2) = SE Sig2
-    at f a = mapSig f a
-
-instance At Sig Sig (SE Sig3) where
-    type AtOut Sig Sig (SE Sig3) = SE Sig3
-    at f a = mapSig f a
-
-instance At Sig Sig (SE Sig4) where
-    type AtOut Sig Sig (SE Sig4) = SE Sig4
+instance SigSpace a => At Sig Sig a where
+    type AtOut Sig Sig a = a
     at f a = mapSig f a
 
 ------------------------------------------------------
@@ -419,10 +388,6 @@ instance At Sig Sig2 (SE Sig2) where
 
 ---------------------------------------------------------   
 
-instance (At Sig Sig a) => At Sig Sig (Source a) where
-    type AtOut Sig Sig (Source a) = Source (AtOut Sig Sig a)
-    at f a = mapSource (at f) a
-
 instance (At Sig (SE Sig) a) => At Sig (SE Sig) (Source a) where
     type AtOut Sig (SE Sig) (Source a) = Source (AtOut Sig (SE Sig) a)
     at f a = mapSource (at f) a
@@ -476,5 +441,4 @@ instance (At Sig2 Sig2 a) => At Sig2 Sig2 (Source a) where
 instance (At Sig2 (SE Sig2) a) => At Sig2 (SE Sig2) (Source a) where
     type AtOut Sig2 (SE Sig2) (Source a) = Source (AtOut Sig2 (SE Sig2) a)
     at f a = mapSource (at f) a
-
 
