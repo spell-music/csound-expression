@@ -141,5 +141,5 @@ midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
     
 -- | Unipolar midiCtrl. Initializes midi control and get the value in the range 0 to 1.
 umidiCtrl :: D -> D -> D -> SE Sig
-umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
+umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival 0 1
 

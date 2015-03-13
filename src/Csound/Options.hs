@@ -6,7 +6,7 @@ module Csound.Options(
     setRates, setBufs, setGain, setJack,
     setOutput, setInput, 
     setDac, setAdc, setDacBy, setAdcBy, setThru,
-    setSilent,
+    setSilent, setMidiDevice, setMa,
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for 
@@ -91,3 +91,10 @@ setThru = mappend setDac setAdc
 setSilent :: Options
 setSilent = (def { csdFlags = def { audioFileOutput = def { nosound = True } } })
 
+-- | Sets midi device
+setMidiDevice :: String -> Options
+setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } }
+
+-- | Sets midi device to all.
+setMa :: Options
+setMa = setMidiDevice "a"

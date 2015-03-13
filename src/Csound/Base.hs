@@ -18,6 +18,7 @@ module Csound.Base(
     module Data.Boolean,
     module Data.Default,
     module Data.Monoid,
+    module Control.Applicative,
 
     -- * Opcodes
     module Csound.Typed.Opcode
@@ -34,6 +35,7 @@ import Csound.Options
 import Data.Boolean
 import Data.Default
 import Data.Monoid
+import Control.Applicative hiding ((<*))
     
 import Csound.Typed.Opcode hiding (button, display, space, lfo, initc7, ctrl7, oscInit, oscListen, oscSend, lpshold, loopseg, loopxseg)
 

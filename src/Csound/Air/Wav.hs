@@ -49,7 +49,7 @@ takeSnd dt asig = trigs (const $ return asig) $ eventList [(0, dt, unit)]
 
 -- | Delays signals by the given amount (in seconds).
 delaySnd :: Sigs a => D -> a -> a
-delaySnd dt asig = trigs (const $ return asig) $ eventList [(dt, -1, unit)]
+delaySnd dt asig = trigs (const $ return asig) $ eventList [(dt, infiniteDur, unit)]
 
 -- | Delays a signal by the first argument and takes only second argument amount
 -- of signal (everything is measured in seconds).

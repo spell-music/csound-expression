@@ -75,17 +75,18 @@ module Csound.Control.Instr(
     -- way down the Score-structure. 
     CsdSco(..), Mix, sco, mix, eff, CsdEventList(..), CsdEvent, 
     mixLoop, sco_, mix_, mixLoop_, mixBy, 
+    infiniteDur,
     
     -- * Evt  
 
     -- ** Singlular
-    trig, sched, schedHarp, schedUntil, schedToggle,
+    trig, sched, retrig, schedHarp, schedUntil, schedToggle, evtLoop,
     trig_, sched_, schedUntil_, 
     trigBy, schedBy, schedHarpBy,
     withDur,
 
     -- ** Plural
-    trigs, scheds, schedHarps, schedUntils,
+    trigs, scheds, retrigs, schedHarps, schedUntils, 
     trigs_, scheds_, schedUntils_, 
     trigsBy, schedsBy, schedHarpsBy,
     withDurs,
@@ -123,7 +124,7 @@ mixLoop_ a = sched_ instr $ withDur dur $ repeatE unit $ metroE $ sig $ 1 / dur
 -- | Invokes an instrument with first event stream and 
 -- holds the note until the second event stream is active.
 schedUntils :: (Arg a, Sigs b) => (a -> SE b) -> Evt [a] -> Evt c -> b
-schedUntils instr onEvt offEvt = scheds instr' $ withDurs (-1) onEvt
+schedUntils instr onEvt offEvt = scheds instr' $ withDurs infiniteDur onEvt
     where 
         instr' x = do 
             res <- instr x
@@ -140,7 +141,7 @@ schedToggle res evt = schedUntil instr on off
 -- | Invokes an instrument with first event stream and 
 -- holds the note until the second event stream is active.
 schedUntils_ :: (Arg a) => (a -> SE ()) -> Evt [a] -> Evt c -> SE ()
-schedUntils_ instr onEvt offEvt = scheds_ instr' $ withDurs (-1) onEvt
+schedUntils_ instr onEvt offEvt = scheds_ instr' $ withDurs infiniteDur onEvt
     where 
         instr' x = do 
             res <- instr x
@@ -179,8 +180,11 @@ trig f = fromPlural $ trigs f
 sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
 sched f = fromPlural $ scheds f
 
+retrig :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> b
+retrig f = fromPlural $ retrigs f
+
 -- | An instrument is triggered with event stream and delay time is set to zero 
--- (event fires immediately) and duration is set to inifinite time. The note is 
+-- (event fires immediately) and duration is set to infinite time. The note is 
 -- held while the instrument is producing something. If the instrument is silent
 -- for some seconds (specified in the first argument) then it's turned off.
 schedHarp :: (Arg a, Sigs b) => D -> (a -> SE b) -> Evt a -> b

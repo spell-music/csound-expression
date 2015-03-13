@@ -1,6 +1,6 @@
 {-#Language BangPatterns, TupleSections, FlexibleContexts #-}
 module Csound.Control.Evt(
-    Evt(..), Bam, 
+    Evt(..), Bam, Tick, 
 
     -- * Core functions
     boolToEvt, evtToBool, sigToEvt, stepper,
@@ -13,7 +13,7 @@ module Csound.Control.Evt(
 
     -- * Higher-level event functions
     devt, eventList,
-    cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle,
+    cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle, toTog, toTog1,
     Rnds,
     oneOf, freqOf, freqAccum, 
     randDs, randList, randInts, randSkip, randSkipBy, 
@@ -29,6 +29,8 @@ import Data.Tuple
 import Csound.Typed
 import Csound.Typed.Opcode
 import Csound.Types(atArg)
+
+type Tick = Evt Unit
 
 -- | Constant event stream. It produces the same value (the first argument)
 -- all the time.
@@ -245,3 +247,16 @@ patternToMask xs = case xs of
             | n <= 0    = []
             | otherwise = True : replicate (n - 1) False
 
+
+-- converting to toggle signals
+
+togGen :: D -> Tick -> Evt D
+togGen n = accumE n (\_ s -> let v = (mod' (s + 1) 2) in (v, v))
+
+-- | Converts clicks to alternating 0 and 1 (toggle event stream)
+toTog :: Tick -> Evt D
+toTog  = togGen 1
+
+-- | Converts clicks to alternating 1 and 0 (toggle event stream with first value set to 1)
+toTog1 :: Tick -> Evt D
+toTog1 = togGen 0
