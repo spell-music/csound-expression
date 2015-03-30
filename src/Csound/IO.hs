@@ -75,7 +75,7 @@ instance RenderCsd (Sig, Sig, Sig, Sig, Sig, Sig) where
 
 instance RenderCsd (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) where
     renderCsdBy opt a = render opt (return a)
-
+{-
 instance RenderCsd 
     ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
     , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) ) where  
@@ -87,7 +87,7 @@ instance RenderCsd
     , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
     , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) ) where  
     renderCsdBy opt a = render opt (return a)
-
+-}
 instance RenderCsd (SE Sig) where
     renderCsdBy opt a = render opt a
 
@@ -103,6 +103,7 @@ instance RenderCsd (SE (Sig, Sig, Sig, Sig, Sig, Sig)) where
 instance RenderCsd (SE (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)) where
     renderCsdBy opt a = render opt a
 
+{-
 instance RenderCsd (SE 
     ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
     , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) )) where  
@@ -114,7 +115,7 @@ instance RenderCsd (SE
     , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
     , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) )) where  
     renderCsdBy opt a = render opt a
-
+-}
 instance (Sigs a, Sigs b) => RenderCsd (a -> b) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 

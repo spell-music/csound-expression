@@ -120,33 +120,6 @@ instance SigSpace a => SigSpace (Source a) where
 
 -- Num
 
-instance Num (Sig, Sig) where
-    (a1, a2) + (b1, b2) = (a1 + b1, a2 + b2)
-    (a1, a2) * (b1, b2) = (a1 * b1, a2 * b2)
-    negate (a1, a2) = (negate a1, negate a2)
-
-    fromInteger n = (fromInteger n, fromInteger n)
-    signum (a1, a2) = (signum a1, signum a2)
-    abs (a1, a2) = (abs a1, abs a2)
-
-instance Num (Sig, Sig, Sig) where
-    (a1, a2, a3) + (b1, b2, b3) = (a1 + b1, a2 + b2, a3 + b3)
-    (a1, a2, a3) * (b1, b2, b3) = (a1 * b1, a2 * b2, a3 * b3)
-    negate (a1, a2, a3) = (negate a1, negate a2, negate a3)
-
-    fromInteger n = (fromInteger n, fromInteger n, fromInteger n)
-    signum (a1, a2, a3) = (signum a1, signum a2, signum a3)
-    abs (a1, a2, a3) = (abs a1, abs a2, abs a3)
-
-instance Num (Sig, Sig, Sig, Sig) where
-    (a1, a2, a3, a4) + (b1, b2, b3, b4) = (a1 + b1, a2 + b2, a3 + b3, a4 + b4)
-    (a1, a2, a3, a4) * (b1, b2, b3, b4) = (a1 * b1, a2 * b2, a3 * b3, a4 * b4)
-    negate (a1, a2, a3, a4) = (negate a1, negate a2, negate a3, negate a4)
-
-    fromInteger n = (fromInteger n, fromInteger n, fromInteger n, fromInteger n)
-    signum (a1, a2, a3, a4) = (signum a1, signum a2, signum a3, signum a4)
-    abs (a1, a2, a3, a4) = (abs a1, abs a2, abs a3, abs a4)
-
 instance Num (SE Sig) where
     (+) = liftA2 (+)
     (*) = liftA2 (*)

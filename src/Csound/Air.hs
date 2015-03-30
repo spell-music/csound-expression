@@ -21,6 +21,12 @@ module Csound.Air (
     -- | Widgets to make live performances.
     module Csound.Air.Live,  
 
+    -- | Scheduling signals with event streams
+    module Csound.Air.Seg,
+
+    -- | Triggering sound samples with events, keyboard and midi.
+    module Csound.Air.Sampler,
+
     -- | Other usefull stuff.
     module Csound.Air.Misc
 ) where
@@ -32,4 +38,6 @@ import Csound.Air.Wav
 import Csound.Air.Spec
 import Csound.Air.Fx
 import Csound.Air.Live
+import Csound.Air.Seg
+import Csound.Air.Sampler
 import Csound.Air.Misc

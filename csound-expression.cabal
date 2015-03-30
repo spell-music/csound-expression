@@ -81,8 +81,10 @@ Library
         Csound.Air.Spec
         Csound.Air.Fx
         Csound.Air.Live
+        Csound.Air.Seg
+        Csound.Air.Sampler
         Csound.Air.Misc
-
+        
         Csound.Types
         Csound.Tab
         Csound.SigSpace

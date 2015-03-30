@@ -25,7 +25,7 @@ module Csound.Control.Gui.Widget (
     -- * Transformers
     setTitle,
     -- * Keyboard
-    KeyEvt(..), Key(..), keyIn, charOn, charOff,
+    KeyEvt(..), Key(..), keyIn, charOn, charOff, strOn, strOff,
 
     -- * Easy to use widgets
     uknob, xknob, uslider, xslider, ujoy, 
@@ -41,13 +41,14 @@ module Csound.Control.Gui.Widget (
 
 import Control.Monad
 
+import Data.Monoid
 import Data.List(transpose)
 import Data.Boolean
 
 import Csound.Typed.Gui
 import Csound.Typed.Types
 import Csound.Control.SE
-import Csound.Control.Evt(listAt)
+import Csound.Control.Evt(listAt, Tick)
 
 --------------------------------------------------------------------
 -- aux widgets
@@ -112,6 +113,13 @@ charOn  = keyIn . Press   . CharKey
 charOff :: Char -> Evt Unit
 charOff = keyIn . Release . CharKey
 
+-- | Creates an event in the output stream when one of the chars is pressed.
+strOn :: String -> Tick
+strOn a = mconcat $ fmap charOn a
+
+-- | Creates an event in the output stream when one of the chars is depressed.
+strOff :: String -> Tick
+strOff a = mconcat $ fmap charOff a
 
 -- | Unipolar linear slider. The value belongs to the interval [0, 1].
 -- The argument is for initial value.

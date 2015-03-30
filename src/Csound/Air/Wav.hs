@@ -78,7 +78,6 @@ lineSnd dt xs = foldr1 go xs
 loopLineSnd :: (Num a, Sigs a) => D -> [a] -> a
 loopLineSnd dt xs = repeatSnd (dt * (int $ length xs)) $ lineSnd dt xs
 
-
 --------------------------------------------------------------------------
 -- sound files playback
 

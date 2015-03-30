@@ -80,7 +80,7 @@ module Csound.Control.Instr(
     -- * Evt  
 
     -- ** Singlular
-    trig, sched, retrig, schedHarp, schedUntil, schedToggle, evtLoop,
+    trig, sched, retrig, schedHarp, schedUntil, schedToggle,
     trig_, sched_, schedUntil_, 
     trigBy, schedBy, schedHarpBy,
     withDur,
@@ -91,6 +91,9 @@ module Csound.Control.Instr(
     trigsBy, schedsBy, schedHarpsBy,
     withDurs,
 
+    -- ** Misc
+    alwaysOn,
+
     -- * Overload
     -- | Converters to make it easier a construction of the instruments.
     Outs(..), onArg, AmpInstr(..), CpsInstr(..)
@@ -100,7 +103,7 @@ import Csound.Typed
 import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
 
-import Csound.Control.Evt(metroE, repeatE, splitToggle)
+import Csound.Control.Evt(metroE, repeatE, splitToggle, loadbang)
 
 -- | Mixes the scores and plays them in the loop.
 mixLoop :: (CsdSco f, Sigs a) => f (Mix a) -> a
@@ -220,3 +223,6 @@ schedBy f = fromPluralBy $ schedsBy f
 schedHarpBy :: (Arg a, Sigs b, Arg c) => D -> (a -> SE b) -> (c -> Evt a) -> c -> b
 schedHarpBy dt f = fromPluralBy $ schedHarpsBy dt f
 
+-- | Executes some procedure for the whole lifespan of the program,
+alwaysOn :: SE () -> SE ()
+alwaysOn proc = sched_ (const $ proc) $ withDur (infiniteDur) $ loadbang
