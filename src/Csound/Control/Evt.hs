@@ -13,7 +13,9 @@ module Csound.Control.Evt(
 
     -- * Higher-level event functions
     devt, eventList,
-    cycleE, iterateE, repeatE, appendE, mappendE, partitionE, splitToggle, toTog, toTog1,
+    cycleE, iterateE, repeatE, appendE, mappendE, partitionE, 
+    takeE, dropE, takeWhileE, dropWhileE,
+    splitToggle, toTog, toTog1,
     Rnds,
     oneOf, freqOf, freqAccum, 
     randDs, randList, randInts, randSkip, randSkipBy, 
@@ -260,3 +262,27 @@ toTog  = togGen 1
 -- | Converts clicks to alternating 1 and 0 (toggle event stream with first value set to 1)
 toTog1 :: Tick -> Evt D
 toTog1 = togGen 0
+
+
+mkRow :: Evt a -> Evt (a, D)
+mkRow = accumE (0 :: D) (\a s -> ((a, s), s + 1) )
+
+filterRow :: (D -> BoolD) -> Evt a -> Evt a
+filterRow p = fmap fst . filterE (p . snd) . mkRow
+
+-- | Takes the ns events from the event stream and ignores the rest of the stream.
+takeE :: Int -> Evt a -> Evt a
+takeE n = filterRow ( <* int n)
+
+-- | Drops the ns events from the event stream and leaves the rest of the stream.
+dropE :: Int -> Evt a -> Evt a
+dropE n = filterRow ( >=* int n)
+
+-- | Takes events while the predicate is true.
+takeWhileE :: (a -> BoolD) -> Evt a -> Evt a
+takeWhileE p = fmap fst . filterE snd . accumE (1 :: D) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0)) 
+
+-- | Drops events while the predicate is true.
+dropWhileE :: (a -> BoolD) -> Evt a -> Evt a
+dropWhileE p = fmap fst . filterE (notB . snd) . accumE (1 :: D) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0)) 
+
