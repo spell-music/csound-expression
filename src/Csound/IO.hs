@@ -44,10 +44,10 @@ import qualified Control.Exception as E
 import Data.Monoid
 import Data.Default
 import Csound.Typed
-import Csound.Types(Sig2, Sig4)
+import Csound.Types(Sig2, Sig4, Sig6, Sig8)
 import Csound.Control.Gui
 
-import Csound.Options(setSilent, setMa)
+import Csound.Options(setSilent, setMa, setDac)
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy 
@@ -64,16 +64,16 @@ instance RenderCsd (SE ()) where
 instance RenderCsd Sig where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd (Sig, Sig) where
+instance RenderCsd Sig2 where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd (Sig, Sig, Sig, Sig) where
+instance RenderCsd Sig4 where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd (Sig, Sig, Sig, Sig, Sig, Sig) where
+instance RenderCsd Sig6 where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) where
+instance RenderCsd Sig8 where
     renderCsdBy opt a = render opt (return a)
 {-
 instance RenderCsd 
@@ -91,16 +91,16 @@ instance RenderCsd
 instance RenderCsd (SE Sig) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE (Sig, Sig)) where
+instance RenderCsd (SE Sig2) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE (Sig, Sig, Sig, Sig)) where
+instance RenderCsd (SE Sig4) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE (Sig, Sig, Sig, Sig, Sig, Sig)) where
+instance RenderCsd (SE Sig6) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)) where
+instance RenderCsd (SE Sig8) where
     renderCsdBy opt a = render opt a
 
 {-
@@ -211,7 +211,7 @@ simplePlayCsdBy opt player = playCsdBy opt phi
     where phi file = do
             runWithUserInterrupt $ player ++ " " ++ file
 
--- | Renders csound code to file @tmp.csd@ and plays it with @-odac@ option
+-- | Renders csound code to file @tmp.csd@ with flags set to @-odac@ and @-Ma@
 -- (sound output goes to soundcard in real time).
 dac :: (RenderCsd a) => a -> IO ()
 dac = dacBy def
@@ -220,8 +220,8 @@ dac = dacBy def
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ "csound -odac " ++ "tmp.csd" 
-    where opt = opt' <> setMa 
+    runWithUserInterrupt $ "csound " ++ "tmp.csd" 
+    where opt = opt' <> (setMa <> setDac)
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()

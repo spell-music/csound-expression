@@ -136,13 +136,13 @@ There are several patterns of (re)triggering.
 
 	Try to hit `q` and `a` keys.
 
-* `Tap` -- is usefule optimization for `Trig` it plays the note only for 
+* `Tap` -- is usefull optimization for `Trig` it plays the note only for 
 		a given static amount of time (it's good for short drum sounds)
 		`Tap` has the same arguments but the turn off string is substituted
 		with a note's length in seconds (it comes first):
 
-		~~~
-		`charTap` :: Sigs a => D -> String -> a -> SE a
+		~~~haskell
+		charTap :: Sigs a => D -> String -> a -> SE a
 		~~~
 
 * `Push` -- plays a signal while the key is pressed.
