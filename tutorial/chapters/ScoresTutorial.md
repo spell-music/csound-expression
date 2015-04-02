@@ -574,6 +574,6 @@ in the docs (see the module `Csound.Air` at the section *Writing sound files*).
 
 * <= [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SamplesTutorial.md)
 
-* => [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/LiveWidgetsTutorial.md)
+* => [Signal segments](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SignalSegmentsTutorial.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
