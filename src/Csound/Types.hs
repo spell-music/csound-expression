@@ -78,12 +78,6 @@ module Csound.Types(
 import Data.Boolean
 import Csound.Typed.Types
 
-type Sig2 = (Sig, Sig)
-type Sig3 = (Sig, Sig, Sig)
-type Sig4 = (Sig, Sig, Sig, Sig)
-type Sig6 = (Sig, Sig, Sig, Sig, Sig, Sig)
-type Sig8 = (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-
 -- | Gets an init-rate value from the list by index.
 atArg :: (Tuple a, Arg a) => [a] -> D -> a
 atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as)

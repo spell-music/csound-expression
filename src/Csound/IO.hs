@@ -75,19 +75,13 @@ instance RenderCsd Sig6 where
 
 instance RenderCsd Sig8 where
     renderCsdBy opt a = render opt (return a)
-{-
-instance RenderCsd 
-    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) ) where  
+
+instance RenderCsd (Sig8, Sig8) where  
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd 
-    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) ) where  
+instance RenderCsd (Sig8, Sig8, Sig8, Sig8) where  
     renderCsdBy opt a = render opt (return a)
--}
+
 instance RenderCsd (SE Sig) where
     renderCsdBy opt a = render opt a
 
@@ -103,20 +97,31 @@ instance RenderCsd (SE Sig6) where
 instance RenderCsd (SE Sig8) where
     renderCsdBy opt a = render opt a
 
-{-
-instance RenderCsd (SE 
-    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) )) where  
+instance RenderCsd (SE (Sig8, Sig8)) where  
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE 
-    ( (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-    , (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) )) where  
+instance RenderCsd (SE (Sig8, Sig8, Sig8, Sig8)) where  
     renderCsdBy opt a = render opt a
--}
-instance (Sigs a, Sigs b) => RenderCsd (a -> b) where
+
+instance (Sigs a) => RenderCsd (a -> Sig) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> Sig2) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> Sig4) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> Sig6) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> Sig8) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8)) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8, Sig8, Sig8)) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
 instance (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
