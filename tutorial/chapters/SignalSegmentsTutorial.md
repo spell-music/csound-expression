@@ -141,9 +141,9 @@ There are several patterns of (re)triggering.
 		`Tap` has the same arguments but the turn off string is substituted
 		with a note's length in seconds (it comes first):
 
-		~~~haskell
-		charTap :: Sigs a => D -> String -> a -> SE a
-		~~~
+	~~~haskell
+	charTap :: Sigs a => D -> String -> a -> SE a
+	~~~
 
 * `Push` -- plays a signal while the key is pressed.
 
