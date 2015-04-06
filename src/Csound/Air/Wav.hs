@@ -15,6 +15,18 @@ module Csound.Air.Wav(
     -- Loads the sample in the table and plays it back from RAM. The sample should be short. The size of the table is limited.
     -- It's up to 6 minutes for 44100 sample rate, 5 minutes for 48000 and 2.8 minutes for 96000.
     LoopMode(..), ramSnd, ramSnd1, 
+    ramTab, mincer, 
+    Phsr(..), relPhsr, sndPhsr, phsrBounce, phsrOnce,
+    ram, ram1,
+
+    -- ** Simple audio reading functions (Stereo)
+    TempoSig, PitchSig,
+
+    readRam, loopRam, readSeg, loopSeg, readRel, loopRel,
+
+    -- ** Simple audio reading functions (Mono)
+
+    readRam1, loopRam1, readSeg1, loopSeg1, readRel1, loopRel1,    
 
     -- * Writing sound files
     SampleFormat(..),
@@ -29,6 +41,11 @@ module Csound.Air.Wav(
 
 import Data.List(isSuffixOf)
 import Data.Default
+import Data.Boolean
+import Control.Applicative hiding((<*))
+
+import Control.Monad.Trans.Class
+import Csound.Dynamic hiding (int)
 
 import Csound.Typed
 import Csound.Typed.Opcode
@@ -244,3 +261,223 @@ writeWav1 file = writeWav file . \x -> (x, x)
 writeAiff1 :: String -> Sig -> SE ()
 writeAiff1 file = writeAiff file . \x -> (x, x)
 
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-- mincer
+
+-- | mincer — Phase-locked vocoder processing.
+--
+-- mincer implements phase-locked vocoder processing 
+-- using function tables containing sampled-sound sources, 
+-- with GEN01, and mincer will accept deferred allocation tables.
+--
+-- This opcode allows for time and frequency-independent scaling. 
+-- Time is controlled by a time index (in seconds) to the function 
+-- table position and can be moved forward and backward at any 
+-- chosen speed, as well as stopped at a given position ("frozen"). 
+-- The quality of the effect is generally improved with phase locking switched on.
+--
+-- > asig mincer atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
+--
+-- csound doc: <http://www.csounds.com/manual/html/mincer.html>
+mincer ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
+mincer b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5    
+    where f a1 a2 a3 a4 a5 = opcs "mincer" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
+
+-- | Mincer. We can playback a table and scale by tempo and pitch.
+--
+-- > mincer fidelity table pointer pitch 
+--
+-- fidelity is the parameter that specifies the size of the window (for FFT transform).
+-- The size equals to formula (fidelity + 11) ^ 2. If you don't know what to choose
+-- choose 0 for pitched sounds and -2 for drums. The table contains the sample to playback.
+-- The pointer loops over the table. The pitch specifies a scaling factor for pitch.
+-- So we can raise tone an octave up by setting the pitch to 2.
+ramTab :: D -> Tab -> Sig -> Sig -> Sig
+ramTab winSizePowerOfTwo tab aptr pitch = mincer aptr 1 pitch tab 1 `withD` (2 ** (winSizePowerOfTwo + 11))
+
+
+-- > let x n = mincer2 (Phsr "/home/anton/fox.wav" 0 (stepSeq [0.2, 1, 0.1, 0.5] 0.5) (lpshold [1, 0.8, -1, 0.2] 0.25)) n
+-- > dac $ mul 3 $ at (lp18 0.7 800 0.1) $ cfd (slide 0.5 $ usqr 0.2) (x 1) (sum [x $ 6/5, x $ 2])
+
+-- | Creates a pointer signal for reading audio from the table in loops.
+--
+-- > lphase length start end speed
+--
+-- Arguments are:
+--
+-- * length of the table  in seconds
+--
+-- * start and end points of the reading interval
+--
+-- * playback speed
+lphase :: D -> Sig -> Sig -> Sig -> Sig
+lphase irefdur kloopstart kloopend kspeed  = atimpt
+    where
+        kstart1 = kloopstart / sig irefdur
+        kend1 = kloopend / sig irefdur
+        ifqbas = 1 / irefdur
+        kfqrel = kspeed * sig ifqbas / (kend1 - kstart1)
+        andxrel = phasor kfqrel
+        atimpt = andxrel * (kloopend-kloopstart) + kloopstart
+
+
+----------------------------------------------------------------------
+
+-- | Looping phasor. It creates a looping pointer to the file.
+-- It's used in the function ram.
+-- 
+-- Ther arguments are: file name, start and end of the looping segment (in seconds),
+-- and the playback speed.
+data Phsr = Phsr
+    { phsrFile  :: String
+    , phsrStart :: Sig
+    , phsrEnd   :: Sig
+    , phsrSpeed :: Sig
+    }
+
+-- | Forces phasor to play only once.
+phsrOnce :: Phsr -> Phsr 
+phsrOnce a = a { phsrSpeed = phsrSpeed a * linseg [1, dt, 1, 0.01, 0] }
+    where dt = ir $ abs $ (phsrEnd a - phsrStart a) / phsrSpeed a
+
+-- | Reads the file forth and back. 
+phsrBounce :: Phsr -> Phsr
+phsrBounce a = a { phsrSpeed = phsrSpeed a * sqr (1 / dt) }
+    where dt = abs $ (phsrEnd a - phsrStart a) / phsrSpeed a
+
+-- | Creates a phasor if segments are relative to the total length.
+-- It can be useful for drum loops. If we don't know the complete length
+-- but we know that loop contains four distinct parts.
+relPhsr :: String -> Sig -> Sig -> Sig -> Phsr
+relPhsr file start end speed = Phsr
+    { phsrFile  = file
+    , phsrStart = start * sig len
+    , phsrEnd   = end   * sig len
+    , phsrSpeed = speed }
+    where len = filelen $ text file
+
+-- | Creates a phasor for reading the whole audio file  in loops 
+-- with given speed.
+sndPhsr :: String -> Sig -> Phsr
+sndPhsr file speed = relPhsr file 0 1 speed
+
+ram1 :: D -> Phsr -> Sig -> Sig
+ram1 = ramChn True 1
+
+-- | Reads audio files in loops. The file is loaded in RAM. 
+-- The size of the file is limited. It should be not more than 6 minutes
+-- for sample rate of 44100. 5.9 minutes for 48000.
+--
+-- What makes this function so cool is
+-- that we can scale the sound by tempo
+-- without affecting pitch, and we can scale the sound by pitch
+-- without affecting the tempo. Let's study the arguments.
+--
+-- > ram fidelity phasor pitch 
+--
+-- fidelity corresponds to the size of the FFT-window. 
+-- The function performs the FFT transform and it has to know the size.
+-- It's not the value for the size it's an integer value
+-- that proportional to the size. The higher the value the higher the size
+-- the lower the value the lower the size. The default value is 0. 
+-- Zero is best for most of the cases. For drums we can lower it to (-2).
+--
+-- The phasor is a quadruple of values
+--
+-- > (Phsr fileName startTime endTime playbackSpeed)
+--
+-- we can read the file from startTime to endTime (in seconds)
+-- and we can set the speed for playback. If speed is negative
+-- file is played in reverse. The playback is looped.
+-- So to scale the tempo or play in reverse we can change the playbackSpeed.
+-- 
+-- The last argument is pitch factor. We can rise by octave with factor 2.
+-- It's good place to use the function semitone. It produces factors for a number in semitones.
+-- 
+-- Note that all parameters (except window size) are signals.
+-- It makes this function very flexible. We can change the speed of playback
+-- and start and end of the reading segment as we wish.
+--
+-- > ram 0 (Phsr "file.wav" 0 1 1.2) 1
+--
+-- PS: here is the formula for window size: 2 ** (fidelity + 11)
+ram :: D -> Phsr -> Sig -> Sig2
+ram winSize phsr pitch = (ramChn False 1 winSize phsr pitch, ramChn False 2 winSize phsr pitch)
+    
+ramChn :: Bool -> Int -> D -> Phsr -> Sig -> Sig
+ramChn isMono n winSize (Phsr file start end speed) pitch = 
+    ifB (abs speed <* 0.001) 0 $ 
+        ramTab winSize (mkTab isMono n file ) (lphase (filelen $ text file) start end speed) pitch
+
+mkTab :: Bool -> Int ->  String -> Tab
+mkTab isMono chn file 
+    | mp3 && isMono    = mp3s file 0 Mp3Mono
+    | mp3 && isStereo  = mp3s file 0 (if chn == 1 then Mp3Left else Mp3Right)
+    | otherwise        = wavs file 0 (if chn == 1 then WavLeft else WavRight)
+    where 
+        mp3 = isMp3 file        
+        isStereo = not isMono
+
+----------------------------------------
+-- std funs
+
+-- | Scaling factor for tempo. The 1 is inherent tempo.
+type TempoSig = Sig
+
+-- | Scaling factor for pitch. The 1 is inherent pitch.
+type PitchSig = Sig
+
+-- | Reads file once and scales it by tempo and pitch.
+readRam :: TempoSig-> PitchSig -> String -> Sig2
+readRam tempo pitch file = ram 0 (phsrOnce $ sndPhsr file tempo) pitch
+
+-- | Loop over file and scales it by tempo and pitch.
+loopRam :: TempoSig-> PitchSig -> String -> Sig2
+loopRam tempo pitch file = ram 0 (sndPhsr file tempo) pitch
+
+-- | Reads a segment from file once and scales it by tempo and pitch.
+-- Segment is defined in seconds.
+readSeg :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+readSeg (kmin, kmax) tempo pitch file = ram 0 (phsrOnce $ Phsr file kmin kmax tempo) pitch
+
+-- | Loops over a segment of file and scales it by tempo and pitch.
+-- Segment is defined in seconds.
+loopSeg :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+loopSeg (kmin, kmax) tempo pitch file = ram 0 (Phsr file kmin kmax tempo) pitch
+
+-- | Reads a relative segment from file once and scales it by tempo and pitch.
+-- Segment is defined in seconds. The end ponits for the segment are relative to the
+-- total length of the file.
+readRel :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+readRel (kmin, kmax) tempo pitch file = ram 0 (phsrOnce $ relPhsr file kmin kmax tempo) pitch
+
+-- | Loops over a relative segment of file and scales it by tempo and pitch.
+-- Segment is defined in seconds. The end ponits for the segment are relative to the
+-- total length of the file.
+loopRel :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+loopRel (kmin, kmax) tempo pitch file = ram 0 (relPhsr file kmin kmax tempo) pitch
+
+-- | The mono version of readRam.
+readRam1 :: TempoSig-> PitchSig -> String -> Sig
+readRam1 tempo pitch file = ram1 0 (phsrOnce $ sndPhsr file tempo) pitch
+
+-- | The mono version of loopRam.
+loopRam1 :: TempoSig-> PitchSig -> String -> Sig
+loopRam1 tempo pitch file = ram1 0 (sndPhsr file tempo) pitch
+
+-- | The mono version of readSeg.
+readSeg1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+readSeg1 (kmin, kmax) tempo pitch file = ram1 0 (phsrOnce $ Phsr file kmin kmax tempo) pitch
+
+-- | The mono version of loopSeg.
+loopSeg1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+loopSeg1 (kmin, kmax) tempo pitch file = ram1 0 (Phsr file kmin kmax tempo) pitch
+
+-- |  The mono version of readRel.
+readRel1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+readRel1 (kmin, kmax) tempo pitch file = ram1 0 (phsrOnce $ relPhsr file kmin kmax tempo) pitch
+
+-- |  The mono version of loopRel.
+loopRel1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+loopRel1 (kmin, kmax) tempo pitch file = ram1 0 (relPhsr file kmin kmax tempo) pitch
