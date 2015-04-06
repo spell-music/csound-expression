@@ -24,6 +24,7 @@ module Csound.Types(
     Sig, D, Tab, Str, Spec, Wspec,    
     BoolSig, BoolD, Val(..), SigOrD,
 
+    Sig2, Sig3, Sig4, Sig5, Sig6, Sig8,
     -- ** Constructors
     double, int, text, 
     
