@@ -50,8 +50,7 @@ module Csound.Types(
     -- 
     -- or
     --
-    -- > asig = ar1 $ diskin2 "file.wav" 1
-    Sig2, Sig3, Sig4, Sig6, Sig8,
+    -- > asig = ar1 $ diskin2 "file.wav" 1    
     ar1, ar2, ar4, ar6, ar8,
 
     -- * Tuples

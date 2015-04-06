@@ -30,7 +30,6 @@ import Csound.Typed
 import Csound.Typed.Gui
 import Csound.Control.Gui(funnyRadio, mapSource)
 import Csound.Typed.Opcode hiding (space)
-import Csound.Types(Sig2)
 import Csound.SigSpace
 import Csound.Air.Wave
 import Csound.Air.Fx

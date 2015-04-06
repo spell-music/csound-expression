@@ -32,7 +32,6 @@ import Csound.Air.Filter
 import Csound.SigSpace
 import Csound.IO(writeSndBy)
 import Csound.Options(setRates)
-import Csound.Types(Sig2)
 
 --------------------------------------------------------------------------
 -- patterns

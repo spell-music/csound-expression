@@ -28,14 +28,14 @@ module Csound.Air.Wav(
 ) where
 
 import Data.List(isSuffixOf)
+import Data.Default
 
 import Csound.Typed
 import Csound.Typed.Opcode
-import Csound.Tab(mp3s, wavs)
+import Csound.Tab(mp3s, wavs, WavChn(..), Mp3Chn(..))
 import Csound.Control.Instr(withDur, sched)
 
 import Csound.SigSpace(mapSig)
-import Csound.Types(Sig2)
 import Csound.Control.Evt(metroE, eventList)
 
 import Csound.Air.Spec
@@ -182,17 +182,19 @@ data LoopMode = Once | Loop | Bounce
     deriving (Show, Eq, Enum)
 
 -- | Loads the sample in the table. The sample should be short. The size of the table is limited.
--- It's up to 6 minutes for 
+-- It's up to 3 minutes for 44100 sample rate (sr), 2.9 minutes for 48000 sr, 1.4 minutes for 96000 sr.
 ramSnd :: LoopMode -> Sig -> String -> Sig2
 ramSnd loopMode speed file = loscil3 1 speed t `withDs` [1, int $ fromEnum loopMode]
     where t 
-            | isMp3 file = mp3s file 0
-            | otherwise  = wavs file 0 0
+            | isMp3 file = mp3s file 0 def
+            | otherwise  = wavs file 0 def
 
+-- | Loads the sample in the table. The sample should be short. The size of the table is limited.
+-- It's up to 6 minutes for 44100 sample rate (sr), 5.9 minutes for 48000 sr, 2.8 minutes for 96000 sr.
 ramSnd1 :: LoopMode -> Sig -> String -> Sig
 ramSnd1 loopMode speed file 
-    | isMp3 file = (\(aleft, aright) -> 0.5 * (aleft + aright)) $ loscil3 1 speed (mp3s file 0) `withDs` [1, int $ fromEnum loopMode]
-    | otherwise  = loscil3 1 speed (wavs file 0 1) `withDs` [1, int $ fromEnum loopMode]
+    | isMp3 file = (\(aleft, aright) -> 0.5 * (aleft + aright)) $ loscil3 1 speed (mp3s file 0 def) `withDs` [1, int $ fromEnum loopMode]
+    | otherwise  = loscil3 1 speed (wavs file 0 WavLeft) `withDs` [1, int $ fromEnum loopMode]
 
 --------------------------------------------------------------------------
 -- writing sound files

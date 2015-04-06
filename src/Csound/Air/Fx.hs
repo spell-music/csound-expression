@@ -32,7 +32,6 @@ module Csound.Air.Fx(
 import Csound.Typed
 import Csound.Tab(sines4, startEnds, setSize, elins)
 import Csound.Typed.Opcode
-import Csound.Types(Sig2)
 import Csound.SigSpace
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)

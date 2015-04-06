@@ -17,6 +17,7 @@ module Csound.Tab (
     doubles,
    
     -- * Read from files
+    WavChn(..), Mp3Chn(..),
     wavs, mp3s,
 
     -- * (In)Harmonic series
@@ -84,15 +85,56 @@ module Csound.Tab (
 import Data.Default
 import Csound.Typed
 
-wavs :: String -> Double -> Int -> Tab
+data WavChn = WavLeft | WavRight | WavAll
+    deriving (Show, Eq)
+
+instance Default WavChn where
+    def = WavAll
+
+fromWavChn :: WavChn -> Int
+fromWavChn x = case x of
+    WavAll   -> 0
+    WavLeft  -> 1
+    WavRight -> 2
+
+-- | Loads wav or aiff file to table
+--
+-- > wavs fileName skipTime channel
+--
+-- skipTime specifies from what second it should read the file.
+--
+-- with channel argument we can read left, right or both channels.
+wavs :: String -> Double -> WavChn -> Tab
 wavs filename skiptime channel = preTab (SizePlain 0) idWavs 
-    (FileAccess filename [skiptime, format, fromIntegral $ channel])
+    (FileAccess filename [skiptime, format, fromIntegral $ fromWavChn channel])
     where format = 0
 
-mp3s :: String -> Double -> Tab
-mp3s filename skiptime = preTab (SizePlain 0) idMp3s 
+data Mp3Chn = Mp3Mono | Mp3Stereo | Mp3Left | Mp3Right | Mp3All
+    deriving (Show, Eq)
+
+fromMp3Chn :: Mp3Chn -> Int
+fromMp3Chn x = case x of
+    Mp3Mono     -> 1
+    Mp3Stereo   -> 2
+    Mp3Left     -> 3
+    Mp3Right    -> 4
+    Mp3All      -> 0
+
+instance Default Mp3Chn where
+    def = Mp3All
+
+-- | Loads mp3 file to table:
+--
+-- > mp3s fileName skipTime format
+--
+-- skipTime specifies from what second it should read the file.
+-- 
+-- format is: 1 - for mono files, 2 - for stereo files, 3 - for left channel of stereo file,
+-- 4 for right channel of stereo file
+mp3s :: String -> Double -> Mp3Chn -> Tab
+mp3s filename skiptime channel = preTab (SizePlain 0) idMp3s 
     (FileAccess filename [skiptime, format])
-    where format = 0
+    where format = fromIntegral $ fromMp3Chn channel
 
 interp :: Int -> [Double] -> Tab
 interp genId as = preTab def genId (ArgsRelative as)

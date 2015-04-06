@@ -44,7 +44,6 @@ import qualified Control.Exception as E
 import Data.Monoid
 import Data.Default
 import Csound.Typed
-import Csound.Types(Sig2, Sig4, Sig6, Sig8)
 import Csound.Control.Gui
 
 import Csound.Options(setSilent, setMa, setDac)
