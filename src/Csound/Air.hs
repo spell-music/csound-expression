@@ -12,6 +12,9 @@ module Csound.Air (
     -- | Sound file playback
     module Csound.Air.Wav,
 
+    -- | Granular synthesis
+    module Csound.Air.Granular,
+
     -- | Spectral Processing
     module Csound.Air.Spec, 
 
@@ -35,9 +38,11 @@ import Csound.Air.Wave
 import Csound.Air.Envelope
 import Csound.Air.Filter
 import Csound.Air.Wav
+import Csound.Air.Granular
 import Csound.Air.Spec
 import Csound.Air.Fx
 import Csound.Air.Live
 import Csound.Air.Seg
 import Csound.Air.Sampler
 import Csound.Air.Misc
+

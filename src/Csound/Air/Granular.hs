@@ -80,14 +80,19 @@ module Csound.Air.Granular(
 
 -- http://www.youtube.com/watch?v=tVW809gMND0
 
+import Data.Default
 import Data.List(isSuffixOf)
 import Control.Applicative hiding ((<*))
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (int)
 import Csound.Typed
 
-import Csound.Base hiding (partikkel, loopSndBy, granule, grain, syncgrain, sndwarp, sndwarpst)
-import qualified Csound.Base as C(granule, grain, syncgrain, sndwarp, sndwarpst)
+import Csound.Typed.Opcode hiding(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst)
+import qualified Csound.Typed.Opcode as C(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst)
+
+import Csound.Air.Wav(PitchSig, TempoSig, lengthSnd)
+import Csound.Tab
+import Csound.SigSpace
 
 -- example
 --
@@ -805,8 +810,8 @@ csdSyncgrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unS
 -- >           [, iseed] [, ipitch1] [, ipitch2] [, ipitch3] [, ipitch4] [, ifnenv]
 --
 -- csound doc: <http://www.csounds.com/manual/html/granule.html>
+csdGranule :: Sig -> D -> D -> D -> D -> Tab -> D -> D -> D -> D -> Sig -> D -> Sig -> D -> D -> D -> Sig
 csdGranule = C.granule
-
 
 -- | 
 -- Reads a mono sound sample from a table and applies time-stretching and/or pitch modification.
@@ -817,6 +822,7 @@ csdGranule = C.granule
 -- >           irandw, ioverlap, ifn2, itimemode
 --
 -- csound doc: <http://www.csounds.com/manual/html/sndwarp.html>
+csdSndwarp :: Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> Sig
 csdSndwarp = C.sndwarp
 
 
@@ -829,4 +835,5 @@ csdSndwarp = C.sndwarp
 -- >           ibeg, iwsize, irandw, ioverlap, ifn2, itimemode
 --
 -- csound doc: <http://www.csounds.com/manual/html/sndwarpst.html>
+csdSndwarpst :: Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> Sig2
 csdSndwarpst = C.sndwarpst
