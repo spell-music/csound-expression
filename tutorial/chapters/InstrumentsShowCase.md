@@ -6,7 +6,7 @@ TODO
 
 ----------------------------------------------------
 
-* <= [Scores](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ScoresTutorial.md)
+* <= [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
 
 * => [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
 
