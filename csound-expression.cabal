@@ -74,8 +74,9 @@ Library
   Exposed-Modules:
         Csound.Base
 
-        Csound.Air
+        Csound.Air        
         Csound.Air.Wave
+        Csound.Air.Granular        
         Csound.Air.Envelope
         Csound.Air.Filter
         Csound.Air.Wav
