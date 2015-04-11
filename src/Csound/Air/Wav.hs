@@ -16,11 +16,11 @@ module Csound.Air.Wav(
     -- It's up to 6 minutes for 44100 sample rate, 5 minutes for 48000 and 2.8 minutes for 96000.
     LoopMode(..), ramSnd, ramSnd1, 
     ramTab, mincer, 
-    Phsr(..), relPhsr, sndPhsr, phsrBounce, phsrOnce,
+    Phsr(..), lphase, relPhsr, sndPhsr, phsrBounce, phsrOnce,
     ram, ram1,
 
     -- ** Simple audio reading functions (Stereo)
-    TempoSig, PitchSig,
+    Fidelity, TempoSig, PitchSig,
 
     readRam, loopRam, readSeg, loopSeg, readRel, loopRel,
 
@@ -293,7 +293,7 @@ mincer b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab
 -- choose 0 for pitched sounds and -2 for drums. The table contains the sample to playback.
 -- The pointer loops over the table. The pitch specifies a scaling factor for pitch.
 -- So we can raise tone an octave up by setting the pitch to 2.
-ramTab :: D -> Tab -> Sig -> Sig -> Sig
+ramTab :: Fidelity -> Tab -> Sig -> Sig -> Sig
 ramTab winSizePowerOfTwo tab aptr pitch = mincer aptr 1 pitch tab 1 `withD` (2 ** (winSizePowerOfTwo + 11))
 
 
@@ -362,7 +362,7 @@ relPhsr file start end speed = Phsr
 sndPhsr :: String -> Sig -> Phsr
 sndPhsr file speed = relPhsr file 0 1 speed
 
-ram1 :: D -> Phsr -> Sig -> Sig
+ram1 :: Fidelity -> Phsr -> Sig -> Sig
 ram1 = ramChn True 1
 
 -- | Reads audio files in loops. The file is loaded in RAM. 
@@ -402,10 +402,10 @@ ram1 = ramChn True 1
 -- > ram 0 (Phsr "file.wav" 0 1 1.2) 1
 --
 -- PS: here is the formula for window size: 2 ** (fidelity + 11)
-ram :: D -> Phsr -> Sig -> Sig2
+ram :: Fidelity -> Phsr -> Sig -> Sig2
 ram winSize phsr pitch = (ramChn False 1 winSize phsr pitch, ramChn False 2 winSize phsr pitch)
     
-ramChn :: Bool -> Int -> D -> Phsr -> Sig -> Sig
+ramChn :: Bool -> Int -> Fidelity -> Phsr -> Sig -> Sig
 ramChn isMono n winSize (Phsr file start end speed) pitch = 
     ifB (abs speed <* 0.001) 0 $ 
         ramTab winSize (mkTab isMono n file ) (lphase (filelen $ text file) start end speed) pitch
@@ -422,6 +422,20 @@ mkTab isMono chn file
 ----------------------------------------
 -- std funs
 
+-- | Fidelity corresponds to the size of the FFT-window that is used by functions of RAM-family. 
+-- The function performs the FFT transform and it has to know the size.
+-- It's not the value for the size it's an integer value
+-- that proportional to the size. The higher the value the higher the size
+-- the lower the value the lower the size. The default value is 0. 
+-- Zero is best for most of the cases. For drums we can lower it to (-2).
+--
+-- PS: here is the formula for window size: 2 ** (fidelity + 11).
+-- So the fidelity is actually the degree for power of two. 
+-- The FFT-algorithm requires the window size to be a power of two.
+--
+-- The lower fidelity is the less power is consumed by the function.
+type Fidelity = D
+
 -- | Scaling factor for tempo. The 1 is inherent tempo.
 type TempoSig = Sig
 
@@ -429,55 +443,55 @@ type TempoSig = Sig
 type PitchSig = Sig
 
 -- | Reads file once and scales it by tempo and pitch.
-readRam :: TempoSig-> PitchSig -> String -> Sig2
-readRam tempo pitch file = ram 0 (phsrOnce $ sndPhsr file tempo) pitch
+readRam :: Fidelity -> TempoSig-> PitchSig -> String -> Sig2
+readRam winSize tempo pitch file = ram winSize (phsrOnce $ sndPhsr file tempo) pitch
 
 -- | Loop over file and scales it by tempo and pitch.
-loopRam :: TempoSig-> PitchSig -> String -> Sig2
-loopRam tempo pitch file = ram 0 (sndPhsr file tempo) pitch
+loopRam :: Fidelity -> TempoSig-> PitchSig -> String -> Sig2
+loopRam winSize tempo pitch file = ram winSize (sndPhsr file tempo) pitch
 
 -- | Reads a segment from file once and scales it by tempo and pitch.
 -- Segment is defined in seconds.
-readSeg :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
-readSeg (kmin, kmax) tempo pitch file = ram 0 (phsrOnce $ Phsr file kmin kmax tempo) pitch
+readSeg :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+readSeg winSize (kmin, kmax) tempo pitch file = ram winSize (phsrOnce $ Phsr file kmin kmax tempo) pitch
 
 -- | Loops over a segment of file and scales it by tempo and pitch.
 -- Segment is defined in seconds.
-loopSeg :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
-loopSeg (kmin, kmax) tempo pitch file = ram 0 (Phsr file kmin kmax tempo) pitch
+loopSeg :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+loopSeg winSize (kmin, kmax) tempo pitch file = ram winSize (Phsr file kmin kmax tempo) pitch
 
 -- | Reads a relative segment from file once and scales it by tempo and pitch.
 -- Segment is defined in seconds. The end ponits for the segment are relative to the
 -- total length of the file.
-readRel :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
-readRel (kmin, kmax) tempo pitch file = ram 0 (phsrOnce $ relPhsr file kmin kmax tempo) pitch
+readRel :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+readRel winSize (kmin, kmax) tempo pitch file = ram winSize (phsrOnce $ relPhsr file kmin kmax tempo) pitch
 
 -- | Loops over a relative segment of file and scales it by tempo and pitch.
 -- Segment is defined in seconds. The end ponits for the segment are relative to the
 -- total length of the file.
-loopRel :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
-loopRel (kmin, kmax) tempo pitch file = ram 0 (relPhsr file kmin kmax tempo) pitch
+loopRel :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig2
+loopRel winSize (kmin, kmax) tempo pitch file = ram winSize (relPhsr file kmin kmax tempo) pitch
 
 -- | The mono version of readRam.
-readRam1 :: TempoSig-> PitchSig -> String -> Sig
-readRam1 tempo pitch file = ram1 0 (phsrOnce $ sndPhsr file tempo) pitch
+readRam1 :: Fidelity -> TempoSig-> PitchSig -> String -> Sig
+readRam1 winSize tempo pitch file = ram1 winSize (phsrOnce $ sndPhsr file tempo) pitch
 
 -- | The mono version of loopRam.
-loopRam1 :: TempoSig-> PitchSig -> String -> Sig
-loopRam1 tempo pitch file = ram1 0 (sndPhsr file tempo) pitch
+loopRam1 :: Fidelity -> TempoSig-> PitchSig -> String -> Sig
+loopRam1 winSize tempo pitch file = ram1 winSize (sndPhsr file tempo) pitch
 
 -- | The mono version of readSeg.
-readSeg1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
-readSeg1 (kmin, kmax) tempo pitch file = ram1 0 (phsrOnce $ Phsr file kmin kmax tempo) pitch
+readSeg1 :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+readSeg1 winSize (kmin, kmax) tempo pitch file = ram1 winSize (phsrOnce $ Phsr file kmin kmax tempo) pitch
 
 -- | The mono version of loopSeg.
-loopSeg1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
-loopSeg1 (kmin, kmax) tempo pitch file = ram1 0 (Phsr file kmin kmax tempo) pitch
+loopSeg1 :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+loopSeg1 winSize (kmin, kmax) tempo pitch file = ram1 winSize (Phsr file kmin kmax tempo) pitch
 
 -- |  The mono version of readRel.
-readRel1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
-readRel1 (kmin, kmax) tempo pitch file = ram1 0 (phsrOnce $ relPhsr file kmin kmax tempo) pitch
+readRel1 :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+readRel1 winSize (kmin, kmax) tempo pitch file = ram1 winSize (phsrOnce $ relPhsr file kmin kmax tempo) pitch
 
 -- |  The mono version of loopRel.
-loopRel1 :: (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
-loopRel1 (kmin, kmax) tempo pitch file = ram1 0 (relPhsr file kmin kmax tempo) pitch
+loopRel1 :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
+loopRel1 winSize (kmin, kmax) tempo pitch file = ram1 winSize (relPhsr file kmin kmax tempo) pitch

@@ -72,10 +72,7 @@ module Csound.Air.Granular(
 	partikkel, 
 
 	-- * Csound functions
-	csdSndwarp, csdSndwarpst, csdSyncgrain, csdGranule, csdPartikkel, 
-
-	-- * Misc
-	noTab
+	csdSndwarp, csdSndwarpst, csdSyncgrain, csdGranule, csdPartikkel
 ) where
 
 -- http://www.youtube.com/watch?v=tVW809gMND0
@@ -107,10 +104,6 @@ w3 = "/home/anton/music/csd/ClassGuit.wav"
 
 -----------------------------------------------------------------
 -- partikkel
-
--- | The default table. It's rendered to (-1) in the Csound.
-noTab :: Tab
-noTab = fromE (-1)
 
 type GrainRate 	= Sig
 type GrainSize 	= Sig

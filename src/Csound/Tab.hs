@@ -4,7 +4,7 @@ module Csound.Tab (
     -- you are pobably not aware of the fact that for efficiency reasons Csound requires that table size is equal
     -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the 
     -- table once but you don't need the guard point if you read the table in many cycles, then the guard point is the the first point of your table).  
-    Tab,
+    Tab, noTab,
 
     -- * Table querries
 
@@ -84,6 +84,10 @@ module Csound.Tab (
 
 import Data.Default
 import Csound.Typed
+
+-- | The default table. It's rendered to @(-1)@ in the Csound.
+noTab :: Tab
+noTab = fromE (-1)
 
 data WavChn = WavLeft | WavRight | WavAll
     deriving (Show, Eq)
