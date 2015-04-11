@@ -15,6 +15,18 @@ or for a full-blown live performances. It's available on [Hackage](http://hackag
 
 Let's look at how we can create computer music with Haskell. 
 
+---------------------------------------------------------------------
+
+News
+-----------------------------
+
+**The 4.5 is out! New features:**
+
+* Easy to use granular synthesis (see `Csound.Air.Granular`)
+
+* Support for opcode `mincer`. It's possible to scale pitch and tempo 
+  of audio files independently (see `Csound.Air.Wav` ram reading functions). 
+
 -------------------------------------------------------------------
 
 
@@ -63,3 +75,5 @@ It's not so in vim but it happens in the Sublime Editor and when you
 invoke `runhaskell`. So the best is to write you program in the separate 
 file and then load it in the ghci and invoke the function `main`
 (which runs the sound rendering with the function `dac`).
+
+
