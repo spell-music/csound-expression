@@ -15,18 +15,6 @@ or for a full-blown live performances. It's available on [Hackage](http://hackag
 
 Let's look at how we can create computer music with Haskell. 
 
----------------------------------------------------------------------
-
-News
------------------------------
-
-**The 4.5 is out! New features:**
-
-* Easy to use granular synthesis (see `Csound.Air.Granular`)
-
-* Support for opcode `mincer`. It's possible to scale pitch and tempo 
-  of audio files independently (see `Csound.Air.Wav` ram reading functions). 
-
 -------------------------------------------------------------------
 
 
@@ -77,3 +65,14 @@ file and then load it in the ghci and invoke the function `main`
 (which runs the sound rendering with the function `dac`).
 
 
+---------------------------------------------------------------------
+
+News
+-----------------------------
+
+**The 4.5 is out! New features:**
+
+* Easy to use granular synthesis (see `Csound.Air.Granular`)
+
+* Support for opcode `mincer`. It's possible to scale pitch and tempo 
+  of audio files independently (see `Csound.Air.Wav` ram reading functions). 
