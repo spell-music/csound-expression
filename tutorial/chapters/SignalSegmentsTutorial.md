@@ -184,6 +184,56 @@ There are several patterns of (re)triggering.
 
 There are many more functions. You can find them in the module `Csound.Air.Sampler`.
 
+### Turning keyboard to DJ-console
+
+Let's create a mini mix board for a DJ.
+The first thing we need is a cool dance drone:
+
+~~~haskell
+> let snd1 a b = mul 1.5 $ mlp (400 + 500 * uosc 0.25) 0.1 $ mul (sqrSeq [1, 0.5, 0.5, 1, 0.5, 0.5, 1, 0.5] b) $ saw a
+~~~
+
+Let's trigger it with keyboard!
+
+~~~haskell
+> dac $ charTrig "q" "a" (snd1 110 8)
+~~~
+
+Try to press 'q' and `a`  keys to get the beat going.
+Let's create another signal. It's intended to be high pitched pulses.
+
+~~~haskell
+> let snd2 a b = mul 0.75 $ mul (usqr (b / 4) * sqrSeq [1, 0.5] b) $ osc a
+~~~
+
+Let's try it out. Try to press `w`, `e`, `r` keys.
+
+~~~haskell
+> dac $ mul 0.5 $ sum [charPush 'w' $ snd2 440 4, charPush 'e' $ snd2 330 4, charPush 'r' $ snd2 660 8]
+~~~
+
+Note that only one keyboard event can be recognized. So if you press or depress
+several keys only one is going to take effect. It's a limitation of 
+current implementation. It's not so with midi events. Let's join the results:
+
+~~~haskell
+> let pulses = mul 0.5 $ sum [charPush 'w' $ snd2 440 4, charPush 'e' $ snd2 330 4, charPush 'r' $ snd2 660 8]
+> let beat = mul 0.5 $ sum [charTrig "q" "a" (snd1 110 8), charTrig "t" "g" $ snd1 220 4]
+~~~
+
+Let's create some drum sounds:
+
+~~~haskell
+> let snd3 = osc (110 * linseg [1, 0.2, 0])
+> let snd4 = mul 3 $ hp 300 10 $ osc (110 * linseg [1, 0.2, 0])
+> let drums = sum [charTrig "z" "" snd3, charTrig "x" "" snd4]
+~~~
+
+Let's the rave along.
+
+~~~haskell
+> dac $ sum [pulses, mul 0.5 beat, mul 1.2 drums]
+~~~
 
 ----------------------------------------------------
 
