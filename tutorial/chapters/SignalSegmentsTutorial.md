@@ -199,7 +199,7 @@ Let's trigger it with keyboard!
 > dac $ charTrig "q" "a" (snd1 110 8)
 ~~~
 
-Try to press 'q' and `a`  keys to get the beat going.
+Try to press `q` and `a`  keys to get the beat going.
 Let's create another signal. It's intended to be high pitched pulses.
 
 ~~~haskell
@@ -229,7 +229,7 @@ Let's create some drum sounds:
 > let drums = sum [charTrig "z" "" snd3, charTrig "x" "" snd4]
 ~~~
 
-Let's the rave along.
+Let's rave along.
 
 ~~~haskell
 > dac $ sum [pulses, mul 0.5 beat, mul 1.2 drums]
