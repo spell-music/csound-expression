@@ -69,7 +69,7 @@ Library
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0, colour >= 2.0, transformers >= 0.3,
         csound-expression-typed >= 0.0.7.2, csound-expression-dynamic >= 0.1.3, 
-        csound-expression-opcodes >= 0.0.1
+        csound-expression-opcodes >= 0.0.2
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
@@ -86,6 +86,7 @@ Library
         Csound.Air.Seg
         Csound.Air.Sampler
         Csound.Air.Misc
+        Csound.Air.Hvs
         
         Csound.Types
         Csound.Tab

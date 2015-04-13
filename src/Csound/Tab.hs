@@ -16,6 +16,10 @@ module Csound.Tab (
     -- * Fill table with numbers
     doubles,
    
+    -- * Create new tables to write/update data
+
+    newTab, newGlobalTab, tabSizeSeconds, tabSizePower2, tabSizeSecondsPower2,
+
     -- * Read from files
     WavChn(..), Mp3Chn(..),
     wavs, mp3s,
@@ -84,13 +88,48 @@ module Csound.Tab (
 
 import Data.Default
 import Csound.Typed
+import Csound.Typed.Opcode(ftgentmp, ftgenonce)
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
 noTab :: Tab
 noTab = fromE (-1)
 
+-- | Creates a new tab. The Tab could be used while the instrument
+-- is playing. When the instrument is retriggered the new tab is allocated.
+--
+-- > newTab size
+newTab :: D -> SE Tab
+newTab size = ftgentmp 0 0 size 7 0 [size, 0]
+
+-- | Creates a new global tab. It's generated only once.
+-- The first argument is the number of the table. 
+-- That's how we distinguish creation of one globale table from another.
+-- It's not the identifier for the table itself!
+--
+-- > newGlobalTab identifier size
+newGlobalTab :: Int -> D -> SE Tab
+newGlobalTab identifier size = do  
+    ref <- newGlobalSERef (0 :: D)        
+    tabId <- ftgenonce 0 (int identifier) size 7 0 [size, 0]
+    writeSERef ref (fromGE $ toGE tabId)
+    fmap (fromGE . toGE) $ readSERef ref
+
+-- | Calculates the number of samples needed to store the given amount of seconds.
+-- It multiplies the value by the current sample rate.
+tabSizeSeconds :: D -> D
+tabSizeSeconds x = x * getSampleRate
+
+-- | Calculates the closest power of two value for a given size.
+tabSizePower2 :: D -> D
+tabSizePower2 x = (ceil' $ logBase 2 x) ** 2
+
+-- | Calculates the closest power of two value in samples for a given size in seconds.
+tabSizeSecondsPower2 :: D -> D
+tabSizeSecondsPower2 = tabSizePower2 . tabSizeSeconds
+
 data WavChn = WavLeft | WavRight | WavAll
     deriving (Show, Eq)
+
 
 instance Default WavChn where
     def = WavAll
