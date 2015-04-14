@@ -121,7 +121,7 @@ tabSizeSeconds x = x * getSampleRate
 
 -- | Calculates the closest power of two value for a given size.
 tabSizePower2 :: D -> D
-tabSizePower2 x = (ceil' $ logBase 2 x) ** 2
+tabSizePower2 x = 2 ** (ceil' $ logBase 2 x)
 
 -- | Calculates the closest power of two value in samples for a given size in seconds.
 tabSizeSecondsPower2 :: D -> D
