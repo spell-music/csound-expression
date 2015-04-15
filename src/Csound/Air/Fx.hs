@@ -165,10 +165,6 @@ funDelays len dtArgs mx a = do
     return $ a + mx * sum aDels 
     where (dts, fs) = unzip dtArgs
 
-
-sec2rel :: Tab -> Sig -> Sig
-sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
-
 -- | Delay for functions that use some table (as a buffer). As granular synth or mincer.
 --
 -- > tabDelay fn maxDelayTime delayTime feedback balance asig

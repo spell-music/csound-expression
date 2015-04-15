@@ -1,10 +1,12 @@
  -- | Spectral functions
  module Csound.Air.Spec( 	
-    toSpec, fromSpec, mapSpec, scaleSpec, addSpec, scalePitch
+    toSpec, fromSpec, mapSpec, scaleSpec, addSpec, scalePitch,
+    crossSpecFilter, crossSpecVocoder, crossSpecFilter1, crossSpecVocoder1
 ) where
 
 import Csound.Typed
 import Csound.Typed.Opcode
+import Csound.Tab(sine)
 
 --------------------------------------------------------------------------
 -- spectral functions
@@ -38,3 +40,30 @@ addSpec hz = mapSpec $ \x -> pvshift x hz 0
 scalePitch :: Sig -> Sig -> Sig
 scalePitch n = scaleSpec (semitone n)
 
+--------------------------------------------------------------------------
+
+at2 :: (Sig -> Sig -> Sig) -> Sig2 -> Sig2 -> Sig2
+at2 f (left1, right1) (left2, right2) = (f left1 left2, f right1 right2)
+
+-- | Filters the partials of the first signal with partials of the second signal.
+crossSpecFilter :: Sig2 -> Sig2 -> Sig2
+crossSpecFilter = at2 crossSpecFilter1
+
+-- | Substitutes the partials of the first signal with partials of the second signal.
+crossSpecVocoder :: Sig2 -> Sig2 -> Sig2
+crossSpecVocoder = at2 crossSpecVocoder1
+
+-- | @crossSpecFilter@ for mono signals.
+crossSpecFilter1 :: Sig -> Sig -> Sig
+crossSpecFilter1 = crossSpecBy 0
+
+-- | @crossSpecVocoder@ for mono signals.
+crossSpecVocoder1 :: Sig -> Sig -> Sig
+crossSpecVocoder1 = crossSpecBy 1
+
+crossSpecBy :: D -> Sig -> Sig -> Sig
+crossSpecBy imode ain1 ain2 = 
+	tradsyn (trcross (getPartials ain1) (getPartials ain2) 1.05 1 `withD` imode) 1 1 500 sine
+	where
+		getPartials asig = partials fs1 fsi2 0.01 1 3 500
+			where (fs1, fsi2) = pvsifd asig 2048 512 1
