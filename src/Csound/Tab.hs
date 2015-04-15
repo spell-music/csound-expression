@@ -83,8 +83,15 @@ module Csound.Tab (
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
     idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2
     , idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes
-    , idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins
+    , idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins,
+
+    -- * Tabular opcodes
+    tablewa, sec2rel
 ) where
+
+import Control.Applicative hiding ((<*))
+import Control.Monad.Trans.Class
+import Csound.Dynamic hiding (int, when1, whens)
 
 import Data.Default
 import Csound.Typed
@@ -536,3 +543,21 @@ hifi    = setDegree 1
 hhifi   = setDegree 2
 hhhifi  = setDegree 3 
 
+
+-- | Writes tables in sequential locations.
+--
+-- This opcode writes to a table in sequential locations to and from an a-rate 
+-- variable. Some thought is required before using it. It has at least two major, 
+-- and quite different, applications which are discussed below.
+--
+-- > kstart tablewa kfn, asig, koff
+--
+-- csound docs: <http://www.csounds.com/manual/html/tablewa.html>
+tablewa ::  Tab -> Sig -> Sig -> SE Sig
+tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unTab b1 <*> unSig b2 <*> unSig b3
+    where f a1 a2 a3 = opcs "tablewa" [(Kr,[Kr,Ar,Kr])] [a1,a2,a3]
+
+
+-- | Transforms phasor that is defined in seconds to relative phasor that ranges in 0 to 1.
+sec2rel :: Tab -> Sig -> Sig
+sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)

@@ -71,6 +71,31 @@ module Csound.Air.Granular(
 	PartikkelSpec(..),
 	partikkel, 
 
+	-- * Granular delays
+
+	-- | This block is for granular delay effects. To make granular delay from the granular functions
+	-- it has to support reading from table with pointer (phasor).
+	-- All functions have the same four parameters: 
+	--
+	-- * @maxDelayTime@ -- maximum delay length in seсoncds.  
+	--
+	-- * @delayTime@ -- delay time (it can vary. it's a signal).  
+	--
+	-- * @feedback@ -- amount of feedback. How much of processed signal is mixed to
+	--    the delayed signal
+	--
+	-- * @balance@ -- mix between dry and wet signal. 0 is dry only signal. 1 is wet only signl.
+	--
+	-- The rest arguments are taken from the original granular functions.
+	grainyDelay, rndGrainyDelay, sndwarpDelay, syncgrainDelay, rndSyncgrainDelay, partikkelDelay, fofDelay,
+	Fof2Spec,
+
+	-- * Granular effets
+	
+	-- | The functions are based on the granular delays. 
+	-- each function is a granular delay with zero feedback and instant delay time.
+	grainyFx, rndGrainyFx, sndwarpFx, syncgrainFx, rndSyncgrainFx, partikkelFx, fofFx,
+
 	-- * Csound functions
 	csdSndwarp, csdSndwarpst, csdSyncgrain, csdGranule, csdPartikkel
 ) where
@@ -78,16 +103,18 @@ module Csound.Air.Granular(
 -- http://www.youtube.com/watch?v=tVW809gMND0
 
 import Data.Default
+import Data.Boolean
 import Data.List(isSuffixOf)
 import Control.Applicative hiding ((<*))
 import Control.Monad.Trans.Class
-import Csound.Dynamic hiding (int)
+import Csound.Dynamic hiding (int, when1, whens)
 import Csound.Typed
 
 import Csound.Typed.Opcode hiding(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst)
 import qualified Csound.Typed.Opcode as C(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst)
 
 import Csound.Air.Wav(PitchSig, TempoSig, lengthSnd)
+import Csound.Air.Fx(tabDelay, MaxDelayTime, DelayTime, Feedback, Balance)
 import Csound.Tab
 import Csound.SigSpace
 
@@ -742,6 +769,139 @@ ptrSndwarpSnd1 :: SndwarpSpec -> PitchSig -> String -> Pointer -> Sig
 ptrSndwarpSnd1 spec xresample file xptr = ptrSndwarp spec xresample (wavs file 0 WavLeft) xptr
 
 ------------------------------------------------------------------------
+-- granular effects
+
+-- | Defaults for @fof2@ opcode.
+data Fof2Spec = Fof2Spec 
+	{ fof2TimeMod  :: Sig
+	, fof2PitchMod :: Sig
+	, fof2Oct   :: Sig 
+	, fof2Band  :: Sig
+	, fof2Rise  :: Sig
+	, fof2Decay :: Sig
+	, fof2Gliss :: Sig
+	, fof2Win   :: Tab
+	}
+
+instance Default Fof2Spec where
+	def = Fof2Spec
+		{ fof2TimeMod  	= 0.2
+		, fof2PitchMod 	= 0 
+		, fof2Oct   		= 0
+		, fof2Band  		= 0
+		, fof2Rise  		= 0.5
+		, fof2Decay 		= 0.5
+		, fof2Gliss 		= 0
+		, fof2Win   		= setSize 8192 $ sines4 [(0.5, 1, 270, 1)]
+		}
+
+-- partikkelDelay :: PartikkelSpec -> D -> Sig -> GrainRate -> GrainSize -> Sig -> Sig -> SE Sig
+-- partikkelDelay spec maxLength delTim 
+
+-- | Granular delay effect for fof2. Good values for grain rate and size are
+--
+-- > grainRate = 25
+-- > grainSize = 2.5
+fofDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> Fof2Spec -> GrainRate -> GrainSize -> Sig -> SE Sig
+fofDelay maxLength delTim kfeed kbalance spec grainRate grainSize asig = do
+	rndTmod <- rnd31 kTmod 1
+	rndFmod <- rnd31 kFmod 1
+	tabDelay (go rndFmod tabLen) maxLength (delTim + rndTmod) kfeed kbalance asig
+	where 
+		kTmod = fof2TimeMod spec
+		kFmod = fof2PitchMod spec
+		kfund = grainRate
+		kris  = fof2Rise spec
+		kdec  = fof2Decay spec
+		kband = fof2Band spec
+		koct  = fof2Oct spec
+		kgliss = fof2Gliss spec
+
+		tabLen = tabSizeSecondsPower2 maxLength
+
+		go :: Sig -> D -> Tab -> Sig -> SE Sig
+		go kFmod tabLen buf kphs = do			    
+			return $ fof2 (ampdbfs (-8)) kfund kform koct kband (kris * kdur) 
+						kdur (kdec * kdur) 100	giLive giSigRise 86400 kphs kgliss
+			where
+				kdur = grainSize / kfund				
+				kform   = (1+kFmod)*(sig $ getSampleRate / tabLen)			
+
+				giSigRise = fof2Win spec
+				giLive = buf
+
+-- | Granular delay effect for @grainy@.
+grainyDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> GrainRate -> GrainSize -> PitchSig -> Sig -> SE Sig
+grainyDelay maxDel delTime kfeed kbalance grainRate grainSize pitch asig = tabDelay go maxDel delTime kfeed kbalance asig
+	where go tab ptr = return $ ptrGrainy grainRate grainSize pitch tab ptr
+
+-- | Granular delay effect for @rndGrainy@.
+rndGrainyDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> RndGrainySpec -> GrainRate -> GrainSize -> PitchSig -> Sig -> SE Sig
+rndGrainyDelay  maxDel delTime kfeed kbalance spec grainRate grainSize pitch asig = tabDelay go maxDel delTime kfeed kbalance asig
+	where go = rndPtrGrainy spec grainRate grainSize pitch
+
+-- | Granular delay effect for @sndwarp@.
+sndwarpDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> SndwarpSpec -> PitchSig -> Sig -> SE Sig
+sndwarpDelay maxDel delTime kfeed kbalance spec pitch asig = tabDelay go maxDel delTime kfeed kbalance asig
+	where go tab ptr = return $ ptrSndwarp spec pitch tab (sec2rel tab ptr)
+
+-- | Granular delay effect for @syncgrain@.
+syncgrainDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> SyncgrainSpec -> GrainSize -> TempoSig -> PitchSig -> Sig -> SE Sig
+syncgrainDelay maxDel delTime kfeed kbalance spec grainSize tempo pitch asig = tabDelay go maxDel delTime kfeed kbalance asig
+	where go tab _ = return $ syncgrain spec grainSize tempo pitch tab
+
+-- | Granular delay effect for @rndSyncgrain@.
+rndSyncgrainDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> RndSyncgrainSpec -> SyncgrainSpec -> GrainSize -> TempoSig -> PitchSig -> Sig -> SE Sig
+rndSyncgrainDelay maxDel delTime kfeed kbalance rndSpec spec grainSize tempo pitch asig = tabDelay go maxDel delTime kfeed kbalance asig
+	where go tab _ = rndSyncgrain rndSpec spec grainSize tempo pitch tab
+
+-- | Granular delay effect for @partikkel@.
+partikkelDelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> PartikkelSpec -> GrainRate -> GrainSize -> PitchSig -> Sig -> SE Sig
+partikkelDelay maxDel delTime kfeed kbalance spec grainRate grainSize pitch asig = tabDelay go maxDel delTime kfeed kbalance asig
+	where go tab ptr = return $ partikkel spec grainRate grainSize pitch [tab] [ptr]
+
+-------------------------------------------------------------------------
+-- effects
+
+fxFeed = 0
+fxBalance = 1
+fxMaxLength = 1
+fxDelTime = 0.05
+
+type GrainDelay a = MaxDelayTime -> DelayTime -> Feedback -> Balance -> a
+
+toGrainFx :: GrainDelay a -> a
+toGrainFx f = f fxMaxLength fxDelTime fxFeed fxBalance
+
+-- | Granular effect for @grainy@.
+grainyFx :: GrainRate -> GrainSize -> PitchSig -> Sig -> SE Sig
+grainyFx = toGrainFx grainyDelay
+
+-- | Granular effect for @rndGrainy@.
+rndGrainyFx :: RndGrainySpec -> GrainRate -> GrainSize -> PitchSig -> Sig -> SE Sig
+rndGrainyFx = toGrainFx rndGrainyDelay
+
+-- | Granular effect for @sndwarp@.
+sndwarpFx :: SndwarpSpec -> PitchSig -> Sig -> SE Sig
+sndwarpFx = toGrainFx sndwarpDelay
+
+-- | Granular effect for @syncgrain@.
+syncgrainFx :: SyncgrainSpec -> GrainSize -> TempoSig -> PitchSig -> Sig -> SE Sig
+syncgrainFx = toGrainFx syncgrainDelay
+
+-- | Granular effect for @rndSyncgrain@.
+rndSyncgrainFx :: RndSyncgrainSpec -> SyncgrainSpec -> GrainSize -> TempoSig -> PitchSig -> Sig -> SE Sig
+rndSyncgrainFx = toGrainFx rndSyncgrainDelay
+
+-- | Granular effect for @partikkel@.
+partikkelFx :: PartikkelSpec -> GrainRate -> GrainSize -> PitchSig -> Sig -> SE Sig
+partikkelFx = toGrainFx partikkelDelay
+
+-- | Granular effect for @fof2@.
+fofFx :: Fof2Spec -> GrainRate -> GrainSize -> Sig -> SE Sig
+fofFx = toGrainFx fofDelay
+
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 -- csound opcodes
 
@@ -830,3 +990,5 @@ csdSndwarp = C.sndwarp
 -- csound doc: <http://www.csounds.com/manual/html/sndwarpst.html>
 csdSndwarpst :: Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> Sig2
 csdSndwarpst = C.sndwarpst
+
+
