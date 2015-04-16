@@ -22,7 +22,7 @@
 -- No need to set all 22 parameters.
 -- Look at the official tutorial (on github) for more examples.
 --
--- The four functions are reimplemented in this way: sndwarp, syncgrain, partikkel, granule.
+-- The five functions are reimplemented in this way: @sndwarp@, @syncgrain@, @partikkel@, @granule@, @fof2@.
 --
 -- The most often used arguments are:
 --
@@ -71,6 +71,11 @@ module Csound.Air.Granular(
 	PartikkelSpec(..),
 	partikkel, 
 
+	-- * Fof2
+
+	Fof2Spec(..),
+	fof2, fof2Snd, fof2Snd1,
+
 	-- * Granular delays
 
 	-- | This block is for granular delay effects. To make granular delay from the granular functions
@@ -87,14 +92,15 @@ module Csound.Air.Granular(
 	-- * @balance@ -- mix between dry and wet signal. 0 is dry only signal. 1 is wet only signl.
 	--
 	-- The rest arguments are taken from the original granular functions.
-	grainyDelay, rndGrainyDelay, sndwarpDelay, syncgrainDelay, rndSyncgrainDelay, partikkelDelay, fofDelay,
-	Fof2Spec,
+	grainyDelay, rndGrainyDelay, sndwarpDelay, 
+	syncgrainDelay, rndSyncgrainDelay, partikkelDelay, fofDelay,	
 
 	-- * Granular effets
 	
 	-- | The functions are based on the granular delays. 
 	-- each function is a granular delay with zero feedback and instant delay time.
-	grainyFx, rndGrainyFx, sndwarpFx, syncgrainFx, rndSyncgrainFx, partikkelFx, fofFx,
+	grainyFx, rndGrainyFx, sndwarpFx, 
+	syncgrainFx, rndSyncgrainFx, partikkelFx, fofFx,
 
 	-- * Csound functions
 	csdSndwarp, csdSndwarpst, csdSyncgrain, csdGranule, csdPartikkel
@@ -110,8 +116,8 @@ import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (int, when1, whens)
 import Csound.Typed
 
-import Csound.Typed.Opcode hiding(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst)
-import qualified Csound.Typed.Opcode as C(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst)
+import Csound.Typed.Opcode hiding(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst, fof2)
+import qualified Csound.Typed.Opcode as C(partikkel, granule, grain, syncgrain, sndwarp, sndwarpst, fof2)
 
 import Csound.Air.Wav(PitchSig, TempoSig, lengthSnd)
 import Csound.Air.Fx(tabDelay, MaxDelayTime, DelayTime, Feedback, Balance)
@@ -769,7 +775,8 @@ ptrSndwarpSnd1 :: SndwarpSpec -> PitchSig -> String -> Pointer -> Sig
 ptrSndwarpSnd1 spec xresample file xptr = ptrSndwarp spec xresample (wavs file 0 WavLeft) xptr
 
 ------------------------------------------------------------------------
--- granular effects
+-- fof2
+
 
 -- | Defaults for @fof2@ opcode.
 data Fof2Spec = Fof2Spec 
@@ -794,6 +801,44 @@ instance Default Fof2Spec where
 		, fof2Gliss 		= 0
 		, fof2Win   		= setSize 8192 $ sines4 [(0.5, 1, 270, 1)]
 		}
+
+-- | Reimplementation of fof2 opcode for stereo  audio files.
+fof2Snd :: Fof2Spec -> GrainRate -> GrainSize -> TempoSig -> String -> Sig2
+fof2Snd spec kgrainrate kgrainsize kspeed file = (f 1, f 2)
+	where f n = fof2Chn n spec kgrainrate kgrainsize kspeed file
+
+-- | Reimplementation of fof2 opcode for mono audio files.
+fof2Snd1 :: Fof2Spec -> GrainRate -> GrainSize -> TempoSig -> String -> Sig
+fof2Snd1 spec kgrainrate kgrainsize kspeed file = f 1
+	where f n = fof2Chn n spec kgrainrate kgrainsize kspeed file
+
+fof2Chn :: Int -> Fof2Spec -> GrainRate -> GrainSize -> TempoSig -> String -> Sig
+fof2Chn n spec kgrainrate kgrainsize kspeed file = 
+	fof2 spec kgrainrate kgrainsize (grainyTab n file) (grainyPtr kspeed file)
+
+-- | Reimplementation of fof2 opcode.
+fof2 :: Fof2Spec -> GrainRate -> GrainSize -> Tab -> Pointer -> Sig
+fof2 spec grainRate grainSize buf kphs = go (ftlen buf) buf kphs
+	where
+		kfund = grainRate
+		kris  = fof2Rise spec
+		kdec  = fof2Decay spec
+		kband = fof2Band spec
+		koct  = fof2Oct spec
+		kgliss = fof2Gliss spec
+
+		go :: D -> Tab -> Sig -> Sig
+		go tabLen buf kphs = do			    
+			csdFof2 (ampdbfs (-8)) kfund kform koct kband (kris * kdur) 
+				kdur (kdec * kdur) 100	giLive giSigRise 86400 kphs kgliss
+			where
+				kdur = grainSize / kfund				
+				kform = (sig $ getSampleRate / tabLen)	
+				giSigRise = fof2Win spec
+				giLive = buf
+
+------------------------------------------------------------------------
+-- granular effects
 
 -- partikkelDelay :: PartikkelSpec -> D -> Sig -> GrainRate -> GrainSize -> Sig -> Sig -> SE Sig
 -- partikkelDelay spec maxLength delTim 
@@ -821,7 +866,7 @@ fofDelay maxLength delTim kfeed kbalance spec grainRate grainSize asig = do
 
 		go :: Sig -> D -> Tab -> Sig -> SE Sig
 		go kFmod tabLen buf kphs = do			    
-			return $ fof2 (ampdbfs (-8)) kfund kform koct kband (kris * kdur) 
+			return $ csdFof2 (ampdbfs (-8)) kfund kform koct kband (kris * kdur) 
 						kdur (kdec * kdur) 100	giLive giSigRise 86400 kphs kgliss
 			where
 				kdur = grainSize / kfund				
@@ -991,4 +1036,13 @@ csdSndwarp = C.sndwarp
 csdSndwarpst :: Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> Sig2
 csdSndwarpst = C.sndwarpst
 
-
+-- | 
+-- Produces sinusoid bursts including k-rate incremental indexing with each successive burst.
+--
+-- Audio output is a succession of sinusoid bursts initiated at frequency xfund with a spectral peak at xform. For xfund above 25 Hz these bursts produce a speech-like formant with spectral characteristics determined by the k-input parameters. For lower fundamentals this generator provides a special form of granular synthesis.
+--
+-- > ares  fof2  xamp, xfund, xform, koct, kband, kris, kdur, kdec, iolaps, \
+-- >           ifna, ifnb, itotdur, kphs, kgliss [, iskip]
+--
+-- csound doc: <http://www.csounds.com/manual/html/fof2.html>
+csdFof2 = C.fof2

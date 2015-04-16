@@ -101,21 +101,20 @@ import Csound.Typed.Opcode(ftgentmp, ftgenonce)
 noTab :: Tab
 noTab = fromE (-1)
 
--- | Creates a new tab. The Tab could be used while the instrument
+-- | Creates a new table. The Tab could be used while the instrument
 -- is playing. When the instrument is retriggered the new tab is allocated.
 --
 -- > newTab size
 newTab :: D -> SE Tab
 newTab size = ftgentmp 0 0 size 7 0 [size, 0]
 
--- | Creates a new global tab. It's generated only once.
--- The first argument is the number of the table. 
--- That's how we distinguish creation of one globale table from another.
--- It's not the identifier for the table itself!
+-- | Creates a new global table. 
+-- It's generated only once. It's persisted between instrument calls.
 --
 -- > newGlobalTab identifier size
-newGlobalTab :: Int -> D -> SE Tab
-newGlobalTab identifier size = do  
+newGlobalTab :: D -> SE Tab
+newGlobalTab size = do  
+    identifier <- getNextGlobalGenId
     ref <- newGlobalSERef (0 :: D)        
     tabId <- ftgenonce 0 (int identifier) size 7 0 [size, 0]
     writeSERef ref (fromGE $ toGE tabId)
