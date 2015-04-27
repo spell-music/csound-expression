@@ -44,8 +44,10 @@ import Data.Default
 import Data.Boolean
 import Control.Applicative hiding((<*))
 
+import Temporal.Media
+
 import Control.Monad.Trans.Class
-import Csound.Dynamic hiding (int)
+import Csound.Dynamic hiding (int, Sco)
 
 import Csound.Typed
 import Csound.Typed.Opcode
@@ -53,7 +55,7 @@ import Csound.Tab(mp3s, wavs, WavChn(..), Mp3Chn(..))
 import Csound.Control.Instr(withDur, sched)
 
 import Csound.SigSpace(mapSig)
-import Csound.Control.Evt(metroE, eventList)
+import Csound.Control.Evt(metroE, loadbang)
 
 import Csound.Air.Spec
 
@@ -62,16 +64,16 @@ import Csound.Air.Spec
 
 -- | Takes only given amount (in seconds) from the signal (the rest is silence).
 takeSnd :: Sigs a => D -> a -> a
-takeSnd dt asig = trigs (const $ return asig) $ eventList [(0, dt, unit)]
+takeSnd dt asig = sched (const $ return asig) $ withDur dt $ loadbang
 
 -- | Delays signals by the given amount (in seconds).
 delaySnd :: Sigs a => D -> a -> a
-delaySnd dt asig = trigs (const $ return asig) $ eventList [(dt, infiniteDur, unit)]
-
+delaySnd dt = segmentSnd dt infiniteDur 
+    
 -- | Delays a signal by the first argument and takes only second argument amount
 -- of signal (everything is measured in seconds).
 segmentSnd ::Sigs a => D -> D -> a -> a
-segmentSnd del dur asig = trigs (const $ return asig) $ eventList [(del, dur, unit)]
+segmentSnd dt dur asig = sched (const $ return asig) $ fmap (del dt) $ withDur dur $ loadbang 
 
 -- | Repeats the signal with the given period.
 repeatSnd :: Sigs a => D -> a -> a
@@ -112,7 +114,7 @@ lengthSnd fileName
     | otherwise         = filelen $ text fileName
 
 -- | Produces repeating segments with the given time in seconds.
-segments :: D -> Evt (D, Unit)
+segments :: D -> Evt (Sco Unit)
 segments dt = withDur dt $ metroE (sig $ recip dt)
 
 -- Stereo

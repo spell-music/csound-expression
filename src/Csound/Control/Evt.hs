@@ -28,6 +28,8 @@ import Data.Default
 import Data.Boolean
 import Data.Tuple
 
+import Temporal.Media
+
 import Csound.Typed
 import Csound.Typed.Opcode
 import Csound.Types(atArg)
@@ -58,8 +60,9 @@ impulseE :: D -> Evt Unit
 impulseE = sigToEvt . impulse
 
 -- | Makes an event stream from list of events.
-eventList :: [(D, D, a)] -> Evt [(D, D, a)]
-eventList es = fmap (const es) loadbang
+eventList :: [(D, D, a)] -> Evt (Sco a)
+eventList es = fmap (const $ har $ fmap singleEvent es) loadbang
+    where singleEvent (start, duration, content) = del start $ str duration $ temp content
 
 -- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
 changedE :: [Sig] ->  Evt Unit

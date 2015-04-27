@@ -73,23 +73,18 @@ module Csound.Control.Instr(
     -- the time domain (stretching the timeline) you can do it in the Mix-version
     -- (after the invokation of the instrument). All notes are rescaled all the
     -- way down the Score-structure. 
-    CsdSco(..), Mix, sco, mix, eff, CsdEventList(..), CsdEvent, 
+    Sco, Mix, sco, mix, eff,
     mixLoop, sco_, mix_, mixLoop_, mixBy, 
     infiniteDur,
+
+    module Temporal.Media,
     
     -- * Evt  
 
-    -- ** Singlular
-    trig, sched, retrig, schedHarp, schedUntil, schedToggle,
-    trig_, sched_, schedUntil_, 
-    trigBy, schedBy, schedHarpBy,
+    sched, retrig, schedHarp, schedUntil, schedToggle,
+    sched_, schedUntil_, 
+    schedBy, schedHarpBy,
     withDur,
-
-    -- ** Plural
-    trigs, scheds, retrigs, schedHarps, schedUntils, 
-    trigs_, scheds_, schedUntils_, 
-    trigsBy, schedsBy, schedHarpsBy,
-    withDurs,
 
     -- ** Misc
     alwaysOn,
@@ -99,35 +94,33 @@ module Csound.Control.Instr(
     Outs(..), onArg, AmpInstr(..), CpsInstr(..)
 ) where
 
-import Csound.Typed
+import Csound.Typed 
 import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
+import Temporal.Media(Event(..), mapEvents)
 
 import Csound.Control.Evt(metroE, repeatE, splitToggle, loadbang)
+import Temporal.Media hiding (delay, line, chord, stretch)
 
 -- | Mixes the scores and plays them in the loop.
-mixLoop :: (CsdSco f, Sigs a) => f (Mix a) -> a
-mixLoop a = sched instr $ withDur dur $ repeatE unit $ metroE $ sig $ 1 / dur
-    where 
-        notes = toCsdEventList a
-        dur   = double $ csdEventListDur notes
-
-        instr _ = return $ mix notes
+mixLoop :: (Sigs a) => Sco (Mix a) -> a
+mixLoop a = sched instr $ withDur dt $ repeatE unit $ metroE $ sig $ 1 / dt
+    where  
+        dt = dur a   
+        instr _ = return $ mix a
 
 -- | Mixes the procedures and plays them in the loop.
-mixLoop_ :: (CsdSco f) => f (Mix Unit) -> SE ()
-mixLoop_ a = sched_ instr $ withDur dur $ repeatE unit $ metroE $ sig $ 1 / dur
+mixLoop_ :: Sco (Mix Unit) -> SE ()
+mixLoop_ a = sched_ instr $ withDur dt $ repeatE unit $ metroE $ sig $ 1 / dt
     where 
-        notes = toCsdEventList a
-        dur   = double $ csdEventListDur notes
-
-        instr _ = mix_ notes
+        dt = dur a
+        instr _ = mix_ a
 
 
 -- | Invokes an instrument with first event stream and 
 -- holds the note until the second event stream is active.
-schedUntils :: (Arg a, Sigs b) => (a -> SE b) -> Evt [a] -> Evt c -> b
-schedUntils instr onEvt offEvt = scheds instr' $ withDurs infiniteDur onEvt
+schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
+schedUntil instr onEvt offEvt = sched instr' $ withDur infiniteDur onEvt
     where 
         instr' x = do 
             res <- instr x
@@ -143,85 +136,24 @@ schedToggle res evt = schedUntil instr on off
 
 -- | Invokes an instrument with first event stream and 
 -- holds the note until the second event stream is active.
-schedUntils_ :: (Arg a) => (a -> SE ()) -> Evt [a] -> Evt c -> SE ()
-schedUntils_ instr onEvt offEvt = scheds_ instr' $ withDurs infiniteDur onEvt
+schedUntil_ :: (Arg a) => (a -> SE ()) -> Evt a -> Evt c -> SE ()
+schedUntil_ instr onEvt offEvt = sched_ instr' $ withDur infiniteDur onEvt
     where 
         instr' x = do 
             res <- instr x
             runEvt offEvt $ const $ turnoff
             return res
 
--- | Sets the same duration for all events. It's useful with the functions @scheds@, @schedsBy@, @scheds_@. 
-withDurs :: D -> Evt [a] -> Evt [(D, a)]
-withDurs dt = fmap $ fmap $ \x -> (dt, x) 
-
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 -- singular
 
 -- | Sets the same duration for all events. It's useful with the functions @sched@, @schedBy@, @sched_@. 
-withDur :: D -> Evt a -> Evt (D, a)
-withDur dt = fmap $ \x -> (dt, x) 
-
--------------------------------------------------------------------------
--- sinlgular case for event triggers
-
-fromPlural :: (Evt [a] -> b) -> (Evt a -> b)
-fromPlural f = f . fmap return
-
-fromPluralBy :: ((c -> Evt [a]) -> c -> b) -> ((c -> Evt a) -> c -> b)
-fromPluralBy f instr c = f (fmap return . instr) c
-
--- | Triggers an instrument with an event stream. The event stream
--- contains triples:
---
--- > (delay_after_event_is_fired, duration_of_the_event, argument_for_the_instrument)
-trig :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
-trig f = fromPlural $ trigs f
-
--- | It's like the function @trig@, but delay is set to zero.
-sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
-sched f = fromPlural $ scheds f
+withDur :: D -> Evt a -> Evt (Sco a)
+withDur dt = fmap (str dt . temp)
 
 retrig :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> b
-retrig f = fromPlural $ retrigs f
-
--- | An instrument is triggered with event stream and delay time is set to zero 
--- (event fires immediately) and duration is set to infinite time. The note is 
--- held while the instrument is producing something. If the instrument is silent
--- for some seconds (specified in the first argument) then it's turned off.
-schedHarp :: (Arg a, Sigs b) => D -> (a -> SE b) -> Evt a -> b
-schedHarp dt f = fromPlural $ schedHarps dt f
-
--- | Invokes an instrument with first event stream and 
--- holds the note until the second event stream is active.
-schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
-schedUntil f eOn eOff = schedUntils f (fmap return eOn) eOff
-
--- | Triggers a procedure on the event stream.
-trig_ :: Arg a => (a -> SE ()) -> Evt (D, D, a) -> SE ()
-trig_ f = fromPlural $ trigs_ f
-
--- | Triggers a procedure on the event stream. A delay time is set to zero.
-sched_ :: Arg a => (a -> SE ()) -> Evt (D, a) -> SE ()
-sched_ f = fromPlural $ scheds_ f
-
--- | Invokes an instrument with first event stream and 
--- holds the note until the second event stream is active.
-schedUntil_ :: Arg a => (a -> SE ()) -> Evt a -> Evt c -> SE ()
-schedUntil_ f eOn eOff = schedUntils_ f (fmap return eOn) eOff
-
--- | A closure to trigger an instrument inside the body of another instrument.
-trigBy :: (Arg a, Sigs b, Arg c) => (a -> SE b) -> (c -> Evt (D, D, a)) -> c -> b
-trigBy f = fromPluralBy $ trigsBy f
-
--- | A closure to trigger an instrument inside the body of another instrument.
-schedBy :: (Arg a, Sigs b, Arg c) => (a -> SE b) -> (c -> Evt (D, a)) -> c -> b
-schedBy f = fromPluralBy $ schedsBy f
-
--- | A closure to trigger an instrument inside the body of another instrument.
-schedHarpBy :: (Arg a, Sigs b, Arg c) => D -> (a -> SE b) -> (c -> Evt a) -> c -> b
-schedHarpBy dt f = fromPluralBy $ schedHarpsBy dt f
+retrig f = retrigs f . fmap return
 
 -- | Executes some procedure for the whole lifespan of the program,
 alwaysOn :: SE () -> SE ()
