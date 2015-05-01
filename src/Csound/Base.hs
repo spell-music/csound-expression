@@ -20,6 +20,9 @@ module Csound.Base(
     module Data.Monoid,
     module Control.Applicative,
 
+    module Temporal.Media,
+    module Temporal.Class,
+
     -- * Opcodes
     module Csound.Typed.Opcode
 ) where
@@ -32,14 +35,17 @@ import Csound.IO
 import Csound.SigSpace
 import Csound.Options
 
+import Temporal.Media
+import Temporal.Class
+
 import Data.Boolean
 import Data.Default
 import Data.Monoid
 import Control.Applicative hiding ((<*))
     
 import Csound.Typed.Opcode hiding (
-    button, display, space, lfo, initc7, ctrl7
-    , oscInit, oscListen, oscSend, 
+    button, display, space, lfo, initc7, ctrl7,
+    oscInit, oscListen, oscSend, 
     lpshold, loopseg, loopxseg,
-    partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2)
-
+    partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2,
+    line, delay)

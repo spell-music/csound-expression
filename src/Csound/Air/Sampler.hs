@@ -21,6 +21,7 @@ module Csound.Air.Sampler (
 
 import Data.Monoid
 import Data.Boolean
+import Temporal.Class
 
 import Csound.Typed
 import Csound.Control
@@ -35,7 +36,7 @@ import Csound.Air.Seg
 
 -- | Triggers the signal with the first stream and turns it off with the second stream.
 evtTrig :: (Sigs a) => Tick -> Tick -> a -> a
-evtTrig x st a = runSeg $ sloop $ slim st $ sdel x $ sloop (slim x $ toSeg a)
+evtTrig x st a = runSeg $ loop $ lim st $ del x $ loop (lim x $ toSeg a)
 
 -- | Toggles the signal with event stream.
 evtToggle :: (Sigs a) => Tick -> a -> a
@@ -47,7 +48,7 @@ evtToggle evt = evtTrig (fmap (const unit) ons) (fmap (const unit) offs)
 -- No it's not every sequence note triggers it
 -- but it's best to limit them anyway
 evtTap :: (Sigs a) => D -> Tick -> a -> a
-evtTap dt x a = runSeg $ sdel x $ sloop $ slim x $ toSeg $ takeSnd dt a
+evtTap dt x a = runSeg $ del x $ loop $ lim x $ toSeg $ takeSnd dt a
 
 -- | Plays a list signals. It triggers the signal with event stream and silences
 -- all the rest in the list so that only one signal is playing. We can create simple
@@ -61,7 +62,7 @@ evtGroup as stop = sum $ fmap (\(a, b, c) -> evtTrig a (mappend b stop) c)
 
 -- | Triggers one signal after another with an event stream.
 evtCycle :: (Sigs a) => Tick -> Tick -> [a] -> a
-evtCycle start stop sigs = runSeg $ sloop $ slim stop $ sdel start $ sloop $ sflow $ fmap (slim start . toSeg) sigs
+evtCycle start stop sigs = runSeg $ loop $ lim stop $ del start $ loop $ mel $ fmap (lim start . toSeg) sigs
 
 -----------------------------------------------------------
 -- Char sampler
@@ -69,7 +70,7 @@ evtCycle start stop sigs = runSeg $ sloop $ slim stop $ sdel start $ sloop $ sfl
 -- | Triggers a signal when one of the chars from the first string is pressed.
 -- Stos signal from playing when one of the chars from the second string is pressed.
 charTrig :: (Sigs a) => String -> String -> a -> a
-charTrig starts stops asig = runSeg $ sloop $ slim (strOn stops) $ toSeg $ retrig (const $ return asig) (strOn starts)
+charTrig starts stops asig = runSeg $ loop $ lim (strOn stops) $ toSeg $ retrig (const $ return asig) (strOn starts)
 
 -- | Plays a signal while a key is pressed.
 charPush :: Sigs a => Char -> a -> a

@@ -3,7 +3,7 @@ module Csound.Control.Evt(
     Evt(..), Bam, Tick, 
 
     -- * Core functions
-    boolToEvt, evtToBool, sigToEvt, stepper,
+    boolToEvt, evtToBool, sigToEvt, evtToSig, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
 
     Snap, snapshot, snaps, sync, syncBpm, 
@@ -30,11 +30,17 @@ import Data.Tuple
 
 import Temporal.Media
 
-import Csound.Typed
+import Csound.Typed hiding (evtToBool)
 import Csound.Typed.Opcode
 import Csound.Types(atArg)
 
 type Tick = Evt Unit
+
+evtToSig :: D -> (Evt D) -> Sig
+evtToSig initVal evts = retrigs (return . sig) $ fmap return $ devt initVal loadbang <> evts
+
+evtToBool :: Evt a -> BoolSig
+evtToBool a = ( ==* 1) $ changed $ return $ evtToSig 0 $ cycleE [1, 0] a
 
 -- | Constant event stream. It produces the same value (the first argument)
 -- all the time.

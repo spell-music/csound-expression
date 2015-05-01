@@ -1,13 +1,14 @@
+{-# Language TypeFamilies #-}
 module Csound.Air.Seg (
-	Seg, toSeg, runSeg,
-	slim, sflow, spar, sloop, 
-	sdel, srest, 
+	Seg, toSeg, runSeg,	
 	constLim, constDel, constRest, limSnd
 ) where
 
 import Data.Maybe
 import Data.Monoid
 import Data.Boolean
+
+import Temporal.Class
 
 import Csound.Typed
 import Csound.SigSpace
@@ -44,6 +45,24 @@ instance Functor Seg where
 
 instance SigSpace a => SigSpace (Seg a) where
 	mapSig f x = fmap (mapSig f) x
+
+type instance DurOf (Seg a) = Tick
+
+instance Sigs a => Compose (Seg a) where
+	mel = sflow
+	har = spar
+
+instance Sigs a => Delay (Seg a) where
+	del = sdel
+
+instance Sigs a => Loop (Seg a) where
+	loop = sloop
+
+instance (Sigs a, Num a) => Rest (Seg a) where
+	rest = srest
+
+instance Sigs a => Limit (Seg a) where
+	lim = slim
 
 seq1 :: Tick -> a -> Seg a
 seq1 dt a = Lim dt (Unlim a)

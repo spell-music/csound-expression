@@ -17,6 +17,9 @@ module Csound.Air.Misc(
     -- * GUI
     lpJoy,
 
+    -- * Effects
+    delaySample,
+
     -- * Function composition
     funSeq, funPar
 ) where
@@ -216,3 +219,8 @@ funSeq = foldl (.) id
 funPar :: Num a => [a -> a] -> a -> a
 funPar fs a = sum $ fmap ($ a) fs
 
+-- | Delay by certain number of samples
+--
+-- > delaySample numOfSamples asig
+delaySample :: D -> Sig -> Sig
+delaySample nsamples asig = delay asig nsamples

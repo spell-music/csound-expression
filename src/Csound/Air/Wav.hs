@@ -1,5 +1,5 @@
  -- | Sound file playback
-module Csound.Air.Wav(
+ module Csound.Air.Wav(
     -- * Stereo
     readSnd, loopSnd, loopSndBy, 
     readWav, loopWav, readSegWav, 
