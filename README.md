@@ -70,6 +70,24 @@ file and then load it in the ghci and invoke the function `main`
 News
 -----------------------------
 
+**The 4.7 is out! New features:**
+
+The Scores are redesigned! The low level `CsdEventList` is substituted
+with more advanced and flexible type `Sco`. The instruments are triggered not
+with pairs or triplets (individual events) but with scores!
+
+The lib now depends on common APIs for delaying and composing values.
+There are common type classes for composition. 
+
+There is a simple API for composition of samples, notes and signal segments.
+The `mel` plays units sequentially, The `hor` plays units at the same time.
+The `del` delays the unit by given amount of time, The `lim` limits the unit in time.
+the `loop` creates infinite loops. The `loopBy` creates finite loops.
+The list of all functions can be found in the package temporal-media. See 
+the module `Temporal.Class`.
+
+I need to update the guide for changes!
+
 **The 4.6 is out! New features:**
 
 * Granular delays and effects (see `Csound.Air.Granular`)
