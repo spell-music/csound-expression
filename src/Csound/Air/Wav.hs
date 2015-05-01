@@ -316,13 +316,9 @@ ramTab winSizePowerOfTwo tab aptr pitch = mincer aptr 1 pitch tab 1 `withD` (2 *
 lphase :: D -> Sig -> Sig -> Sig -> Sig
 lphase irefdur kloopstart kloopend kspeed  = atimpt
     where
-        kstart1 = kloopstart / sig irefdur
-        kend1 = kloopend / sig irefdur
-        ifqbas = 1 / irefdur
-        kfqrel = kspeed * sig ifqbas / (kend1 - kstart1)
+        kfqrel = kspeed / (kloopend - kloopstart)
         andxrel = phasor kfqrel
         atimpt = andxrel * (kloopend-kloopstart) + kloopstart
-
 
 ----------------------------------------------------------------------
 
@@ -410,7 +406,8 @@ ram winSize phsr pitch = (ramChn False 1 winSize phsr pitch, ramChn False 2 winS
 ramChn :: Bool -> Int -> Fidelity -> Phsr -> Sig -> Sig
 ramChn isMono n winSize (Phsr file start end speed) pitch = 
     ifB (abs speed <* 0.001) 0 $ 
-        ramTab winSize (mkTab isMono n file ) (lphase (filelen $ text file) start end speed) pitch
+        ramTab winSize (mkTab isMono n file ) (lphase (filelen $ text file) start end (speed * srFactor)) (pitch * srFactor)
+    where srFactor = sig $ (filesr $ text file) / getSampleRate
 
 mkTab :: Bool -> Int ->  String -> Tab
 mkTab isMono chn file 
