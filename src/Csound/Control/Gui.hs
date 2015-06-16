@@ -51,7 +51,7 @@ module Csound.Control.Gui (
     Gui, 
     Widget, Input, Output, Inner,
     Sink, Source, Display, SinkSource,
-    widget, sink, source, display, sinkSource,
+    widget, sink, source, display, sinkSource, sinkSlice, sourceSlice,
     mapSource, mapGuiSource, 
     mhor, mver, msca,
 
