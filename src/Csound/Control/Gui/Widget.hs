@@ -36,6 +36,11 @@ module Csound.Control.Gui.Widget (
     -- | Widgets for sample and hold functions
     hnumbers, vnumbers,
 
+    -- * Range widgets
+    Range,
+    rangeKnob, rangeSlider, rangeKnobSig, rangeSliderSig,
+    rangeJoy, rangeJoy2, rangeJoySig,
+
     -- * The 2D matrix of widgets
     knobPad, togglePad, buttonPad, genPad
 ) where
@@ -49,7 +54,8 @@ import Data.Boolean
 import Csound.Typed.Gui
 import Csound.Typed.Types
 import Csound.Control.SE
-import Csound.Control.Evt(listAt, Tick)
+import Csound.SigSpace(uon)
+import Csound.Control.Evt(listAt, Tick, snaps2, dropE, devt, loadbang)
 
 --------------------------------------------------------------------
 -- aux widgets
@@ -134,21 +140,21 @@ uknob = knob "" (linSpan 0 1)
 
 -- | Exponential slider (usefull for exploring frequencies or decibels). 
 --
--- > xknob min max initVal
+-- > xknob (min, max) initVal
 --
 -- The value belongs to the interval [min, max].
 -- The last argument is for initial value.
-xslider :: Double -> Double -> Double -> Source Sig
-xslider a b initVal = slider "" (expSpan a b) initVal
+xslider :: Range Double -> Double -> Source Sig
+xslider (a, b) initVal = slider "" (expSpan a b) initVal
 
 -- | Exponential knob (usefull for exploring frequencies or decibels). 
 --
--- > xknob min max initVal
+-- > xknob (min, max) initVal
 --
 -- The value belongs to the interval [min, max].
 -- The last argument is for initial value.
-xknob :: Double -> Double -> Double -> Source Sig
-xknob a b initVal = knob "" (expSpan a b) initVal
+xknob :: Range Double -> Double -> Source Sig
+xknob (a, b) initVal = knob "" (expSpan a b) initVal
 
 -- | Unit linear joystick.
 ujoy :: (Double, Double) -> Source (Sig, Sig)
@@ -279,3 +285,96 @@ radioGroupSig gcat names initVal = source $ do
     return (gcat guis, res)
     where        
         ids = fmap (sig . int) [0 .. length names - 1]
+
+
+
+-- | Pair of minimum and maximum values.
+type Range a = (a, a)
+
+-- | Creates a knob that outputs only integers in the given range.
+-- It produces a signal of integer values.
+--
+-- > rangeKnobSig (min, max) initVal 
+rangeKnobSig :: Range Int -> Int -> Source Sig
+rangeKnobSig = rangeSig1 uknob
+
+-- | Creates a slider that outputs only integers in the given range.
+-- It produces a signal of integer values.
+--
+-- > rangeSliderSig (min, max) initVal 
+rangeSliderSig :: Range Int -> Int -> Source Sig
+rangeSliderSig = rangeSig1 uslider
+
+-- | Creates a knob that outputs only integers in the given range.
+-- It produces an event stream of integer values. It can be used with
+-- list access functions @listAt@, @atTuple@, @atArg@.
+--
+-- > rangeKnob needInit (min, max) initVal
+--
+-- The first argument is a boolean. If it's true than the initial value
+-- is put in the output stream. If it\s False the initial value is skipped.
+rangeKnob :: Bool -> Range Int -> Int -> Source (Evt D)
+rangeKnob = rangeEvt1 uknob
+
+-- | Creates a slider that outputs only integers in the given range.
+-- It produces an event stream of integer values. It can be used with
+-- list access functions @listAt@, @atTuple@, @atArg@.
+--
+-- > rangeSlider needInit (min, max) initVal
+--
+-- The first argument is a boolean. If it's true than the initial value
+-- is put in the output stream. If it\s False the initial value is skipped.
+rangeSlider :: Bool -> Range Int -> Int -> Source (Evt D)
+rangeSlider = rangeEvt1 uslider
+
+rangeSig1 :: (Double -> Source Sig) -> Range Int -> Int -> Source Sig
+rangeSig1 widget range initVal = mapSource (fromRelative range) $ widget $ toRelativeInitVal range initVal
+
+rangeEvt1 :: (Double -> Source Sig) -> Bool -> Range Int -> Int -> Source (Evt D)
+rangeEvt1 widget isInit range initVal = mapSource (addInit . snaps) $ rangeSig1 widget range initVal
+    where
+        addInit
+            | isInit    = ((devt (int initVal) loadbang) <> )
+            | otherwise = id
+
+-- | 2d range range slider. Outputs a pair of event streams. 
+-- Each stream  contains changes in the given direction (Ox or Oy).
+--
+-- > rangeJoy needsInit rangeX rangeY (initX, initY)
+--
+-- The first argument is a boolean. If it's true than the initial value
+-- is put in the output stream. If it\s False the initial value is skipped.
+rangeJoy :: Bool -> Range Int -> Range Int -> (Int, Int) -> Source (Evt D, Evt D)
+rangeJoy isInit rangeX rangeY initVals = mapSource (addInit . f) $ rangeJoySig rangeX rangeY initVals
+    where 
+        f (x, y) = (snaps x, snaps y)           
+        addInit
+            | isInit    = id
+            | otherwise = \(a, b) -> (dropE 1 a, dropE 1 b)
+
+-- | 2d range range slider. It produces a single event stream. 
+-- The event fires when any signal changes.
+--
+-- > rangeJoy2 needsInit rangeX rangeY (initX, initY)
+--
+-- The first argument is a boolean. If it's true than the initial value
+-- is put in the output stream. If it\s False the initial value is skipped.
+rangeJoy2 :: Bool -> Range Int -> Range Int -> (Int, Int) -> Source (Evt (D, D))
+rangeJoy2 isInit rangeX rangeY initVals = mapSource (addInit . snaps2) $ rangeJoySig rangeX rangeY initVals
+    where
+        addInit
+            | isInit    = id
+            | otherwise = dropE 1
+
+-- | 2d range range slider. It produces the pair of integer signals
+rangeJoySig :: Range Int -> Range Int -> (Int, Int) -> Source (Sig, Sig)
+rangeJoySig rangeX rangeY (initValX, initValY) = mapSource f $ 
+    ujoy (toRelativeInitVal rangeX initValX, toRelativeInitVal rangeY initValY)
+    where f (x, y) = (fromRelative rangeX x, fromRelative rangeY y)
+
+toRelativeInitVal :: Range Int -> Int -> Double
+toRelativeInitVal (kmin, kmax) initVal = (fromIntegral $ initVal - kmin) / (fromIntegral $ (kmax - 1) - kmin) 
+
+fromRelative :: Range Int -> Sig -> Sig
+fromRelative (kmin, kmax) = floor' . uon (f kmin) (f kmax - 0.01)
+    where f = sig . int

@@ -5,7 +5,7 @@ module Csound.Air.Wave (
     osc, oscBy, saw, isaw, pulse, sqr, pw, tri, ramp, blosc,
 
     -- * Unipolar
-    unipolar, bipolar, on, uon, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
+    unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
 
     -- * Noise
     rndh, urndh, rndi, urndi, white, pink,
@@ -97,21 +97,6 @@ upw duty cps = unipolar $ pw duty cps
 -- | Unipolar triangle wave with ram factor.
 uramp :: Sig -> Sig -> Sig
 uramp duty cps = unipolar $ ramp duty cps
-
-
--- rescaling
-
--- | Rescaling of the bipolar signal (-1, 1) -> (a, b)
--- 
--- > on a b biSig
-on :: SigSpace a => Sig -> Sig -> a -> a
-on a b x = uon a b $ mapSig unipolar x 
-
--- | Rescaling of the unipolar signal (0, 1) -> (a, b)
--- 
--- > on a b uniSig
-uon :: SigSpace a => Sig -> Sig -> a -> a
-uon a b = mapSig (\x -> a + (b - a) * x) 
 
 --------------------------------------------------------------------------
 -- noise

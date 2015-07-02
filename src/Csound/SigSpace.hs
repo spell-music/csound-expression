@@ -5,7 +5,7 @@
         FlexibleInstances, 
         FlexibleContexts #-}
 module Csound.SigSpace(
-    SigSpace(..), BindSig(..), mul, At(..), bat,
+    SigSpace(..), BindSig(..), mul, on, uon, At(..), mixAt, bat,
     cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, 
     wsum        
 ) where
@@ -15,7 +15,6 @@ import Control.Applicative
 
 import Csound.Typed
 import Csound.Types
-import Csound.Control.Gui(Source, mapSource)
 import Csound.Typed.Opcode(pvscross, pvscale, pvsmix, balance)
 
 -- | A class for easy way to process the outputs of the instruments.
@@ -29,6 +28,21 @@ class SigSpace a => BindSig a where
 -- | Scaling the sound.
 mul :: SigSpace a => Sig -> a -> a
 mul k = mapSig (k * )
+
+-- rescaling
+
+-- | Rescaling of the bipolar signal (-1, 1) -> (a, b)
+-- 
+-- > on a b biSig
+on :: SigSpace a => Sig -> Sig -> a -> a
+on a b x = uon a b $ mapSig unipolar x 
+    where unipolar a = 0.5 + 0.5 * a
+
+-- | Rescaling of the unipolar signal (0, 1) -> (a, b)
+-- 
+-- > on a b uniSig
+uon :: SigSpace a => Sig -> Sig -> a -> a
+uon a b = mapSig (\x -> a + (b - a) * x) 
 
 -- | Crossfade.
 --
@@ -110,10 +124,6 @@ instance BindSig  (SE (Sig, Sig, Sig)) where bindSig f = fmap (bindSig f)
 
 instance SigSpace (SE (Sig, Sig, Sig, Sig)) where mapSig  f = fmap (mapSig f)
 instance BindSig  (SE (Sig, Sig, Sig, Sig)) where bindSig f = fmap (bindSig f)
-
-instance SigSpace a => SigSpace (Source a) where
-    mapSig f = mapSource (mapSig f)
-
 
 -----------------------------------------------------
 -- numeric instances
@@ -298,8 +308,15 @@ class SigSpace b => At a b c where
     type AtOut a b c :: *
     at :: (a -> b) -> c -> AtOut a b c
 
+-- | It applies an effect and balances the processed signal by original one.
 bat :: At Sig a b => (Sig -> a) -> b -> AtOut Sig a b
 bat f = at (\x -> mapSig ( `balance` x) $ f x)
+
+-- | It applies an effect and mixes the processed signal with original one.
+-- The first argument is for proportion of dry/wet (original/processed).
+-- It's like @at@ but it allows to balance processed signal with original one.
+mixAt :: (At a b c, c ~ AtOut a b c, SigSpace c, Num c) => Sig -> (a -> b) -> c -> c
+mixAt k f a = cfd k a (at f a)
 
 instance SigSpace a => At Sig Sig a where
     type AtOut Sig Sig a = a
@@ -361,10 +378,6 @@ instance At Sig Sig2 (SE Sig2) where
 
 ---------------------------------------------------------   
 
-instance (At Sig (SE Sig) a) => At Sig (SE Sig) (Source a) where
-    type AtOut Sig (SE Sig) (Source a) = Source (AtOut Sig (SE Sig) a)
-    at f a = mapSource (at f) a
-
 ---------------------------------------------------------   
 -- Sig2 -> Sig2
 
@@ -406,12 +419,3 @@ instance At Sig2 (SE Sig2) (SE Sig2) where
     at f a = f =<< a
 
 ---------------------------------------------------------   
-
-instance (At Sig2 Sig2 a) => At Sig2 Sig2 (Source a) where
-    type AtOut Sig2 Sig2 (Source a) = Source (AtOut Sig2 Sig2 a)
-    at f a = mapSource (at f) a
-
-instance (At Sig2 (SE Sig2) a) => At Sig2 (SE Sig2) (Source a) where
-    type AtOut Sig2 (SE Sig2) (Source a) = Source (AtOut Sig2 (SE Sig2) a)
-    at f a = mapSource (at f) a
-

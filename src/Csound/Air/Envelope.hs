@@ -1,10 +1,21 @@
+{-#  Language TypeFamilies, FlexibleInstances #-}
 -- | Envelopes
 module Csound.Air.Envelope (
     leg, xeg,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
-    onDur, lindurBy, expdurBy, linendurBy,    
+    onDur, lindurBy, expdurBy, linendurBy,  
+
+    -- * Faders
+    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades,
+
+    -- * Humanize    
+    HumanizeValue(..), HumanizeTime(..), HumanizeValueTime(..),
+    hval, htime, hvalTime,
+
     -- * Looping envelopes   
+
+    -- ** Simple
     lpshold, loopseg, loopxseg, lpsholdBy, loopsegBy, loopxsegBy,
     holdSeq, linSeq, expSeq,
     linloop, exploop, sah, stepSeq, 
@@ -12,12 +23,24 @@ module Csound.Air.Envelope (
     pwSeq, ipwSeq, rampSeq, irampSeq, xrampSeq, ixrampSeq,
     adsrSeq, xadsrSeq, adsrSeq_, xadsrSeq_,  
 
-    -- * Faders
-    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades
+    -- ** Complex
+    Seq, toSeq, onBeat, onBeats,
+
+    seqConst, seqLin, seqExp,
+
+    seqPw, iseqPw, seqSqr, iseqSqr,
+    seqSaw, iseqSaw, xseqSaw, ixseqSaw, seqRamp, iseqRamp, seqTri, seqTriRamp,
+    seqAdsr, xseqAdsr, seqAdsr_, xseqAdsr_,
+
+    seqPat, seqAsc, seqDesc, seqHalf
 
 ) where
 
+import Control.Monad
+import Control.Applicative
 import Data.List(intersperse)
+
+import Temporal.Media
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lpshold, loopseg, loopxseg)
@@ -448,3 +471,409 @@ genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) we
 
         groupSegs :: [[Sig]] -> [Sig]
         groupSegs as = concat $ intersperse [0] as
+
+
+-- | The seq is a type for step sequencers. 
+-- The step sequencer is a monophonic control signal.
+-- Most often step sequencer is a looping segment of
+-- some values. It's used to create bas lines or conrtrol the frequency of
+-- the filter in dub or trance music. There are simple functions
+-- for creation of step sequencers defined in the module "Csound.Air.Envelope".
+--
+-- Basically the step sequence is a list of pairs:
+--
+-- >  [(valA, durA), (valB, durB), (valC, durC)]
+--
+-- each pair defines a segment of height valN that lasts for durN.
+-- The sequence is repeated with the given frequency. Each segment
+-- has certain shape. It can be a constant or line segment or 
+-- fragment of square wave or fragment of an adsr envelope. 
+-- There are many predefined functions.
+--
+-- With Seq we can construct control signals in very flexible way.
+-- We can use the score composition functions for creation of sequences.
+-- We can use @mel@ for sequencing of individual steps, we can use @str@
+-- for stretching the sequence in time domain, we can delay with @del@.
+--
+-- Here is an example:
+--
+-- > dac $ tri $ seqConst [str 0.25 $ mel [440, 220, 330, 220], 110] 1
+--
+-- We can see how the function @str@ was used to make a certain segment faster.
+-- There are numerical instaces for Seq. Bt it defines only functions @fronInteger@ and
+-- @fromRational@.
+newtype Seq = Seq { unSeq :: [Seq1] }
+
+data Seq1 = Rest {
+        seq1Dur :: Sig } 
+    | Seq1 {
+          seq1Dur :: Sig
+        , seq1Val :: Sig
+    }
+
+type instance DurOf Seq = Sig
+
+instance Duration Seq where
+    dur (Seq as) = sum $ fmap seq1Dur as
+
+instance Rest Seq where
+    rest t = Seq [Rest t]
+
+instance Delay Seq where
+    del t a = mel [rest t, a]
+
+instance Melody Seq where
+    mel as = Seq $ as >>= unSeq    
+
+instance Stretch Seq where
+    str t (Seq as) = Seq $ fmap (updateDur t) as
+        where updateDur k a = a { seq1Dur = k * seq1Dur a }
+
+-- | Creates a 
+toSeq :: Sig -> Seq
+toSeq a = Seq [Seq1 1 a]
+
+-- | Squashes a sequence to a single beat.
+onBeat :: Seq -> Seq
+onBeat a = str (1 / dur a) a
+
+-- | Squashes a sequence to a single beat and then stretches to the given value.
+onBeats :: Sig -> Seq -> Seq
+onBeats k = str k . onBeat
+
+instance Num Seq where
+    fromInteger n = toSeq $ fromInteger n
+    (+) = undefined
+    (*) = undefined
+    negate = undefined
+    abs = undefined
+    signum = undefined
+
+instance Fractional Seq where
+    fromRational = toSeq . fromRational
+    (/) = undefined
+
+-------------------------------------------------
+
+seqGen0 :: ([Sig] -> Sig -> Sig) -> (Sig -> Sig -> [Sig]) -> [Seq] -> Sig -> Sig
+seqGen0 loopFun segFun as = loopFun (renderSeq0 segFun $ mel as)
+
+seqGen1 :: ([Sig] -> Sig -> Sig) -> (Sig -> Sig -> [Sig]) -> [Seq] -> Sig -> Sig
+seqGen1 loopFun segFun as = loopFun (renderSeq1 segFun $ mel as)
+
+simpleSeq0 loopFun = seqGen0 loopFun $ \dt val -> [val, dt]
+simpleSeq1 loopFun = seqGen0 loopFun $ \dt val -> [val, dt]
+
+seq0 = seqGen0 lpshold
+seq1 = seqGen1 loopseg
+seqx = seqGen1 loopxseg
+
+-- | A sequence of constant segments.
+seqConst :: [Seq] -> Sig -> Sig
+seqConst = simpleSeq0 lpshold
+
+-- | A linear sequence.
+seqLin :: [Seq] -> Sig -> Sig
+seqLin = simpleSeq1 loopseg
+
+-- | An exponential sequence.
+seqExp :: [Seq] -> Sig -> Sig
+seqExp = simpleSeq1 loopxseg
+
+-------------------------------------------------
+-- square
+
+-- | The sequence of pulse width waves.
+-- The first argument is a duty cycle (ranges from 0 to 1).
+seqPw :: Sig -> [Seq] -> Sig -> Sig
+seqPw k = seq0 $ \dt val -> [val, dt * k, 0, dt * (1 - k)]
+
+-- | The sequence of inversed pulse width waves.
+iseqPw :: Sig -> [Seq] -> Sig -> Sig
+iseqPw k = seq0 $ \dt val -> [0, dt * k, val, dt * (1 - k)]
+
+-- | The sequence of square waves.
+seqSqr :: [Seq] -> Sig -> Sig
+seqSqr = seqPw 0.5
+
+-- | The sequence of inversed square waves.
+iseqSqr :: [Seq] -> Sig -> Sig
+iseqSqr = iseqPw 0.5
+
+-- saw
+
+saw1  dt val = [val, dt, 0, 0]
+isaw1 dt val = [0, dt, val, 0]
+
+-- | The sequence of sawtooth waves.
+seqSaw :: [Seq] -> Sig -> Sig
+seqSaw = seq1 saw1
+
+-- | The sequence of inversed sawtooth waves.
+iseqSaw :: [Seq] -> Sig -> Sig
+iseqSaw = seq1 isaw1
+
+-- | The sequence of exponential sawtooth waves.
+xseqSaw :: [Seq] -> Sig -> Sig
+xseqSaw = seqx saw1
+
+-- | The sequence of inversed exponential sawtooth waves.
+ixseqSaw :: [Seq] -> Sig -> Sig
+ixseqSaw = seqx isaw1
+
+-- | The sequence of ramp  functions. The first argument is a duty cycle.
+seqRamp :: Sig -> [Seq] -> Sig -> Sig
+seqRamp k = seq1 $ \dt val -> [val, k * dt, 0, (1 - k) * dt, 0, 0]
+
+-- | The sequence of inversed ramp  functions. The first argument is a duty cycle.
+iseqRamp :: Sig -> [Seq] -> Sig -> Sig
+iseqRamp k = seq1 $ \dt val -> [0, k * dt, val, (1 - k) * dt, 0, 0]
+
+-- tri
+
+-- | The sequence of triangular waves.
+seqTri :: [Seq] -> Sig -> Sig
+seqTri = seqTriRamp 0.5
+
+-- | The sequence of ramped triangular waves.
+seqTriRamp :: Sig -> [Seq] -> Sig -> Sig
+seqTriRamp k = seq1 $ \dt val -> [0, dt * k, val, dt * (1 - k)]
+
+-- adsr
+
+adsr1 a d s r dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r), s * val, r * dt ]
+adsr1_ a d s r rest dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r - rest), s * val, r * dt, 0, rest ]
+
+-- | The sequence of ADSR-envelopes.
+--
+-- > seqAdsr att dec sus rel
+--
+-- It has to be:
+--
+-- > att + dec + sus_time + rel == 1
+seqAdsr :: Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
+seqAdsr a d s r = seq1 (adsr1 a d s r)
+
+-- | The sequence of exponential ADSR-envelopes.
+xseqAdsr :: Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
+xseqAdsr a d s r = seqx (adsr1 a d s r)
+
+-- | The sequence of ADSR-envelopes with rest at the end.
+--
+-- > seqAdsr att dec sus rel rest
+--
+-- It has to be:
+--
+-- > att + dec + sus_time + rel + rest == 1
+
+seqAdsr_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
+seqAdsr_ a d s r rest = seq1 (adsr1_ a d s r rest)
+
+-- | The sequence of exponential ADSR-envelopes with rest at the end.
+xseqAdsr_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
+xseqAdsr_ a d s r rest = seqx (adsr1_ a d s r rest)
+
+-------------------------------------------------
+
+renderSeq0 :: (Sig -> Sig -> [Sig]) -> Seq -> [Sig]
+renderSeq0 f (Seq as) = as >>= phi
+    where 
+        phi x = case x of
+            Seq1 dt val -> f dt val
+            Rest dt     -> [0, dt]
+
+renderSeq1 :: (Sig -> Sig -> [Sig]) -> Seq -> [Sig]
+renderSeq1 f (Seq as) = as >>= phi
+    where 
+        phi x = case x of
+            Seq1 dt val -> f dt val
+            Rest dt     -> [0, dt, 0, 0]
+
+-------------------------------------------------
+
+genSeqPat :: (Int -> [Double]) -> [Int] -> Seq
+genSeqPat g ns = mel (ns >>= f)
+    where f n 
+            | n <= 0 = []
+            | n == 1 = [1]
+            | otherwise = fmap (toSeq . sig . double) $ g n
+
+-- | Function for creation of accented beats. 
+-- The steady beat pattern of accents is repeated.
+-- The first argument describes the list of integers.
+-- Each integer is a main beat and the length of the beat.
+-- We can create a typical latino beat:
+--
+-- > dac $ mul (seqSaw [seqPat [3, 3, 2]] 1) white
+seqPat :: [Int] -> Seq
+seqPat ns = mel (ns >>= f)
+    where f n 
+            | n <= 0 = []
+            | n == 1 = [1]
+            | otherwise = [1, rest $ sig $ int $ n - 1]
+
+rowDesc n = [1, 1 - recipN .. recipN ]
+    where recipN = 1/ fromIntegral n
+
+-- | It's like @seqPat@ but inplace of rests it fills the gaps with
+-- segments descending in value.
+--
+-- > dac $ mul (seqSaw [seqDesc [3, 3, 2]] 1) white
+seqDesc :: [Int] -> Seq
+seqDesc = genSeqPat rowDesc
+    
+-- | It's like @seqPat@ but inplace of rests it fills the gaps with
+-- segments ascending in value.
+--
+-- > dac $ mul (seqSaw [seqAsc [3, 3, 2]] 1) white
+seqAsc :: [Int] -> Seq
+seqAsc = genSeqPat (\n -> let xs = rowDesc n in head xs : reverse (tail xs))
+
+-- | It's like @seqPat@ but inplace of rests it fills the gaps with 0.5s.
+--
+-- > dac $ mul (seqSaw [seqHalf [3, 3, 2]] 1) white
+seqHalf :: [Int] -> Seq
+seqHalf = genSeqPat $ (\n -> 1 : take (n - 1) (repeat 0.5))
+
+-------------------------------------------------
+-- humanizers
+
+-- | Alias for @humanVal@.
+hval :: HumanizeValue a => Sig -> a -> HumanizeValueOut a
+hval = humanVal
+
+-- | Alias for @humanTime@.
+htime :: HumanizeTime a => Sig -> a -> HumanizeTimeOut a
+htime = humanTime
+
+-- | Alias for @humanValTime@.
+hvalTime :: HumanizeValueTime a => Sig -> Sig -> a -> HumanizeValueTimeOut a
+hvalTime = humanValTime
+
+-- value
+
+-- | A function transformer (decorator). We can transform an envelope producer
+-- so that all values are sumed with some random value. The amplitude of the
+-- random value is given with the first argument.
+--
+-- It can transform linseg, expseg, sequence producers and simplified sequence producers. 
+--
+-- An example:
+--
+-- > dac $ mul (humanVal 0.1 sqrSeq [1, 0.5, 0.2, 0.1] 1) $ white
+--
+-- As you can see it transforms the whole function. So we don't need for extra parenthesis.
+class HumanizeValue a where
+    type HumanizeValueOut a :: *
+    humanVal :: Sig -> a -> HumanizeValueOut a
+
+rndVal :: Sig -> Sig -> Sig -> SE Sig
+rndVal cps dr val = fmap (+ val) $ randh dr cps
+
+rndValD :: Sig -> D -> SE D
+rndValD dr val = fmap (+ val) $ random (- (ir dr)) (ir dr)
+
+instance HumanizeValue ([Seq] -> Sig -> Sig) where
+    type HumanizeValueOut ([Seq] -> Sig -> Sig) = [Seq] -> Sig -> SE Sig
+    humanVal dr f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSeq cps) sq)
+        where
+            humanSeq cps (Seq as) = fmap Seq $ forM as $ \x -> case x of
+                Rest _      -> return x
+                Seq1 dt val -> fmap (Seq1 dt) $ rndVal cps dr val
+
+instance HumanizeValue ([Sig] -> Sig -> Sig) where
+    type HumanizeValueOut ([Sig] -> Sig -> Sig) = [Sig] -> Sig -> SE Sig
+    humanVal dr f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSig cps) sq)
+        where humanSig cps val = rndVal cps dr val
+
+instance HumanizeValue ([D] -> Sig) where
+    type HumanizeValueOut ([D] -> Sig) = [D] -> SE Sig
+    humanVal dr f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
+        where human1 (n, a)
+                    | mod n 2 == 1 = rndValD dr a
+                    | otherwise    = return a
+
+instance HumanizeValue ([D] -> D -> Sig) where
+    type HumanizeValueOut ([D] -> D -> Sig) = [D] -> D -> SE Sig
+    humanVal dr f = \xs release -> fmap (flip f release) $ mapM human1 $ zip [0 ..] xs
+        where human1 (n, a)
+                    | mod n 2 == 1 = rndValD dr a
+                    | otherwise    = return a
+
+-- time
+
+-- | A function transformer (decorator). We can transform an envelope producer
+-- so that all durations are sumed with some random value. The amplitude of the
+-- random value is given with the first argument.
+--
+-- It can transform linseg, expseg, sequence producers and simplified sequence producers. 
+--
+-- An example:
+--
+-- > dac $ mul (humanTime 0.1 sqrSeq [1, 0.5, 0.2, 0.1] 1) $ white
+--
+-- As you can see it transforms the whole function. So we don't need for extra parenthesis.
+class HumanizeTime a where
+    type HumanizeTimeOut a :: *
+    humanTime :: Sig -> a -> HumanizeTimeOut a
+
+instance HumanizeTime ([Seq] -> Sig -> Sig) where
+    type HumanizeTimeOut ([Seq] -> Sig -> Sig) = [Seq] -> Sig -> SE Sig
+    humanTime dr f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSeq cps) sq)
+        where
+            humanSeq cps (Seq as) = fmap Seq $ forM as $ \x -> case x of
+                Rest dt     -> fmap Rest $ rndVal cps dr dt
+                Seq1 dt val -> fmap (flip Seq1 val) $ rndVal cps dr dt
+
+instance HumanizeTime ([D] -> Sig) where
+    type HumanizeTimeOut ([D] -> Sig) = [D] -> SE Sig
+    humanTime dr f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
+        where human1 (n, a)
+                    | mod n 2 == 0 = rndValD dr a
+                    | otherwise    = return a
+
+instance HumanizeTime ([D] -> D -> Sig) where
+    type HumanizeTimeOut ([D] -> D -> Sig) = [D] -> D -> SE Sig
+    humanTime dr f = \xs release -> liftA2 f (mapM human1 $ zip [0 ..] xs) (rndValD dr release)
+        where human1 (n, a)
+                    | mod n 2 == 0 = rndValD dr a
+                    | otherwise    = return a
+
+-- value & time
+
+-- | A function transformer (decorator). We can transform an envelope producer
+-- so that all values and durations are sumed with some random value. The amplitude of the
+-- random value is given with the first two arguments.
+--
+-- It can transform linseg, expseg, sequence producers and simplified sequence producers. 
+--
+-- An example:
+--
+-- > dac $ mul (humanValTime 0.1 0.1 sqrSeq [1, 0.5, 0.2, 0.1] 1) $ white
+--
+-- As you can see it transforms the whole function. So we don't need for extra parenthesis.
+class HumanizeValueTime a where
+    type HumanizeValueTimeOut a :: *
+    humanValTime :: Sig -> Sig -> a -> HumanizeValueTimeOut a
+
+instance HumanizeValueTime ([Seq] -> Sig -> Sig) where
+    type HumanizeValueTimeOut ([Seq] -> Sig -> Sig) = [Seq] -> Sig -> SE Sig
+    humanValTime drVal drTime f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSeq cps) sq)
+        where
+            humanSeq cps (Seq as) = fmap Seq $ forM as $ \x -> case x of
+                Rest dt     -> fmap Rest $ rndVal cps drTime dt
+                Seq1 dt val -> liftA2 Seq1 (rndVal cps drTime dt) (rndVal cps drVal val)
+
+instance HumanizeValueTime ([D] -> Sig) where
+    type HumanizeValueTimeOut ([D] -> Sig) = [D] -> SE Sig
+    humanValTime drVal drTime f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
+        where human1 (n, a)
+                    | mod n 2 == 1 = rndValD drVal  a
+                    | otherwise    = rndValD drTime a
+
+instance HumanizeValueTime ([D] -> D -> Sig) where
+    type HumanizeValueTimeOut ([D] -> D -> Sig) = [D] -> D -> SE Sig
+    humanValTime drVal drTime f = \xs release -> liftA2 f (mapM human1 $ zip [0 ..] xs) (rndValD drTime release)
+        where human1 (n, a)
+                    | mod n 2 == 1 = rndValD drVal  a
+                    | otherwise    = rndValD drTime a

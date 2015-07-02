@@ -1,4 +1,4 @@
-{-# Language TypeFamilies, FlexibleContexts, FlexibleInstances #-}
+{-# Language TypeFamilies, FlexibleContexts, FlexibleInstances, ScopedTypeVariables #-}
 -- | We can convert notes to sound signals with instruments. 
 -- An instrument is a function:
 --
@@ -87,7 +87,7 @@ module Csound.Control.Instr(
     withDur,
 
     -- ** Misc
-    alwaysOn,
+    alwaysOn, playWhen,
 
     -- * Overload
     -- | Converters to make it easier a construction of the instruments.
@@ -143,6 +143,16 @@ schedUntil_ instr onEvt offEvt = sched_ instr' $ withDur infiniteDur onEvt
             res <- instr x
             runEvt offEvt $ const $ turnoff
             return res
+
+-- | Transforms an instrument from always on to conditional one. 
+-- The routput instrument plays only when condition is true otherwise
+-- it produces silence.
+playWhen :: forall a b. Sigs a => BoolSig -> (b -> SE a) -> (b -> SE a)
+playWhen onSig instr msg = do
+    ref <- newSERef (0 :: a)
+    writeSERef ref 0
+    when1 onSig $ writeSERef ref =<< instr msg
+    readSERef ref
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------

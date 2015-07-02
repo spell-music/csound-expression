@@ -1,4 +1,9 @@
-{-# Language TypeSynonymInstances, FlexibleInstances #-}
+{-# Language 
+    TypeSynonymInstances, 
+    FlexibleInstances, 
+    MultiParamTypeClasses, 
+    FlexibleContexts, 
+    TypeFamilies #-}
 -- | GUI (Graphical User Interface) elements are handy to change 
 -- the parameters of the sound in real time. It includes sliders, 
 -- knobs, rollers, buttons and other widgets. 
@@ -54,6 +59,7 @@ module Csound.Control.Gui (
     widget, sink, source, display, sinkSource, sinkSlice, sourceSlice,
     mapSource, mapGuiSource, 
     mhor, mver, msca,
+    joinSource,
 
     -- * Panels
     panel, win, panels, panelBy,
@@ -66,10 +72,13 @@ module Csound.Control.Gui (
 
     -- * Lifters
     -- | An easy way to combine visuals for sound sources.
+    hlifts, vlifts,
 
     lift1, hlift2, vlift2, hlift3, vlift3, hlift4, vlift4, hlift5, vlift5,
 
     -- ** Lifters with visual scaling
+    hlifts', vlifts',
+
     hlift2', vlift2', hlift3', vlift3', hlift4', vlift4', hlift5', vlift5'
 ) where
 
@@ -80,6 +89,22 @@ import Csound.Typed.Gui
 import Csound.Control.Gui.Layout
 import Csound.Control.Gui.Props
 import Csound.Control.Gui.Widget
+import Csound.SigSpace
+
+instance SigSpace a => SigSpace (Source a) where
+    mapSig f = mapSource (mapSig f)
+
+instance (At Sig (SE Sig) a) => At Sig (SE Sig) (Source a) where
+    type AtOut Sig (SE Sig) (Source a) = Source (AtOut Sig (SE Sig) a)
+    at f a = mapSource (at f) a
+
+instance (At Sig2 Sig2 a) => At Sig2 Sig2 (Source a) where
+    type AtOut Sig2 Sig2 (Source a) = Source (AtOut Sig2 Sig2 a)
+    at f a = mapSource (at f) a
+
+instance (At Sig2 (SE Sig2) a) => At Sig2 (SE Sig2) (Source a) where
+    type AtOut Sig2 (SE Sig2) (Source a) = Source (AtOut Sig2 (SE Sig2) a)
+    at f a = mapSource (at f) a
 
 -- | Creates a window with the given name, size and content
 --
@@ -90,8 +115,43 @@ win name (x, y) = panelBy name (Just $ Rect 0 0 x y)
 keyWin :: String -> (Int, Int) -> Gui -> SE ()
 keyWin name (x, y) = keyPanelBy name (Just $ Rect 0 0 x y)
 
+-- | Hides the SE inside Source.
+joinSource :: Source (SE a) -> Source a
+joinSource a = do
+    (g, mv) <- a
+    v <- mv
+    return (g, v)
+
 ----------------------------------------------------------------------------------
 -- easy grouppings for GUIs
+
+-- | Groups a list of Source-widgets. The visuals are horizontally aligned.
+hlifts :: ([a] -> b) -> [Source a] -> Source b
+hlifts = genLifts hor
+
+-- | Groups a list of Source-widgets. The visuals are vertically aligned.
+vlifts :: ([a] -> b) -> [Source a] -> Source b
+vlifts = genLifts ver
+
+-- | Groups a list of Source-widgets. The visuals are horizontally aligned. 
+-- It uses the list of proportions.
+hlifts' :: [Double] -> ([a] -> b) -> [Source a] -> Source b
+hlifts' props = genLifts (applyProportionsToList props hor)
+
+-- | Groups a list of Source-widgets. The visuals are vertically aligned.
+-- It uses the list of proportions.
+vlifts' :: [Double] -> ([a] -> b) -> [Source a] -> Source b
+vlifts' props = genLifts (applyProportionsToList props ver)
+
+applyProportionsToList :: [Double] -> ([Gui] -> Gui) -> [Gui] -> Gui
+applyProportionsToList props f as = f $ zipWith sca (props ++ repeat 1) as
+
+genLifts :: ([Gui] -> Gui) -> ([a] -> b) -> [Source a] -> Source b
+genLifts gf f as = fmap phi $ sequence as
+    where 
+        phi xs = (gf gs, f vs)
+            where (gs, vs) = unzip xs
+
 
 -- | The shortcut for @mapSource@.
 lift1 :: (a -> b) -> Source a -> Source b

@@ -6,7 +6,7 @@ module Csound.Control.Evt(
     boolToEvt, evtToBool, sigToEvt, evtToSig, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
 
-    Snap, snapshot, snaps, sync, syncBpm, 
+    Snap, snapshot, snaps, snaps2, sync, syncBpm, 
     
     -- * Opcodes
     metroE, impulseE, changedE, triggerE, loadbang, impulse,
@@ -92,6 +92,12 @@ partitionE p evts = (a, b)
 -- | Splits a toggle event stream on on-events and off-events.
 splitToggle :: Evt D -> (Evt D, Evt D)
 splitToggle = swap . partitionE (==* 0)
+
+-- | Constructs an event stream that contains pairs from the
+-- given pair of signals. Events happens when any signal changes.
+snaps2 :: Sig2 -> Evt (D, D)
+snaps2 (x, y) = snapshot const (x, y) trigger
+    where trigger = sigToEvt $ changed [x, y]
 
 ----------------------------------------------------------------------
 -- higher level evt-funs

@@ -48,9 +48,13 @@ instance SigSpace a => SigSpace (Seg a) where
 
 type instance DurOf (Seg a) = Tick
 
-instance Sigs a => Compose (Seg a) where
+instance Sigs a => Melody (Seg a) where
 	mel = sflow
+
+instance Sigs a => Harmony (Seg a) where	
 	har = spar
+
+instance Sigs a => Compose (Seg a) where
 
 instance Sigs a => Delay (Seg a) where
 	del = sdel
