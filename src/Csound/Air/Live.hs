@@ -5,13 +5,17 @@ module Csound.Air.Live (
     mixer, hmixer, mixMono,
 
     -- * Effects
-    FxFun, FxUI(..), fxBox,
+    FxFun, FxUI(..), fxBox, uiBox,
     fxColor, fxVer, fxHor, fxSca, fxApp,
+
+    -- * Instrument choosers
+    instrChooser, hinstrChooser, vinstrChooser,
+    midiChooser,  hmidiChooser, vmidiChooser,
 
     -- ** Fx units
     uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho,
     uiFilter, uiReverb, uiGain, uiWhite, uiPink, uiFx, uiRoom,
-    uiHall, uiCave, uiSig, uiMix,
+    uiHall, uiCave, uiSig, uiMix, uiMidi,
 
      -- * Static widgets
     AdsrBound(..), AdsrInit(..),
@@ -28,7 +32,9 @@ import qualified Data.Colour.Names as C
 
 import Csound.Typed
 import Csound.Typed.Gui
-import Csound.Control.Gui(funnyRadio, mapSource)
+import Csound.Control.Evt
+import Csound.Control.Instr
+import Csound.Control.Gui
 import Csound.Typed.Opcode hiding (space)
 import Csound.SigSpace
 import Csound.Air.Wave
@@ -152,8 +158,19 @@ fxBox name fx onOff args = source $ do
             | otherwise = f gs
             where f xs = uiGroupGui gOff (ver xs)
 
+-- | Creates an FX-box from the given visual representation.
+-- It insertes a big On/Off button atop of the GUI.
+uiBox :: String -> Source FxFun -> Bool -> Source FxFun 
+uiBox name fx onOff = mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go off fx
+    where
+        off =  mapGuiSource (setFontSize 25) $ toggleSig name onOff 
+        go off fx arg = mul off $ fx arg
+
+uiOnOffSize = 1.7
+uiBoxSize   = 8
+
 uiGroupGui :: Gui -> Gui -> Gui 
-uiGroupGui a b =ver [sca 1.7 a, sca 8 b]
+uiGroupGui a b =ver [sca uiOnOffSize a, sca uiBoxSize b]
 
 sourceColor2 :: Color -> Source a -> Source a
 sourceColor2 col a = source $ do
@@ -283,9 +300,10 @@ uiHall isOn = sourceColor2 C.mediumseagreen $ uiFx "Hall" largeHall2 isOn
 uiCave :: Bool -> Source FxFun
 uiCave isOn = sourceColor2 C.darkviolet $ uiFx "Cave" magicCave2 isOn
 
--- | The widget for selecting a midi instrument. 
-uiMidi :: Bool -> [(String, Msg -> SE Sig2)] -> Source FxFun
-uiMidi isOn as = sourceColor2 C.forestgreen $ undefined
+-- | Midi chooser implemented as FX-box.
+uiMidi :: [(String, Msg -> SE Sig2)] -> Int -> Source FxFun 
+uiMidi xs initVal = sourceColor2 C.forestgreen $ uiBox "Midi" fx True
+    where fx = lift1 (\aout arg -> return $ aout + arg) $ vmidiChooser xs initVal
 
 -- | the widget for mixing in a signal to the signal.
 uiSig :: String -> Bool -> Source Sig2 -> Source FxFun
@@ -353,3 +371,39 @@ masterVolume = slider "master" uspan 0.5
 masterVolumeKnob :: Source Sig
 masterVolumeKnob = knob "master" uspan 0.5
 
+
+----------------------------------------------------
+-- instrument choosers
+
+genMidiChooser chooser xs initVal = joinSource $ lift1 midi $ chooser xs initVal
+
+-- | Chooses a midi instrument among several alternatives. It uses the @radioButtons@ for GUI groupping.
+midiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
+midiChooser  = genMidiChooser instrChooser
+
+-- | Chooses a midi instrument among several alternatives. It uses the @hradio@ for GUI groupping.
+hmidiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
+hmidiChooser = genMidiChooser hinstrChooser
+
+-- | Chooses a midi instrument among several alternatives. It uses the @vradio@ for GUI groupping.
+vmidiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
+vmidiChooser = genMidiChooser vinstrChooser
+
+-- | Chooses an instrument among several alternatives. It uses the @radioButtons@ for GUI groupping.
+instrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+instrChooser = genInstrChooser $ \names initVal -> radioButton "" (zip names $ fmap int [0 ..]) initVal
+
+-- | Chooses an instrument among several alternatives. It uses the @hradio@ for GUI groupping.
+hinstrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+hinstrChooser = genInstrChooser hradio
+
+-- | Chooses an instrument among several alternatives. It uses the @vradio@ for GUI groupping.
+vinstrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+vinstrChooser = genInstrChooser vradio
+
+genInstrChooser :: (Sigs b) => ([String] -> Int -> Source (Evt D)) -> [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+genInstrChooser widget xs initVal = lift1 go $ widget names initVal
+    where 
+        (names, instrs) = unzip xs
+        go evtInstrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> playWhen (sig (int n) ==* instrId) instr) [0 ..] instrs
+            where instrId = evtToSig (int initVal) evtInstrId
