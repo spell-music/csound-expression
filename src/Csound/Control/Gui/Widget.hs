@@ -42,7 +42,13 @@ module Csound.Control.Gui.Widget (
     rangeJoy, rangeJoy2, rangeJoySig,
 
     -- * The 2D matrix of widgets
-    knobPad, togglePad, buttonPad, genPad
+    knobPad, togglePad, buttonPad, genPad,
+
+    -- * External control
+
+    -- | The widgets can be controlled with external signals/event streams
+    button', toggle', knob', slider', uknob', uslider',
+    hradio', vradio', hradioSig', vradioSig'
 ) where
 
 import Control.Monad
@@ -55,7 +61,8 @@ import Csound.Typed.Gui
 import Csound.Typed.Types
 import Csound.Control.SE
 import Csound.SigSpace(uon)
-import Csound.Control.Evt(listAt, Tick, snaps2, dropE, devt, loadbang)
+import Csound.Control.Evt(listAt, Tick, snaps2, dropE, devt, loadbang, evtToSig)
+import Csound.Typed.Opcode(changed)
 
 --------------------------------------------------------------------
 -- aux widgets
@@ -378,3 +385,96 @@ toRelativeInitVal (kmin, kmax) initVal = (fromIntegral $ initVal - kmin) / (from
 fromRelative :: Range Int -> Sig -> Sig
 fromRelative (kmin, kmax) = floor' . uon (f kmin) (f kmax - 0.01)
     where f = sig . int
+
+
+------------------------------------------------------------
+-- external control of widgets
+
+-- | It's like simple @button@, but it can be controlled with external control.
+-- The first argument is for external control.
+button' :: Tick -> String -> Source Tick
+button' ctrl name = mapSource (mappend ctrl) $ button name
+
+-- | It's like simple @toggle@, but it can be controlled with external control.
+-- The first argument is for external control.
+toggle' :: Evt D -> String -> Bool -> Source (Evt D)
+toggle' ctrl name initVal = source $ do
+    (gui, output, input) <- setToggle name initVal
+    output ctrl
+    return $ (gui, mappend ctrl input)
+
+-- | It's like simple @uknob@, but it can be controlled with external control.
+-- The first argument is for external control.
+uknob' :: Sig -> Double -> Source Sig   
+uknob' ctrl initVal = ctrlSig (double initVal) ctrl $ setKnob "" uspan initVal 
+
+-- | It's like simple @uslider@, but it can be controlled with external control.
+-- The first argument is for external control.
+uslider' :: Sig -> Double -> Source Sig 
+uslider' ctrl initVal = ctrlSig (double initVal) ctrl $ setSlider "" uspan initVal 
+
+-- | It's like simple @knob@, but it can be controlled with external control.
+-- The first argument is for external control.
+knob' :: Sig -> String -> ValSpan -> Double -> Source Sig
+knob' ctrl name span initVal = ctrlSig (double initVal) ctrl $ setKnob name span initVal
+
+-- | It's like simple @slider@, but it can be controlled with external control.
+-- The first argument is for external control.
+slider' :: Sig -> String -> ValSpan -> Double -> Source Sig
+slider' ctrl name span initVal = ctrlSig (double initVal) ctrl $ setSlider name span initVal
+
+-- | It's like simple @hradioSig@, but it can be controlled with external control.
+-- The first argument is for external control.
+hradioSig' :: Sig -> [String] -> Int -> Source Sig
+hradioSig' = radioGroupSig' hor 
+
+-- | It's like simple @vradioSig@, but it can be controlled with external control.
+-- The first argument is for external control.
+vradioSig' :: Sig -> [String] -> Int -> Source Sig
+vradioSig' = radioGroupSig' ver
+
+-- | It's like simple @hradio@, but it can be controlled with external control.
+-- The first argument is for external control.
+hradio' :: Evt D -> [String] -> Int -> Source (Evt D) 
+hradio' = radioGroup' hor 
+
+-- | It's like simple @vradio@, but it can be controlled with external control.
+-- The first argument is for external control.
+vradio' :: Evt D -> [String] -> Int -> Source (Evt D)
+vradio' = radioGroup' ver
+
+radioGroup'  :: ([Gui] -> Gui) -> Evt D -> [String] -> Int -> Source (Evt D)
+radioGroup' gcat ctrl names initVal =  mapSource snaps $ radioGroupSig' gcat (evtToSig (int initVal) ctrl) names initVal
+
+radioGroupSig'  :: ([Gui] -> Gui) -> Sig -> [String] -> Int -> Source Sig
+radioGroupSig' gcat ctrl names initVal = source $ do
+    (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
+    curRef <- newGlobalSERef (sig $ int initVal)   
+
+    when1 (changed [ctrl] ==* 1) $ writeSERef curRef ctrl
+
+    current <- readSERef curRef    
+    zipWithM_ (\w i -> w $ ifB (current ==* i) 1 0) writes ids
+    zipWithM_ (\r i -> runEvt (snaps r) $ \x -> do              
+        when1 (sig x ==* 1) $ do
+            writeSERef curRef i
+        when1 (sig x ==* 0 &&* current ==* i) $ do
+           writeSERef curRef i    
+        ) reads ids   
+
+    res <- readSERef curRef
+    return (gcat guis, res)
+    where        
+        ids = fmap (sig . int) [0 .. length names - 1]
+
+
+ctrlSig :: D -> Sig -> SinkSource Sig -> Source Sig
+ctrlSig initVal ctrl v = source $ do
+    (gui, output, input) <- v
+    ref <- newGlobalSERef (sig initVal)
+    when1 (changed [ctrl] ==* 1) $ writeSERef ref ctrl  
+    when1 (changed [input] ==* 1) $ writeSERef ref input    
+    res <- readSERef ref
+    output res
+    return (gui, res)
+    
