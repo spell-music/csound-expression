@@ -22,7 +22,10 @@ module Csound.Air (
     module Csound.Air.Fx,  
 
     -- | Widgets to make live performances.
-    module Csound.Air.Live,  
+    module Csound.Air.Live, 
+
+    -- | A multitap looper.
+    module Csound.Air.Looper,   
 
     -- | Scheduling signals with event streams
     module Csound.Air.Seg,
@@ -42,6 +45,7 @@ import Csound.Air.Granular
 import Csound.Air.Spec
 import Csound.Air.Fx
 import Csound.Air.Live
+import Csound.Air.Looper
 import Csound.Air.Seg
 import Csound.Air.Sampler
 import Csound.Air.Misc

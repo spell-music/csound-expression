@@ -47,7 +47,7 @@ module Csound.Control.Gui.Widget (
     -- * External control
 
     -- | The widgets can be controlled with external signals/event streams
-    button', toggle', knob', slider', uknob', uslider',
+    button', toggle', toggleSig', knob', slider', uknob', uslider',
     hradio', vradio', hradioSig', vradioSig'
 ) where
 
@@ -402,6 +402,10 @@ toggle' ctrl name initVal = source $ do
     (gui, output, input) <- setToggle name initVal
     output ctrl
     return $ (gui, mappend ctrl input)
+
+toggleSig' :: Sig -> String -> Bool -> Source Sig
+toggleSig' ctrl name initVal = 
+    ctrlSig (if initVal then 1 else 0) ctrl $ setToggleSig name initVal
 
 -- | It's like simple @uknob@, but it can be controlled with external control.
 -- The first argument is for external control.
