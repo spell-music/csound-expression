@@ -70,6 +70,38 @@ file and then load it in the ghci and invoke the function `main`
 News
 -----------------------------
 
+**The 4.8 is out! New features:**
+
+A multitap looper is implemented (see `Csound.Air.Looper`). It's  a powerful widget 
+with lots of controls. We can create unlimited number of taps.
+And the length of the loops doesn't have to be the same for all taps.
+We can insert effects and even external controllers. And all this is packed
+as a simple function that produces a widget and the output signal.
+Three types of loopers are available one is for raw signal inputs,
+another for midi instruments and the last one is for soundfonts.
+You can see it in action at [youtube](https://www.youtube.com/watch?v=cQQt9bu_x-A).
+
+There are lots of new step sequencers available. 
+Pre 4.8 step sequencers could only produce signals
+with equal time segments but new step sequencers can 
+play a tiny melodies. The API of temporal-media is 
+supported for step sequencers (see `Csound.Air.Envelope`).
+There is a new type called `Seq`. It's for step sequencers
+that can play monophonic melodies.
+
+There is a type class for humanization of envelopes.
+It works for linseg and step sequencers. It adds some amount
+of randomness to durations or values (see `Csound.Air.Envelope` `HumanValue`
+and `HumanTime`). 
+
+A midi chooser ui-box was implemented (see `Csound.Air.Live`, `hmidiChooser`, `uiMidi`). 
+It makes it easy to choose a midi instrument among several alternatives. There are stand alone
+widgets and widgets implemented as an effect-box.
+
+The class `Compose` from `temporal-media` package was broken 
+to two classes: `Harmony` (with function `hor`) 
+and `Melody` (with function `mel`).
+
 **The 4.7 is out! New features:**
 
 The Scores are redesigned! The low level `CsdEventList` is substituted
