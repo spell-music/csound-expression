@@ -9,8 +9,8 @@ module Csound.Air.Live (
     fxColor, fxVer, fxHor, fxSca, fxApp,
 
     -- * Instrument choosers
-    instrChooser, hinstrChooser, vinstrChooser,
-    midiChooser,  hmidiChooser, vmidiChooser,
+    hinstrChooser, vinstrChooser,
+    hmidiChooser, vmidiChooser,
 
     -- ** Fx units
     uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho,
@@ -377,10 +377,6 @@ masterVolumeKnob = knob "master" uspan 0.5
 
 genMidiChooser chooser xs initVal = joinSource $ lift1 midi $ chooser xs initVal
 
--- | Chooses a midi instrument among several alternatives. It uses the @radioButtons@ for GUI groupping.
-midiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
-midiChooser  = genMidiChooser instrChooser
-
 -- | Chooses a midi instrument among several alternatives. It uses the @hradio@ for GUI groupping.
 hmidiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
 hmidiChooser = genMidiChooser hinstrChooser
@@ -389,21 +385,17 @@ hmidiChooser = genMidiChooser hinstrChooser
 vmidiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
 vmidiChooser = genMidiChooser vinstrChooser
 
--- | Chooses an instrument among several alternatives. It uses the @radioButtons@ for GUI groupping.
-instrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
-instrChooser = genInstrChooser $ \names initVal -> radioButton "" (zip names $ fmap int [0 ..]) initVal
-
 -- | Chooses an instrument among several alternatives. It uses the @hradio@ for GUI groupping.
 hinstrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
-hinstrChooser = genInstrChooser hradio
+hinstrChooser = genInstrChooser hradioSig
 
 -- | Chooses an instrument among several alternatives. It uses the @vradio@ for GUI groupping.
 vinstrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
-vinstrChooser = genInstrChooser vradio
+vinstrChooser = genInstrChooser vradioSig
 
-genInstrChooser :: (Sigs b) => ([String] -> Int -> Source (Evt D)) -> [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+genInstrChooser :: (Sigs b) => ([String] -> Int -> Source Sig) -> [(String, a -> SE b)] -> Int -> Source (a -> SE b)
 genInstrChooser widget xs initVal = lift1 go $ widget names initVal
     where 
         (names, instrs) = unzip xs
-        go evtInstrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> playWhen (sig (int n) ==* instrId) instr) [0 ..] instrs
-            where instrId = evtToSig (int initVal) evtInstrId
+        go instrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> playWhen (sig (int n) ==* instrId) instr) [0 ..] instrs
+            
