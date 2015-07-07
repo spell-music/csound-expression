@@ -33,9 +33,9 @@ import Csound.Air.Misc
 --
 -- * @loopPostfx@ - list of post-loop effects (the default is do-nothing effect)
 --
--- * @loopPrefxVal - list of dry/wet values for pre-looop effects (the default is 0.5 for all taps)
+-- * @loopPrefxVal@ - list of dry/wet values for pre-looop effects (the default is 0.5 for all taps)
 --
--- * @loopPostfxVal - list of dry/wet values for post-looop effects (the default is 0.5 for all taps)
+-- * @loopPostfxVal@ - list of dry/wet values for post-looop effects (the default is 0.5 for all taps)
 --
 -- * @loopInitInstr@  - the initial sounding tap (sound source) (what tap we are going to record when the looper starts up).
 --

@@ -18,7 +18,7 @@ module Csound.Air.Misc(
     lpJoy,
 
     -- * Effects
-    delaySample,
+    delaySig,
 
     -- * Function composition
     funSeq, funPar
@@ -219,8 +219,13 @@ funSeq = foldl (.) id
 funPar :: Num a => [a -> a] -> a -> a
 funPar fs a = sum $ fmap ($ a) fs
 
--- | Delay by certain number of samples
+-- | Delay a signal by certain number of seconds
+-- There is a subtle difference between the function and the function @delaySnd@.
+-- The @delaySig@ is for delaying a signal on a micro level (the delay time have to be small)
+-- It's implemented with delay buffer in the csound. But @delaySnd@ is for delaying
+-- on macro level (the delay time can be big). It's implemented with scores and invocation
+-- of hidden instruments.
 --
--- > delaySample numOfSamples asig
-delaySample :: D -> Sig -> Sig
-delaySample nsamples asig = delay asig nsamples
+-- > delaySig numOfSamples asig
+delaySig :: D -> Sig -> Sig
+delaySig nsamples asig = delay asig nsamples
