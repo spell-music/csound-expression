@@ -153,7 +153,7 @@ rndPan2 (a, b) = rndPan $ mean [a, b]
 -- | Random panning
 rndPan :: Sig -> SE Sig2
 rndPan a = do   
-    return $ pan2 a (sig $ rnd (1 :: D))
+    fmap (pan2 a . sig) (rnd (1 :: D))
 
 -- | Random volume (with gauss distribution)
 -- 
@@ -168,9 +168,8 @@ gaussVol k a = do
 -- > gaussVol (minVolume, maxVolume)
 rndVol :: SigSpace a => (D, D) -> a -> SE a
 rndVol (kMin, kMax) a = do
-    let level = rnd (1 :: D)
+    level <- rnd (1 :: D)
     return $ mul (sig $ kMin + (kMax - kMin) * level) a
-
 
 -- | Hi-fi output for stereo signals. Saves the stereo signal to file.
 -- The length of the file is defined in seconds.

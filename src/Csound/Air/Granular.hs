@@ -641,14 +641,17 @@ syncgrain spec kgrdur ktimescale kpitch ftab = mul 0.2 res
 -- | The syncgrain with randomized parameters.
 rndSyncgrain :: RndSyncgrainSpec -> SyncgrainSpec -> GrainSize -> TempoSig -> PitchSig -> Tab -> SE Sig
 rndSyncgrain rndSpec spec kgrdur ktimescale kpitch ftab = do	
+		rndSyncGrainDur <- rnd (rndSyncgrainGrainDur rndSpec)
+		rndSyncGrainPitch <- birnd (rndSyncgrainPitch rndSpec)
+		rndSyncGrainTimescale <- birnd (rndSyncTimescale rndSpec)
 		let kgroverlap = sig $ (syncgrainOverlap spec) / 2
 		    ko1 = int' (kgroverlap + 0.15)
-		    kgr = kgrdur + rnd (rndSyncgrainGrainDur rndSpec)
+		    kgr = kgrdur + rndSyncGrainDur
 		    kfr = ko1 / kgr 
 		    kps = 1 / ko1
 
 		    awp = phasor (sig $ getSampleRate / ftlen ftab)
-		    res = csdSyncgrain 1 kfr (kpitch + birnd (rndSyncgrainPitch rndSpec)) kgr (kps * ktimescale + birnd (rndSyncTimescale rndSpec)) ftab (syncgrainWin spec) (syncgrainOverlap spec)
+		    res = csdSyncgrain 1 kfr (kpitch + rndSyncGrainPitch) kgr (kps * ktimescale + rndSyncGrainTimescale) ftab (syncgrainWin spec) (syncgrainOverlap spec)
 		return res
 
 -- | syncgrain that is defined on stereo audio files. We provide the filename instead of table.
