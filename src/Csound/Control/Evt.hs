@@ -9,7 +9,7 @@ module Csound.Control.Evt(
     Snap, snapshot, snaps, snaps2, sync, syncBpm, 
     
     -- * Opcodes
-    metroE, impulseE, changedE, triggerE, loadbang, impulse,
+    metro, gaussTrig, dust, metroSig, dustSig, dustSig2, impulseE, changedE, triggerE, loadbang, impulse, metroE,
 
     -- * Higher-level event functions
     devt, eventList,
@@ -31,7 +31,8 @@ import Data.Tuple
 import Temporal.Media
 
 import Csound.Typed hiding (evtToBool)
-import Csound.Typed.Opcode
+import Csound.Typed.Opcode hiding (metro, dust, dust2)
+import qualified Csound.Typed.Opcode as O(metro, dust, dust2)
 import Csound.Types(atArg)
 
 type Tick = Evt Unit
@@ -47,9 +48,42 @@ evtToBool a = ( ==* 1) $ changed $ return $ evtToSig 0 $ cycleE [1, 0] a
 devt :: D -> Evt a -> Evt D
 devt d = fmap (const d)
 
+{-# DEPRECATED metroE "Use metro instead" #-}
 -- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
 metroE :: Sig -> Evt Unit 
-metroE = sigToEvt . metro
+metroE = sigToEvt . O.metro
+
+-- | Creates a stream of events that happen with the given frequency.
+metro :: Sig -> Evt Unit 
+metro = sigToEvt . O.metro
+
+-- | Csound's original metro function.
+metroSig :: Sig -> Sig
+metroSig = O.metro
+
+-- | Creates a stream of ticks that happen around the given frequency with given deviation.
+-- 
+-- > gaussTrig freq deviation
+gaussTrig :: Sig -> Sig -> Tick
+gaussTrig afreq adev = Evt $ \bam -> do
+    on <- gausstrig 1 (afreq * sig getBlockSize) adev
+    when1 (on >* 0.5) $ bam unit
+
+-- | Creates a stream of random events. The argument is a number of events per second.
+--
+-- > dust eventsPerSecond
+dust :: Sig -> Tick
+dust freq = Evt $ \bam -> do
+    on <- O.dust 1 (freq * sig getBlockSize)
+    when1 (on >* 0.5) $ bam unit
+
+-- | Creates a signal that contains a random ones that happen with given frequency.
+dustSig :: Sig -> SE Sig
+dustSig freq = O.dust 1 (freq * sig getBlockSize)
+
+-- | Creates a signal that contains a random ones or negative ones that happen with given frequency.
+dustSig2 :: Sig -> SE Sig
+dustSig2 freq = O.dust2 1 (freq * sig getBlockSize)
 
 -- | Fires a single event right now.
 --

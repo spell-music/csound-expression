@@ -26,7 +26,16 @@ module Csound.Air.Wave (
     fosc,
 
     -- * Low frequency oscillators
-    Lfo, lfo
+    Lfo, lfo,
+
+    -- * Detune
+    detune,
+
+    -- * Unision
+    multiHz, multiCent, multiRnd, multiGauss, multiRndSE, multiGaussSE,
+
+    -- * Random splines
+    urspline, birspline
 ) where
 
 import Csound.Typed
@@ -91,6 +100,22 @@ upulse = unipolar . pulse
 -- | Unipolar band-limited oscillator.
 ublosc :: Tab -> Sig -> Sig
 ublosc tb = unipolar . blosc tb
+
+-- | Unipolar random splines.
+-- It generates the splines with unipolar output (ranges from 0 to 1).
+-- Arguments affect the frequency for generation of new values. 
+--
+-- > urspline cpsMin cpsMax
+urspline :: Sig -> Sig -> SE Sig
+urspline cpsMin cpsMax = rspline 0 1 cpsMin cpsMax
+
+-- | Bipolar random splines.
+-- It generates the splines with bipolar output (ranges from -1 to 1).
+-- Arguments affect the frequency for generation of new values. 
+--
+-- > birspline cpsMin cpsMax
+birspline :: Sig -> Sig -> SE Sig
+birspline cpsMin cpsMax = rspline (-1) 1 cpsMin cpsMax
 
 -----------------------
 
@@ -223,4 +248,67 @@ type Lfo = Sig
 lfo :: (Sig -> Sig) -> Sig -> Sig -> Sig
 lfo shape depth rate = depth * shape rate
 
+--------------------------------------------------------------------------
 
+-- | Scales the oscillator by frequency.
+-- That's how we can rise the pitch by 2 semitones and 15 cents:
+--
+-- > detune (semitone 2 * cent 15) osc
+detune :: Sig -> (Sig -> a) -> (Sig -> a)
+detune k f cps = f (k * cps) 
+
+--------------------------------------------------------------------------
+
+linRange n amount = fmap (\x -> amount * sig (2 * double x - 1)) [0, (1 / fromIntegral n) .. 1] 
+
+-- | Unision by Hertz. It creates n oscillators that are playing 
+-- the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in Hz.
+--
+-- > multiHz numberOfUnits amountHz wave
+multiHz :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a) 
+multiHz n amount f cps = mean $ fmap (f . (cps + )) $ linRange n amount
+
+-- | Unision by Cents. It creates n oscillators that are playing 
+-- the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in cents.
+--
+-- > multiCent numberOfUnits amountCent wave
+multiCent :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a) 
+multiCent n amount f cps = mean $ fmap (f . (cps * ) . cent) $ linRange n amount
+    
+-- | Oscillators are detuned randomly in the given interval.
+--
+-- > multiRnd numberOfUnits amountCent wave
+multiRnd :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
+multiRnd = genMultiRnd (rnd 1)
+
+-- | Oscillators are detuned randomly with Gauss distribution in the given interval.
+--
+-- > multiGauss numberOfUnits amountCent wave
+multiGauss :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
+multiGauss = genMultiRnd (fmap ((+ 0.5) . ir) $ gauss 0.5)
+
+genMultiRnd :: Fractional a => (SE D) -> Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
+genMultiRnd gen n amount f cps = fmap mean $ mapM (const go) $ replicate n ()
+    where go = fmap (\dx -> f $ cps + amount * (sig $ 2 * dx - 1)) gen
+
+-- | Oscillators are detuned randomly in the given interval.
+-- Useful for waves that return a signals with Side Effects.
+--
+-- > multiRnd numberOfUnits amountCent wave
+multiRndSE :: Fractional a => Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
+multiRndSE = genMultiRndSE (rnd 1)
+
+-- | Oscillators are detuned randomly with Gauss distribution in the given interval.
+-- Useful for waves that return a signals with Side Effects.
+--
+-- > multiGauss numberOfUnits amountCent wave
+multiGaussSE :: Fractional a => Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
+multiGaussSE = genMultiRndSE (fmap ((+ 0.5) . ir) $ gauss 0.5)
+
+genMultiRndSE :: Fractional a => (SE D) -> Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
+genMultiRndSE gen n amount f cps = fmap mean $ mapM (const go) $ replicate n ()
+    where go = (\dx -> f $ cps * cent (amount * (sig $ 2 * dx - 1))) =<< gen
+
+-- | Mean value.
+mean :: Fractional a => [a] -> a
+mean xs = sum xs / (fromIntegral $ length xs)

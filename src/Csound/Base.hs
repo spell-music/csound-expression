@@ -48,4 +48,5 @@ import Csound.Typed.Opcode hiding (
     oscInit, oscListen, oscSend, 
     lpshold, loopseg, loopxseg,
     partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2,
-    line, delay)
+    line, delay,
+    metro, dust)
