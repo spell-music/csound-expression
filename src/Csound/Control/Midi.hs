@@ -1,19 +1,20 @@
 -- | Midi.
 module Csound.Control.Midi(
-    MidiChn(..), MidiFun, toMidiFun, toMidiFun_, 
+    MidiChn(..), MidiFun, toMidiFun, toMidiFun_,
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
     -- * Mono-midi synth
-    monoMsg, holdMsg, 
+    monoMsg, holdMsg,
     -- * Midi event streams
     midiKeyOn, midiKeyOff,
     -- * Reading midi note parameters
-    cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,      
+    cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
 
     -- * Overload
     MidiInstr(..)
 ) where
 
+import Prelude hiding ((<*))
 import Data.Boolean
 
 import Csound.Typed
@@ -60,7 +61,7 @@ monoMsg chn portTime relTime = do
 	(amp, cps, status) <- genAmpCpsSig (toMidiFun chn)
 	return (port amp portTime * port status relTime,  port cps portTime)
 
--- | Produces midi amplitude and frequency as a signal and holds the 
+-- | Produces midi amplitude and frequency as a signal and holds the
 -- last value till the next one is present.
 -- It can be used in mono-synths. Arguments are portamento time
 -- and release time. A portamento time is time it takes for transition
@@ -80,22 +81,22 @@ genAmpCpsSig midiFun = do
 	let resStatus = ifB (downsamp status ==* 0) 0 1
 	(amp, cps) <- readSERef ref
 	return (downsamp amp, downsamp cps, resStatus)
-	where 
+	where
 		instr :: SERef (Sig, Sig) -> Msg -> SE Sig
 		instr hNote msg = do
 			writeSERef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)
-			return 1		
+			return 1
 
 genHoldAmpCpsSig :: ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
 genHoldAmpCpsSig midiFun = do
 	ref <- newGlobalSERef ((0, 0) :: (Sig, Sig))
-	midiFun (instr ref)	
+	midiFun (instr ref)
 	(amp, cps) <- readSERef ref
 	return (downsamp amp, downsamp cps)
-	where 
+	where
 		instr :: SERef (Sig, Sig) -> Msg -> SE ()
 		instr hNote msg = do
-			writeSERef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)			
+			writeSERef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)
 
 
 --------------------------------------------------------------
@@ -110,7 +111,7 @@ midiKeyOff :: MidiChn -> D -> SE Tick
 midiKeyOff = midiKeyOffBy . toMidiFun
 
 midiKeyOnBy :: MidiFun Sig -> D -> SE (Evt D)
-midiKeyOnBy midiFun key = do	
+midiKeyOnBy midiFun key = do
 	chRef  <- newGlobalSERef (0 :: Sig)
 	evtRef <- newGlobalSERef (0 :: Sig)
 	writeSERef chRef =<< midiFun instr
@@ -123,12 +124,12 @@ midiKeyOnBy midiFun key = do
 	return $ filterE ( >* 0) $ snaps evtSig
 	where
 		instr msg = do
-			print' [notnum msg] 
+			print' [notnum msg]
 			return $ ifB (boolSig $ notnum msg ==* key) (sig $ ampmidi msg 1) 0
 
 
 midiKeyOffBy :: MidiFun Sig -> D -> SE Tick
-midiKeyOffBy midiFun key = do	
+midiKeyOffBy midiFun key = do
 	chRef  <- newGlobalSERef (0 :: Sig)
 	evtRef <- newGlobalSERef (0 :: Sig)
 	writeSERef chRef =<< midiFun instr
@@ -141,26 +142,25 @@ midiKeyOffBy midiFun key = do
 	return $ fmap (const unit) $ filterE ( <* 0) $ snaps evtSig
 	where
 		instr msg = do
-			print' [notnum msg] 
+			print' [notnum msg]
 			return $ ifB (boolSig $ notnum msg ==* key) (sig $ ampmidi msg 1) 0
 
 --------------------------------------------------------------
 
 -- | Initialization of the midi control-messages.
 initc7 :: D -> D -> D -> SE ()
-initc7 = initMidiCtrl 
+initc7 = initMidiCtrl
 
 -- | Initializes midi control and get the value in the specified range.
 midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
 midiCtrl7 chno ctrlno ival imin imax = do
     initc7 chno ctrlno ival
     return $ ctrl7 chno ctrlno imin imax
-    
+
 -- | Initializes midi control and get the value in the range (-1) to 1.
 midiCtrl :: D -> D -> D -> SE Sig
 midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
-    
+
 -- | Unipolar midiCtrl. Initializes midi control and get the value in the range 0 to 1.
 umidiCtrl :: D -> D -> D -> SE Sig
 umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival 0 1
-
