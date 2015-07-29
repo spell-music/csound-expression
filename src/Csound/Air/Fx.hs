@@ -1,5 +1,5 @@
 -- | Effects
-module Csound.Air.Fx(    
+module Csound.Air.Fx(
     -- * Reverbs
     reverbsc1, rever1, rever2, reverTime,
     smallRoom, smallHall, largeHall, magicCave,
@@ -27,13 +27,14 @@ module Csound.Air.Fx(
     fxFlanger, fxFlanger2, analogDelay, analogDelay2, fxEcho, fxEcho2,
     fxFilter, fxFilter2,
     fxWhite, fxWhite2, fxPink, fxPink2, equalizer, equalizer2, eq4, eq7,
-    fxGain, 
+    fxGain,
 
     -- * Misc
     trackerSplice
 
 ) where
 
+import Prelude hiding ((<*))
 import Data.Boolean
 
 import Csound.Typed
@@ -58,7 +59,7 @@ reverbsc1 x k co = 0.5 * (a + b)
 
 -- | Reverb with given time.
 reverTime :: DelayTime -> Sig -> Sig
-reverTime dt a =  nreverb a dt 0.3 
+reverTime dt a =  nreverb a dt 0.3
 
 -- | Mono reverb (based on reverbsc)
 --
@@ -126,13 +127,13 @@ type Balance = Sig
 echo :: MaxDelayTime -> Feedback -> Sig -> SE Sig
 echo len fb = fdelay len fb 1
 
--- | Delay with feedback. 
+-- | Delay with feedback.
 --
 -- > fdelay delayLength decayRatio balance
 fdelay :: MaxDelayTime -> Feedback -> Balance -> Sig -> SE Sig
 fdelay len = fvdelay len (sig len)
 
--- | Delay with feedback. 
+-- | Delay with feedback.
 --
 -- > fdelay maxDelayLength delayLength feedback balance
 fvdelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> Sig -> SE Sig
@@ -148,12 +149,12 @@ fvdelay len dt fb mx a = do
 -- > fdelay maxDelayLength  delays balance asig
 fvdelays :: MaxDelayTime -> [(DelayTime, Feedback)] -> Balance -> Sig -> SE Sig
 fvdelays len dtArgs mx a = funDelays len (zip dts fs) mx a
-    where 
+    where
         (dts, fbks) = unzip dtArgs
         fs = map (*) fbks
 
 
--- | Generic multitap delay. It's just like @fvdelays@ but instead of constant feedbackLevel 
+-- | Generic multitap delay. It's just like @fvdelays@ but instead of constant feedbackLevel
 -- it expects a function for processing a delayed signal on the tap.
 --
 -- > fdelay maxDelayLength  delays balance asig
@@ -162,7 +163,7 @@ funDelays len dtArgs mx a = do
     _ <- delayr len
     aDels <- mapM deltap3 dts
     delayw $ a + sum (zipWith ($) fs aDels)
-    return $ a + mx * sum aDels 
+    return $ a + mx * sum aDels
     where (dts, fs) = unzip dtArgs
 
 -- | Delay for functions that use some table (as a buffer). As granular synth or mincer.
@@ -170,13 +171,13 @@ funDelays len dtArgs mx a = do
 -- > tabDelay fn maxDelayTime delayTime feedback balance asig
 tabDelay :: (Tab -> Sig -> SE Sig) -> MaxDelayTime -> DelayTime -> Feedback -> Balance -> Sig -> SE Sig
 tabDelay go maxLength delTim  kfeed kbalance asig = do
-    buf <- newTab tabLen    
+    buf <- newTab tabLen
     ptrRef <- newSERef (0 :: Sig)
-    aresRef <- newSERef (0 :: Sig)  
+    aresRef <- newSERef (0 :: Sig)
     ptr <- readSERef ptrRef
     when1 (ptr >=* sig tabLen) $ do
         writeSERef ptrRef 0
-    ptr <- readSERef ptrRef 
+    ptr <- readSERef ptrRef
 
     let kphs = (ptr / sig tabLen) - (delTim/(sig $ tabLen / getSampleRate))
     awet <-go buf (wrap kphs 0 1)
@@ -194,7 +195,7 @@ type ToneSig  = Sig
 
 -- Distortion
 
--- | Distortion. 
+-- | Distortion.
 --
 -- > distort distLevel asig
 distortion :: Sig -> Sig -> Sig
@@ -226,7 +227,7 @@ flange alfo fbk mx asig = ntrpol asig (flanger asig ulfo fbk) mx
 
 -- | First order phaser.
 phase1 :: Sig -> Lfo -> Feedback -> Balance -> Sig -> Sig
-phase1 ord alfo fbk mx asig = ntrpol asig (phaser1 asig (20 + unipolar alfo) ord fbk) mx  
+phase1 ord alfo fbk mx asig = ntrpol asig (phaser1 asig (20 + unipolar alfo) ord fbk) mx
 
 -- | Second order phaser. Sweeping gaps in the timbre are placed harmonicaly
 harmPhase :: Sig -> Lfo -> Sig -> Sig -> Feedback -> Balance -> Sig -> Sig
@@ -247,7 +248,7 @@ logScale :: Sig -> (Sig, Sig) -> Sig -> Sig
 logScale steep (min, max) a = scale (logcurve a steep) max min
 
 dryWetMix :: Sig -> (Sig, Sig)
-dryWetMix kmix = (kDry, kWet) 
+dryWetMix kmix = (kDry, kWet)
     where
         iWet = setSize 1024 $ elins [0, 1, 1]
         iDry = setSize 1024 $ elins [1, 1, 0]
@@ -258,7 +259,7 @@ fxWet :: (Num a, SigSpace a) => Sig -> a -> a -> a
 fxWet mix ain aout = mul dry ain + mul wet aout
     where (dry, wet) = dryWetMix mix
 
--- Distortion 
+-- Distortion
 
 -- | Distortion
 --
@@ -289,7 +290,7 @@ fxDistort2 klevel kdrive ktone (al, ar) = (fx al, fx ar)
 -- > stChorus2 mix rate depth width sigIn
 stChorus2 :: Balance -> RateSig -> DepthSig -> WidthSig -> Sig2 -> Sig2
 stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR)
-    where 
+    where
         krate = expScale 20 (0.001, 7) krate'
         ilfoshape = setSize 131072 $ sines4 [(1, 0.5, 0, 0.5)]
         kporttime = linseg  [0, 0.001, 0.02]
@@ -309,15 +310,15 @@ stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR
 -- > fxPhaser mix rate depth freq feedback sigIn
 fxPhaser ::Balance -> Feedback -> RateSig -> DepthSig -> Sig -> Sig -> Sig
 fxPhaser kmix fb krate' kdepth kfreq ain = fxWet kmix ain aout
-    where       
+    where
         krate = expScale 10 (0.01, 14) krate'
         klfo  = kdepth * utri krate
-        aout  = phaser1 ain (cpsoct $ klfo + kfreq) 8 fb        
+        aout  = phaser1 ain (cpsoct $ klfo + kfreq) 8 fb
 
 -- | Stereo phaser.
 fxPhaser2 :: Balance -> Feedback -> RateSig -> DepthSig -> Sig -> Sig2 -> Sig2
 fxPhaser2 kmix fb krate kdepth kfreq (al, ar) = (fx al, fx ar)
-    where fx = fxPhaser kmix fb krate kdepth kfreq  
+    where fx = fxPhaser kmix fb krate kdepth kfreq
 
 -- Flanger
 
@@ -332,8 +333,8 @@ fxFlanger kmix kfback krate' kdepth kdelay' ain = fxWet kmix ain aout
         ilfoshape = setSize 131072 $ sines4 [(0.5, 1, 180, 1)]
         kporttime = linseg  [0, 0.001, 0.1]
         adlt = interp $ portk kdelay kporttime
-        kdep = portk (kdepth*0.01) kporttime 
-        amod = oscili kdep krate ilfoshape      
+        kdep = portk (kdepth*0.01) kporttime
+        amod = oscili kdep krate ilfoshape
         adelsig = flanger ain (adlt + amod) kfback `withD` 1.2
         aout = mean [ain, adelsig]
 
@@ -365,19 +366,19 @@ analogDelay kmix kfback ktime  ktone'  ain = do
 -- | Stereo analog delay.
 analogDelay2 :: Balance -> Feedback -> DelayTime -> ToneSig -> Sig2 -> SE Sig2
 analogDelay2 kmix kfback ktime ktone  = bindSig fx
-    where fx = analogDelay kmix kfback ktime ktone 
+    where fx = analogDelay kmix kfback ktime ktone
 
 -- Filter
 
 -- | Filter effect (a pair of butterworth low and high pass filters).
 --
--- > fxFilter lowPassfFreq highPassFreq gain 
+-- > fxFilter lowPassfFreq highPassFreq gain
 fxFilter :: Sig -> Sig -> Sig -> Sig -> Sig
-fxFilter kLPF' kHPF' kgain' ain = mul kgain $ app (blp kLPF) $ app (bhp kHPF) $ ain 
-    where 
+fxFilter kLPF' kHPF' kgain' ain = mul kgain $ app (blp kLPF) $ app (bhp kHPF) $ ain
+    where
         app f = f . f
-        kLPF = scaleFreq kLPF' 
-        kHPF = scaleFreq kHPF' 
+        kLPF = scaleFreq kLPF'
+        kHPF = scaleFreq kHPF'
         kgain = scale kgain' 20 0
         scaleFreq x = expScale 4 (20, 20000) x
 
@@ -438,7 +439,7 @@ fxWhite freq depth ain = do
 
 -- | Adds filtered white noize to the stereo signal
 fxWhite2 ::Sig -> Sig -> Sig2 -> SE Sig2
-fxWhite2 freq depth = bindSig fx 
+fxWhite2 freq depth = bindSig fx
     where fx = fxWhite freq depth
 
 -- | Adds filtered pink noize to the signal
@@ -452,7 +453,7 @@ fxPink freq depth ain = do
 
 -- | Adds filtered pink noize to the stereo signal
 fxPink2 ::Sig -> Sig -> Sig2 -> SE Sig2
-fxPink2 freq depth = bindSig fx 
+fxPink2 freq depth = bindSig fx
     where fx = fxPink freq depth
 
 -- Echo
@@ -461,7 +462,7 @@ fxPink2 freq depth = bindSig fx
 --
 -- > fxEcho maxDelayLength delTime feedback sigIn
 fxEcho :: D -> Sig -> Sig -> Sig -> SE Sig
-fxEcho maxLen ktime fback = fvdelay (5 * maxLen) (sig maxLen * 0.95 * kTime) fback 1  
+fxEcho maxLen ktime fback = fvdelay (5 * maxLen) (sig maxLen * 0.95 * kTime) fback 1
     where
         kporttime = linseg [0,0.001,0.1]
         kTime = portk   ktime  (kporttime*3)
@@ -474,30 +475,30 @@ fxEcho2 maxLen ktime fback = bindSig fx
 
 
 
--- | Instrument plays an input signal in different modes. 
--- The segments of signal can be played back and forth. 
--- 
+-- | Instrument plays an input signal in different modes.
+-- The segments of signal can be played back and forth.
+--
 -- > trackerSplice maxLength segLength mode
--- 
+--
 -- * @maxLength@ -- the maximum length of the played segment (in seconds)
 --
 -- * @segLength@ -- the segment length in seconds
 --
 -- * @mode@ -- mode of the playing. If it's 1 - only a part of the sample is plyaed and
 --   it's played forward. The portion of the signal starts from the current playback point.
---   It lasts for segLength. If it's 2 - the segment is played in reverse. 
+--   It lasts for segLength. If it's 2 - the segment is played in reverse.
 --   Other values produce the normal input signal.
 --
 -- Original author: Rory Walsh
 --
 -- Example:
 --
--- > main = dac $ do    
+-- > main = dac $ do
 -- >    let ev ch1 ch2 dt = fmap (\x -> (x, dt)) $ mconcat [
--- >          fmap (const 1.5) $ charOn ch1 
--- >        , fmap (const 2.5) $ charOn ch2 
+-- >          fmap (const 1.5) $ charOn ch1
+-- >        , fmap (const 2.5) $ charOn ch2
 -- >        , fmap (const 0) $ charOff ch1 <> charOff ch2]
--- > 
+-- >
 -- >    (k, dt) <- stepper (0, 0.1) $ ev 'q' 'w' 0.1 <> ev 'a' 's' 0.2 <> ev 'z' 'x' 0.4
 -- >    mul 1.3 $ trackerSplice 0.8 dt (int' k) $ fst $ loopWav 1 "drumLoop.wav"
 trackerSplice :: D -> Sig -> Sig -> Sig -> SE Sig
@@ -516,9 +517,9 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
     let apos = samphold (andx1 * sig (ftlen buf)) (sig ksamp)
 
     whens [
-        (kmode >=* 1 &&* kmode <* 2, do             
-                kindx <- readSERef kindxRef                             
-                writeSERef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)                
+        (kmode >=* 1 &&* kmode <* 2, do
+                kindx <- readSERef kindxRef
+                writeSERef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)
                 kindx <- readSERef kindxRef
                 when1 (kindx + apos >* sig (ftlen buf)) $ do
                     writeSERef kindxRef $ (-segLength)
@@ -527,12 +528,12 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 
                 writeSERef aoutRef $ table (apos + kindx) buf `withDs` [0, 1]
                 writeSERef ksampRef 0
-        ), (kmode >=* 2 &&* kmode <* 3, do              
+        ), (kmode >=* 2 &&* kmode <* 3, do
                 kindx <- readSERef kindxRef
                 writeSERef kindxRef $ ifB ((kindx+apos) <=* 0) (sig (ftlen buf) - apos) (kindx-1)
                 kindx <- readSERef kindxRef
                 writeSERef aoutRef $ table (apos+kindx) buf `withDs` [0, 1]
-                writeSERef ksampRef 0   
+                writeSERef ksampRef 0
         )] (do
                 writeSERef ksampRef 1
                 writeSERef aoutRef asig)
