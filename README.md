@@ -70,6 +70,15 @@ file and then load it in the ghci and invoke the function `main`
 News
 -----------------------------
 
+**The 4.8.2 is out! New features:**
+
+This release improves oscillators in many ways.
+Adds phase control to many standard oscillators.
+There are functions to detune oscillator and create unisions of oscillators 
+(multioscillators or chorus effect). 
+
+Adds support for randomly generating events (with random frequency).
+
 **The 4.8 is out! New features:**
 
 A multitap looper is implemented (see `Csound.Air.Looper`). It's  a powerful widget 
