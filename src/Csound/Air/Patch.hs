@@ -1,21 +1,21 @@
 -- | Patches.
 module Csound.Air.Patch(
-	CsdNote, Instr, Fx, Fx1, Fx2,
-	Patch1, Patch2, Patch(..),
-	getPatchFx,
+	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
+	Patch1, Patch2, Patch(..),	
+	getPatchFx, dryPatch, atMix, atMixes,
 
 	-- * Midi
-	atMidi, atMidi', dryMidi,
+	atMidi,
 
 	-- * Events
-	atSched, atSched', drySched,
-	atSchedUntil, atSchedUntil', drySchedUntil,
+	atSched,
+	atSchedUntil,
 
 	-- * Sco
-	atSco, atSco', drySco,
+	atSco,
 
 	-- * Single note
-	atNote, atNote', dryNote,
+	atNote,
 
 	-- * Fx
 	addInstrFx, addPreFx, addPostFx
@@ -37,6 +37,7 @@ type Instr a = CsdNote -> SE a
 
 -- | An effect processes the input signal.
 type Fx a = a  -> SE a
+type DryWetRatio = Sig
 
 -- | Mono effect.
 type Fx1 = Fx Sig
@@ -50,18 +51,43 @@ type Patch1 = Patch Sig
 -- | Stereo patches.
 type Patch2 = Patch Sig2
 
+data FxSpec a = FxSpec
+	{ fxMix :: DryWetRatio
+	, fxFun :: Fx a	
+	}
+
 -- | A patch. It's an instrument, an effect and default dry/wet ratio.
 data Patch a = Patch
 	{ patchInstr :: Instr a
-	, patchFx	 :: Fx a
-	, patchMix   :: Sig	
+	, patchFx	 :: [FxSpec a]
 	}
 
-wet :: (SigSpace a, Sigs a) => Sig -> Fx a -> a -> SE a
-wet k fx asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
+dryPatch :: Patch a -> Patch a
+dryPatch p = p { patchFx = [] }
 
-getPatchFx :: (SigSpace a, Sigs a) => Patch a -> a -> SE a
-getPatchFx p = wet (patchMix p) (patchFx p)
+-- | Sets the mix of the last effect.
+atMix :: Sig -> Patch a -> Patch a
+atMix k p = p { patchFx = mapHead (\x -> x { fxMix = k }) (patchFx p) }
+	where 
+		mapHead f xs = case xs of
+			[]   -> []
+			a:as -> f a : as
+
+-- | Sets the mix of the effects from last to first.
+atMixes :: [Sig] -> Patch a -> Patch a
+atMixes ks p = p { patchFx = zipFirst (\k x -> x { fxMix = k }) ks (patchFx p) }
+	where
+		zipFirst f xs ys = case (xs, ys) of
+			(_,    [])   -> []
+			([],   bs)   -> bs
+			(a:as, b:bs) -> f a b : zipFirst f as bs
+
+
+wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
+wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
+
+getPatchFx :: (SigSpace a, Sigs a) => Patch a -> Fx a
+getPatchFx p = foldr (<=<) return $ fmap wet $ patchFx p
 
 --------------------------------------------------------------
 
@@ -69,73 +95,37 @@ instance SigSpace a => SigSpace (Patch a) where
 	mapSig f p = p { patchInstr = fmap (mapSig f) . patchInstr p }
 
 --------------------------------------------------------------
--- 
-
-dryNote :: Patch a -> CsdNote -> SE a
-dryNote p note = patchInstr p note
-
-atNote' :: (SigSpace a, Sigs a) => Sig -> Patch a -> CsdNote -> SE a
-atNote' k p note = wet k (patchFx p) =<< patchInstr p note
+-- note
 
 atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote -> SE a
-atNote p = atNote' (patchMix p) p
+atNote p note = getPatchFx p =<< patchInstr p note
 
 --------------------------------------------------------------
 -- midi
 
--- | Plays dry patch with midi.
-dryMidi :: (Sigs a) => Patch a -> SE a
-dryMidi a = midi (patchInstr a . ampCps)
-
 -- | Plays a patch with midi. Supplies a custom value for mixing effects (dry/wet).
 -- The 0 is a dry signal, the 1 is a wet signal.
-atMidi' :: (SigSpace a, Sigs a) => Sig -> Patch a -> SE a
-atMidi' k a = wet k (patchFx a) =<< midi (patchInstr a . ampCps)	
-
--- | Plays a patch with midi
 atMidi :: (SigSpace a, Sigs a) => Patch a -> SE a
-atMidi a = atMidi' (patchMix a) a
+atMidi a = getPatchFx a =<< midi (patchInstr a . ampCps)	
 
 --------------------------------------------------------------
 -- sched
 
--- | Plays dry patch with event stream.
-drySched :: (Sigs a) => Patch a -> Evt (Sco CsdNote) -> SE a
-drySched p evt = return $ sched (patchInstr p) evt
-
 -- | Plays a patch with event stream. Supplies a custom value for mixing effects (dry/wet).
 -- The 0 is a dry signal, the 1 is a wet signal.
-atSched' :: (SigSpace a, Sigs a) => Sig -> Patch a -> Evt (Sco CsdNote) -> SE a
-atSched' k p evt = wet k (patchFx p) $ sched (patchInstr p) evt
-
--- | Plays a patch with event stream.
 atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco CsdNote) -> SE a
-atSched p = atSched' (patchMix p) p
-
-drySchedUntil :: (Sigs a) => Patch a -> Evt CsdNote -> Evt b -> SE a
-drySchedUntil p evt stop = return $ schedUntil (patchInstr p) evt stop
-
-atSchedUntil' :: (SigSpace a, Sigs a) => Sig -> Patch a -> Evt CsdNote -> Evt b -> SE a
-atSchedUntil' k p evt stop = wet k (patchFx p) $ schedUntil (patchInstr p) evt stop
+atSched p evt = getPatchFx p $ sched (patchInstr p) evt
 
 atSchedUntil :: (SigSpace a, Sigs a) => Patch a -> Evt CsdNote -> Evt b -> SE a
-atSchedUntil p = atSchedUntil' (patchMix p) p
+atSchedUntil p evt stop = getPatchFx p $ schedUntil (patchInstr p) evt stop
 
 --------------------------------------------------------------
 -- sco
-
--- | Plays dry patch with scores.
-drySco :: (Sigs a) => Patch a -> Sco CsdNote -> Sco (Mix a)
-drySco p sc = sco (patchInstr p) sc
  
  -- | Plays a patch with scores. Supplies a custom value for mixing effects (dry/wet).
 -- The 0 is a dry signal, the 1 is a wet signal.
-atSco' :: (SigSpace a, Sigs a) => Sig -> Patch a -> Sco CsdNote -> Sco (Mix a)
-atSco' k p sc = eff (wet k (patchFx p)) $ sco (patchInstr p) sc	
-
--- | Plays a patch with event scores.
 atSco :: (SigSpace a, Sigs a) => Patch a -> Sco CsdNote -> Sco (Mix a)
-atSco p = atSco' (patchMix p) p
+atSco p sc = eff (getPatchFx p) $ sco (patchInstr p) sc	
 
 --------------------------------------------------------------
 
@@ -144,9 +134,9 @@ addInstrFx :: Fx a -> Patch a -> Patch a
 addInstrFx f p = p { patchInstr = f <=< patchInstr p }
 
 -- | Appends an effect before patch's effect.
-addPreFx :: Fx a -> Patch a -> Patch a
-addPreFx f p = p { patchFx = patchFx p <=< f }
+addPreFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
+addPreFx dw f p = p { patchFx = patchFx p ++ [FxSpec dw f] }
 
 -- | Appends an effect after patch's effect.
-addPostFx :: Fx a -> Patch a -> Patch a
-addPostFx f p = p { patchFx = f <=< patchFx p }
+addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
+addPostFx dw f p = p { patchFx = FxSpec dw f : patchFx p }
