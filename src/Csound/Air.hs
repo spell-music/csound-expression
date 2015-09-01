@@ -25,7 +25,10 @@ module Csound.Air (
     module Csound.Air.Live, 
 
     -- | A multitap looper.
-    module Csound.Air.Looper,   
+    module Csound.Air.Looper, 
+
+    -- | Patches.
+    module Csound.Air.Patch,   
 
     -- | Scheduling signals with event streams
     module Csound.Air.Seg,
@@ -46,6 +49,7 @@ import Csound.Air.Spec
 import Csound.Air.Fx
 import Csound.Air.Live
 import Csound.Air.Looper
+import Csound.Air.Patch
 import Csound.Air.Seg
 import Csound.Air.Sampler
 import Csound.Air.Misc

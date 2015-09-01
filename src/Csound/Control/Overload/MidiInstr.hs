@@ -7,7 +7,7 @@ import Csound.Typed
 import Csound.Typed.Opcode
 
 ampCps :: Msg -> (D, D)
-ampCps msg = (ampmidi msg 1, (cpsmidi msg))
+ampCps msg = (ampmidi msg 1, cpsmidi msg)
 
 -------------------------------------------------------------------------------
 

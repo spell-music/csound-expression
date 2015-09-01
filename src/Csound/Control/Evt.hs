@@ -113,7 +113,7 @@ triggerE :: Sig -> Sig -> Sig -> Evt Unit
 triggerE a1 a2 a3 = sigToEvt $ trigger a1 a2 a3
 
 -- | the sync function but time is measured in beats per minute.
-syncBpm :: (Default a, Tuple a) => D -> Evt a -> Evt a
+syncBpm :: (Default a, Tuple a) => Sig -> Evt a -> Evt a
 syncBpm dt = sync (dt / 60)
 
 -- | Splits event stream on two streams with predicate.

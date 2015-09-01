@@ -86,6 +86,7 @@ Library
         Csound.Air.Seg
         Csound.Air.Sampler
         Csound.Air.Looper
+        Csound.Air.Patch
         Csound.Air.Misc
         Csound.Air.Hvs
         

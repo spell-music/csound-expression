@@ -1,3 +1,4 @@
+{-# Language FlexibleContexts #-}
 -- | Midi.
 module Csound.Control.Midi(
     MidiChn(..), MidiFun, toMidiFun, toMidiFun_, 
@@ -11,7 +12,7 @@ module Csound.Control.Midi(
     cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,      
 
     -- * Overload
-    MidiInstr(..)
+    tryMidi, MidiInstr(..)
 ) where
 
 import Data.Boolean
@@ -164,3 +165,11 @@ midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
 umidiCtrl :: D -> D -> D -> SE Sig
 umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival 0 1
 
+--------------------------------------------------------------
+
+-- | Invokes ooverloaded instruments with midi.
+-- Example:
+--
+-- > dac $ tryMidi (mul (fades 0.01 0.1) . tri)
+tryMidi :: (MidiInstr a, Sigs (MidiInstrOut a)) => a -> SE (MidiInstrOut a)
+tryMidi x = midi $ onMsg x
