@@ -18,7 +18,10 @@ module Csound.Air.Patch(
 	atNote,
 
 	-- * Fx
-	addInstrFx, addPreFx, addPostFx
+	addInstrFx, addPreFx, addPostFx,
+
+	-- * Misc
+	patchWhen
 ) where
 
 import Control.Monad
@@ -86,6 +89,7 @@ atMixes ks p = p { patchFx = zipFirst (\k x -> x { fxMix = k }) ks (patchFx p) }
 wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
 wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
 
+-- | Transforms all the effects for the given patch into a single function. 
 getPatchFx :: (SigSpace a, Sigs a) => Patch a -> Fx a
 getPatchFx p = foldr (<=<) return $ fmap wet $ patchFx p
 
@@ -97,6 +101,7 @@ instance SigSpace a => SigSpace (Patch a) where
 --------------------------------------------------------------
 -- note
 
+-- | Plays a patch at the given note.
 atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote -> SE a
 atNote p note = getPatchFx p =<< patchInstr p note
 
@@ -140,3 +145,14 @@ addPreFx dw f p = p { patchFx = patchFx p ++ [FxSpec dw f] }
 -- | Appends an effect after patch's effect.
 addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
 addPostFx dw f p = p { patchFx = FxSpec dw f : patchFx p }
+
+----------------------------------------------------------------
+
+-- | Plays the patch when confition is true otherwise it produces silence.
+patchWhen :: Sigs a => BoolSig -> Patch a -> Patch a
+patchWhen cond p = p 
+	{ patchInstr = playWhen cond (patchInstr p)
+	, patchFx    = fmap (mapFun $ playWhen cond) (patchFx p) }
+	where mapFun f x = x { fxFun = f $ fxFun x }
+
+

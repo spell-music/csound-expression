@@ -1,7 +1,7 @@
 -- | A multitap looper.
 module Csound.Air.Looper (
 	LoopSpec(..), LoopControl(..),
-	sigLoop, midiLoop, sfLoop
+	sigLoop, midiLoop, sfLoop, patchLoop
 ) where
 
 import Control.Monad
@@ -22,6 +22,7 @@ import Csound.Air.Live
 import Csound.Air.Wave
 import Csound.Air.Fx
 import Csound.Air.Filter
+import Csound.Air.Patch
 import Csound.Air.Misc
 
 
@@ -129,6 +130,10 @@ sfLoop spec dtBpm times fonts = midiLoop spec dtBpm times $ fmap (uncurry sfMsg)
 -- It takes a list of midi instruments in place of signal inputs. The rest is the same
 midiLoop :: LoopSpec -> D -> [D] -> [Msg -> SE Sig2] -> Source Sig2
 midiLoop = genLoop $ \cond midiInstr -> midi $ playWhen cond midiInstr 
+
+-- | Some instruments not work well with the looper. Alwo be aware of limitation of software resources.
+patchLoop :: LoopSpec -> D -> [D] -> [Patch2] -> Source Sig2
+patchLoop = genLoop $ \cond p -> atMidi (patchWhen cond p)
 
 -- | Simple multitap Looper. We can create as many taps as we like
 -- also we can create fade outs/ins insert effects and control mix. 
