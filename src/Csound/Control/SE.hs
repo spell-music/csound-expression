@@ -1,5 +1,5 @@
 module Csound.Control.SE(
-    SE, SERef, writeSERef, readSERef, modifySERef, mixSERef, newSERef, sensorsSE, newGlobalSERef, globalSensorsSE
+    SE, Ref, writeRef, readRef, modifyRef, mixRef, newRef, sensorsSE, newGlobalRef, globalSensorsSE
 ) where
 
 import Csound.Typed.Control

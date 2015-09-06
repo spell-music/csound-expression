@@ -15,6 +15,8 @@ module Csound.Control.Midi(
     tryMidi, MidiInstr(..)
 ) where
 
+import Prelude hiding ((<*))
+
 import Data.Boolean
 
 import Csound.Typed
@@ -76,27 +78,27 @@ holdMsg channel portTime = do
 
 genAmpCpsSig :: ((Msg -> SE Sig) -> SE Sig) -> SE (Sig, Sig, Sig)
 genAmpCpsSig midiFun = do
-	ref <- newGlobalSERef ((0, 0) :: (Sig, Sig))
+	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
 	status <- midiFun (instr ref)
 	let resStatus = ifB (downsamp status ==* 0) 0 1
-	(amp, cps) <- readSERef ref
+	(amp, cps) <- readRef ref
 	return (downsamp amp, downsamp cps, resStatus)
 	where 
-		instr :: SERef (Sig, Sig) -> Msg -> SE Sig
+		instr :: Ref (Sig, Sig) -> Msg -> SE Sig
 		instr hNote msg = do
-			writeSERef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)
+			writeRef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)
 			return 1		
 
 genHoldAmpCpsSig :: ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
 genHoldAmpCpsSig midiFun = do
-	ref <- newGlobalSERef ((0, 0) :: (Sig, Sig))
+	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
 	midiFun (instr ref)	
-	(amp, cps) <- readSERef ref
+	(amp, cps) <- readRef ref
 	return (downsamp amp, downsamp cps)
 	where 
-		instr :: SERef (Sig, Sig) -> Msg -> SE ()
+		instr :: Ref (Sig, Sig) -> Msg -> SE ()
 		instr hNote msg = do
-			writeSERef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)			
+			writeRef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)			
 
 
 --------------------------------------------------------------
@@ -112,15 +114,15 @@ midiKeyOff = midiKeyOffBy . toMidiFun
 
 midiKeyOnBy :: MidiFun Sig -> D -> SE (Evt D)
 midiKeyOnBy midiFun key = do	
-	chRef  <- newGlobalSERef (0 :: Sig)
-	evtRef <- newGlobalSERef (0 :: Sig)
-	writeSERef chRef =<< midiFun instr
+	chRef  <- newGlobalRef (0 :: Sig)
+	evtRef <- newGlobalRef (0 :: Sig)
+	writeRef chRef =<< midiFun instr
 
 	alwaysOn $ do
-		a <- readSERef chRef
-		writeSERef evtRef $ diff a
+		a <- readRef chRef
+		writeRef evtRef $ diff a
 
-	evtSig <- readSERef evtRef
+	evtSig <- readRef evtRef
 	return $ filterE ( >* 0) $ snaps evtSig
 	where
 		instr msg = do
@@ -130,15 +132,15 @@ midiKeyOnBy midiFun key = do
 
 midiKeyOffBy :: MidiFun Sig -> D -> SE Tick
 midiKeyOffBy midiFun key = do	
-	chRef  <- newGlobalSERef (0 :: Sig)
-	evtRef <- newGlobalSERef (0 :: Sig)
-	writeSERef chRef =<< midiFun instr
+	chRef  <- newGlobalRef (0 :: Sig)
+	evtRef <- newGlobalRef (0 :: Sig)
+	writeRef chRef =<< midiFun instr
 
 	alwaysOn $ do
-		a <- readSERef chRef
-		writeSERef evtRef $ diff a
+		a <- readRef chRef
+		writeRef evtRef $ diff a
 
-	evtSig <- readSERef evtRef
+	evtSig <- readRef evtRef
 	return $ fmap (const unit) $ filterE ( <* 0) $ snaps evtSig
 	where
 		instr msg = do

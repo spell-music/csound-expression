@@ -115,10 +115,10 @@ newTab size = ftgentmp 0 0 size 7 0 [size, 0]
 newGlobalTab :: D -> SE Tab
 newGlobalTab size = do  
     identifier <- getNextGlobalGenId
-    ref <- newGlobalSERef (0 :: D)        
+    ref <- newGlobalRef (0 :: D)        
     tabId <- ftgenonce 0 (int identifier) size 7 0 [size, 0]
-    writeSERef ref (fromGE $ toGE tabId)
-    fmap (fromGE . toGE) $ readSERef ref
+    writeRef ref (fromGE $ toGE tabId)
+    fmap (fromGE . toGE) $ readRef ref
 
 -- | Calculates the number of samples needed to store the given amount of seconds.
 -- It multiplies the value by the current sample rate.

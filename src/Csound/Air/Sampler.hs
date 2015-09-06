@@ -172,13 +172,13 @@ genCharToggle needSync minitVal key asig = retrig (togInstr minitVal asig)
 	$ needSync $ charOn key
 	where 
 		togInstr mv0 asig isPlay = do
-			ref <- newSERef 0			
+			ref <- newRef 0			
 			case mv0 of
 				Nothing -> return ()
-				Just v0 -> writeSERef ref v0
+				Just v0 -> writeRef ref v0
 			when1 (sig isPlay ==* 1) $ do
-				writeSERef ref asig
-			readSERef ref
+				writeRef ref asig
+			readRef ref
 
 -- Consider note limiting? or performance degrades
 -- every note is held to infinity and it continues to produce zeroes.
@@ -322,10 +322,10 @@ midiToggleBy midiInstr midiChn key asig = fmap (\evt -> retrig (togMidiInstr asi
 	(fmap (accumE (1 :: D) (\a s -> ((a, s), mod' (s + 1) 2))) $ midiKeyOn midiChn $ int key)
 	where 
 		togMidiInstr asig (amp, isPlay) = do
-			ref <- newSERef 0
+			ref <- newRef 0
 			when1 (sig isPlay ==* 1) $ do
-				writeSERef ref =<< midiInstr asig amp
-			readSERef ref
+				writeRef ref =<< midiInstr asig amp
+			readRef ref
 
 -- | The generic midiGroup. We can specify the midi function.
 -- The midi function takes in a signal and a volume of the pressed key (it ranges from 0 to 1).

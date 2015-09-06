@@ -186,10 +186,10 @@ vnumbers = genNumbers ver
 
 genNumbers :: ([Gui] -> Gui) -> [Double] -> Source Sig
 genNumbers gx as@(d:ds) = source $ do
-    ref <- newGlobalSERef (sig $ double d)
+    ref <- newGlobalRef (sig $ double d)
     (gs, evts) <- fmap unzip $ mapM (button . show) as
-    zipWithM_ (\x e -> runEvt e $ \_ -> writeSERef ref (sig $ double x)) as evts 
-    res <- readSERef ref
+    zipWithM_ (\x e -> runEvt e $ \_ -> writeRef ref (sig $ double x)) as evts 
+    res <- readRef ref
     return (gx gs, res)
 
 
@@ -278,17 +278,17 @@ radioGroup gcat names initVal = mapSource snaps $ radioGroupSig gcat names initV
 radioGroupSig  :: ([Gui] -> Gui) -> [String] -> Int -> Source Sig
 radioGroupSig gcat names initVal = source $ do
     (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
-    curRef <- newGlobalSERef (sig $ int initVal)
-    current <- readSERef curRef    
+    curRef <- newGlobalRef (sig $ int initVal)
+    current <- readRef curRef    
     zipWithM_ (\w i -> w $ ifB (current ==* i) 1 0) writes ids
     zipWithM_ (\r i -> runEvt (snaps r) $ \x -> do              
         when1 (sig x ==* 1) $ do
-            writeSERef curRef i
+            writeRef curRef i
         when1 (sig x ==* 0 &&* current ==* i) $ do
-           writeSERef curRef i    
+           writeRef curRef i    
         ) reads ids   
 
-    res <- readSERef curRef
+    res <- readRef curRef
     return (gcat guis, res)
     where        
         ids = fmap (sig . int) [0 .. length names - 1]
@@ -453,20 +453,20 @@ radioGroup' gcat ctrl names initVal =  mapSource snaps $ radioGroupSig' gcat (ev
 radioGroupSig'  :: ([Gui] -> Gui) -> Sig -> [String] -> Int -> Source Sig
 radioGroupSig' gcat ctrl names initVal = source $ do
     (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
-    curRef <- newGlobalSERef (sig $ int initVal)   
+    curRef <- newGlobalRef (sig $ int initVal)   
 
-    when1 (changed [ctrl] ==* 1) $ writeSERef curRef ctrl
+    when1 (changed [ctrl] ==* 1) $ writeRef curRef ctrl
 
-    current <- readSERef curRef    
+    current <- readRef curRef    
     zipWithM_ (\w i -> w $ ifB (current ==* i) 1 0) writes ids
     zipWithM_ (\r i -> runEvt (snaps r) $ \x -> do              
         when1 (sig x ==* 1) $ do
-            writeSERef curRef i
+            writeRef curRef i
         when1 (sig x ==* 0 &&* current ==* i) $ do
-           writeSERef curRef i    
+           writeRef curRef i    
         ) reads ids   
 
-    res <- readSERef curRef
+    res <- readRef curRef
     return (gcat guis, res)
     where        
         ids = fmap (sig . int) [0 .. length names - 1]
@@ -475,10 +475,10 @@ radioGroupSig' gcat ctrl names initVal = source $ do
 ctrlSig :: D -> Sig -> SinkSource Sig -> Source Sig
 ctrlSig initVal ctrl v = source $ do
     (gui, output, input) <- v
-    ref <- newGlobalSERef (sig initVal)
-    when1 (changed [ctrl] ==* 1) $ writeSERef ref ctrl  
-    when1 (changed [input] ==* 1) $ writeSERef ref input    
-    res <- readSERef ref
+    ref <- newGlobalRef (sig initVal)
+    when1 (changed [ctrl] ==* 1) $ writeRef ref ctrl  
+    when1 (changed [input] ==* 1) $ writeRef ref input    
+    res <- readRef ref
     output res
     return (gui, res)
     

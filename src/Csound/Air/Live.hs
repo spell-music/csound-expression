@@ -139,18 +139,18 @@ fxBox :: FxUI a => String -> a -> Bool -> [(String, Double)] -> Source FxFun
 fxBox name fx onOff args = source $ do
     (gOff0, off) <- toggleSig name onOff
     let gOff = setFontSize 25 gOff0
-    offRef <- newGlobalSERef (0 :: Sig)
-    writeSERef offRef off
+    offRef <- newGlobalRef (0 :: Sig)
+    writeRef offRef off
     let (names, initVals) = unzip $ take (arityFx fx) args  
     (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals 
     let f x = do
-        ref <- newSERef (0 :: Sig, 0 :: Sig)
-        goff <- readSERef offRef
-        writeSERef ref x        
+        ref <- newRef (0 :: Sig, 0 :: Sig)
+        goff <- readRef offRef
+        writeRef ref x        
         when1 (goff ==* 1) $ do
-            x2 <- readSERef ref
-            writeSERef ref =<< applyFxArgs fx as x2
-        res <- readSERef ref        
+            x2 <- readRef ref
+            writeRef ref =<< applyFxArgs fx as x2
+        res <- readRef ref        
         return res  
     let gui = setBorder UpBoxBorder $ go (length names) gOff gs
     return (gui, f)

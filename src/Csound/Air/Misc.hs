@@ -1,3 +1,4 @@
+{-# Language FlexibleContexts #-}
 -- | Patterns
 module Csound.Air.Misc(
     mean, vibrate, randomPitch, chorusPitch, resons, resonsBy, modes, dryWet, 
@@ -33,6 +34,8 @@ module Csound.Air.Misc(
     testDrone, testDrone2, testDrone3, testDrone4
 
 ) where
+
+import Prelude hiding ((<*))
 
 import Control.Monad
 import Data.Boolean

@@ -94,6 +94,8 @@ module Csound.Control.Instr(
     Outs(..), onArg, AmpInstr(..), CpsInstr(..)
 ) where
 
+import Prelude hiding ((<*))
+
 import Csound.Typed 
 import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
@@ -149,10 +151,10 @@ schedUntil_ instr onEvt offEvt = sched_ instr' $ withDur infiniteDur onEvt
 -- it produces silence.
 playWhen :: forall a b. Sigs a => BoolSig -> (b -> SE a) -> (b -> SE a)
 playWhen onSig instr msg = do
-    ref <- newSERef (0 :: a)
-    writeSERef ref 0
-    when1 onSig $ writeSERef ref =<< instr msg
-    readSERef ref
+    ref <- newRef (0 :: a)
+    writeRef ref 0
+    when1 onSig $ writeRef ref =<< instr msg
+    readRef ref
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------

@@ -1,8 +1,11 @@
+{-# Language FlexibleContexts, ScopedTypeVariables #-}
 -- | A multitap looper.
 module Csound.Air.Looper (
 	LoopSpec(..), LoopControl(..),
 	sigLoop, midiLoop, sfLoop, patchLoop
 ) where
+
+import Prelude hiding ((<*))
 
 import Control.Monad
 import Data.List
@@ -162,7 +165,7 @@ getControls a =
 	, ( $ "del") $ maybe button button' (loopDel a)
 	, (\f -> f "through" False) $ maybe toggleSig (toggleSig' . evtToSig (-1))  (loopThrough a)) 
 
-genLoop :: (BoolSig -> a -> SE Sig2) -> LoopSpec -> D -> [D] -> [a] -> Source Sig2
+genLoop :: forall a. (BoolSig -> a -> SE Sig2) -> LoopSpec -> D -> [D] -> [a] -> Source Sig2
 genLoop playInstr spec dtBpm times' instrs = do
 	(preFxKnobGui, preFxKnobWrite, preFxKnobRead) <- setKnob "pre" (linSpan 0 1) 0.5
 	(postFxKnobGui, postFxKnobWrite, postFxKnobRead) <- setKnob "post" (linSpan 0 1) 0.5
@@ -176,8 +179,8 @@ genLoop playInstr spec dtBpm times' instrs = do
 		preCoeffs <- tabSigs preFxKnobWrite preFxKnobRead x initPreVals
 		postCoeffs <- tabSigs postFxKnobWrite postFxKnobRead x initPostVals
 
-		refs <- mapM (const $ newSERef (1 :: Sig)) ids
-		delRefs <- mapM (const $ newSERef (0 :: Sig)) ids
+		refs <- mapM (const $ newRef (1 :: Sig)) ids
+		delRefs <- mapM (const $ newRef (0 :: Sig)) ids
 		zipWithM_ (setSilencer refs) silencer sils
 		at smallRoom2 $ sum $ zipWith3 (f delEvt thr x) (zip3 times ids repeatFades) (zip5 mixCoeffs preFx preCoeffs postFx postCoeffs) $ zip3 delRefs refs instrs) throughDel sw sil
 	where
@@ -212,12 +215,13 @@ genLoop playInstr spec dtBpm times' instrs = do
 
 		maxDel = 3
 
+		f :: Tick -> Sig -> Sig -> (D, Int, Sig) -> (Sig, FxFun, Sig, FxFun, Sig) -> (Ref Sig, Ref Sig, a) -> SE Sig2
 		f delEvt thr x (t, n, repeatFadeWeight) (mixCoeff, preFx, preCoeff, postFx, postCoeff) (delRef, silRef, instr) = do
-			silVal <- readSERef silRef	
+			silVal <- readRef silRef	
 			runEvt delEvt $ \_ -> do
-				a <- readSERef delRef
-				when1 isCurrent $ writeSERef delRef (ifB (a + 1 <* maxDel) (a + 1) 0)
-			delVal <- readSERef delRef
+				a <- readRef delRef
+				when1 isCurrent $ writeRef delRef (ifB (a + 1 <* maxDel) (a + 1) 0)
+			delVal <- readRef delRef
 			echoSig <- playSf 0
 
 			let d0 = delVal ==* 0
@@ -233,17 +237,17 @@ genLoop playInstr spec dtBpm times' instrs = do
 				isCurrent = x ==* (sig $ int n)
 
 		setSilencer refs silIds evt = runEvt evt $ \v -> 
-			mapM_ (\ref -> writeSERef ref $ sig v) $ fmap (refs !! ) silIds
+			mapM_ (\ref -> writeRef ref $ sig v) $ fmap (refs !! ) silIds
 
 tabSigs :: Output Sig -> Input Sig -> Sig -> [Sig] -> SE [Sig]
 tabSigs writeWidget readWidget switch initVals = do	
-	refs <- mapM newGlobalSERef initVals	
+	refs <- mapM newGlobalRef initVals	
 
-	vs <- mapM readSERef refs
+	vs <- mapM readRef refs
 	runEvt (changedE [switch]) $ \_ -> do
 		mapM_  (\(v, x) -> when1 (x ==* switch) $ writeWidget v) $ zip vs $ fmap (sig . int) [0 .. length initVals - 1]
 
 	forM_ (zip [0..] refs) $ \(n, ref) -> do
-		when1 ((sig $ int n) ==* switch) $ writeSERef ref readWidget
+		when1 ((sig $ int n) ==* switch) $ writeRef ref readWidget
 
 	return vs

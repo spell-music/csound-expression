@@ -43,6 +43,7 @@ module Csound.Types(
    
     -- ** Logic functions
     boolSig, when1, whens, whileDo, untilDo,
+    equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
 
     -- ** Aliases 
     -- | Handy for functions that return tuples to specify the utput type
@@ -75,6 +76,8 @@ module Csound.Types(
     Sigs
 ) where
 
+import Prelude hiding ((<*))
+
 import Data.Boolean
 import Csound.Typed.Types
 
@@ -86,3 +89,20 @@ atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as
 atTuple :: (Tuple a) => [a] -> Sig -> a
 atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
+equalsTo :: EqB a => a -> a -> BooleanOf a
+equalsTo = (==*)
+
+notEqualsTo :: EqB a => a -> a -> BooleanOf a
+notEqualsTo = (/=*)
+
+lessThan :: OrdB a => a -> a -> BooleanOf a
+lessThan = (<*) 
+
+greaterThan :: OrdB a => a -> a -> BooleanOf a
+greaterThan = (>*)
+
+lessThanEquals :: OrdB a => a -> a -> BooleanOf a
+lessThanEquals = (<=*)
+
+greaterThanEquals :: OrdB a => a -> a -> BooleanOf a
+greaterThanEquals = (>=*)

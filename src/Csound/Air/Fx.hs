@@ -34,6 +34,8 @@ module Csound.Air.Fx(
 
 ) where
 
+import Prelude hiding ((<*))
+
 import Data.Boolean
 
 import Csound.Typed
@@ -171,18 +173,18 @@ funDelays len dtArgs mx a = do
 tabDelay :: (Tab -> Sig -> SE Sig) -> MaxDelayTime -> DelayTime -> Feedback -> Balance -> Sig -> SE Sig
 tabDelay go maxLength delTim  kfeed kbalance asig = do
     buf <- newTab tabLen    
-    ptrRef <- newSERef (0 :: Sig)
-    aresRef <- newSERef (0 :: Sig)  
-    ptr <- readSERef ptrRef
+    ptrRef <- newRef (0 :: Sig)
+    aresRef <- newRef (0 :: Sig)  
+    ptr <- readRef ptrRef
     when1 (ptr >=* sig tabLen) $ do
-        writeSERef ptrRef 0
-    ptr <- readSERef ptrRef 
+        writeRef ptrRef 0
+    ptr <- readRef ptrRef 
 
     let kphs = (ptr / sig tabLen) - (delTim/(sig $ tabLen / getSampleRate))
     awet <-go buf (wrap kphs 0 1)
-    writeSERef aresRef $ asig + kfeed * awet
-    ares <- readSERef aresRef
-    writeSERef ptrRef =<< tablewa buf ares 0
+    writeRef aresRef $ asig + kfeed * awet
+    ares <- readRef aresRef
+    writeRef ptrRef =<< tablewa buf ares 0
     return $ (1 - kbalance) * asig + kbalance * awet
     where
         tabLen = tabSizeSecondsPower2 maxLength
@@ -503,39 +505,39 @@ fxEcho2 maxLen ktime fback = bindSig fx
 trackerSplice :: D -> Sig -> Sig -> Sig -> SE Sig
 trackerSplice maxLength segLengthSeconds kmode asig = do
     setksmps 1
-    kindxRef <- newSERef (0 :: Sig)
-    ksampRef <- newSERef (1 :: D)
-    aoutRef  <- newSERef (0 :: Sig)
+    kindxRef <- newRef (0 :: Sig)
+    ksampRef <- newRef (1 :: D)
+    aoutRef  <- newRef (0 :: Sig)
 
     buf <- newTab (tabSizeSecondsPower2 maxLength)
     let segLength = segLengthSeconds * sig getSampleRate
         andx = phasor (sig $ getSampleRate / ftlen buf)
         andx1 = delay andx 1
     tabw asig (andx * sig (ftlen buf)) buf
-    ksamp <- readSERef ksampRef
+    ksamp <- readRef ksampRef
     let apos = samphold (andx1 * sig (ftlen buf)) (sig ksamp)
 
     whens [
         (kmode >=* 1 &&* kmode <* 2, do             
-                kindx <- readSERef kindxRef                             
-                writeSERef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)                
-                kindx <- readSERef kindxRef
+                kindx <- readRef kindxRef                             
+                writeRef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)                
+                kindx <- readRef kindxRef
                 when1 (kindx + apos >* sig (ftlen buf)) $ do
-                    writeSERef kindxRef $ (-segLength)
+                    writeRef kindxRef $ (-segLength)
 
-                kindx <- readSERef kindxRef
+                kindx <- readRef kindxRef
 
-                writeSERef aoutRef $ table (apos + kindx) buf `withDs` [0, 1]
-                writeSERef ksampRef 0
+                writeRef aoutRef $ table (apos + kindx) buf `withDs` [0, 1]
+                writeRef ksampRef 0
         ), (kmode >=* 2 &&* kmode <* 3, do              
-                kindx <- readSERef kindxRef
-                writeSERef kindxRef $ ifB ((kindx+apos) <=* 0) (sig (ftlen buf) - apos) (kindx-1)
-                kindx <- readSERef kindxRef
-                writeSERef aoutRef $ table (apos+kindx) buf `withDs` [0, 1]
-                writeSERef ksampRef 0   
+                kindx <- readRef kindxRef
+                writeRef kindxRef $ ifB ((kindx+apos) <=* 0) (sig (ftlen buf) - apos) (kindx-1)
+                kindx <- readRef kindxRef
+                writeRef aoutRef $ table (apos+kindx) buf `withDs` [0, 1]
+                writeRef ksampRef 0   
         )] (do
-                writeSERef ksampRef 1
-                writeSERef aoutRef asig)
+                writeRef ksampRef 1
+                writeRef aoutRef asig)
 
-    aout <-readSERef aoutRef
+    aout <-readRef aoutRef
     return aout

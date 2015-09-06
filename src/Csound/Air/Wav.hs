@@ -39,6 +39,8 @@
     takeSnd, delaySnd, afterSnd, lineSnd, loopLineSnd, segmentSnd, repeatSnd, toMono
 ) where
 
+import Prelude hiding ((<*))
+
 import Data.List(isSuffixOf)
 import Data.Default
 import Data.Boolean

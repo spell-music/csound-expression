@@ -236,22 +236,22 @@ aftT' evts = take1 $ sigToEvt $ evtLoop Nothing asigs evts
 
 simT' :: [Tick] -> Tick
 simT' as = Evt $ \bam -> do
-	isAwaitingRef <- newSERef (1 :: D)
-	countDownRef  <- newSERef (int (length as) :: D)
+	isAwaitingRef <- newRef (1 :: D)
+	countDownRef  <- newRef (int (length as) :: D)
 
 	mapM_ (mkEvt countDownRef) as
 
-	countDown <- readSERef countDownRef
-	isAwaiting <- readSERef isAwaitingRef
+	countDown <- readRef countDownRef
+	isAwaiting <- readRef isAwaitingRef
 	when1 (sig isAwaiting ==* 1 &&* sig countDown ==* 0) $ do
 		bam unit
-		writeSERef isAwaitingRef 0
+		writeRef isAwaitingRef 0
 	where 
 		mkEvt ref e = do
-			notFiredRef <- newSERef (1 :: D)
-			notFired <- readSERef notFiredRef
+			notFiredRef <- newRef (1 :: D)
+			notFired <- readRef notFiredRef
 			runEvt e $ \_ -> do
 				when1 (sig notFired ==* 1) $ do
-					writeSERef notFiredRef 0
-					modifySERef ref (\x -> x - 1)
+					writeRef notFiredRef 0
+					modifyRef ref (\x -> x - 1)
 

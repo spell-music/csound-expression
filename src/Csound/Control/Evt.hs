@@ -23,6 +23,8 @@ module Csound.Control.Evt(
     every, masked        
 ) where
 
+import Prelude hiding ((<*))
+
 import Data.Monoid
 import Data.Default
 import Data.Boolean
