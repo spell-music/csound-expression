@@ -1,7 +1,7 @@
 -- | A whisper of the wind.
 module Main where
 
-import Csound
+import Csound.Base
 
 -------------------------------------------------------------
 -- orchestra
@@ -30,6 +30,7 @@ wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) =
 i21 t0 dt amp bandRise bandDec freqRise freqDec pan winds = 
     del t0 $ dt *| temp (amp, bandRise, bandDec, freqRise, freqDec, pan, winds)
 
+windRes :: Sco (Mix Sig2)
 windRes = sco (onArg wind) $ har
     [ i21  0    12   60   500  0    555  111  0     0.2
     , i21  4    8    70   400  0    444  111  0.3   0.6
@@ -67,6 +68,6 @@ windRes = sco (onArg wind) $ har
     , i21  64   12   72   300  0    333  333  0.9   0.8
     ]
 
--- | Let's repeat everything 10 times and add the sustain for 2 seconds per note.
-main = dac $ mix $ sustain 2 $ loop 3 windRes
+-- | Let's repeat everything 4 times and add the sustain for 2 seconds per note.
+main = dac $ mix $ sustain 2 $ loopBy 4 windRes
 

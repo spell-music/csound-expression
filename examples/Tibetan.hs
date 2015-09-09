@@ -1,4 +1,4 @@
-{- | additional parameters: ioff, irise, idec
+{- | Example requires the package `random` to be installed
 
 This remarkable tibetan harmonic chant like effect is created by nine sinusoidal 
 oscillators, whose frequencies are almost identical: separated by a fraction of 
@@ -17,7 +17,7 @@ import Control.Applicative hiding ((<*))
 
 import System.Random
 
-import Csound hiding (N)
+import Csound.Base
 import Color(blurp, blue)
 
 -- | A pure tibetan instrument with randomized parameters.
@@ -29,7 +29,7 @@ pureTibetan :: (D, D, D, D, D) -> Sig
 pureTibetan (amp, cps, off, rise, dec) = mean $ fmap partial $ 0 : offs ++ (fmap negate offs)
     where offs = fmap int [1 .. 4]
           partial rat = linen (sig amp) rise idur dec * oscBy wave (sig $ cps + off * rat)   
-          wave = ifB (cps <* 230) (waveBy 5) (ifB (cps <* 350) (waveBy 3) (waveBy 1))
+          wave = ifB (cps `lessThan` 230) (waveBy 5) (ifB (cps `lessThan` 350) (waveBy 3) (waveBy 1))
           waveBy n = sines $ [0.3, 0, 0, 0] ++ replicate n 0.1
 
 -----------------------------------------------------------
@@ -60,7 +60,7 @@ w = Wait
 instance Num Act where    
     fromInteger = Tone . fromInteger
 
-type N = (Double, Double, D, D, D, D)
+type N = (D, D, D, D, D, D)
 
 
 data St = St 
@@ -103,7 +103,7 @@ getNotes k st = (notes, st')
           riss = rises rise
 
           notes = take (stRepeat st) $ getZipList $ (\t0 dt amp cps ris dec -> 
-                (t0, dt, double amp, double cps, double ris, double dec)) <$>
+                (double t0, double dt, double amp, double cps, double ris, double dec)) <$>
                 ZipList t0s <*> ZipList dts <*> ZipList amps <*> ZipList cpss <*> ZipList decs <*> ZipList riss
 
           st' = st{ stSpan = getSpan (stRepeat st) t0s dts }
@@ -186,7 +186,7 @@ starLfos        = cycle [23, 10, 5, 15, 17]
 starHarms       = cycle [10, 6, 7, 10]
 starSweeps      = cycle [0.7, 0.6, 0.6, 0.5, 0.8, 0.9, 0.25, 0.7, 0.5, 0.5, 0.6]
 
-starTotalDelay  = 5 * 60
+starTotalDelay  = 1.5 * 60
 starInitDelays  =              [ 0, 11,  2, 8,  21, 25]
 starPeriods     = fmap (* 2.5) [ 7, 23, 77, 13, 17, 31]
 
@@ -194,12 +194,13 @@ starChord       = [0, 1, 2, 4, 7]
 
 starSco = sco blue $
     flip evalState starParams $ traverse addParam $ 
-    takeS starLength $ har $ zipWith3 phi starInitDelays starPeriods starChord
-    where phi dt period note = del dt $ loop 70 $ har [4 *| temp (double $ id2cps 2 note), rest period] 
+    har $ zipWith3 phi starInitDelays starPeriods starChord
+    where phi dt period note = del dt $ loopBy 50 $ har [4 *| temp (double $ id2cps 2 note), rest period] 
 
           addParam cps = state $ \((amp, lfo, harm, sweep) : params) -> 
             ((amp, cps, lfo, harm, sweep), params) 
-             
+ 
+
 ------------------------------------------------------------
 
 main = do
@@ -208,9 +209,9 @@ main = do
         [ introBlurp
         , del (introDur * 0.70) $ har 
             [ globalEffect $ har 
-                [res2 notes
+                [ res2 notes
                 , del starTotalDelay $ starSco
-                , del (3 * starTotalDelay) $ starSco]
+                , del (2 * starTotalDelay) $ starSco]
             , blurpSco
             ]]
                 

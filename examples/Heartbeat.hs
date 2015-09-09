@@ -5,7 +5,7 @@
 -- > cabal install temporal-csound
 module Main where
 
-import Csound
+import Csound.Base
 
 linenIdur :: Sig -> D -> D -> Sig
 linenIdur a rise dec = linen a (idur * rise) idur (idur * dec) 
@@ -89,7 +89,7 @@ instrChorusel (cps, pan, a, b) = chorusel cps pan a b
 instrCrackle :: D -> Sig2
 instrCrackle cps = crackle (0.5::D) cps 12 20
 
-scoBeat = sco (onArg instr1) $ del 2 $ loop 32 $ mel [0.25 *| melTemp [0.5, 0.3], rest 1.5]
+scoBeat = sco (onArg instr1) $ del 2 $ loopBy 32 $ mel [0.25 *| melTemp [0.5, 0.3], rest 1.5]
 
 scoPluck = sco (onArg instrPluck) $ del 8 $ mel $ take n $ zipWith (\amp pan -> 0.5 *| temp (amp, pan)) 
     (fmap double $ [0, (v/40) .. v] ++ repeat v) (cycle [0.2, 0.8])

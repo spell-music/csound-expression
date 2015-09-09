@@ -20,10 +20,9 @@ Requirements:
 
     It should print a long message with version and available flags and libraries.
 
-*   temporal-csound package. It brings together temporal-music-notation and csound-expression packages.
-    It's used to make the process of score-writing more convenient.
+*   csound-expression package. Also the Tibetan example requires the `random` package.
 
-    > cabal install temporal-csound
+    > cabal install csound-expression
 
 
 When  everything is installed examples should work as executable programs.
@@ -32,4 +31,8 @@ So you can type in the command line:
 > runhaskell AnExample.hs 
 
 and get the sound or csound-file. 
+
+Also you can load the file into ghci and play with parts of the music
+in interactive mode.
+
 

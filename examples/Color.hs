@@ -1,7 +1,7 @@
 -- | A gallery of instruments (found in Csound catalog).
 module Color where
 
-import Csound
+import Csound.Base
 
 bass (amp, cps) = sig amp * once env * osc (sig cps)
     where env = eexps [1, 0.00001]

@@ -17,7 +17,7 @@ echo a = print' [a]
 
 
 -- | A single metronome (four beats per second).
-src = metroE 4
+src = metro 4
 
 e1, e2, e3, e4, e5, e6, e7, e8 :: Evt D
 
@@ -33,8 +33,8 @@ e5 = mappendE e2
 
 e51 :: Evt (D, D)
 e51 = mappend 
-        (repeatE (0.7, 220) (metroE (2/7)))
-        (cycleE [(0.5, 440), (0.5, 330)] (metroE 2))
+        (repeatE (0.7, 220) (metro (2/7)))
+        (cycleE [(0.5, 440), (0.5, 330)] (metro 2))
 
 -- rands
 
@@ -54,7 +54,7 @@ avgSum = accumE (0, 0) $ \a (s, n) ->
 
 -- mask
 
-e10 :: Evt (D, D)
+e10 :: Evt (Sco D)
 e10 = withDur 0.5 $ filterE (>* 110) $ mconcat 
     [ every 0 [5,7] $ repeatE 330 src
     , every 3 [11] $ repeatE 550 src

@@ -3,7 +3,7 @@ module Waves where
 
 import Csound.Base
 
-main = vdac $ do
+main = dac $ do
     -- Creates a master volume slider.
     (gvol, vol) <- masterVolume
 
@@ -18,6 +18,6 @@ main = vdac $ do
     -- Places elements on window aligned horizontally.
     panel $ hor [sca 0.1 gvol, gw]
 
-    -- Triggers the instrument with midi keyboard.
-    return $ mul vol $ midi $ onMsg instr
+    -- Triggrs the instrument with midi keyboard.
+    return $ vol * instr 220
 
