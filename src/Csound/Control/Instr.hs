@@ -94,10 +94,6 @@ module Csound.Control.Instr(
     Outs(..), onArg, AmpInstr(..), CpsInstr(..)
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Csound.Typed 
 import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload

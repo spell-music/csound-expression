@@ -15,10 +15,6 @@ module Csound.Control.Midi(
     tryMidi, MidiInstr(..)
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Data.Boolean
 
 import Csound.Typed
@@ -143,7 +139,7 @@ midiKeyOffBy midiFun key = do
 		writeRef evtRef $ diff a
 
 	evtSig <- readRef evtRef
-	return $ fmap (const unit) $ filterE ( <* 0) $ snaps evtSig
+	return $ fmap (const unit) $ filterE ( `lessThan` 0) $ snaps evtSig
 	where
 		instr msg = do
 			print' [notnum msg] 

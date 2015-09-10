@@ -39,10 +39,6 @@
     takeSnd, delaySnd, afterSnd, lineSnd, loopLineSnd, segmentSnd, repeatSnd, toMono
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Data.List(isSuffixOf)
 import Data.Default
 import Data.Boolean
@@ -409,7 +405,7 @@ ram winSize phsr pitch = (ramChn False 1 winSize phsr pitch, ramChn False 2 winS
     
 ramChn :: Bool -> Int -> Fidelity -> Phsr -> Sig -> Sig
 ramChn isMono n winSize (Phsr file start end speed) pitch = 
-    ifB (abs speed <* 0.001) 0 $ 
+    ifB (abs speed `lessThan` 0.001) 0 $ 
         ramTab winSize (mkTab isMono n file ) (lphase (filelen $ text file) start end (speed * srFactor)) (pitch * srFactor)
     where srFactor = sig $ (filesr $ text file) / getSampleRate
 

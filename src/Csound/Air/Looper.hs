@@ -5,10 +5,6 @@ module Csound.Air.Looper (
 	sigLoop, midiLoop, sfLoop, patchLoop
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Control.Monad
 import Data.List
 
@@ -222,7 +218,7 @@ genLoop playInstr spec dtBpm times' instrs = do
 			silVal <- readRef silRef	
 			runEvt delEvt $ \_ -> do
 				a <- readRef delRef
-				when1 isCurrent $ writeRef delRef (ifB (a + 1 <* maxDel) (a + 1) 0)
+				when1 isCurrent $ writeRef delRef (ifB (a + 1 `lessThan` maxDel) (a + 1) 0)
 			delVal <- readRef delRef
 			echoSig <- playSf 0
 

@@ -76,10 +76,6 @@ module Csound.Types(
     Sigs
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Data.Boolean
 import Csound.Typed.Types
 
@@ -91,20 +87,3 @@ atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as
 atTuple :: (Tuple a) => [a] -> Sig -> a
 atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
-equalsTo :: EqB a => a -> a -> BooleanOf a
-equalsTo = (==*)
-
-notEqualsTo :: EqB a => a -> a -> BooleanOf a
-notEqualsTo = (/=*)
-
-lessThan :: OrdB a => a -> a -> BooleanOf a
-lessThan = (<*) 
-
-greaterThan :: OrdB a => a -> a -> BooleanOf a
-greaterThan = (>*)
-
-lessThanEquals :: OrdB a => a -> a -> BooleanOf a
-lessThanEquals = (<=*)
-
-greaterThanEquals :: OrdB a => a -> a -> BooleanOf a
-greaterThanEquals = (>=*)

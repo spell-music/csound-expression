@@ -35,9 +35,6 @@ module Csound.Air.Misc(
 
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
 import Control.Monad
 import Data.Boolean
 import Data.Default
@@ -461,7 +458,7 @@ impPwEnsemble x = mul 0.3 $ at (mlp (3500 + x * 2) 0.1) $ mul (leg 0.5 0 1 1) $ 
 -- * cps - the frequency of the note
 tibetan :: Int -> Sig -> D -> Sig
 tibetan n off cps = chorusPitch n (2 * off * fromIntegral n) (oscBy wave) (sig cps)
-    where wave = ifB (cps <* 230) (waveBy 5) (ifB (cps <* 350) (waveBy 3) (waveBy 1))
+    where wave = ifB (cps `lessThan` 230) (waveBy 5) (ifB (cps `lessThan` 350) (waveBy 3) (waveBy 1))
           waveBy x = sines $ [0.3, 0, 0, 0] ++ replicate x 0.1
 
 impRazorPad speed amp cps = f cps + 0.75 * f (cps * 0.5)

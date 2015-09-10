@@ -34,10 +34,6 @@ module Csound.Air.Fx(
 
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Data.Boolean
 
 import Csound.Typed
@@ -520,7 +516,7 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
     let apos = samphold (andx1 * sig (ftlen buf)) (sig ksamp)
 
     whens [
-        (kmode >=* 1 &&* kmode <* 2, do             
+        (kmode >=* 1 &&* kmode `lessThan` 2, do             
                 kindx <- readRef kindxRef                             
                 writeRef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)                
                 kindx <- readRef kindxRef
@@ -531,7 +527,7 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 
                 writeRef aoutRef $ table (apos + kindx) buf `withDs` [0, 1]
                 writeRef ksampRef 0
-        ), (kmode >=* 2 &&* kmode <* 3, do              
+        ), (kmode >=* 2 &&* kmode `lessThan` 3, do              
                 kindx <- readRef kindxRef
                 writeRef kindxRef $ ifB ((kindx+apos) <=* 0) (sig (ftlen buf) - apos) (kindx-1)
                 kindx <- readRef kindxRef

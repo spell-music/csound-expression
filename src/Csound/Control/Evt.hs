@@ -23,10 +23,6 @@ module Csound.Control.Evt(
     every, masked        
 ) where
 
-#if MIN_VERSION_base(4,8,0)
-import Prelude hiding ((<*))
-#endif
-
 import Data.Monoid
 import Data.Default
 import Data.Boolean
@@ -154,7 +150,7 @@ listAt vals evt
     | null vals = mempty
     | otherwise = fmap (atArg vals) $ filterE within evt
     where
-        within x = (x >=* 0) &&* (x <* len)
+        within x = (x >=* 0) &&* (x `lessThan` len)
         len = int $ length vals
 
 -- | 
@@ -245,7 +241,7 @@ freqOf rnds evt = fmap (takeByWeight accs vals) $ randDs evt
 
 takeByWeight :: (Tuple a, Arg a) => [D] -> [a] -> D -> a
 takeByWeight accumWeights vals at = 
-    guardedArg (zipWith (\w val -> (at <* w, val)) accumWeights vals) (last vals)
+    guardedArg (zipWith (\w val -> (at `lessThan` w, val)) accumWeights vals) (last vals)
 
 accumWeightList :: Num a => [a] -> [a]
 accumWeightList = go 0
@@ -291,7 +287,7 @@ every empties beats = masked mask
 masked :: (Tuple a, Arg a) => [D] -> Evt a -> Evt a
 masked ms = filterAccumE 0 $ \a s -> 
     let n  = int $ length ms
-        s1 = ifB (s + 1 <* n) (s + 1) 0
+        s1 = ifB (s + 1 `lessThan` n) (s + 1) 0
     in  (atArg ms s ==* 1, a, s1)
 
 patternToMask :: [Int] -> [Bool]
@@ -325,7 +321,7 @@ filterRow p = fmap fst . filterE (p . snd) . mkRow
 
 -- | Takes the ns events from the event stream and ignores the rest of the stream.
 takeE :: Int -> Evt a -> Evt a
-takeE n = filterRow ( <* int n)
+takeE n = filterRow ( `lessThan` int n)
 
 -- | Drops the ns events from the event stream and leaves the rest of the stream.
 dropE :: Int -> Evt a -> Evt a
