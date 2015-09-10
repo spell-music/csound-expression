@@ -513,11 +513,3 @@ rever2 fbk (a1, a2) = (a1 + wa1, a2 + wa2)
     where (wa1, wa2) = reverbsc a1 a2 fbk 12000
 
 type Feedback = Sig
-
-harmonPatch :: (SigSpace a, Sigs a) => [Sig] -> [D] -> Patch a -> Patch a
-harmonPatch amps freqs p = p { 
-        patchInstr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ patchInstr p (amp, cps * f)) amps freqs 
-    }
-
-deepPad :: (SigSpace a, Sigs a) => Patch a -> Patch a
-deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]

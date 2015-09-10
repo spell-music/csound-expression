@@ -20,6 +20,9 @@ module Csound.Air.Patch(
 	-- * Fx
 	addInstrFx, addPreFx, addPostFx,
 
+	-- * Pads
+	harmonPatch, deepPad,
+
 	-- * Misc
 	patchWhen
 ) where
@@ -156,3 +159,13 @@ patchWhen cond p = p
 	where mapFun f x = x { fxFun = f $ fxFun x }
 
 
+------------------------------------------------
+-- pads
+
+harmonPatch :: (SigSpace a, Sigs a) => [Sig] -> [D] -> Patch a -> Patch a
+harmonPatch amps freqs p = p { 
+		patchInstr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ patchInstr p (amp, cps * f)) amps freqs	
+	}
+
+deepPad :: (SigSpace a, Sigs a) => Patch a -> Patch a
+deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]
