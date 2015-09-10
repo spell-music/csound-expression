@@ -67,6 +67,7 @@ the basic virtual midi instrument:
 ~~~haskell
 > ghci
 Prelude> :m +Csound.Base
+Prelude> :set -XFlexibleContexts
 Prelude Csound.Base> let run f = vdac $ midi $ onMsg f
 ~~~
 
@@ -267,19 +268,19 @@ as a control signal.
 Let's use it for vibrato:
 
 ~~~haskell
-run 0.25 $ \cps -> leg 1 3 0.5 3 * saw (cps * (1 + 0.1 * osc 5))
+run 0.25 $ \cps -> leg 1 3 0.5 0.7 * saw (cps * (1 + 0.02 * osc 5))
 ~~~
 
 Or we can make a tremolo if we modify an amplitude:
 
 ~~~haskell
-run 0.25 $ \cps -> osc 5 * leg 1 3 0.5 3 * saw cps
+run 0.25 $ \cps -> osc 5 * leg 1 3 0.5 0.7 * saw cps
 ~~~
 
 The lfo-frequency can change over time:
 
 ~~~haskell
-run 0.25 $ \cps -> osc (5 * leg 1 1 0.2 3) * leg 2 3 0.5 3 * saw cps
+run 0.25 $ \cps -> osc (5 * leg 1 1 0.2 3) * leg 2 3 0.5 0.7 * saw cps
 ~~~
 
 Also we can change the shape of the LFO. We can use `saw`, `tri` or `sqr`
@@ -327,7 +328,7 @@ It happens so often that there are special functions that abstracts these patter
 From `(0, 1)` to `(a, b)`:
 
 ~~~haskell
-uon :: Sig -> Sig -> Sig -> Sig
+uon :: SigSpace a => Sig -> Sig -> a -> a
 uon a b x = ...
 
 let y = uon a b x
@@ -336,7 +337,7 @@ let y = uon a b x
 Or from (-1, 1) to `(a, b)`:
 
 ~~~haskell
-on :: Sig -> Sig -> Sig -> Sig
+on :: SigSpace a => Sig -> Sig -> a -> a
 on a b x = ...
 
 let y = on a b x
@@ -444,7 +445,7 @@ to repeat the pitch changes. The `linloop` is just like `linseg` but it repeats 
 Let's create a simple snare:
 
 ~~~haskell
-> snare2 = at (hp 500 23) $ mul (sqrSeq [0, 0, 1, 0, 0, 0, 0.5, 0.2] 4) $ pink
+> let snare = at (hp 500 23) $ mul (sqrSeq [0, 0, 1, 0, 0, 0, 0.5, 0.2] 4) $ pink
 > dac $ return kick + snare
 ~~~
 
@@ -468,7 +469,7 @@ Let's add some pitched sounds. Also we can make the kick louder:
 
 ~~~haskell
 > let ticks = return $ mul (sqrSeq [0, 0, 0, 0, 1, 1] 8) $ osc 440
-> dac $ mul 0.3 $ return (mul 2.4 kick) + return ticks + snare + hiHat
+> dac $ mul 0.3 $ return (mul 2.4 kick) + ticks + snare + hiHat
 ~~~
 
 ### Using GUIs as control signals
@@ -497,7 +498,7 @@ What if we want to change the frequency? It's best to change the frequency with 
 control signals (the change is not linear but exponential). we can use the function `xknob`:
 
 ~~~haskell
-> dac $ hlift2 (\amp cps -> mul amp $ mlp 1500 0.1 $ saw cps) (uknob 0.5) (xknob 50 600 110)
+> dac $ hlift2 (\amp cps -> mul amp $ mlp 1500 0.1 $ saw cps) (uknob 0.5) (xknob (50, 600) 110)
 ~~~
 
 The `xknob` takes in three values. They are the minimum and maximum values and the initial value.
@@ -508,8 +509,8 @@ Let's change the parameters of the filter with sliders:
 
 ~~~haskell
 > dac $ vlift2 (\(amp, cps) (cflt, q)  -> mul amp $ mlp cflt q $ saw cps) 
-	(hlift2 (,) (uknob 0.5) (xknob 50 600 110)) 
-	(vlift2 (,) (xslider 250 7000 1500) (mul 0.95 $ uslider 0.5))
+	(hlift2 (,) (uknob 0.5) (xknob (50, 600) 110)) 
+	(vlift2 (,) (xslider (250, 7000) 1500) (mul 0.95 $ uslider 0.5))
 ~~~
 
 We can see the picture of the talking robot.
@@ -597,7 +598,7 @@ We can change parameters in real-time with EG's and LFO's.
 Let's create an envelope and apply it to the amplitude and center frequency:
 
 ~~~haskell
-> let env = mxadsr 0.1 0.5 0.3 1
+> let env = leg 0.1 0.5 0.3 1
 > run (0.15 * env) (lp (1500 * env) 1.5 . saw)
 ~~~
 
@@ -614,20 +615,29 @@ the center frequency gets higher and we get more bright sounds:
 We can make a waveform more interesting with new partials.
 
 ~~~haskell
-> run (0.1 * env) (\x -> lop (x + 2500 * env) 3.5 $ saw x + 0.3 * tri (3 * x) + 0.1 * tri (4 * x))
+> run (0.1 * env) (\x -> lp (x + 2500 * env) 3.5 $ saw x + 0.3 * tri (3 * x) + 0.1 * tri (4 * x))
 ~~~
 
 We can apply an LFO to the resonance.
 
 ~~~haskell
-run (0.15 * env) (\x -> lop (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (0.15 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 Also we can apply LFO to the frequency:
 
 ~~~haskell
-run (0.15 * env) (\x -> lop (x + 500 * env) (7 + 3 * sqr 4) $ saw (x * (1 + 0.1 * osc 4)))
+run (0.15 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw (x * (1 + 0.1 * osc 4)))
 ~~~
+
+We can increase an order of the resonant filter applying it several times.
+There is a function `filt` that does it:
+
+~~~
+run (0.15 * env) (\x -> filt 2 lp (x + 500 * env) (3 + 2 * sqr 4) $ saw x)
+~~~
+
+You can find lots of filters in the module `Csound.Air.Filter`.
 
 Effects
 ---------------------------------
@@ -676,7 +686,7 @@ rever1 :: Sig -> Sig -> (Sig, Sig)
 
 It's base on very cool Csound unit `reverbsc`. It takes in feedback level (0 to 1)
 and input signal and produces the processed output. There are several ready to use
-shortcuts: `smallRoom`, `smallHall`, `lhaskellargeRoom`, `largHall` and `magicCave`.
+shortcuts: `smallRoom`, `smallHall`, `largeRoom`, `largeHall` and `magicCave`.
 
 Let's place our sound in the magic cave:
 
@@ -831,10 +841,10 @@ We can create a sequence of random numbers that change linearly
 with given frequency. Also this unit can be used as LFO.
 
 ~~~haskell
-rnds, urnds :: Sig -> SE Sig
+rndi, urndi :: Sig -> SE Sig
 
- rnds amplitude frequency
-urnds amplitude frequency
+ rndi frequency
+urndi frequency
 ~~~
 
 The `urnds `varies between 0 and 1. The `rnds` varies between -1 and 1.
@@ -848,20 +858,20 @@ white, pink :: SE Sig
 Let's create a simple wind instrument:
 
 ~~~haskell
-> let instr x = do { cfq <- 2000 * urnds 0.5; asig <- white; return $ mlp (x + cfq) 0.6 asig }
+> let simpleWind x = do { cfq <- 2000 * urndi 0.5; asig <- white; return $ mlp (x + cfq) 0.6 asig }
 ~~~
 
 We filter the white noise with filter. The center frequency randomly varies
 above the certain threshold. Let's hear the wind:
 
 ~~~haskell
-run id (0.5 * fadeOut 1.5) instr
+dac $ mul (fadeIn 0.5) $ simpleWind 500
 ~~~
 
 Complex waves
 --------------------------------
 
-Let's study how can we made our waveforms more interesting.
+Let's study how we can made our waveforms more interesting.
 We can apply several simple techniques to achieve it.
 
 ### Reading sound signals from files

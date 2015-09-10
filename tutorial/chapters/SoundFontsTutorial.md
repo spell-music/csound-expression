@@ -58,7 +58,7 @@ We can find a lot of soundfonts in the net. Some links to start:
 
 * <= [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
 
-* => [Scores](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SamplesTutorial.md)
+* => [Samples](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SamplesTutorial.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
 

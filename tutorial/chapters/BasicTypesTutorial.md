@@ -6,9 +6,9 @@ Let's look at the basic types of the library.
 Signals (Sig)
 ----------------------
 
-We are going to make a sound. So the most frequently used type is a signal. It's called `Sig`. 
-The signal is a steam of numbers that is updated at a certain rate.
-Actually it's a small array of doubles. For every cycle the sound-engine
+We are going to make an audio signal. So the most frequently used type is a signal. It's called `Sig`. 
+The signal is a stream of numbers that is updated at a certain rate.
+Actually it's a stream of small arrays of doubles. For every cycle the audio-engine
 updates it. It can see only one frame at the given time. 
 
 Conceptually we can think that signal is a list of numbers.
@@ -24,7 +24,7 @@ $ ghci
 > :m +Csound.Base 
 ~~~
 
-So let's create a few signals:
+So let's create a couple of signals:
 
 ~~~{.haskell}
 > let x = 1 :: Sig
@@ -83,7 +83,7 @@ Here we used the special function `mul`. We could
 just use the normal Haskell's `*`. But `mul` is more
 convenient. It can work not only for signals but for 
 tuples of signals (if we want a stereo playback) 
-or signals that contain side effects (wrapped in the monad).
+or signals that contain side effects (wrapped in the monad `SE`).
 So the `mul` is preferable.  
 
 Constant numbers (D)
@@ -188,7 +188,7 @@ after release. The `fades` combines both functions.
 Strings (Str)
 -----------------------------------
 
-The friend of mine has made a wonderful record in Ableton.
+The friend of mine has made a wonderful track in Ableton.
 I have a wav-file from her and want to beep-along with it.
 I can use a `diskin2` opcode for it:
 
@@ -245,7 +245,7 @@ Ok, we are ready to play along with it:
 
 Notice how simple is the combining midi-devices output
 with the regular signals. The function `midi` produces 
-a normal signal wrapped in SE-monad. We can use it anywhere.
+a normal signal wrapped in `SE`-monad. We can use it anywhere.
 
 There are useful shortcuts that let us use a normal Haskell strings:
 
@@ -414,11 +414,14 @@ Linear and exponential segments:
 consts, lins, exps, cubes, splines :: [Double] -> Tab
 ~~~
 
-Reads samples from files
+Reads samples from files (the second argument is duration of an audio segment in seconds)
 
 ~~~{.haskell}
-wavs :: String -> Double -> Int -> Tab
-mp3s :: String -> Double -> Tab
+data WavChn = WavLeft | WavRight | WavAll
+data Mp3Chn = Mp3Mono | Mp3Stereo | Mp3Left | Mp3Right | Mp3All
+
+wavs :: String -> Double -> WavChn -> Tab
+mp3s :: String -> Double -> Mp3Chn
 ~~~
 
 Harmonic series:
@@ -471,6 +474,7 @@ The output values lie in the range of -1 to 1:
 rndi :: Sig -> SE Sig
 ~~~
 
+THe first arhument is frequency of generated random numbers.
 We can get the constant random numbers (it's like sample and hold
 function with random numbers):
 
@@ -521,7 +525,7 @@ The renderer performs common subexpression elimination.
 So the examples above would be rendered in the same code.
 
 We need to tell to the renderer when we want two random values.
-Here comes the SE monad (Side Effects for short).
+Here comes the `SE` monad (Side Effects for short).
 
 ~~~haskell
 x1 = do
@@ -582,16 +586,16 @@ The global variables are visible everywhere.
 We can create a reference to the mutable variable with functions:
 
 ~~~{.haskell}
-newSERef 		:: Tuple a => a -> SE (SERef a)
-newGlobalSERef  :: Tuple a => a -> SE (SERef a)
+newRef          :: Tuple a => a -> SE (Ref a)
+newGlobalRef    :: Tuple a => a -> SE (Ref a)
 ~~~
 
-They take in an initial value and create a value of the type `SERef`:
+They take in an initial value and create a value of the type `Ref`:
 
 ~~~{.haskell}
-data SERef a = SERef 
-	{ writeSERef :: a -> SE ()
-	, readSERef  :: SE a
+data Ref a = Ref 
+	{ writeRef :: a -> SE ()
+	, readRef  :: SE a
 	}
 ~~~
 
@@ -661,7 +665,7 @@ creates a stright line between the points `1500` and `250` that lasts for `5` se
 > dac $ at (mlp (linseg [1500, 5, 250]) 0.1) $ white
 ~~~
 
-It let's us apply signal transformation functions to values of 
+It let us apply signal transformation functions to values of 
 many different types. The one function that we have already seen is `mul`:
 
 ~~~{.haskell}
@@ -707,7 +711,7 @@ length equals the second one minus one.
 cfds :: SigSpace a => [Sig] -> [a] -> a
 ~~~
 
-Another usefull function is 
+Another usefull function is weighted sum
 
 ~~~{.haskell}
 wsum :: SigSpace a => [(Sig, a)] -> a
@@ -756,10 +760,10 @@ scaleSpec :: Sig -> Sig -> Sig
 scalePitch :: Sig -> Sig -> Sig
 ~~~
 
-`ScaleSpec` scales the frequency of the signal in Hz ratios
+`scaleSpec` scales the frequency of the signal in Hz ratios
 but `scalePitch` does it in semitones.
 
-If have a spectrum we can process it with many functions from the 
+If we have a spectrum we can process it with many functions from the 
 module [Spectral processing](http://hackage.haskell.org/package/csound-expression-opcodes-0.0.0/docs/Csound-Typed-Opcode-SpectralProcessing.html).
 
 

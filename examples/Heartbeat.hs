@@ -1,8 +1,4 @@
 -- | The Heartbeat by Julie Friedman (without crackle)
---
--- requires temporal-csound
---
--- > cabal install temporal-csound
 module Main where
 
 import Csound.Base

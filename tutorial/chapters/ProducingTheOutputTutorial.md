@@ -3,7 +3,7 @@ Rendering Csound files
 
 We know how to play the sound live. We can use the function `dac`
 for it. Also we know how to use virtual midi-device. We can use `vdac` for it.
-But there are many more ways to render the Csound file. Let's study them.
+But there are many other ways to render the Csound file. Let's study them.
 The functions that we are going to look at live in the 
 module [Csound.IO](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-IO.html).
 
@@ -12,7 +12,7 @@ Producing the Csound code
 
 The csound-expression library at its core is a Csound file
 generator. The most basic thing it can do is to make
-as String that contains the Csound code.
+as `String` that contains the Csound code.
 
 ~~~haskell
 renderCsd :: RenderCsd a => a -> IO String
@@ -122,6 +122,13 @@ In this case we are using Csound to do something useful
 but without making any noise about it. Maybe we are going
 to manipulate some sound-files or receive Midi-messages 
 and silently print them on the screen.
+
+There is also support for GUIs. We are going to encounter it soon.
+The signal that is wrapped in the UI is also can be rendered:
+
+~~~
+Source Sig, Source (Sig, Sig), ...
+~~~
 
 Options
 ----------------------------------------------------

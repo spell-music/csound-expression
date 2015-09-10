@@ -37,4 +37,9 @@ and get the sound going out of your speakers.
 Also you can load the file into ghci and play with parts of the music
 in interactive mode.
 
+------------------------------------------
+
+Lots of examples can be found at the repository: csound-bits
+
+https://github.com/spell-music/csound-bits
 

@@ -1,579 +1,429 @@
 
 Scores
-======================================
+=============================
 
-Right now we know how to produce a single sound:
+The type for Score comes from another library `temporal-media`.
+The score is a bunch of notes for an instrument to be played.
+Every note has a start time, duration (both in seconds) and 
+some arguments for the instrument. The arguments can carry
+information about volume and pitch or some timbral parameters. 
 
-~~~haskell
-> dac $ osc (220 + 50 * osc 0.5)
+We can invoke an instrument with functions:
+
+~~~
+sco :: (Arg a, Sigs b) => (a -> SE b) -> Sco a -> Sco (Mix b)
+mix :: Sigs a => Sco (Mix a) -> a
 ~~~
 
-We know how to trigger an instrument with a  midi device:
+With `sco` we convert a score of notes to score of unmixed signals.
+With `mix` we can mix the score of signals to a single signal.
 
-~~~haskell
-> vdac $ midi $ onMsg $ \x -> osc (x + 50 * osc 0.5)
+We can notice the two type classes. 
+
+* The `Arg` is for arguments.
+  It contains the primitive types `D` (numbers), `Str` (strings)
+  and `Tab` (tables). Also the argument can contain tuples 
+  of afore mentioned primitive types.
+
+* The `Sigs` is for tuples of signals. It can be `Sig`, `Sig2`, `Sig4` and so on.
+
+
+That's how we can play a single note for one second:
+
+~~~
+> let instr x = return $ osc $ sig x
+> dac $ mix $ sco instr (temp 440)
 ~~~
 
-We know how to trigger the sound with an event stream:
+The function `temp` creates a note that starts right away 
+and lasts for one second. The argument of the function becomes
+the argument for the instrument to play.
 
-~~~haskell
-> dac $ sched (const $ return $ osc 440) $ withDur 0.25 $ metroE 2
+Why do we need two functions? Isn't it better to convert
+the score of notes to signal? The answer to this question
+lies in the fact that when we have scores of signals we can 
+combine them together. We can construct scores that contain
+signals from different instruments:
+
+~~~
+> let oscInstr x = return $ osc $ sig x
+> let sawInstr x = return $ saw $ sig x
+> dac $ mix $ mel [sco oscInstr (temp 440), rest 1, sco sawInstr (temp 440)]
 ~~~
 
-We can even trigger the instruments with GUI. Since some of them
-can produce event streams.
+We have created two instruments for pure sine and saw-tooth. 
+Then we create a couple of notes (`temp`), apply the instruments to
+them (`sco`) and play them one after another (`mel`). We have put a one second
+rest between the notes. So the mix contains a signals
+from two different instruments.
 
-But can we play tabs or scores? 
 
-Triggering an instrument with the scores
+Main functions
 ----------------------------------
 
-The Csound originally have
-the two parts: orchestra and scores. The orchestra lists all the instruments
-and in the scores we can find the notes that trigger the instruments.
-The note consists of four parts:
+The main strength of the type `Sco` is that we can build complex 
+scores out of simple primitives. Let's repeat our simple notes four times (`loopBy`)
+and play it four times faster (`str`):
 
-~~~haskell
-(nameOfTheInstrument, startTime, duration, argumentsForTheInstrument)
+~~~
+> dac $ mix $ str 0.25 $ loopBy 4 $ mel [sco oscInstr (temp 440), rest 1, sco sawInstr (temp 440), rest 1]
 ~~~
 
-In the Csound it's written like this:
+Let's study the most important functions for composition 
+(the complete list can be found in the docs for `temporal-media` package, on Hackage). 
 
-~~~haskell
-i2 0 5 0.5 440
+### Primitive functions
+
+Let's start with primitive functions:
+
+~~~
+temp :: a -> Sco a
+rest :: D -> Sco a
 ~~~
 
-It plays the instrument 2 at 0 second for a 5 seconds. The first argument
-is 0.5 (can be an amplitude) and the second is 440 (can be a frequency).
+The `temp` creates a single note that starts right away and lasts for one second.
+The function `rest` creates a pause that lasts for the given amount of time.
 
-### The type CsdEventList
+### Functions for sequential and parallel composition
 
-The scores contains a list of statements like this. In the csound-expression we encode this 
-information with a special type `CsdEventList`:
+The next functions can group lists of scores. 
+If we play notes one after another we can get a melody (`mel`).
+If we play notes at the same time we can get a harmony (`har`).
+So there are two functions:
 
-~~~haskell
-type CsdEvent a = (Double, Double, a)
-
-data CsdEventList a = CsdEventList 
-  { csdEventListDuration :: Double
-  , csdEventListNotes    :: [CsdEvent a]
-  }
+~~~
+mel, har :: [Sco a] -> Sco a
 ~~~
 
-The `CsdEventList` contains all notes for a single instrument to play.
+Let's play a major chord. First we play it in line and then we form a chord:
 
-We can trigger the instrument with the function `sco`:
-
-~~~haskell
-sco :: (CsdSco f, Arg a, Sigs b) => (a -> SE b) -> f a -> f (Mix b)
-sco instrument scores = ...
+~~~
+> let notes = fmap temp $ fmap (220 * ) [1, 5/4, 3/2, 2]
+> let q = mel [mel notes, har notes]
+> dac $ mix $ sco oscInstr q
 ~~~
 
-### Type class `CsdSco`
+We can hear the buzz in the last chord. It's caused by clipping.
+All signals for `dac` should have the amplitude less or equal than 1.
+We can scale the last chord by amplitude with the function `eff`:
 
-
-But where is the `CsdEventList`? The  `CsdEventList` is an instance
-of the type class `CsdSco`:
-
-~~~haskell
-class Functor f => CsdSco f where
-	toCsdEventList :: f a -> CsdEventList a
-	singleCsdEvent :: CsdEvent a -> f a
+~~~
+eff :: (Sigs b, Sigs a) => (a -> SE b) -> Sco (Mix a) -> Sco (Mix b)
 ~~~
 
-The `CsdEventList` is a canonical representation for the score-like types.
-The intention is to make the library open to many score-representations.
-We should not force the user to use the most proper variant. We let it be
-whatever it's best for the user.
+The `eff` applies an effect to the scores of signals.
 
-There are unknown types: `Arg` and `Mix`. Let's study them briefly.
-
-### Arguments for the instrument
-
-At the moment of triggering an instrument can take only certain types
-of arguments. They are constant numbers (`D`), strings (`Str`) or arrays (`Tab`).
-The type class `Arg` defines this restriction:
-
-~~~haskell
-class Tuple a => Arg a
-
-Arg D	 
-Arg Str	 
-Arg Unit	 
-Arg Tab	 
-(Arg a, Arg b) => Arg (a, b)	 
-(Arg a, Arg b, Arg c) => Arg (a, b, c)	 
-(Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d)
-...
+~~~
+dac $ mix $ mel [sco oscInstr (mel notes), eff (return . mul 0.2) $ sco oscInstr $ har notes]
 ~~~
 
-We can use three primitive types or tuples of them.
-An instrument that needs no arguments takes in an empty tuple `Unit`.
+The cool part of it is that we can treat a block of notes as a single value.
+We can give it a name, process it with a function or produce it with the function.
+It's impossible with plain Csound.
 
+### Time to delay
 
-### Getting the `Mix` done
+We can delay a bunch of notes with function:
 
-The result is a score again but the value of the score is wrapped 
-in the type `Mix`:
-
-~~~haskell
-sco :: (CsdSco f, Arg a, Sigs b) => (a -> SE b) -> f a -> f (Mix b)
+~~~
+del :: D -> Sco a -> Sco a
 ~~~
 
-It's a special type that represents a scores of sound signals.
-When we make a score of signals we can not use the sound signals
-directly. To get the result we have to mix it down to the single signal:
+It takes a time to delay and a score. Let's play a note after two seconds delay:
 
-~~~haskell
-mix :: (Sigs a, CsdSco f) => f (Mix a) -> a
+~~~
+> dac $ mix $ sco oscInstr $ del 2 $ temp 440
 ~~~
 
-Let's play a chord:
+### Speed up or slow down
 
-~~~haskell
-> dac $ mix $ sco (return . osc . sig) (CsdEventList 3 [(0, 1, 220), (1, 1, 330), (2, 1, 440)])
+We can speed  up or slow down the notes playback with function `str` (short for stretch).
+It stretches the length of notes in time domain. Let's play our previous example four times faster:
+
+~~~
+> dac $ mix $ str 0.25 $ mel [sco oscInstr (mel notes), eff (return . mul 0.2) $ sco oscInstr $ har notes]
 ~~~
 
-### Processing the unmixed signals
+### Loops
 
-We can not process the signals directly. If we want to apply an effect we 
-need to use a function `eff`:
+We can repeat a score several times with function `loopBy`:
 
-~~~haskell
-eff :: (CsdSco f, Sigs a, Sigs b) => (a -> SE b) -> f (Mix a) -> f (Mix b)
+~~~
+loopBy :: Int -> Sco a -> Sco a
 ~~~
 
-Let's process the output:
+### Functor
 
-~~~haskell
-> let x = sco (return . osc . sig) (CsdEventList 3 [(0, 1, 220), (1, 1, 330), (2, 1, 440)])
-> dac $ mix $ eff (return . mul (linseg [0, 1.5, 1, 1.5, 0])) x
+Needless to say that Sco is a functor. We can map the notes with `fmap`:
+
+~~~
+fmap :: (a -> b) -> Sco a -> Sco b
 ~~~
 
-We apply fade in and fade out to the result signal.
+Twinkle twinkle little star
+----------------------------------------
 
-### Playing in the loop
+Let's create a simple melody and play it with a sine instrument.
+We are going to play a twinkle twinkle little star song.
+For this tune we have two kind of bars. The first bar
+contains two notes that are played twice. In the second type
+of bar one note is played twice and then another is held.
+We've got two patterns:
 
-Sometimes the scores we made is so interesting that we want
-to listen to it over and over again. We can make it with a function:
-
-~~~haskell
-mixLoop :: (CsdSco f, Sigs a) => f (Mix a) -> a
+~~~
+> let p1 a b = mel $ fmap temp [a, a, b, b]
+> let p2 a b = mel [mel $ fmap temp [a, a], str 2 $ temp b]
 ~~~
 
-It takes unmixed scores of signals and produces a signal that loops over
-the give score.
+Alsow we have a third pattern. It's more higher level. 
+If we study the song we can see that we always play a first 
+pattern and then we play a second one. So let's create a function for it:
 
-Let's play the chord in the loop:
-
-~~~haskell
-> dac $ mixLoop x
+~~~
+> let p3 a b c d = mel [p1 a b, p2 c d]
 ~~~
 
-The better scores with temporal-music-notation
-------------------------------------------
+Let's add an amplitude envelope to the instrument:
 
-Notice how boring is the creation of the value for scores:
-
-~~~haskell
-> CsdEventList 3 [(0, 1, 220), (1, 1, 330), (2, 1, 440)]
+~~~
+let oscInstr x = return $ mul (linsegr [0, 0.03, 1, 0.2, 0] 0.1 0) $ osc $ sig x
 ~~~
 
-It's on purpose. The `CsdEventList` is not to be used directly. The user
-should seek for better alternatives. The `CsdEventList` is just a canonical
-type and it does not provide any functions to make the construction
-of scores easier.
+Let's also define a synonym for rendering function:
 
-In this section we are going to study an alternative. There is only one right now.
-There is an instance of `CsdSco` for the type `Score` from the package `temporal-music-notation`.
-The package defines handy function for building complex scores out of simpler ones.
-
-To use this package we have to install the package `temporal-csound`. 
-It defines the instance and provides some other useful things. 
-
-~~~haskell
-> :q
-leaving ghci...
-$ cabal-install temporal-csound
+~~~
+> let run = dac . mix . sco oscInstr . fmap cpspch
 ~~~
 
-When everything is properly installed we can load in the interpreter
-the module `Csound`. 
+The `cpspch` is csound function that converts numeric values (encoded
+in Csound) to frequencies. The value `8.00` is a C1, the `8.01` is D#1
+the value `8.02` is D1, the `9.00` is C2, and so on. The `8.12` is the
+same as `9.00`.
 
-~~~haskell
-$ ghci
-> :m +Csound
+Let's listen for the first phrase:
+
+~~~
+> run $ str 0.25 $ p3 8.00 8.07 8.09 8.07
 ~~~
 
-Let's study the main functions!
+And then goes the second phrase:
 
-### The basic functions
+~~~
+> run $ str 0.25 $ mel [p3 8.00 8.07 8.09 8.07, p3 8.05 8.04 8.02 8.00]
+~~~
+We can notice that the third and fourt phrases are the same. And in the last
+two phrases we are going to repeat first two phrases. Let's give a name to phrases.
+And combine them in the tune:
 
-The score is something that contains a list of notes and the total duration (in seconds).
-The note contains the time when it starts, the duration, and the parameter.
+~~~
+> let ph1 = p3 8.00 8.07 8.09 8.07
+> let ph2 = p3 8.05 8.04 8.02 8.00
+> let ph3 = p3 8.07 8.05 8.04 8.02
 
-The interesting thing is that we can build complex scores out of simple ones.
-there is a tiny set of functions to do it. The simplest functions are:
+> let ph12 = mel [ph1, ph2]
+> let ph33 = loopBy 2 ph3
+> let ph   = mel [ph12, ph33, ph12]
 
-~~~haskell
-temp :: a -> Score a
-rest :: Double -> Score a
+> run $ str 0.25 ph
 ~~~
 
-The function `temp` lifts the value to `Score`. It creates a `Score`
-that lasts for one second and contains a single note that starts right now
-and lasts for one second. The note contains the value that was given in 
-the first argument of the `temp`.
+With this approach we can better see the structure of the song.
 
-The function `rest` creates a `Score` that contains no notes and lasts 
-for a given amount of time (in seconds).
+Let's add chords to the tune. The song is based on three chords: C, F, G7.
+Let's create a function to play a chord:
 
-That's how we can build Scores out of simple values.
-Let's look at how we can combine the Scores.
-
-There are four simple functions:
-
-~~~haskell
-str, del :: Double -> Score a -> Score a
-
-mel, har :: [Score a] -> Score a
+~~~
+> let ch a b c = mel [temp a, har [temp b, temp c]]
+> let chC = ch 7.00 7.04 7.07
+> let chF = ch 7.00 7.05 7.09
+> let chG = ch 7.02 7.05 7.07
 ~~~
 
-The `str` is short for `stretch`. It stretches the notes in time domain.
-That's how we can make a single note that lasts for 2 seconds:
+The structure of the chords is the same as the structure of the tune:
 
-~~~haskell
-> str 2 $ temp "Hello"
+~~~
+> let ch1 = mel [chC, chC, chF, chC]
+> let ch2 = loopBy 2 $ mel [chG, chC]
+> let ch3 = loopBy 2 $ mel [chC, chG]
+
+> let ch12 = mel [ch1, ch2]
+> let ch33 = mel [ch3, ch3]
+
+> let ch = mel [ch12, ch33, ch12]
 ~~~
 
-The `del` is short for *delay*. It delays all events by the
-given amount of time.
+We can play the tune with chords. Let's play it twice:
 
+~~~
+> run $ str 0.25 $ loopBy 2 $ har [ch, ph]
+~~~ 
 
-The two other functions can group the lists of scores. 
-The first one, `mel` is short for *melody*. It sequence 
-one note after another. The second one `har` is short for 
-`harmony`. It plays several Scores together.
+Here it is! But what about clipping? Some signals are above the 1 in amplitude.
+We can easily solve this problem by scaling thae output signal. But here 
+we are going to take another approach. We are going to introduce another parameter
+for the instrument. The instrument was defined for frequencies. Now it's going
+to get in the amplitudes also:
 
-Let's arrange the list of letters one after another:
-
-~~~haskell
-> mel $ fmap temp "Hello"
+~~~
+> let oscInstr (amp, cps) = 
+  return $ mul (sig amp * linsegr [0, 0.03, 1, 0.2, 0] 0.1 0) $ osc $ sig cps
 ~~~
 
-We can use the function `render` to see the list of events in the score:
+We have to update the `run` function also:
 
-~~~haskell
-> mapM_ print $ render $ mel $ fmap temp "Hello"
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'H'}
-Event {eventStart = 1.0, eventDur = 1.0, eventContent = 'e'}
-Event {eventStart = 2.0, eventDur = 1.0, eventContent = 'l'}
-Event {eventStart = 3.0, eventDur = 1.0, eventContent = 'l'}
-Event {eventStart = 4.0, eventDur = 1.0, eventContent = 'o'}
+~~~
+> let run = dac . mix . sco oscInstr . fmap (\(a, b) -> (a, cpspch b))
 ~~~
 
-We can see that the start time was properly arranged.
-We can query the duration of the scores with the function `dur`:
+We transform not the whole argument with `cpspch` but 
+only the second value in the tuple. We have the scores of frequencies.
+Let's transform them in the scores of pairs! We assume that chords are 
+quieter than the melody:
 
-~~~haskell
-> dur $ mel $ fmap temp "Hello"
-5.0
+~~~
+> run $ str 0.25 $ loopBy 2 $ har [fmap (\x -> (0.4, x)) ch,  fmap (\x -> (0.6, x)) ph]
 ~~~
 
-Let's arrange the letters so that they are played in chord:
+Main classes for composition
+------------------------------------
 
-~~~haskell
-> dur $ har $ fmap temp "Hello"
-1.0
-> mapM_ print $ render $ har $ fmap temp "Hello"
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'H'}
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'e'}
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'l'}
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'l'}
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'o'}
+I have simplified a bit the types for functions.
+For example, If we try to query the type in the ghci:
+
+~~~
+> :t mel
+mel :: Compose a => [a] -> a
 ~~~
 
-We can see that every note starts at the same time and lasts
-the same amount of time. we can combine both results together:
+Or for `del`:
 
-~~~haskell
-> let e1 = mel $ fmap temp "Hello"
-> let e2 = har $ fmap temp "World"
-> dur $ mel [e1, str 4 e2]
-9.0
+~~~
+> :t del
+del :: Delay a => DurOf a -> a -> a
 ~~~
 
-Nice thing is that score is a Functor:
+The main functions belong to the type class. They are not
+defined for `Sco` lone. There is an implementation for `del`,
+`mel`, `har`, `rest`, etc. But later we are going to meet some other
+types which we can compose with the same functions. We are going
+to compose with samples (pieces of audio) and signal segments 
+(signals that are limited with event streams).
 
-~~~haskell
-> :m +Data.Char
-> mapM_ print $ render $ fmap toUpper $ mel [e1, str 4 e2]
-Event {eventStart = 0.0, eventDur = 1.0, eventContent = 'H'}
-Event {eventStart = 1.0, eventDur = 1.0, eventContent = 'E'}
-Event {eventStart = 2.0, eventDur = 1.0, eventContent = 'L'}
-Event {eventStart = 3.0, eventDur = 1.0, eventContent = 'L'}
-Event {eventStart = 4.0, eventDur = 1.0, eventContent = 'O'}
-Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'W'}
-Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'O'}
-Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'R'}
-Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'L'}
-Event {eventStart = 5.0, eventDur = 4.0, eventContent = 'D'}
+The only functions that was defined on `Sco` is `temp`:
+
+~~~
+:t temp
+temp :: Num t => a -> Track t a
 ~~~
 
-But enough with strings let's play something.
+We can see that is defined for `Track`s but the `Sco` is 
+a special case for `Track`:
 
-Let's create a scores:
-
-~~~haskell
-> let notes = fmap temp [1, 5/4, 3/2, 2]
-> let n1 = mel notes
-> let n2 = har notes
-> let ns = fmap (double . (440 * )) $ str 0.5 $ mel [n1, str 4 n2]
+~~~
+type Sco a = Track D a
 ~~~
 
-Let's invoke it with an instrument:
+### Compose
 
-~~~haskell
-> dac $ mul 0.15 $ mix $ sco (return . mul (fades 0.1 0.1) . osc . sig) ns 
+Let's review the main classes. We can `Compose` things:
+
+~~~
+:i Compose
+class Compose a where
+  mel :: [a] -> a
+  har :: [a] -> a
+  (+:+) :: a -> a -> a
+  (=:=) :: a -> a -> a
+    -- Defined in ‘Temporal.Class’
 ~~~
 
-The type `Score` is an instance of `CsdSco` so we can use it with 
-functions `sco` and `mix`. What's interesting we can combine the scores of
-signals:
+We can see our good friends `mel` and `har` alongside
+with corresponding binary equivalents `(+:+)` and `(=:=)`.
 
-~~~haskell
-> let q f = sco (return . mul (fades 0.1 0.1) . f . sig) ns
-> let q1 = q osc
-> let q2 = q saw
-> dac $ mul 0.1 $ mix $ mel [q1, q2]
+There is a function that is based on this class:
+
+~~~
+> :t loopBy
+loopBy :: Compose a => Int -> a -> a
 ~~~
 
-We can use the functions `str`, `mel`, `har` and other before mixing.
-Even if they contain the signals.
+It's defined as
 
-
-### Other useful functions
-
-Let's briefly study some other functions:
-
-Replicates the score N-times:
-
-~~~haskell
-loop :: Int -> Score a -> Score a
+~~~
+loopBy n a = mel $ replicate n a
 ~~~
 
-Takes only a portion of the notes. It creates aclip
-that contains only notes that lie within a given interval:
+### Delay
 
-~~~haskell
-slice :: Double -> Double -> Score a -> Score a
+We can delay things:
+
+~~~
+> :i Delay
+class Delay a where
+  del :: DurOf a -> a -> a
+    -- Defined in ‘Temporal.Class’
 ~~~
 
-Filters the events:
+The `DurOf` is a type family. If you don't know what type family
+is here is the description. Type family is a function defined
+on types. It means that for any type that is instance of `DurOf`
+there is a corresponding type that signifies it's duration.
 
-~~~haskell
-filterEvents :: (Event Dur a -> Bool) -> Score a -> Score a
+The duration for `Sco` is a constant number `D`.
+
+So the function for delaying is:
+
+~~~
+del :: Delay a => DurOf a -> a -> a
 ~~~
 
-The package `temporal-music-notation` is not only for arrangement of Scores.
-It defines the types for `Volume`, `Pitch` and `Note`. there are plenty of functions
-to make the creation of scores easy. The detailed study goes beyond the scope
-of this article but interested user can study the docs for the package.
+### Stretch
 
-Composability of the sound signals
-------------------------------------------
+We can stretch things:
 
-What's interesting is that we can use all of the sound producing
-techniques together. The sound that is created with an instrument
-and event stream is just a signal. We can use it in our midi-device
-or in another instrument and then we can trigger it with scores. 
-The possibilities are infinite.
-
-Let's create a pulse of pure sines:
-
-~~~haskell
-> let instr x = mul 0.5 $ 
-	sched (return . mlp 1500 0.6 . mul (fades 0.05 0.05) . osc . sig) $ 
-	withDur 0.2 $ devt x $  metroE 2
+~~~
+> :i Stretch
+class Stretch a where
+  str :: DurOf a -> a -> a
 ~~~
 
-The result of the function `instr` is just a signal we can use
-it like any other signal. We can trigger the instrument with a midi device:
+### Rest
 
-~~~haskell
-> vdac $ mul 0.5 $ midi $ onMsg instr
+We can create pauses:
+
+~~~
+> :i Rest
+class Compose a => Rest a where
+  rest :: DurOf a -> a
+    -- Defined in ‘Temporal.Class’  
 ~~~
 
-We can process it somehow:
+### Loops
 
-~~~haskell
-> vdac $ mul 0.5 $ midi $ onMsg (mul (utri 0.5 * fades 0.1 1.5) . instr)
+We can create an infinite loop:
+
+~~~
+class Loop a where
+  loop :: a -> a
+    -- Defined in ‘Temporal.Class’
 ~~~
 
-We can make our instrument little bit more interesting. We are going to 
-play pure major chords:
+### Limit
 
-~~~haskell
-> let instr x = mul 0.25 $ 
-		sched (return . mlp 1500 0.6 . mul (fades 0.05 0.05) . osc . sig) $ 
-		withDur 0.2 $ fmap (* x) $ cycleE [1, 5/4, 3/2, 2] $  metroE 8
+We can limit the length:
+
+~~~
+:i Limit
+class Limit a where
+  lim :: DurOf a -> a -> a
 ~~~
 
-The midi instrument is the same:
-
-~~~haskell
-> vdac $ mul 0.5 $ midi $ onMsg (mul (utri 0.5 * fades 0.1 1.5) . instr)
-~~~
- 
-Instrument adapters
------------------------------------------
-
-Instruments can return a tuple of signals or a single signal or
-a tuple of signals wrapped in the type `SE`. There are many different
-variants of the output. But often we want to process the output as 
-a single signal. The output is always a container of signals.
-To simplify this task there is a class `SigSpace`:
-
-~~~haskell
-class SigSpace a where
-    mapSig  :: (Sig -> Sig) -> a -> a
-    bindSig :: (Sig -> SE Sig) -> a -> SE a
-~~~
-
-With method from this class we can easily apply the effects to the
-different types of the output. There is a very often used special case:
-
-~~~haskell
-mul :: SigSpace a => Sig -> a -> a
-mul k = mapSig ( * k)
-~~~
-
-It scales the output.
-
-Sometimes our instruments are pure functions. But all functions
-that invoke instruments require them to return a result that is wrapped
-in the type `SE`. Often we can lift the instrument on the fly
-with methods from the special classes:
-
-~~~haskell
-class Outs a where
-    type SigOuts a :: *
-    toOuts :: a -> SE (SigOuts a)
-    
-onArg :: Outs b => (a -> b) -> (a -> SE (SigOuts b))   
-
-class CpsInstr a where
-    type CpsInstrOut a :: *
-    onCps :: a -> (D, D) -> SE (CpsInstrOut a)
-
-class AmpInstr a where
-    type AmpInstrOut a :: *
-    onamp :: a -> D -> SE (AmpInstrOut a)
-~~~
-
-The method `onArg` unifies the pure and non-pure instruments.
-We can use it like this:
-
-~~~haskell
-> let notes = temp (440 :: D)
-> let instr cps = osc $ sig cps
-> dac $ mix $ sco (onArg instr) notes
-~~~
-
-So we don't need to wrap the output in the type `SE` with the method `return`.
-
-The method `onCps` defines an instrument that takes amplitude
-and frequency as input. For example, we can convert to this type of instrument
-a waveform:
-
-~~~haskell
-> let notes = temp (0.5 :: D, 440 :: D)
-> dac $ mix $ sco (onCps osc) notes
-~~~
-
-The method `onAmp` defines an instrument that takes only amplitude.
-They are drum sounds or noises. It can construct instruments from constants
-by scaling the sound with the input amplitude.
-
-~~~haskell
-> let notes = str 0.25 $ loop 4 $ mel [temp (0.5::D), rest 1]
-> let instr = noise 1 0
-> dac $ mix $ sco (onAmp instr) notes
-~~~
-
-The sound processing procedures
------------------------------------------
-
-Sometimes we don't want to hear anything or play anything. 
-We just want the Csound to do something useful. We can use it
-as a sound processor. We can read the sound from the file transform it
-and save it to the file. 
-
-It's an easy thing to do. Since the `RenderCsd` contains the instance
-
-~~~haskell
-RenderCsd (SE ())
-~~~
-
-We can just use the function
-
-~~~haskell
-csd :: RenderCsd a => a -> IO ()
-~~~
-
-To invoke the Csound on the rendered file. 
-Also we can render the procedure to the Csound file and
-use the Csound to invoke it. That's how we can skip the rendering step. 
-
-Let's process a sound file. We can create a sound file that contains a pure tone:
-
-~~~haskell
-> let len = 2
-> csd $ writeWav1 "osc220.wav" $ setDur len $ mul (linseg [0, 1, 1, 1, 0]) $ osc 220
-~~~
-
-We write the files to the disk with function:
-
-~~~haskell
-writeWav1 :: String -> Sig -> SE ()
-writeWav1 fileName asig
-~~~
-
-It writes mono signals to wav-files. There is a function for stereo signals:
-
-~~~haskell
-writeWav :: String -> (Sig, Sig) -> SE ()
-writeWav fileName sigs
-~~~
-
-Note how fast it was. We don't need to wait for the signal to be heard.
-We can produce a twenty minutes in just half a minute. It can be useful
-for generated ambient music. 
-
-Let's process this file and write the output to another file. 
-We are going to transpose this file. We are going to make it an octave higher:
-
-~~~haskell
-> csd $ writeWav "osc440.wav" $ setDur (lengthSnd "osc220.wav") $ mapSig (scaleSpec 2) $ readSnd "osc220.wav"
-~~~
-
-We used the function `lengthSnd` to calculate the length of the first file in seconds.
-
-There is a more generic function to write signals to files:
-
-~~~haskell
-writeSigs :: FormatType -> SampleFormat -> String -> [Sig] -> SE ()
-writeSigs formatType sdampleFormat fileName sigs = ...
-~~~
-
-It writes several signals to the disk. We can specify the format type. Only four formats are allowed:
-`Wav`, `Aiff`, `Raw` and `Ircam`. Also we can specify s sample format. You can study all sample formats
-in the docs (see the module `Csound.Air` at the section *Writing sound files*).
+This function is not defined for `Sco`.
 
 ----------------------------------------------------
 
-* <= [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SamplesTutorial.md)
+* <= [User interaction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/UserInteractionTutorial.md)
 
-* => [Signal segments](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SignalSegmentsTutorial.md)
+* => [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
