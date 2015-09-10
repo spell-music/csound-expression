@@ -24,10 +24,11 @@ module Csound.Air.Patch(
 	harmonPatch, deepPad,
 
 	-- * Misc
-	patchWhen
+	patchWhen, mixInstr
 ) where
 
 import Control.Monad
+import Control.Applicative
 
 import Csound.Typed
 import Csound.SigSpace
@@ -158,6 +159,9 @@ patchWhen cond p = p
 	, patchFx    = fmap (mapFun $ playWhen cond) (patchFx p) }
 	where mapFun f x = x { fxFun = f $ fxFun x }
 
+
+mixInstr :: (SigSpace a, Num a) => Sig -> Patch a -> Patch a -> Patch a
+mixInstr k f p = p { patchInstr = \x -> liftA2 (+) (patchInstr p x) (fmap (mul k) (patchInstr f x)) }
 
 ------------------------------------------------
 -- pads
