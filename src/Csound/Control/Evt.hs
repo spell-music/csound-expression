@@ -23,7 +23,9 @@ module Csound.Control.Evt(
     every, masked        
 ) where
 
+#if MIN_VERSION_base(4,8,0)
 import Prelude hiding ((<*))
+#endif
 
 import Data.Monoid
 import Data.Default

@@ -39,7 +39,9 @@
     takeSnd, delaySnd, afterSnd, lineSnd, loopLineSnd, segmentSnd, repeatSnd, toMono
 ) where
 
+#if MIN_VERSION_base(4,8,0)
 import Prelude hiding ((<*))
+#endif
 
 import Data.List(isSuffixOf)
 import Data.Default

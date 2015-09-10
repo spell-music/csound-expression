@@ -34,7 +34,9 @@ module Csound.Air.Fx(
 
 ) where
 
+#if MIN_VERSION_base(4,8,0)
 import Prelude hiding ((<*))
+#endif
 
 import Data.Boolean
 

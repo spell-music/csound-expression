@@ -35,8 +35,9 @@ module Csound.Air.Misc(
 
 ) where
 
+#if MIN_VERSION_base(4,8,0)
 import Prelude hiding ((<*))
-
+#endif
 import Control.Monad
 import Data.Boolean
 import Data.Default

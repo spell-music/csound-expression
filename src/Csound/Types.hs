@@ -76,7 +76,9 @@ module Csound.Types(
     Sigs
 ) where
 
+#if MIN_VERSION_base(4,8,0)
 import Prelude hiding ((<*))
+#endif
 
 import Data.Boolean
 import Csound.Typed.Types
