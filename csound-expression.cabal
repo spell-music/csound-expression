@@ -47,12 +47,9 @@ Extra-Source-Files :
     examples/Events.hs
     examples/DubBass.hs
 
-    examples/Gui/Button.hs      
-    examples/Gui/Envelope.hs  
-    examples/Gui/Harmonics.hs  
-    examples/Gui/Osc.hs
-    examples/Gui/EnvelopeAndHarmonics.hs  
-    examples/Gui/Filter.hs    
+    examples/Gui/Button.hs          
+    examples/Gui/Harmonics.hs      
+    examples/Gui/EnvelopeAndHarmonics.hs      
     examples/Gui/Key.hs        
     examples/Gui/Waves.hs
 
