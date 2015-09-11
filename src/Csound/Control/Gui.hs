@@ -82,8 +82,11 @@ module Csound.Control.Gui (
     hlift2', vlift2', hlift3', vlift3', hlift4', vlift4', hlift5', vlift5',
 
     -- * Monadic binds
-    hbind, vbind, happly, vapply
+    hbind, vbind, happly, vapply, hmapM, vmapM,
+    hbind', vbind', happly', vapply', hmapM', vmapM'
 ) where
+
+import Control.Monad
 
 import Csound.Typed
 
@@ -285,8 +288,46 @@ happly = flip $ genBind (\a b -> hor [b, a])
 vapply :: (a -> Source b) -> Source a -> Source b
 vapply = flip $ genBind (\a b -> ver [b, a])
 
+-- | Monadic bind with horizontal concatenation of visuals.
+-- It expects scaling factors for visuals as first two arguments.
+hbind' :: Double -> Double -> Source a -> (a -> Source b) -> Source b
+hbind' ka kb = genBind (\a b -> hor [sca ka a, sca kb b])
+
+-- | Monadic bind with vertical concatenation of visuals.
+-- It expects scaling factors for visuals as first two arguments.
+vbind' :: Double -> Double -> Source a -> (a -> Source b) -> Source b
+vbind' ka kb = genBind (\a b -> ver [sca ka a, sca kb b])
+
+-- | Monadic apply with horizontal concatenation of visuals.
+-- It expects scaling factors for visuals as first two arguments.
+happly' :: Double -> Double -> (a -> Source b) -> Source a -> Source b
+happly' ka kb = flip $ genBind (\a b -> hor [sca kb b, sca ka a])
+
+-- | Monadic apply with vertical concatenation of visuals.
+-- It expects scaling factors for visuals as first two arguments.
+vapply' :: Double -> Double -> (a -> Source b) -> Source a -> Source b
+vapply' ka kb = flip $ genBind (\a b -> ver [sca kb b, sca ka a])
+
+
 genBind :: (Gui -> Gui -> Gui) -> Source a -> (a -> Source b) -> Source b
 genBind gui ma mf = source $ do
     (ga, a) <- ma
     (gb, b) <- mf a
     return (gui ga gb, b)
+
+hmapM :: (a -> Source b) -> [a] -> Source [b]
+hmapM = genMapM hor
+
+vmapM :: (a -> Source b) -> [a] -> Source [b]
+vmapM = genMapM ver
+
+hmapM' :: [Double] -> (a -> Source b) -> [a] -> Source [b]
+hmapM' ks = genMapM (\xs -> hor $ zipWith sca ks xs)
+
+vmapM' :: [Double] -> (a -> Source b) -> [a] -> Source [b]
+vmapM' ks = genMapM (\xs -> ver $ zipWith sca ks xs)
+
+genMapM :: ([Gui] -> Gui) -> (a -> Source b) -> [a] -> Source [b]
+genMapM gui f xs = source $ do
+    (gs, vs) <- fmap unzip $ mapM f xs
+    return (gui gs, vs) 
