@@ -74,20 +74,111 @@ to make a midi-instrument. We can play a single held note:
 
 We can play the patch with event stream:
 
-~~~
+~~~haskell
 > let notes = cycleE [(1, 220), (0.5, 220 * 5/ 4), (0.25, 330), (0.5, 440)]
 > dac $ atSched p (withDur 0.15 $ notes $ metro 6)
 ~~~
 
 We can also play Scores with patch:
 
-~~~
+~~~haskell
 > let ns = fmap temp [(0.5, 220), (0.75, 330), (1, 440)]
 > let notes = str 0.25 $ mel [mel ns, har ns, rest 4]
 > dac $ mul 0.75 $ mix $ atSco p notes
 ~~~
 
-We can change the amount of dry/wet effect
+We can change the amount of dry/wet apllied to the signal.
 
+~~~haskell
+atMix   :: Sig   -> Patch a -> Patch a
+atMixes :: [Sig] -> Patch a -> Patch a
+~~~
 
------------------------------------
+The `atMix` changes the ratio only for the last effect.
+With `atMixes` we can tune all ratios.
+Also there is a function to play unprocessed dry signal:
+
+~~~haskell
+dryPatch :: Patch a -> Patch a
+~~~
+
+We can add effects to the given patch. We can insert the effect
+in the beginning and to the end of the chain:
+
+~~~haskell
+addPreFx, addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
+~~~
+
+Let's add a delay effect to
+the defined patch:
+
+~~~haskell
+vdac $ atMidi $ addPreFx 1 (at $ echo 0.35 0.65) p
+~~~
+
+There are some usefull functions for Pads:
+
+~~~haskell
+deepPad :: (Sigs a, SigSpace a) => Patch a -> Patch a
+~~~
+
+It adds some weight to the timbre. It's defined with more generic function:
+
+~~~haskell
+harmonPatch :: (Sigs a, SigSpace a) => [Sig] -> [D] -> Patch a -> Patch a
+harmonPatch amplitudes harmonics patch
+~~~
+
+It plays a given patch as harmonic series.
+
+But let's study some predefined patches. We should install the `csound-catalog` package.
+Then we need to import the module `Csound.Patch` and try some goodies (you can use `dac`
+instead of `vdac` if you have a real midi device):
+
+~~~
+>:m +Csound.Patch
+> vdac $ atMidi vibraphone1
+
+> vdac $ atMidi dreamPad
+
+> vdac $ atMidi $ deepPad razorPad
+
+> vdac $ atMidi epianoBright 
+
+> vdac $ atMidi xylophone
+
+> vdac $ atMidi scrapeDahina 
+
+> vdac $ atMidi noiz
+
+> vdac $ atMidi mildWind
+
+> vdac $ atMidi toneWheelOrgan
+
+> vdac $ atMidi $ addPreFx 1 (at $ echo 0.35 0.65) banyan
+
+> vdac $ atMidi caveOvertonePad
+
+> vdac $ atMidi flute
+
+> vdac $ atMidi hulusiVibrato
+
+> vdac $ atMidi shortBassClarinet
+
+> vdac $ atMidi $ withDeepBass 0.75 pwBass
+
+> vdac $ atMidi pwEnsemble
+
+> vdac $ atMidi albertClockBellBelfast 
+~~~
+
+There are 200+ of other instruments to try out! You can find the complete list
+in the module `Csound.Patch`.
+
+-------------------------------------------
+
+* <= [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
+
+* => [Sound fonts](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SoundFontsTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
