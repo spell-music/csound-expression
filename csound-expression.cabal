@@ -1,12 +1,12 @@
 Name:          csound-expression
-Version:       4.8.2
+Version:       4.8.3
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
 Synopsis:      library to make electronic music
 Stability:     Experimental
-Tested-With:   GHC==7.6
+Tested-With:   GHC==7.10
 Build-Type:    Simple
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
@@ -68,7 +68,7 @@ Library
   Ghc-Options:    -Wall
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0, colour >= 2.0, transformers >= 0.3,
-        csound-expression-typed >= 0.0.7.7, csound-expression-dynamic >= 0.1.4.3, temporal-media >= 0.6.0,
+        csound-expression-typed >= 0.0.7.8, csound-expression-dynamic >= 0.1.4.3, temporal-media >= 0.6.1,
         csound-expression-opcodes >= 0.0.3
   Hs-Source-Dirs:      src/
   Exposed-Modules:
