@@ -48,8 +48,6 @@ Let's look at how we can create computer music with Haskell.
 
 Appendix:
 
-* [Quickstart guide](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/appendix/QuickStart.markdown)
-
 * [Introduction to Csound for Haskellers](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/appendix/CsoundInstro.markdown)
 
 * [Overview of the library](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/appendix/Overview.markdown)
