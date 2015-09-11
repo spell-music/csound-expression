@@ -79,7 +79,10 @@ module Csound.Control.Gui (
     -- ** Lifters with visual scaling
     hlifts', vlifts',
 
-    hlift2', vlift2', hlift3', vlift3', hlift4', vlift4', hlift5', vlift5'
+    hlift2', vlift2', hlift3', vlift3', hlift4', vlift4', hlift5', vlift5',
+
+    -- * Monadic binds
+    hbind, vbind, happly, vapply
 ) where
 
 import Csound.Typed
@@ -266,3 +269,24 @@ hlift5' a b c d e = lift5' a b c d e (\a b c d e -> hor [a, b, c, d, e])
 vlift5' :: Double -> Double -> Double -> Double -> Double -> (a1 -> a2 -> a3 -> a4 -> a5 -> b) -> Source a1 -> Source a2 -> Source a3 -> Source a4 -> Source a5 -> Source b
 vlift5' a b c d e = lift5' a b c d e (\a b c d e -> ver [a, b, c, d, e])
 
+-- | Monadic bind with horizontal concatenation of visuals.
+hbind :: Source a -> (a -> Source b) -> Source b
+hbind = genBind (\a b -> hor [a, b])
+
+-- | Monadic bind with vertical concatenation of visuals.
+vbind :: Source a -> (a -> Source b) -> Source b
+vbind = genBind (\a b -> ver [a, b])
+
+-- | Monadic apply with horizontal concatenation of visuals.
+happly :: (a -> Source b) -> Source a -> Source b
+happly = flip $ genBind (\a b -> hor [b, a])
+
+-- | Monadic apply with vertical concatenation of visuals.
+vapply :: (a -> Source b) -> Source a -> Source b
+vapply = flip $ genBind (\a b -> ver [b, a])
+
+genBind :: (Gui -> Gui -> Gui) -> Source a -> (a -> Source b) -> Source b
+genBind gui ma mf = source $ do
+    (ga, a) <- ma
+    (gb, b) <- mf a
+    return (gui ga gb, b)
