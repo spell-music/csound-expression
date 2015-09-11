@@ -9,7 +9,7 @@ Welcome to the simplest textual synthesizer.
 
 Csound-expression is a Haskell framework for computer music.
 With the help of the library we can create our instruments on the fly. 
-A few lines in the interpreter is enough to get the cool sound going
+A couple of lines in the interpreter is enough to get the cool sound going
 out of your speakers. It can be used for simple daily sound-file processing 
 or for a full-blown live performances. It's available on [Hackage](http://hackage.haskell.org/package/csound-expression).
 
