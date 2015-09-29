@@ -700,6 +700,6 @@ Let's rave along.
 
 * <= [Scores](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ScoresTutorial.md)
 
-* => [Sound fonts](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SoundFontsTutorial.md)
+* => [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Patches.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

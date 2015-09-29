@@ -31,13 +31,17 @@ module Csound.Air.Misc(
     ticks4, nticks4,
 
     -- * Drone
-    testDrone, testDrone2, testDrone3, testDrone4
+    testDrone, testDrone2, testDrone3, testDrone4,
+
+    hrtf
 
 ) where
 
 import Control.Monad
 import Data.Boolean
 import Data.Default
+
+import Csound.Dynamic hiding (int)
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (metro)
@@ -513,3 +517,14 @@ rever2 fbk (a1, a2) = (a1 + wa1, a2 + wa2)
     where (wa1, wa2) = reverbsc a1 a2 fbk 12000
 
 type Feedback = Sig
+
+----------------------------------------------------------
+
+hrtf :: (Sig, Sig) -> Sig -> (Sig,Sig)
+hrtf (a, b) asig = hrtfmove' asig a b
+
+hrtfmove' ::  Sig -> Sig -> Sig -> (Sig,Sig)
+hrtfmove' b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> (unStr $ text "hrtf-44100-left.dat") <*> (unStr $ text "hrtf-44100-right.dat")
+    where f a1 a2 a3 a4 a5 = mopcs "hrtfmove" ([Ar,Ar],[Ar,Kr,Kr,Sr,Sr,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+
+-- "hrtf-44100-left.dat","hrtf-44100-right.dat"
