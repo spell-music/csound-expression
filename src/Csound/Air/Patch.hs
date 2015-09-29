@@ -131,7 +131,7 @@ atSchedUntil p evt stop = getPatchFx p $ schedUntil (patchInstr p) evt stop
 --------------------------------------------------------------
 -- sco
  
- -- | Plays a patch with scores. Supplies a custom value for mixing effects (dry/wet).
+-- | Plays a patch with scores. Supplies a custom value for mixing effects (dry/wet).
 -- The 0 is a dry signal, the 1 is a wet signal.
 atSco :: (SigSpace a, Sigs a) => Patch a -> Sco CsdNote -> Sco (Mix a)
 atSco p sc = eff (getPatchFx p) $ sco (patchInstr p) sc	
