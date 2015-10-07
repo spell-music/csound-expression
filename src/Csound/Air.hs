@@ -36,6 +36,9 @@ module Csound.Air (
     -- | Triggering sound samples with events, keyboard and midi.
     module Csound.Air.Sampler,
 
+    -- | Advanced panning functions
+    module Csound.Air.Pan,
+
     -- | Other usefull stuff.
     module Csound.Air.Misc
 ) where
@@ -52,5 +55,6 @@ import Csound.Air.Looper
 import Csound.Air.Patch
 import Csound.Air.Seg
 import Csound.Air.Sampler
+import Csound.Air.Pan
 import Csound.Air.Misc
 
