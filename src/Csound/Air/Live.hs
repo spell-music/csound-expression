@@ -412,13 +412,13 @@ routeInstr instrs instrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> 
 ----------------------------------------------------
 -- effect choosers
 
-hpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch a)] -> Int -> Source a 
+hpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a 
 hpatchChooser = genPatchChooser hradioSig
 
-vpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch a)] -> Int -> Source a 
+vpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a 
 vpatchChooser = genPatchChooser vradioSig
 
-genPatchChooser :: (SigSpace a, Sigs a) => ([String] -> Int -> Source Sig) -> [(String, Patch a)] -> Int -> Source a
+genPatchChooser :: (SigSpace a, Sigs a) => ([String] -> Int -> Source Sig) -> [(String, Patch D a)] -> Int -> Source a
 genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
     where 
         (names, patches) = unzip xs                
