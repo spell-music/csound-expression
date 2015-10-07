@@ -16,7 +16,7 @@ module Csound.Air.Patch(
 	atSco,
 
 	-- * Single note
-	atNote, atCps,
+	atNote,
 
 	-- * Fx
 	addInstrFx, addPreFx, addPostFx,
@@ -115,9 +115,6 @@ instance SigSpace a => SigSpace (Patch b a) where
 -- | Plays a patch at the given note.
 atNote :: (SigSpace b, Sigs b) => Patch a b -> CsdNote a -> SE b
 atNote p note = getPatchFx p =<< patchInstr p note
-
-atCps :: (SigSpace b, Sigs b) => Patch Sig b -> Sig -> SE b
-atCps p cps = atNote p (0.5, cps)
 
 --------------------------------------------------------------
 -- midi
