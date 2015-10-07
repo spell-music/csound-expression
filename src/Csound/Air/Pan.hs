@@ -36,7 +36,7 @@ headPanNet (m, n) sigs = sum $ zipWith staticHeadPan [(double a, double b) | a <
   
 -- | The same as headPanNet but for stereo signals.
 headPanNet2 :: (Int, Int) -> [Sig2] -> Sig2
-headPanNet2 (m, n) sigs = headPan (m, n) (fmap toMono sigs)
+headPanNet2 (m, n) sigs = headPanNet (m, n) (fmap toMono sigs)
 
 
 
