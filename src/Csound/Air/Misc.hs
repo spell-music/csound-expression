@@ -21,6 +21,9 @@ module Csound.Air.Misc(
     -- * Effects
     delaySig,
 
+    -- * Wave shaper
+    wshaper, genSaturator, saturator, mildSaturator, hardSaturator, hardSaturator2,
+
     -- * Function composition
     funSeq, funPar,
 
@@ -514,4 +517,52 @@ rever2 fbk (a1, a2) = (a1 + wa1, a2 + wa2)
     where (wa1, wa2) = reverbsc a1 a2 fbk 12000
 
 type Feedback = Sig
+
+------------------------------------------------------
+-- wave shaper
+
+-- | Wave shaper. The signal should be bepolar. It ranges within the interval [-1, 1].
+--
+-- > wshaper table amount asig
+--
+-- wave shaper transforms the input signal with the table. 
+-- The amount of transformation scales the signal from 0 to 10. 
+-- the amount is ratio of scaling. It expects the values from the interval [0, 1].
+-- 
+wshaper :: Tab -> Sig -> Sig -> Sig
+wshaper t amt asig = tablei (0.5 + amt * asig / 20) t `withD` 1 
+
+-- | Wave shaper with sigmoid.
+-- 
+-- > genSaturator sigmoidRadius amount asig
+--
+-- * sigmoid radius is 5 to 100.
+--
+-- * amount is [0, 1]
+genSaturator :: Double -> Sig -> Sig -> Sig
+genSaturator rad amt = wshaper (tanhSigmoid rad) amt
+
+-- | Alias for
+--
+-- > genSaturator 5
+mildSaturator :: Sig -> Sig -> Sig
+mildSaturator = genSaturator 10
+
+-- | Alias for
+--
+-- > genSaturator 10
+saturator :: Sig -> Sig -> Sig
+saturator = genSaturator 15
+
+-- | Alias for
+--
+-- > genSaturator 50
+hardSaturator :: Sig -> Sig -> Sig
+hardSaturator = genSaturator 35
+
+-- | Alias for
+--
+-- > genSaturator 100
+hardSaturator2 :: Sig -> Sig -> Sig
+hardSaturator2 = genSaturator 65
 

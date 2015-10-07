@@ -28,7 +28,7 @@ module Csound.Tab (
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
     sines, sines3, sines2, sines1, sines4, buzzes,
     -- ** Special cases
-    sine, cosine, sigmoid,
+    sine, cosine, sigmoid, tanhSigmoid,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -404,6 +404,10 @@ cosine = buzzes 1 []
 -- | Table for sigmoid wave.
 sigmoid :: Tab
 sigmoid = sines4 [(0.5, 0.5, 270, 0.5)]
+
+-- | Creates tanh sigmoid. The argument is the radius of teh sigmoid.
+tanhSigmoid :: Double -> Tab
+tanhSigmoid x = esplines (fmap tanh [-x, (-x +0.5) .. x]) 
 
 -- | Generates values similar to the opcode 'Csound.Opcode.Basic.buzz'. 
 --
