@@ -35,12 +35,15 @@ module Csound.Air.Wave (
     multiHz, multiCent, multiRnd, multiGauss, multiRndSE, multiGaussSE,
 
     -- * Random splines
-    urspline, birspline
+    urspline, birspline,
+
+    -- * Buzzes
+    buz, gbuz, buz', gbuz'    
 ) where
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
-import Csound.Tab(sine, sines4)
+import Csound.Tab(sine, cosine, sines4)
 import Csound.SigSpace
 
 -- | A pure tone (sine wave).
@@ -312,3 +315,26 @@ genMultiRndSE gen n amount f cps = fmap mean $ mapM (const go) $ replicate n ()
 -- | Mean value.
 mean :: Fractional a => [a] -> a
 mean xs = sum xs / (fromIntegral $ length xs)
+
+---------------------------------------------
+-- buzzes
+
+-- |  Output is a set of harmonically related sine partials.
+--
+-- > buz numOfHarmonics frequency
+buz :: Sig -> Sig -> Sig
+buz kh x = buzz 1 x kh sine
+
+-- | Buz with phase
+buz' :: D -> Sig -> Sig -> Sig
+buz' phs kh x = buz kh x `withD` phs
+
+-- |  Output is a set of harmonically related cosine partials.
+--
+-- > gbuz (minHarm, maxHarm) ratio frequency
+gbuz :: (Sig, Sig) -> Sig -> Sig -> Sig
+gbuz (hmin, hmax) hratio x = gbuzz 1 x hmax hmin hratio cosine
+
+-- | Gbuz with phase
+gbuz' :: D -> (Sig, Sig) -> Sig -> Sig -> Sig
+gbuz' phs hs hratio x = gbuz hs hratio x `withD` phs
