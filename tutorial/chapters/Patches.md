@@ -8,8 +8,8 @@ The main type for the instrument is a `Patch`. The patch is an instrument functi
 to be played and the chain of effects:
 
 ~~~haskell
-type CsdNote = (D, D)
-type Instr a = CsdNote -> SE a
+type CsdNote a = (a, a)
+type Instr a b = CsdNote a -> SE b 
 
 type Fx a = a  -> SE a
 type DryWetRatio = Sig
@@ -19,9 +19,9 @@ data FxSpec a = FxSpec
     , fxFun :: Fx a 
     }
 
-data Patch a = Patch
-    { patchInstr :: Instr a
-    , patchFx    :: [FxSpec a]
+data Patch a b = Patch
+    { patchInstr :: Instr a b
+    , patchFx    :: [FxSpec b]
     }
 ~~~
 
@@ -99,14 +99,14 @@ With `atMixes` we can tune all ratios.
 Also there is a function to play unprocessed dry signal:
 
 ~~~haskell
-dryPatch :: Patch a -> Patch a
+dryPatch :: Patch a b -> Patch a b
 ~~~
 
 We can add effects to the given patch. We can insert the effect
 in the beginning and to the end of the chain:
 
 ~~~haskell
-addPreFx, addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
+addPreFx, addPostFx :: DryWetRatio -> Fx b -> Patch a b -> Patch a b
 ~~~
 
 Let's add a delay effect to
@@ -119,13 +119,13 @@ vdac $ atMidi $ addPreFx 1 (at $ echo 0.35 0.65) p
 There are some usefull functions for Pads:
 
 ~~~haskell
-deepPad :: (Sigs a, SigSpace a) => Patch a -> Patch a
+deepPad :: (Fractional a, Sigs b, SigSpace b) => Patch a b -> Patch a b
 ~~~
 
 It adds some weight to the timbre. It's defined with more generic function:
 
 ~~~haskell
-harmonPatch :: (Sigs a, SigSpace a) => [Sig] -> [D] -> Patch a -> Patch a
+harmonPatch :: (Fractional a, Sigs b, SigSpace b) => [Sig] -> [a] -> Patch a b -> Patch a b
 harmonPatch amplitudes harmonics patch
 ~~~
 
