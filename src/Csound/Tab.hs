@@ -86,7 +86,10 @@ module Csound.Tab (
     , idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins,
 
     -- * Tabular opcodes
-    tablewa, sec2rel
+    tablewa, sec2rel,
+
+    -- * Tables of tables
+    TabList, tabList, fromTabList, fromTabListD
 ) where
 
 import Control.Applicative hiding ((<*))
