@@ -39,6 +39,9 @@ module Csound.Air (
     -- | Advanced panning functions
     module Csound.Air.Pan,
 
+    -- | FM synth
+    module Csound.Air.Fm,
+
     -- | Other usefull stuff.
     module Csound.Air.Misc
 ) where
@@ -56,5 +59,6 @@ import Csound.Air.Patch
 import Csound.Air.Seg
 import Csound.Air.Sampler
 import Csound.Air.Pan
+import Csound.Air.Fm
 import Csound.Air.Misc
 
