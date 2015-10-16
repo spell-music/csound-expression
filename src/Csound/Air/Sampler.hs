@@ -26,7 +26,8 @@ module Csound.Air.Sampler (
 
     -- | Keyboard char columns
     keyColumn1, keyColumn2, keyColumn3, keyColumn4, keyColumn5, 
-    keyColumn6, keyColumn7, keyColumn8, keyColumn9, keyColumn0
+    keyColumn6, keyColumn7, keyColumn8, keyColumn9, keyColumn0,
+    keyColumns
 
 ) where
 
@@ -357,3 +358,6 @@ keyColumn7 = ['7', 'u', 'j', 'm']
 keyColumn8 = ['8', 'i', 'k', ',']
 keyColumn9 = ['9', 'o', 'l', '.']
 keyColumn0 = ['0', 'p', ';', '/']
+
+keyColumns :: [[Char]]
+keyColumns = [keyColumn1, keyColumn2, keyColumn3, keyColumn4, keyColumn5, keyColumn6, keyColumn7, keyColumn8, keyColumn9, keyColumn0]
