@@ -1,6 +1,8 @@
 Csound-expression guide
 ===============================================================================
 
+[![Join the chat at https://gitter.im/anton-k/csound-expression](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/anton-k/csound-expression?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Welcome to the simplest textual synthesizer.
 
 ~~~{.haskell}
