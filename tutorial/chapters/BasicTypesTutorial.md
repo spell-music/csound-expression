@@ -210,10 +210,38 @@ ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
 ~~~
 
 Every function is an identity. It's here only to help the type inference.
-So we have a stereo wav-file, and we want to play it at normal speed:
+Find a *.wav file (your mileage may vary)
 
 ~~~{.haskell}
-> let sample = toMono $ ar2 $ diskin2 (text "fuzzy.wav") 1
+$ uname -a
+ Linux ... aptosid 4.1-1 (2015-06-22) x86_64 GNU/Linux
+$ sudo updatedb
+$ locate .wav
+...
+/usr/share/sounds/alsa/Noise.wav
+...
+$ file /usr/share/sounds/alsa/Noise.wav
+ /usr/share/sounds/alsa/Noise.wav: RIFF (little-endian) data, WAVE audio, Microsoft PCM, 16 bit, mono 48000 Hz
+~~~
+
+With a mono wav-file you can use:
+
+~~~{.haskell}
+> let sample = ar1 $ diskin2 (text "Noise.wav") 1
+~~~
+
+Find a stereo wav-file as above or however:
+
+~~~{.haskell}
+$ cp /usr/share/webkitgtk-1.0/resources/audio/Composite.wav .
+$ file Composite.wav
+ Composite.wav: RIFF (little-endian) data, WAVE audio, Microsoft PCM, 16 bit, stereo 44100 Hz
+~~~
+
+So we have a stereo wav-file, and we want to play it at normal speed.
+
+~~~{.haskell}
+> let sample = toMono $ ar2 $ diskin2 (text "Composite.wav") 1
 ~~~
 
 We don't care right now about the stereo so we have converted
@@ -238,7 +266,7 @@ the extension `OverloadedStrings` we don't need to call the function `text`.
 Ok, we are ready to play along with it:
 
 ~~~{.haskell}
-> let sample = toMono $ ar2 $ diskin2 (text "fuzzy.wav") 1
+> let sample = toMono $ ar2 $ diskin2 (text "Composite.wav") 1
 > let meOnKeys = midi $ onMsg osc
 > vdac $ mul 0.5 $ meOnKeys + return sample
 ~~~
@@ -267,7 +295,7 @@ Negative speed works only for `loopWav`.
 So we can read our friends record like this:
 
 ~~~{.haskell}
-let sample = loopSnd "fuzzy.wav"
+let sample = loopSnd "Composite.wav"
 ~~~
 
 If we want only a portion of the sound to be played we can use the
