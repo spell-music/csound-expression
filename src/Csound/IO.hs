@@ -46,7 +46,7 @@ import Data.Default
 import Csound.Typed
 import Csound.Control.Gui
 
-import Csound.Options(setSilent, setMa, setDac)
+import Csound.Options(setSilent, setDac)
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy 
@@ -225,7 +225,7 @@ dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
     runWithUserInterrupt $ "csound " ++ "tmp.csd" 
-    where opt = opt' <> (setMa <> setDac)
+    where opt = opt' <> setDac
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()
