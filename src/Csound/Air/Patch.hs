@@ -31,7 +31,10 @@ module Csound.Air.Patch(
 	withSmallRoom, withSmallRoom', 
 	withSmallHall, withSmallHall',
 	withLargeHall, withLargeHall',
-	withMagicCave, withMagicCave'
+	withMagicCave, withMagicCave',
+
+	-- * Sound font patches
+	sfPatch, sfPatchHall
 ) where
 
 import Control.Monad
@@ -41,6 +44,7 @@ import Csound.Typed
 import Csound.SigSpace
 import Csound.Control.Midi
 import Csound.Control.Instr
+import Csound.Control.Sf
 import Csound.Air.Fx
 
 -- | A simple csound note (good for playing with midi-keyboard).
@@ -239,4 +243,14 @@ withRever :: (Sig2 -> Sig2) -> DryWetRatio -> Patch2 -> Patch2
 withRever fx ratio p = addPostFx ratio (return . fx) p
 
 ------------------------------------------------
--- 
+-- sound font patch
+
+sfPatchHall :: Sf -> Patch2
+sfPatchHall sf = Patch 
+    { patchInstr = \(amp, cps) -> return $ sfCps sf 0.5 amp cps
+    , patchFx    = [(FxSpec 0.25 (return . smallHall2))] }
+
+sfPatch :: Sf -> Patch2
+sfPatch sf = Patch 
+    { patchInstr = \(amp, cps) -> return $ sfCps sf 0.5 amp cps
+    , patchFx    = [] }
