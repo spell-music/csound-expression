@@ -6,7 +6,7 @@ module Csound.Air.Patch(
 	getPatchFx, dryPatch, atMix, atMixes,
 
 	-- * Midi
-	atMidi, atMonoMidi, atHoldMidi,
+	atMidi, atMono, atMono', atMonoSharp, atHoldMidi,
 
 	-- * Events
 	atSched,
@@ -131,18 +131,25 @@ atNote p note = getPatchFx p =<< patchInstr p note
 atMidi :: (SigSpace a, Sigs a) => Patch D a -> SE a
 atMidi a = getPatchFx a =<< midi (patchInstr a . ampCps)	
 
+-- | Simplified monosynth patch
+atMono :: (SigSpace a, Sigs a) => Patch Sig a -> SE a
+atMono = atMono' ChnAll 0.01 0.1
+
+-- | Simplified monosynth patch (sharp attack and transitions)
+atMonoSharp :: (SigSpace a, Sigs a) => Patch Sig a -> SE a
+atMonoSharp = atMono' ChnAll 0.005 0.05
+
 -- | Monosynth patch. Plays the patch with function @monoMsg@
 --
 -- > atMonoMidi midiChn portamentotime releaseTime patch
-atMonoMidi :: (SigSpace a, Sigs a) => MidiChn -> D -> D -> Patch Sig a -> SE a
-atMonoMidi chn port rel a = getPatchFx a =<< patchInstr a =<< monoMsg chn port rel
+atMono' :: (SigSpace a, Sigs a) => MidiChn -> D -> D -> Patch Sig a -> SE a
+atMono' chn port rel a = getPatchFx a =<< patchInstr a =<< monoMsg chn port rel
 
 -- | Monosynth patch. Plays the patch with function @holdMsg@
 --
 -- > atMonoMidi midiChn portamentotime patch
 atHoldMidi :: (SigSpace a, Sigs a) => MidiChn -> D -> Patch Sig a -> SE a
 atHoldMidi chn port a = getPatchFx a =<< patchInstr a =<< holdMsg chn port
-
 
 --------------------------------------------------------------
 -- sched
