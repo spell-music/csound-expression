@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       4.8.4
+Version:       4.9.0
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -65,7 +65,7 @@ Library
   Ghc-Options:    -Wall
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0, colour >= 2.0, transformers >= 0.3, containers,
-        csound-expression-typed >= 0.0.8, csound-expression-dynamic >= 0.1.5, temporal-media >= 0.6.1,
+        csound-expression-typed >= 0.0.9, csound-expression-dynamic >= 0.1.5, temporal-media >= 0.6.1,
         csound-expression-opcodes >= 0.0.3
   Hs-Source-Dirs:      src/
   Exposed-Modules:
