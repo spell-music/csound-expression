@@ -68,6 +68,46 @@ file and then load it in the ghci and invoke the function `main`
 News
 -----------------------------
 
+**The 4.9.0 is out! New features:**
+
+csound-expression
+
+* Functions for creation of FM-synthesizers. We can create
+the whole graph of FM-units (with feedback). Check out the module `Csound.Air.Fm`
+
+* Support for Monosynth patches. See atMono in the module `Csound.Air.Patch`
+
+* Easy to use Binaural panning. See the module `Csound.Air.Pan`
+
+* Construction of patches for sound fonts (`sfPatch`, `sfPatchHall`). 
+
+* Table of tables. We can create a table that contains tables.
+
+* Harmonic oscillators for subtractive synth: `buz` and `gbuz`
+
+* Reverbs for patches. It's very easy to add a reverb to your  patch
+ (`withSmallHall patch`, `withLargeHall patch`, etc)
+
+* Some bug-fixes
+
+csound-catalog
+
+* Many mono-synth were added. You can use them with function `atMono`
+  in place of `atMidi`. The mono versions of patches have suffix `m`.
+
+* SHARC instruments. SHARC db contains a FFT-samples for sustain notes. 
+   It includes many orchestra instruments. There are many new patches that
+   use natural sounding timbres taken from the SHARC library. 
+   Check out functions `soloSharc`, `padSharc`, `dreamSharc`.
+
+csound-sampler
+
+* Handy function `withBpm` allows to query current bpm with in the scope
+  of expression.
+
+* Sampler mappers were generalized.
+
+* Char trigering functions are synchronized with bpm.
 
 **The 4.8.3 is out! New features:**
 
