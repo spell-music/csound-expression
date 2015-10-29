@@ -25,7 +25,13 @@ module Csound.Air.Patch(
 	harmonPatch, deepPad,
 
 	-- * Misc
-	patchWhen, mixInstr
+	patchWhen, mixInstr,
+
+	-- * Rever
+	withSmallRoom, withSmallRoom', 
+	withSmallHall, withSmallHall',
+	withLargeHall, withLargeHall',
+	withMagicCave, withMagicCave'
 ) where
 
 import Control.Monad
@@ -35,6 +41,7 @@ import Csound.Typed
 import Csound.SigSpace
 import Csound.Control.Midi
 import Csound.Control.Instr
+import Csound.Air.Fx
 
 -- | A simple csound note (good for playing with midi-keyboard).
 -- It's a pair of amplitude (0 to 1) and freuqncy (Hz).
@@ -193,3 +200,36 @@ harmonPatch amps freqs p = p {
 
 deepPad :: (Fractional a, SigSpace b, Sigs b) => Patch a b -> Patch a b
 deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]
+
+------------------------------------------------
+-- revers
+
+withSmallRoom :: Patch2 -> Patch2
+withSmallRoom = withSmallRoom' 0.25
+
+withSmallRoom' :: DryWetRatio -> Patch2 -> Patch2
+withSmallRoom' = withRever smallRoom2
+
+withSmallHall :: Patch2 -> Patch2
+withSmallHall = withSmallHall' 0.25
+
+withSmallHall' :: DryWetRatio -> Patch2 -> Patch2
+withSmallHall' = withRever smallHall2
+
+withLargeHall :: Patch2 -> Patch2
+withLargeHall = withLargeHall' 0.25
+
+withLargeHall' :: DryWetRatio -> Patch2 -> Patch2
+withLargeHall' = withRever largeHall2
+
+withMagicCave :: Patch2 -> Patch2
+withMagicCave = withMagicCave' 0.25
+
+withMagicCave' :: DryWetRatio -> Patch2 -> Patch2
+withMagicCave' = withRever magicCave2
+
+withRever :: (Sig2 -> Sig2) -> DryWetRatio -> Patch2 -> Patch2
+withRever fx ratio p = addPostFx ratio (return . fx) p
+
+------------------------------------------------
+-- 

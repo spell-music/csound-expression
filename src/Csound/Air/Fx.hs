@@ -43,7 +43,6 @@ import Csound.SigSpace
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
-import Csound.Air.Misc(mean)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -539,3 +538,9 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 
     aout <-readRef aoutRef
     return aout
+
+
+
+-- | Mean value.
+mean :: Fractional a => [a] -> a
+mean xs = sum xs / (fromIntegral $ length xs)
