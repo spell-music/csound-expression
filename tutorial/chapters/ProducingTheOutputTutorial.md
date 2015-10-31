@@ -47,7 +47,14 @@ Let's write a 10 seconds of concert A (440 Hz). We can use it
 for tuning:
 
 ~~~haskell
-> writeSnd "A.wav" $ setDur 10 $ osc 440
+$ ghci
+Prelude> :m Csound.Air.Wave Csound.Options Csound.IO
+Prelude Csound.Air.Wave Csound.Options Csound.IO> writeSnd "A.wav" $ setDur 10 $ osc 440
+Prelude Csound.Air.Wave Csound.Options Csound.IO> :q
+$ file A.wav 
+ A.wav: RIFF (little-endian) data, WAVE audio, Microsoft PCM, 16 bit, mono 44100 Hz
+$ aplay A.wav
+ Playing WAVE 'A.wav' : Signed 16 bit Little Endian, Rate 44100 Hz, Mono
 ~~~
 
 The audio is going to be rendered off-line. The good thing
