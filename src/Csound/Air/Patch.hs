@@ -1,3 +1,4 @@
+{-# Language ScopedTypeVariables #-}
 -- | Patches.
 module Csound.Air.Patch(
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
@@ -34,7 +35,10 @@ module Csound.Air.Patch(
 	withMagicCave, withMagicCave',
 
 	-- * Sound font patches
-	sfPatch, sfPatchHall
+	sfPatch, sfPatchHall,
+
+	-- * Csound API
+	patchByNameMidi
 ) where
 
 import Control.Monad
@@ -46,6 +50,7 @@ import Csound.Control.Midi
 import Csound.Control.Instr
 import Csound.Control.Sf
 import Csound.Air.Fx
+import Csound.Typed.Opcode(cpsmidinn)
 
 -- | A simple csound note (good for playing with midi-keyboard).
 -- It's a pair of amplitude (0 to 1) and freuqncy (Hz).
@@ -254,3 +259,13 @@ sfPatch :: Sf -> Patch2
 sfPatch sf = Patch 
     { patchInstr = \(amp, cps) -> return $ sfCps sf 0.5 amp cps
     , patchFx    = [] }
+
+------------------------------------------------
+-- Csound API
+
+-- | Wrapper for function @trigByNameMidi@.
+patchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch D a -> SE a
+patchByNameMidi name p = getPatchFx p =<< trigByNameMidi name go
+	where
+		go :: (D, D, Unit) -> SE a
+		go (pitch, vol, _) = patchInstr p (vol / 127, cpsmidinn pitch)

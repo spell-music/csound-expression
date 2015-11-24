@@ -86,6 +86,10 @@ module Csound.Control.Instr(
     schedBy, schedHarpBy,
     withDur,
 
+    -- * Api
+    trigByName, trigByName_,
+    trigByNameMidi, trigByNameMidi_,
+
     -- ** Misc
     alwaysOn, playWhen,
 
