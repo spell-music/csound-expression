@@ -5,11 +5,12 @@ module Csound.Control.Midi(
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
     -- * Mono-midi synth
-    monoMsg, holdMsg, 
+    monoMsg, holdMsg, trigNamedMono,
     -- * Midi event streams
     midiKeyOn, midiKeyOff,
     -- * Reading midi note parameters
-    cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,      
+    cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
+    ampmidinn,
 
     -- * Overload
     tryMidi, MidiInstr(..)
@@ -43,6 +44,13 @@ toMidiFun_ x = case x of
 
 ampCps :: Msg -> (D, D)
 ampCps msg = (ampmidi msg 1, cpsmidi msg)
+
+-- | Converts midi velocity number to amplitude. 
+-- The first argument is dynamic range in decibels.
+--
+-- > ampmidinn (volMinDb, volMaxDb) volumeKey = amplitude
+ampmidinn :: (D, D) -> D -> D
+ampmidinn (volMin, volMax) volKey = ampdbfs (volMin + ir (ampmidid volKey (volMax - volMin)))
 
 -----------------------------------------------------------------------
 -- Midi addons
@@ -98,6 +106,33 @@ genHoldAmpCpsSig midiFun = do
 		instr hNote msg = do
 			writeRef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)			
 
+trigNamedMono :: D -> D -> String -> SE (Sig, Sig)
+trigNamedMono portTime relTime name = namedMonoMsg portTime relTime name
+
+{-	do
+	(volKey, pitchKey, status) <- namedAmpCpsSig name
+	return (port volKey portTime * port status relTime,  port pitchKey portTime)
+-}
+-- namedMonoMsg portTime relTime name
+
+namedAmpCpsSig:: String -> SE (Sig, Sig, Sig)
+namedAmpCpsSig name = do
+	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))	
+	statusRef <- newGlobalRef (0 :: Sig)
+	status <- trigByNameMidi name (instr statusRef ref)
+	writeRef statusRef status 
+	let resStatus = ifB (downsamp status ==* 0) 0 1
+	(amp, cps) <- readRef ref
+	return (downsamp amp, downsamp cps, resStatus)
+	where 
+		instr :: Ref Sig -> Ref (Sig, Sig) -> (D, D, Unit) -> SE Sig
+		instr statusRef hNote (pitchKey, volKey, _) = do
+			curId <- readRef statusRef
+			myIdRef <- newRef (ir curId)
+			myId <- readRef myIdRef			
+			when1 (curId ==* (sig $ myId + 1)) $ do
+				writeRef hNote (sig volKey, sig pitchKey)
+			return 1
 
 --------------------------------------------------------------
 

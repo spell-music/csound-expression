@@ -38,7 +38,7 @@ module Csound.Air.Patch(
 	sfPatch, sfPatchHall,
 
 	-- * Csound API
-	patchByNameMidi
+	patchByNameMidi, monoPatchByNameMidi, monoSharpPatchByNameMidi, monoPatchByNameMidi'
 ) where
 
 import Control.Monad
@@ -50,7 +50,7 @@ import Csound.Control.Midi
 import Csound.Control.Instr
 import Csound.Control.Sf
 import Csound.Air.Fx
-import Csound.Typed.Opcode(cpsmidinn)
+import Csound.Typed.Opcode(cpsmidinn, ampdb)
 
 -- | A simple csound note (good for playing with midi-keyboard).
 -- It's a pair of amplitude (0 to 1) and freuqncy (Hz).
@@ -268,4 +268,23 @@ patchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch D a -> SE 
 patchByNameMidi name p = getPatchFx p =<< trigByNameMidi name go
 	where
 		go :: (D, D, Unit) -> SE a
-		go (pitch, vol, _) = patchInstr p (vol / 127, cpsmidinn pitch)
+		go (pitch, vol, _) = patchInstr p (vel2amp vol, cpsmidinn pitch)
+
+
+monoPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
+monoPatchByNameMidi name p = monoPatchByNameMidi' 0.01 0.1 name p
+
+monoSharpPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
+monoSharpPatchByNameMidi name p = monoPatchByNameMidi' 0.005 0.05 name p
+
+-- | Wrapper for function @trigByNameMidi@ for mono synth.
+monoPatchByNameMidi' :: forall a . (SigSpace a, Sigs a) => D -> D -> String -> Patch Sig a -> SE a
+monoPatchByNameMidi' portTime relTime name p = getPatchFx p =<< patchInstr p =<< fmap convert (trigNamedMono portTime relTime name)
+	where
+		convert (vol, pch) = (vel2ampSig vol, cpsmidinn pch)
+
+vel2amp :: D -> D
+vel2amp vol = ((vol / 64) ** 2) / 2
+
+vel2ampSig :: Sig -> Sig
+vel2ampSig vol = ((vol / 64) ** 2) / 2

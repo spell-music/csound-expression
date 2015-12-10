@@ -66,7 +66,7 @@ Library
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0, colour >= 2.0, transformers >= 0.3, containers,
         csound-expression-typed >= 0.0.9.1, csound-expression-dynamic >= 0.1.5, temporal-media >= 0.6.1,
-        csound-expression-opcodes >= 0.0.3
+        csound-expression-opcodes >= 0.0.3.1
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base

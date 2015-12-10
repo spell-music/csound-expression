@@ -104,6 +104,7 @@ import Csound.Typed.Opcode(ftgentmp, ftgenonce)
 noTab :: Tab
 noTab = fromE (-1)
 
+{-
 -- | Creates a new table. The Tab could be used while the instrument
 -- is playing. When the instrument is retriggered the new tab is allocated.
 --
@@ -122,6 +123,7 @@ newGlobalTab size = do
     tabId <- ftgenonce 0 (int identifier) size 7 0 [size, 0]
     writeRef ref (fromGE $ toGE tabId)
     fmap (fromGE . toGE) $ readRef ref
+-}
 
 -- | Calculates the number of samples needed to store the given amount of seconds.
 -- It multiplies the value by the current sample rate.
