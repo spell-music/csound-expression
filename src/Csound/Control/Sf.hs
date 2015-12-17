@@ -10,9 +10,11 @@
 -- The functions with suffix @m@ produce mono outputs.
 -- The loopers play samples in loops.
 module Csound.Control.Sf(
-    Sf(Sf), sf2, 
+    Sf(Sf), sf2, sfTemp,
     -- * Midi message
     sfMsg, sfMsg3, sfMsgm, sfMsg3m, sfMsgLooper,
+    -- ** Custom temperament
+    sfMsgTemp, sfMsgTemp3, sfMsgTempm, sfMsgTemp3m, sfMsgLooperTemp,
     -- * Midi note
     sfKey, sfKey3, sfKeym, sfKey3m, sfKeyLooper,
     -- * Frequency in Hz
@@ -23,12 +25,22 @@ import Csound.Typed
 import Csound.Typed.Opcode
 import Csound.SigSpace
 
+import Csound.Tuning
+import Csound.Control.Midi
+
 -- | Creates a midi instrument from sf2 sound font.
 -- Midi listens on all channels. It's useful to quickly
 -- test a sound font. The second argument is a sustain in seconds.
 -- How long it takes for the sound to decay.
 sf2 :: Sf -> D -> SE (Sig, Sig)
 sf2 sf sust = midi $ sfMsg3 sf sust
+
+-- | Creates a midi instrument from sf2 sound font.
+-- Midi listens on all channels. It's useful to quickly
+-- test a sound font. The second argument is a sustain in seconds.
+-- How long it takes for the sound to decay.
+sfTemp :: Temp -> Sf -> D -> SE (Sig, Sig)
+sfTemp tm sf sust = midi $ sfMsgTemp3 tm sf sust
 
 -----------------------------------
 
@@ -62,6 +74,41 @@ sfMsg3m = genSfMsg sfplay3m
 -- The first arguments are: start, end, crossfade of the loop.
 sfMsgLooper :: Sig -> Sig -> Sig -> Sf -> D -> Msg -> SE (Sig, Sig)
 sfMsgLooper start end crossfade = genSfMsg $ 
+    \vel key amp cps sf -> sflooper vel key amp cps sf start end crossfade
+
+-----------------------------------
+-- custom temperament
+
+-- | Creates a midi instrument from sf2 sound font file.
+-- The second argument is sustain in seconds.
+-- Reads samples with linear interpolation.
+sfMsgTemp :: Temp -> Sf -> D -> Msg -> SE (Sig, Sig)
+sfMsgTemp = genSfMsgTemp sfplay
+
+-- | Creates a midi instrument from sf2 sound font file.
+-- The second argument is sustain in seconds.
+-- Reads samples with cubic interpolation.
+sfMsgTemp3 :: Temp -> Sf -> D -> Msg -> SE (Sig, Sig)
+sfMsgTemp3 = genSfMsgTemp sfplay3
+
+-- | Creates a midi instrument from sf2 sound font file.
+-- The second argument is sustain in seconds.
+-- Reads samples with linear interpolation.
+-- Produces mono output.
+sfMsgTempm :: Temp -> Sf -> D -> Msg -> SE Sig
+sfMsgTempm = genSfMsgTemp sfplaym
+
+-- | Creates a midi instrument from sf2 sound font file.
+-- The second argument is sustain in seconds.
+-- Reads samples with cubic interpolation.
+-- Produces mono output.
+sfMsgTemp3m :: Temp -> Sf -> D -> Msg -> SE Sig
+sfMsgTemp3m = genSfMsgTemp sfplay3m
+
+-- | Midi looper of the sf2 samples. 
+-- The first arguments are: start, end, crossfade of the loop.
+sfMsgLooperTemp :: Sig -> Sig -> Sig -> Temp -> Sf -> D -> Msg -> SE (Sig, Sig)
+sfMsgLooperTemp start end crossfade = genSfMsgTemp $ 
     \vel key amp cps sf -> sflooper vel key amp cps sf start end crossfade
 
 -----------------------------------------
@@ -126,11 +173,14 @@ sfCpsLooper start end crossfade = genSfCps $
 
 ----------------------------------------------
 
-type SfFun a = D -> D -> Sig -> Sig -> Sf -> a
+type SfFun a = D ->  D -> Sig -> Sig -> Sf -> a
 
 genSfMsg :: (SigSpace a, Sigs a) => SfFun a -> Sf -> D -> Msg -> SE a
 genSfMsg play sf sustain msg = return $ mul env $ play (veloc msg) (notnum msg) 1 1 sf
     where env = sfEnv sustain (veloc msg / 127)
+
+genSfMsgTemp :: (SigSpace a, Sigs a) => SfFun a -> Temp -> Sf -> D -> Msg -> SE a
+genSfMsgTemp play tm sf sustain msg = return $ genSfCps play sf sustain (ampmidi msg 1) (cpsmidi' tm msg)
 
 genSfKey :: SigSpace a => SfFun a -> Sf -> D -> D -> D -> a
 genSfKey play sf sustain vel key = mul env $ play vel key 1 1 sf

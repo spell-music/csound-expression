@@ -11,6 +11,7 @@ module Csound.Base(
     module Csound.IO,
     module Csound.Air,
     module Csound.Tab,
+    module Csound.Tuning,
     module Csound.Options,
     module Csound.SigSpace,
 
@@ -29,6 +30,7 @@ module Csound.Base(
 
 import Csound.Air 
 import Csound.Tab
+import Csound.Tuning
 import Csound.Types
 import Csound.Control
 import Csound.IO

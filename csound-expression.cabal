@@ -94,6 +94,7 @@ Library
         Csound.SigSpace
         Csound.IO
         Csound.Options
+        Csound.Tuning
 
         Csound.Control
         Csound.Control.Evt

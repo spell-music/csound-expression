@@ -1,5 +1,5 @@
 module Csound.Control.Overload(
-    Outs(..), onArg, MidiInstr(..), AmpInstr(..), CpsInstr(..)        
+    Outs(..), onArg, MidiInstr(..), MidiInstrTemp(..), AmpInstr(..), CpsInstr(..)        
 ) where
 
 import Csound.Control.Overload.Outs

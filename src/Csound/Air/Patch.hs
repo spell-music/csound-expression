@@ -38,7 +38,13 @@ module Csound.Air.Patch(
 	sfPatch, sfPatchHall,
 
 	-- * Csound API
-	patchByNameMidi, monoPatchByNameMidi, monoSharpPatchByNameMidi, monoPatchByNameMidi'
+	patchByNameMidi, monoPatchByNameMidi, monoSharpPatchByNameMidi, monoPatchByNameMidi',
+
+	-- * Custom temperament
+	-- ** Midi
+	atMidiTemp, atMonoTemp, atMonoSharpTemp, atMonoTemp', atHoldMidiTemp, 
+	-- ** Csound API
+	patchByNameMidiTemp, monoPatchByNameMidiTemp, monoSharpPatchByNameMidiTemp, monoPatchByNameMidiTemp'
 ) where
 
 import Control.Monad
@@ -51,6 +57,7 @@ import Csound.Control.Instr
 import Csound.Control.Sf
 import Csound.Air.Fx
 import Csound.Typed.Opcode(cpsmidinn, ampdb)
+import Csound.Tuning
 
 -- | A simple csound note (good for playing with midi-keyboard).
 -- It's a pair of amplitude (0 to 1) and freuqncy (Hz).
@@ -140,13 +147,26 @@ atNote p note = getPatchFx p =<< patchInstr p note
 atMidi :: (SigSpace a, Sigs a) => Patch D a -> SE a
 atMidi a = getPatchFx a =<< midi (patchInstr a . ampCps)	
 
+-- | Plays a patch with midi. Supplies a custom value for mixing effects (dry/wet).
+-- The 0 is a dry signal, the 1 is a wet signal.
+atMidiTemp :: (SigSpace a, Sigs a) => Temp -> Patch D a -> SE a
+atMidiTemp tm a = getPatchFx a =<< midi (patchInstr a . ampCps' tm)
+
 -- | Simplified monosynth patch
 atMono :: (SigSpace a, Sigs a) => Patch Sig a -> SE a
 atMono = atMono' ChnAll 0.01 0.1
 
+-- | Simplified monosynth patch with custom temperament.
+atMonoTemp :: (SigSpace a, Sigs a) => Temp -> Patch Sig a -> SE a
+atMonoTemp tm = atMonoTemp' tm ChnAll 0.01 0.1
+
 -- | Simplified monosynth patch (sharp attack and transitions)
 atMonoSharp :: (SigSpace a, Sigs a) => Patch Sig a -> SE a
 atMonoSharp = atMono' ChnAll 0.005 0.05
+
+-- | Simplified monosynth patch (sharp attack and transitions) with custom temperament.
+atMonoSharpTemp :: (SigSpace a, Sigs a) => Temp -> Patch Sig a -> SE a
+atMonoSharpTemp tm = atMonoTemp' tm ChnAll 0.005 0.05
 
 -- | Monosynth patch. Plays the patch with function @monoMsg@
 --
@@ -154,11 +174,23 @@ atMonoSharp = atMono' ChnAll 0.005 0.05
 atMono' :: (SigSpace a, Sigs a) => MidiChn -> D -> D -> Patch Sig a -> SE a
 atMono' chn port rel a = getPatchFx a =<< patchInstr a =<< monoMsg chn port rel
 
+-- | Monosynth patch with custom temperament. Plays the patch with function @monoMsgTemp@
+--
+-- > atMonoMidi midiChn portamentotime releaseTime patch
+atMonoTemp' :: (SigSpace a, Sigs a) => Temp -> MidiChn -> D -> D -> Patch Sig a -> SE a
+atMonoTemp' tm chn port rel a = getPatchFx a =<< patchInstr a =<< monoMsgTemp tm chn port rel
+
 -- | Monosynth patch. Plays the patch with function @holdMsg@
 --
 -- > atMonoMidi midiChn portamentotime patch
 atHoldMidi :: (SigSpace a, Sigs a) => MidiChn -> D -> Patch Sig a -> SE a
 atHoldMidi chn port a = getPatchFx a =<< patchInstr a =<< holdMsg chn port
+
+-- | Monosynth patch with custom temperament. Plays the patch with function @holdMsgTemp@
+--
+-- > atMonoMidi midiChn portamentotime patch
+atHoldMidiTemp :: (SigSpace a, Sigs a) => Temp -> MidiChn -> D -> Patch Sig a -> SE a
+atHoldMidiTemp tm chn port a = getPatchFx a =<< patchInstr a =<< holdMsgTemp tm chn port
 
 --------------------------------------------------------------
 -- sched
@@ -263,25 +295,43 @@ sfPatch sf = Patch
 ------------------------------------------------
 -- Csound API
 
+patchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch D a -> SE a
+patchByNameMidi = genPatchByNameMidi cpsmidinn
+
+patchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch D a -> SE a
+patchByNameMidiTemp tm = genPatchByNameMidi (cpsmidi'D tm)
+
 -- | Wrapper for function @trigByNameMidi@.
-patchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch D a -> SE a
-patchByNameMidi name p = getPatchFx p =<< trigByNameMidi name go
+genPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => (D -> D) -> String -> Patch D a -> SE a
+genPatchByNameMidi key2cps name p = getPatchFx p =<< trigByNameMidi name go
 	where
 		go :: (D, D, Unit) -> SE a
-		go (pitch, vol, _) = patchInstr p (vel2amp vol, cpsmidinn pitch)
+		go (pitch, vol, _) = patchInstr p (vel2amp vol, key2cps pitch)
 
 
-monoPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
+monoPatchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
 monoPatchByNameMidi name p = monoPatchByNameMidi' 0.01 0.1 name p
 
-monoSharpPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
+monoPatchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch Sig a -> SE a
+monoPatchByNameMidiTemp tm name p = monoPatchByNameMidiTemp' tm 0.01 0.1 name p
+
+monoSharpPatchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
 monoSharpPatchByNameMidi name p = monoPatchByNameMidi' 0.005 0.05 name p
 
+monoSharpPatchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch Sig a -> SE a
+monoSharpPatchByNameMidiTemp tm name p = monoPatchByNameMidiTemp' tm 0.005 0.05 name p
+
+monoPatchByNameMidi' :: (SigSpace a, Sigs a) => D -> D -> String -> Patch Sig a -> SE a
+monoPatchByNameMidi' = genMonoPatchByNameMidi' cpsmidinn
+
+monoPatchByNameMidiTemp' :: (SigSpace a, Sigs a) => Temp -> D -> D -> String -> Patch Sig a -> SE a
+monoPatchByNameMidiTemp' tm = genMonoPatchByNameMidi' (cpsmidi'Sig tm)
+
 -- | Wrapper for function @trigByNameMidi@ for mono synth.
-monoPatchByNameMidi' :: forall a . (SigSpace a, Sigs a) => D -> D -> String -> Patch Sig a -> SE a
-monoPatchByNameMidi' portTime relTime name p = getPatchFx p =<< patchInstr p =<< fmap convert (trigNamedMono portTime relTime name)
+genMonoPatchByNameMidi' :: forall a . (SigSpace a, Sigs a) => (Sig -> Sig) -> D -> D -> String -> Patch Sig a -> SE a
+genMonoPatchByNameMidi' key2cps portTime relTime name p = getPatchFx p =<< patchInstr p =<< fmap convert (trigNamedMono portTime relTime name)
 	where
-		convert (vol, pch) = (vel2ampSig vol, cpsmidinn pch)
+		convert (vol, pch) = (vel2ampSig vol, key2cps pch)
 
 vel2amp :: D -> D
 vel2amp vol = ((vol / 64) ** 2) / 2

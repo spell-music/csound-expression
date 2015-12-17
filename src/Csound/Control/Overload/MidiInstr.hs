@@ -1,13 +1,22 @@
 {-# Language TypeFamilies, FlexibleInstances, FlexibleContexts #-}
 module Csound.Control.Overload.MidiInstr(
-    MidiInstr(..)
+    MidiInstr(..), MidiInstrTemp(..)
 ) where
 
 import Csound.Typed
 import Csound.Typed.Opcode
 
+import Csound.Tuning
+
 ampCps :: Msg -> (D, D)
 ampCps msg = (ampmidi msg 1, cpsmidi msg)
+
+-- | Midi message convertion to Hz with custom temperament.
+cpsmidi' :: Temp -> Msg -> D
+cpsmidi' (Temp t) msg = cpstmid msg t
+
+ampCps' :: Temp -> Msg -> (D, D)
+ampCps' temp msg = (ampmidi msg 1, cpsmidi' temp msg)
 
 -------------------------------------------------------------------------------
 
@@ -359,4 +368,212 @@ instance MidiInstr (D -> SE (Sig, Sig, Sig, Sig)) where
         (a1, a2, a3, a4) <- f ((cpsmidi msg))
         return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3, sig (ampmidi msg 1) * a4)
 
+-------------------------------------------------------------------------------
+-- Custom temperament
 
+-- | Converts a value to the midi-instrument with custom temperament. 
+-- It's used with the functions 'Csound.Base.midi', 'Csound.Base.midin'.
+class MidiInstr a => MidiInstrTemp a where
+    onMsg' :: Temp -> a -> Msg -> SE (MidiInstrOut a)
+
+-- by (Sig, Sig)
+
+sig2' :: Temp -> Msg -> (Sig, Sig)
+sig2' tm msg = (sig amp, sig cps)
+    where (amp, cps) = ampCps' tm msg
+
+instance MidiInstrTemp ((Sig, Sig) -> Sig) where
+    onMsg' tm f = return . f . sig2' tm
+
+instance MidiInstrTemp ((Sig, Sig) -> (Sig, Sig)) where
+    onMsg' tm f = return . f . sig2' tm
+
+instance MidiInstrTemp ((Sig, Sig) -> (Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . sig2' tm
+
+instance MidiInstrTemp ((Sig, Sig) -> (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . sig2' tm
+
+-- se sig
+
+instance MidiInstrTemp ((Sig, Sig) -> SE Sig) where
+    onMsg' tm f = f . sig2' tm
+
+instance MidiInstrTemp ((Sig, Sig) -> SE (Sig, Sig)) where
+    onMsg' tm f = f . sig2' tm
+
+instance MidiInstrTemp ((Sig, Sig) -> SE (Sig, Sig, Sig)) where
+    onMsg' tm f = f . sig2' tm
+
+instance MidiInstrTemp ((Sig, Sig) -> SE (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = f . sig2' tm
+
+-- by Sig / D
+
+dsig' :: Temp -> Msg -> (D, Sig)
+dsig' tm msg = (amp, sig cps)
+    where (amp, cps) = ampCps' tm msg
+
+instance MidiInstrTemp ((D, Sig) -> Sig) where
+    onMsg' tm f = return . f . dsig' tm
+
+instance MidiInstrTemp ((D, Sig) -> (Sig, Sig)) where
+    onMsg' tm f = return . f . dsig' tm
+
+instance MidiInstrTemp ((D, Sig) -> (Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . dsig' tm
+
+instance MidiInstrTemp ((D, Sig) -> (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . dsig' tm
+
+-- se sig
+
+instance MidiInstrTemp ((D, Sig) -> SE Sig) where
+    onMsg' tm f = f . dsig' tm
+
+instance MidiInstrTemp ((D, Sig) -> SE (Sig, Sig)) where
+    onMsg' tm f = f . dsig' tm
+
+instance MidiInstrTemp ((D, Sig) -> SE (Sig, Sig, Sig)) where
+    onMsg' tm f = f . dsig' tm
+
+instance MidiInstrTemp ((D, Sig) -> SE (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = f . dsig' tm
+
+-- by Sig / D
+
+sigd' :: Temp -> Msg -> (Sig, D)
+sigd' tm msg = (sig amp, cps)
+    where (amp, cps) = ampCps' tm msg
+
+instance MidiInstrTemp ((Sig, D) -> Sig) where
+    onMsg' tm f = return . f . sigd' tm
+
+instance MidiInstrTemp ((Sig, D) -> (Sig, Sig)) where
+    onMsg' tm f = return . f . sigd' tm
+
+instance MidiInstrTemp ((Sig, D) -> (Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . sigd' tm
+
+instance MidiInstrTemp ((Sig, D) -> (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . sigd' tm
+
+-- se sig
+
+instance MidiInstrTemp ((Sig, D) -> SE Sig) where
+    onMsg' tm f = f . sigd' tm
+
+instance MidiInstrTemp ((Sig, D) -> SE (Sig, Sig)) where
+    onMsg' tm f = f . sigd' tm
+
+instance MidiInstrTemp ((Sig, D) -> SE (Sig, Sig, Sig)) where
+    onMsg' tm f = f . sigd' tm
+
+instance MidiInstrTemp ((Sig, D) -> SE (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = f . sigd' tm
+
+-- d2
+
+d2' :: Temp -> Msg -> (D, D)
+d2' tm = ampCps' tm
+
+instance MidiInstrTemp ((D, D) -> Sig) where
+    onMsg' tm f = return . f . d2' tm
+
+instance MidiInstrTemp ((D, D) -> (Sig, Sig)) where
+    onMsg' tm f = return . f . d2' tm
+
+instance MidiInstrTemp ((D, D) -> (Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . d2' tm
+
+instance MidiInstrTemp ((D, D) -> (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = return . f . d2' tm
+
+-- se sig
+
+instance MidiInstrTemp ((D, D) -> SE Sig) where
+    onMsg' tm f = f . d2' tm
+
+instance MidiInstrTemp ((D, D) -> SE (Sig, Sig)) where
+    onMsg' tm f = f . d2' tm
+
+instance MidiInstrTemp ((D, D) -> SE (Sig, Sig, Sig)) where
+    onMsg' tm f = f . d2' tm
+
+instance MidiInstrTemp ((D, D) -> SE (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f = f . d2' tm
+
+-- sig
+
+instance MidiInstrTemp (Sig -> Sig) where
+    onMsg' tm f msg = return $ sig (ampmidi msg 1) * f (sig (cpsmidi' tm msg))
+    
+instance MidiInstrTemp (Sig -> (Sig, Sig)) where
+    onMsg' tm f msg = return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2)
+        where (a1, a2) = f (sig (cpsmidi' tm msg))
+
+instance MidiInstrTemp (Sig -> (Sig, Sig, Sig)) where
+    onMsg' tm f msg = return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3)
+        where (a1, a2, a3) = f (sig (cpsmidi' tm msg))
+
+instance MidiInstrTemp (Sig -> (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f msg = return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3, sig (ampmidi msg 1) * a4)
+        where (a1, a2, a3, a4) = f (sig (cpsmidi' tm msg))
+
+    
+instance MidiInstrTemp (Sig -> SE Sig) where
+    onMsg' tm f msg = do
+        a1 <- f (sig (cpsmidi' tm msg))
+        return $ sig (ampmidi msg 1) * a1
+    
+instance MidiInstrTemp (Sig -> SE (Sig, Sig)) where
+    onMsg' tm f msg = do
+        (a1, a2) <- f (sig (cpsmidi' tm msg))
+        return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2)
+
+instance MidiInstrTemp (Sig -> SE (Sig, Sig, Sig)) where
+    onMsg' tm f msg = do
+        (a1, a2, a3) <- f (sig (cpsmidi' tm msg))
+        return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3)
+
+instance MidiInstrTemp (Sig -> SE (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f msg = do
+        (a1, a2, a3, a4) <- f (sig (cpsmidi' tm msg))
+        return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3, sig (ampmidi msg 1) * a4)
+
+-- d
+
+instance MidiInstrTemp (D -> Sig) where
+    onMsg' tm f msg = return $ sig (ampmidi msg 1) * f (cpsmidi' tm msg)
+    
+instance MidiInstrTemp (D -> (Sig, Sig)) where
+    onMsg' tm f msg = return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2)
+        where (a1, a2) = f (cpsmidi' tm msg)
+
+instance MidiInstrTemp (D -> (Sig, Sig, Sig)) where
+    onMsg' tm f msg = return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3)
+        where (a1, a2, a3) = f (cpsmidi' tm msg)
+
+instance MidiInstrTemp (D -> (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f msg = return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3, sig (ampmidi msg 1) * a4)
+        where (a1, a2, a3, a4) = f (cpsmidi' tm msg)
+
+instance MidiInstrTemp (D -> SE Sig) where
+    onMsg' tm f msg = do
+        a1 <- f ((cpsmidi' tm msg))
+        return $ sig (ampmidi msg 1) * a1
+    
+instance MidiInstrTemp (D -> SE (Sig, Sig)) where
+    onMsg' tm f msg = do
+        (a1, a2) <- f ((cpsmidi' tm msg))
+        return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2)
+
+instance MidiInstrTemp (D -> SE (Sig, Sig, Sig)) where
+    onMsg' tm f msg = do
+        (a1, a2, a3) <- f ((cpsmidi' tm msg))
+        return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3)
+
+instance MidiInstrTemp (D -> SE (Sig, Sig, Sig, Sig)) where
+    onMsg' tm f msg = do
+        (a1, a2, a3, a4) <- f ((cpsmidi' tm msg))
+        return $ (sig (ampmidi msg 1) * a1, sig (ampmidi msg 1) * a2, sig (ampmidi msg 1) * a3, sig (ampmidi msg 1) * a4)

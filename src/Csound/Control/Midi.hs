@@ -6,14 +6,20 @@ module Csound.Control.Midi(
     midi_, midin_, pgmidi_,
     -- * Mono-midi synth
     monoMsg, holdMsg, trigNamedMono,
+
+    -- ** Custom temperament
+    monoMsgTemp, holdMsgTemp,
     -- * Midi event streams
     midiKeyOn, midiKeyOff,
     -- * Reading midi note parameters
     cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
     ampmidinn,
 
+    -- ** Custom temperament
+    ampCps', cpsmidi', cpsmidi'D, cpsmidi'Sig, 
+
     -- * Overload
-    tryMidi, MidiInstr(..)
+    tryMidi, tryMidi', MidiInstr(..), MidiInstrTemp(..)
 ) where
 
 import Data.Boolean
@@ -23,6 +29,8 @@ import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
 import Csound.Control.Instr(alwaysOn)
 import Csound.Control.Evt(Tick)
+
+import Csound.Tuning
 
 -- | Specifies the midi channel or programm.
 data MidiChn = ChnAll | Chn Int | Pgm (Maybe Int) Int
@@ -52,6 +60,22 @@ ampCps msg = (ampmidi msg 1, cpsmidi msg)
 ampmidinn :: (D, D) -> D -> D
 ampmidinn (volMin, volMax) volKey = ampdbfs (volMin + ir (ampmidid volKey (volMax - volMin)))
 
+-- | Midi message convertion with custom temperament.
+ampCps' :: Temp -> Msg -> (D, D)
+ampCps' temp msg = (ampmidi msg 1, cpsmidi' temp msg)
+
+-- | Midi message convertion to Hz with custom temperament.
+cpsmidi' :: Temp -> Msg -> D
+cpsmidi' (Temp t) msg = cpstmid msg t
+
+-- | Midi pitch key convertion to Hz with custom temperament. It works on constants.
+cpsmidi'D :: Temp -> D -> D
+cpsmidi'D (Temp t) key = cpstuni key t
+
+-- | Midi pitch key convertion to Hz with custom temperament. It works on signals.
+cpsmidi'Sig :: Temp -> Sig -> Sig
+cpsmidi'Sig (Temp t) key = cpstun 1 key t
+
 -----------------------------------------------------------------------
 -- Midi addons
 
@@ -67,6 +91,16 @@ ampmidinn (volMin, volMax) volKey = ampdbfs (volMin + ir (ampmidid volKey (volMa
 monoMsg :: MidiChn -> D -> D -> SE (Sig, Sig)
 monoMsg = genMonoMsg cpsmidi
 
+-- | Produces midi amplitude and frequency as a signal.
+-- The signal fades out when nothing is pressed.
+-- It can be used in mono-synths. Arguments are custom temperament, midi channel, portamento time
+-- and release time. A portamento time is time it takes for transition
+-- from one note to another. 
+--
+-- > monoMsgTemp temperament channel portamentoTime releaseTime
+monoMsgTemp :: Temp -> MidiChn -> D -> D -> SE (Sig, Sig)
+monoMsgTemp tm = genMonoMsg (cpsmidi' tm)
+
 genMonoMsg :: (Msg -> D) -> MidiChn -> D -> D -> SE (Sig, Sig)
 genMonoMsg key2cps chn portTime relTime = do
 	(amp, cps, status) <- genAmpCpsSig key2cps (toMidiFun chn)
@@ -81,6 +115,16 @@ genMonoMsg key2cps chn portTime relTime = do
 -- > holdMsg portamentoTime
 holdMsg :: MidiChn -> D -> SE (Sig, Sig)
 holdMsg = genHoldMsg cpsmidi
+
+-- | Produces midi amplitude and frequency as a signal and holds the 
+-- last value till the next one is present.
+-- It can be used in mono-synths. Arguments are portamento time
+-- and release time. A portamento time is time it takes for transition
+-- from one note to another.
+--
+-- > holdMsg portamentoTime
+holdMsgTemp :: Temp -> MidiChn -> D -> SE (Sig, Sig)
+holdMsgTemp tm = genHoldMsg (cpsmidi' tm)
 
 genHoldMsg :: (Msg -> D) -> MidiChn -> D -> SE (Sig, Sig)
 genHoldMsg key2cps channel portTime = do
@@ -114,12 +158,6 @@ genHoldAmpCpsSig key2cps midiFun = do
 
 trigNamedMono :: D -> D -> String -> SE (Sig, Sig)
 trigNamedMono portTime relTime name = namedMonoMsg portTime relTime name
-
-{-	do
-	(volKey, pitchKey, status) <- namedAmpCpsSig name
-	return (port volKey portTime * port status relTime,  port pitchKey portTime)
--}
--- namedMonoMsg portTime relTime name
 
 namedAmpCpsSig:: String -> SE (Sig, Sig, Sig)
 namedAmpCpsSig name = do
@@ -214,3 +252,10 @@ umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival 0 1
 -- > dac $ tryMidi (mul (fades 0.01 0.1) . tri)
 tryMidi :: (MidiInstr a, Sigs (MidiInstrOut a)) => a -> SE (MidiInstrOut a)
 tryMidi x = midi $ onMsg x
+
+-- | Invokes ooverloaded instruments with midi and custom temperament.
+-- Example:
+--
+-- > dac $ tryMidi' youngTemp2 (mul (fades 0.01 0.1) . tri)
+tryMidi' :: (MidiInstrTemp a, Sigs (MidiInstrOut a)) => Temp -> a -> SE (MidiInstrOut a)
+tryMidi' tm x = midi $ onMsg' tm x
