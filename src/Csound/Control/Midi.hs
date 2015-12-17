@@ -65,8 +65,11 @@ ampmidinn (volMin, volMax) volKey = ampdbfs (volMin + ir (ampmidid volKey (volMa
 --
 -- > monoMsg channel portamentoTime releaseTime
 monoMsg :: MidiChn -> D -> D -> SE (Sig, Sig)
-monoMsg chn portTime relTime = do
-	(amp, cps, status) <- genAmpCpsSig (toMidiFun chn)
+monoMsg = genMonoMsg cpsmidi
+
+genMonoMsg :: (Msg -> D) -> MidiChn -> D -> D -> SE (Sig, Sig)
+genMonoMsg key2cps chn portTime relTime = do
+	(amp, cps, status) <- genAmpCpsSig key2cps (toMidiFun chn)
 	return (port amp portTime * port status relTime,  port cps portTime)
 
 -- | Produces midi amplitude and frequency as a signal and holds the 
@@ -77,13 +80,16 @@ monoMsg chn portTime relTime = do
 --
 -- > holdMsg portamentoTime
 holdMsg :: MidiChn -> D -> SE (Sig, Sig)
-holdMsg channel portTime = do
-	(amp, cps) <- genHoldAmpCpsSig (toMidiFun_ channel)
+holdMsg = genHoldMsg cpsmidi
+
+genHoldMsg :: (Msg -> D) -> MidiChn -> D -> SE (Sig, Sig)
+genHoldMsg key2cps channel portTime = do
+	(amp, cps) <- genHoldAmpCpsSig key2cps (toMidiFun_ channel)
 	return (port amp portTime,  port cps portTime)
 
 
-genAmpCpsSig :: ((Msg -> SE Sig) -> SE Sig) -> SE (Sig, Sig, Sig)
-genAmpCpsSig midiFun = do
+genAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> SE (Sig, Sig, Sig)
+genAmpCpsSig key2cps midiFun = do
 	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
 	status <- midiFun (instr ref)
 	let resStatus = ifB (downsamp status ==* 0) 0 1
@@ -92,11 +98,11 @@ genAmpCpsSig midiFun = do
 	where 
 		instr :: Ref (Sig, Sig) -> Msg -> SE Sig
 		instr hNote msg = do
-			writeRef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)
+			writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
 			return 1		
 
-genHoldAmpCpsSig :: ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
-genHoldAmpCpsSig midiFun = do
+genHoldAmpCpsSig :: (Msg -> D) -> ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
+genHoldAmpCpsSig key2cps midiFun = do
 	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
 	midiFun (instr ref)	
 	(amp, cps) <- readRef ref
@@ -104,7 +110,7 @@ genHoldAmpCpsSig midiFun = do
 	where 
 		instr :: Ref (Sig, Sig) -> Msg -> SE ()
 		instr hNote msg = do
-			writeRef hNote (sig $ ampmidi msg 1, sig $ cpsmidi msg)			
+			writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)			
 
 trigNamedMono :: D -> D -> String -> SE (Sig, Sig)
 trigNamedMono portTime relTime name = namedMonoMsg portTime relTime name
