@@ -112,11 +112,6 @@ instance Tuple TempList where
 
 instance Arg TempList where
 
-instance Tuple TabList where
-    tupleMethods = undefined
-
-instance Arg TabList where
-
 -- | Creates a list of temperaments.
 tempList :: [Temp] -> TempList
 tempList xs = TempList $ tabList $ fmap unTemp xs
