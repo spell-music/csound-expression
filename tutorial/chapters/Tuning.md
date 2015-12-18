@@ -197,7 +197,7 @@ you can find in the module `Csound.Tuning`.
 ---------------------------------------------------------------------
 
 
-* <= [Sound fonts](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SoundFontsTutorial.md)
+* <= [Custom temperament. Microtonal music](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Tuning.md)
 
 * => [Samples](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SamplesTutorial.md)
 
