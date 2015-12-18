@@ -75,7 +75,7 @@ Temperament is defined with the base note and the set of relationships
 for the notes of the scale. The temperament (`Temp`) can be created
 with function `genTemp`:
 
-~~~
+~~~haskell
 genTemp :: Double -> Double -> Double -> [Double] -> Temp
 genTemp mainInterval baseHz baseMidiKey cents
 ~~~
@@ -184,11 +184,17 @@ Also we can use custom temperaments with sound fonts.
 ~~~
 
 Temperament as a note's parameter
--------------------------
+--------------------------------------
 
 It's worth to note that we can pass the temperament as the instrument's argument.
 It can be used inside the scores or with event streams.
 The `Temp` type is an instance of the typeclass `Arg`.
+
+More information on the datatype `Temp`  and it's functions
+you can find in the module `Csound.Tuning`.
+
+
+---------------------------------------------------------------------
 
 
 * <= [Sound fonts](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SoundFontsTutorial.md)
