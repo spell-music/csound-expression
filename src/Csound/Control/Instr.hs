@@ -87,6 +87,11 @@ module Csound.Control.Instr(
     withDur,
 
     -- * Api
+    -- | We can create named instruments. then we can trigger the named instruments with Csound API.
+    -- Csound can be used not as a text to audio converter but also as a shared C-library. There are
+    -- many bindings to many languages. For example we can use Python or Android SDK to create UI
+    -- and under the hood we can use the audio engine created with Haskell. The concept of named instruments 
+    -- is the bridge for other lnguages to use our haskell-generated code.
     trigByName, trigByName_,
     trigByNameMidi, trigByNameMidi_,
 

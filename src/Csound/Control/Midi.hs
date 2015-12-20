@@ -156,6 +156,15 @@ genHoldAmpCpsSig key2cps midiFun = do
 		instr hNote msg = do
 			writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)			
 
+-- | Creates a named instrument that can be triggered with Csound API. 
+-- This way we can create a csd file that can be used inside another program/language.
+--
+-- It simulates the input for monophonic midi-like instrument. Notes are encoded with messages:
+--
+-- > i "givenName" 1 pitchKey volumeKey     -- note on
+-- > i "givenName" 0 pitchKey volumeKey     -- note off
+--
+-- The output is a pair of signals @(midiVolume, midiPitch)@.
 trigNamedMono :: D -> D -> String -> SE (Sig, Sig)
 trigNamedMono portTime relTime name = namedMonoMsg portTime relTime name
 

@@ -295,9 +295,19 @@ sfPatch sf = Patch
 ------------------------------------------------
 -- Csound API
 
+-- | Triggers patch with Csound API.
+-- It creates a named instruement with given name (first argument).
+--
+-- It simulates the midi-like instrument. Notes are encoded with messages:
+--
+-- > i "givenName" 1 pitchKey volumeKey     -- note on
+-- > i "givenName" 0 pitchKey volumeKey     -- note off
 patchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch D a -> SE a
 patchByNameMidi = genPatchByNameMidi cpsmidinn
 
+-- | Triggers patch with Csound API.
+-- It creates a named instruement with given name (second argument).
+-- It behaves like the function @patchByNameMidi@ but we can specify custom temperament.
 patchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch D a -> SE a
 patchByNameMidiTemp tm = genPatchByNameMidi (cpsmidi'D tm)
 
@@ -309,21 +319,41 @@ genPatchByNameMidi key2cps name p = getPatchFx p =<< trigByNameMidi name go
 		go (pitch, vol, _) = patchInstr p (vel2amp vol, key2cps pitch)
 
 
+-- | Triggers patch with Csound API.
+-- It creates a named instruement with given name (first argument).
+--
+-- It simulates the midi-like instrument. Notes are encoded with messages:
+--
+-- > i "givenName" 1 pitchKey volumeKey     -- note on
+-- > i "givenName" 0 pitchKey volumeKey     -- note off
+--
+-- It behaves just like the function @patchByNameMidi@ but it's defined for
+-- monophonic patches. For instruments that take in continuous signals not messages/notes.
 monoPatchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
 monoPatchByNameMidi name p = monoPatchByNameMidi' 0.01 0.1 name p
 
+-- | Triggers patch with Csound API.
+-- It creates a named instruement with given name (first argument).
+-- It behaves like the function @monoPatchByNameMidi@ but we can specify custom temperament.
 monoPatchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch Sig a -> SE a
 monoPatchByNameMidiTemp tm name p = monoPatchByNameMidiTemp' tm 0.01 0.1 name p
 
+-- | The monophonic patch with sharper transition from note to note.
 monoSharpPatchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch Sig a -> SE a
 monoSharpPatchByNameMidi name p = monoPatchByNameMidi' 0.005 0.05 name p
 
+-- | The monophonic patch with sharper transition from note to note.
+-- We can specify a custom temperament.
 monoSharpPatchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch Sig a -> SE a
 monoSharpPatchByNameMidiTemp tm name p = monoPatchByNameMidiTemp' tm 0.005 0.05 name p
 
+-- | Generic function fr invocation of monophonic instrument with Csound API.
+-- We can specify portamento and release times.
 monoPatchByNameMidi' :: (SigSpace a, Sigs a) => D -> D -> String -> Patch Sig a -> SE a
 monoPatchByNameMidi' = genMonoPatchByNameMidi' cpsmidinn
 
+-- | Generic function fr invocation of monophonic instrument with Csound API.
+-- We can specify portamento and release times. Also we can specify a temperament.
 monoPatchByNameMidiTemp' :: (SigSpace a, Sigs a) => Temp -> D -> D -> String -> Patch Sig a -> SE a
 monoPatchByNameMidiTemp' tm = genMonoPatchByNameMidi' (cpsmidi'Sig tm)
 
