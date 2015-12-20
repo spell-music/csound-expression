@@ -46,6 +46,8 @@ Let's look at how we can create computer music with Haskell.
 
 * [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
 
+* [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
+
 -------------------------------------------------------------------
 
 Appendix:
