@@ -167,6 +167,14 @@ instance RenderCsd (Source (SE Sig4)) where
                 panel gui
                 asig
 
+instance RenderCsd (Source ()) where
+    renderCsdBy opt src = renderCsdBy opt $ do
+        (ui, _) <- src        
+        panel ui
+
+instance RenderCsd (Source (SE ())) where
+    renderCsdBy opt src = renderCsdBy opt (joinSource src)
+
 -- | Renders Csound file.
 renderCsd :: RenderCsd a => a -> IO String
 renderCsd = renderCsdBy def
