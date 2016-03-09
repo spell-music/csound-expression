@@ -34,7 +34,6 @@ module Csound.Options(
     Config(..)
 ) where
 
-import Data.Monoid
 import Data.Default
 import Csound.Typed
 

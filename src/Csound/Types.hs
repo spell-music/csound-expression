@@ -42,7 +42,7 @@ module Csound.Types(
     quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
-    boolSig, when1, whens, whileDo, untilDo,
+    boolSig, when1, whens, whileDo, untilDo, whileDoD, untilDoD,
     equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
 
     -- ** Aliases 

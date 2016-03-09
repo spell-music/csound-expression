@@ -87,7 +87,8 @@ Library
         Csound.Air.Misc
         Csound.Air.Hvs
         Csound.Air.Fm
-        Csound.Air.Pan        
+        Csound.Air.Pan 
+        Csound.Air.Padsynth       
         
         Csound.Types
         Csound.Tab

@@ -68,6 +68,9 @@ module Csound.Tab (
     winHamming, winHanning,  winBartlett, winBlackman,
     winHarris, winGaussian, winKaiser, winRectangle, winSync,
 
+    -- * Padsynth
+    padsynth, PadsynthSpec(..), defPadsynthSpec,
+
     -- * Low level Csound definition.
     gen,
     
@@ -81,9 +84,10 @@ module Csound.Tab (
     -- * Identifiers for GEN-routines
     
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
-    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2
-    , idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes
-    , idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins,
+    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, 
+    idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, 
+    idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins,
+    idPadsynth, idTanh, idExp, idSone, idFarey, idWave,
 
     -- * Tabular opcodes
     tablewa, sec2rel,
@@ -502,6 +506,38 @@ winTypeId x = case x of
 wins :: WinType -> [Double] -> Tab
 wins ty params = gen idWins (winTypeId ty : params)
 
+data PadsynthSpec = PadsynthSpec 
+    { padsynthFundamental     :: Double
+    , padsynthBandwidth       :: Double
+    , padsynthHarmonics       :: [Double]
+    , padsynthPartialScale    :: Double
+    , padsynthHarmonicStretch :: Double
+    } deriving (Show, Eq)
+
+
+-- | Specs for padsynth algorithm:
+--
+-- > defPadsynthSpec fundamentalFrequency partialBandwidth harmonics
+--
+-- * fundamentalFrequency -- fundamental frequency of the not in the generated table.
+--
+-- * partialBandwidth -- bandwidth of the first partial.
+--
+-- * harmonics -- the list of amplitudes for harmonics.
+defPadsynthSpec :: Double -> Double -> [Double] -> PadsynthSpec
+defPadsynthSpec fundamentalFreq partialBW harmonics = PadsynthSpec fundamentalFreq partialBW harmonics 1 1
+
+-- | Creates tables for the padsynth algorithm (described at <http://www.paulnasca.com/algorithms-created-by-me>).
+-- The table size should be very big the default is 18 power of 2.
+-- 
+-- csound docs: <http://csound.github.io/docs/manual/GENpadsynth.html>
+padsynth :: PadsynthSpec -> Tab
+padsynth (PadsynthSpec fundamentalFreq partialBW harmonics partialScale harmonicStretch) = 
+    plainStringTab idPadsynth ([fundamentalFreq, partialBW, partialScale, harmonicStretch] ++ harmonics)
+
+plainStringTab :: String -> [Double] -> Tab
+plainStringTab genId as = preStringTab def genId (ArgsPlain as)
+
 -- | Creates a table of doubles (It's f-table in Csound).
 -- Arguments are:
 --
@@ -550,7 +586,6 @@ midfi   = setDegree 0
 hifi    = setDegree 1
 hhifi   = setDegree 2
 hhhifi  = setDegree 3 
-
 
 -- | Writes tables in sequential locations.
 --

@@ -42,6 +42,9 @@ module Csound.Air (
     -- | FM synth
     module Csound.Air.Fm,
 
+    -- | Padsynth
+    module Csound.Air.Padsynth,
+
     -- | Other usefull stuff.
     module Csound.Air.Misc
 ) where
@@ -60,5 +63,6 @@ import Csound.Air.Seg
 import Csound.Air.Sampler
 import Csound.Air.Pan
 import Csound.Air.Fm
+import Csound.Air.Padsynth
 import Csound.Air.Misc
 
