@@ -21,11 +21,11 @@ module Csound.Air.Padsynth (
     -- * Layered padsynth
     padsynthOscMultiCps, padsynthOscMultiCps2,
     padsynthOscMultiVol, padsynthOscMultiVol2,
-    padsynthOscMultiVolCps, padsynthOscMultiVolCps2,
-    layeredPadsynthOsc
+    padsynthOscMultiVolCps, padsynthOscMultiVolCps2    
 ) where
 
 import Data.List
+import Control.Arrow
 
 import Csound.Typed
 import Csound.Tab
@@ -33,10 +33,10 @@ import Csound.Air.Wave
 import Csound.Typed.Opcode(poscil)
 
 padsynthOsc :: PadsynthSpec -> Sig -> SE Sig
-padsynthOsc spec freq = padsybthOscByTab (double $ padsynthFundamental spec) (padsynth spec) freq
+padsynthOsc spec freq = padsynthOscByTab (double $ padsynthFundamental spec) (padsynth spec) freq
 
-padsybthOscByTab :: D -> Tab -> Sig -> SE Sig
-padsybthOscByTab baseFreq tab freq = ares
+padsynthOscByTab :: D -> Tab -> Sig -> SE Sig
+padsynthOscByTab baseFreq tab freq = ares
     where
         len = ftlen tab
         wave = rndPhs (\phs freq -> poscil 1 freq tab `withD` phs)
@@ -51,50 +51,71 @@ toStereoOsc f x = do
 padsynthOsc2 :: PadsynthSpec -> Sig -> SE Sig2
 padsynthOsc2 spec freq = toStereoOsc (padsynthOsc spec) freq
 
-layeredPadsynthOsc :: [(BoolD, PadsynthSpec)] -> Sig -> SE Sig
-layeredPadsynthOsc specs freq = do
+layeredPadsynthSpec :: D -> [(D, PadsynthSpec)] -> SE (D, Tab)
+layeredPadsynthSpec val specs = do
     refTab      <- newCtrlRef lastTab
     refBaseFreq <- newCtrlRef lastBaseFreq
 
-    whenDs (fmap (toTabCaseExpr refTab) specs) doNothing
-    whenDs (fmap (toBaseFreqCaseExpr refBaseFreq) specs)   doNothing
+    compareWhenD val (fmap (second $ toCase refTab refBaseFreq) specs)
 
     tab <- readRef refTab
     baseFreq <- readRef refBaseFreq
 
-    padsybthOscByTab baseFreq tab freq
+    return (baseFreq, tab)
     where      
-        toTabCaseExpr = caseExpr padsynth
-        toBaseFreqCaseExpr = caseExpr (double . padsynthFundamental)
+        toCase refTab refBaseFreq spec = do
+            writeRef refTab (padsynth spec)
+            writeRef refBaseFreq (double $ padsynthFundamental spec)
 
-        caseExpr extract ref (cond, spec) = (cond, writeRef ref $ extract spec)
-
-        lastTab = padsynth $ snd $ last specs
+        lastTab      = padsynth $ snd $ last specs
         lastBaseFreq = double $ padsynthFundamental $ snd $ last specs
-        doNothing = return ()
    
 toThreshholdCond :: D -> (Double, PadsynthSpec) -> (BoolD, PadsynthSpec)
 toThreshholdCond val (thresh, spec) = (val `lessThanEquals` double thresh, spec)
 
 padsynthOscMultiCps :: [(Double, PadsynthSpec)] -> D -> SE Sig
-padsynthOscMultiCps specs freq = layeredPadsynthOsc (fmap (toThreshholdCond freq) specs) (sig freq)
-           
+padsynthOscMultiCps specs freq = do
+    (baseFreq, tab) <- layeredPadsynthSpec freq (fmap (first double) specs)
+    padsynthOscByTab baseFreq tab (sig freq)
+
 padsynthOscMultiCps2 :: [(Double, PadsynthSpec)] -> D -> SE Sig2
-padsynthOscMultiCps2 specs freq = toStereoOsc (padsynthOscMultiCps specs) freq
+padsynthOscMultiCps2 specs freq = do
+    (baseFreq, tab) <- layeredPadsynthSpec freq (fmap (first double) specs)
+    toStereoOsc (padsynthOscByTab baseFreq tab) (sig freq)
 
 padsynthOscMultiVol :: [(Double, PadsynthSpec)] -> (D, Sig) -> SE Sig
-padsynthOscMultiVol specs (amp, freq) = fmap (sig amp * ) $ layeredPadsynthOsc (fmap (toThreshholdCond amp) specs) freq
+padsynthOscMultiVol specs (amp, freq) = do
+    (baseFreq, tab) <- layeredPadsynthSpec amp (fmap (first double) specs)
+    fmap (sig amp * ) $ padsynthOscByTab baseFreq tab freq
 
 padsynthOscMultiVol2 :: [(Double, PadsynthSpec)] -> (D, Sig) -> SE Sig2
-padsynthOscMultiVol2 specs freq = toStereoOsc (padsynthOscMultiVol specs) freq
+padsynthOscMultiVol2 specs (amp, freq) = do
+    (baseFreq, tab) <- layeredPadsynthSpec amp (fmap (first double) specs)
+    toStereoOsc (fmap (sig amp * ) . padsynthOscByTab baseFreq tab) freq
 
+-- | TODO (undefined function)
 padsynthOscMultiVolCps :: [((Double, Double), PadsynthSpec)] -> (D, D) -> SE Sig
-padsynthOscMultiVolCps specs (amp, freq) = fmap (sig amp * ) $ layeredPadsynthOsc (fmap (toCond amp freq) specs) (sig freq)
-    where 
-        toCond = undefined
+padsynthOscMultiVolCps specs (amp, freq) = undefined
 
+-- | TODO (undefined function)
 padsynthOscMultiVolCps2 :: [((Double, Double), PadsynthSpec)] -> (D, D) -> SE Sig2
 padsynthOscMultiVolCps2 specs x = toStereoOsc (padsynthOscMultiVolCps specs) x
+
+----------------------------------------------------
+-- 
+
+whenElseD :: BoolD -> SE () -> SE () -> SE ()
+whenElseD cond ifDo elseDo = whenDs [(cond, ifDo)] elseDo
+
+compareWhenD :: D -> [(D, SE ())] -> SE ()
+compareWhenD val conds = case conds of
+    [] -> return ()
+    [(cond, ifDo)] -> ifDo 
+    (cond1, do1):(cond2, do2): [] -> whenElseD (val `lessThan` cond1) do1 do2
+    _ -> whenElseD (val `lessThan` rootCond) (compareWhenD val less) (compareWhenD val more)
+    where
+        (less, more) = splitAt (length conds `div` 2) conds
+        rootCond = fst $ last less
 
 ----------------------------------------------------
 -- waves
