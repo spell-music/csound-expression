@@ -9,6 +9,7 @@ module Csound.Air.Wave (
 
     -- ** With random phase
     rndOsc, rndOscBy, rndSaw, rndIsaw, rndPulse, rndSqr, rndPw, rndTri, rndRamp, rndBlosc,    
+    rndPhs,
 
     -- * Unipolar
     unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
@@ -180,6 +181,7 @@ ublosc' a = unipolar' (blosc' a)
 --------------------------------------------------------------------------
 -- random phase
 
+-- | Generic random phase oscil
 rndPhs :: (D -> Sig -> Sig) -> (Sig -> SE Sig)
 rndPhs f cps = fmap (\x -> f x cps) $ rnd 1
 

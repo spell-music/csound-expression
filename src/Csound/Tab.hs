@@ -26,7 +26,8 @@ module Csound.Tab (
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
-    sines, sines3, sines2, sines1, sines4, buzzes,
+    sines, sines3, sines2, sines1, sines4, buzzes, bwSines, bwOddSines,
+
     -- ** Special cases
     sine, cosine, sigmoid, tanhSigmoid,
 
@@ -402,6 +403,19 @@ sines3 xs = plains idSines3 [a | (pn, strength, phs) <- xs, a <- [pn, strength, 
 sines4 :: [(PartialNumber, PartialStrength, PartialPhase, PartialDC)] -> Tab
 sines4 xs = plains idSines4 [a | (pn, strength, phs, dc) <- xs, a <- [pn, strength, phs, dc]]
 
+-- | Sines with bandwidth (simplified padsynth generator)
+--
+-- bwSines harmonics bandwidth
+bwSines :: [Double] -> Double -> Tab
+bwSines harmonics bandwidth = padsynth (defPadsynthSpec bandwidth harmonics)
+
+-- | Sines with bandwidth (simplified padsynth generator). Only odd harmonics are present
+--
+-- bwOddSines harmonics bandwidth
+bwOddSines :: [Double] -> Double -> Tab
+bwOddSines harmonics bandwidth = padsynth ((defPadsynthSpec bandwidth harmonics) { padsynthHarmonicStretch = 2 })
+
+
 -- | Table for pure sine wave.
 sine :: Tab
 sine = sines [1]
@@ -508,32 +522,37 @@ wins ty params = gen idWins (winTypeId ty : params)
 
 data PadsynthSpec = PadsynthSpec 
     { padsynthFundamental     :: Double
-    , padsynthBandwidth       :: Double
-    , padsynthHarmonics       :: [Double]
+    , padsynthBandwidth       :: Double    
     , padsynthPartialScale    :: Double
     , padsynthHarmonicStretch :: Double
+    , padsynthShape           :: PadsynthShape
+    , padsynthShapeParameter  :: Double
+    , padsynthHarmonics       :: [Double]
     } deriving (Show, Eq)
 
+data PadsynthShape = GaussShape | SquareShape | ExpShape
+    deriving (Show, Eq, Ord, Enum)
+
+padsynthShapeId :: PadsynthShape -> Double
+padsynthShapeId shape = fromIntegral $ 1 + (fromEnum shape)
 
 -- | Specs for padsynth algorithm:
 --
--- > defPadsynthSpec fundamentalFrequency partialBandwidth harmonics
---
--- * fundamentalFrequency -- fundamental frequency of the not in the generated table.
+-- > defPadsynthSpec partialBandwidth harmonics
 --
 -- * partialBandwidth -- bandwidth of the first partial.
 --
 -- * harmonics -- the list of amplitudes for harmonics.
-defPadsynthSpec :: Double -> Double -> [Double] -> PadsynthSpec
-defPadsynthSpec fundamentalFreq partialBW harmonics = PadsynthSpec fundamentalFreq partialBW harmonics 1 1
+defPadsynthSpec :: Double -> [Double] -> PadsynthSpec
+defPadsynthSpec partialBW harmonics = PadsynthSpec 261.625565 partialBW 1 1 GaussShape 1 harmonics
 
 -- | Creates tables for the padsynth algorithm (described at <http://www.paulnasca.com/algorithms-created-by-me>).
 -- The table size should be very big the default is 18 power of 2.
 -- 
 -- csound docs: <http://csound.github.io/docs/manual/GENpadsynth.html>
 padsynth :: PadsynthSpec -> Tab
-padsynth (PadsynthSpec fundamentalFreq partialBW harmonics partialScale harmonicStretch) = 
-    plainStringTab idPadsynth ([fundamentalFreq, partialBW, partialScale, harmonicStretch] ++ harmonics)
+padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch shape shapeParameter harmonics) = 
+    plainStringTab idPadsynth ([fundamentalFreq, partialBW, partialScale, padsynthShapeId shape, shapeParameter, harmonicStretch] ++ harmonics)
 
 plainStringTab :: String -> [Double] -> Tab
 plainStringTab genId as = preStringTab def genId (ArgsPlain as)
