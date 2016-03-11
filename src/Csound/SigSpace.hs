@@ -5,7 +5,7 @@
         FlexibleInstances, 
         FlexibleContexts #-}
 module Csound.SigSpace(
-    SigSpace(..), BindSig(..), mul, on, uon, At(..), mixAt, bat,
+    SigSpace(..), BindSig(..), mul, on, uon, At(..), MixAt(..), bat, bmixAt,
     cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, 
     wsum        
 ) where
@@ -312,12 +312,6 @@ class SigSpace b => At a b c where
 bat :: At Sig a b => (Sig -> a) -> b -> AtOut Sig a b
 bat f = at (\x -> mapSig ( `balance` x) $ f x)
 
--- | It applies an effect and mixes the processed signal with original one.
--- The first argument is for proportion of dry/wet (original/processed).
--- It's like @at@ but it allows to balance processed signal with original one.
-mixAt :: (At a b c, c ~ AtOut a b c, SigSpace c, Num c) => Sig -> (a -> b) -> c -> c
-mixAt k f a = cfd k a (at f a)
-
 instance SigSpace a => At Sig Sig a where
     type AtOut Sig Sig a = a
     at f a = mapSig f a
@@ -418,4 +412,157 @@ instance At Sig2 (SE Sig2) (SE Sig2) where
     type AtOut Sig2 (SE Sig2) (SE Sig2) = SE Sig2
     at f a = f =<< a
 
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-- MixAt
+
+-- | It applies an effect and mixes the processed signal with original one.
+-- The first argument is for proportion of dry/wet (original/processed).
+-- It's like @at@ but it allows to balance processed signal with original one.
+class (SigSpace b, At a b c) => MixAt a b c where    
+    mixAt :: Sig -> (a -> b) -> c -> AtOut a b c
+
+-- | It applies an effect and balances the processed signal by original one.
+-- Also it applies an effect and mixes the processed balanced signal with original one.
+bmixAt :: MixAt Sig a b => Sig -> (Sig -> a) -> b -> AtOut Sig a b
+bmixAt k f = mixAt k (\x -> mapSig ( `balance` x) $ f x)
+
+---------------------------------------------------
+
+instance SigSpace a => MixAt Sig Sig a where    
+    mixAt k f a = mapSig (\x -> cfd k x (f x)) a
+
+------------------------------------------------------
+-- for (Sig -> SE Sig)
+
+instance MixAt Sig (SE Sig) Sig where    
+    mixAt k f dry = do
+        wet <- f dry
+        return $ cfd k dry wet
+
+instance MixAt Sig (SE Sig) Sig2 where    
+    mixAt k f (dry1, dry2) = do
+        wet1 <- f dry1
+        wet2 <- f dry2
+        return $ cfd k (dry1, dry2) (wet1, wet2)
+
+instance MixAt Sig (SE Sig) Sig3 where
+    mixAt k f (dry1, dry2, dry3) = do
+        wet1 <- f dry1
+        wet2 <- f dry2
+        wet3 <- f dry3
+        return $ cfd k (dry1, dry2, dry3) (wet1, wet2, wet3)
+
+instance MixAt Sig (SE Sig) Sig4 where    
+    mixAt k f (dry1, dry2, dry3, dry4) = do
+        wet1 <- f dry1
+        wet2 <- f dry2
+        wet3 <- f dry3
+        wet4 <- f dry4
+        return $ cfd k (dry1, dry2, dry3, dry4) (wet1, wet2, wet3, wet4)
+
+instance MixAt Sig (SE Sig) (SE Sig) where    
+    mixAt k f dry = do
+        dry1 <- dry
+        wet1 <- f dry1
+        return $ cfd k dry1 wet1
+
+instance MixAt Sig (SE Sig) (SE Sig2) where
+    mixAt k f dry = do
+        (dry1, dry2) <- dry
+        wet1 <- f dry1
+        wet2 <- f dry2
+        return $ cfd k (dry1, dry2) (wet1, wet2)
+
+instance MixAt Sig (SE Sig) (SE Sig3) where
+    mixAt k f dry = do
+        (dry1, dry2, dry3) <- dry
+        wet1 <- f dry1
+        wet2 <- f dry2
+        wet3 <- f dry3
+        return $ cfd k (dry1, dry2, dry3) (wet1, wet2, wet3)
+
+instance MixAt Sig (SE Sig) (SE Sig4) where
+    mixAt k f dry = do
+        (dry1, dry2, dry3, dry4) <- dry
+        wet1 <- f dry1
+        wet2 <- f dry2
+        wet3 <- f dry3
+        wet4 <- f dry4
+        return $ cfd k (dry1, dry2, dry3, dry4) (wet1, wet2, wet3, wet4)
+
+-----------------------------------------------------
+-- mono to stereo 
+
+instance MixAt Sig Sig2 Sig where
+    mixAt k f dry = cfd k (dry, dry) wet
+        where wet = f dry
+
+instance MixAt Sig Sig2 (SE Sig) where    
+    mixAt k f dry = fmap (\x -> cfd k (x, x) (f x)) dry
+
+instance MixAt Sig Sig2 Sig2 where    
+    mixAt k f dry = cfd k dry wet
+        where wet = 0.5 * (f (fst dry) + f (snd dry))
+
+instance MixAt Sig Sig2 (SE Sig2) where    
+    mixAt k f dry = do
+        (dry1, dry2) <- dry
+        let wet = 0.5 * (f dry1 + f dry2)        
+        return $ cfd k (dry1, dry2) wet
+
 ---------------------------------------------------------   
+
+---------------------------------------------------------   
+-- Sig2 -> Sig2
+
+instance MixAt Sig2 Sig2 Sig where    
+    mixAt k f dry1 = cfd k dry wet
+        where             
+            dry = fromMono dry1
+            wet = f dry
+
+instance MixAt Sig2 Sig2 Sig2 where    
+    mixAt k f dry = cfd k dry wet
+        where
+            wet = f dry
+
+instance MixAt Sig2 Sig2 (SE Sig) where    
+    mixAt k f dry1 = do
+        dry <- fmap fromMono dry1
+        let wet = f dry
+        return $ cfd k dry wet
+
+instance MixAt Sig2 Sig2 (SE Sig2) where
+    mixAt k f drySe = do
+        dry <- drySe
+        let wet = f dry
+        return $ cfd k dry wet
+
+
+---------------------------------------------
+-- Sig2 -> SE Sig2
+
+instance MixAt Sig2 (SE Sig2) Sig where    
+    mixAt k f dry1 = do
+        wet <- f dry
+        return $ cfd k dry wet
+        where
+            dry = fromMono dry1
+
+instance MixAt Sig2 (SE Sig2) Sig2 where    
+    mixAt k f dry = do
+        wet <- f dry
+        return $ cfd k dry wet
+
+instance MixAt Sig2 (SE Sig2) (SE Sig) where    
+    mixAt k f dry1 = do
+        dry <- fmap fromMono dry1
+        wet <- f dry
+        return $ cfd k dry wet
+
+instance MixAt Sig2 (SE Sig2) (SE Sig2) where
+    mixAt k f drySe = do
+        dry <- drySe
+        wet <- f dry
+        return $ cfd k dry wet
