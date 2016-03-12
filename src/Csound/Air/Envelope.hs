@@ -7,7 +7,7 @@ module Csound.Air.Envelope (
     onDur, lindurBy, expdurBy, linendurBy,  
 
     -- * Faders
-    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades,
+    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades, slope, xslope,
 
     -- * Humanize    
     HumanizeValue(..), HumanizeTime(..), HumanizeValueTime(..),
@@ -125,7 +125,18 @@ fadeIn att = linseg [0, att, 1]
 -- | Fades out with the given attack time.
 fadeOut :: D -> Sig
 fadeOut dec = linsegr [1] dec 0
-        
+
+-- | Slope envelope. It stays at zero for a given time then it raises to 1 for thre given time.
+-- The function is usefull to delay the LFO.
+--
+-- > slope zeroTime rizeTime
+slope :: D -> D -> Sig
+slope dt1 dt2 = linseg [0, dt1, 0, dt2, 1 ]
+
+-- | Exponential slope (See the function @slope@). 
+xslope :: D -> D -> Sig
+xslope dt1 dt2 = linseg [0, dt1, 0, dt2, 1 ]
+
 -- | Fades in by exponent with the given attack time.
 expFadeIn :: D -> Sig
 expFadeIn att = expseg [0.0001, att, 1]
