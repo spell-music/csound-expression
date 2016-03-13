@@ -25,13 +25,23 @@ module Csound.Air.Filter(
     formant, singA, singO, singE, singU, singO2,
 
     -- * Making the smooth lines
-    smooth, slide
+    smooth, slide,
 
+    -- * Analog filters
+    -- | Requires Csound 6.07 or higher
+
+    alp1, alp2, alp3, alp4, ahp,
+
+    -- ** Low level analog filters    
+    mvchpf, mvclpf1, mvclpf2, mvclpf3, mvclpf4
 ) where
 
 import Csound.Typed
 import Csound.SigSpace(bat)
 import Csound.Typed.Opcode
+
+import Control.Monad.Trans.Class
+import Csound.Dynamic
 
 -- | Low-pass filter.
 --
@@ -206,3 +216,85 @@ anA  = [(650, 50), (1100, 50), (2860, 50), (3300, 50), (4500, 50)]
 anE  = [(500, 50), (1750, 50), (2450, 50), (3350, 50), (5000, 50)]
 anIY = [(330, 50), (2000, 50), (2800, 50), (3650, 50), (5000, 50)]
 anO2 = [(400, 50), (840, 50), (2800, 50), (3250, 50), (4500, 50)]
+
+-------------------------------------------------------
+-- new filters
+
+-- | Analog-like low-pass filter
+--
+-- > alpf1 centerFrequency resonance asig
+alp1 :: Sig -> Sig -> Sig -> Sig
+alp1 freq reson asig = mvclpf1 asig freq reson
+
+-- | Analog-like low-pass filter
+--
+-- > alpf2 centerFrequency resonance asig
+alp2 :: Sig -> Sig -> Sig -> Sig
+alp2 freq reson asig = mvclpf2 asig freq reson
+
+-- | Analog-like low-pass filter
+--
+-- > alpf3 centerFrequency resonance asig
+alp3 :: Sig -> Sig -> Sig -> Sig
+alp3 freq reson asig = mvclpf3 asig freq reson
+
+-- | Analog-like low-pass filter
+--
+-- > alpf4 centerFrequency resonance asig
+alp4 :: Sig -> Sig -> Sig -> Sig
+alp4 freq reson asig = mvclpf4 asig freq reson
+
+-- | Analog-like high-pass filter
+--
+-- > ahp centerFrequency asig
+ahp :: Sig -> Sig -> Sig
+ahp freq asig = mvchpf asig freq
+
+-- | 
+-- Moog ladder lowpass filter.
+--
+-- Moogladder is an new digital implementation of the Moog ladder filter based on 
+-- the work of Antti Huovilainen, described in the paper "Non-Linear Digital 
+-- Implementation of the Moog Ladder Filter" (Proceedings of DaFX04, Univ of Napoli). 
+-- This implementation is probably a more accurate digital representation of 
+-- the original analogue filter.
+--
+-- > asig  moogladder  ain, kcf, kres[, istor]
+--
+-- csound doc: <http://www.csounds.com/manual/html/moogladder.html>
+
+
+-- | Emulator of analog high pass filter.
+--
+-- > mvchpf asig xfreq
+mvchpf :: Sig -> Sig -> Sig
+mvchpf b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
+    where f a1 a2 = opcs "mvchpf" [(Ar,[Ar,Xr,Ir])] [a1,a2]
+
+-- | Emulators of analog filters (requires Csound >= 6.07). 
+--
+-- > mvclpf1 asig xfreq xresonance 
+mvclpf1 :: Sig -> Sig -> Sig -> Sig
+mvclpf1 = genMvclpf "mvclpf1"
+
+-- | Emulators of analog filters.
+--
+-- > mvclpf2 asig xfreq xresonance 
+mvclpf2 :: Sig -> Sig -> Sig -> Sig
+mvclpf2 = genMvclpf "mvclpf2"
+
+-- | Emulators of analog filters.
+--
+-- > mvclpf3 asig xfreq xresonance 
+mvclpf3 :: Sig -> Sig -> Sig -> Sig
+mvclpf3 = genMvclpf "mvclpf3"
+
+-- | Emulators of analog filters.
+--
+-- > mvclpf4 asig xfreq xresonance 
+mvclpf4 :: Sig -> Sig -> Sig -> Sig
+mvclpf4 = genMvclpf "mvclpf4"
+
+genMvclpf :: String -> Sig -> Sig -> Sig -> Sig
+genMvclpf name b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+    where f a1 a2 a3 = opcs name [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]

@@ -135,7 +135,7 @@ slope dt1 dt2 = linseg [0, dt1, 0, dt2, 1 ]
 
 -- | Exponential slope (See the function @slope@). 
 xslope :: D -> D -> Sig
-xslope dt1 dt2 = linseg [0, dt1, 0, dt2, 1 ]
+xslope dt1 dt2 = linseg [0.001, dt1, 0.001, dt2, 1 ]
 
 -- | Fades in by exponent with the given attack time.
 expFadeIn :: D -> Sig
