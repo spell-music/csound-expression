@@ -8,6 +8,7 @@ module Csound.Air.Fx(
     -- * Delays
     MaxDelayTime, DelayTime, Feedback, Balance,
     echo, fdelay, fvdelay, fvdelays, funDelays, tabDelay,
+    PingPongSpec(..), pingPong, pingPong', csdPingPong,
 
     -- * Distortion
     distortion,
@@ -35,6 +36,7 @@ module Csound.Air.Fx(
 ) where
 
 import Data.Boolean
+import Data.Default
 
 import Csound.Typed
 import Csound.Tab(sines4, startEnds, setSize, elins, newTab, tabSizeSecondsPower2, tablewa, sec2rel)
@@ -185,6 +187,63 @@ tabDelay go maxLength delTim  kfeed kbalance asig = do
     return $ (1 - kbalance) * asig + kbalance * awet
     where
         tabLen = tabSizeSecondsPower2 maxLength
+
+-- | Aux parameters for ping pong delay. 
+-- They are maximum delay time, low pass filter center frequency and Pan width.
+-- The defaults are @(5 sec, 3500, 0.3)@.
+data PingPongSpec = PingPongSpec {
+        pingPongMaxTime :: MaxDelayTime,
+        pingPongDamp    :: Sig,
+        pingPongWidth   :: Sig    
+    }
+
+instance Default PingPongSpec where
+    def = PingPongSpec {
+            pingPongMaxTime = 5,
+            pingPongDamp    = 3500,
+            pingPongWidth   = 0.3
+        }
+
+-- | Ping-pong delay. 
+--
+-- > pingPong delayTime feedback mixLevel
+pingPong :: DelayTime -> Feedback -> Balance -> Sig2 -> SE Sig2
+pingPong delTime feedback mixLevel (ainL, ainR) = pingPong' def delTime feedback mixLevel (ainL, ainR)
+
+-- | Ping-pong delay with miscellaneous arguments. 
+--
+-- > pingPong' spec delayTime feedback mixLevel
+pingPong' :: PingPongSpec -> DelayTime -> Feedback -> Balance -> Sig2 -> SE Sig2    
+pingPong' (PingPongSpec maxTime damp width) delTime feedback mixLevel (ainL, ainR) = 
+    csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR)
+
+-- | Ping-pong delay defined in csound style. All arguments are present (nothing is hidden).
+-- 
+-- > csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR)
+csdPingPong :: MaxDelayTime -> DelayTime -> Sig -> Feedback -> Sig -> Balance -> Sig2 -> SE Sig2
+csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = do
+    afirst <- offsetDelay ainL   
+    atapL  <- channelDelay afirst
+    atapR  <- channelDelay ainR
+    return $ mixControl $ widthControl afirst (atapL, atapR)
+    where
+        offsetDelay ain = do
+            abuf <- delayr maxTime
+            afirst <- deltap3 delTime
+            let afirst1 = tone afirst damp
+            delayw ain
+            return afirst1
+
+        channelDelay ain = do
+            abuf <- delayr (2 * maxTime)
+            atap <- deltap3 (2 * delTime)
+            let atap1 = tone atap damp
+            delayw (ain + atap1 * feedback)
+            return atap1
+
+        widthControl afirst (atapL, atapR) = (afirst + atapL + (1 - width) * atapR, atapR + (1 - width) * atapL)
+
+        mixControl (atapL ,atapR) = (cfd mixLevel ainL atapL, cfd mixLevel ainR atapR)
 
 type DepthSig = Sig
 type RateSig  = Sig

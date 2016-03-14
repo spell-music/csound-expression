@@ -7,7 +7,7 @@ module Csound.Air.Envelope (
     onDur, lindurBy, expdurBy, linendurBy,  
 
     -- * Faders
-    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades, slope, xslope,
+    fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades, slope, expSlope,
 
     -- * Humanize    
     HumanizeValue(..), HumanizeTime(..), HumanizeValueTime(..),
@@ -134,8 +134,8 @@ slope :: D -> D -> Sig
 slope dt1 dt2 = linseg [0, dt1, 0, dt2, 1 ]
 
 -- | Exponential slope (See the function @slope@). 
-xslope :: D -> D -> Sig
-xslope dt1 dt2 = linseg [0.001, dt1, 0.001, dt2, 1 ]
+expSlope :: D -> D -> Sig
+expSlope dt1 dt2 = linseg [0.001, dt1, 0.001, dt2, 1 ]
 
 -- | Fades in by exponent with the given attack time.
 expFadeIn :: D -> Sig
