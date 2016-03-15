@@ -1,9 +1,15 @@
--- | Padsynth algorithm.
+-- | Padsynth algorithm. See the details at:
+--
+-- csound docs: <http://csound.github.io/docs/manual/GENpadsynth.html>
+--
+-- original description: <http://www.paulnasca.com/algorithms-created-by-me>
+--
+-- more detailed description: <http://zynaddsubfx.sourceforge.net/doc/PADsynth/PADsynth.htm>
 --
 -- An example:
 --
 -- > harms = [ 
--- >     1,  1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 
+-- >     1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 
 -- >     0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133, 
 -- >     0.9400014281, 0.3000001907, 0.120003365, 0.1799997687, 0.5200006366]
 -- > 
@@ -213,6 +219,7 @@ bwSqr2 bandwidth = toStereoOsc (bwSqr bandwidth)
 bwSaw2 :: Double -> Sig -> SE Sig2
 bwSaw2 bandwidth = toStereoOsc (bwSaw bandwidth)
 
+-- Interesting algorithms / examples
 
 -- harms = [ 1,  1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133, 0.9400014281, 0.3000001907, 0.120003365, 0.1799997687, 0.5200006366]
 -- spec = defPadsynthSpec 82.2 harms
