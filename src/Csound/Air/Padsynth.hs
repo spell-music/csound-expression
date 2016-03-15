@@ -32,6 +32,12 @@ import Csound.Tab
 import Csound.Air.Wave
 import Csound.Typed.Opcode(poscil)
 
+-- | Padsynth oscillator. 
+--
+-- padsynthOsc spec frequency
+--
+-- It makes it easy to create padsynth sound waves (see Tab.padsynth). 
+-- It creates a padsynth table and reads it with poscil at the right speed.
 padsynthOsc :: PadsynthSpec -> Sig -> SE Sig
 padsynthOsc spec freq = padsynthOscByTab (double $ padsynthFundamental spec) (padsynth spec) freq
 
@@ -48,6 +54,7 @@ toStereoOsc f x = do
     right <- f x
     return (left, right)
 
+-- | Stereo padsynth oscillatro. It creates two padsynth ftables for left and right channels.
 padsynthOsc2 :: PadsynthSpec -> Sig -> SE Sig2
 padsynthOsc2 spec freq = toStereoOsc (padsynthOsc spec) freq
 
@@ -73,31 +80,50 @@ layeredPadsynthSpec val specs = do
 toThreshholdCond :: D -> (Double, PadsynthSpec) -> (BoolD, PadsynthSpec)
 toThreshholdCond val (thresh, spec) = (val `lessThanEquals` double thresh, spec)
 
+-- | It uses several padsynth tables. Each table is responsible for specific interval of frequencies.
+-- The list of pairs specifies the threshhold value and padsynth specification.
+-- The padsynth table is active for all frequencies that lie below the given threshold.
+--
+-- > padsynthOscMultiCps thresholdSpecPairs frequency = ...
 padsynthOscMultiCps :: [(Double, PadsynthSpec)] -> D -> SE Sig
 padsynthOscMultiCps specs freq = do
     (baseFreq, tab) <- layeredPadsynthSpec freq (fmap (first double) specs)
     padsynthOscByTab baseFreq tab (sig freq)
 
+-- | Stereo version of @padsynthOscMultiCps@.
 padsynthOscMultiCps2 :: [(Double, PadsynthSpec)] -> D -> SE Sig2
 padsynthOscMultiCps2 specs freq = do
     (baseFreq, tab) <- layeredPadsynthSpec freq (fmap (first double) specs)
     toStereoOsc (padsynthOscByTab baseFreq tab) (sig freq)
 
+-- | It behaves just like @padsynthOscMultiCps@ but it spreads the padsynth tables among amplitude values.
+-- So the last input argument is a pair of amplitude and frequency:
+--
+-- > padsynthOscMultiVol thresholdSpecPairs (amplitude, frequency) = ...
 padsynthOscMultiVol :: [(Double, PadsynthSpec)] -> (D, Sig) -> SE Sig
 padsynthOscMultiVol specs (amp, freq) = do
     (baseFreq, tab) <- layeredPadsynthSpec amp (fmap (first double) specs)
     fmap (sig amp * ) $ padsynthOscByTab baseFreq tab freq
 
+-- | Stereo version of @padsynthOscMultiVol@.
 padsynthOscMultiVol2 :: [(Double, PadsynthSpec)] -> (D, Sig) -> SE Sig2
 padsynthOscMultiVol2 specs (amp, freq) = do
     (baseFreq, tab) <- layeredPadsynthSpec amp (fmap (first double) specs)
     toStereoOsc (fmap (sig amp * ) . padsynthOscByTab baseFreq tab) freq
 
 -- | TODO (undefined function)
+--
+-- With this function we can create square zones in the domain of @(amplitude, frequency)@.
+-- We can assign a separate padsynth table for each zone.
+-- The list of pairs contains a pair of two threshold values @(amplitude, frequency)@ and dedicated padsynth specification.
+--
+-- > padsynthOscMultiVolCps thresholdSpecPairs (amplitude, frequency) = ...
 padsynthOscMultiVolCps :: [((Double, Double), PadsynthSpec)] -> (D, D) -> SE Sig
 padsynthOscMultiVolCps specs (amp, freq) = undefined
 
 -- | TODO (undefined function)
+--
+-- Stereo version of @padsynthOscMultiVolCps@.
 padsynthOscMultiVolCps2 :: [((Double, Double), PadsynthSpec)] -> (D, D) -> SE Sig2
 padsynthOscMultiVolCps2 specs x = toStereoOsc (padsynthOscMultiVolCps specs) x
 
@@ -120,16 +146,23 @@ compareWhenD val conds = case conds of
 ----------------------------------------------------
 -- waves
 
-
+-- | Creates padsynth oscillator with given harmonics.
+--
+-- > bwOscBy harmonics bandwidth frequency
 bwOscBy :: [Double] -> Double -> Sig -> SE Sig
 bwOscBy harmonics bandwidth = padsynthOsc (defPadsynthSpec bandwidth harmonics)
 
+-- | Stereo version of @bwOscBy@.
 bwOscBy2 :: [Double] -> Double -> Sig -> SE Sig2
 bwOscBy2 harmonics bandwidth = toStereoOsc (bwOscBy harmonics bandwidth)
 
+-- | Creates padsynth oscillator with given odd harmonics.
+--
+-- > bwOddOscBy harmonics bandwidth frequency
 bwOddOscBy :: [Double] -> Double -> Sig -> SE Sig
 bwOddOscBy harmonics bandwidth = padsynthOsc ((defPadsynthSpec bandwidth harmonics) { padsynthHarmonicStretch = 2 })
 
+-- | Stereo version of @bwOddOscBy@.
 bwOddOscBy2 :: [Double] -> Double -> Sig -> SE Sig2
 bwOddOscBy2 harmonics bandwidth = toStereoOsc (bwOddOscBy harmonics bandwidth)
 
@@ -139,27 +172,44 @@ triCoeff = intersperse 0 $ zipWith (*) (iterate (* (-1)) (1)) $ fmap (\x -> 1 / 
 sqrCoeff = intersperse 0 $ zipWith (*) (iterate (* (-1)) (1)) $ fmap (\x -> 1 / (x))     $ [1, 3 ..]
 sawCoeff = zipWith (*) (iterate (* (-1)) (1)) $ fmap (\x -> 1 / (x)) $ [1, 2 ..]
 
+-- | Pure sine wave with padsynth wave table:
+--
+-- > bwOsc bandwidth frequency
 bwOsc :: Double -> Sig -> SE Sig
 bwOsc = bwOscBy [1]
 
+-- | Triangle wave with padsynth wave table:
+--
+-- > bwTri bandwidth frequency
 bwTri :: Double -> Sig -> SE Sig
 bwTri = bwOscBy (take limit triCoeff)
 
+-- | Square wave with padsynth wave table:
+--
+-- > bwSqr bandwidth frequency
 bwSqr :: Double -> Sig -> SE Sig
 bwSqr = bwOscBy (take limit sqrCoeff)
 
+-- | Saw-tooth wave with padsynth wave table:
+--
+-- > bwSaw bandwidth frequency
 bwSaw :: Double -> Sig -> SE Sig
 bwSaw = bwOscBy (take limit sawCoeff)
 
+
+-- | Stereo version of @bwOsc@.
 bwOsc2 :: Double -> Sig -> SE Sig2
 bwOsc2 bandwidth = toStereoOsc (bwOsc bandwidth)
 
+-- | Stereo version of @bwTri@.
 bwTri2 :: Double -> Sig -> SE Sig2
 bwTri2 bandwidth = toStereoOsc (bwTri bandwidth)
 
+-- | Stereo version of @bwSqr@.
 bwSqr2 :: Double -> Sig -> SE Sig2
 bwSqr2 bandwidth = toStereoOsc (bwSqr bandwidth)
 
+-- | Stereo version of @bwSaw@.
 bwSaw2 :: Double -> Sig -> SE Sig2
 bwSaw2 bandwidth = toStereoOsc (bwSaw bandwidth)
 

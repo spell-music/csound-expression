@@ -520,6 +520,9 @@ winTypeId x = case x of
 wins :: WinType -> [Double] -> Tab
 wins ty params = gen idWins (winTypeId ty : params)
 
+-- | Padsynth parameters.
+--
+-- see for details: <http://csound.github.io/docs/manual/GENpadsynth.html>
 data PadsynthSpec = PadsynthSpec 
     { padsynthFundamental     :: Double
     , padsynthBandwidth       :: Double    
