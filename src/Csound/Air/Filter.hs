@@ -104,7 +104,7 @@ bbr freq band a = butbr a freq band
 --
 -- > mlp centerFrequency qResonance signal
 mlp :: Sig -> Sig -> Sig -> Sig
-mlp cf q asig = moogladder asig cf q
+mlp cf q asig = moogvcf asig cf q
 
 -- | Makes slides between values in the signals.
 -- The first value defines a duration in seconds for a transition from one
@@ -148,10 +148,10 @@ flatFilt n f cfq asig = (foldl (.) id $ replicate n (f cfq)) asig
 lp18 :: Sig -> Sig -> Sig -> Sig -> Sig
 lp18 dist cfq q asig = lpf18 asig cfq q dist
 
--- | Another implementation of moog low pass filter (it's moogvcf in Csound).
+-- | Another implementation of moog low pass filter (it's moogladder in Csound).
 -- The arguments have are just like in the @mlp@ filter.
 mlp2 :: Sig -> Sig -> Sig -> Sig
-mlp2 cfq q asig = moogvcf asig cfq q
+mlp2 cfq q asig = moogladder asig cfq q
 
 -- | Mooglowpass filter with 18 dB.
 mlp3 :: Sig -> Sig -> Sig -> Sig
