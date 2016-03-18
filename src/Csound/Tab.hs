@@ -70,7 +70,7 @@ module Csound.Tab (
     winHarris, winGaussian, winKaiser, winRectangle, winSync,
 
     -- * Padsynth
-    padsynth, PadsynthSpec(..), defPadsynthSpec,
+    padsynth, PadsynthSpec(..), PadsynthShape(..), defPadsynthSpec,
 
     -- * Low level Csound definition.
     gen,
@@ -555,7 +555,9 @@ defPadsynthSpec partialBW harmonics = PadsynthSpec 261.625565 partialBW 1 1 Gaus
 -- csound docs: <http://csound.github.io/docs/manual/GENpadsynth.html>
 padsynth :: PadsynthSpec -> Tab
 padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch shape shapeParameter harmonics) = 
-    plainStringTab idPadsynth ([fundamentalFreq, partialBW, partialScale, padsynthShapeId shape, shapeParameter, harmonicStretch] ++ harmonics)
+    plainStringTab idPadsynth ([fundamentalFreq, partialBW, partialScale, harmonicStretch, padsynthShapeId shape, shapeParameter] ++ harmonics)
+
+                                    -- 261.625565     25.0         1.0             1.0             2.0                 1.0             1.0 0.5 0.0 0.2
 
 plainStringTab :: String -> [Double] -> Tab
 plainStringTab genId as = preStringTab def genId (ArgsPlain as)

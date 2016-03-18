@@ -119,7 +119,7 @@ data PadsynthShape = GaussShape | SquareShape | ExpShape
 
 Wow! Lots of parameters. 
 
-* Funcdamental -- is the frequency of the note that is stored in the table.
+* Fundamental -- is the frequency of the note that is stored in the table.
 
 * Bandwidth -- is the bandwidth of harmonic. How wide we should spread the harmonics.
 
@@ -145,23 +145,143 @@ defPadsynthSpec :: Double -> [Double] -> PadsynthSpec
 It requires only bandwidth and harmonics. Also you can modify some parameters like this:
 
 ~~~haskell
-> (defPArameters 45 [1, 0.5, 0.1]) { padsynthShape = SquareShape }
+> (defPArameters 45 [1, 0.5, 0.1]) { padsynthPartialScale  = 2.3  }
 ~~~
 
 Let's listen to the sound of some harmonics:
 
 ~~~haskell
 > let wave cps = padsynthOsc (defPadsynthSpec 25 [1, 0.5, 0, 0.2]) cps
-> dac $ at (mlp (500 + 1500 * uosc 0.25) 0.1) $ wave $ constSeq [110, 137, 165, 220] 6
+> dac $ at (mlp (150 + 2500 * uosc 0.25) 0.1) $ wave $ constSeq [110, 137, 165, 220] 6
 ~~~
 
-We modify the center frequency of lowpass filter with LFO. The frequency is created with running sequence of four notes.
+We modify the center frequency of moogladder low-pass filter with LFO. The frequency is created with running sequence of four notes.
+
+It's useful to be able to assign different harmonic content to different
+regions of frequencies. We can do it with :
+
+~~~haskell
+padsynthOscMultiCps :: [(Double, PadsynthSpec)] -> D -> SE Sig
+padsynthOscMultiCps specs frequency = ...
+~~~
+
+The list of pairs contains thresholds for frequencies and padsynth specifications. 
+The given padsynth specification is going to be applied to all notes
+with frequencies that are below the given threshold and above of the threshold of
+the previous element in the list.
+
+There is a function that can apply different padsynth specs according to the value of the amplitude.
+
+~~~haskell
+padsynthOscMultiVol :: [(Double, PadsynthSpec)] -> (D, Sig) -> SE Sig
+padsynthOscMultiVol specs (amplitude, frequency) = ...
+~~~
+
+There are stereo versions of the padsynth oscillators:
+
+~~~haskell
+padsynthOsc2 :: PadsynthSpec -> Sig -> SE Sig2
+
+padsynthOscMultiCps2 :: [(Double, PadsynthSpec)] -> D -> SE Sig2
+
+padsynthOscMultiVol2 :: [(Double, PadsynthSpec)] -> (D, Sig) -> SE Sig2
+~~~
 
 ## Low level PADsynth table generator
 
-Table generator
+If the default oscillators are not good for you and you want to implement
+your own you may beed to create the padsynth ftable first.
+It's not that hard to do if we understand the `PadsynthSpec` data type (see prev section).
+
+We can create a table with a following function:
+
+~~~haskell
+padsynth :: PadsynthSpec -> Tab
+~~~
 
 ## PADsynth instruments
 
+The package `csound-catalog` contains many predefined instruments that are based 
+on padsynth algorithm. They take in a spectrum of Sharc instrument 
+and create a padsynth instrument with it:
 
+~~~haskell
+psOrganSharc :: SharcInstr -> Patch2
+psPianoSharc :: SharcInstr -> Patch2
+psPadSharc :: SharcInstr -> Patch2
+psSoftPadSharc :: SharcInstr -> Patch2
+~~~
+
+There are about 30 predefined sharc instruments. The sharc instrument contains
+spectrum of some orchestral instrument. You can find the full list of sharc instruments in
+the module Csound.Patch (Section Sharc instruments > Concrete instruments)
+
+Let's listen to some of them (recall that  we need to import the `Csound.Patch` module to use the predefined patches):
+
+~~~haskell
+> :m +Csound.Patch
+> vdac $ atMidi $ psSoftPadSharc shAltoFlute
+> vdac $ atMidi $ psOrganSharc shCello
+> vdac $ atMidi $ psPiano shTrumpetC
+~~~
+
+The timbre of an instrument can be altered by changing the bandwidth of padsynth.
+There are special versions of aforementioned functions that allows to alter
+specific parameters (The function name stays the same but it's followed by `'`). 
+
+~~~haskell
+data PadSharcSpec = PadSharcSpec {
+        padSharcBandwidth :: Double,
+        padSharcSize      :: Int
+    }
+
+psPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+~~~
+
+The type `PadSharcSpec` is defined in the module `Csound.Catalog.Wave` (see SHARC section). 
+It contains two parameters:
+
+* Bandwidth -- bandwidth for padsynth ftables
+
+* Size -- number of frequency regions (1 to 40)
+
+The size determines how many tables are going to be used. The default is 15.
+
+There is an instance of `Default` class for `PadSharcSpec`:
+
+~~~haskell
+instance Default PadSharcSpec where
+    def = PadSharcSpec 15 8
+~~~
+
+So if we want to alter only bandwidth we can do it like this:
+
+~~~haskell
+vdac $ atMidi $ psSoftPadSharc' (def { padSharcBandwidth = 56 }) shAltoFlute
+~~~
+
+There are many more functions they are related to altering reverb effect for the instruments
+and the number of frequency regions. We can increase the number of regions if we use the suffix `Hifi`:
+
+~~~haskell
+vdac $ atMidi $ psLargeOrganSharcHifi shAltoFlute
+~~~
+
+*** Deep pads
+
+The padsynth algorithm is super cool for creation of pads. There are predefined functions that
+create great pads. They have vedic names: 
+
+~~~haskell
+vibhu, rishi, agni, prakriti, rajas, avatara, bhumi :: PadsynthBandwidth -> Patch2
+~~~
+
+The only argument is the bandwidth for underlying tables.
+
+You can try them out:
+
+~~~haskell
+> dac $ atMidi $ vibhu 35
+> dac $ atMidi $ vibhu 0.6
+~~~
 
