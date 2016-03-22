@@ -181,7 +181,7 @@ There are many more widgets to consider you can find them in the module
 
 * <= [Signal segments](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SignalSegmentsTutorial.md)
 
-* => [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
+* => [Padsynth algorythm](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Padsynth.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
 

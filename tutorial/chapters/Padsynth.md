@@ -267,7 +267,7 @@ and the number of frequency regions. We can increase the number of regions if we
 vdac $ atMidi $ psLargeOrganSharcHifi shAltoFlute
 ~~~
 
-*** Deep pads
+### Deep pads
 
 The padsynth algorithm is super cool for creation of pads. There are predefined functions that
 create great pads. They have vedic names: 
@@ -285,3 +285,65 @@ You can try them out:
 > dac $ atMidi $ vibhu 0.6
 ~~~
 
+You can switch `dac` to `vdac` if you don't have the real hardware midi device
+attached to your computer.
+
+### Pads with crossfades
+
+There are cool instruments that allow to morph between several timbres.
+Right now they are defined only for pads. They have got suffix `Cfd` 
+for morphing of two timbres and `Cfd4` for morphing four timbres:
+
+~~~
+psPadSharcCfd :: Sig -> SharcInstr -> SharcInstr -> Patch2
+psPadSharcCfd cfdLevel instr1 instr2 = ...
+
+psPadSharcCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> Patch2
+psPadSharcCfd4 cfdLevelX cfdLevelY instr1 instr2 instr3 instr4 = ...
+~~~
+
+The `cfdLevel` lies in the interval `(0, 1)`. The `0` produces only first instrument and
+the `1` produces only second instrument. So we have the mixture of two timbres.
+Also we can create the mixture of four signals. But in this case we have two levels:
+`cfdLevelX` and `cfdLevelY`. We can imagine that timbres lie at the corners of the rectangle.
+The levels define the coordinates of the point that lies inside the rectangle. 
+The output timbre is produced with bilinear interpolation of timbres that lie at the corners of the rectangle.
+The values for levels lie at the interval `(0, 1)`. The `0` means left corner (or bottom) and `1`
+stands for right corner (or top corner).
+
+Let's create a simple crossfade pad:
+
+~~~haskell
+vdac $ atMidi $ psPadSharcCfd (uosc 0.25) shAltoFlute shCello
+~~~
+
+reminder: the `uosc` produces unipolar sine wave with given frequency.
+
+There are many more functions. They have different prefixes:
+
+~~~haskell
+psSoftPadSharcCfd, psDeepPadSharcCfd, psDeepSoftPadSharcCfd, ...
+~~~
+
+See the full list at the module `Csound.Patch`.
+
+Also there are deep pads with corssfades:
+
+~~~
+vedicPadCfd :: Sig -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPadCfd cfdLevel instr1 instr2 bandwidth = ...
+
+vedicPadCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPadCfd4 cfdLevelX cfdLevelY instr1 instr2 instr3 instr4 bandwidth = ...
+~~~
+
+They are particularly useful to test timbres with different values for bandwidth (it's the last input argument). 
+Good values lie at the interval `(0.01, 130)`.
+
+--------------------------------------------------------
+
+* <= [Widgets for live performances](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/LiveWidgetsTutorial.md)
+
+* => [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
+
+* [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)
