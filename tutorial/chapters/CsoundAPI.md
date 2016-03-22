@@ -42,8 +42,10 @@ Let's create a pair of channels to control the volume and the frequency of audio
 ~~~haskell
 module Main where
 
-volume      = makeChn "volume"
-frequency   = makeChn "frequency"
+import Csound.Base
+
+volume      = text "volume"
+frequency   = text "frequency"
 
 instr = do
     vol <- chnGetCtrl volume
@@ -54,9 +56,8 @@ main = writeCsd "osc.csd" instr
 ~~~
 
 So we have a file `main.csd` that encodes our audio engine.
-Let's create Python program to control it with sliders.
-We are going to use the the python's built in UI-library tkinter.
-Also to use Csound API we need to install the python bindings.
+Let's create Python program to control our audio.
+We are going to use Csound API and we need to install the python bindings.
 On Debian/Ubuntu we can install it with `apt-get`:
 
 ~~~
@@ -74,16 +75,104 @@ We can quikly check how to use the audio engine that we have generated
 with our language of choice. The python examples is based on the information
 from this repo.
 
-So let's create a couple of sliders and plug them to Csound:
 
 ~~~python
+import csnd6
 
+class Ctrl:
+    def __init__(self, volume, frequency):
+        engine = csnd6.Csound()
+        engine.SetOption("-odac")
+        engine.Compile("osc.csd") 
+
+        thread = csnd6.CsoundPerformanceThread(engine) 
+        thread.Play()              
+
+        self.engine = engine
+        self.thread = thread
+
+        self.set_volume(volume)
+        self.set_frequency(frequency)
+
+    def set_volume(self, volume):
+        self.engine.SetChannel("volume", volume)
+
+    def set_frequency(self, frequency):
+        self.engine.SetChannel("frequency", frequency)
+
+    def close(self):
+        self.thread.Stop()        
+        self.thread.Join()        
 ~~~
 
+We create an object that can start a Csound engine and update volume and frequency.
+In the initialization step we create an audio engine? load file "osc.csd" to it
+and start csound in the separate thread:
 
+~~~python
+        engine = csnd6.Csound()
+        engine.SetOption("-odac")
+        engine.Compile("osc.csd") 
 
+        thread = csnd6.CsoundPerformanceThread(engine) 
+        thread.Play()
+~~~
 
+Then we save the state for the object:
 
+~~~python
+        self.engine = engine
+        self.thread = thread
+~~~
+
+and set the initial values for frequency and volume:
+
+~~~python
+        self.set_volume(volume)
+        self.set_frequency(frequency)
+~~~
+
+These functions update values for csound channels. 
+So with channels we can propagate changes from python to csound:
+
+~~~python
+    def set_volume(self, volume):
+        self.engine.SetChannel("volume", volume)
+~~~
+
+The last method `close` stops the engine:
+
+~~~
+    def close(self):
+        self.thread.Stop()        
+        self.thread.Join()        
+~~~
+
+What's interesting with thism code is that we can control our engine within 
+the python interpreter. It's very simple skeleton for creation of Live coding with python and haskell combo!
+Let's try some commands. Navigate to the directory with our python file `oscil.py`:
+
+~~~python
+$ python
+> from oscil import Ctrl
+> c1 = Ctrl(0.5, 220)
+> c1.set_frequency(440)
+> c1.set_volume(0.3)
+> c1.set_volume(0.1)
+> c1.close()
+~~~
+
+We can instantiate several Csound audio engines!
+
+~~~python
+> c1 = Ctrl(0.5, 220)
+> c2 = Ctrl(0.3, 330)
+> c3 = Ctrl(0.6, 110)
+> c3.set_frequency(150)
+>
+> for c in [c1, c2, c3]:
+>   c.close()
+~~~
 
 We can trigger Csound instruments with notes. 
 
