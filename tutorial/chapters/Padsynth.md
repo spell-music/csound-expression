@@ -294,7 +294,7 @@ There are cool instruments that allow to morph between several timbres.
 Right now they are defined only for pads. They have got suffix `Cfd` 
 for morphing of two timbres and `Cfd4` for morphing four timbres:
 
-~~~
+~~~haskell
 psPadSharcCfd :: Sig -> SharcInstr -> SharcInstr -> Patch2
 psPadSharcCfd cfdLevel instr1 instr2 = ...
 
@@ -329,7 +329,7 @@ See the full list at the module `Csound.Patch`.
 
 Also there are deep pads with corssfades:
 
-~~~
+~~~haskell
 vedicPadCfd :: Sig -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadCfd cfdLevel instr1 instr2 bandwidth = ...
 
