@@ -53,6 +53,11 @@ Extra-Source-Files :
     examples/Gui/Key.hs        
     examples/Gui/Waves.hs
 
+    examples/Api/message.py
+    examples/Api/Message.hs
+    examples/Api/oscil.py
+    examples/Api/Oscil.hs
+
 Homepage:        https://github.com/anton-k/csound-expression
 Bug-Reports:     https://github.com/anton-k/csound-expression/issues
 
