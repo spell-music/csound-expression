@@ -1,5 +1,5 @@
 
-Csound API. Using generated code with another languages
+Csound API. Using generated code with other languages
 ==================================================================
 
 The cool thing about Csound is that it's not only a text to audio converter.
