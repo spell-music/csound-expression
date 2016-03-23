@@ -349,7 +349,7 @@ to simulate note-on/off behavior:
 ~~~
 i "givenName" delay duration 1 pitchKey volumeKey auxParams     -- note on
 i "givenName" delay duration 0 pitchKey volumeKey auxParams     -- note off
-~~
+~~~
 
 Alongside with delay and duration we have another hidden argument. It's  the fourth argument. 
 It's `1` for note on and `0` for note off. Which note to turn off is determined by pitch key.
