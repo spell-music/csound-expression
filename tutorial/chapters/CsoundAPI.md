@@ -549,6 +549,18 @@ In the `play` function we stop all previous instances and then start new note. W
 ~~~
 
 
+Let's try it out in the terminal:
+
+~~~python
+$ python
+> from player import Player
+> p = Player()
+> p.play("muzzy.wav")
+> p.stop()
+> p.play("song.mp3")
+> p.close()
+~~~
+
 --------------------------------------------------
 
 * <= [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
