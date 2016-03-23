@@ -67,6 +67,8 @@ On Debian/Ubuntu we can install it with `apt-get`:
 On Windows it's installed with Csound installer. You can download it
 from the official Csound site. On OSX we can install it with `brew`.
 
+The source code with examples can be found at [the github directory](https://github.com/spell-music/csound-expression/tree/master/examples/Api).
+
 ### How to use channels with Python
 
 There is a cool GitHub project [Csound API examples](https://github.com/csound/csoundAPI_examples)
