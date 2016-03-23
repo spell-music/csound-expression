@@ -401,9 +401,155 @@ collection of `csound-expression` instruments.
 
 ## Example: Audio player
 
-Let's create a command line audio player
+Let's create a command line audio player. We are going to create
+3 instruments. One for playing wavs and aiffs, another one for playing mp3s
+and the last one to stop player.
 
----------------------------------------------------------
+~~~haskell
+-- the file Player.hs
+module Main where
+
+import Csound.Base
+
+declick :: Sig2 -> Sig2
+declick = mul (fades 0.01 0.1)
+
+playWav :: Str -> SE Sig2
+playWav file = return $ declick $ diskin2 file 1
+
+playMp3 :: Str -> SE Sig2
+playMp3 file = return $ declick $ mp3in file
+
+stop :: Unit -> SE ()
+stop _ = do 
+    turnoffByName "wav" 0 0.1
+    turnoffByName "mp3" 0 0.1
+    turnoff
+
+main = writeCsd "player.csd" $ do
+    wavs <- trigByName "wav" playWav
+    mp3s <- trigByName "mp3" playMp3
+    trigByName_ "stop" stop
+    return $ wavs + mp3s
+~~~
+
+Let's take this file apart. The first thing we create is declicking envelope
+so that playback starts and fades without clicks:
+
+~~~haskell
+declick :: Sig2 -> Sig2
+declick = mul (fades 0.01 0.1)
+~~~
+
+Next we define an instruemnt to play wavs and aiffs:
+
+~~~haskell
+playWav :: Str -> SE Sig2
+playWav file = return $ declick $ diskin2 file 1
+~~~
+
+We define an instrument to play mp3s:
+
+~~~haskell
+playMp3 :: Str -> SE Sig2
+playMp3 file = return $ declick $ mp3in file
+~~~
+
+We define an instrument to turn off any notes for all instruments
+that play wavs and mp3s.
+
+~~~haskell
+stop :: Unit -> SE ()
+stop _ = do 
+    turnoffByName "wav" 0 0.1
+    turnoffByName "mp3" 0 0.1
+    turnoff
+~~~
+
+It uses the new function `turnoffByName`. The function
+is defined to turnoff named instruments. The first argument is the name of the instrument.
+The next is the code for turning off. Zero means turnoff all instances. The last argument is for release time (in seconds).
+
+At the main function we assign names to instruments and direct the output to speakers.
+
+~~~haskell
+main = writeCsd "player.csd" $ do
+    wavs <- trigByName "wav" playWav
+    mp3s <- trigByName "mp3" playMp3
+    trigByName_ "stop" stop
+    return $ wavs + mp3s
+~~~
+
+So we can create a file with audio engine and give it a name `player.csd` with command:
+
+~~~
+> runhaskell Player.hs
+~~~
+
+Let's look at the python code:
+
+~~~python
+import csnd6, os.path, time
+
+def is_mp3(filename):
+    filename, file_extension = os.path.splitext(filename)
+    return file_extension == '.mp3'
+
+class Player:
+    def __init__(self):
+        engine = csnd6.Csound()
+        engine.SetOption("-odac")
+        engine.Compile("player.csd") 
+
+        thread = csnd6.CsoundPerformanceThread(engine) 
+        thread.Play()              
+
+        self.engine = engine
+        self.thread = thread        
+
+    def play_file_by_ext(self, ext, file):
+        self.thread.InputMessage("i \"%s\" 0 -1 \"%s\"" % (ext, file))
+
+    def stop(self):
+        self.thread.InputMessage("i \"stop\" 0 0.01")
+        time.sleep(0.02)
+
+    def play(self, file):
+        self.stop()        
+        if is_mp3(file):            
+            self.play_file_by_ext("mp3", file)
+        else:
+            self.play_file_by_ext("wav", file)       
+
+    def close(self):
+        self.thread.Stop()        
+        self.thread.Join()             
+~~~
+
+The initialization and termination are the same as in previous examples. 
+In the body of the instrument  we use a trick to play note forever.
+To play note forever in the Csound we have to invoke it with negative duration.
+Look at the code for triggering the notes:
+
+~~~python
+    def play_file_by_ext(self, ext, file):
+        self.thread.InputMessage("i \"%s\" 0 -1 \"%s\"" % (ext, file))
+~~~
+
+Notice the duration of the note is set to `-1`. It's going to held the note forever.
+In the `play` function we stop all previous instances and then start new note. We determine the file type by extension:
+
+~~~python
+    def play(self, file):
+        self.stop()        
+        if is_mp3(file):            
+            self.play_file_by_ext("mp3", file)
+        else:
+            self.play_file_by_ext("wav", file)  
+~~~
+
+
+--------------------------------------------------
 
 * <= [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
 

@@ -57,6 +57,9 @@ Extra-Source-Files :
     examples/Api/Message.hs
     examples/Api/oscil.py
     examples/Api/Oscil.hs
+    examples/Api/player.py
+    examples/Api/Player.hs
+
 
 Homepage:        https://github.com/anton-k/csound-expression
 Bug-Reports:     https://github.com/anton-k/csound-expression/issues

@@ -94,6 +94,7 @@ module Csound.Control.Instr(
     -- is the bridge for other lnguages to use our haskell-generated code.
     trigByName, trigByName_,
     trigByNameMidi, trigByNameMidi_,
+    turnoffByName,
 
     -- ** Misc
     alwaysOn, playWhen,
@@ -102,6 +103,9 @@ module Csound.Control.Instr(
     -- | Converters to make it easier a construction of the instruments.
     Outs(..), onArg, AmpInstr(..), CpsInstr(..)
 ) where
+
+import Control.Monad.Trans.Class
+import Csound.Dynamic hiding (str, Sco(..), when1, alwaysOn)
 
 import Csound.Typed 
 import Csound.Typed.Opcode hiding (initc7)
@@ -177,3 +181,27 @@ retrig f = retrigs f . fmap return
 -- | Executes some procedure for the whole lifespan of the program,
 alwaysOn :: SE () -> SE ()
 alwaysOn proc = sched_ (const $ proc) $ withDur (infiniteDur) $ loadbang
+
+--------------------------------------------------------------
+
+-- | Turns off named instruments.
+--
+-- > turnoffNamedInstr name kmode krelease
+--
+-- name of the instrument (should be defined with @trigByName@ or smth like that).
+--
+-- kmode -- sum of the following values:
+-- 
+-- 0, 1, or 2: turn off all instances (0), oldest only (1), or newest only (2)
+--
+-- 4: only turn off notes with exactly matching (fractional) instrument number, rather than ignoring fractional part
+--
+-- 8: only turn off notes with indefinite duration (p3 < 0 or MIDI)
+-- 
+-- krelease -- if non-zero, the turned off instances are allowed to release, otherwise are deactivated immediately (possibly resulting in clicks)
+turnoffByName :: String -> Sig -> Sig -> SE ()
+turnoffByName name kmode krelease = strTurnoff2 (text name) kmode krelease
+
+strTurnoff2 ::  Str -> Sig -> Sig -> SE ()
+strTurnoff2 b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
+    where f a1 a2 a3 = opcs "turnoff2" [(Xr,[Sr,Kr,Kr])] [a1,a2,a3]
