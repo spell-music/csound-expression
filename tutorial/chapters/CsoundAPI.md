@@ -155,6 +155,7 @@ What's interesting with thism code is that we can control our engine within
 the python interpreter. It's very simple skeleton for creation of Live coding with python and haskell combo!
 Let's try some commands. Navigate to the directory with our python file `oscil.py`:
 
+
 ~~~python
 $ python
 > from oscil import Controll
@@ -163,7 +164,7 @@ $ python
 > c1.set_volume(0.3)
 > c1.set_volume(0.1)
 > c1.close()
-~~~Controll
+~~~
 
 We can instantiate several Csound audio engines!
 
