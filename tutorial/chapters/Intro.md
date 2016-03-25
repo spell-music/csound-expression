@@ -154,6 +154,14 @@ I'd like to mention those who supported me a lot with their music and ideas:
     [Paul Hudak](http://haskell.cs.yale.edu/people/paul-hudak/), [Gabriel Gonzalez](http://www.haskellforall.com/), 
     [Rich Hickey](http://thechangelog.com/rich-hickeys-greatest-hits/) and Csound's community.
 
+* Thanks a lot to all who patiently answered my questions and provided skillful solutions, encouragement and ideas:
+
+    Iain McCurdy, Victor Lazarini, Rory Walsh, John Ffitch, Joachim Heintz, Peter Burgess, Dr. Richard Boulanger, Michael Gogins, Oeyvind Brandtsegg,
+    Richard Dobson, Partev Barr Sarkissian, Dave Phillips, Guillermo Senna, Art Hunkins, 
+    Ben McAllister, Michael Rhoades, Brian Merchant, Wolf Peuker,Hlöðver Sigurðsson, Aaron Krister Johnson, Andy Fillebrown and friends)
+
+    tell me if I forgot to mention you :)
+
 
 ----------------------------------------------------
 
