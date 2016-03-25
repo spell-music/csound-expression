@@ -563,7 +563,7 @@ $ python
 
 --------------------------------------------------
 
-* <= * [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
+* <= [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
 
 * => Happy Haskelling / Csounding
 
