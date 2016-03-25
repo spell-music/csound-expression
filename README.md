@@ -78,6 +78,47 @@ file and then load it in the ghci and invoke the function `main`
 News
 -----------------------------
 
+**The 5.0 is out! New features:**
+
+csound-expression
+
+* Microtonal tunings. We can use custom temperaments with insturments, patches, soundfonts and MIDI-instruments.
+   Check out the guide on tuning and microtonal music (see also module `Csound.Tuning`).
+   There are many predefined tunings (including ancient ones).
+   Now we can play the authentic Bach music with Haskell! 
+
+* Functions for Csound API. We can interface with generated code through many other languages.
+   We can generate the code with Haskell and the use it in other environments. we can build UI with Python or Clojure,
+     we can create an Android synthesizer. See the guide section on Csound API.
+
+* Padsynth algorithm (need Csound 6.05). There are functions that makes it easy to use wonderful PADsynth algorithm,
+    This algorithm is designed to make "alive" instruments, natural pads. 
+    There are not only function that explore the algorithm but also new PAtches in the
+    package csound-catalog that are based on it! See the section in the guide on the PADsynth.
+
+* Argument modifiers make it very convinient to modulate the rguments (apply vibrato to frequency
+   or add some randomness to the parameter).
+
+* The hard clipping was substituted with limiter. There should be no distortion when
+   amplitude goes higher than `0dbfs` value.
+
+* Adds Ping-pong delay implementation.
+
+* Adds Rory Walsh's brand new analog filters (need Csound 6.07)
+
+* Bugfixes for `mixAt` function. Now it doesn't duplicates the effectful-code.
+   Now `mixAt` is not a function that is based on class `At`. It becomes
+   a method in it's own class called `MixAt`. That fixes the code duplication problem.
+   
+csound-catalog
+
+* new instruments that are based on PADsynth algorithm. Check out `Csound.Patch`
+   at the section on PADsynth Sharc instruments.
+
+csound-sampler
+
+* adds some useful instances for class `At` and `MixAt`.
+
 **The 4.9.0 is out! New features:**
 
 csound-expression
