@@ -55,18 +55,18 @@ To change the temperament we can use the function `atMidiTemp`
 that accepts the temperament as the first argument:
 
 ~~~haskell
-> vdac $ atMidiTemp youngTemp1 vibraphone1
+> vdac $ atMidiTemp young1 vibraphone1
 ~~~
 
 We can try out an ancient Pythagorean tuning:
 
 ~~~haskell
-> vdac $ atMidiTemp pythagorTemp1 vibraphone1
+> vdac $ atMidiTemp pythagor1 vibraphone1
 ~~~
 
 We have several predefined temperaments to try out:
-`equalTemp`, `pythagorTemp`, `meantoneTemp`, `justTemp`, `werckmeisterTemp`,
-`youngTemp`, `youngTemp1`, `youngTemp2`.
+`equal1`, `pythagor`, `meantone`, `just1`, `werckmeister`,
+`young1`, `young2`, `young3`.
 
 Temperament
 ---------------------------
@@ -93,8 +93,8 @@ Let's look at the arguments:
 So here is the definition for equal temperament:
 
 ~~~haskell
-equalTemp  = genTemp 2 261.63 60 equalCents
-equalCents = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
+equal1  = genTemp 2 261.63 60 equalCents1
+equalCents1 = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
 ~~~
 
 The list should include the first note from the next octave (scale's main interval).
@@ -110,7 +110,7 @@ The `baseC` creates a temperament with octave interval and modern C as the base 
 We can rewrite the previous definition as:
 
 ~~~
-equalTemp = baseC equalCents
+equal1 = baseC equalCents1
 ~~~
 
 There are other useful functions
@@ -122,8 +122,8 @@ stdTemp, barTemp :: [Double] -> Temp
 The function `stdTemp` creates a scale so that 9nth note is modern concert A (440 Hz).
 The `barTemp` creates a temperament with baroque concert A (415 Hz).
 There are predefined lists of cents for several western temperaments:
-`equalCents`, `pythagorCents`, `meantoneCents`, `werckmeisterCents`,
-`youngCents`, `youngCents1`, `youngCents2`.
+`equalCents1`, `pythagorCents1`, `meantoneCents`, `werckmeisterCents`,
+`youngCents1`, `youngCents2`, `youngCents3`.
 We can use them as an example to define our own temperaments.
 
 Midi instruments
@@ -140,7 +140,7 @@ and converts it to midi function of the type `Msg -> SE Sig`
 We can change the temperament with function `onMsg'`
 
 ~~~haskell
-> vdac $ midi $ onMsg' justTemp $ \cps -> 0.4 * fades 0.01 0.1 * tri cps
+> vdac $ midi $ onMsg' just1 $ \cps -> 0.4 * fades 0.01 0.1 * tri cps
 ~~~
 
 The `onMsg` takes in a temperament as the first argument.
@@ -167,11 +167,11 @@ With patches we can use the functions `atMidiTemp` (for polyphonic synths) and
 `atMonoTemp` (for monophonic synths). Let's lookt at a couple of examples:
 
 ~~~haskell
-> vdac $ atMidiTemp youngTemp1 dreamPad
+> vdac $ atMidiTemp young1 dreamPad
 ~~~
 
 ~~~haskell
-> vdac $ atMonoTemp justTemp nightPadm
+> vdac $ atMonoTemp just1 nightPadm
 ~~~
 
 Sound fonts
@@ -180,7 +180,7 @@ Sound fonts
 Also we can use custom temperaments with sound fonts.
 
 ~~~haskell
-> vdac $ sfTemp meantoneTemp (Sf "/path/to/soundfont/jRhodes3.sf2" 0 0) 0.2
+> vdac $ sfTemp meantone (Sf "/path/to/soundfont/jRhodes3.sf2" 0 0) 0.2
 ~~~
 
 Temperament as a note's parameter
