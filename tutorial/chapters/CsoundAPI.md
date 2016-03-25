@@ -563,7 +563,7 @@ $ python
 
 --------------------------------------------------
 
-* <= [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
+* <= * [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
 
 * => Happy Haskelling / Csounding
 
