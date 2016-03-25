@@ -7,7 +7,10 @@ module Csound.Air (
     module Csound.Air.Envelope,  
 
     -- | Filters
-    module Csound.Air.Filter,      
+    module Csound.Air.Filter, 
+
+    -- | Argument modifiers
+    module Csound.Air.ModArg,     
 
     -- | Sound file playback
     module Csound.Air.Wav,
@@ -52,6 +55,7 @@ module Csound.Air (
 import Csound.Air.Wave
 import Csound.Air.Envelope
 import Csound.Air.Filter
+import Csound.Air.ModArg
 import Csound.Air.Wav
 import Csound.Air.Granular
 import Csound.Air.Spec

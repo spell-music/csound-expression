@@ -84,6 +84,7 @@ Library
         Csound.Air.Granular        
         Csound.Air.Envelope
         Csound.Air.Filter
+        Csound.Air.ModArg
         Csound.Air.Wav
         Csound.Air.Spec
         Csound.Air.Fx
