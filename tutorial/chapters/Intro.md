@@ -158,7 +158,7 @@ I'd like to mention those who supported me a lot with their music and ideas:
 
     Iain McCurdy, Victor Lazarini, Rory Walsh, John Ffitch, Joachim Heintz, Peter Burgess, Dr. Richard Boulanger, Michael Gogins, Oeyvind Brandtsegg,
     Richard Dobson, Partev Barr Sarkissian, Dave Phillips, Guillermo Senna, Art Hunkins, 
-    Ben McAllister, Michael Rhoades, Brian Merchant, Wolf Peuker,Hlöðver Sigurðsson, Aaron Krister Johnson, Andy Fillebrown and friends)
+    Ben McAllister, Michael Rhoades, Brian Merchant, Gleb Rogozinsky, Eugene Cherny, Wolf Peuker,Hlöðver Sigurðsson, Aaron Krister Johnson, Andy Fillebrown and friends)
 
     tell me if I forgot to mention you :)
 
