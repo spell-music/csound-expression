@@ -109,11 +109,13 @@ csound-expression
 * Bugfixes for `mixAt` function. Now it doesn't duplicates the effectful-code.
    Now `mixAt` is not a function that is based on class `At`. It becomes
    a method in it's own class called `MixAt`. That fixes the code duplication problem.
-   
+
 csound-catalog
 
 * new instruments that are based on PADsynth algorithm. Check out `Csound.Patch`
-   at the section on PADsynth Sharc instruments.
+   at the section on PADsynth Sharc instruments. There are new deep spiritual vedic pads
+   (vibhu, rishi, agni, prakriti, rajas, avatara, bhumi).
+
 
 csound-sampler
 
