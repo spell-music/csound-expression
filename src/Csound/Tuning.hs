@@ -4,12 +4,12 @@ module Csound.Tuning(
     tempC, tempRatioC, stdTemp, stdTempRatio, barTemp, barTempRatio, concertA, ratioConcertA,
 
     -- * Specific temperaments
-    equalTemp, justTemp, meantoneTemp, pythagorTemp,
-    werckmeisterTemp, youngTemp, youngTemp1, youngTemp2,
+    equal1, just1, meantone, pythagor,
+    werckmeister, young1, young2, young3,
 
     -- ** In cents
-    equalCents, justCents, meantoneCents, pythagorCents,
-    werckmeisterCents, youngCents, youngCents1, youngCents2,
+    equalCents1, justCents1, meantoneCents, pythagorCents,
+    werckmeisterCents, youngCents1, youngCents2, youngCents3,
 
     -- * List of temperaments
     TempList(..), tempList, fromTempList, fromTempListD,
@@ -96,7 +96,7 @@ concertA hz cents = ratioConcertA hz (fmap cent2ratio cents)
 newtype Temp = Temp { unTemp :: Tab }
 
 instance Default Temp where
-    def = equalTemp
+    def = equal1
 
 -- | List of temperaments (or more precisely f-table of temperaments).
 -- It can be passed as an argument to the instrument (it can be a part of the note).
@@ -132,46 +132,46 @@ cent2ratio x = 2 ** (x / 1200)
 ratio2cent :: Floating a => a -> a
 ratio2cent x = 1200 * logBase 2 x
 
-equalCents          = fmap (* 100) [0 .. 12]
-justCents           = fmap ratio2cent [1/1, 16/15,   9/8, 6/5, 5/4, 4/3, 45/32,   3/2, 8/5, 5/3, 9/5, 15/8,  2/1]
+equalCents1         = fmap (* 100) [0 .. 12]
+justCents1          = fmap ratio2cent [1/1, 16/15,   9/8, 6/5, 5/4, 4/3, 45/32,   3/2, 8/5, 5/3, 9/5, 15/8,  2/1]
 meantoneCents       = [0,    76.0,    193.2,   310.3,   386.3,   503.4,   579.5,   696.8,   772.6,   889.7,   1006.8,  1082.9,  1200]
 pythagorCents       = [0,   113.7,   203.9,   294.1,   407.8,   498, 611.7,   702, 792.2,   905.9,   996.1,   1109.8, 1200]
 werckmeisterCents   = [0,  90.225,  192.18,  294.135, 390.225, 498.045, 588.27,  696.09,  792.18,  888.27,  996.09,  1092.18, 1200]
-youngCents          = [0,    93.9,    195.8,   297.8,   391.7,   499.9,   591.9,   697.9,   795.8,   893.8,   999.8,   1091.8,  1200]
 
-youngCents1         = zipWith (+) equalCents [0, 0.1, 2.1, 4, -2.1, 6.1, -1.8, 4.2, 2.1, 0, 6, -2, 0]
-youngCents2         = zipWith (+) equalCents [0, -3.9, 2, 0, -2, 3.9, -5.9, 3.9, -2, 0, 2, -3.9, 0]
+youngCents1         = [0,    93.9,    195.8,   297.8,   391.7,   499.9,   591.9,   697.9,   795.8,   893.8,   999.8,   1091.8,  1200]
+youngCents2         = zipWith (+) equalCents1 [0, 0.1, 2.1, 4, -2.1, 6.1, -1.8, 4.2, 2.1, 0, 6, -2, 0]
+youngCents3         = zipWith (+) equalCents1 [0, -3.9, 2, 0, -2, 3.9, -5.9, 3.9, -2, 0, 2, -3.9, 0]
     
 toTemp = tempC
 
 -- | Equal temperament
-equalTemp :: Temp
-equalTemp          = toTemp equalCents
+equal1 :: Temp
+equal1          = toTemp equalCents1
 
 -- | Just intonation
-justTemp :: Temp
-justTemp           = toTemp justCents
+just1 :: Temp
+just1           = toTemp justCents1
 
 -- | Meantone temperament
-meantoneTemp :: Temp
-meantoneTemp       = toTemp meantoneCents
+meantone :: Temp
+meantone       = toTemp meantoneCents
 
 -- | Pythagorean tuning
-pythagorTemp :: Temp
-pythagorTemp       = toTemp pythagorCents 
+pythagor :: Temp
+pythagor       = toTemp pythagorCents 
 
 -- | Werckmeister III temperament. Probably it was temperament of the Bach musical era.
-werckmeisterTemp :: Temp
-werckmeisterTemp   = toTemp werckmeisterCents
+werckmeister :: Temp
+werckmeister   = toTemp werckmeisterCents
 
 -- | Tomas Young temperament
-youngTemp :: Temp
-youngTemp          = toTemp youngCents
+young1 :: Temp
+young1          = toTemp youngCents1
 
 -- | Tomas Young temperament 1 (aligned with ET by C and A)
-youngTemp1 :: Temp
-youngTemp1         = toTemp youngCents1
+young2 :: Temp
+young2         = toTemp youngCents2
 
 -- | Tomas Young temperament 2 (aligned with ET by C and A)
-youngTemp2 :: Temp
-youngTemp2         = toTemp youngCents2
+young3 :: Temp
+young3         = toTemp youngCents3
