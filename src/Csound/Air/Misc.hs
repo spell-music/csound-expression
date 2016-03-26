@@ -521,16 +521,16 @@ type Feedback = Sig
 ------------------------------------------------------
 -- wave shaper
 
--- | Wave shaper. The signal should be bepolar. It ranges within the interval [-1, 1].
+-- | Wave shaper. The signal should be bipolar. It ranges within the interval [-1, 1].
 --
 -- > wshaper table amount asig
 --
 -- wave shaper transforms the input signal with the table. 
--- The amount of transformation scales the signal from 0 to 10. 
+-- The amount of transformation scales the signal from 0 to 1. 
 -- the amount is ratio of scaling. It expects the values from the interval [0, 1].
 -- 
 wshaper :: Tab -> Sig -> Sig -> Sig
-wshaper t amt asig = tablei (0.5 + amt * asig / 20) t `withD` 1 
+wshaper t amt asig = tablei (10 * amt * asig / 20) t `withDs` [1, 0.5]
 
 -- | Wave shaper with sigmoid.
 -- 
@@ -546,23 +546,23 @@ genSaturator rad amt = wshaper (tanhSigmoid rad) amt
 --
 -- > genSaturator 5
 mildSaturator :: Sig -> Sig -> Sig
-mildSaturator = genSaturator 10
+mildSaturator = genSaturator 1
 
 -- | Alias for
 --
 -- > genSaturator 10
 saturator :: Sig -> Sig -> Sig
-saturator = genSaturator 15
+saturator = genSaturator 1.5
 
 -- | Alias for
 --
 -- > genSaturator 50
 hardSaturator :: Sig -> Sig -> Sig
-hardSaturator = genSaturator 35
+hardSaturator = genSaturator 3.5
 
 -- | Alias for
 --
 -- > genSaturator 100
 hardSaturator2 :: Sig -> Sig -> Sig
-hardSaturator2 = genSaturator 65
+hardSaturator2 = genSaturator 6.5
 
