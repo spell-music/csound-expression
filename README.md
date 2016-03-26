@@ -105,7 +105,7 @@ csound-expression
 
 * Adds **Ping-pong delay** implementation. See function `pingPong` at the module `Csound.Air.Fx`.
 
-* Adds Rory Walsh's brand **new analog filters** (need Csound 6.07)
+* Adds Rory Walsh's brand **new analog filters** (need Csound 6.07). See functions `alp1`, `alp2` and `alp3` at the module `Csound.Air.Filter`.
 
 * Bugfixes for `mixAt` function. Now it doesn't duplicates the effectful-code.
    Now `mixAt` is not a function that is based on class `At`. It becomes
