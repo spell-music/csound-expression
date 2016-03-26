@@ -340,6 +340,25 @@ vedicPadCfd4 cfdLevelX cfdLevelY instr1 instr2 instr3 instr4 bandwidth = ...
 They are particularly useful to test timbres with different values for bandwidth (it's the last input argument). 
 Good values lie at the interval `(0.01, 130)`.
 
+There are crossfade versions of specific pads: `vibhuRishi`, `vibhuAgni`, `rishiPrakriti` and so on.
+They take in the bandwidth and crossfade level:
+
+~~~haskell
+> dac $ mul 2 $ vibhuRajas 45 (uosc 0.25)
+~~~
+
+Also we can use a randomized signal to control the crossfade level:
+
+~~~haskell
+> dac $ do { k <- 0.5 + jitter 0.5 0.1 0.2;  mul 2 $ atMidi $ vibhuRajas 65 k }
+~~~
+
+We can create a timbral shimmer effect if we increase the rate of randomized crossfade level:
+
+~~~haskell
+> dac $ do { k <- 0.5 + jitter 0.5 1 8;  mul 2 $ atMidi $ vibhuRajas 65 k }
+~~~
+
 --------------------------------------------------------
 
 * <= [Widgets for live performances](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/LiveWidgetsTutorial.md)
