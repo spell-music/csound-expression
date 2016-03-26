@@ -258,7 +258,7 @@ dumpWav file asig = writeWav file asig >> return asig
 
 -- | Dumps mono signal to file and sends the audio through. Useful to monitor the signals.
 dumpWav1 :: String -> Sig -> SE Sig
-dumpWav1 file asig = writeWav file (fromMono asig) >> return asig
+dumpWav1 file asig = writeWav file (asig, asig) >> return asig
 
 -- | Writes aiff files.
 writeAiff :: String -> (Sig, Sig) -> SE ()
