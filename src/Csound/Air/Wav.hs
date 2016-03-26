@@ -31,6 +31,7 @@
     -- * Writing sound files
     SampleFormat(..),
     writeSigs, writeWav, writeAiff, writeWav1, writeAiff1,
+    dumpWav, dumpWav1,
 
     -- * Utility
     lengthSnd, segments,
@@ -250,6 +251,14 @@ writeSigs fmt sample file = fout (text file) formatToInt
 -- | Writes wav files.
 writeWav :: String -> (Sig, Sig) -> SE ()
 writeWav file = writeSigs Wav Int16 file . \(a, b) -> [a, b]
+
+-- | Dumps signals to file and sends the audio through. Useful to monitor the signals.
+dumpWav :: String -> (Sig, Sig) -> SE (Sig, Sig)
+dumpWav file asig = writeWav file asig >> return asig
+
+-- | Dumps mono signal to file and sends the audio through. Useful to monitor the signals.
+dumpWav1 :: String -> Sig -> SE Sig
+dumpWav1 file asig = writeWav file (fromMono asig) >> return asig
 
 -- | Writes aiff files.
 writeAiff :: String -> (Sig, Sig) -> SE ()
