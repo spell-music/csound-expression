@@ -359,6 +359,16 @@ We can create a timbral shimmer effect if we increase the rate of randomized cro
 > dac $ do { k <- 0.5 + jitter 0.5 1 8;  mul 2 $ atMidi $ vibhuRajas 65 k }
 ~~~
 
+#### Padsynth and noise
+
+we can make the pad more interesting if we add some noise. There are two predefined
+patches that illustrate this idea: `noisyRise` and `noisySpiral`:
+
+~~~
+> vdac $ atMidi noisyRise
+> vdac $ atMidi noisySpiral
+~~~
+
 --------------------------------------------------------
 
 * <= [Widgets for live performances](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/LiveWidgetsTutorial.md)
