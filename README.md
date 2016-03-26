@@ -87,25 +87,25 @@ csound-expression
    There are many predefined tunings (including ancient ones).
    Now we can play the authentic Bach music with Haskell! 
 
-* Functions for Csound API. We can interface with generated code through many other languages.
+* **Functions for Csound API**. We can interface with generated code through many other languages.
    We can generate the code with Haskell and the use it in other environments. we can build UI with Python or Clojure,
      we can create an Android synthesizer. See the guide section on Csound API.
 
-* Padsynth algorithm (need Csound 6.05). There are functions that makes it easy to use wonderful PADsynth algorithm,
+* **Padsynth algorithm** (need Csound 6.05). There are functions that makes it easy to use wonderful PADsynth algorithm,
     This algorithm is designed to make "alive" instruments, natural pads. 
     There are not only function that explore the algorithm but also new PAtches in the
     package csound-catalog that are based on it! See the section in the guide on the PADsynth.
     Lot's of padsynth instruments are mode with morphing support. We can crossfade between 2 or even 4 timbres.    
 
-* Argument modifiers make it very convinient to modulate the rguments (apply vibrato to frequency
+* **Argument modifiers** make it very convinient to modulate the rguments (apply vibrato to frequency
    or add some randomness to the parameter).
 
-* The hard clipping was substituted with limiter. There should be no distortion when
+* The **hard clipping** was substituted with **limiter**. There should be no distortion when
    amplitude goes higher than `0dbfs` value.
 
-* Adds Ping-pong delay implementation.
+* Adds **Ping-pong delay** implementation.
 
-* Adds Rory Walsh's brand new analog filters (need Csound 6.07)
+* Adds Rory Walsh's brand **new analog filters** (need Csound 6.07)
 
 * Bugfixes for `mixAt` function. Now it doesn't duplicates the effectful-code.
    Now `mixAt` is not a function that is based on class `At`. It becomes
@@ -113,7 +113,7 @@ csound-expression
 
 csound-catalog
 
-* new instruments that are based on PADsynth algorithm. Check out `Csound.Patch`
+* **new instruments** that are based on **PADsynth algorithm**. Check out `Csound.Patch`
    at the section on PADsynth Sharc instruments. There are new deep spiritual vedic pads
    (vibhu, rishi, agni, prakriti, rajas, avatara, bhumi).
 
