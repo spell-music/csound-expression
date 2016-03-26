@@ -103,7 +103,7 @@ csound-expression
 * The **hard clipping** was substituted with **limiter**. There should be no distortion when
    amplitude goes higher than `0dbfs` value.
 
-* Adds **Ping-pong delay** implementation.
+* Adds **Ping-pong delay** implementation. See function `pingPong` at the module `Csound.Air.Fx`.
 
 * Adds Rory Walsh's brand **new analog filters** (need Csound 6.07)
 
