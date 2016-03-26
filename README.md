@@ -82,7 +82,7 @@ News
 
 csound-expression
 
-* Microtonal tunings. We can use custom temperaments with insturments, patches, soundfonts and MIDI-instruments.
+* **Microtonal tunings**. We can use custom temperaments with insturments, patches, soundfonts and MIDI-instruments.
    Check out the guide on tuning and microtonal music (see also module `Csound.Tuning`).
    There are many predefined tunings (including ancient ones).
    Now we can play the authentic Bach music with Haskell! 
@@ -95,6 +95,7 @@ csound-expression
     This algorithm is designed to make "alive" instruments, natural pads. 
     There are not only function that explore the algorithm but also new PAtches in the
     package csound-catalog that are based on it! See the section in the guide on the PADsynth.
+    Lot's of padsynth instruments are mode with morphing support. We can crossfade between 2 or even 4 timbres.    
 
 * Argument modifiers make it very convinient to modulate the rguments (apply vibrato to frequency
    or add some randomness to the parameter).
@@ -115,7 +116,6 @@ csound-catalog
 * new instruments that are based on PADsynth algorithm. Check out `Csound.Patch`
    at the section on PADsynth Sharc instruments. There are new deep spiritual vedic pads
    (vibhu, rishi, agni, prakriti, rajas, avatara, bhumi).
-
 
 csound-sampler
 
