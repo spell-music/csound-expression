@@ -15,12 +15,15 @@ module Csound.Air.Wave (
     -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
     rawTri, rawSaw, rawSqr, rawPw, rawTri', rawSaw', rawSqr', rawPw', rndRawTri, rndRawSaw, rndRawSqr, rndRawPw,
 
-    -- ** With hard sync
+    -- ** With hard sync (band-limited waves)
     SyncSmooth(..),
 
     sawSync, isawSync, pulseSync, sqrSync, triSync, bloscSync,
     sawSync', isawSync', pulseSync', sqrSync', triSync', bloscSync',
-    
+
+    -- ** With hard sync (non bandlimited waves)
+    rawTriSync, rawSqrSync, rawSawSync, rawPwSync, oscSyncBy,
+
     -- * Unipolar
     unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
 
@@ -58,7 +61,7 @@ module Csound.Air.Wave (
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
-import Csound.Tab(sine, cosine, sines4, triTab, pwTab, sawTab, sqrTab)
+import Csound.Tab(setSize, elins, sine, cosine, sines4, triTab, pwTab, sawTab, sqrTab)
 import Csound.SigSpace
 
 -- | A pure tone (sine wave).
@@ -433,3 +436,44 @@ urndRawSqr = urndOscBy sqrTab
 
 urndRawPw :: Double -> Sig -> SE Sig
 urndRawPw duty = urndOscBy (pwTab duty)
+
+--------------------------------------
+-- Hard-sync for simple non-bandlimited waveforms
+
+-- | Hard-sync with non-bandlimited triangle wave.
+rawTriSync :: SyncSmooth -> Sig -> Sig -> Sig
+rawTriSync = oscSyncBy triTab
+
+-- | Hard-sync with non-bandlimited square wave.
+rawSqrSync :: SyncSmooth -> Sig -> Sig -> Sig
+rawSqrSync = oscSyncBy sqrTab
+
+-- | Hard-sync with non-bandlimited sawtooth wave.
+rawSawSync :: SyncSmooth -> Sig -> Sig -> Sig
+rawSawSync = oscSyncBy sawTab
+
+-- | Hard-sync with non-bandlimited pulse-width wave.
+rawPwSync  :: Double -> SyncSmooth -> Sig -> Sig -> Sig
+rawPwSync duty = oscSyncBy (pwTab duty)
+
+-- | Hard-sync with non-bandlimited waves.
+oscSyncBy :: Tab -> SyncSmooth -> Sig -> Sig -> Sig
+oscSyncBy tab smoothType cpsRatio cps = (\smoothFun -> syncOsc smoothFun tab cpsRatio cps) $ case smoothType of
+    RawSync      -> (\_ _ -> 1)                   
+    SawSync      -> (\amaster _ -> (1 - amaster)) 
+    TriSync      -> (const $ readSync uniTriTab)  
+    TrapSync     -> (const $ readSync uniTrapTab) 
+    UserSync gen -> (const $ readSync gen)        
+    where
+        readSync ft async = table3 async ft `withD` 1        
+        uniTriTab  = setSize 4097 $ elins [0, 1, 0]
+        uniTrapTab = setSize 4097 $ elins [1, 1, 0]
+
+syncOsc smoothFun ftab ratio cps = dcblock $ aout
+    where
+        (amaster, asyncMaster) = syncphasor cps 0
+        (aslave,  asyncSlave)  = syncphasor (cps * ratio) asyncMaster
+        aosc = table3 aslave ftab `withD` 1
+        aout = aosc * smoothFun amaster asyncMaster
+
+
