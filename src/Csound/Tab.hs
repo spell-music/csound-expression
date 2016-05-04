@@ -30,6 +30,7 @@ module Csound.Tab (
 
     -- ** Special cases
     sine, cosine, sigmoid, tanhSigmoid,
+    triTab, sawTab, sqrTab, pwTab,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -628,3 +629,22 @@ tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unTab b1
 -- | Transforms phasor that is defined in seconds to relative phasor that ranges in 0 to 1.
 sec2rel :: Tab -> Sig -> Sig
 sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
+
+-------------------
+-- specific tabs
+
+-- | Linear segments that form a singl cycle of triangle wave.
+triTab :: Tab
+triTab = elins [0, 1, 0, -1, 0]
+
+-- | Linear segments that form a single cycle of sawtooth wave.
+sawTab :: Tab
+sawTab = elins [1, -1]
+
+-- | Linear segments that form a single cycle of square wave.
+sqrTab :: Tab
+sqrTab = lins [1, 0.5, 1, 0.01, -1, 0.5 -1, 0.01, 1]
+
+-- | Pulse-width wave formed with linear segments. Duty cycle rages from 0 to 1. 0.5 is a square wave.
+pwTab :: Double -> Tab
+pwTab duty = lins [1, duty, 1, 0.01, -1, 1 - duty, -1, 0.01, 1]
