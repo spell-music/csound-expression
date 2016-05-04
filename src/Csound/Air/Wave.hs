@@ -21,6 +21,9 @@ module Csound.Air.Wave (
     sawSync, isawSync, pulseSync, sqrSync, triSync, bloscSync,
     sawSync', isawSync', pulseSync', sqrSync', triSync', bloscSync',
 
+    -- ** With soft sync
+    softSync, rawSoftSync,
+
     -- ** With hard sync (non bandlimited waves)
     rawTriSync, rawSqrSync, rawSawSync, rawPwSync, oscSyncBy,
 
@@ -437,7 +440,7 @@ urndRawSqr = urndOscBy sqrTab
 urndRawPw :: Double -> Sig -> SE Sig
 urndRawPw duty = urndOscBy (pwTab duty)
 
---------------------------------------
+----------------------------------------------------------
 -- Hard-sync for simple non-bandlimited waveforms
 
 -- | Hard-sync with non-bandlimited triangle wave.
@@ -458,7 +461,7 @@ rawPwSync duty = oscSyncBy (pwTab duty)
 
 -- | Hard-sync with non-bandlimited waves.
 oscSyncBy :: Tab -> SyncSmooth -> Sig -> Sig -> Sig
-oscSyncBy tab smoothType cpsRatio cps = (\smoothFun -> syncOsc smoothFun tab cpsRatio cps) $ case smoothType of
+oscSyncBy tab smoothType cpsRatio cps = (\smoothFun -> syncOsc smoothFun tab (ar cpsRatio) (ar cps)) $ case smoothType of
     RawSync      -> (\_ _ -> 1)                   
     SawSync      -> (\amaster _ -> (1 - amaster)) 
     TriSync      -> (const $ readSync uniTriTab)  
@@ -466,8 +469,10 @@ oscSyncBy tab smoothType cpsRatio cps = (\smoothFun -> syncOsc smoothFun tab cps
     UserSync gen -> (const $ readSync gen)        
     where
         readSync ft async = table3 async ft `withD` 1        
-        uniTriTab  = setSize 4097 $ elins [0, 1, 0]
-        uniTrapTab = setSize 4097 $ elins [1, 1, 0]
+        
+uniSawTab  = setSize 4097 $ elins [1, 0]
+uniTriTab  = setSize 4097 $ elins [0, 1, 0]
+uniTrapTab = setSize 4097 $ elins [1, 1, 0]
 
 syncOsc smoothFun ftab ratio cps = dcblock $ aout
     where
@@ -477,3 +482,21 @@ syncOsc smoothFun ftab ratio cps = dcblock $ aout
         aout = aosc * smoothFun amaster asyncMaster
 
 
+----------------------------------------------------------
+-- Soft-sync
+
+softSync :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+softSync = genSoftSync sqr blosc
+
+rawSoftSync :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+rawSoftSync = genSoftSync rawSqr oscBy
+
+genSoftSync :: SigSpace a => (Sig -> Sig) -> (Tab -> Sig -> Sig) -> SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+genSoftSync cpsSwitchWave smoothTabWave smoothType wave ratio cps = flip mul rawSync $ case smoothType of
+    RawSync  -> 1
+    SawSync  -> smoothTabWave uniSawTab cps
+    TriSync  -> smoothTabWave uniTriTab cps
+    TrapSync -> smoothTabWave uniTrapTab cps
+    UserSync t -> smoothTabWave t cps
+    where 
+        rawSync = wave (ar $ (ar ratio) * (ar cps) * (ar $ cpsSwitchWave cps)) 
