@@ -11,6 +11,10 @@ module Csound.Air.Wave (
     rndOsc, rndOscBy, rndSaw, rndIsaw, rndPulse, rndSqr, rndPw, rndTri, rndRamp, rndBlosc,    
     rndPhs,
 
+    -- ** Raw analog waves (no band limiting)
+    -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
+    rawTri, rawSaw, rawSqr, rawPw, rawTri', rawSaw', rawSqr', rawPw', rndRawTri, rndRawSaw, rndRawSqr, rndRawPw,
+
     -- ** With hard sync
     SyncSmooth(..),
 
@@ -25,6 +29,10 @@ module Csound.Air.Wave (
 
     -- ** With random phase
     urndOsc, urndOscBy, urndSaw, urndIsaw, urndPulse, urndSqr, urndPw, urndTri, urndRamp, urndBlosc,        
+
+    -- ** Raw analog waves (no band limiting)
+    -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
+    urawTri, urawSaw, urawSqr, urawPw, urawTri', urawSaw', urawSqr', urawPw', urndRawTri, urndRawSaw, urndRawSqr, urndRawPw,
 
     -- * Noise
     rndh, urndh, rndi, urndi, white, pink,
@@ -50,7 +58,7 @@ module Csound.Air.Wave (
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
-import Csound.Tab(sine, cosine, sines4)
+import Csound.Tab(sine, cosine, sines4, triTab, pwTab, sawTab, sqrTab)
 import Csound.SigSpace
 
 -- | A pure tone (sine wave).
@@ -346,3 +354,82 @@ gbuz (hmin, hmax) hratio x = gbuzz 1 x hmax hmin hratio cosine
 -- | Gbuz with phase
 gbuz' :: D -> (Sig, Sig) -> Sig -> Sig -> Sig
 gbuz' phs hs hratio x = gbuz hs hratio x `withD` phs
+
+---------------------------------------------
+-- raw waveforms
+
+-- bipolar
+
+rawTri :: Sig -> Sig
+rawTri = oscBy triTab
+
+rawSaw :: Sig -> Sig
+rawSaw = oscBy sawTab
+
+rawSqr :: Sig -> Sig
+rawSqr = oscBy sqrTab
+
+rawPw :: Double -> Sig -> Sig
+rawPw duty = oscBy (pwTab duty)
+
+rawTri' :: D -> Sig -> Sig
+rawTri' = oscBy' triTab
+
+rawSaw' :: D -> Sig -> Sig
+rawSaw' = oscBy' sawTab
+
+rawSqr' :: D -> Sig -> Sig
+rawSqr' = oscBy' sqrTab
+
+rawPw' :: Double -> D -> Sig -> Sig
+rawPw' duty = oscBy' (pwTab duty)
+
+rndRawTri :: Sig -> SE Sig
+rndRawTri = rndOscBy triTab
+
+rndRawSaw :: Sig -> SE Sig
+rndRawSaw = rndOscBy sawTab
+
+rndRawSqr :: Sig -> SE Sig
+rndRawSqr = rndOscBy sqrTab
+
+rndRawPw :: Double -> Sig -> SE Sig
+rndRawPw duty = rndOscBy (pwTab duty)
+
+-- unipolar
+
+urawTri :: Sig -> Sig
+urawTri = uoscBy triTab
+
+urawSaw :: Sig -> Sig
+urawSaw = uoscBy sawTab
+
+urawSqr :: Sig -> Sig
+urawSqr = uoscBy sqrTab
+
+urawPw :: Double -> Sig -> Sig
+urawPw duty = uoscBy (pwTab duty)
+
+urawTri' :: D -> Sig -> Sig
+urawTri' = uoscBy' triTab
+
+urawSaw' :: D -> Sig -> Sig
+urawSaw' = uoscBy' sawTab
+
+urawSqr' :: D -> Sig -> Sig
+urawSqr' = uoscBy' sqrTab
+
+urawPw' :: Double -> D -> Sig -> Sig
+urawPw' duty = uoscBy' (pwTab duty)
+
+urndRawTri :: Sig -> SE Sig
+urndRawTri = urndOscBy triTab
+
+urndRawSaw :: Sig -> SE Sig
+urndRawSaw = urndOscBy sawTab
+
+urndRawSqr :: Sig -> SE Sig
+urndRawSqr = urndOscBy sqrTab
+
+urndRawPw :: Double -> Sig -> SE Sig
+urndRawPw duty = urndOscBy (pwTab duty)
