@@ -11,6 +11,12 @@ module Csound.Air.Wave (
     rndOsc, rndOscBy, rndSaw, rndIsaw, rndPulse, rndSqr, rndPw, rndTri, rndRamp, rndBlosc,    
     rndPhs,
 
+    -- ** With hard sync
+    SyncSmooth(..),
+
+    sawSync, isawSync, pulseSync, sqrSync, triSync, bloscSync,
+    sawSync', isawSync', pulseSync', sqrSync', triSync', bloscSync',
+    
     -- * Unipolar
     unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
 
@@ -181,7 +187,7 @@ ublosc' a = unipolar' (blosc' a)
 --------------------------------------------------------------------------
 -- random phase
 
--- | Generic random phase oscil
+-- | Generic random smoothTypephase oscil
 rndPhs :: (D -> Sig -> Sig) -> (Sig -> SE Sig)
 rndPhs f cps = fmap (\x -> f x cps) $ rnd 1
 
