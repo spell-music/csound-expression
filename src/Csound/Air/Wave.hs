@@ -485,14 +485,14 @@ syncOsc smoothFun ftab ratio cps = dcblock $ aout
 ----------------------------------------------------------
 -- Soft-sync
 
-softSync :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+softSync :: SigSpace a => (Sig -> a) -> SyncSmooth -> Sig -> (Sig -> a)
 softSync = genSoftSync sqr blosc
 
-rawSoftSync :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+rawSoftSync :: SigSpace a => (Sig -> a) -> SyncSmooth -> Sig -> (Sig -> a)
 rawSoftSync = genSoftSync rawSqr oscBy
 
-genSoftSync :: SigSpace a => (Sig -> Sig) -> (Tab -> Sig -> Sig) -> SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
-genSoftSync cpsSwitchWave smoothTabWave smoothType wave ratio cps = flip mul rawSync $ case smoothType of
+genSoftSync :: SigSpace a => (Sig -> Sig) -> (Tab -> Sig -> Sig) -> (Sig -> a) -> SyncSmooth -> Sig -> (Sig -> a)
+genSoftSync cpsSwitchWave smoothTabWave wave smoothType ratio cps = flip mul rawSync $ case smoothType of
     RawSync  -> 1
     SawSync  -> smoothTabWave uniSawTab cps
     TriSync  -> smoothTabWave uniTriTab cps
