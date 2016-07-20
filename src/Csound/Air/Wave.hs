@@ -500,3 +500,9 @@ genSoftSync cpsSwitchWave smoothTabWave wave smoothType ratio cps = flip mul raw
     UserSync t -> smoothTabWave t cps
     where 
         rawSync = wave (ar $ (ar ratio) * (ar cps) * (ar $ cpsSwitchWave cps)) 
+
+------------------------------------------------------
+-- PW and Ramp hard sync
+
+-- pwSync 
+
