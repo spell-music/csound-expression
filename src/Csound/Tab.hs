@@ -95,7 +95,10 @@ module Csound.Tab (
     tablewa, sec2rel,
 
     -- * Tables of tables
-    TabList, tabList, fromTabList, fromTabListD
+    TabList, tabList, fromTabList, fromTabListD,
+
+    -- * Mic table functions
+    tablew
 ) where
 
 import Control.Applicative hiding ((<*))
@@ -648,3 +651,24 @@ sqrTab = lins [1, 0.5, 1, 0.01, -1, 0.5 -1, 0.01, 1]
 -- | Pulse-width wave formed with linear segments. Duty cycle rages from 0 to 1. 0.5 is a square wave.
 pwTab :: Double -> Tab
 pwTab duty = lins [1, duty, 1, 0.01, -1, 1 - duty, -1, 0.01, 1]
+
+---------------------------------------------------
+
+-- | 
+-- tablew — Change the contents of existing function tables. 
+--
+-- This opcode operates on existing function tables, changing their contents. 
+-- tablew is for writing at k- or at a-rates, with the table number being 
+-- specified at init time. Using tablew with i-rate signal and index values 
+-- is allowed, but the specified data will always be written to the function 
+-- table at k-rate, not during the initialization pass. The valid combinations 
+-- of variable types are shown by the first letter of the variable names. 
+--
+-- > tablew asig, andx, ifn [, ixmode] [, ixoff] [, iwgmode]
+-- > tablew isig, indx, ifn [, ixmode] [, ixoff] [, iwgmode]
+-- > tablew ksig, kndx, ifn [, ixmode] [, ixoff] [, iwgmode]
+--
+-- csound doc: <http://www.csounds.com/manual/html/tablew.html>
+tablew ::  Sig -> Sig -> Tab -> SE ()
+tablew b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+    where f a1 a2 a3 = opcs "tablew" [(Xr,[Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3]

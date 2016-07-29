@@ -18,9 +18,10 @@ module Csound.Air.Wave (
     -- ** With hard sync (band-limited waves)
     SyncSmooth(..),
 
+{-
     sawSync, isawSync, pulseSync, sqrSync, triSync, bloscSync,
     sawSync', isawSync', pulseSync', sqrSync', triSync', bloscSync',
-
+-}
     -- ** With soft sync
     softSync, rawSoftSync,
 
@@ -439,6 +440,8 @@ urndRawSqr = urndOscBy sqrTab
 
 urndRawPw :: Double -> Sig -> SE Sig
 urndRawPw duty = urndOscBy (pwTab duty)
+
+data SyncSmooth = RawSync | SawSync | TriSync | TrapSync | UserSync Tab
 
 ----------------------------------------------------------
 -- Hard-sync for simple non-bandlimited waveforms
