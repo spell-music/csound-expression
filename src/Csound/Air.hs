@@ -17,6 +17,7 @@ module Csound.Air (
 
     -- | Granular synthesis
     module Csound.Air.Granular,
+    module Csound.Air.Granular.Morpheus,
 
     -- | Spectral Processing
     module Csound.Air.Spec, 
@@ -58,6 +59,7 @@ import Csound.Air.Filter
 import Csound.Air.ModArg
 import Csound.Air.Wav
 import Csound.Air.Granular
+import Csound.Air.Granular.Morpheus
 import Csound.Air.Spec
 import Csound.Air.Fx
 import Csound.Air.Live
