@@ -22,14 +22,14 @@ module Csound.Tab (
 
     -- * Read from files
     WavChn(..), Mp3Chn(..),
-    wavs, mp3s,
+    wavs, wavl, wavr, mp3s, mp3l, mp3r, mp3m,
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
     sines, sines3, sines2, sines1, sines4, buzzes, bwSines, bwOddSines,
 
     -- ** Special cases
-    sine, cosine, sigmoid, tanhSigmoid,
+    sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
     triTab, sawTab, sqrTab, pwTab,
 
     -- * Interpolants    
@@ -186,6 +186,14 @@ fromMp3Chn x = case x of
 instance Default Mp3Chn where
     def = Mp3All
 
+-- | Reads left channel of audio-file
+wavl :: String -> Tab
+wavl file = wavs file 0 WavLeft
+
+-- | Reads right channel of audio-file
+wavr :: String -> Tab
+wavr file = wavs file 0 WavRight
+
 -- | Loads mp3 file to table:
 --
 -- > mp3s fileName skipTime format
@@ -198,6 +206,18 @@ mp3s :: String -> Double -> Mp3Chn -> Tab
 mp3s filename skiptime channel = preTab (SizePlain 0) idMp3s 
     (FileAccess filename [skiptime, format])
     where format = fromIntegral $ fromMp3Chn channel
+
+-- | Reads left channel of mp3-file
+mp3l :: String -> Tab
+mp3l file = mp3s file 0 Mp3Left
+
+-- | Reads right channel of mp3-file
+mp3r :: String -> Tab
+mp3r file = mp3s file 0 Mp3Right
+
+-- | Reads mono of mp3-file
+mp3m :: String -> Tab
+mp3m file = mp3s file 0 Mp3Mono
 
 interp :: Int -> [Double] -> Tab
 interp genId as = preTab def genId (ArgsRelative as)
@@ -431,6 +451,14 @@ cosine = buzzes 1 []
 -- | Table for sigmoid wave.
 sigmoid :: Tab
 sigmoid = sines4 [(0.5, 0.5, 270, 0.5)]
+
+-- | Table for sigmoid rise wave.
+sigmoidRise :: Tab
+sigmoidRise = guardPoint $ sines4 [(0.5, 1, 270, 1)]
+
+-- | Table for sigmoid fall wave.
+sigmoidFall :: Tab
+sigmoidFall = guardPoint $ sines4 [(0.5, 1, 90, 1)]
 
 -- | Creates tanh sigmoid. The argument is the radius of teh sigmoid.
 tanhSigmoid :: Double -> Tab

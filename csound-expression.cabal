@@ -87,7 +87,8 @@ Library
 
         Csound.Air        
         Csound.Air.Wave
-        Csound.Air.Granular        
+        Csound.Air.Granular
+        Csound.Air.Granular.Morpheus
         Csound.Air.Envelope
         Csound.Air.Filter
         Csound.Air.ModArg
