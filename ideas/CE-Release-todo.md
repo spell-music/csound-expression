@@ -3,13 +3,6 @@ Release todo
 
 * complete Hard and Soft sync 
 
-* complete partikkel helper function to read from samples
-    think hard on interface how to mke it easy  (what namings to choose)
-
-    * based on samples
-
-    * maybe other cases:  (I think it's better for the next release)
-
 * make granular oscillators (based on SHARC and partikkel)
 
 * include table Read/Write opcodes
@@ -19,7 +12,18 @@ Release todo
 
    What about Tab of tabs in this case ??
 
+----------------------------------------
+-- Done
+
 * add mul' for SE
+
+* complete partikkel helper function to read from samples
+    think hard on interface how to mke it easy  (what namings to choose)
+
+    * based on samples
+
+    * maybe other cases:  (I think it's better for the next release)
+
 
 ------------------------------
 -- next release
