@@ -18,12 +18,22 @@ module Csound.Air.Wave (
     -- ** With hard sync (band-limited waves)
     SyncSmooth(..),
 
-{-
     sawSync, isawSync, pulseSync, sqrSync, triSync, bloscSync,
     sawSync', isawSync', pulseSync', sqrSync', triSync', bloscSync',
--}
-    -- ** With soft sync
-    softSync, rawSoftSync,
+
+    -- *** hard sync with absolute slave frequencies
+    sawSyncAbs, isawSyncAbs, pulseSyncAbs, sqrSyncAbs, triSyncAbs, bloscSyncAbs,
+    sawSyncAbs', isawSyncAbs', pulseSyncAbs', sqrSyncAbs', triSyncAbs', bloscSyncAbs',
+
+
+    -- *** hard sync with absolute custom smooth mode
+    sawSyncBy, isawSyncBy, pulseSyncBy, sqrSyncBy, triSyncBy, bloscSyncBy,
+    sawSyncBy', isawSyncBy', pulseSyncBy', sqrSyncBy', triSyncBy', bloscSyncBy',
+    sawSyncAbsBy, isawSyncAbsBy, pulseSyncAbsBy, sqrSyncAbsBy, triSyncAbsBy, bloscSyncAbsBy,
+    sawSyncAbsBy', isawSyncAbsBy', pulseSyncAbsBy', sqrSyncAbsBy', triSyncAbsBy', bloscSyncAbsBy',
+
+   -- ** With soft sync
+    softSync, rawSoftSync, softSyncBy, rawSoftSyncBy,
 
     -- ** With hard sync (non bandlimited waves)
     rawTriSync, rawSqrSync, rawSawSync, rawPwSync, oscSyncBy,
@@ -62,6 +72,8 @@ module Csound.Air.Wave (
     -- * Buzzes
     buz, gbuz, buz', gbuz'    
 ) where
+
+import Data.Default
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
@@ -441,8 +453,6 @@ urndRawSqr = urndOscBy sqrTab
 urndRawPw :: Double -> Sig -> SE Sig
 urndRawPw duty = urndOscBy (pwTab duty)
 
-data SyncSmooth = RawSync | SawSync | TriSync | TrapSync | UserSync Tab
-
 ----------------------------------------------------------
 -- Hard-sync for simple non-bandlimited waveforms
 
@@ -488,14 +498,20 @@ syncOsc smoothFun ftab ratio cps = dcblock $ aout
 ----------------------------------------------------------
 -- Soft-sync
 
-softSync :: SigSpace a => (Sig -> a) -> SyncSmooth -> Sig -> (Sig -> a)
-softSync = genSoftSync sqr blosc
+softSync :: SigSpace a => (Sig -> a) -> Sig -> (Sig -> a)
+softSync = softSyncBy def
 
-rawSoftSync :: SigSpace a => (Sig -> a) -> SyncSmooth -> Sig -> (Sig -> a)
-rawSoftSync = genSoftSync rawSqr oscBy
+rawSoftSync :: SigSpace a => (Sig -> a) -> Sig -> (Sig -> a)
+rawSoftSync = rawSoftSyncBy def
 
-genSoftSync :: SigSpace a => (Sig -> Sig) -> (Tab -> Sig -> Sig) -> (Sig -> a) -> SyncSmooth -> Sig -> (Sig -> a)
-genSoftSync cpsSwitchWave smoothTabWave wave smoothType ratio cps = flip mul rawSync $ case smoothType of
+softSyncBy :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+softSyncBy = genSoftSync sqr blosc
+
+rawSoftSyncBy :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+rawSoftSyncBy = genSoftSync rawSqr oscBy
+
+genSoftSync :: SigSpace a => (Sig -> Sig) -> (Tab -> Sig -> Sig) -> SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
+genSoftSync cpsSwitchWave smoothTabWave smoothType wave ratio cps = flip mul rawSync $ case smoothType of
     RawSync  -> 1
     SawSync  -> smoothTabWave uniSawTab cps
     TriSync  -> smoothTabWave uniTriTab cps
