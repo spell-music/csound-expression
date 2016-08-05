@@ -1,21 +1,23 @@
 Release todo
 ============================
 
-* complete Hard and Soft sync 
-
 * make granular oscillators (based on SHARC and partikkel)
 
-* include table Read/Write opcodes
-
 * add filters with adjectives for character names
+
+* include table Read/Write opcodes
 
 * add SE wrappers to table read and write opcodes
    add special funs for read-only tables.
 
    What about Tab of tabs in this case ??
 
+* casio oscillators
+
 ----------------------------------------
 -- Done
+
+* complete Hard and Soft sync 
 
 * add mul' for SE
 
