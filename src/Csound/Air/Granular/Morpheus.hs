@@ -14,7 +14,7 @@ module Csound.Air.Granular.Morpheus(
 	pairToSquare,
 
 	-- * Oscillators
-	morpheusOsc, morpheusOsc2, morpheusOscMultiCps
+	morpheusOsc, morpheusOsc2
 ) where
 
 import Control.Arrow
@@ -234,40 +234,13 @@ morpheusOsc spec (baseFreq, t) cps = morpheus spec waves ratio
 cycleTab t = phasor $ sig $ recip $ getTabLen t
 
 -- | Morpheus oscillator.
-morpheusOsc2 :: MorphSpec -> (D, [(Sig, Tab)]) -> (Sig, Sig) -> Sig -> SE Sig2
-morpheusOsc2 spec (baseFreq, ts) (x, y) cps = morpheus spec waves ratio
+morpheusOsc2 :: MorphSpec -> D -> [(Sig, Tab)] -> (Sig, Sig) -> Sig -> SE Sig2
+morpheusOsc2 spec baseFreq ts (x, y) cps = morpheus spec waves ratio
 	where
 		(a1, a2, a3, a4) = pairToSquare (x, y)
 		ratio = cps / sig baseFreq		
 		waves = zipWith (\amp (key, t) -> (t, amp, key, cycleTab t)) [a1, a2, a3, a4] (cycle $ ts)		
 
--- | Morpheus oscillator.
--- It reads through the tables. The list of tables corresponds to pairs of frequencies and waveshapes.
--- 
--- > morpheusOscMultiCps spec baseFreqWaves cps = ...
-morpheusOscMultiCps :: MorphSpec -> [(D, Tab)] -> D -> SE Sig2
-morpheusOscMultiCps spec tabs cps = do
-	(baseFreq, tab) <- getTabForFreq tabs cps
-	let aptr = phasor (sig $ 1 / getTabLen tab)
-	morpheus spec [(tab, 1, 1, aptr)] (sig $ cps / baseFreq)
-
-getTabForFreq :: [(D, Tab)] -> D -> SE (D, Tab)
-getTabForFreq specs val = do
-	refTab      <- newCtrlRef lastTab
-	refBaseFreq <- newCtrlRef lastBaseFreq
-
-	compareWhenD val (fmap (\(baseFreq, tab) -> (baseFreq, toCase refTab refBaseFreq (baseFreq, tab))) specs)
-
-	tab <- readRef refTab
-	baseFreq <- readRef refBaseFreq
-
-	return (baseFreq, tab)
-	where
-        toCase refTab refBaseFreq spec = do
-            writeRef refTab (snd spec)
-            writeRef refBaseFreq (fst spec)
-
-        (lastBaseFreq, lastTab) = last specs
 
 {- examples
 

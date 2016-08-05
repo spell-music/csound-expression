@@ -27,7 +27,10 @@ module Csound.Air.Padsynth (
     -- * Layered padsynth
     padsynthOscMultiCps, padsynthOscMultiCps2,
     padsynthOscMultiVol, padsynthOscMultiVol2,
-    padsynthOscMultiVolCps, padsynthOscMultiVolCps2    
+    padsynthOscMultiVolCps, padsynthOscMultiVolCps2,
+
+    -- * Granular oscillators
+    morphsynthOscMultiCps, quadMorphsynthOscMultiCps   
 ) where
 
 import Data.List
@@ -38,6 +41,8 @@ import Csound.Tab
 import Csound.Air.Wave
 import Csound.Typed.Opcode(poscil)
 import Csound.Types(compareWhenD)
+
+import Csound.Air.Granular.Morpheus
 
 -- | Padsynth oscillator. 
 --
@@ -219,3 +224,23 @@ bwSaw2 bandwidth = toStereoOsc (bwSaw bandwidth)
 -- an idea ^ to crossfade between noises 4 knobs and to crossfade between harmonics other 4 knobs
 -- for a synth
 
+----------------------------------------------------------------
+-- morpheus oscil
+
+-- | Combines morpheus oscillators with padsynth algorithm.
+-- It uses single table for granular synthesis.
+morphsynthOscMultiCps :: MorphSpec -> [(Double, PadsynthSpec)] -> D -> SE Sig2
+morphsynthOscMultiCps morphSpec specs freq = do
+    (baseFreq, tab) <- layeredPadsynthSpec freq (fmap (first double) specs)
+    morpheusOsc morphSpec (baseFreq, tab) (sig freq)
+
+-- | Combines morpheus oscillators with padsynth algorithm.
+-- It uses up to four tables for granular synthesis.
+quadMorphsynthOscMultiCps :: MorphSpec -> [[(Double, PadsynthSpec)]] -> (Sig, Sig) -> D -> SE Sig2
+quadMorphsynthOscMultiCps morphSpec specs (x, y) freq = do
+    freqTabs <- mapM getFreqTab specs    
+    let mainFreq = fst $ head freqTabs 
+    morpheusOsc2 morphSpec mainFreq (fmap (toTab mainFreq) freqTabs) (x, y) (sig freq)
+    where
+        getFreqTab specs = layeredPadsynthSpec freq (fmap (first double) specs)
+        toTab mainFreq (freq, t) = (sig $ freq / mainFreq, t)
