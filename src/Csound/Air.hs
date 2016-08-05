@@ -2,6 +2,8 @@
 module Csound.Air (      
     -- | The basic sound waves: pure sine, sawtooth, square, triangle, LFOs.
     module Csound.Air.Wave,
+    -- | Hard and soft sync
+    module Csound.Air.Wave.Sync,
 
     -- | Envelope generators.
     module Csound.Air.Envelope,  
@@ -54,6 +56,7 @@ module Csound.Air (
 ) where
 
 import Csound.Air.Wave
+import Csound.Air.Wave.Sync
 import Csound.Air.Envelope
 import Csound.Air.Filter
 import Csound.Air.ModArg

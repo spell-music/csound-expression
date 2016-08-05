@@ -7,6 +7,8 @@ Release todo
 
 * include table Read/Write opcodes
 
+* add filters with adjectives for character names
+
 * add SE wrappers to table read and write opcodes
    add special funs for read-only tables.
 
@@ -40,6 +42,15 @@ Release todo
 -- next release (super hard problems)
 
 * thinking on cabbage UI. To get Csound instruments work with DAW.
+
+* adding parameters for patches. Synth characters. Set of sub-synth tools to create the patch (waves filters envelopes)
+
+* global tempo
+
+* note arpegiator
+
+* thinking on more modular approach (creation of streams of notes instead of callback functions)
+   arpeggiator as anote transformer
 
 * thinking on delay + sampler bug
 
