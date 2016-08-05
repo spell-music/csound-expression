@@ -5,8 +5,6 @@ Release todo
 
 * add filters with adjectives for character names
 
-* include table Read/Write opcodes
-
 * add SE wrappers to table read and write opcodes
    add special funs for read-only tables.
 
