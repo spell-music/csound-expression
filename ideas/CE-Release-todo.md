@@ -5,11 +5,6 @@ Release todo
 
 * add filters with adjectives for character names
 
-* add SE wrappers to table read and write opcodes
-   add special funs for read-only tables.
-
-   What about Tab of tabs in this case ??
-
 * casio oscillators
 
 ----------------------------------------
@@ -26,6 +21,10 @@ Release todo
 
     * maybe other cases:  (I think it's better for the next release)
 
+* add SE wrappers to table read and write opcodes
+   add special funs for read-only tables.
+
+   What about Tab of tabs in this case ??
 
 ------------------------------
 -- next release

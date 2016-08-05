@@ -37,6 +37,7 @@ import Csound.Typed
 import Csound.Tab
 import Csound.Air.Wave
 import Csound.Typed.Opcode(poscil)
+import Csound.Types(compareWhenD)
 
 -- | Padsynth oscillator. 
 --
@@ -132,22 +133,6 @@ padsynthOscMultiVolCps specs (amp, freq) = undefined
 -- Stereo version of @padsynthOscMultiVolCps@.
 padsynthOscMultiVolCps2 :: [((Double, Double), PadsynthSpec)] -> (D, D) -> SE Sig2
 padsynthOscMultiVolCps2 specs x = toStereoOsc (padsynthOscMultiVolCps specs) x
-
-----------------------------------------------------
--- 
-
-whenElseD :: BoolD -> SE () -> SE () -> SE ()
-whenElseD cond ifDo elseDo = whenDs [(cond, ifDo)] elseDo
-
-compareWhenD :: D -> [(D, SE ())] -> SE ()
-compareWhenD val conds = case conds of
-    [] -> return ()
-    [(cond, ifDo)] -> ifDo 
-    (cond1, do1):(cond2, do2): [] -> whenElseD (val `lessThan` cond1) do1 do2
-    _ -> whenElseD (val `lessThan` rootCond) (compareWhenD val less) (compareWhenD val more)
-    where
-        (less, more) = splitAt (length conds `div` 2) conds
-        rootCond = fst $ last less
 
 ----------------------------------------------------
 -- waves

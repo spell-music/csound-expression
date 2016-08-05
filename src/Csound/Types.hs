@@ -42,7 +42,7 @@ module Csound.Types(
     quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
-    boolSig, when1, whens, whenD1, whenDs, whileDo, untilDo, whileDoD, untilDoD,
+    boolSig, when1, whens, whenD1, whenDs, whileDo, untilDo, whileDoD, untilDoD, whenElseD, compareWhenD,
     equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
 
     -- ** Aliases 
@@ -78,6 +78,7 @@ module Csound.Types(
 
 import Data.Boolean
 import Csound.Typed.Types
+import Csound.Control.SE
 
 -- | Gets an init-rate value from the list by index.
 atArg :: (Tuple a, Arg a) => [a] -> D -> a
@@ -87,3 +88,17 @@ atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as
 atTuple :: (Tuple a) => [a] -> Sig -> a
 atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
+
+whenElseD :: BoolD -> SE () -> SE () -> SE ()
+whenElseD cond ifDo elseDo = whenDs [(cond, ifDo)] elseDo
+
+-- | Performs tree search f the first argument lies within the interval it performs the corresponding procedure.
+compareWhenD :: D -> [(D, SE ())] -> SE ()
+compareWhenD val conds = case conds of
+    [] -> return ()
+    [(cond, ifDo)] -> ifDo 
+    (cond1, do1):(cond2, do2): [] -> whenElseD (val `lessThan` cond1) do1 do2
+    _ -> whenElseD (val `lessThan` rootCond) (compareWhenD val less) (compareWhenD val more)
+    where
+        (less, more) = splitAt (length conds `div` 2) conds
+        rootCond = fst $ last less

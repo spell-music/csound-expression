@@ -11,9 +11,13 @@ module Csound.Air.Granular.Morpheus(
 	morphSnd1, morphSnd,
 
 	-- * Amplitude modes
-	pairToSquare
+	pairToSquare,
+
+	-- * Oscillators
+	morpheusOsc, morpheusOsc2, morpheusOscMultiCps
 ) where
 
+import Control.Arrow
 import Data.Default
 
 import Csound.Typed
@@ -24,6 +28,7 @@ import Csound.SigSpace
 import Csound.Air.Granular(Pointer, csdPartikkel)
 import Csound.Air.Wav
 import Csound.Air.Wave
+import Csound.Types(compareWhenD)
 
 type WaveAmp = Sig
 type WaveKey = Sig
@@ -166,9 +171,7 @@ morpheus spec pwaves cps = do
     	amp3 = getAmp wave3
     	amp4 = getAmp wave4
 
-    	imax_grains = 100
-
-    	getTabLen t = ftlen t / getSampleRate
+    	imax_grains = 100   	
 
     	getWaveKey (tab1, amp1, key1, ptr1) = key1 / sig (getTabLen tab1)
 
@@ -202,6 +205,8 @@ morpheus spec pwaves cps = do
     		mapM_  (\(i, amp) -> tablew amp  (2 + sig (int i)) t ) (zip [0 .. ] [a1, a2, a3, a4])
     		return t
 
+getTabLen t = ftlen t / getSampleRate
+
 pairToSquare :: (Sig, Sig) -> (Sig, Sig, Sig, Sig)
 pairToSquare (x, y) = ((1 - x) * (1 - y), x * (1 - y) , x * y, (1 - x) * y)
 
@@ -218,6 +223,51 @@ morphSndByTab getTab spec waves cps = morpheus spec (fmap fromSnd waves) cps
 	where
 		fromSnd (file, amp, key) = (getTab file, amp, key, phasor (1 / sig (lengthSnd file)))
 
+-- | Morpheus oscillator.
+morpheusOsc :: MorphSpec -> (D, Tab) -> Sig -> SE Sig2
+morpheusOsc spec (baseFreq, t) cps = morpheus spec waves ratio
+	where
+		ratio = cps / sig baseFreq
+		aptr = cycleTab t
+		waves = [(t, 1, 1, aptr)]
+
+cycleTab t = phasor $ sig $ recip $ getTabLen t
+
+-- | Morpheus oscillator.
+morpheusOsc2 :: MorphSpec -> (D, [(Sig, Tab)]) -> (Sig, Sig) -> Sig -> SE Sig2
+morpheusOsc2 spec (baseFreq, ts) (x, y) cps = morpheus spec waves ratio
+	where
+		(a1, a2, a3, a4) = pairToSquare (x, y)
+		ratio = cps / sig baseFreq		
+		waves = zipWith (\amp (key, t) -> (t, amp, key, cycleTab t)) [a1, a2, a3, a4] (cycle $ ts)		
+
+-- | Morpheus oscillator.
+-- It reads through the tables. The list of tables corresponds to pairs of frequencies and waveshapes.
+-- 
+-- > morpheusOscMultiCps spec baseFreqWaves cps = ...
+morpheusOscMultiCps :: MorphSpec -> [(D, Tab)] -> D -> SE Sig2
+morpheusOscMultiCps spec tabs cps = do
+	(baseFreq, tab) <- getTabForFreq tabs cps
+	let aptr = phasor (sig $ 1 / getTabLen tab)
+	morpheus spec [(tab, 1, 1, aptr)] (sig $ cps / baseFreq)
+
+getTabForFreq :: [(D, Tab)] -> D -> SE (D, Tab)
+getTabForFreq specs val = do
+	refTab      <- newCtrlRef lastTab
+	refBaseFreq <- newCtrlRef lastBaseFreq
+
+	compareWhenD val (fmap (\(baseFreq, tab) -> (baseFreq, toCase refTab refBaseFreq (baseFreq, tab))) specs)
+
+	tab <- readRef refTab
+	baseFreq <- readRef refBaseFreq
+
+	return (baseFreq, tab)
+	where
+        toCase refTab refBaseFreq spec = do
+            writeRef refTab (snd spec)
+            writeRef refBaseFreq (fst spec)
+
+        (lastBaseFreq, lastTab) = last specs
 
 {- examples
 
