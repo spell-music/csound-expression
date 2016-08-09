@@ -5,7 +5,7 @@
         FlexibleInstances, 
         FlexibleContexts #-}
 module Csound.SigSpace(
-    SigSpace(..), BindSig(..), mul, on, uon, At(..), MixAt(..), bat, bmixAt,
+    SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..), bat, bmixAt,
     cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, 
     wsum        
 ) where
@@ -28,6 +28,10 @@ class SigSpace a => BindSig a where
 -- | Scaling the sound.
 mul :: SigSpace a => Sig -> a -> a
 mul k = mapSig (k * )
+
+-- | Scaling the sound with effectful signal.
+mul' :: BindSig a => SE Sig -> a -> SE a
+mul' k = bindSig (\x -> fmap (* x) k)
 
 -- rescaling
 
