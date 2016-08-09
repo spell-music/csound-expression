@@ -111,6 +111,7 @@ Library
         Csound.IO
         Csound.Options
         Csound.Tuning
+        Csound.Cabbage
 
         Csound.Control
         Csound.Control.Evt
