@@ -213,10 +213,10 @@ pairToSquare (x, y) = ((1 - x) * (1 - y), x * (1 - y) , x * y, (1 - x) * y)
 morphSnd1 :: MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
 morphSnd1 spec waves cps = morpheus spec (fmap fromSnd waves) cps
 	where
-		fromSnd (file, amp, key) = (wavl file, amp, key, phasor (1 / sig (lengthSnd file)))
+		fromSnd (file, amp, key) = (wavLeft file, amp, key, phasor (1 / sig (lengthSnd file)))
 
 morphSnd :: MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
-morphSnd spec waves cps = morphSndByTab wavl spec waves cps + morphSndByTab wavr spec waves cps
+morphSnd spec waves cps = morphSndByTab wavLeft spec waves cps + morphSndByTab wavRight spec waves cps
 
 morphSndByTab :: (String -> Tab) -> MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
 morphSndByTab getTab spec waves cps = morpheus spec (fmap fromSnd waves) cps

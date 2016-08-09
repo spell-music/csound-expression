@@ -22,7 +22,7 @@ module Csound.Tab (
 
     -- * Read from files
     WavChn(..), Mp3Chn(..),
-    wavs, wavl, wavr, mp3s, mp3l, mp3r, mp3m,
+    wavs, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
@@ -190,12 +190,12 @@ instance Default Mp3Chn where
     def = Mp3All
 
 -- | Reads left channel of audio-file
-wavl :: String -> Tab
-wavl file = wavs file 0 WavLeft
+wavLeft :: String -> Tab
+wavLeft file = wavs file 0 WavLeft
 
 -- | Reads right channel of audio-file
-wavr :: String -> Tab
-wavr file = wavs file 0 WavRight
+wavRight :: String -> Tab
+wavRight file = wavs file 0 WavRight
 
 -- | Loads mp3 file to table:
 --
@@ -211,12 +211,12 @@ mp3s filename skiptime channel = preTab (SizePlain 0) idMp3s
     where format = fromIntegral $ fromMp3Chn channel
 
 -- | Reads left channel of mp3-file
-mp3l :: String -> Tab
-mp3l file = mp3s file 0 Mp3Left
+mp3Left :: String -> Tab
+mp3Left file = mp3s file 0 Mp3Left
 
 -- | Reads right channel of mp3-file
-mp3r :: String -> Tab
-mp3r file = mp3s file 0 Mp3Right
+mp3Right :: String -> Tab
+mp3Right file = mp3s file 0 Mp3Right
 
 -- | Reads mono of mp3-file
 mp3m :: String -> Tab
