@@ -7,6 +7,10 @@ Release todo
 
 * casio oscillators
 
+* nord drums
+
+* freeverb
+
 ----------------------------------------
 -- Done
 
