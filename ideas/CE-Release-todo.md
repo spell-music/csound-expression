@@ -37,6 +37,10 @@ Release todo
 
 * try to emulate some instruments from commercial Virtual-analog synths
 
+* OSC - functions
+
+* Midi out 
+
 ------------------------------
 -- next release (super hard problems)
 
