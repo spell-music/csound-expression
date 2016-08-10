@@ -1,5 +1,5 @@
 module Csound.Cabbage(
-    Cab, cabbage,
+    Cab, CabProp, cabbage,
 
     -- * Widgets
     button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable, 
