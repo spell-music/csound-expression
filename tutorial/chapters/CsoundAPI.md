@@ -565,6 +565,6 @@ $ python
 
 * <= [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
 
-* => Happy Haskelling / Csounding
+* => [Creating VST-plugins with Cabbage](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

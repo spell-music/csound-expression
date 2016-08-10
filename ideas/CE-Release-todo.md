@@ -30,6 +30,8 @@ Release todo
 
    What about Tab of tabs in this case ??
 
+* thinking on cabbage UI. To get Csound instruments work with DAW.
+
 ------------------------------
 -- next release
 
@@ -47,8 +49,6 @@ Release todo
 
 ------------------------------
 -- next release (super hard problems)
-
-* thinking on cabbage UI. To get Csound instruments work with DAW.
 
 * adding parameters for patches. Synth characters. Set of sub-synth tools to create the patch (waves filters envelopes)
 
