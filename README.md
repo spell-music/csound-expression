@@ -54,6 +54,8 @@ Let's look at how we can create computer music with Haskell.
 
 * [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
 
+* [Creating plugins with Cabbage](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md)
+
 -------------------------------------------------------------------
 
 Appendix:

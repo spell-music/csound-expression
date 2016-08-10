@@ -54,7 +54,8 @@ ui = do
 			C.text1 "Click me"
 			C.colour0 (C.Rgb 150 30 0)
 			C.colour1 (C.Rgb 30 150 12)	
-	chnCtrlGet "button"	
+	res <- chnCtrlGet "button"	
+	return res
 
 main = dac $ do
 	btn <- ui
@@ -158,7 +159,7 @@ We can find out how to do it o the official [web-site](http://cabbageaudio.com/d
 
 --------------------------------------------------
 
-* <= [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
+* <= [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
 
 * => Happy Haskelling / Csounding
 
