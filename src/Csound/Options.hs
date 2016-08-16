@@ -7,6 +7,7 @@ module Csound.Options(
     setOutput, setInput, 
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
+    setCabbage,
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for 
@@ -34,6 +35,7 @@ module Csound.Options(
     Config(..)
 ) where
 
+import Data.Monoid
 import Data.Default
 import Csound.Typed
 
@@ -97,3 +99,9 @@ setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } 
 -- | Sets midi device to all.
 setMa :: Options
 setMa = setMidiDevice "a"
+
+---------------------------------------------
+
+setCabbage :: Options
+setCabbage = setRates 48000 64 <> setNoRtMidi <> setMidiDevice "0"
+    where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }} 

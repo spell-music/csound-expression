@@ -35,7 +35,10 @@ module Csound.IO (
     dac, dacBy, vdac, vdacBy,
 
     -- * Render and run
-    csd, csdBy
+    csd, csdBy,
+
+    -- * Render and run with cabbage
+    runCabbage, runCabbageBy
 ) where
 
 import System.Process
@@ -46,7 +49,7 @@ import Data.Default
 import Csound.Typed
 import Csound.Control.Gui
 
-import Csound.Options(setSilent, setDac)
+import Csound.Options(setSilent, setDac, setCabbage)
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy 
@@ -290,3 +293,17 @@ runWithUserInterrupt cmd = do
             E.UserInterrupt -> terminateProcess pid >> E.throw x
             e               -> E.throw e
 
+----------------------------------------------------------
+
+-- | Runs the csound files with cabbage engine. 
+-- It invokes the Cabbage command line utility and setts all default cabbage flags.
+runCabbage :: (RenderCsd a) => a -> IO ()
+runCabbage = runCabbageBy def
+
+-- | Runs the csound files with cabbage engine with user defined options. 
+-- It invokes the Cabbage command line utility and setts all default cabbage flags.
+runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
+runCabbageBy opt' a = do
+    writeCsdBy opt "tmp.csd" a
+    runWithUserInterrupt $ "Cabbage " ++ "tmp.csd" 
+    where opt = opt' <> setCabbage
