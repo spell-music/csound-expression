@@ -33,10 +33,28 @@ module Csound.Air.Filter(
     alp1, alp2, alp3, alp4, ahp,
 
     -- ** Low level analog filters    
-    mvchpf, mvclpf1, mvclpf2, mvclpf3, mvclpf4
+    mvchpf, mvclpf1, mvclpf2, mvclpf3, mvclpf4,
+
+    -- * Zero delay filters
+
+    -- ** One pole filters
+    zdf1, zlp1, zhp1, zap1,
+
+    -- ** Two pole filters
+    zdf2, zlp, zbp, zhp, zdf2_notch, zbr,
+
+    -- ** Ladder filter
+    zladder, 
+
+    -- ** Four poles filters
+    zdf4, zlp4, zbp4, zhp4, 
+
+    -- ** Eq-filters
+    peakEq, highShelf, lowShelf 
 ) where
 
 import Csound.Typed
+import Csound.Typed.Plugins
 import Csound.SigSpace(bat)
 import Csound.Typed.Opcode
 
