@@ -5,6 +5,9 @@ Creating plugins with Cabbage
 
 (since version 5.1)
 
+WARNING: Right now Cabbage is not stable. It's hard to use. But when it will improve we are going to have 
+the set of tools to create cabbage instruments.
+
 The Cabbage is a cool program that let's you run Csound instruments and effects as VST-plugins.
 Moreover it let's you run Csound on Android. It defines it's own way to define UI-widgets in Csound.
 Cabbage is very easy to learn, the Haskell implementation faithfully represents the cabbage.
