@@ -19,7 +19,7 @@ module Csound.Air.Filter(
     -- * Specific filters
 
     -- ** Moog filters
-    mlp, mlp2, mlp3, lp18,
+    mlp, mlp2, mlp3, lp18, ladder,
 
     -- ** Formant filters
     formant, singA, singO, singE, singU, singO2,
@@ -50,7 +50,27 @@ module Csound.Air.Filter(
     zdf4, zlp4, zbp4, zhp4, 
 
     -- ** Eq-filters
-    peakEq, highShelf, lowShelf 
+    peakEq, highShelf, lowShelf,
+
+    -- * Classic analog-like filters
+
+    -- ** low pass
+    lpCheb1, lpCheb1', lpCheb2, lpCheb2', clp, clp',
+
+    -- ** high pass
+    hpCheb1, hpCheb1', hpCheb2, hpCheb2', chp, chp',
+
+    -- * Named resonant low pass filters
+    plastic, wobble, trumpy, harsh, 
+
+    -- * TB303 filter
+    tbf,
+
+    -- * Statevariable filters
+    slp, shp, sbp, sbr,
+
+    -- * Multimode filters
+    multiStatevar, multiSvfilter
 ) where
 
 import Csound.Typed
@@ -316,3 +336,170 @@ mvclpf4 = genMvclpf "mvclpf4"
 genMvclpf :: String -> Sig -> Sig -> Sig -> Sig
 genMvclpf name b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
     where f a1 a2 a3 = opcs name [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+
+
+-----------------------------------------------
+-- named filters
+
+-- classic filters
+
+-- low pass
+
+-- | Chebyshev  type I low pass filter (with 2 poles).
+lpCheb1 :: Sig -> Sig -> Sig
+lpCheb1 = lpCheb1' 2
+
+-- | Chebyshev  type I low pass filter (with given number of poles, first argument).
+lpCheb1' :: D -> Sig -> Sig -> Sig
+lpCheb1' npoles kcf asig = clfilt asig kcf 0 npoles `withD` 1
+
+-- | Chebyshev  type II low pass filter (with 2 poles).
+lpCheb2 :: Sig -> Sig -> Sig 
+lpCheb2 = lpCheb2' 2
+
+-- | Chebyshev  type II low pass filter (with given number of poles, first argument).
+lpCheb2' :: D -> Sig -> Sig -> Sig
+lpCheb2' npoles kcf asig = clfilt asig kcf 0 npoles `withD` 2
+
+-- | Butterworth lowpass filter based on clfilt opcode (with 2 poles).
+clp :: Sig -> Sig -> Sig
+clp = clp' 2
+
+-- | Butterworth lowpass filter based on clfilt opcode (with given number of poles, first argument).
+clp' :: D -> Sig -> Sig -> Sig
+clp' npoles kcf asig = clfilt asig kcf 0 npoles `withD` 0
+
+-- high pass
+
+-- | Chebyshev  type I high pass filter (with 2 poles).
+hpCheb1 :: Sig -> Sig -> Sig
+hpCheb1 = hpCheb1' 2
+
+-- | Chebyshev  type I high pass filter (with given number of poles, first argument).
+hpCheb1' :: D -> Sig -> Sig -> Sig
+hpCheb1' npoles kcf asig = clfilt asig kcf 1 npoles `withD` 1
+
+-- | Chebyshev  type II high pass filter (with 2 poles).
+hpCheb2 :: Sig -> Sig -> Sig 
+hpCheb2 = hpCheb2' 2
+
+-- | Chebyshev  type II high pass filter (with given number of poles, first argument).
+hpCheb2' :: D -> Sig -> Sig -> Sig
+hpCheb2' npoles kcf asig = clfilt asig kcf 1 npoles `withD` 2
+
+-- | Butterworth high pass filter based on clfilt opcode (with 2 poles).
+chp :: Sig -> Sig -> Sig
+chp = clp' 2
+
+-- | Butterworth high pass filter based on clfilt opcode (with given number of poles, first argument).
+chp' :: D -> Sig -> Sig -> Sig
+chp' npoles kcf asig = clfilt asig kcf 1 npoles `withD` 0
+
+------------------------------------------
+-- band-pass
+
+mkBp :: FlatFilter -> FlatFilter -> Sig -> Sig -> Sig -> Sig
+mkBp lowPass highPass cfq bw asig = highPass (cfq - rad) $ lowPass (cfq + rad) asig
+    where rad = bw / 2
+
+bpCheb1 :: Sig -> Sig -> Sig -> Sig
+bpCheb1 = bpCheb1' 2
+
+bpCheb1' :: D -> Sig -> Sig -> Sig -> Sig
+bpCheb1' npoles = mkBp (lpCheb1' npoles) (hpCheb1' npoles) 
+
+bpCheb2 :: Sig -> Sig -> Sig -> Sig
+bpCheb2 = bpCheb2' 2
+
+bpCheb2' :: D -> Sig -> Sig -> Sig -> Sig
+bpCheb2' npoles = mkBp (lpCheb2' npoles) (hpCheb2' npoles) 
+
+cbp :: Sig -> Sig -> Sig -> Sig
+cbp = cbp' 2
+
+cbp' :: D -> Sig -> Sig -> Sig -> Sig
+cbp' npoles = mkBp (clp' npoles) (chp' npoles) 
+
+
+---------------------------------------------
+-- resonant filters
+
+mkReson :: FlatFilter -> FlatFilter -> ResonFilter
+mkReson lowPass highPass kcf res asig = 0.5 * (lowPass (kcf * 2) asig + bandPass bw kcf asig)
+    where
+        bw = kcf / (0.001 + abs res)
+        bandPass = mkBp lowPass highPass   
+
+cheb1 :: Sig -> Sig -> Sig -> Sig
+cheb1 = cheb1' 2
+
+cheb1' :: D -> Sig -> Sig -> Sig -> Sig
+cheb1' npoles = mkReson (lpCheb1' npoles) (hpCheb1' npoles) 
+
+cheb2 :: Sig -> Sig -> Sig -> Sig
+cheb2 = cheb2' 2
+
+cheb2' :: D -> Sig -> Sig -> Sig -> Sig
+cheb2' npoles = mkReson (lpCheb2' npoles) (hpCheb2' npoles) 
+
+vcf :: Sig -> Sig -> Sig -> Sig
+vcf = cbp' 2
+
+vcf' :: D -> Sig -> Sig -> Sig -> Sig
+vcf' npoles = mkReson (clp' npoles) (chp' npoles) 
+
+-- moog ladder
+
+ladder :: Sig -> Sig -> Sig -> Sig
+ladder kcf res asig = moogladder asig kcf res
+
+-----------------------------------------
+-- named filters
+
+plastic :: Sig -> Sig -> Sig -> Sig
+plastic kcf res asig = rezzy asig kcf (1 + 99 * res)
+
+wobble :: Sig -> Sig -> Sig -> Sig
+wobble kcf res asig = lowres asig kcf res
+
+trumpy :: Sig -> Sig -> Sig -> Sig
+trumpy kcf res asig = vlowres asig kcf (res* 0.15) 6 (4 + res * 20)
+
+harsh :: Sig -> Sig -> Sig -> Sig
+harsh kcf res asig = bat (\x -> bqrez x kcf (1 + 90 * res)) asig
+
+-----------------------------
+
+-- | Fixed version of tbfcv filter
+-- the first argument is distortion (range [0, 1])
+tbf :: Sig -> Sig -> Sig -> Sig -> Sig
+tbf dist kcf res asig = tbvcf asig (1010 + kcf) res (0.5 + 3.5 * dist) 0.5
+
+-----------------------------
+-- state variable filter
+
+slp :: Sig -> Sig -> Sig -> Sig
+slp kcf res asig = lows
+    where (_, lows, _, _) = statevar asig kcf res
+
+shp :: Sig -> Sig -> Sig -> Sig
+shp kcf res asig = highs
+    where (highs, _, _, _) = statevar asig kcf res
+
+sbp :: Sig -> Sig -> Sig -> Sig
+sbp kcf res asig = mids
+    where (_, _, mids, _) = statevar asig kcf res
+
+sbr :: Sig -> Sig -> Sig -> Sig
+sbr kcf res asig = sides
+    where (_, _, _, sides) = statevar asig kcf res
+
+
+multiStatevar :: (Sig, Sig, Sig) -> Sig -> Sig -> Sig -> Sig
+multiStatevar (weightLows, wieghtHighs, weightMids) kcf res asig = weightLows * lows + wieghtHighs * highs + weightMids * mids
+    where (highs, lows, mids, _) = statevar asig kcf res
+
+multiSvfilter :: (Sig, Sig, Sig) -> Sig -> Sig -> Sig -> Sig
+multiSvfilter (weightLows, wieghtHighs, weightMids) kcf res asig = weightLows * lows + wieghtHighs * highs + weightMids * mids
+    where (highs, lows, mids) = svfilter asig kcf res
+
