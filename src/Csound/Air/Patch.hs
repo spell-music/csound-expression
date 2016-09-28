@@ -1,9 +1,10 @@
 {-# Language ScopedTypeVariables #-}
 -- | Patches.
 module Csound.Air.Patch(
+  
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
-	Patch1, Patch2, Patch(..),	
-	PatchSig1, PatchSig2,
+	Patch1, Patch2, Patch(..)
+{-      
 	getPatchFx, dryPatch, atMix, atMixes,
 
 	-- * Midi
@@ -45,10 +46,12 @@ module Csound.Air.Patch(
 	atMidiTemp, atMonoTemp, atMonoSharpTemp, atMonoTemp', atHoldMidiTemp, 
 	-- ** Csound API
 	patchByNameMidiTemp, monoPatchByNameMidiTemp, monoSharpPatchByNameMidiTemp, monoPatchByNameMidiTemp'
+    -}
 ) where
 
 import Control.Monad
 import Control.Applicative
+import Control.Arrow(second)
 
 import Csound.Typed
 import Csound.SigSpace
@@ -76,44 +79,39 @@ type Fx1 = Fx Sig
 -- | Stereo effect.
 type Fx2 = Fx Sig2
 
--- | Mono patches.
-type Patch1 = Patch D Sig
-
--- | Stereo patches.
-type Patch2 = Patch D Sig2
-
--- | Mono continuous patches.
-type PatchSig1 = Patch Sig Sig
-
--- | Stereo continuous patches.
-type PatchSig2 = Patch Sig Sig2
-
 data FxSpec a = FxSpec
 	{ fxMix :: DryWetRatio
 	, fxFun :: Fx a	
 	}
 
+{-
 -- | A patch. It's an instrument, an effect and default dry/wet ratio.
 data Patch a b = Patch 	
     { patchInstr :: Instr a b
     , patchFx	 :: [FxSpec b] }
+-}
 
-{- new patch implementation ???
+type Patch1 = Patch Sig
+type Patch2 = Patch Sig2
 
-data Patch2 = Patch Sig2
-
-data Patch a =
-    | MonoSynt (Instr Sig a)
+data Patch a 
+    = MonoSynt (Instr Sig a)
     | PolySynt (Instr D   a)
     | FxChain [FxSpec a] (Patch a)
     | SplitPatch [(D, (Patch a))]
     | LayerPatch [(Sig, (Patch a))]
--}
 
-dryPatch :: Patch a b -> Patch a b
-dryPatch p = p { patchFx = [] }
+dryPatch :: Patch a -> Patch a
+dryPatch x = case x of
+    MonoSynt instr -> x
+    PolySynt instr -> x
+    FxChain _ p    -> dryPatch p
+    SplitPatch xs  -> dryPatch $ snd $ head xs
+    LayerPatch xs  -> dryPatch $ snd $ head xs
 
+{-
 -- | Sets the mix of the last effect.
+}
 atMix :: Sig -> Patch a b -> Patch a b
 atMix k p = p { patchFx = mapHead (\x -> x { fxMix = k }) (patchFx p) }
 	where 
@@ -137,11 +135,57 @@ wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
 -- | Transforms all the effects for the given patch into a single function. 
 getPatchFx :: (SigSpace a, Sigs a) => Patch b a -> Fx a
 getPatchFx p = foldr (<=<) return $ fmap wet $ patchFx p
+-}
 
 --------------------------------------------------------------
 
-instance SigSpace a => SigSpace (Patch b a) where
-	mapSig f p = p { patchInstr = fmap (mapSig f) . patchInstr p }
+instance SigSpace a => SigSpace (Patch a) where
+	mapSig f x = 
+            case x of
+                MonoSynt instr -> MonoSynt $ fmap (mapSig f) . instr
+                PolySynt instr -> PolySynt $ fmap (mapSig f) . instr
+                FxChain fxs p  -> FxChain fxs $ mapSig f p
+                SplitPatch xs  -> SplitPatch $ mapSnd f xs
+                LayerPatch xs  -> LayerPatch $ mapSnd f xs
+            where mapSnd f = fmap (second $ mapSig f) 
+
+
+wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
+wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
+
+getPatchFx :: (SigSpace a, Sigs a) => [FxSpec a] -> Fx a
+getPatchFx xs = foldr (<=<) return $ fmap wet xs
+
+atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote D -> SE a
+atNote p note@(amp, cps) = case p of
+    MonoSynt instr -> instr (sig amp, sig cps)
+    PolySynt instr -> instr note
+    FxChain fxs p -> getPatchFx fxs =<< atNote p note 
+    LayerPatch xs -> onLayered xs $ \x -> atNote x note
+    SplitPatch xs -> undefined
+
+atMidi :: (SigSpace a, Sigs a) => Patch a -> SE a
+atMidi x = case x of
+    MonoSynt instr -> undefined
+    PolySynt instr -> midi (instr . ampCps)
+    FxChain fxs p -> getPatchFx fxs =<< atMidi p
+    LayerPatch xs -> onLayered xs atMidi
+
+atMidiTemp :: (SigSpace a, Sigs a) => Temp -> Patch a -> SE a
+atMidiTemp tm x = case x of
+    MonoSynt instr -> undefined
+    PolySynt instr -> midi (instr . ampCps' tm)
+    FxChain fxs p -> getPatchFx fxs =<< atMidiTemp tm p
+    LayerPatch xs -> onLayered xs (atMidiTemp tm)
+
+-- tm a = getPatchFx a =<< midi (patchInstr a . ampCps' tm)
+
+onLayered :: (SigSpace a, Sigs a) => [(Sig, Patch a)] -> (Patch a -> SE a) -> SE a
+onLayered xs f = fmap sum $ mapM (\(vol, p) -> fmap (mul vol) $ f p) xs
+
+--    getPatchFx a =<< midi (patchInstr a . ampCps)    
+
+{-
 
 --------------------------------------------------------------
 -- note
@@ -379,3 +423,5 @@ vel2amp vol = ((vol / 64) ** 2) / 2
 
 vel2ampSig :: Sig -> Sig
 vel2ampSig vol = ((vol / 64) ** 2) / 2
+
+-}
