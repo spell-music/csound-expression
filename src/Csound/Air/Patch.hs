@@ -94,10 +94,21 @@ data FxSpec a = FxSpec
 	}
 
 -- | A patch. It's an instrument, an effect and default dry/wet ratio.
-data Patch a b = Patch
-	{ patchInstr :: Instr a b
-	, patchFx	 :: [FxSpec b]
-	}
+data Patch a b = Patch 	
+    { patchInstr :: Instr a b
+    , patchFx	 :: [FxSpec b] }
+
+{- new patch implementation ???
+
+data Patch2 = Patch Sig2
+
+data Patch a =
+    | MonoSynt (Instr Sig a)
+    | PolySynt (Instr D   a)
+    | FxChain [FxSpec a] (Patch a)
+    | SplitPatch [(D, (Patch a))]
+    | LayerPatch [(Sig, (Patch a))]
+-}
 
 dryPatch :: Patch a b -> Patch a b
 dryPatch p = p { patchFx = [] }
