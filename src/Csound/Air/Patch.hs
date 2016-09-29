@@ -177,8 +177,44 @@ atMidiTemp tm x = case x of
     PolySynt instr -> midi (instr . ampCps' tm)
     FxChain fxs p -> getPatchFx fxs =<< atMidiTemp tm p
     LayerPatch xs -> onLayered xs (atMidiTemp tm)
+    SplitPatch xs -> undefined
 
--- tm a = getPatchFx a =<< midi (patchInstr a . ampCps' tm)
+--------------------------------------------------------------
+-- sched
+
+-- | Plays a patch with event stream. Supplies a custom value for mixing effects (dry/wet).
+-- The 0 is a dry signal, the 1 is a wet signal.
+atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco (CsdNote D)) -> SE a
+atSched x evt = case x of
+    MonoSynt instr -> undefined
+    PolySynt instr -> return $ sched instr evt
+    FxChain fxs p  -> getPatchFx fxs =<< atSched p evt
+    LayerPatch xs -> onLayered xs (\patch -> atSched patch evt)
+    SplitPatch xs -> undefined
+
+
+atSchedUntil :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> Evt b -> SE a
+atSchedUntil x evt stop = case x of     
+    MonoSynt instr -> undefined
+    PolySynt instr -> return $ schedUntil instr evt stop
+    FxChain fxs p  -> getPatchFx fxs =<< atSchedUntil p evt stop
+    LayerPatch xs -> onLayered xs (\patch -> atSchedUntil patch evt stop)
+    SplitPatch xs -> undefined
+
+--------------------------------------------------------------
+-- sco
+ 
+-- | Plays a patch with scores. Supplies a custom value for mixing effects (dry/wet).
+-- The 0 is a dry signal, the 1 is a wet signal.
+atSco :: (SigSpace a, Sigs a) => Patch a -> Sco (CsdNote D) -> Sco (Mix a)
+atSco x sc = case x of
+    MonoSynt instr -> undefined
+    PolySynt instr -> sco instr sc 
+    FxChain fxs p  -> eff (getPatchFx fxs) $atSco p sc
+    LayerPatch xs -> har $ fmap (\(vol, p) -> atSco (mul vol p) sc) xs
+    SplitPatch xs -> undefined
+--    eff (getPatchFx p) $ sco (patchInstr p) sc 
+
 
 onLayered :: (SigSpace a, Sigs a) => [(Sig, Patch a)] -> (Patch a -> SE a) -> SE a
 onLayered xs f = fmap sum $ mapM (\(vol, p) -> fmap (mul vol) $ f p) xs
