@@ -5,7 +5,9 @@ module Csound.Air.Patch(
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
 	Patch1, Patch2, Patch(..),
 
-	-- getPatchFx, dryPatch, atMix, atMixes,
+    mapPatchInstr, dryPatch, getPatchFx,
+
+	-- atMix, atMixes,
 
 	-- * Midi
 	atMidi, -- atMono, atMono', atMonoSharp, atHoldMidi,
@@ -19,10 +21,9 @@ module Csound.Air.Patch(
 
 	-- * Single note
 	atNote,
-{-}
+
 	-- * Fx
-	addInstrFx, addPreFx, addPostFx,
--}
+    addInstrFx, addPreFx, addPostFx,
 
 	-- * Pads
 	harmonPatch, deepPad,
@@ -36,22 +37,26 @@ module Csound.Air.Patch(
 	withSmallRoom, withSmallRoom', 
 	withSmallHall, withSmallHall',
 	withLargeHall, withLargeHall',
-	withMagicCave, withMagicCave'
-{-
+	withMagicCave, withMagicCave',
+
 	-- * Sound font patches
 	sfPatch, sfPatchHall,
 
+    -- * Monosynt params
+    onMonoSyntSpec, setMonoSharp, setMonoHold
+{-
 	-- * Csound API
 	patchByNameMidi, monoPatchByNameMidi, monoSharpPatchByNameMidi, monoPatchByNameMidi',
 
 	-- * Custom temperament
 	-- ** Midi
-	atMidiTemp, atMonoTemp, atMonoSharpTemp, atMonoTemp', atHoldMidiTemp, 
+	atMidiTemp,
 	-- ** Csound API
 	patchByNameMidiTemp, monoPatchByNameMidiTemp, monoSharpPatchByNameMidiTemp, monoPatchByNameMidiTemp'
     -}
 ) where
 
+import Data.Boolean
 import Data.Default    
 import Control.Monad
 import Control.Applicative
@@ -65,6 +70,7 @@ import Csound.Control.Sf
 import Csound.Air.Fx
 import Csound.Typed.Opcode(cpsmidinn, ampdb)
 import Csound.Tuning
+import Csound.Types
 
 -- | A simple csound note (good for playing with midi-keyboard).
 -- It's a pair of amplitude (0 to 1) and freuqncy (Hz).
@@ -115,16 +121,25 @@ data Patch a
     = MonoSynt MonoSyntSpec (Instr Sig a)
     | PolySynt (Instr D   a)
     | FxChain [FxSpec a] (Patch a)
-    | SplitPatch [(D, (Patch a))]
+    | SplitPatch (Patch a) D (Patch a)
     | LayerPatch [(Sig, (Patch a))]
+
+
+mapPatchInstr :: ((CsdNote D -> SE a) -> (CsdNote D -> SE a)) -> Patch a -> Patch a
+mapPatchInstr f x = case x of
+    MonoSynt _ _ -> x
+    PolySynt instr -> PolySynt $ f instr
+    FxChain fxs p -> FxChain fxs $ mapPatchInstr f p
+    LayerPatch xs -> LayerPatch (mapSnd (mapPatchInstr f) xs)
+    SplitPatch a dt b -> SplitPatch (mapPatchInstr f a) dt (mapPatchInstr f b)
 
 dryPatch :: Patch a -> Patch a
 dryPatch x = case x of
     MonoSynt spec instr -> x
-    PolySynt instr -> x
-    FxChain _ p    -> dryPatch p
-    SplitPatch xs  -> dryPatch $ snd $ head xs
-    LayerPatch xs  -> dryPatch $ snd $ head xs
+    PolySynt instr      -> x
+    FxChain _ p         -> dryPatch p
+    SplitPatch a dt b   -> SplitPatch (dryPatch a) dt (dryPatch b)
+    LayerPatch xs       -> LayerPatch $ mapSnd dryPatch xs
 
 {-
 -- | Sets the mix of the last effect.
@@ -162,10 +177,11 @@ instance SigSpace a => SigSpace (Patch a) where
                 MonoSynt spec instr -> MonoSynt spec $ fmap (mapSig f) . instr
                 PolySynt instr -> PolySynt $ fmap (mapSig f) . instr
                 FxChain fxs p  -> FxChain fxs $ mapSig f p
-                SplitPatch xs  -> SplitPatch $ mapSnd f xs
+                SplitPatch a dt b -> SplitPatch (mapSig f a) dt (mapSig f b)
                 LayerPatch xs  -> FxChain [FxSpec 1 (return . mapSig f)] $ LayerPatch xs
-            where mapSnd f = fmap (second $ mapSig f) 
 
+mapSnd :: (a -> b) -> [(c, a)] -> [(c, b)]
+mapSnd f = fmap (second f) 
 
 wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
 wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
@@ -178,8 +194,16 @@ atNote p note@(amp, cps) = case p of
     MonoSynt spec instr -> instr (sig amp, sig cps)
     PolySynt instr -> instr note
     FxChain fxs p -> getPatchFx fxs =<< atNote p note 
-    LayerPatch xs -> onLayered xs $ \x -> atNote x note
-    SplitPatch xs -> undefined
+    LayerPatch xs -> onLayered xs $ \x -> atNote x note    
+    SplitPatch a t b -> getSplit (cps `lessThan` t) (atNote a note) (atNote b note)
+
+getSplit :: (Num a, Tuple a) => BoolD -> SE a -> SE a -> SE a
+getSplit cond a b = do
+    ref <- newRef 0
+    whenElseD cond 
+        (mixRef ref =<< a)
+        (mixRef ref =<< b)
+    readRef ref
 
 atMidi :: (SigSpace a, Sigs a) => Patch a -> SE a
 atMidi x = case x of
@@ -187,6 +211,7 @@ atMidi x = case x of
     PolySynt instr -> midi (instr . ampCps)
     FxChain fxs p -> getPatchFx fxs =<< atMidi p
     LayerPatch xs -> onLayered xs atMidi
+    SplitPatch a dt b -> genMidiSplitPatch ampCps a dt b
     where
         monoSynt spec instr = instr =<< getArg
             where
@@ -204,7 +229,7 @@ atMidiTemp tm x = case x of
     PolySynt instr -> midi (instr . ampCps' tm)
     FxChain fxs p -> getPatchFx fxs =<< atMidiTemp tm p
     LayerPatch xs -> onLayered xs (atMidiTemp tm)
-    SplitPatch xs -> undefined
+    SplitPatch a cps b -> genMidiSplitPatch (ampCps' tm) a cps b
     where
         monoSynt spec instr = instr =<< getArg
             where
@@ -216,6 +241,32 @@ atMidiTemp tm x = case x of
                 rel  = monoSyntRelease spec
                 chn  = monoSyntChn spec
 
+genMidiSplitPatch :: (SigSpace a, Sigs a) => (Msg -> (D, D)) -> Patch a -> D -> Patch a -> SE a
+genMidiSplitPatch midiArg = genSplitPatch $ \instr -> midi (instr . midiArg)
+
+genSplitPatch :: (SigSpace a, Sigs a) => ((CsdNote D -> SE a) -> SE a) -> Patch a -> D -> Patch a -> SE a
+genSplitPatch playInstr a dt b = liftA2 (+) (leftSplit dt a) (rightSplit dt b)
+    where
+        leftSplit  dt a = onCondPlay ( `lessThan` dt) a
+        rightSplit dt a = onCondPlay ( `greaterThanEquals` dt) a
+
+        onCondPlay cond x = case x of
+            MonoSynt spec instr -> error "Split doesn't work for monophonic synths. Pleas use only polyphonic synths."
+            PolySynt instr -> playInstr (restrictPolyInstr cond instr)
+            FxChain fxs p -> getPatchFx fxs =<< onCondPlay cond p
+            LayerPatch xs -> onLayered xs (onCondPlay cond)
+            SplitPatch a dt b -> liftA2 (+) 
+                        (onCondPlay (\x -> cond x &&* (x `lessThan` dt)) a) 
+                        (onCondPlay (\x -> cond x &&* (x `greaterThanEquals` dt)) b)
+
+restrictPolyInstr :: (Sigs a) => (D -> BoolD) -> (CsdNote D -> SE a) -> CsdNote D -> SE a
+restrictPolyInstr cond instr note@(amp, cps) = do
+    ref <- newRef 0
+    whenElseD (cond cps) 
+        (writeRef ref =<< instr note)
+        (writeRef ref 0)
+    readRef ref
+
 --------------------------------------------------------------
 -- sched
 
@@ -223,20 +274,22 @@ atMidiTemp tm x = case x of
 -- The 0 is a dry signal, the 1 is a wet signal.
 atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco (CsdNote D)) -> SE a
 atSched x evt = case x of
-    MonoSynt _ instr -> undefined
-    PolySynt instr -> return $ sched instr evt
+    MonoSynt _ instr -> error "atSched is not defined for monophonic synthesizers"
+    PolySynt instr -> playInstr instr
     FxChain fxs p  -> getPatchFx fxs =<< atSched p evt
     LayerPatch xs -> onLayered xs (\patch -> atSched patch evt)
-    SplitPatch xs -> undefined
+    SplitPatch a t b -> genSplitPatch playInstr a t b
+    where playInstr instr = return $ sched instr evt
 
 
 atSchedUntil :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> Evt b -> SE a
 atSchedUntil x evt stop = case x of     
-    MonoSynt _ instr -> undefined
-    PolySynt instr -> return $ schedUntil instr evt stop
+    MonoSynt _ instr -> error "atSchedUntil is not defined for monophonic synthesizers"
+    PolySynt instr -> playInstr instr
     FxChain fxs p  -> getPatchFx fxs =<< atSchedUntil p evt stop
     LayerPatch xs -> onLayered xs (\patch -> atSchedUntil patch evt stop)
-    SplitPatch xs -> undefined
+    SplitPatch a cps b -> genSplitPatch playInstr a cps b
+    where playInstr instr = return $ schedUntil instr evt stop
 
 --------------------------------------------------------------
 -- sco
@@ -245,11 +298,11 @@ atSchedUntil x evt stop = case x of
 -- The 0 is a dry signal, the 1 is a wet signal.
 atSco :: (SigSpace a, Sigs a) => Patch a -> Sco (CsdNote D) -> Sco (Mix a)
 atSco x sc = case x of
-    MonoSynt _ instr -> undefined
+    MonoSynt _ instr -> error "atSco is not defined for monophonic synthesizers"
     PolySynt instr -> sco instr sc 
     FxChain fxs p  -> eff (getPatchFx fxs) $atSco p sc
     LayerPatch xs -> har $ fmap (\(vol, p) -> atSco (mul vol p) sc) xs
-    SplitPatch xs -> undefined
+    SplitPatch a cps b -> undefined    
 --    eff (getPatchFx p) $ sco (patchInstr p) sc 
 
 
@@ -257,6 +310,20 @@ onLayered :: (SigSpace a, Sigs a) => [(Sig, Patch a)] -> (Patch a -> SE a) -> SE
 onLayered xs f = fmap sum $ mapM (\(vol, p) -> fmap (mul vol) $ f p) xs
 
 --    getPatchFx a =<< midi (patchInstr a . ampCps)    
+
+onMonoSyntSpec :: (MonoSyntSpec -> MonoSyntSpec) -> Patch a -> Patch a
+onMonoSyntSpec f x = case x of
+    MonoSynt spec instr -> MonoSynt (f spec) instr
+    PolySynt instr -> PolySynt instr
+    FxChain fxs p -> FxChain fxs $ onMonoSyntSpec f p 
+    LayerPatch xs -> LayerPatch $ mapSnd (onMonoSyntSpec f) xs
+    SplitPatch a cps b -> SplitPatch (onMonoSyntSpec f a) cps (onMonoSyntSpec f b)
+
+setMonoSharp :: Patch a -> Patch a
+setMonoSharp = onMonoSyntSpec (\x -> x { monoSyntSlideTime = 0.005, monoSyntRelease = 0.05 })
+
+setMonoHold :: Patch a -> Patch a
+setMonoHold = onMonoSyntSpec (\x -> x { monoSyntHold = True })
 
 {-
 
@@ -340,18 +407,27 @@ atSco :: (SigSpace a, Sigs a) => Patch D a -> Sco (CsdNote D) -> Sco (Mix a)
 atSco p sc = eff (getPatchFx p) $ sco (patchInstr p) sc	
 
 --------------------------------------------------------------
-
--- | Adds an effect to the patch's instrument.
-addInstrFx :: Fx b -> Patch a b -> Patch a b
-addInstrFx f p = p { patchInstr = f <=< patchInstr p }
-
--- | Appends an effect before patch's effect.
-addPreFx :: DryWetRatio -> Fx b -> Patch a b -> Patch a b
-addPreFx dw f p = p { patchFx = patchFx p ++ [FxSpec dw f] }
 -}
 
+-- | Adds an effect to the patch's instrument.
+addInstrFx :: Fx a -> Patch a -> Patch a
+addInstrFx f p = mapPatchInstr (\instr -> f <=< instr) p
+
+-- | Appends an effect before patch's effect.
+addPreFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
+addPreFx dw f p = case p of
+    FxChain fxs (PolySynt instr) -> FxChain (addFx fxs) (PolySynt instr)
+    FxChain fxs (MonoSynt spec instr) -> FxChain (addFx fxs) (MonoSynt spec instr)
+    PolySynt instr -> FxChain fxSpec $ PolySynt instr
+    MonoSynt spec instr -> FxChain fxSpec $ MonoSynt spec instr
+    LayerPatch xs -> LayerPatch $ mapSnd (addPreFx dw f) xs
+    SplitPatch a cps b -> SplitPatch (addPreFx dw f a) cps (addPreFx dw f b)
+    where 
+        addFx xs = xs ++ fxSpec
+        fxSpec = [FxSpec dw f]
+
 -- | Appends an effect after patch's effect.
-addPostFx :: DryWetRatio -> Fx b -> Patch b -> Patch b
+addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
 addPostFx dw f p = case p of
     FxChain fxs rest -> FxChain (fxSpec : fxs) rest
     _                -> FxChain [fxSpec] p
@@ -389,13 +465,11 @@ tfmInstr monoTfm polyTfm x = case x of
     MonoSynt spec instr -> MonoSynt spec $ monoTfm instr
     PolySynt instr -> PolySynt $ polyTfm instr
     FxChain fxs p -> FxChain fxs $ rec p
-    SplitPatch xs -> SplitPatch $ mapSnd rec xs
+    SplitPatch a cps b -> SplitPatch (rec a) cps (rec b)
     LayerPatch xs -> LayerPatch $ mapSnd rec xs
     where
         rec = tfmInstr monoTfm polyTfm
         mapSnd f = fmap (second f) 
-
-
 
 ------------------------------------------------
 -- revers
@@ -427,20 +501,16 @@ withMagicCave' = withRever magicCave2
 withRever :: (Sig2 -> Sig2) -> DryWetRatio -> Patch2 -> Patch2
 withRever fx ratio p = addPostFx ratio (return . fx) p
 
-{-
-
 ------------------------------------------------
 -- sound font patch
 
 sfPatchHall :: Sf -> Patch2
-sfPatchHall sf = Patch 
-    { patchInstr = \(amp, cps) -> return $ sfCps sf 0.5 amp cps
-    , patchFx    = [(FxSpec 0.25 (return . smallHall2))] }
+sfPatchHall = withSmallHall . sfPatch
 
 sfPatch :: Sf -> Patch2
-sfPatch sf = Patch 
-    { patchInstr = \(amp, cps) -> return $ sfCps sf 0.5 amp cps
-    , patchFx    = [] }
+sfPatch sf = PolySynt $ \(amp, cps) -> return $ sfCps sf 0.5 amp cps
+
+{-
 
 ------------------------------------------------
 -- Csound API
