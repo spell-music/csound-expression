@@ -11,12 +11,13 @@ module Csound.Air.Live (
     -- * Instrument choosers
     hinstrChooser, vinstrChooser,
     hmidiChooser, vmidiChooser,
-    hpatchChooser, vpatchChooser,
+--    hpatchChooser, vpatchChooser,
 
     -- ** Fx units
     uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho,
     uiFilter, uiReverb, uiGain, uiWhite, uiPink, uiFx, uiRoom,
-    uiHall, uiCave, uiSig, uiMix, uiMidi, uiPatch,
+    uiHall, uiCave, uiSig, uiMix, uiMidi, 
+    -- uiPatch,
 
      -- * Static widgets
     AdsrBound(..), AdsrInit(..),
@@ -308,10 +309,12 @@ uiMidi :: [(String, Msg -> SE Sig2)] -> Int -> Source FxFun
 uiMidi xs initVal = sourceColor2 C.forestgreen $ uiBox "Midi" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vmidiChooser xs initVal
 
+{-
 -- | Patch chooser implemented as FX-box.
 uiPatch :: [(String, Patch2)] -> Int -> Source FxFun 
 uiPatch xs initVal = sourceColor2 C.forestgreen $ uiBox "Patch" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vpatchChooser xs initVal
+-}
 
 -- | the widget for mixing in a signal to the signal.
 uiSig :: String -> Bool -> Source Sig2 -> Source FxFun
@@ -409,6 +412,7 @@ genInstrChooser widget xs initVal = lift1 (routeInstr instrs) $ widget names ini
 routeInstr :: Sigs b => [a -> SE b] -> Sig -> (a -> SE b)
 routeInstr instrs instrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> playWhen (sig (int n) ==* instrId) instr) [0 ..] instrs
 
+{-
 ----------------------------------------------------
 -- effect choosers
 
@@ -427,4 +431,4 @@ genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
         instrs = fmap patchInstr patches
         fxs    = fmap getPatchFx patches
         
-
+-}
