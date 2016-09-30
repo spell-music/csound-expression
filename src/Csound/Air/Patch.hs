@@ -305,6 +305,20 @@ atSco x sc = case x of
     SplitPatch a cps b -> undefined    
 --    eff (getPatchFx p) $ sco (patchInstr p) sc 
 
+scoSplitPatch :: (SigSpace a, Sigs a) => Patch a -> D -> Patch a -> Sco (CsdNote D) -> Sco (Mix a)
+scoSplitPatch a dt b sc = har [leftSplit dt a, rightSplit dt b]
+    where
+        leftSplit  dt a = onCondPlay ( `lessThan` dt) a
+        rightSplit dt a = onCondPlay ( `greaterThanEquals` dt) a
+
+        onCondPlay cond x = case x of
+            MonoSynt spec instr -> error "Split doesn't work for monophonic synths. Pleas use only polyphonic synths."
+            PolySynt instr -> sco (restrictPolyInstr cond instr) sc
+            FxChain fxs p -> eff (getPatchFx fxs) $ atSco p sc
+            LayerPatch xs -> har $ fmap (\(vol, p) -> atSco (mul vol p) sc) xs
+            SplitPatch a dt b -> har 
+                        [ onCondPlay (\x -> cond x &&* (x `lessThan` dt)) a
+                        , onCondPlay (\x -> cond x &&* (x `greaterThanEquals` dt)) b ]
 
 onLayered :: (SigSpace a, Sigs a) => [(Sig, Patch a)] -> (Patch a -> SE a) -> SE a
 onLayered xs f = fmap sum $ mapM (\(vol, p) -> fmap (mul vol) $ f p) xs
