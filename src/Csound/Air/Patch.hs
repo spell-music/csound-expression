@@ -5,7 +5,7 @@ module Csound.Air.Patch(
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
 	Patch1, Patch2, Patch(..),
 
-    mapPatchInstr, dryPatch, getPatchFx,
+    mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,
 
 	-- atMix, atMixes,
 
@@ -125,13 +125,25 @@ data Patch a
     | LayerPatch [(Sig, (Patch a))]
 
 
-mapPatchInstr :: ((CsdNote D -> SE a) -> (CsdNote D -> SE a)) -> Patch a -> Patch a
+mapMonoPolyInstr :: (Instr Sig a -> Instr Sig a) -> (Instr D a -> Instr D a) -> Patch a -> Patch a
+mapMonoPolyInstr mono poly x = case x of
+    MonoSynt spec instr -> MonoSynt spec (mono instr)
+    PolySynt instr      -> PolySynt (poly instr)
+    FxChain  fxs p      -> FxChain fxs (rec p)
+    LayerPatch xs       -> LayerPatch (mapSnd rec xs)
+    SplitPatch a dt b   -> SplitPatch (rec a) dt (rec b)
+    where
+        rec = mapMonoPolyInstr mono poly
+
+mapPatchInstr :: (Instr D a -> Instr D a) -> Patch a -> Patch a
 mapPatchInstr f x = case x of
     MonoSynt _ _ -> x
     PolySynt instr -> PolySynt $ f instr
-    FxChain fxs p -> FxChain fxs $ mapPatchInstr f p
-    LayerPatch xs -> LayerPatch (mapSnd (mapPatchInstr f) xs)
-    SplitPatch a dt b -> SplitPatch (mapPatchInstr f a) dt (mapPatchInstr f b)
+    FxChain fxs p -> FxChain fxs $ rec p
+    LayerPatch xs -> LayerPatch (mapSnd rec xs)
+    SplitPatch a dt b -> SplitPatch (rec a) dt (rec b)
+    where
+        rec = mapPatchInstr f
 
 dryPatch :: Patch a -> Patch a
 dryPatch x = case x of
@@ -338,6 +350,10 @@ setMonoSharp = onMonoSyntSpec (\x -> x { monoSyntSlideTime = 0.005, monoSyntRele
 
 setMonoHold :: Patch a -> Patch a
 setMonoHold = onMonoSyntSpec (\x -> x { monoSyntHold = True })
+
+
+transPatch :: D -> Patch a -> Patch a
+transPatch k = mapMonoPolyInstr (\instr -> instr . second ( * sig k)) (\instr -> instr . second ( * k))
 
 {-
 

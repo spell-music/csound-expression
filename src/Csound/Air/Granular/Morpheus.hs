@@ -1,4 +1,4 @@
--- | Wonderful echoes from morpheus.
+    -- | Wonderful echoes from morpheus.
 -- Granular synthesis for morphing between waveforms.
 -- It's a simplification of partikkel opcode for the case of morphing.
 module Csound.Air.Granular.Morpheus(
