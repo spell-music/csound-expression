@@ -5,12 +5,11 @@ module Csound.Air.Patch(
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
 	Patch1, Patch2, Patch(..),
 
-    mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,
-
-	-- atMix, atMixes,
+    mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,	
+    setFxMix, setFxMixes,
 
 	-- * Midi
-	atMidi, -- atMono, atMono', atMonoSharp, atHoldMidi,
+	atMidi, 
 
 	-- * Events
 	atSched,
@@ -27,10 +26,10 @@ module Csound.Air.Patch(
 
 	-- * Pads
 	harmonPatch, deepPad,
-{-
+
 	-- * Misc
 	patchWhen, 
--}
+
     mixInstr,
 
 	-- * Rever
@@ -43,17 +42,16 @@ module Csound.Air.Patch(
 	sfPatch, sfPatchHall,
 
     -- * Monosynt params
-    onMonoSyntSpec, setMonoSharp, setMonoHold
-{-
-	-- * Csound API
-	patchByNameMidi, monoPatchByNameMidi, monoSharpPatchByNameMidi, monoPatchByNameMidi',
+    onMonoSyntSpec, setMonoSharp, setMonoHold,
+	
+    -- * Csound API
+    patchByNameMidi,
 
 	-- * Custom temperament
 	-- ** Midi
 	atMidiTemp,
 	-- ** Csound API
-	patchByNameMidiTemp, monoPatchByNameMidiTemp, monoSharpPatchByNameMidiTemp, monoPatchByNameMidiTemp'
-    -}
+    patchByNameMidiTemp	    
 ) where
 
 import Data.Boolean
@@ -93,13 +91,6 @@ data FxSpec a = FxSpec
 	{ fxMix :: DryWetRatio
 	, fxFun :: Fx a	
 	}
-
-{-
--- | A patch. It's an instrument, an effect and default dry/wet ratio.
-data Patch a b = Patch 	
-    { patchInstr :: Instr a b
-    , patchFx	 :: [FxSpec b] }
--}
 
 type Patch1 = Patch Sig
 type Patch2 = Patch Sig2
@@ -153,33 +144,18 @@ dryPatch x = case x of
     SplitPatch a dt b   -> SplitPatch (dryPatch a) dt (dryPatch b)
     LayerPatch xs       -> LayerPatch $ mapSnd dryPatch xs
 
-{-
--- | Sets the mix of the last effect.
-}
-atMix :: Sig -> Patch a b -> Patch a b
-atMix k p = p { patchFx = mapHead (\x -> x { fxMix = k }) (patchFx p) }
-	where 
-		mapHead f xs = case xs of
-			[]   -> []
-			a:as -> f a : as
+setFxMix :: Sig -> Patch a -> Patch a
+setFxMix a = setFxMixes [a]
 
--- | Sets the mix of the effects from last to first.
-atMixes :: [Sig] -> Patch a b -> Patch a b
-atMixes ks p = p { patchFx = zipFirst (\k x -> x { fxMix = k }) ks (patchFx p) }
-	where
-		zipFirst f xs ys = case (xs, ys) of
-			(_,    [])   -> []
-			([],   bs)   -> bs
-			(a:as, b:bs) -> f a b : zipFirst f as bs
-
-
-wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
-wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
-
--- | Transforms all the effects for the given patch into a single function. 
-getPatchFx :: (SigSpace a, Sigs a) => Patch b a -> Fx a
-getPatchFx p = foldr (<=<) return $ fmap wet $ patchFx p
--}
+setFxMixes :: [Sig] -> Patch a -> Patch a
+setFxMixes ks p = case p of
+    FxChain fxs x -> FxChain (zipFirst (\k x -> x { fxMix = k }) ks fxs) x
+    _ -> p
+    where
+        zipFirst f xs ys = case (xs, ys) of
+            (_,    [])   -> []
+            ([],   bs)   -> bs
+            (a:as, b:bs) -> f a b : zipFirst f as bs
 
 --------------------------------------------------------------
 
@@ -205,9 +181,11 @@ atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote D -> SE a
 atNote p note@(amp, cps) = case p of
     MonoSynt spec instr -> instr (sig amp, sig cps)
     PolySynt instr -> instr note
-    FxChain fxs p -> getPatchFx fxs =<< atNote p note 
-    LayerPatch xs -> onLayered xs $ \x -> atNote x note    
-    SplitPatch a t b -> getSplit (cps `lessThan` t) (atNote a note) (atNote b note)
+    FxChain fxs p -> getPatchFx fxs =<< rec p
+    LayerPatch xs -> onLayered xs rec
+    SplitPatch a t b -> getSplit (cps `lessThan` t) (rec a) (rec b)
+    where
+        rec x = atNote x note
 
 getSplit :: (Num a, Tuple a) => BoolD -> SE a -> SE a -> SE a
 getSplit cond a b = do
@@ -216,6 +194,9 @@ getSplit cond a b = do
         (mixRef ref =<< a)
         (mixRef ref =<< b)
     readRef ref
+
+--------------------------------------------------------------
+-- midi
 
 atMidi :: (SigSpace a, Sigs a) => Patch a -> SE a
 atMidi x = case x of
@@ -355,90 +336,6 @@ setMonoHold = onMonoSyntSpec (\x -> x { monoSyntHold = True })
 transPatch :: D -> Patch a -> Patch a
 transPatch k = mapMonoPolyInstr (\instr -> instr . second ( * sig k)) (\instr -> instr . second ( * k))
 
-{-
-
---------------------------------------------------------------
--- note
-
--- | Plays a patch at the given note.
-atNote :: (SigSpace b, Sigs b) => Patch a b -> CsdNote a -> SE b
-atNote p note = getPatchFx p =<< patchInstr p note
-
---------------------------------------------------------------
--- midi
-
--- | Plays a patch with midi. Supplies a custom value for mixing effects (dry/wet).
--- The 0 is a dry signal, the 1 is a wet signal.
-atMidi :: (SigSpace a, Sigs a) => Patch D a -> SE a
-atMidi a = getPatchFx a =<< midi (patchInstr a . ampCps)	
-
--- | Plays a patch with midi. Supplies a custom value for mixing effects (dry/wet).
--- The 0 is a dry signal, the 1 is a wet signal.
-atMidiTemp :: (SigSpace a, Sigs a) => Temp -> Patch D a -> SE a
-atMidiTemp tm a = getPatchFx a =<< midi (patchInstr a . ampCps' tm)
-
--- | Simplified monosynth patch
-atMono :: (SigSpace a, Sigs a) => Patch Sig a -> SE a
-atMono = atMono' ChnAll 0.01 0.1
-
--- | Simplified monosynth patch with custom temperament.
-atMonoTemp :: (SigSpace a, Sigs a) => Temp -> Patch Sig a -> SE a
-atMonoTemp tm = atMonoTemp' tm ChnAll 0.01 0.1
-
--- | Simplified monosynth patch (sharp attack and transitions)
-atMonoSharp :: (SigSpace a, Sigs a) => Patch Sig a -> SE a
-atMonoSharp = atMono' ChnAll 0.005 0.05
-
--- | Simplified monosynth patch (sharp attack and transitions) with custom temperament.
-atMonoSharpTemp :: (SigSpace a, Sigs a) => Temp -> Patch Sig a -> SE a
-atMonoSharpTemp tm = atMonoTemp' tm ChnAll 0.005 0.05
-
--- | Monosynth patch. Plays the patch with function @monoMsg@
---
--- > atMonoMidi midiChn portamentotime releaseTime patch
-atMono' :: (SigSpace a, Sigs a) => MidiChn -> D -> D -> Patch Sig a -> SE a
-atMono' chn port rel a = getPatchFx a =<< patchInstr a =<< monoMsg chn port rel
-
--- | Monosynth patch with custom temperament. Plays the patch with function @monoMsgTemp@
---
--- > atMonoMidi midiChn portamentotime releaseTime patch
-atMonoTemp' :: (SigSpace a, Sigs a) => Temp -> MidiChn -> D -> D -> Patch Sig a -> SE a
-atMonoTemp' tm chn port rel a = getPatchFx a =<< patchInstr a =<< monoMsgTemp tm chn port rel
-
--- | Monosynth patch. Plays the patch with function @holdMsg@
---
--- > atMonoMidi midiChn portamentotime patch
-atHoldMidi :: (SigSpace a, Sigs a) => MidiChn -> D -> Patch Sig a -> SE a
-atHoldMidi chn port a = getPatchFx a =<< patchInstr a =<< holdMsg chn port
-
--- | Monosynth patch with custom temperament. Plays the patch with function @holdMsgTemp@
---
--- > atMonoMidi midiChn portamentotime patch
-atHoldMidiTemp :: (SigSpace a, Sigs a) => Temp -> MidiChn -> D -> Patch Sig a -> SE a
-atHoldMidiTemp tm chn port a = getPatchFx a =<< patchInstr a =<< holdMsgTemp tm chn port
-
---------------------------------------------------------------
--- sched
-
--- | Plays a patch with event stream. Supplies a custom value for mixing effects (dry/wet).
--- The 0 is a dry signal, the 1 is a wet signal.
-atSched :: (SigSpace a, Sigs a) => Patch D a -> Evt (Sco (CsdNote D)) -> SE a
-atSched p evt = getPatchFx p $ sched (patchInstr p) evt
-
-atSchedUntil :: (SigSpace a, Sigs a) => Patch D a -> Evt (CsdNote D) -> Evt b -> SE a
-atSchedUntil p evt stop = getPatchFx p $ schedUntil (patchInstr p) evt stop
-
---------------------------------------------------------------
--- sco
- 
--- | Plays a patch with scores. Supplies a custom value for mixing effects (dry/wet).
--- The 0 is a dry signal, the 1 is a wet signal.
-atSco :: (SigSpace a, Sigs a) => Patch D a -> Sco (CsdNote D) -> Sco (Mix a)
-atSco p sc = eff (getPatchFx p) $ sco (patchInstr p) sc	
-
---------------------------------------------------------------
--}
-
 -- | Adds an effect to the patch's instrument.
 addInstrFx :: Fx a -> Patch a -> Patch a
 addInstrFx f p = mapPatchInstr (\instr -> f <=< instr) p
@@ -463,17 +360,18 @@ addPostFx dw f p = case p of
     _                -> FxChain [fxSpec] p
     where fxSpec = FxSpec dw f
 
-{-
-----------------------------------------------------------------
+--------------------------------------------------------------
 
--- | Plays the patch when confition is true otherwise it produces silence.
-patchWhen :: Sigs b => BoolSig -> Patch a b -> Patch a b
-patchWhen cond p = p 
-	{ patchInstr = playWhen cond (patchInstr p)
-	, patchFx    = fmap (mapFun $ playWhen cond) (patchFx p) }
-	where mapFun f x = x { fxFun = f $ fxFun x }
-
--}
+patchWhen :: (Sigs a) => BoolSig -> Patch a -> Patch a
+patchWhen cond x = case x of
+    MonoSynt spec instr -> MonoSynt spec (playWhen cond instr)
+    PolySynt instr      -> PolySynt (playWhen cond instr)
+    FxChain  fxs p      -> FxChain (fmap (mapFun (playWhen cond)) fxs) (rec p)
+    LayerPatch xs       -> LayerPatch $ mapSnd rec xs
+    SplitPatch a cps b  -> SplitPatch (rec a) cps (rec b)        
+    where 
+        rec = patchWhen cond
+        mapFun f x = x { fxFun = f $ fxFun x }
 
 mixInstr :: (SigSpace b, Num b) => Sig -> Patch b -> Patch b -> Patch b
 mixInstr k f p = LayerPatch [(k, f), (1, p)]
@@ -540,10 +438,57 @@ sfPatchHall = withSmallHall . sfPatch
 sfPatch :: Sf -> Patch2
 sfPatch sf = PolySynt $ \(amp, cps) -> return $ sfCps sf 0.5 amp cps
 
-{-
 
 ------------------------------------------------
 -- Csound API
+
+
+-- | Triggers patch with Csound API.
+-- It creates a named instruement with given name (first argument).
+--
+-- It simulates the midi-like instrument. Notes are encoded with messages:
+--
+-- > i "givenName" 1 pitchKey volumeKey     -- note on
+-- > i "givenName" 0 pitchKey volumeKey     -- note off
+patchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch a -> SE a
+patchByNameMidi = genPatchByNameMidi cpsmidinn cpsmidinn
+
+-- | Triggers patch with Csound API.
+-- It creates a named instruement with given name (second argument).
+-- It behaves like the function @patchByNameMidi@ but we can specify custom temperament.
+patchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch a -> SE a
+patchByNameMidiTemp tm = genPatchByNameMidi (cpsmidi'Sig tm) (cpsmidi'D tm)
+
+genPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => (Sig -> Sig) -> (D -> D) -> String -> Patch a -> SE a
+genPatchByNameMidi monoKey2cps polyKey2cps name x = case x of 
+    MonoSynt spec instr -> monoSynt spec instr
+    PolySynt instr      -> polySynt instr
+    FxChain fxs p       -> getPatchFx fxs =<< rec p
+    LayerPatch xs       -> onLayered xs rec
+    SplitPatch a cps b  -> splitPatch a cps b
+    where
+        rec = genPatchByNameMidi monoKey2cps polyKey2cps name
+
+        monoSynt spec instr = instr =<< fmap convert (trigNamedMono portTime relTime name)
+            where
+                convert (vol, pch) = (vel2ampSig vol, monoKey2cps pch)
+                portTime = monoSyntSlideTime spec
+                relTime  = monoSyntRelease    spec
+
+        polySynt instr = trigByNameMidi name go
+            where
+                go :: (D, D, Unit) -> SE a
+                go (pitch, vol, _) = instr (vel2amp vol, polyKey2cps pitch)
+
+        splitPatch a cps b = genSplitPatch polySynt a cps b
+
+vel2amp :: D -> D
+vel2amp vol = ((vol / 64) ** 2) / 2
+
+vel2ampSig :: Sig -> Sig
+vel2ampSig vol = ((vol / 64) ** 2) / 2
+
+{-
 
 -- | Triggers patch with Csound API.
 -- It creates a named instruement with given name (first argument).
