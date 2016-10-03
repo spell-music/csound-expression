@@ -150,6 +150,20 @@ instance RenderCsd (Source Sig4) where
                 panel gui
                 return asig
 
+instance RenderCsd (Source Sig6) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                return asig
+
+instance RenderCsd (Source Sig8) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                return asig                
+
 instance RenderCsd (Source (SE Sig)) where
     renderCsdBy opt a = renderCsdBy opt res
         where res = do
@@ -163,12 +177,27 @@ instance RenderCsd (Source (SE Sig2)) where
                 (gui, asig) <- a
                 panel gui
                 asig
+
 instance RenderCsd (Source (SE Sig4)) where
     renderCsdBy opt a = renderCsdBy opt res
         where res = do
                 (gui, asig) <- a
                 panel gui
                 asig
+
+instance RenderCsd (Source (SE Sig6)) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                asig
+
+instance RenderCsd (Source (SE Sig8)) where
+    renderCsdBy opt a = renderCsdBy opt res
+        where res = do
+                (gui, asig) <- a
+                panel gui
+                asig                
 
 instance RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
