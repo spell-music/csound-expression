@@ -64,7 +64,7 @@ module Csound.Air.Filter(
     plastic, wobble, trumpy, harsh, 
 
     -- * TB303 filter
-    tbf,
+    tbf, diode, linDiode, noNormDiode,
 
     -- * Statevariable filters
     slp, shp, sbp, sbr,
