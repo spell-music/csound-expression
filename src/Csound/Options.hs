@@ -7,6 +7,7 @@ module Csound.Options(
     setOutput, setInput, 
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
+    setMessageLevel, noTrace,
     setCabbage,
 
     -- * Flags
@@ -99,6 +100,12 @@ setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } 
 -- | Sets midi device to all.
 setMa :: Options
 setMa = setMidiDevice "a"
+
+setMessageLevel :: Int -> Options
+setMessageLevel n = def { csdFlags = def { displays = def { messageLevel = Just n }}}
+
+noTrace :: Options
+noTrace = setMessageLevel 0
 
 ---------------------------------------------
 
