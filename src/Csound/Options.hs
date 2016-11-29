@@ -3,7 +3,8 @@ module Csound.Options(
 
     -- * Shortcuts
     setDur,
-    setRates, setBufs, setGain, setJack,
+    setRates, setBufs, setGain, 
+    setJack, setAlsa, setCoreAudio, setMme,
     setOutput, setInput, 
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
@@ -61,6 +62,14 @@ setGain d = def { csdGain = Just d' }
 setJack :: String -> Options
 setJack name = def { csdFlags = def { rtaudio = Just $ Jack name "input" "output" } }
 
+setCoreAudio :: Options
+setCoreAudio = def { csdFlags = def { rtaudio = Just $ CoreAudio } }
+
+setAlsa :: Options
+setAlsa = def { csdFlags = def { rtaudio = Just $ Alsa } }
+
+setMme :: Options
+setMme = def { csdFlags = def { rtaudio = Just $ Mme } }
 
 setDac :: Options
 setDac = setDacBy ""
