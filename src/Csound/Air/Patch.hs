@@ -3,7 +3,7 @@
 module Csound.Air.Patch(
   
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
-	Patch1, Patch2, Patch(..),
+	Patch1, Patch2, Patch(..), PolySyntSpec(..), MonoSyntSpec(..),
     polySynt, monoSynt,
 
     mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,	
