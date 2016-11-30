@@ -12,7 +12,7 @@ Let's load the module:
 
 Now we can play a patch:
 
-~~~
+~~~haskell
 > vdac $ mul 0.75 $ atMidi dreamPad
 > vdac $ mul 0.75 $ atMidi vibraphone1
 ~~~
@@ -21,7 +21,7 @@ With `vdac` we can play midi instruments on a virtual midi-keyboard.
 If you have a real midi-keyboard attached to your computer you can
 use the plain old `dac`. This way we can play the patches with real MIDI-device:
 
-~~~
+~~~haskell
 > dac $ mul 0.75 $ atMidi toneWheelOrgan
 ~~~
 
@@ -34,7 +34,7 @@ Let's look at the definition of the `Patch`:
 ~~~haskell
 data Patch a 
     = MonoSynt MonoSyntSpec (Instr Sig a)
-    | PolySynt (Instr D a)
+    | PolySynt PolySyntSpec (Instr D a)
     | FxChain [FxSpec a] (Patch a)
     | SplitPatch (Patch a) D (Patch a)
     | LayerPatch [(Sig, Patch a)]
@@ -47,10 +47,13 @@ Let's discuss each case.
 Patch can be a polyphonic synth:
 
 ~~~haskell
-PolySynt (Instr D a)
+PolySynt PolySyntSpec (Instr D a)
 
 type CsdNote a = (a, a)
 type Instr a b = CsdNote a -> SE b  
+
+data PolySyntSpec = PolySyntSpec
+    { polySyntChn :: MidiChn }
 ~~~
 
 It converts notes to signals. With polyphonic instrument we can
@@ -59,6 +62,9 @@ play several notes at the same time. The note is apair of amplitude and frequenc
 Also patch can be a monophonic synth. The monophonic synth can play
 only one note at the time (like flute or voice). But it converts not just
 notes but signals of amplitude and frequency.
+
+With `PolySyntSpec` we can specify midi channel to play the instrument. 
+The `PolySyntSpec` has default instance with which we listen for midi messages on all channels.
 
 Let's play a polyphonic patch:
 
@@ -259,19 +265,25 @@ harmonPatch :: (SigSpace b, Sigs b) => [Sig] -> [D] -> Patch b -> Patch b
 
 We can quickly fuse two patches together with function `mixInstr`:
 
-~~~
+~~~haskell
 mixInstr :: (SigSpace b, Num b) => Sig -> Patch b -> Patch b -> Patch b
 ~~~
 
 We can create patches out of soundfonts! This way we can quickly turn our PC
 into rompler. Check the soundfont section of the guide for the details on the type `Sf`.
 
-~~~
+~~~haskell
 sfPatchHall :: Sf -> Patch2
 sfPatch     :: Sf -> Patch2
 ~~~
 
 There other functions. See the full list at the module `Csound.Air.Patch`.
+
+We can set a midi channel for all instruments in the patch with function `setMidiChn`:
+
+~~~haskell
+setMidiChn :: MidiChn -> Patch a -> Patch a
+~~~
 
 ## There are many beautiful instruments
 
@@ -279,7 +291,7 @@ Let's study some predefined patches. We should install the `csound-catalog` pack
 Then we need to import the module `Csound.Patch` and try some goodies (you can use `dac`
 instead of `vdac` if you have a real midi device):
 
-~~~
+~~~haskell
 >:m +Csound.Patch
 > vdac $ atMidi vibraphone1
 
