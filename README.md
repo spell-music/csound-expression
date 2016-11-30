@@ -130,27 +130,27 @@ csound-expression
 
 * **Many great filters were added** thanks to the work of Steven Yi. Now we can use 
 
-   ** zero-delay filters: `zlp`, `zhp`, `zbp`, `zladder`, `zdf2`, `zdf4`.
+   * zero-delay filters: `zlp`, `zhp`, `zbp`, `zladder`, `zdf2`, `zdf4`.
 
-   ** diode ladder filter (famous acid sound of TB-303): `diode`, `linDiode`
+   * diode ladder filter (famous acid sound of TB-303): `diode`, `linDiode`
 
-   ** Korg 35 filters: `korg_lp`, `linKorg_lp`, `korg_hp`
+   * Korg 35 filters: `korg_lp`, `linKorg_lp`, `korg_hp`
 
    New classical analog-like filters:
 
-   ** Chebyshev type I and II low pass filters: lpCheb1, lpCheb2 (also there are high-pass versions)
+   * Chebyshev type I and II low pass filters: lpCheb1, lpCheb2 (also there are high-pass versions)
 
-   ** new butterworth filters: `clp`
+   * new butterworth filters: `clp`
 
   Named filters with specific character suggested with a name:
 
-  ** `plastic`
+  * `plastic`
 
-  ** `wobble`
+  * `wobble`
 
-  ** `trumpy`
+  * `trumpy`
 
-  ** `harsh`
+  * `harsh`
 
 * **Useful aliases for classic reverbs** with single dry-wet ratio as a parameter: `room`, `chamber`, `hall`, `cave`.
 
