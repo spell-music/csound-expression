@@ -408,7 +408,7 @@ patchWhen cond x = case x of
         rec = patchWhen cond
         mapFun f x = x { fxFun = f $ fxFun x }
 
--- | Mix to patches together.
+-- | Mix two patches together.
 mixInstr :: (SigSpace b, Num b) => Sig -> Patch b -> Patch b -> Patch b
 mixInstr k f p = LayerPatch [(k, f), (1, p)]
 
