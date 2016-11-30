@@ -84,26 +84,6 @@ News
 
 csound-expression
 
-* **Hard and soft sync**. Lots of functions added for hard and soft sync. Check out the module `Csound.Air.Wave.Sync`.
-
-* **Morpheus is here**. New cool granular synthesizer is included. It's based on partikkel opcode. 
-   The aim is to simplify the work-flow with partikkel opcode. The API is experimental right now and might change.
-   See the module `Csound.Air.Granular.Morpheus` for details.
-
-* **Raw waveforms for analogue-like oscillators**: `rawSaw`, `rawTri`, `rawSqr` non-band limited based
-  on table lookup. Can be usefull for LFOs or more light-weight versions of oscillators than `saw`, `tri` or `sqr`.
-
-* **mul' new scaling function**. Scaling with side-effects. Can be usefull to scale with random envelope.
-
-* **Adds table read and write opcodes**. Adds opcodes `tablewa`, `tablew`, `readTab`, `readTable`, `readTable3`, `readTablei`.
-    See the module @Csound.Tab@ for details.
-
-* **Cabbage support**. Adds full support for building [cabbage](http://cabbageaudio.com/) interfaces. Checkout the module `Csound.Cabbage`.
-  We can create vst-plugins with it!  Still needs help for testing. We can check out the tutorial on how to build cabbage interfaces
-  with csound-expression library: [Cabbage guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md).
-
-* **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, `mp3Left`, `mp3Right` to read  
-   audio by channels. Also we can read both channels with functions `wavs` and `mp3s`.
 
 * **New data type for Patches!** This change is incompatible but it brings better support for playing patches live!
    The polyphonic and monophonic patches are united with single data-type so we can play them with the same functions.
@@ -113,18 +93,11 @@ csound-expression
 
    See the [guide on patches](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/Patches.md) to read the details.
 
-* **Support for up to 8 outputs**. More instances for `RenderCsd` were added. Now we can play back up to 8 signals at the same time!
+* **Hard and soft sync**. Lots of functions added for hard and soft sync. Check out the module `Csound.Air.Wave.Sync`.
 
-* **Useful option to suppress the event printing on the screen**. By default the Csound prints out every message on the screen (with time stamps and amplitudes).
-    Now we have useful function `noTrace` to suppress those messages. Just write `dacBy noTrace $ mySigs` to stop them.
-
-* **Adds More option setters for RT-audio engines**. New option setters: `setAlsa`, `setMme`, `setCoreAudio`.
-    Also it fixes the name of the RT-engine for OSX.
-
-* **Transforming the audio with impulse responses now is super easy**. Check out the new functions `monoIR`, `stereoIR`
-   from the module `Csound.Air.Fx`. With those functions we can easily add complicated and beautiful reverbs
-   from natural environments or classical reverberation units. There are plenty IR resources you can find out on the WEB.
-   Also it adds the cool `zconv` function for zero convolution delay kindly provided by Victor Lazzarini.
+* **Morpheus is here**. New cool granular synthesizer is included. It's based on partikkel opcode. 
+   The aim is to simplify the work-flow with partikkel opcode. The API is experimental right now and might change.
+   See the module `Csound.Air.Granular.Morpheus` for details.
 
 * **Rewrite for filters**. Filters get new names that suppose the audio-quality of the filter. Also many filters were redesigned
    to unify the parameters (order of arguments and ranges). Check out the module `Csound.Air.Filter`.
@@ -143,17 +116,37 @@ csound-expression
 
    * new butterworth filters: `clp`
 
-  Named filters with specific character suggested with a name:
+  Named filters with specific character suggested with a name: `plastic`, `wobble`, `trumpy`, `harsh`.
 
-  * `plastic`
+* **Transforming the audio with impulse responses now is super easy**. Check out the new functions `monoIR`, `stereoIR`
+   from the module `Csound.Air.Fx`. With those functions we can easily add complicated and beautiful reverbs
+   from natural environments or classical reverberation units. There are plenty IR resources you can find out on the WEB.
+   Also it adds the cool `zconv` function for zero convolution delay kindly provided by Victor Lazzarini.
 
-  * `wobble`
-
-  * `trumpy`
-
-  * `harsh`
+* **Cabbage support**. Adds full support for building [cabbage](http://cabbageaudio.com/) interfaces. Checkout the module `Csound.Cabbage`.
+  We can create vst-plugins with it!  Still needs help for testing. We can check out the tutorial on how to build cabbage interfaces
+  with csound-expression library: [Cabbage guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md).
 
 * **Useful aliases for classic reverbs** with single dry-wet ratio as a parameter: `room`, `chamber`, `hall`, `cave`.
+
+* **Raw waveforms for analogue-like oscillators**: `rawSaw`, `rawTri`, `rawSqr` non-band limited based
+  on table lookup. Can be usefull for LFOs or more light-weight versions of oscillators than `saw`, `tri` or `sqr`.
+
+* **mul' new scaling function**. Scaling with side-effects. Can be usefull to scale with random envelope.
+
+* **Adds table read and write opcodes**. Adds opcodes `tablewa`, `tablew`, `readTab`, `readTable`, `readTable3`, `readTablei`.
+    See the module @Csound.Tab@ for details.
+
+* **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, `mp3Left`, `mp3Right` to read  
+   audio by channels. Also we can read both channels with functions `wavs` and `mp3s`.
+
+* **Support for up to 8 outputs**. More instances for `RenderCsd` were added. Now we can play back up to 8 signals at the same time!
+
+* **Useful option to suppress the event printing on the screen**. By default the Csound prints out every message on the screen (with time stamps and amplitudes).
+    Now we have useful function `noTrace` to suppress those messages. Just write `dacBy noTrace $ mySigs` to stop them.
+
+* **Adds More option setters for RT-audio engines**. New option setters: `setAlsa`, `setMme`, `setCoreAudio`.
+    Also it fixes the name of the RT-engine for OSX.
 
 csound-sampler
 
