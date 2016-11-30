@@ -1,7 +1,7 @@
 -- | The Cab is a monad for Cabbage markup language. 
 -- The markup description can be constructed in the same way as blaze-html markup.
 --
--- We use monadic equencing for sequencing of markup elements.
+-- We use monadic sequencing for sequencing of markup elements.
 --
 -- An example:
 --
