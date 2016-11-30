@@ -2,6 +2,9 @@
 -- | Envelopes
 module Csound.Air.Envelope (
     leg, xeg,
+
+    -- ADSR with retrigger for mono-synths
+    adsr140,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,  
@@ -49,6 +52,7 @@ import Csound.Air.Wave
 import Csound.Tab(lins, exps, gp)
 import Csound.Air.Wave(oscBy)
 import Csound.Air.Filter(slide)
+import Csound.Typed.Plugins(adsr140)
 
 -- | Linear adsr envelope generator with release
 --

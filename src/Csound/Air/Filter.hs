@@ -66,6 +66,9 @@ module Csound.Air.Filter(
     -- * TB303 filter
     tbf, diode, linDiode, noNormDiode,
 
+    -- Korg 35 filters
+    linKorg_lp, linKorg_hp, korg_lp, korg_hp,
+
     -- * Statevariable filters
     slp, shp, sbp, sbr,
 

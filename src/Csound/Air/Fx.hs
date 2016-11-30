@@ -16,6 +16,7 @@ module Csound.Air.Fx(
     -- * Chorus
     DepthSig, RateSig, WidthSig, ToneSig,
     chorus,
+    -- solinaChorus, testSolinaChorus,
 
     -- * Flanger
     flange,
@@ -29,6 +30,9 @@ module Csound.Air.Fx(
     fxFilter, fxFilter2,
     fxWhite, fxWhite2, fxPink, fxPink2, equalizer, equalizer2, eq4, eq7,
     fxGain, 
+
+    -- Eq
+    audaciousEq,
 
     -- * Misc
     trackerSplice
@@ -45,6 +49,7 @@ import Csound.SigSpace
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
+import Csound.Typed.Plugins
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
