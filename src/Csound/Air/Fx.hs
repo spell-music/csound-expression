@@ -1,9 +1,12 @@
+{-# Language FlexibleContexts #-}
 -- | Effects
 module Csound.Air.Fx(    
     -- * Reverbs
     reverbsc1, rever1, rever2, reverTime,
     smallRoom, smallHall, largeHall, magicCave,
     smallRoom2, smallHall2, largeHall2, magicCave2,
+
+    room, chamber, hall, cave,
 
     -- * Delays
     MaxDelayTime, DelayTime, Feedback, Balance,
@@ -111,6 +114,32 @@ largeHall2 = rever2 0.9
 magicCave2 :: Sig2 -> Sig2
 magicCave2 = rever2 0.99
 
+---------------------------------------------------------------------------------
+
+-- | An alias for 
+--
+-- > let room dryWet asig = mixAt dryWet smallRoom2 asig
+room :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
+room mx ain = mixAt mx smallRoom2 ain
+
+-- | An alias for 
+--
+-- > let room dryWet asig = mixAt dryWet smallHall2 asig
+chamber :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
+chamber mx ain = mixAt mx smallHall2 ain
+
+-- | An alias for 
+--
+-- > let room dryWet asig = mixAt dryWet largeHall2 asig
+hall :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
+hall mx ain = mixAt mx largeHall2 ain
+
+-- | An alias for 
+--
+-- > let room dryWet asig = mixAt dryWet magicCave2 asig
+cave :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
+cave mx ain = mixAt mx magicCave2 ain
+    
 ---------------------------------------------------------------------------------
 -- Delays
 
