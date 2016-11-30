@@ -25,6 +25,9 @@
 -- > main = dac $ do
 -- >    btn <- ui
 -- >    return $ btn * osc 220
+--
+-- We can read a complete tutorial on how to create Cabbage plugins at the guide:
+-- <https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md>
 module Csound.Cabbage(
     Cab, CabProp, Col(..), cabbage,
 
