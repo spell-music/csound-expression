@@ -87,14 +87,27 @@ type Fx1 = Fx Sig
 -- | Stereo effect.
 type Fx2 = Fx Sig2
 
+-- | Fx specification. It;s a pair of dryWet ratio and a transformation function.
 data FxSpec a = FxSpec
 	{ fxMix :: DryWetRatio
 	, fxFun :: Fx a	
 	}
 
+-- | Mono-output patch.
 type Patch1 = Patch Sig
+
+-- | Stereo-output patch.
 type Patch2 = Patch Sig2
 
+-- | Specification for monophonic synthesizer.
+-- 
+-- * Chn -- midi channel to listen on
+--
+-- * Hold -- to hold the note or not
+--
+-- * SlideTime -- time of transition between notes
+--
+-- * SyntRelease -- time of release
 data MonoSyntSpec = MonoSyntSpec
     { monoSyntChn       :: MidiChn  
     , monoSyntHold      :: Bool
@@ -108,14 +121,25 @@ instance Default MonoSyntSpec where
         , monoSyntSlideTime = 0.01
         , monoSyntRelease = 0.1 }
 
+-- | The patch can be:
+--
+-- *  a plain monophonic or polyphonic synthesizer
+--
+-- * patch with chain of effects, 
+--
+-- * split on keyboard with certain frequency
+--
+-- * layer of patches. That is a several patches that sound at the same time.
+--  the layer is a patch and the weight of volume for a given patch.
 data Patch a 
     = MonoSynt MonoSyntSpec (Instr Sig a)
     | PolySynt (Instr D   a)
     | FxChain [FxSpec a] (Patch a)
     | SplitPatch (Patch a) D (Patch a)
-    | LayerPatch [(Sig, (Patch a))]
+    | LayerPatch [(Sig, Patch a)]
 
 
+-- Maps all monophonic and polyphonic patches within the given patch.
 mapMonoPolyInstr :: (Instr Sig a -> Instr Sig a) -> (Instr D a -> Instr D a) -> Patch a -> Patch a
 mapMonoPolyInstr mono poly x = case x of
     MonoSynt spec instr -> MonoSynt spec (mono instr)
@@ -126,6 +150,7 @@ mapMonoPolyInstr mono poly x = case x of
     where
         rec = mapMonoPolyInstr mono poly
 
+-- Maps all polyphonic patches within the given patch.
 mapPatchInstr :: (Instr D a -> Instr D a) -> Patch a -> Patch a
 mapPatchInstr f x = case x of
     MonoSynt _ _ -> x
@@ -136,6 +161,7 @@ mapPatchInstr f x = case x of
     where
         rec = mapPatchInstr f
 
+-- | Removes all effects from the patch.
 dryPatch :: Patch a -> Patch a
 dryPatch x = case x of
     MonoSynt spec instr -> x
@@ -144,9 +170,11 @@ dryPatch x = case x of
     SplitPatch a dt b   -> SplitPatch (dryPatch a) dt (dryPatch b)
     LayerPatch xs       -> LayerPatch $ mapSnd dryPatch xs
 
+-- | Sets the dryWet ratio of the effects wwithin the patch.
 setFxMix :: Sig -> Patch a -> Patch a
 setFxMix a = setFxMixes [a]
 
+-- | Sets the dryWet ratios for the chain of the effects wwithin the patch.
 setFxMixes :: [Sig] -> Patch a -> Patch a
 setFxMixes ks p = case p of
     FxChain fxs x -> FxChain (zipFirst (\k x -> x { fxMix = k }) ks fxs) x
@@ -174,9 +202,11 @@ mapSnd f = fmap (second f)
 wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
 wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
 
+-- | Renders the effect chain to a single function.
 getPatchFx :: (SigSpace a, Sigs a) => [FxSpec a] -> Fx a
 getPatchFx xs = foldr (<=<) return $ fmap wet xs
 
+-- | Plays a patch with a single infinite note.
 atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote D -> SE a
 atNote p note@(amp, cps) = case p of
     MonoSynt spec instr -> instr (sig amp, sig cps)
@@ -198,6 +228,7 @@ getSplit cond a b = do
 --------------------------------------------------------------
 -- midi
 
+-- | Plays a patch with midi. 
 atMidi :: (SigSpace a, Sigs a) => Patch a -> SE a
 atMidi x = case x of
     MonoSynt spec instr -> monoSynt spec instr
@@ -216,6 +247,7 @@ atMidi x = case x of
                 rel  = monoSyntRelease spec
                 chn  = monoSyntChn spec
 
+-- | Plays a patch with midi with given temperament (see @Csound.Tuning@).
 atMidiTemp :: (SigSpace a, Sigs a) => Temp -> Patch a -> SE a
 atMidiTemp tm x = case x of
     MonoSynt spec instr -> monoSynt spec instr
@@ -263,8 +295,7 @@ restrictPolyInstr cond instr note@(amp, cps) = do
 --------------------------------------------------------------
 -- sched
 
--- | Plays a patch with event stream. Supplies a custom value for mixing effects (dry/wet).
--- The 0 is a dry signal, the 1 is a wet signal.
+-- | Plays a patch with event stream. 
 atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco (CsdNote D)) -> SE a
 atSched x evt = case x of
     MonoSynt _ instr -> error "atSched is not defined for monophonic synthesizers"
@@ -275,6 +306,7 @@ atSched x evt = case x of
     where playInstr instr = return $ sched instr evt
 
 
+-- | Plays a patch with event stream with stop-note event stream. 
 atSchedUntil :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> Evt b -> SE a
 atSchedUntil x evt stop = case x of     
     MonoSynt _ instr -> error "atSchedUntil is not defined for monophonic synthesizers"
@@ -287,8 +319,7 @@ atSchedUntil x evt stop = case x of
 --------------------------------------------------------------
 -- sco
  
--- | Plays a patch with scores. Supplies a custom value for mixing effects (dry/wet).
--- The 0 is a dry signal, the 1 is a wet signal.
+-- | Plays a patch with scores. 
 atSco :: (SigSpace a, Sigs a) => Patch a -> Sco (CsdNote D) -> Sco (Mix a)
 atSco x sc = case x of
     MonoSynt _ instr -> error "atSco is not defined for monophonic synthesizers"
@@ -318,6 +349,7 @@ onLayered xs f = fmap sum $ mapM (\(vol, p) -> fmap (mul vol) $ f p) xs
 
 --    getPatchFx a =<< midi (patchInstr a . ampCps)    
 
+-- | Transform  the spec for monophonic patch.
 onMonoSyntSpec :: (MonoSyntSpec -> MonoSyntSpec) -> Patch a -> Patch a
 onMonoSyntSpec f x = case x of
     MonoSynt spec instr -> MonoSynt (f spec) instr
@@ -326,13 +358,15 @@ onMonoSyntSpec f x = case x of
     LayerPatch xs -> LayerPatch $ mapSnd (onMonoSyntSpec f) xs
     SplitPatch a cps b -> SplitPatch (onMonoSyntSpec f a) cps (onMonoSyntSpec f b)
 
+-- | Sets the monophonic to sharp transition and quick release.
 setMonoSharp :: Patch a -> Patch a
 setMonoSharp = onMonoSyntSpec (\x -> x { monoSyntSlideTime = 0.005, monoSyntRelease = 0.05 })
 
+-- | Sets the monophonic patch to hold mode. All notes are held.
 setMonoHold :: Patch a -> Patch a
 setMonoHold = onMonoSyntSpec (\x -> x { monoSyntHold = True })
 
-
+-- | Transpose the patch by a given ratio. We can use the functions semitone, cent to calculate the ratio.
 transPatch :: D -> Patch a -> Patch a
 transPatch k = mapMonoPolyInstr (\instr -> instr . second ( * sig k)) (\instr -> instr . second ( * k))
 
@@ -362,6 +396,7 @@ addPostFx dw f p = case p of
 
 --------------------------------------------------------------
 
+-- | Plays a patch when the condition signal is satisfied. Can be useful for switches.
 patchWhen :: (Sigs a) => BoolSig -> Patch a -> Patch a
 patchWhen cond x = case x of
     MonoSynt spec instr -> MonoSynt spec (playWhen cond instr)
@@ -373,21 +408,25 @@ patchWhen cond x = case x of
         rec = patchWhen cond
         mapFun f x = x { fxFun = f $ fxFun x }
 
+-- | Mix to patches together.
 mixInstr :: (SigSpace b, Num b) => Sig -> Patch b -> Patch b -> Patch b
 mixInstr k f p = LayerPatch [(k, f), (1, p)]
 
 ------------------------------------------------
 -- pads
 
+-- | Harmnoic series of patches.
 harmonPatch :: (SigSpace b, Sigs b) => [Sig] -> [D] -> Patch b -> Patch b
 harmonPatch amps freqs = tfmInstr monoTfm polyTfm
     where
         monoTfm instr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ instr (amp, cps * f)) amps (fmap sig freqs)
         polyTfm instr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ instr (amp, cps * f)) amps freqs 
 
+-- | Adds an octave below note for a given patch to make the sound deeper.
 deepPad :: (SigSpace b, Sigs b) => Patch b -> Patch b
 deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]
 
+-- | Transforms instrument functions for polyphonic and monophonic patches.
 tfmInstr :: ((CsdNote Sig -> SE b) -> (CsdNote Sig -> SE b)) -> ((CsdNote D -> SE b) -> (CsdNote D -> SE b)) -> Patch b -> Patch b
 tfmInstr monoTfm polyTfm x = case x of
     MonoSynt spec instr -> MonoSynt spec $ monoTfm instr
@@ -432,9 +471,11 @@ withRever fx ratio p = addPostFx ratio (return . fx) p
 ------------------------------------------------
 -- sound font patch
 
+-- | Sound font patch with a bit of reverb.
 sfPatchHall :: Sf -> Patch2
 sfPatchHall = withSmallHall . sfPatch
 
+-- | Sound font patch.
 sfPatch :: Sf -> Patch2
 sfPatch sf = PolySynt $ \(amp, cps) -> return $ sfCps sf 0.5 amp cps
 
