@@ -136,7 +136,7 @@ csound-expression
 * **mul' new scaling function**. Scaling with side-effects. Can be useful to scale with random envelope.
 
 * **Adds table read and write opcodes**. Adds opcodes `tablewa`, `tablew`, `readTab`, `readTable`, `readTable3`, `readTablei`.
-    See the module @Csound.Tab@ for details.
+    See the module `Csound.Tab` for details.
 
 * **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, `mp3Left`, `mp3Right` to read  
    audio by channels. Also we can read both channels with functions `wavs` and `mp3s`.
