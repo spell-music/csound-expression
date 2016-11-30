@@ -8,6 +8,14 @@ module Csound.Air.Fx(
 
     room, chamber, hall, cave,
 
+    -- ** Impulse Responce convolution reverbs
+    --
+    -- | Be careful with volumes. Some IRs can require scaling with really small coefficients like 0.01.
+    -- 
+    monoIR, stereoIR, stereoIR2, pmonoIR, pstereoIR, pstereoIR2, 
+    monoIR', stereoIR', stereoIR2',
+    ZConvSpec(..), zconv, zconv',
+
     -- * Delays
     MaxDelayTime, DelayTime, Feedback, Balance,
     echo, fdelay, fvdelay, fvdelays, funDelays, tabDelay,
@@ -49,6 +57,7 @@ import Csound.Typed
 import Csound.Tab(sines4, startEnds, setSize, elins, newTab, tabSizeSecondsPower2, tablewa, sec2rel)
 import Csound.Typed.Opcode
 import Csound.SigSpace
+import Csound.Tab
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
@@ -139,7 +148,56 @@ hall mx ain = mixAt mx largeHall2 ain
 -- > let room dryWet asig = mixAt dryWet magicCave2 asig
 cave :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
 cave mx ain = mixAt mx magicCave2 ain
+
+---------------------------------------------------------------------------------
+-- IR reverbs
+
+-- | Fast zero delay convolution with impulse response that is contained in mono-audio file.
+--
+-- > monoIR irFile ain
+monoIR :: FilePath -> Sig -> Sig
+monoIR = monoIR' def
+
+-- | Fast zero delay convolution with impulse response that is contained in mono-audio file.
+-- We can specify aux parameters for convolution algorithm (see @zconv'@).
+--
+-- > monoIR' spec irFile ain
+monoIR' :: ZConvSpec -> FilePath -> Sig -> Sig
+monoIR' spec fileName ain = zconv' spec (wavLeft fileName) ain
+
+-- | Fast zero delay convolution with impulse response that is contained in stereo-audio file.
+--
+-- > stereoIR irFile ain
+stereoIR :: FilePath -> Sig2 -> Sig2
+stereoIR = stereoIR' def
+
+-- | Fast zero delay convolution with impulse response that is contained in stereo-audio file.
+-- We can specify aux parameters for convolution algorithm (see @zconv'@).
+--
+-- > stereoIR' spec irFile ain
+stereoIR' :: ZConvSpec -> FilePath -> Sig2 -> Sig2
+stereoIR' spec fileName (ainL, ainR) = (zconv' spec (wavLeft fileName) ainL, zconv' spec (wavRight fileName) ainR)
+
+-- | If IR is encoded in a couple of mono files.
+stereoIR2 :: (FilePath, FilePath) -> Sig2 -> Sig2
+stereoIR2 = stereoIR2' def
+
+-- | If IR is encoded in a couple of mono files.
+stereoIR2' :: ZConvSpec -> (FilePath, FilePath) -> Sig2 -> Sig2
+stereoIR2' spec (file1, file2) (ainL, ainR) = (monoIR' spec file1 ainL, monoIR' spec file2 ainR)
+
+-- | Precise mono IR with pconvolve (requires a lot of CPU).
+pmonoIR :: FilePath -> Sig -> Sig
+pmonoIR fileName ain = pconvolve ain (text fileName)
+
+-- | Precise stereo IR with pconvolve (requires a lot of CPU).
+pstereoIR :: FilePath -> Sig2 -> Sig2
+pstereoIR fileName (ainL, ainR) = pconvolve ((ainL + ainR) * 0.5) (text fileName)
+
+pstereoIR2 :: (FilePath, FilePath) -> Sig2 -> Sig2
+pstereoIR2 (file1, file2) (ainL, ainR) = (pmonoIR file1 ainL, pmonoIR file2 ainR)
     
+
 ---------------------------------------------------------------------------------
 -- Delays
 
