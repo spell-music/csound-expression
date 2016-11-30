@@ -88,8 +88,9 @@ csound-expression
 
 * **Morpheus is here**. New cool granular synthesizer is included. It's based on partikkel opcode. 
    The aim is to simplify the work-flow with partikkel opcode. The API is experimental right now and might change.
+   See the module `Csound.Air.Granular.Morpheus` for details.
 
-* **Raw waveforms for analogue-like oscillators**: `rawSaw`, rawTri, `rawSqr` non-band limited based
+* **Raw waveforms for analogue-like oscillators**: `rawSaw`, `rawTri`, `rawSqr` non-band limited based
   on table lookup. Can be usefull for LFOs or more light-weight versions of oscillators than `saw`, `tri` or `sqr`.
 
 * **mul' new scaling function**. Scaling with side-effects. Can be usefull to scale with random envelope.
@@ -97,11 +98,11 @@ csound-expression
 * **Adds table read and write opcodes**. Adds opcodes `tablewa`, `tablew`, `readTab`, `readTable`, `readTable3`, `readTablei`.
     See the module @Csound.Tab@ for details.
 
-* **Cabbage support**. Adds full support for building [cabbage](http://cabbageaudio.com/) interfaces. Checkout the module @Csound.Cabbage@.
+* **Cabbage support**. Adds full support for building [cabbage](http://cabbageaudio.com/) interfaces. Checkout the module `Csound.Cabbage`.
   We can create vst-plugins with it!  Still needs help for testing. We can check out the tutorial on how to build cabbage interfaces
   with csound-expression library: [Cabbage guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md).
 
-* **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, mp3Left, mp3Right to read  
+* **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, `mp3Left`, `mp3Right` to read  
    audio by channels. Also we can read both channels with functions `wavs` and `mp3s`.
 
 * **New data type for Patches!** This change is incompatible but it brings better support for playing patches live!
@@ -114,7 +115,7 @@ csound-expression
 
 * **Support for up to 8 outputs**. More instances for `RenderCsd` were added. Now we can play back up to 8 signals at the same time!
 
-* *Useful option to suppress the event printing on the screen**. By default the Csound prints out every message on the screen (with time stamps and amplitudes).
+* **Useful option to suppress the event printing on the screen**. By default the Csound prints out every message on the screen (with time stamps and amplitudes).
     Now we have useful function `noTrace` to suppress those messages. Just write `dacBy noTrace $ mySigs` to stop them.
 
 * **Adds More option setters for RT-audio engines**. New option setters: `setAlsa`, `setMme`, `setCoreAudio`.
@@ -156,7 +157,7 @@ csound-expression
 
 csound-sampler
 
-* **Adds randomized patterns* with which we can skip the beats in the fixed pattern by given probability: `rndPat` and `rndPat'`.
+* **Adds randomized patterns** with which we can skip the beats in the fixed pattern by given probability: `rndPat` and `rndPat'`.
 
 **The 5.0 is out! New features:**
 
