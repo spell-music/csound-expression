@@ -99,8 +99,10 @@ instance Default MorphSpec where
 		, morphGrainEnv     = def
 		}
 
--- | Synth that is based on partikkel. It allows easy morphing between up to four waves.
--- Many parameters of partikel were simplified to get the good defaults for sound morphing behaviour.
+-- | Synth that is based on partikkel. It allows easy morphing between unlimited number of waves.
+-- While partikkel allows only 4 waves to be used. We can use as many as we like. Internally
+-- the list is split on groups 4 elements or less in each and one partikkel is applied to each group.
+-- Many parameters of partikel were simplified to get the good defaults for sound morphing behavior.
 --
 -- > morpheus spec waves frequencyScale
 --
@@ -111,7 +113,15 @@ instance Default MorphSpec where
 -- * frequencyScale -- scaling factor for frequency. 1 means playing at the original frequency, 2 rises the pitch by octave. 
 --     We can use negative values to play the grains in reverse.
 morpheus :: MorphSpec -> [MorphWave] -> Sig -> SE Sig2
-morpheus spec pwaves cps = do
+morpheus spec pwaves cps = sum $ fmap (\waves -> morpheus4 spec waves cps) (splitBy4 pwaves)
+
+splitBy4 :: [a] -> [[a]]
+splitBy4 xs = case xs of
+    a:b:c:d:rest -> [a,b,c,d] : splitBy4 rest
+    rest         -> [rest]
+
+morpheus4 :: MorphSpec -> [MorphWave] -> Sig -> SE Sig2
+morpheus4 spec pwaves cps = do
 	iwaveamptab <- makeMorphTable amp1 amp2 amp3 amp4
 	return $ csdPartikkel agrainrate kdistribution idisttab async kenv2amt ienv2tab
 					ienv_attack ienv_decay ksustain_amount ka_d_ratio kduration kamp igainmasks
@@ -143,7 +153,7 @@ morpheus spec pwaves cps = do
     	-- grain density
     	grainDensity = morphGrainDensity spec
     	kGrainRate = grainRate grainDensity
-    	kduration = grainSize grainDensity
+    	kduration = grainSize grainDensity                    
 
     	kwavfreq = cps
 
@@ -207,14 +217,21 @@ morpheus spec pwaves cps = do
 
 getTabLen t = ftlen t / getSampleRate
 
+-- | Creates four control signals out two signals. The control signals are encoded by the position
+-- of the point on XY-plane. The four resulting signals are derived from the proximity of the point
+-- to four squares of the ((0, 1), (0, 1)) square. It can be useful to control the morpheus with XY-pad controller.
 pairToSquare :: (Sig, Sig) -> (Sig, Sig, Sig, Sig)
 pairToSquare (x, y) = ((1 - x) * (1 - y), x * (1 - y) , x * y, (1 - x) * y)
 
+-- | Morpheus synth for mono-audio files. The first cell in each tripple is occupied by file name.
+-- The rest arguments are the same as for @morpheus@.
 morphSnd1 :: MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
 morphSnd1 spec waves cps = morpheus spec (fmap fromSnd waves) cps
 	where
 		fromSnd (file, amp, key) = (wavLeft file, amp, key, phasor (1 / sig (lengthSnd file)))
 
+-- | Morpheus synth for stereo-audio files. The first cell in each tripple is occupied by file name.
+-- The rest arguments are the same as for @morpheus@.
 morphSnd :: MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
 morphSnd spec waves cps = morphSndByTab wavLeft spec waves cps + morphSndByTab wavRight spec waves cps
 
@@ -224,6 +241,11 @@ morphSndByTab getTab spec waves cps = morpheus spec (fmap fromSnd waves) cps
 		fromSnd (file, amp, key) = (getTab file, amp, key, phasor (1 / sig (lengthSnd file)))
 
 -- | Morpheus oscillator.
+--
+-- > morpheusOsc spec (baseFrequency, table) cps
+--
+-- @baseFrequency@ is the frequency of the sample contained in the table. With oscillator
+-- we can read the table on different frequencies. 
 morpheusOsc :: MorphSpec -> (D, Tab) -> Sig -> SE Sig2
 morpheusOsc spec (baseFreq, t) cps = morpheus spec waves ratio
 	where
@@ -233,7 +255,9 @@ morpheusOsc spec (baseFreq, t) cps = morpheus spec waves ratio
 
 cycleTab t = phasor $ sig $ recip $ getTabLen t
 
--- | Morpheus oscillator.
+-- | Morpheus oscillator. We control the four tables with pair of control signals (see the function @pairToSquare@).
+--
+-- > morpheusOsc2 spec baseFrequency waves (x, y) cps = ...
 morpheusOsc2 :: MorphSpec -> D -> [(Sig, Tab)] -> (Sig, Sig) -> Sig -> SE Sig2
 morpheusOsc2 spec baseFreq ts (x, y) cps = morpheus spec waves ratio
 	where
