@@ -87,7 +87,7 @@ csound-expression
 
 * **New data type for Patches!** This change is incompatible but it brings better support for playing patches live!
    The polyphonic and monophonic patches are united with single data-type so we can play them with the same functions.
-   Also now we can create layered patches to play severl patches at the same time and also we can split the keyboard
+   Also now we can create layered patches to play several patches at the same time and also we can split the keyboard
    on sections to play different patches on different sections. It's useful feature available in many modern synthesizers.
    But here we can include any number of layers! and we can mix mono and poly instruments together! 
 
@@ -128,11 +128,12 @@ csound-expression
   with csound-expression library: [Cabbage guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md).
 
 * **Useful aliases for classic reverbs** with single dry-wet ratio as a parameter: `room`, `chamber`, `hall`, `cave`.
+  We can use it like this: `dac $ hall 0.25 mySynt` instead of `dec $ mixAt 0.25 largeHall2 mySynt`.
 
 * **Raw waveforms for analogue-like oscillators**: `rawSaw`, `rawTri`, `rawSqr` non-band limited based
-  on table lookup. Can be usefull for LFOs or more light-weight versions of oscillators than `saw`, `tri` or `sqr`.
+  on table lookup. Can be useful for LFOs or more light-weight versions of oscillators than `saw`, `tri` or `sqr`.
 
-* **mul' new scaling function**. Scaling with side-effects. Can be usefull to scale with random envelope.
+* **mul' new scaling function**. Scaling with side-effects. Can be useful to scale with random envelope.
 
 * **Adds table read and write opcodes**. Adds opcodes `tablewa`, `tablew`, `readTab`, `readTable`, `readTable3`, `readTablei`.
     See the module @Csound.Tab@ for details.
