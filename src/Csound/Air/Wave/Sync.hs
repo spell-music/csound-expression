@@ -54,21 +54,27 @@ import Csound.Air.Wave
 rndPhsSync :: (D -> Sig -> Sig -> Sig) -> (Sig -> Sig -> SE Sig)
 rndPhsSync f ratio cps = fmap (\x -> f x ratio cps) $ rnd 1
 
+-- | Hard sync with saw waveform and randomized phase.
 rndSawSync :: Sig -> Sig -> SE Sig 
 rndSawSync = rndPhsSync sawSync'
 
+-- | Hard sync with integral saw waveform and randomized phase.
 rndIsawSync :: Sig -> Sig -> SE Sig
 rndIsawSync = rndPhsSync isawSync'
 
+-- | Hard sync with pulse waveform and randomized phase.
 rndPulseSync :: Sig -> Sig -> SE Sig 
 rndPulseSync = rndPhsSync pulseSync'
 
+-- | Hard sync with square waveform and randomized phase.
 rndSqrSync :: Sig -> Sig -> SE Sig 
 rndSqrSync = rndPhsSync sqrSync'
 
+-- | Hard sync with triangle waveform and randomized phase.
 rndTriSync :: Sig -> Sig -> SE Sig
 rndTriSync = rndPhsSync triSync'
 
+-- | Hard sync with band-limited table waveform waveform and randomized phase.
 rndBloscSync :: Tab -> Sig -> Sig -> SE Sig 
 rndBloscSync t = rndPhsSync (bloscSync' t)
 
@@ -177,29 +183,71 @@ syncOsc smoothFun ftab slaveCps cps = dcblock $ aout
 ----------------------------------------------------------
 -- Soft-sync
 
+-- | Soft sync with given waveform (with band-limited square wave for switch).
+-- The soft sync amount is controlled with ratio between master and slave frequencies.
+--
+-- > softSync slaveWave ratio masterWave
 softSync :: SigSpace a => (Sig -> a) -> Sig -> (Sig -> a)
 softSync = softSyncBy def
 
+-- | Soft sync with given waveform (with raw square wave for switch). It's faster than `softSync`
+-- The soft sync amount is controlled with ratio between master and slave frequencies.
+--
+-- > rawSoftSync slaveWave ratio masterWave
 rawSoftSync :: SigSpace a => (Sig -> a) -> Sig -> (Sig -> a)
 rawSoftSync = rawSoftSyncBy def
 
+-- | Soft sync with given waveform (with band-limited square wave for switch).
+-- The soft sync amount is controlled with ratio between master and slave frequencies.
+-- With first argument we can specify the smoothness algorithm.
+--
+-- > softSyncBy spec slaveWave ratio masterWave
+--
 softSyncBy :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
 softSyncBy = genSoftSync sqr blosc
 
+-- | Soft sync with given waveform (with raw square wave for switch). It's faster than `softSyncBy`
+-- The soft sync amount is controlled with ratio between master and slave frequencies.
+-- With first argument we can specify the smoothness algorithm.
+--
+-- > rawSoftSyncBy spec slaveWave ratio masterWave
+--
 rawSoftSyncBy :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
 rawSoftSyncBy = genSoftSync rawSqr oscBy
 
 ----------------------------------------------------------
 
+
+-- | Soft sync with given waveform (with band-limited square wave for switch).
+-- The soft sync amount is controlled with absolute frequency of the slave oscillator.
+--
+-- > softSyncAbs slaveWave ratio masterWave
 softSyncAbs :: SigSpace a => (Sig -> a) -> Sig -> (Sig -> a)
 softSyncAbs = softSyncAbsBy def
 
+-- | Soft sync with given waveform (with raw square wave for switch). It's faster than `softSyncAbs`
+-- The soft sync amount is controlled with absolute frequency of the slave oscillator.
+--
+-- > rawSoftSyncAbs slaveWave ratio masterWave
 rawSoftSyncAbs :: SigSpace a => (Sig -> a) -> Sig -> (Sig -> a)
 rawSoftSyncAbs = rawSoftSyncAbsBy def
 
+
+-- | Soft sync with given waveform (with band-limited square wave for switch).
+-- The soft sync amount is controlled with absolute frequency of the slave oscillator.
+-- With first argument we can specify the smoothness algorithm.
+--
+-- > softSyncAbsBy spec slaveWave ratio masterWave
+--
 softSyncAbsBy :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
 softSyncAbsBy = genSoftSyncAbs sqr blosc
 
+-- | Soft sync with given waveform (with raw square wave for switch). It's faster than `softSyncAbsBy`
+-- The soft sync amount is controlled with absolute frequency of the slave oscillator.
+-- With first argument we can specify the smoothness algorithm.
+--
+-- > rawSoftSyncBy spec slaveWave ratio masterWave
+--
 rawSoftSyncAbsBy :: SigSpace a => SyncSmooth -> (Sig -> a) -> Sig -> (Sig -> a)
 rawSoftSyncAbsBy = genSoftSyncAbs rawSqr oscBy
 
