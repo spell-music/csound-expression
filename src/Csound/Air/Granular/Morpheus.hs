@@ -263,7 +263,7 @@ morpheusOsc2 spec baseFreq ts (x, y) cps = morpheus spec waves ratio
 	where
 		(a1, a2, a3, a4) = pairToSquare (x, y)
 		ratio = cps / sig baseFreq		
-		waves = zipWith (\amp (key, t) -> (t, amp, key, cycleTab t)) [a1, a2, a3, a4] (cycle $ ts)		
+		waves = zipWith (\amp (key, t) -> (t, amp, key, cycleTab t)) (cycle [a1, a2, a3, a4]) ts
 
 
 {- examples
