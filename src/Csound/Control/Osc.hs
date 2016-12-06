@@ -1,6 +1,10 @@
 -- | Open Sound Control.
 module Csound.Control.Osc(
-    initOsc, listenOsc, sendOsc, listenOscVal, ListenOsc
+    OscHost, OscPort, OscAddress, OscType,
+    -- * Server
+    initOsc, listenOsc, ListenOsc, OscVal, listenOscVal,
+    -- * Client
+    sendOsc
 ) where
 
 import Csound.Typed
