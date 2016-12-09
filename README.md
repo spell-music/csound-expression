@@ -80,7 +80,7 @@ file and then load it in the ghci and invoke the function `main`
 News
 -----------------------------
 
-**The 5.1 is out! Let's warm up our hearts with new bright ideas at this Cold winter! New features:**
+**The 5.1 is out! Let's warm up our hearts with new bright ideas in this Cold winter! New features:**
 
 csound-expression
 

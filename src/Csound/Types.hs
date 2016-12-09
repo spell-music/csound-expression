@@ -76,8 +76,11 @@ module Csound.Types(
     Sigs,
 
     -- * Arrays
-    Arr, newLocalArr, newGlobalArr, 
-    writeArr, readArr, modifyArr, mixArr
+    Arr, newLocalArr, newGlobalArr, newLocalCtrlArr, newGlobalCtrlArr, 
+    writeArr, readArr, modifyArr, mixArr,
+    -- ** Type inference helpers
+    Arr1, DArr1, Arr2, DArr2, Arr3, DArr3,
+    arr1, darr1, arr2, darr2, arr3, darr3    
 ) where
 
 import Data.Boolean
