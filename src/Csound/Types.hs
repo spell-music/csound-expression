@@ -22,7 +22,7 @@
 module Csound.Types(
     -- * Primitive types    
     Sig, D, Tab, Str, Spec, Wspec,    
-    BoolSig, BoolD, Val(..), SigOrD,
+    BoolSig, BoolD, Val(..), SigOrD,    
 
     Sig2, Sig3, Sig4, Sig5, Sig6, Sig8,
     -- ** Constructors
@@ -73,7 +73,11 @@ module Csound.Types(
     ifArg, guardedArg, caseArg, 
 
     -- ** Outputs
-    Sigs
+    Sigs,
+
+    -- * Arrays
+    Arr, newLocalArr, newGlobalArr, 
+    writeArr, readArr, modifyArr, mixArr
 ) where
 
 import Data.Boolean
