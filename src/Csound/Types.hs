@@ -80,7 +80,17 @@ module Csound.Types(
     writeArr, readArr, modifyArr, mixArr,
     -- ** Type inference helpers
     Arr1, DArr1, Arr2, DArr2, Arr3, DArr3,
-    arr1, darr1, arr2, darr2, arr3, darr3    
+    arr1, darr1, arr2, darr2, arr3, darr3,  
+
+    -- ** Array opcodes
+    fillLocalArray, fillGlobalArray, fillLocalCtrlArray, fillGlobalCtrlArray,
+    lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray, 
+    scalearray, slicearray,
+
+    -- ** Spectral opcodes
+    SpecArr, fft, fftinv, rfft, rifft, pvs2tab, tab2pvs, cmplxprod, 
+    rect2pol, pol2rect, pol2rect2, windowArray, 
+    r2c, c2r, magsArray, phsArray  
 ) where
 
 import Data.Boolean
