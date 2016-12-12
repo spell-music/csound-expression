@@ -18,7 +18,7 @@ module Csound.Air.Fx(
 
     -- * Delays
     MaxDelayTime, DelayTime, Feedback, Balance,
-    echo, fdelay, fvdelay, fvdelays, funDelays, tabDelay,
+    echo, fvdelay, fvdelays, funDelays, tabDelay,
     PingPongSpec(..), pingPong, pingPong', csdPingPong,
 
     -- * Distortion
@@ -216,24 +216,14 @@ type Balance = Sig
 -- | The simplest delay with feedback. Arguments are: delay length and decay ratio.
 --
 -- > echo delayLength ratio
-echo :: MaxDelayTime -> Feedback -> Sig -> SE Sig
-echo len fb = fdelay len fb 1
-
--- | Delay with feedback. 
---
--- > fdelay delayLength decayRatio balance
-fdelay :: MaxDelayTime -> Feedback -> Balance -> Sig -> SE Sig
-fdelay len = fvdelay len (sig len)
+echo :: MaxDelayTime -> Feedback -> Sig -> Sig
+echo len fb x = x + flanger x (sig len) fb `withD` (len + 0.005)
 
 -- | Delay with feedback. 
 --
 -- > fdelay maxDelayLength delayLength feedback balance
-fvdelay :: MaxDelayTime -> DelayTime -> Feedback -> Balance -> Sig -> SE Sig
-fvdelay len dt fb mx a = do
-    _ <- delayr len
-    aDel <- deltap3 dt
-    delayw $ a + fb * aDel
-    return $ a + (aDel * mx)
+fvdelay :: MaxDelayTime -> DelayTime -> Feedback -> Sig -> Sig
+fvdelay len dt fb a = a + flanger a dt fb `withD` len
 
 -- | Multitap delay. Arguments are: max delay length, list of pairs @(delayLength, decayRatio)@,
 -- balance of mixed signal with processed signal.
@@ -610,19 +600,16 @@ fxPink2 freq depth = bindSig fx
 -- | Simplified delay
 --
 -- > fxEcho maxDelayLength delTime feedback sigIn
-fxEcho :: D -> Sig -> Sig -> Sig -> SE Sig
-fxEcho maxLen ktime fback = fvdelay (5 * maxLen) (sig maxLen * 0.95 * kTime) fback 1  
+fxEcho :: D -> Sig -> Sig -> Sig -> Sig
+fxEcho maxLen ktime fback = fvdelay (5 * maxLen) (sig maxLen * 0.95 * kTime) fback
     where
         kporttime = linseg [0,0.001,0.1]
         kTime = portk   ktime  (kporttime*3)
 
 -- | Simplified stereo delay.
-fxEcho2 :: D -> Sig -> Sig -> Sig2 -> SE Sig2
-fxEcho2 maxLen ktime fback = bindSig fx
+fxEcho2 :: D -> Sig -> Sig -> Sig2 -> Sig2
+fxEcho2 maxLen ktime fback = at fx
     where fx = fxEcho maxLen ktime fback
-
-
-
 
 -- | Instrument plays an input signal in different modes. 
 -- The segments of signal can be played back and forth. 

@@ -230,7 +230,7 @@ genLoop playInstr spec dtBpm times' instrs = do
 
 			let playEcho dId = mul (smooth 0.05 $ ifB dId 1 0) $ mul (smooth 0.1 silVal) $ at (echo (dt * t) (ifB dId repeatFadeWeight 0)) $ ifB dId echoSig 0
 
-			mul mixCoeff $ mixAt postCoeff postFx $ sum [ sum $ fmap playEcho [d0, d1, d2]
+			mul mixCoeff $ mixAt postCoeff postFx $ sum [ return $ sum $ fmap playEcho [d0, d1, d2]
 				, playSf 1]
 			where 
 				playSf thrVal = mixAt preCoeff preFx $ playInstr (isCurrent &&* thr ==* thrVal) instr
