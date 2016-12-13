@@ -83,14 +83,22 @@ module Csound.Types(
     arr1, darr1, arr2, darr2, arr3, darr3,  
 
     -- ** Array opcodes
-    fillLocalArray, fillGlobalArray, fillLocalCtrlArray, fillGlobalCtrlArray,
-    lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray, 
-    scalearray, slicearray,
+    fillLocalArrayNew, fillGlobalArrayNew, fillLocalCtrlArrayNew, fillGlobalCtrlArrayNew,
+    maparrayNew, lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray, 
+    scalearray, slicearrayNew,
+
+    fillArrayCopy, maparrayCopy, slicearrayCopy,
 
     -- ** Spectral opcodes
-    SpecArr, fft, fftinv, rfft, rifft, pvs2tab, tab2pvs, cmplxprod, 
-    rect2pol, pol2rect, pol2rect2, windowArray, 
-    r2c, c2r, magsArray, phsArray  
+    SpecArr, 
+
+    fftNew, fftinvNew, rfftNew, rifftNew, pvs2tab, tab2pvs, cmplxprodNew, 
+    rect2polNew, pol2rectNew, pol2rect2New, windowArrayNew, 
+    r2cNew, c2rNew, magsArrayNew, phsArrayNew,
+
+    fftCopy, fftinvCopy, rfftCopy, rifftCopy, cmplxprodCopy, 
+    rect2polCopy, pol2rectCopy, pol2rect2Copy, windowArrayCopy, 
+    r2cCopy, c2rCopy, magsArrayCopy, phsArrayCopy
 ) where
 
 import Data.Boolean
