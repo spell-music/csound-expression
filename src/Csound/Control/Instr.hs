@@ -101,13 +101,17 @@ module Csound.Control.Instr(
 
     -- * Overload
     -- | Converters to make it easier a construction of the instruments.
-    Outs(..), onArg, AmpInstr(..), CpsInstr(..)
+    Outs(..), onArg, AmpInstr(..), CpsInstr(..),
+
+    -- * Imperative instruments
+    InstrRef, newInstr, scheduleEvent, negateInstrRef, addFracInstrRef,
+    newOutInstr, noteOn, noteOff
 ) where
 
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (str, Sco(..), when1, alwaysOn)
 
-import Csound.Typed 
+import Csound.Typed
 import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
 import Temporal.Media(Event(..), mapEvents)
