@@ -46,7 +46,7 @@ module Csound.Air.Fx(
     audaciousEq,
 
     -- * Misc
-    trackerSplice
+    trackerSplice, pitchShifterDelay
 
 ) where
 
@@ -61,7 +61,8 @@ import Csound.Tab
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
-import Csound.Typed.Plugins
+import Csound.Typed.Plugins hiding(pitchShifterDelay)
+import qualified Csound.Typed.Plugins as P(pitchShifterDelay)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -682,3 +683,6 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 -- | Mean value.
 mean :: Fractional a => [a] -> a
 mean xs = sum xs / (fromIntegral $ length xs)
+
+pitchShifterDelay :: MaxDelayTime -> (Feedback, Feedback) -> DelayTime -> Sig -> Sig -> Sig
+pitchShifterDelay maxDelayTime (fb1, fb2) dlt ratio ain = P.pitchShifterDelay maxDelayTime (fb1, fb2) dlt ratio ain
