@@ -15,7 +15,7 @@
     -- Loads the sample in the table and plays it back from RAM. The sample should be short. The size of the table is limited.
     -- It's up to 6 minutes for 44100 sample rate, 5 minutes for 48000 and 2.8 minutes for 96000.
     LoopMode(..), ramSnd, ramSnd1, 
-    ramTab, mincer, 
+    ramTab, mincer, temposcal,
     Phsr(..), lphase, relPhsr, sndPhsr, phsrBounce, phsrOnce,
     ram, ram1,
 
@@ -26,7 +26,10 @@
 
     -- ** Simple audio reading functions (Mono)
 
-    readRam1, loopRam1, readSeg1, loopSeg1, readRel1, loopRel1,    
+    readRam1, loopRam1, readSeg1, loopSeg1, readRel1, loopRel1,
+
+    -- ** Scaling audio files
+    scaleDrum, scaleHarm, scaleDrum1, scaleHarm1, scaleWav1, scaleWav,
 
     -- * Writing sound files
     SampleFormat(..),
@@ -52,7 +55,7 @@ import Csound.Dynamic hiding (int, Sco)
 
 import Csound.Typed
 import Csound.Typed.Opcode
-import Csound.Tab(mp3s, wavs, WavChn(..), Mp3Chn(..))
+import Csound.Tab(mp3s, mp3Left, wavs, wavLeft, WavChn(..), Mp3Chn(..))
 import Csound.Control.Instr(withDur, sched)
 
 import Csound.SigSpace(mapSig)
@@ -295,6 +298,25 @@ mincer ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
 mincer b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5    
     where f a1 a2 a3 a4 a5 = opcs "mincer" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
+-- | temposcal — Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'. 
+--
+-- temposcal implements phase-locked vocoder processing using function tables containing 
+-- sampled-sound sources, with GEN01, and temposcal will accept deferred allocation tables.
+--
+-- This opcode allows for time and frequency-independent scaling. Time is advanced internally, 
+-- but controlled by a tempo scaling parameter; when an onset is detected, timescaling is 
+-- momentarily stopped to avoid smearing of attacks. The quality of the effect is generally 
+-- improved with phase locking switched on.
+--
+-- temposcal will also scale pitch, independently of frequency, using a transposition factor (k-rate). 
+--
+-- > asig temposcal ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, ithresh]
+--
+-- csound doc: <http://www.csounds.com/manual/html/temposcal.html>
+temposcal :: Sig -> Sig -> Sig -> Tab -> Sig -> Sig
+temposcal b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5    
+    where f a1 a2 a3 a4 a5 = opcs "temposcal" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+
 -- | Mincer. We can playback a table and scale by tempo and pitch.
 --
 -- > mincer fidelity table pointer pitch 
@@ -454,7 +476,7 @@ type PitchSig = Sig
 readRam :: Fidelity -> TempoSig-> PitchSig -> String -> Sig2
 readRam winSize tempo pitch file = ram winSize (phsrOnce $ sndPhsr file tempo) pitch
 
--- | Loop over file and scales it by tempo and pitch.
+-- | Loop over file and scales it by tempo and pitch (it's based on mincer opcode).
 loopRam :: Fidelity -> TempoSig-> PitchSig -> String -> Sig2
 loopRam winSize tempo pitch file = ram winSize (sndPhsr file tempo) pitch
 
@@ -503,3 +525,37 @@ readRel1 winSize (kmin, kmax) tempo pitch file = ram1 winSize (phsrOnce $ relPhs
 -- |  The mono version of loopRel.
 loopRel1 :: Fidelity -> (Sig, Sig) -> TempoSig-> PitchSig -> String -> Sig
 loopRel1 winSize (kmin, kmax) tempo pitch file = ram1 winSize (relPhsr file kmin kmax tempo) pitch
+
+------------------------------------
+-- scaling tempo/pitch based on temposcale
+
+-- | ScaleWav function with fidelity set for drum-loops.
+scaleDrum :: TempoSig -> PitchSig -> String -> Sig2
+scaleDrum = scaleWav (-2)
+
+-- | ScaleWav function with fidelity set for hormonical-loops.
+scaleHarm :: TempoSig -> PitchSig -> String -> Sig2
+scaleHarm = scaleWav 0
+
+-- | ScaleWav1 function with fidelity set for drum-loops.
+scaleDrum1 :: TempoSig -> PitchSig -> String -> Sig
+scaleDrum1 = scaleWav1 (-2)
+
+-- | ScaleWav1 function with fidelity set for hormonical-loops.
+scaleHarm1 :: TempoSig -> PitchSig -> String -> Sig
+scaleHarm1 = scaleWav1 0
+
+-- | Scaling mono audio files (accepts both midi and wav). It's based on temposcal Csound opcode.
+scaleWav1 :: Fidelity -> TempoSig -> PitchSig -> String -> Sig
+scaleWav1 winSizePowerOfTwo tempo pitch filename = go $ if mp3 then mp3Left filename else wavLeft filename
+    where 
+        go = simpleTempoScale winSizePowerOfTwo tempo pitch            
+        mp3 = isMp3 filename        
+
+
+-- | Scaling stereo audio files (accepts both midi and wav). It's based on temposcal Csound opcode.
+scaleWav :: Fidelity -> TempoSig -> PitchSig -> String -> Sig2
+scaleWav winSizePowerOfTwo tempo pitch filename = (go $ mkTab False 0 filename, go $ mkTab False 1 filename) 
+    where go = simpleTempoScale winSizePowerOfTwo tempo pitch
+
+simpleTempoScale winSizePowerOfTwo tempo pitch t = temposcal tempo 1 pitch t 1 `withD` (2 ** (winSizePowerOfTwo + 11))
