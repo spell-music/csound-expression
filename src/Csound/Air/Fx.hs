@@ -42,6 +42,9 @@ module Csound.Air.Fx(
     fxWhite, fxWhite2, fxPink, fxPink2, equalizer, equalizer2, eq4, eq7,
     fxGain, 
 
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFreqShifter, fxLoFi,
+    fxPanTrem, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2,
+
     -- Eq
     audaciousEq,
 
@@ -448,23 +451,28 @@ stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR
 -- | Phaser
 --
 -- > fxPhaser mix rate depth freq feedback sigIn
+
+{-
 fxPhaser ::Balance -> Feedback -> RateSig -> DepthSig -> Sig -> Sig -> Sig
 fxPhaser kmix fb krate' kdepth kfreq ain = fxWet kmix ain aout
     where       
         krate = expScale 10 (0.01, 14) krate'
         klfo  = kdepth * utri krate
         aout  = phaser1 ain (cpsoct $ klfo + kfreq) 8 fb        
+-}
 
 -- | Stereo phaser.
-fxPhaser2 :: Balance -> Feedback -> RateSig -> DepthSig -> Sig -> Sig2 -> Sig2
-fxPhaser2 kmix fb krate kdepth kfreq (al, ar) = (fx al, fx ar)
-    where fx = fxPhaser kmix fb krate kdepth kfreq  
+fxPhaser2 :: Feedback -> RateSig -> DepthSig -> Sig -> Sig2 -> Sig2
+fxPhaser2 fb krate kdepth kfreq (al, ar) = (fx al, fx ar)
+    where fx = fxPhaser fb krate kdepth kfreq  
 
 -- Flanger
 
 -- | Flanger
 --
 -- > fxFlanger mix feedback rate depth delay sigIn
+
+{-
 fxFlanger :: Balance -> Feedback -> RateSig -> DepthSig -> DelayTime -> Sig -> Sig
 fxFlanger kmix kfback krate' kdepth kdelay' ain = fxWet kmix ain aout
     where
@@ -477,11 +485,12 @@ fxFlanger kmix kfback krate' kdepth kdelay' ain = fxWet kmix ain aout
         amod = oscili kdep krate ilfoshape      
         adelsig = flanger ain (adlt + amod) kfback `withD` 1.2
         aout = mean [ain, adelsig]
+-}
 
 -- | Stereo flanger
-fxFlanger2 :: Balance -> Feedback -> RateSig -> DepthSig -> DelayTime -> Sig2 -> Sig2
-fxFlanger2 kmix kfback krate kdepth kdelay  (al ,ar) = (fx al, fx ar)
-    where fx = fxFlanger kmix kfback krate kdepth kdelay
+fxFlanger2 :: Feedback -> RateSig -> DepthSig -> DelayTime -> Sig2 -> Sig2
+fxFlanger2 kfback krate kdepth kdelay  (al ,ar) = (fx al, fx ar)
+    where fx = fxFlanger kfback krate kdepth kdelay
 
 -- Analog delay
 
