@@ -1,6 +1,8 @@
 -- | Basic waveforms that are used most often. 
 -- A waveform function takes in a time varied frequency (in Hz).
 module Csound.Air.Wave (
+    Wave, 
+    
 	 -- * Bipolar
     osc, oscBy, saw, isaw, pulse, sqr, pw, tri, ramp, blosc,
 
@@ -54,6 +56,8 @@ import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
 import Csound.Tab(setSize, elins, sine, cosine, sines4, triTab, pwTab, sawTab, sqrTab)
 import Csound.SigSpace
+
+type Wave = Sig -> SE Sig
 
 -- | A pure tone (sine wave).
 osc :: Sig -> Sig

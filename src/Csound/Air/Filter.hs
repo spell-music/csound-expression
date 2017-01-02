@@ -14,7 +14,7 @@ module Csound.Air.Filter(
 
     -- * Filter order
     ResonFilter, FlatFilter,
-    filt, flatFilt,
+    filt, flatFilt, toReson,
 
     -- * Specific filters
 
@@ -168,6 +168,10 @@ type ResonFilter = Sig -> Sig -> Sig -> Sig
 -- 
 -- > f centerFreq q asig
 type FlatFilter  = Sig -> Sig -> Sig
+
+-- | Makes fake resonant filter from flat filter. The resulting filter just ignores the resonance.
+toReson :: FlatFilter -> ResonFilter
+toReson filter = \cfq res -> filter cfq
 
 -- | Applies a filter n-times. The n is given in the first rgument.
 filt :: Int -> ResonFilter -> ResonFilter

@@ -417,8 +417,8 @@ testDrone2 cps = atNote (deepPad nightPad) (0.8, cps)
 testDrone3 cps = atNote (deepPad caveOvertonePad) (0.8, cps)
 testDrone4 cps = atNote (deepPad pwEnsemble) (0.8, cps)
 
-pwEnsemble = withSmallHall $ PolySynt def $ at fromMono . mul 0.55 . onCps impPwEnsemble    
-nightPad   = withLargeHall $ PolySynt def $ mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . impNightPad 0.5)
+pwEnsemble = withSmallHall $ polySynt $ at fromMono . mul 0.55 . onCps impPwEnsemble    
+nightPad   = withLargeHall $ polySynt $ mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . impNightPad 0.5)
 
 data RazorPad = RazorPad { razorPadSpeed :: Sig }
 
@@ -426,14 +426,14 @@ instance Default RazorPad where
     def = RazorPad 0.5
 
 razorPad = razorPad' def
-razorPad' (RazorPad speed) = withLargeHall' 0.35 $ PolySynt def $ at fromMono . mul 0.6 . onCps (uncurry $ impRazorPad speed)    
+razorPad' (RazorPad speed) = withLargeHall' 0.35 $ polySynt $ at fromMono . mul 0.6 . onCps (uncurry $ impRazorPad speed)    
 
-overtonePad = withLargeHall' 0.35 $ PolySynt def overtoneInstr
+overtonePad = withLargeHall' 0.35 $ polySynt overtoneInstr
     
 overtoneInstr :: CsdNote D -> SE Sig2
 overtoneInstr = mul 0.65 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (tibetan 11 0.012 cps) + mul (fades 0.25 1) (tibetan 13 0.015 (cps * 0.5)))    
 
-caveOvertonePad =  FxChain (fx1 0.2 (magicCave2 . mul 0.8)) $ PolySynt def overtoneInstr
+caveOvertonePad =  FxChain (fx1 0.2 (magicCave2 . mul 0.8)) $ polySynt overtoneInstr
 
 -- implem
 
@@ -487,8 +487,8 @@ stringPad amp cps = blp (900 + amp * 300) $ chorusPitch 3 0.1 f cps
 giwave :: Tab
 giwave = sines [1, 0.5, 0.33, 0.25, 0.0, 0.1, 0.1, 0.1]
 
-fx1 :: Sig -> (a -> a) -> [FxSpec a]
-fx1 dw f = [FxSpec dw (return . f)]
+fx1 :: Sig -> (a -> a) -> [GenFxSpec a]
+fx1 dw f = [return $ FxSpec dw (return . f)]
 
 -- | The magic cave reverb (stereo).
 magicCave2 :: Sig2 -> Sig2
