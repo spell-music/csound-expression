@@ -44,6 +44,7 @@ module Csound.IO (
 import System.Process
 import qualified Control.Exception as E
 
+import Control.Monad
 import Data.Monoid
 import Data.Default
 import Csound.Typed
@@ -129,6 +130,9 @@ instance (Sigs a) => RenderCsd (a -> Sig) where
 instance (Sigs a) => RenderCsd (a -> Sig2) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
+instance (Sigs a) => RenderCsd (a -> Sig3) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
 instance (Sigs a) => RenderCsd (a -> Sig4) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
@@ -153,94 +157,155 @@ instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8)) where
 instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8, Sig8, Sig8)) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
-instance (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
+instance (Sigs a) => RenderCsd (a -> SE Sig) where
     renderCsdBy opt f = renderEffBy opt f
 
+instance (Sigs a) => RenderCsd (a -> SE Sig2) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE Sig3) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE Sig4) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE Sig5) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE Sig6) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE Sig8) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig8, Sig8)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig8, Sig8, Sig8, Sig8)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> Source Sig) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source Sig2) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source Sig3) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source Sig4) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source Sig6) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source Sig8) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig8, Sig8)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig8, Sig8, Sig8, Sig8)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig3)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig4)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig5)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig6)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE Sig8)) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig8, Sig8))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig8, Sig8, Sig8, Sig8))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
 instance RenderCsd (Source Sig) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                return asig
+    renderCsdBy opt a = renderCsdBy opt (fromSource a)
 
 instance RenderCsd (Source Sig2) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                return asig
+    renderCsdBy opt a = renderCsdBy opt (fromSource a)
 
 instance RenderCsd (Source Sig4) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                return asig
+    renderCsdBy opt a = renderCsdBy opt (fromSource a)
 
 instance RenderCsd (Source (Sig2, Sig2)) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2)) -> (a1, a2, b1, b2)) a
 
 instance RenderCsd (Source Sig6) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                return asig
+    renderCsdBy opt a = renderCsdBy opt (fromSource a)
 
 instance RenderCsd (Source (Sig2, Sig2, Sig2)) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2), (c1, c2)) -> (a1, a2, b1, b2, c1, c2)) a
 
 instance RenderCsd (Source Sig8) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                return asig                
+    renderCsdBy opt a = renderCsdBy opt (fromSource a)
 
 instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2), (c1, c2), (d1, d2)) -> (a1, a2, b1, b2, c1, c2, d1, d2)) a
 
 instance RenderCsd (Source (SE Sig)) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                asig
+    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
 instance RenderCsd (Source (SE Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                asig
+    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
 instance RenderCsd (Source (SE Sig4)) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                asig
+    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
 instance RenderCsd (Source (SE (Sig2, Sig2))) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2)) -> (a1, a2, b1, b2)) a
 
-
 instance RenderCsd (Source (SE Sig6)) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                asig
+    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
 instance RenderCsd (Source (SE (Sig2, Sig2, Sig2))) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2), (c1, c2)) -> (a1, a2, b1, b2, c1, c2)) a
 
 instance RenderCsd (Source (SE Sig8)) where
-    renderCsdBy opt a = renderCsdBy opt res
-        where res = do
-                (gui, asig) <- a
-                panel gui
-                asig                
+    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
 instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2))) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2), (c1, c2), (d1, d2)) -> (a1, a2, b1, b2, c1, c2, d1, d2)) a

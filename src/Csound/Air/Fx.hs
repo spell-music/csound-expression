@@ -36,14 +36,19 @@ module Csound.Air.Fx(
     phase1, harmPhase, powerPhase,
 
     -- * Effects with unit parameters
+    -- | Implemented by Iain McCurdy's Csound code.
+
+    DriveSig, SensitivitySig, BaseCps, Resonance, TimeSig, BitsReductionSig, FoldoverSig,
+    TremWaveSig, RatioSig, FftSize,
+
     fxDistort, fxDistort2, stChorus2, fxPhaser, fxPhaser2,
     fxFlanger, fxFlanger2, analogDelay, analogDelay2, fxEcho, fxEcho2,
     fxFilter, fxFilter2,
     fxWhite, fxWhite2, fxPink, fxPink2, equalizer, equalizer2, eq4, eq7,
     fxGain, 
 
-    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2,
+    fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter, {- , 
+    fxRingModulator, , -}
 
     -- Eq
     audaciousEq,
@@ -64,8 +69,13 @@ import Csound.Tab
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
-import Csound.Typed.Plugins hiding(pitchShifterDelay)
-import qualified Csound.Typed.Plugins as P(pitchShifterDelay)
+import Csound.Typed.Plugins hiding(pitchShifterDelay,
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
+
+import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -490,7 +500,7 @@ fxFlanger kmix kfback krate' kdepth kdelay' ain = fxWet kmix ain aout
 -- | Stereo flanger
 fxFlanger2 :: Feedback -> RateSig -> DepthSig -> DelayTime -> Sig2 -> Sig2
 fxFlanger2 kfback krate kdepth kdelay  (al ,ar) = (fx al, fx ar)
-    where fx = fxFlanger kfback krate kdepth kdelay
+    where fx = P.fxFlanger kfback krate kdepth kdelay
 
 -- Analog delay
 
@@ -693,5 +703,228 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 mean :: Fractional a => [a] -> a
 mean xs = sum xs / (fromIntegral $ length xs)
 
+---------------------------------------------------
+-- rename the arguments and comment
+
+-- | PitchShifterDelay
+-- 
+-- A pitch shifter effect that employs delay lines
+-- 
+-- > pitchShifterDelay maxDelayTime delayTime (feedback1, feedback2) transposeRatio ain
+--
+-- Arguments
+--
+-- * @maxDelayTime @ --  maximum delay time (kdlt should not exceed this value)
+--
+-- * @transposeRatio @ --  pitch transposition (in semitones)
+--
+-- * @delayTime      @ --  delay time employed by the pitch shifter effect (should be within the range ksmps/sr and imaxdlt) 
+--
+-- * @feedback1      @ --  feedback using method 1 (output from delay taps are fed back directly into their own buffers before enveloping and mixing)
+--
+-- * @feedback2      @ --  feedback using method 2 (enveloped and mixed output from both taps is fed back into both buffers)-- 
+--
+-- * @ain            @ --  input audio to be pitch shifted
 pitchShifterDelay :: MaxDelayTime -> (Feedback, Feedback) -> DelayTime -> Sig -> Sig -> Sig
 pitchShifterDelay maxDelayTime (fb1, fb2) dlt ratio ain = P.pitchShifterDelay maxDelayTime (fb1, fb2) dlt ratio ain
+
+-- | Delay line with low-pass filter in the feedback chain.
+-- The filter adds natural decay to the echoes.
+--
+-- > fxAnalogDelay mixRatio delayTime feedback toneRatio ain
+--
+-- Note that the center frequency of the filter is measured in normalized units (form 0  to 1).
+fxAnalogDelay :: Balance -> DelayTime -> Feedback -> ToneSig -> Sig -> Sig
+fxAnalogDelay kmix kdelay kfback ktone ain = P.fxAnalogDelay kmix kdelay kfback ktone ain
+
+type DriveSig = Sig
+
+-- | Distortion unit with low-pass filter.
+--
+-- > fxDistortion driveLevel toneRatio ain
+--
+-- Note that the center frequency of the filter is measured in normalized units (form 0  to 1).
+fxDistortion :: DriveSig -> ToneSig -> Sig -> Sig
+fxDistortion kdrive ktone ain = P.fxDistortion 1 kdrive ktone ain
+
+type SensitivitySig = Sig
+type BaseCps = Sig
+type Resonance = Sig
+
+-- | Envelope follower. 
+--
+-- > fxFollower sensitivity baseFrequencyRatio resonance ain
+--
+-- Arguments:
+--
+-- * @sensitivity        @ --  sensitivity of the envelope follower (suggested range: 0 to 1)
+--
+-- * @baseFrequencyRatio @ --  base frequency of the filter before modulation by the input dynamics (range: 0 to 1)
+--
+-- ; @resonance          @ --  resonance of the lowpass filter (suggested range: 0 to 1)
+fxFollower :: SensitivitySig -> BaseCps -> Resonance -> Sig -> Sig
+fxFollower ksens kbaseFreq kreson = P.fxEnvelopeFollower ksens kbaseFreq (0.99 * kreson)
+
+type TimeSig = Sig
+
+-- | An effect that reverses an audio stream in chunks
+--
+-- > fxReverse time
+--
+-- @time@ -- the size of the chunck in seconds.
+fxReverse :: TimeSig -> Sig -> Sig
+fxReverse ktime = P.fxReverse ktime
+
+-- | A flanger effect following the typical design of a so called 'stomp box'
+-- 
+-- >  fxFlanger rate depth delayTime feedback ain = 
+--
+-- Arguments
+--
+-- * @rate      @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
+--
+-- * @depth     @ --  depth of the lfo of the effect (range 0 to 1)
+--
+-- * @delayTime @ --  static delay offset of the flanging effect (range 0 to 1)
+--
+-- * @feedback  @ --  feedback and therefore intensity of the effect (range 0 to 1)
+--
+-- * @ain       @ --  input audio to which the flanging effect will be applied
+fxFlanger :: RateSig -> DepthSig -> DelayTime -> Feedback -> Sig -> Sig
+fxFlanger krate kdepth kdelay kfback ain = P.fxFlanger krate kdepth kdelay kfback ain
+
+-- | Phaser
+--
+-- An phase shifting effect that mimics the design of a so called 'stomp box'
+-- 
+-- > fxPhaser rate depth freq fback ain
+-- 
+-- Arguments:
+-- 
+-- * @rate  @ --  rate of lfo of the effect (range 0 to 1)
+--
+-- * @depth @ --  depth of lfo of the effect (range 0 to 1)
+--
+-- * @freq  @ --  centre frequency of the phase shifting effect in octaves (suggested range 6 to 11)
+--
+-- * @fback @ --  feedback and therefore intensity of the effect (range 0 to 1)  
+--
+-- * @ain   @ --  input audio to be pitch shifted
+fxPhaser :: RateSig -> DepthSig -> BaseCps -> Feedback -> Sig -> Sig
+fxPhaser krate kdepth cps kfback ain = P.fxPhaser krate kdepth (6 + 5 * cps) kfback ain
+
+type BitsReductionSig = Sig
+type FoldoverSig = Sig
+
+-- | LoFi
+-- 
+-- 'Low Fidelity' distorting effects of bit reduction and downsampling (foldover)
+-- 
+-- > fxLoFi  bits fold ain = ...
+-- 
+-- Arguments
+-- 
+-- * @bits  @ --  bit depth reduction (range 0 to 1)
+--
+-- * @fold  @ --  amount of foldover (range 0 to 1)    
+--
+-- * @ain   @ --  input audio to have low fidelity distortion effects applied
+fxLoFi :: BitsReductionSig -> FoldoverSig -> Sig -> Sig
+fxLoFi kbits kfold ain = P.fxLoFi (0.6 * kbits) kfold ain
+
+-- | Stereo Chorus
+-- 
+-- A stereo chorus effect
+-- 
+-- > fxChorus2 rate depth width (ainLeft, ainRight)
+-- 
+-- Arguments
+-- 
+-- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
+--
+-- * @depth @ --  depth of the lfo of the effect (range 0 to 1)
+--
+-- * @width @ --  width of stereo widening (range 0 to 1)
+--
+-- * @ainX  @ --  input stereo signal
+fxChorus2 :: RateSig -> DepthSig -> WidthSig -> Sig2 -> Sig2
+fxChorus2 krate kdepth kwidth ain = P.fxChorus2 krate kdepth kwidth ain
+
+type TremWaveSig = Sig
+
+-- | Auto pan
+-- 
+-- > fxAutoPan wave rate depth ain
+-- 
+-- ; Arguments:
+-- 
+-- * @wave  @ --  waveform used by the lfo (0=sine 1=triangle 2=square)
+--
+-- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
+--
+-- * @depth @ --  depth of the lfo of the effect (range 0 to 1)
+--
+-- * @mode  @ --  mode of the effect (0=auto-panning 1=tremolo)
+--
+-- * @ain   @ --  input stereo audio
+fxAutoPan :: TremWaveSig -> DepthSig -> RateSig -> Sig2 -> Sig2
+fxAutoPan tremWave kdepth krate = P.fxPanTrem kdepth krate 0 tremWave
+
+-- | Tremolo
+-- 
+-- tremolo effect
+-- 
+-- > fxTrem wave rate depth ain
+-- 
+-- ; Arguments:
+-- 
+-- * @wave  @ --  waveform used by the lfo (0=sine 1=triangle 2=square)
+--
+-- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
+--
+-- * @depth @ --  depth of the lfo of the effect (range 0 to 1)
+--
+-- * @mode  @ --  mode of the effect (0=auto-panning 1=tremolo)
+--
+-- * @ain   @ --  input stereo audio
+fxTrem :: TremWaveSig -> DepthSig -> RateSig -> Sig2 -> Sig2
+fxTrem tremWave kdepth krate = P.fxPanTrem kdepth krate 1 tremWave
+
+type RatioSig = Sig
+type FftSize  = D
+
+-- | PitchShifter
+-- 
+--  A pitch shifter effect based on FFT technology
+-- 
+-- > fxPitchShifter  fftSize mixRatio transposeRatio feedback ain
+-- 
+-- Arguments
+-- 
+-- * @fftSize  @ -- size for FFT analysis (good values 1024, 512, 256, 2048), the higher values introduce latency but lower values are less accurate.
+--
+-- * @mix      @ --  dry / wet mix of the output signal (range 0 to 1)
+--
+-- * @transpose@ -- pitch ratio
+--
+-- * @feedback @ --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1) 
+--
+-- * @ain      @ --  input audio to be pitch shifted
+fxPitchShifter :: FftSize -> Balance -> RatioSig -> Feedback -> Sig -> Sig
+fxPitchShifter ifftSize kmix ratio kfback = P.fxPitchShifter ifftSize kmix ratio kfback
+
+-- | FreqShifter
+-- ; ----------------
+-- ; A frequency shifter effect using the hilbert filter
+-- ;
+-- ; aout  FreqShifter  adry,kmix,kfreq,kmult,kfback
+-- ;
+-- ; Performance
+-- ; -----------
+-- ; adry   --  input audio to be frequency shifted
+-- ; kmix   --  dry / wet mix of the output signal (range 0 to 1)
+-- ; kfreq  --  frequency of frequency shifter effect (suggested range -1000 to 1000)
+-- ; kmult  --  multiplier of frequency value for fine tuning control (suggested range -1 to 1)
+-- ; kfback --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1)
+fxFreqShifter :: Balance -> Sig -> Sig -> Feedback -> Sig -> Sig
+fxFreqShifter kmix freq kmul kfback = P.fxFreqShifter kmix freq kmul kfback

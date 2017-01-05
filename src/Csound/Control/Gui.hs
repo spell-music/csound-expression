@@ -59,7 +59,7 @@ module Csound.Control.Gui (
     widget, sink, source, display, sinkSource, sinkSlice, sourceSlice,
     mapSource, mapGuiSource, 
     mhor, mver, msca,
-    joinSource,
+    joinSource, fromSource, fromSourceSE,
 
     -- * Panels
     panel, win, panels, panelBy,
@@ -127,6 +127,15 @@ joinSource a = do
     (g, mv) <- a
     v <- mv
     return (g, v)
+
+fromSource :: Source a -> SE a
+fromSource a = do
+    (gui, asig) <- a
+    panel gui
+    return asig   
+
+fromSourceSE :: Source (SE a) -> SE a
+fromSourceSE = join . fromSource
 
 ----------------------------------------------------------------------------------
 -- easy grouppings for GUIs
