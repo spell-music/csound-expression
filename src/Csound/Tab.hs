@@ -77,6 +77,9 @@ module Csound.Tab (
     -- * Harmonics
     tabHarmonics,
 
+    -- * Normalize table
+    normTab, NormTabSpec(..),
+
     -- * Low level Csound definition.
     gen,
     
@@ -711,6 +714,20 @@ mixTabs  :: [(Tab, PartialNumber, PartialStrength, PartialPhase)] -> Tab
 mixTabs xs = hideGE $ do
     args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (fmap fromIntegral $ renderTab tab) : fmap return [pn, strength, phs]]
     return $ plains idMixTabs args
+
+--  | Normalizing table
+--
+-- Csound GEN04: <http://www.csounds.com/manual/html/GEN04.html>
+normTab :: NormTabSpec -> Tab -> Tab
+normTab spec tab = hideGE $ do
+    idx <- renderTab tab
+    return $ plains idNormTab $ fmap fromIntegral [idx, fromNormTabSpec spec]
+    where
+        fromNormTabSpec x = case x of
+            ScanLeftToRight -> 0
+            ScanFromMiddle  -> 1
+
+data NormTabSpec = ScanLeftToRight | ScanFromMiddle
 
 -------------------
 -- specific tabs
