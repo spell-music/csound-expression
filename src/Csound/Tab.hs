@@ -27,6 +27,7 @@ module Csound.Tab (
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
     sines, sines3, sines2, sines1, sines4, buzzes, bwSines, bwOddSines,
+    mixOnTab, mixTabs,
 
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
@@ -690,6 +691,26 @@ tabHarmonics :: Tab -> Double -> Double -> Maybe Double -> Maybe Double -> Tab
 tabHarmonics tab minh maxh mrefSr mInterp = hideGE $ do
     idx <- renderTab tab
     return $ preTab def idTabHarmonics (ArgsPlain (catMaybes $ fmap Just [fromIntegral idx, minh, maxh] ++ [mrefSr, mInterp]))
+
+---------------------------------
+-- mixing tabs GEN31 GEN32
+
+-- | It's just like sines3 but inplace of pure sinewave it uses supplied in the first argument shape.
+-- 
+-- mixOnTab srcTable [(partialNumber, partialStrength, partialPahse)]
+--
+-- phahse is in range [0, 1]
+mixOnTab :: Tab -> [(PartialNumber, PartialStrength, PartialPhase)] -> Tab
+mixOnTab tab xs = hideGE $ do
+    idx <- renderTab tab
+    return $ plains idMixOnTab $ fromIntegral idx : [a | (pn, strength, phs) <- xs, a <- [pn, strength, phs]]
+
+-- | It's like @mixOnTab@ but it's more generic since we can mix not only one shape.
+-- But we can specify shape for each harmonic.
+mixTabs  :: [(Tab, PartialNumber, PartialStrength, PartialPhase)] -> Tab
+mixTabs xs = hideGE $ do
+    args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (fmap fromIntegral $ renderTab tab) : fmap return [pn, strength, phs]]
+    return $ plains idMixTabs args
 
 -------------------
 -- specific tabs
