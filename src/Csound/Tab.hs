@@ -73,6 +73,9 @@ module Csound.Tab (
     -- * Padsynth
     padsynth, PadsynthSpec(..), PadsynthShape(..), defPadsynthSpec,
 
+    -- * Harmonics
+    tabHarmonics,
+
     -- * Low level Csound definition.
     gen,
     
@@ -111,6 +114,7 @@ import Csound.Dynamic hiding (int, when1, whens)
 import Data.Default
 import Csound.Typed
 import Csound.Typed.Opcode(ftgentmp, ftgenonce)
+import Data.Maybe
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
 noTab :: Tab
@@ -663,6 +667,29 @@ tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unTab b1
 -- | Transforms phasor that is defined in seconds to relative phasor that ranges in 0 to 1.
 sec2rel :: Tab -> Sig -> Sig
 sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
+
+---------------------------------------------------
+
+-- | Generates harmonic partials by analyzing an existing table.
+--
+-- > tabHarmonics src minh maxh [ref_sr] [interp]
+--
+-- * src -- source ftable. It should be primitive ie constructed not with "ftgen" family of opcodes.
+--
+-- * minh -- lowest harmonic number
+--
+-- * maxh -- maxh -- highest harmonic number
+--
+-- * ref_sr (optional) -- maxh is scaled by (sr / ref_sr). The default value of ref_sr is sr. If ref_sr is zero or negative, it is now ignored. 
+--
+-- * interp (optional) -- if non-zero, allows changing the amplitude of the lowest and highest harmonic partial depending on the fractional part of minh and maxh. For example, if maxh is 11.3 then the 12th harmonic partial is added with 0.3 amplitude. This parameter is zero by default.
+--
+-- GEN30 for Csound: <http://www.csounds.com/manual/html/GEN30.html>
+--
+tabHarmonics :: Tab -> Double -> Double -> Maybe Double -> Maybe Double -> Tab
+tabHarmonics tab minh maxh mrefSr mInterp = hideGE $ do
+    idx <- renderTab tab
+    return $ preTab def idTabHarmonics (ArgsPlain (catMaybes $ fmap Just [fromIntegral idx, minh, maxh] ++ [mrefSr, mInterp]))
 
 -------------------
 -- specific tabs

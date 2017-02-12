@@ -308,7 +308,7 @@ atMidi x = go Nothing x
 atMidiTemp :: (SigSpace a, Sigs a) => Temp -> Patch a -> SE a
 atMidiTemp tm x = go Nothing x
     where 
-        go maybeSkin p = case x of
+        go maybeSkin x = case x of
             MonoSynt spec instr -> monoSynt spec (runSkin instr maybeSkin)
             PolySynt spec instr -> midiChn (polySyntChn spec) ((runSkin instr maybeSkin) . ampCps' tm)
             SetSkin skin p -> newSkin skin p
