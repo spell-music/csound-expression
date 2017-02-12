@@ -704,7 +704,7 @@ sawTab = elins [1, -1]
 
 -- | Linear segments that form a single cycle of square wave.
 sqrTab :: Tab
-sqrTab = lins [1, 0.5, 1, 0.01, -1, 0.5 -1, 0.01, 1]
+sqrTab = lins [1, 0.5, 1, 0.01, -1, 0.5, -1, 0.01, 1]
 
 -- | Pulse-width wave formed with linear segments. Duty cycle rages from 0 to 1. 0.5 is a square wave.
 pwTab :: Double -> Tab
