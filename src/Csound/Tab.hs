@@ -88,7 +88,7 @@ module Csound.Tab (
     tabHarmonics,
 
     -- * Normalize table
-    normTab, NormTabSpec(..),
+    normTab, NormTabSpec(..), scaleTab,
 
     -- * Low level Csound definition.
     gen,
@@ -740,6 +740,11 @@ normTab spec tab = hideGE $ do
             ScanFromMiddle  -> 1
 
 data NormTabSpec = ScanLeftToRight | ScanFromMiddle
+
+scaleTab :: (Double, Double) -> Tab -> Tab
+scaleTab (minVal, maxVal) tab = hideGE $ do
+    tabId <- renderTab tab
+    return $ skipNorm $ gen idReadNumTab [fromIntegral tabId, minVal, maxVal]
 
 ----------------------------------------------------
 
