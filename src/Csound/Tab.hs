@@ -113,6 +113,7 @@ module Csound.Tab (
 
 import Control.Applicative hiding ((<*))
 import Control.Monad.Trans.Class
+import Control.Monad.Trans.Reader
 import Csound.Dynamic hiding (int, when1, whens)
 
 import Data.Default
@@ -231,10 +232,10 @@ mp3m :: String -> Tab
 mp3m file = mp3s file 0 Mp3Mono
 
 interp :: Int -> [Double] -> Tab
-interp genId as = preTab def genId (ArgsRelative as)
+interp genId as = preTab def genId (relativeArgs as)
 
 plains :: Int -> [Double] -> Tab
-plains genId as = preTab def genId (ArgsPlain as)
+plains genId as = preTab def genId (ArgsPlain $ return as)
 
 insertOnes :: [Double] -> [Double]
 insertOnes xs = case xs of
@@ -389,7 +390,7 @@ econsts = consts . insertOnes
 --
 -- * dur - duration of the segment
 startEnds :: [Double] -> Tab
-startEnds as = preTab def idStartEnds (ArgsGen16 as)
+startEnds as = preTab def idStartEnds (relativeArgsGen16 as)
 
 -- | Equally spaced interpolation for the function @startEnds@
 --
@@ -603,7 +604,7 @@ padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch sh
                                     -- 261.625565     25.0         1.0             1.0             2.0                 1.0             1.0 0.5 0.0 0.2
 
 plainStringTab :: String -> [Double] -> Tab
-plainStringTab genId as = preStringTab def genId (ArgsPlain as)
+plainStringTab genId as = preStringTab def genId (ArgsPlain $ return as)
 
 -- | Creates a table of doubles (It's f-table in Csound).
 -- Arguments are:
@@ -614,7 +615,7 @@ plainStringTab genId as = preStringTab def genId (ArgsPlain as)
 --
 -- All tables are created at 0 and memory is never released.
 gen :: Int -> [Double] -> Tab
-gen genId args = preTab def genId (ArgsPlain args)
+gen genId args = preTab def genId (ArgsPlain $ return args)
 
 -- | Adds guard point to the table size (details of the interpolation schemes: you do need guard point if your intention is to read the 
 -- table once but you don't need the guard point if you read table in many cycles, the guard point is the the first point of your table).  
@@ -693,7 +694,7 @@ sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
 tabHarmonics :: Tab -> Double -> Double -> Maybe Double -> Maybe Double -> Tab
 tabHarmonics tab minh maxh mrefSr mInterp = hideGE $ do
     idx <- renderTab tab
-    return $ preTab def idTabHarmonics (ArgsPlain (catMaybes $ fmap Just [fromIntegral idx, minh, maxh] ++ [mrefSr, mInterp]))
+    return $ preTab def idTabHarmonics (ArgsPlain $ return (catMaybes $ fmap Just [fromIntegral idx, minh, maxh] ++ [mrefSr, mInterp]))
 
 ---------------------------------
 -- mixing tabs GEN31 GEN32
@@ -887,3 +888,43 @@ tablekt b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
 tablexkt ::  Sig -> Tab -> Sig -> D -> Sig
 tablexkt b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <*> unD b4
     where f a1 a2 a3 a4 = opcs "tablexkt" [(Ar,[Xr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+
+----------------------------------------------------------------
+-- tab args
+
+relativeArgs :: [Double] -> TabArgs
+relativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
+    where
+        fromRelative n as = substEvens (mkRelative n $ getEvens as) as
+          
+        getEvens xs = case xs of
+            [] -> []
+            _:[] -> []
+            _:b:as -> b : getEvens as
+            
+        substEvens evens xs = case (evens, xs) of
+            ([], as) -> as
+            (_, []) -> []
+            (e:es, a:_:as) -> a : e : substEvens es as
+            _ -> error "table argument list should contain even number of elements"
+            
+relativeArgsGen16 :: [Double] -> TabArgs
+relativeArgsGen16 xs = ArgsPlain $ reader $ \size -> formRelativeGen16 size xs
+    where            
+        formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
+         
+          -- special case. subst relatives for Gen16
+        formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
+
+        getGen16 xs = case xs of
+            _:durN:_:rest    -> durN : getGen16 rest
+            _                -> []
+
+        substGen16 durs xs = case (durs, xs) of 
+            ([], as) -> as
+            (_, [])  -> []
+            (d:ds, valN:_:typeN:rest)   -> valN : d : typeN : substGen16 ds rest
+            (_, _)   -> xs
+
+mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as
+    where s = fromIntegral n / sum as

@@ -1,5 +1,4 @@
-GEN04 — Generates a normalizing function.
-GEN15 — Creates two tables of stored polynomial functions.
+
 GEN18 — Writes composite waveforms made up of pre-existing waveforms.
 GEN21 — Generates tables of different random distributions.
 GEN23 — Reads numeric values from a text file.
@@ -20,3 +19,8 @@ GENexp — Generate a table with values on the exp function.
 GENsone — Generate a table with values of the sone function.
 GENfarey — Fills a table with the Farey Sequence Fn of the integer n.
 GENwave — Generates a compactly supported wavelet function.
+
+----------------------
+-- hard to implement within the urrent model
+
+GEN15 — Creates two tables of stored polynomial functions.
