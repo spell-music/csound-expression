@@ -1,5 +1,3 @@
-GEN33 — Generate composite waveforms by mixing simple sinusoids.
-GEN34 — Generate composite waveforms by mixing simple sinusoids.
 GEN40 — Generates a random distribution using a distribution histogram.
 GEN41 — Generates a random list of numerical pairs.
 GEN42 — Generates a random distribution of discrete ranges of values.

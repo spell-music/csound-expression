@@ -23,12 +23,13 @@ module Csound.Tab (
     -- * Read from files
     WavChn(..), Mp3Chn(..),
     wavs, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
-    readNumFile, readTrajectoryFile,
+    readNumFile, readTrajectoryFile, readPvocex,
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
     sines, sines3, sines2, sines1, sines4, buzzes, bwSines, bwOddSines,
     mixOnTab, mixTabs,
+    tabSines1, tabSines2,
 
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
@@ -906,6 +907,33 @@ readNumFile filename = skipNorm $ preTab def idReadNumFile $ FileAccess filename
 -- | Reads trajectory from file (GEN28)
 readTrajectoryFile :: String -> Tab
 readTrajectoryFile filename = skipNorm $ preTab def idReadTrajectoryFile $ FileAccess filename []
+
+-- | Reads PVOCEX files (GEN43)
+readPvocex :: String -> Int -> Tab
+readPvocex filename channel = preTab def idPvocex $ FileAccess filename [fromIntegral channel]
+
+------------------------------------------------------
+
+-- | Csound's GEN33 — Generate composite waveforms by mixing simple sinusoids.  
+--
+-- > tabSines1 srcTab nh scl [fmode]
+--
+-- Csound docs: <http://www.csounds.com/manual/html/GEN33.html>
+tabSines1 :: Tab -> Double -> Double -> Maybe Double -> Tab
+tabSines1 = tabSinesBy idMixSines2
+
+-- | Csound's GEN34 — Generate composite waveforms by mixing simple sinusoids. 
+--
+-- > tabSines2 srcTab nh scl [fmode]
+--
+-- Csound docs: <http://www.csounds.com/manual/html/GEN3.html>
+tabSines2 :: Tab -> Double -> Double -> Maybe Double -> Tab
+tabSines2 = tabSinesBy idMixSines2
+
+tabSinesBy :: Int -> Tab -> Double -> Double -> Maybe Double -> Tab
+tabSinesBy genId tab nh amp fmode = hideGE $ do
+    tabId <- renderTab tab
+    return $ preTab def genId $ ArgsPlain $ return $ [fromIntegral tabId, nh, amp] ++ (maybe [] return fmode)
 
 -------------------
 -- specific tabs
