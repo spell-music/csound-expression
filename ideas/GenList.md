@@ -1,7 +1,3 @@
-GEN24 — Reads numeric values from another allocated function-table and rescales them.
-GEN25 — Construct functions from segments of exponential curves in breakpoint fashion.
-GEN27 — Construct functions from segments of straight lines in breakpoint fashion.
-GEN28 — Reads a text file which contains a time-tagged trajectory.
 GEN33 — Generate composite waveforms by mixing simple sinusoids.
 GEN34 — Generate composite waveforms by mixing simple sinusoids.
 GEN40 — Generates a random distribution using a distribution histogram.
@@ -15,6 +11,9 @@ GENexp — Generate a table with values on the exp function.
 GENsone — Generate a table with values of the sone function.
 GENfarey — Fills a table with the Farey Sequence Fn of the integer n.
 GENwave — Generates a compactly supported wavelet function.
+GEN25 — Construct functions from segments of exponential curves in breakpoint fashion.
+GEN27 — Construct functions from segments of straight lines in breakpoint fashion.
+
 
 ----------------------
 -- hard to implement within the urrent model

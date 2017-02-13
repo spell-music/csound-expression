@@ -23,7 +23,7 @@ module Csound.Tab (
     -- * Read from files
     WavChn(..), Mp3Chn(..),
     wavs, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
-    readNumFile,
+    readNumFile, readTrajectoryFile,
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
@@ -899,9 +899,13 @@ poissonDist' = dist' 11
 
 ------------------------------------------------------
 
--- | Reads 
+-- | Reads numbers from file (GEN23)
 readNumFile :: String -> Tab
 readNumFile filename = skipNorm $ preTab def idReadNumFile $ FileAccess filename []
+
+-- | Reads trajectory from file (GEN28)
+readTrajectoryFile :: String -> Tab
+readTrajectoryFile filename = skipNorm $ preTab def idReadTrajectoryFile $ FileAccess filename []
 
 -------------------
 -- specific tabs
