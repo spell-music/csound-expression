@@ -23,6 +23,7 @@ module Csound.Tab (
     -- * Read from files
     WavChn(..), Mp3Chn(..),
     wavs, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
+    readNumFile,
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
@@ -66,6 +67,15 @@ module Csound.Tab (
 
     -- * Polynomials    
     polys, chebs1, chebs2, bessels,
+
+    -- * Random values 
+
+    -- ** Distributions
+    uniDist, linDist, triDist, expDist, biexpDist, gaussDist,
+    cauchyDist, pcauchyDist, betaDist, weibullDist, poissonDist,
+    -- *** Distributions with levels
+    uniDist', linDist', triDist', expDist', biexpDist', gaussDist',
+    cauchyDist', pcauchyDist', betaDist', weibullDist', poissonDist',
     
     -- * Windows  
     winHamming, winHanning,  winBartlett, winBlackman,
@@ -753,6 +763,137 @@ tabseg xs = hideGE $ do
 
 etabseg :: [(Tab, PartialStrength)] -> Tab
 etabseg = tabseg . fmap (\(tab, amp) -> (tab, amp, 1))
+
+--------------------------------------------------
+-- distributions
+
+
+{- Csound Docs, distribution types
+
+    1 = Uniform (positive numbers only)
+
+    2 = Linear (positive numbers only)
+
+    3 = Triangular (positive and negative numbers)
+
+    4 = Exponential (positive numbers only)
+
+    5 = Biexponential (positive and negative numbers)
+
+    6 = Gaussian (positive and negative numbers)
+
+    7 = Cauchy (positive and negative numbers)
+
+    8 = Positive Cauchy (positive numbers only)
+
+    9 = Beta (positive numbers only)
+
+    10 = Weibull (positive numbers only)
+
+    11 = Poisson (positive numbers only)
+-}
+
+gen21 :: Int -> [Double] -> Tab
+gen21 typeId aux = gen idRandDists $ fromIntegral typeId : aux
+
+dist :: Int -> Tab
+dist n = gen21 n []
+
+-- | Uniform (positive numbers only)
+uniDist :: Tab
+uniDist = dist 1
+
+-- | Linear (positive numbers only)
+linDist :: Tab
+linDist = dist 2
+
+-- | Triangular (positive and negative numbers)
+triDist :: Tab
+triDist = dist 3
+
+-- | Exponential (positive numbers only)
+expDist :: Tab
+expDist = dist 4
+
+-- | Biexponential (positive and negative numbers)
+biexpDist :: Tab
+biexpDist = dist 5
+
+-- | Gaussian (positive and negative numbers)
+gaussDist :: Tab
+gaussDist = dist 6
+
+-- | Cauchy (positive and negative numbers)
+cauchyDist :: Tab
+cauchyDist = dist 7
+
+-- | Positive Cauchy (positive numbers only)
+pcauchyDist :: Tab
+pcauchyDist = dist 8
+
+-- | Beta (positive numbers only)
+--
+-- > betaDist alpha beta
+-- 
+-- * @alpha@ -- alpha value. If kalpha is smaller than one, smaller values favor values near 0. 
+--
+-- * @beta@ -- beta value. If kbeta is smaller than one, smaller values favor values near krange.
+betaDist :: Double -> Double -> Tab
+betaDist arg1 arg2 = gen21 9 [1, arg1, arg2]
+
+-- | Weibull (positive numbers only)
+--
+-- * tau -- if greater than one, numbers near ksigma are favored. If smaller than one, small values are favored. If t equals 1, the distribution is exponential. Outputs only positive numbers.
+weibullDist :: Double -> Tab
+weibullDist arg1 = gen21 10 [1, arg1]
+
+-- | Poisson (positive numbers only)
+poissonDist :: Tab
+poissonDist = dist 11
+
+-- with level
+
+dist' :: Int -> Double -> Tab
+dist' n level = gen21 n [level]
+
+uniDist' :: Double -> Tab
+uniDist' = dist' 1
+
+linDist' :: Double -> Tab
+linDist' = dist' 2
+
+triDist' :: Double -> Tab
+triDist' = dist' 3
+
+expDist' :: Double -> Tab
+expDist' = dist' 4
+
+biexpDist' :: Double -> Tab
+biexpDist' = dist' 5
+
+gaussDist' :: Double -> Tab
+gaussDist' = dist' 6
+
+cauchyDist' :: Double -> Tab
+cauchyDist' = dist' 7
+
+pcauchyDist' :: Double -> Tab
+pcauchyDist' = dist' 8
+
+betaDist' :: Double -> Double -> Double -> Tab
+betaDist' level arg1 arg2 = gen21 9 [level, arg1, arg2]
+
+weibullDist' :: Double -> Double -> Tab
+weibullDist' level arg1 = gen21 10 [level, arg1]
+
+poissonDist' :: Double -> Tab
+poissonDist' = dist' 11
+
+------------------------------------------------------
+
+-- | Reads 
+readNumFile :: String -> Tab
+readNumFile filename = skipNorm $ preTab def idReadNumFile $ FileAccess filename []
 
 -------------------
 -- specific tabs

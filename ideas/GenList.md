@@ -1,7 +1,3 @@
-
-GEN18 — Writes composite waveforms made up of pre-existing waveforms.
-GEN21 — Generates tables of different random distributions.
-GEN23 — Reads numeric values from a text file.
 GEN24 — Reads numeric values from another allocated function-table and rescales them.
 GEN25 — Construct functions from segments of exponential curves in breakpoint fashion.
 GEN27 — Construct functions from segments of straight lines in breakpoint fashion.
