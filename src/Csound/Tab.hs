@@ -741,6 +741,9 @@ normTab spec tab = hideGE $ do
 
 data NormTabSpec = ScanLeftToRight | ScanFromMiddle
 
+-- | Creates a new table wich contains all values from the source table rescaled to the given interval.
+--
+-- > scaleTab (minValue, maxValue) sourceTab
 scaleTab :: (Double, Double) -> Tab -> Tab
 scaleTab (minVal, maxVal) tab = hideGE $ do
     tabId <- renderTab tab
