@@ -60,9 +60,9 @@ module Csound.Tab (
     -- > lins [0, 1, 1, 3, 0]
     --
     -- all these expressions are equivalent. 
-    consts, lins, cubes, exps, splines, startEnds,
+    consts, lins, cubes, exps, splines, startEnds, tabseg,
     -- ** Equally spaced interpolants
-    econsts, elins, ecubes, eexps, esplines, estartEnds,
+    econsts, elins, ecubes, eexps, esplines, estartEnds, etabseg,
 
     -- * Polynomials    
     polys, chebs1, chebs2, bessels,
@@ -112,6 +112,7 @@ module Csound.Tab (
 ) where
 
 import Control.Applicative hiding ((<*))
+import Control.Arrow(second)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 import Csound.Dynamic hiding (int, when1, whens)
@@ -730,6 +731,29 @@ normTab spec tab = hideGE $ do
 
 data NormTabSpec = ScanLeftToRight | ScanFromMiddle
 
+----------------------------------------------------
+
+-- | tabseg  -- Writes composite waveforms made up of pre-existing waveforms. 
+--
+-- tabseg [(tab, amplitude, duration)]
+--
+-- Csound GEN18: <http://www.csounds.com/manual/html/GEN18.html>
+--
+-- Butnotice the difference with Csound we specify start and finish of writing but
+-- here we only specify the relative length of segments. Segments are arranged so
+-- that the start f next segment comes right after the end of the prev segment.
+tabseg :: [(Tab, PartialStrength, Double)] -> Tab
+tabseg xs = hideGE $ do 
+    tabIds <- mapM renderTab tabs
+    return $ preTab def idLinTab $ mkArgs tabIds
+    where
+        (tabs, amps, durs) = unzip3 xs        
+        segments n = fmap (second $ \x -> x - 1) $ tail $ scanl (\(a, b) x -> (b, b + x)) (0, 0) $ mkRelative n durs
+        mkArgs ids = ArgsPlain $ reader $ \size -> concat $ zipWith3 (\tabId amp (start, finish) -> [fromIntegral tabId, amp, start, finish]) ids amps (segments size)
+
+etabseg :: [(Tab, PartialStrength)] -> Tab
+etabseg = tabseg . fmap (\(tab, amp) -> (tab, amp, 1))
+
 -------------------
 -- specific tabs
 
@@ -928,3 +952,4 @@ relativeArgsGen16 xs = ArgsPlain $ reader $ \size -> formRelativeGen16 size xs
 
 mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as
     where s = fromIntegral n / sum as
+
