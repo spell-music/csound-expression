@@ -1,4 +1,3 @@
-GENtanh — Generate a table with values on the tanh function.
 GENexp — Generate a table with values on the exp function.
 GENsone — Generate a table with values of the sone function.
 GENfarey — Fills a table with the Farey Sequence Fn of the integer n.

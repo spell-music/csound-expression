@@ -34,7 +34,7 @@ module Csound.Tab (
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
     triTab, sawTab, sqrTab, pwTab,
-    tanhTab, rescaleTanhTab,
+    tanhTab, rescaleTanhTab, expTab, rescaleExpTab,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -1023,6 +1023,17 @@ tanhTab (start, end) = plainStringTab idTanh [start, end, 0]
 rescaleTanhTab :: (Double, Double) -> Tab
 rescaleTanhTab (start, end) = plainStringTab idTanh [start, end, 1]
 
+-- | Tab with exponential from the given interval.
+--
+-- > tanh (start, end)
+expTab :: (Double, Double) -> Tab
+expTab (start, end) = plainStringTab idExp [start, end, 0]
+
+-- | Tab with exponential from the given interval. The table is rescaled.
+--
+-- > tanh (start, end)
+rescaleExpTab :: (Double, Double) -> Tab
+rescaleExpTab (start, end) = plainStringTab idExp [start, end, 1]
 
 
 ---------------------------------------------------
