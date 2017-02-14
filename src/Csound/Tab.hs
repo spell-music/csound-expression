@@ -35,6 +35,7 @@ module Csound.Tab (
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
     triTab, sawTab, sqrTab, pwTab,
     tanhTab, rescaleTanhTab, expTab, rescaleExpTab, soneTab, rescaleSoneTab,
+    fareyTab,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -1055,6 +1056,30 @@ soneTab (start, end) equalpoint = plainStringTab idSone [start, end, equalpoint,
 -- * equalpoint -- the point on the curve when the input and output values are equal.
 rescaleSoneTab :: (Double, Double) -> Double -> Tab
 rescaleSoneTab (start, end) equalpoint = plainStringTab idSone [start, end, equalpoint, 0]
+
+-- | "farey" — Fills a table with the Farey Sequence Fn of the integer n.
+--
+-- see details in Csound doc: <http://www.csounds.com/manual/html/GENfarey.html>
+--
+-- Notice that the arguments are reversed (in the haskell mindset)
+--
+-- > fareyTab mode num
+--
+-- num -- the integer n for generating Farey Sequence Fn
+-- 
+-- mode -- integer to trigger a specific output to be written into the table:
+--
+-- * 0 -- outputs floating point numbers representing the elements of Fn.
+--
+-- * 1 -- outputs delta values of successive elements of Fn, useful for generating note durations for example.
+--
+-- * 2 -- outputs only the denominators of the integer ratios, useful for indexing other tables or instruments for example.
+--
+-- * 3 -- same as mode 2 but with normalised output.
+--
+-- * 4 -- same as mode 0 but with 1 added to each number, useful for generating tables for tuning opcodes, for example cps2pch.
+fareyTab :: Int -> Int -> Tab
+fareyTab mode num = plainStringTab idFarey $ fmap fromIntegral [num, mode]
 
 ---------------------------------------------------
 
