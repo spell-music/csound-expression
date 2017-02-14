@@ -31,6 +31,9 @@ module Csound.Tab (
     mixOnTab, mixTabs,
     tabSines1, tabSines2,
 
+    -- * Wavelets
+    waveletTab, rescaleWaveletTab,
+
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
     triTab, sawTab, sqrTab, pwTab,
@@ -992,6 +995,30 @@ tabSinesBy :: Int -> Tab -> Double -> Double -> Maybe Double -> Tab
 tabSinesBy genId tab nh amp fmode = hideGE $ do
     tabId <- renderTab tab
     return $ preTab def genId $ ArgsPlain $ return $ [fromIntegral tabId, nh, amp] ++ (maybe [] return fmode)
+
+-------------------
+-- wavelets
+
+-- | "wave" — Generates a compactly supported wavelet function.
+--
+-- > waveletTab srcTab seq
+--
+-- Csound docs: <http://www.csounds.com/manual/html/GENwave.html>
+waveletTab :: Tab -> Int -> Tab
+waveletTab = waveletTabBy 0
+
+-- | "wave" — Generates a compactly supported wavelet function. The result table is rescaled.
+--
+-- > waveletTab srcTab seq
+--
+-- Csound docs: <http://www.csounds.com/manual/html/GENwave.html>
+rescaleWaveletTab :: Tab -> Int -> Tab
+rescaleWaveletTab = waveletTabBy 1
+
+waveletTabBy :: Int -> Tab -> Int -> Tab
+waveletTabBy rescaleFlag srcTab seq = hideGE $ do
+    tabId <- renderTab srcTab
+    return $ plainStringTab idWave $ fmap fromIntegral [tabId, seq, 0]
 
 -------------------
 -- specific tabs

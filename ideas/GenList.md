@@ -1,4 +1,3 @@
-GENwave — Generates a compactly supported wavelet function.
 GEN25 — Construct functions from segments of exponential curves in breakpoint fashion.
 GEN27 — Construct functions from segments of straight lines in breakpoint fashion.
 
