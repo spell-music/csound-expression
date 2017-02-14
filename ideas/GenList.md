@@ -1,4 +1,3 @@
-GEN52 — Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode.
 GENtanh — Generate a table with values on the tanh function.
 GENexp — Generate a table with values on the exp function.
 GENsone — Generate a table with values of the sone function.
