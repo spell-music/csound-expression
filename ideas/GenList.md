@@ -1,5 +1,3 @@
-GENexp — Generate a table with values on the exp function.
-GENsone — Generate a table with values of the sone function.
 GENfarey — Fills a table with the Farey Sequence Fn of the integer n.
 GENwave — Generates a compactly supported wavelet function.
 GEN25 — Construct functions from segments of exponential curves in breakpoint fashion.

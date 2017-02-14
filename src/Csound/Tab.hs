@@ -34,7 +34,7 @@ module Csound.Tab (
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
     triTab, sawTab, sqrTab, pwTab,
-    tanhTab, rescaleTanhTab, expTab, rescaleExpTab,
+    tanhTab, rescaleTanhTab, expTab, rescaleExpTab, soneTab, rescaleSoneTab,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -1013,28 +1013,48 @@ pwTab duty = lins [1, duty, 1, 0.01, -1, 1 - duty, -1, 0.01, 1]
 
 -- | Tab with tanh from the given interval.
 --
--- > tanh (start, end)
+-- > tanhTab (start, end)
 tanhTab :: (Double, Double) -> Tab
 tanhTab (start, end) = plainStringTab idTanh [start, end, 0]
 
 -- | Tab with tanh from the given interval. The table is rescaled.
 --
--- > tanh (start, end)
+-- > rescaleTanhTab (start, end)
 rescaleTanhTab :: (Double, Double) -> Tab
 rescaleTanhTab (start, end) = plainStringTab idTanh [start, end, 1]
 
 -- | Tab with exponential from the given interval.
 --
--- > tanh (start, end)
+-- > expTab (start, end)
 expTab :: (Double, Double) -> Tab
 expTab (start, end) = plainStringTab idExp [start, end, 0]
 
 -- | Tab with exponential from the given interval. The table is rescaled.
 --
--- > tanh (start, end)
+-- > rescaleExpTab (start, end)
 rescaleExpTab :: (Double, Double) -> Tab
 rescaleExpTab (start, end) = plainStringTab idExp [start, end, 1]
 
+-- | Tab with sone from the given interval.
+--
+-- > soneTab (start, end) equalpoint
+--
+-- * start, end -- first and last value to be stored. The points stored are uniformly spaced between these to the table size.
+--
+-- * equalpoint -- the point on the curve when the input and output values are equal.
+soneTab :: (Double, Double) -> Double -> Tab
+soneTab (start, end) equalpoint = plainStringTab idSone [start, end, equalpoint, 0]
+
+
+-- | Tab with sone from the given interval.
+--
+-- > soneTab (start, end) equalpoint
+--
+-- * start, end -- first and last value to be stored. The points stored are uniformly spaced between these to the table size.
+--
+-- * equalpoint -- the point on the curve when the input and output values are equal.
+rescaleSoneTab :: (Double, Double) -> Double -> Tab
+rescaleSoneTab (start, end) equalpoint = plainStringTab idSone [start, end, equalpoint, 0]
 
 ---------------------------------------------------
 
