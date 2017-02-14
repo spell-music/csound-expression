@@ -79,6 +79,8 @@ module Csound.Tab (
     uniDist', linDist', triDist', expDist', biexpDist', gaussDist',
     cauchyDist', pcauchyDist', betaDist', weibullDist', poissonDist',
     
+    -- ** Rand values and ranges
+    randDist, rangeDist,
 
 
     -- * Windows  
@@ -910,6 +912,32 @@ tabDist :: Tab -> Tab
 tabDist src = hideGE $ do
     tabId <- renderTab src
     return $ gen idRandHist [fromIntegral tabId]
+
+-- | randDist — Generates a random list of numerical pairs (GEN41).
+--
+-- > randDist  [value1, prob1, value2, prob2, value3, prob3 ... valueN, probN]
+--
+-- The first number of each pair is a value, and the second is the probability of that value to 
+-- be chosen by a random algorithm. Even if any number can be assigned to the probability element of each pair, 
+-- it is suggested to give it a percent value, in order to make it clearer for the user.
+--
+-- This subroutine is designed to be used together with duserrnd and urd opcodes (see duserrnd for more information).
+randDist :: [Double] -> Tab
+randDist xs = skipNorm $ gen idRandPairs xs
+
+
+-- | rangeDist — Generates a random distribution of discrete ranges of values (GEN42).
+--
+-- The first number of each group is a the minimum value of the 
+-- range, the second is the maximum value and the third is the probability 
+-- of that an element belonging to that range of values can be chosen by 
+-- a random algorithm. Probabilities for a range should be a fraction of 1, 
+-- and the sum of the probabilities for all the ranges should total 1.0.
+--
+-- This subroutine is designed to be used together with duserrnd and urd opcodes (see duserrnd for more information). 
+-- Since both duserrnd and urd do not use any interpolation, it is suggested to give a size reasonably big.
+rangeDist :: [Double] -> Tab
+rangeDist xs = skipNorm $ gen idRandRanges xs
 
 ------------------------------------------------------
 
