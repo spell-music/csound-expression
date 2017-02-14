@@ -34,6 +34,7 @@ module Csound.Tab (
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
     triTab, sawTab, sqrTab, pwTab,
+    tanhTab, rescaleTanhTab,
 
     -- * Interpolants    
     -- | All funtions have the same shape of arguments:
@@ -1009,6 +1010,20 @@ sqrTab = lins [1, 0.5, 1, 0.01, -1, 0.5, -1, 0.01, 1]
 -- | Pulse-width wave formed with linear segments. Duty cycle rages from 0 to 1. 0.5 is a square wave.
 pwTab :: Double -> Tab
 pwTab duty = lins [1, duty, 1, 0.01, -1, 1 - duty, -1, 0.01, 1]
+
+-- | Tab with tanh from the given interval.
+--
+-- > tanh (start, end)
+tanhTab :: (Double, Double) -> Tab
+tanhTab (start, end) = plainStringTab idTanh [start, end, 0]
+
+-- | Tab with tanh from the given interval. The table is rescaled.
+--
+-- > tanh (start, end)
+rescaleTanhTab :: (Double, Double) -> Tab
+rescaleTanhTab (start, end) = plainStringTab idTanh [start, end, 1]
+
+
 
 ---------------------------------------------------
 
