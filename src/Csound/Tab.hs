@@ -74,10 +74,13 @@ module Csound.Tab (
     -- ** Distributions
     uniDist, linDist, triDist, expDist, biexpDist, gaussDist,
     cauchyDist, pcauchyDist, betaDist, weibullDist, poissonDist,
+    tabDist,
     -- *** Distributions with levels
     uniDist', linDist', triDist', expDist', biexpDist', gaussDist',
     cauchyDist', pcauchyDist', betaDist', weibullDist', poissonDist',
     
+
+
     -- * Windows  
     winHamming, winHanning,  winBartlett, winBlackman,
     winHarris, winGaussian, winKaiser, winRectangle, winSync,
@@ -897,6 +900,16 @@ weibullDist' level arg1 = gen21 10 [level, arg1]
 
 poissonDist' :: Double -> Tab
 poissonDist' = dist' 11
+
+-- GEN40
+
+-- | Generates a random distribution using a distribution histogram (GEN40).
+--
+-- Csound docs: <http://www.csounds.com/manual/html/GEN40.html>
+tabDist :: Tab -> Tab
+tabDist src = hideGE $ do
+    tabId <- renderTab src
+    return $ gen idRandHist [fromIntegral tabId]
 
 ------------------------------------------------------
 
