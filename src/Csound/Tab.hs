@@ -23,7 +23,7 @@ module Csound.Tab (
     -- * Read from files
     WavChn(..), Mp3Chn(..),
     wavs, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
-    readNumFile, readTrajectoryFile, readPvocex,
+    readNumFile, readTrajectoryFile, readPvocex, readMultichannel,
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
@@ -955,6 +955,18 @@ readTrajectoryFile filename = skipNorm $ preTab def idReadTrajectoryFile $ FileA
 -- | Reads PVOCEX files (GEN43)
 readPvocex :: String -> Int -> Tab
 readPvocex filename channel = preTab def idPvocex $ FileAccess filename [fromIntegral channel]
+
+-- | readMultichannel — Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode (GEN52).
+-- 
+-- > f # time size 52 nchannels fsrc1 offset1 srcchnls1 [fsrc2 offset2 srcchnls2 ... fsrcN offsetN srcchnlsN]
+--
+-- csound doc: <http://www.csounds.com/manual/html/GEN52.html>
+readMultichannel :: Int -> [(Tab, Int, Int)] -> Tab
+readMultichannel n args = hideGE $ do
+    idSrcs <- mapM renderTab fsrcs
+    return $ skipNorm $ gen idMultichannel $ fmap fromIntegral $ n : (concat $ zipWith3 (\a b c -> [a, b, c]) idSrcs offsets chnls)
+    where
+        (fsrcs, offsets, chnls) = unzip3 args
 
 ------------------------------------------------------
 

@@ -1,7 +1,3 @@
-GEN41 — Generates a random list of numerical pairs.
-GEN42 — Generates a random distribution of discrete ranges of values.
-GEN43 — Loads a PVOCEX file containing a PV analysis.
-GEN51 — This subroutine fills a table with a fully customized micro-tuning scale, in the manner of Csound opcodes cpstun, cpstuni and cpstmid.
 GEN52 — Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode.
 GENtanh — Generate a table with values on the tanh function.
 GENexp — Generate a table with values on the exp function.
