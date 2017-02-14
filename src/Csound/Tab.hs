@@ -124,7 +124,10 @@ module Csound.Tab (
     tablewa, tablew, readTab, readTable, readTable3, readTablei,
 
     -- ** Table Reading with Dynamic Selection
-    tableikt, tablekt, tablexkt
+    tableikt, tablekt, tablexkt,
+
+    -- ** random generators from tables
+    cuserrnd, duserrnd
 ) where
 
 import Control.Applicative hiding ((<*))
@@ -1136,6 +1139,43 @@ tablexkt b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <*> unD b4
     where f a1 a2 a3 a4 = opcs "tablexkt" [(Ar,[Xr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 ----------------------------------------------------------------
+-- duserrnd and cuserrnd
+
+-- | cuserrnd — Continuous USER-defined-distribution RaNDom generator.
+--
+-- Continuous USER-defined-distribution RaNDom generator.
+--
+-- > aout cuserrnd kmin, kmax, ktableNum
+-- > iout cuserrnd imin, imax, itableNum
+-- > kout cuserrnd kmin, kmax, ktableNum
+--
+-- csound doc: <http://www.csounds.com/manual/html/cuserrnd.html>
+--
+-- the tab should be done with tabDist, randDist or rangeDist
+cuserrnd :: SigOrD a => a -> a -> Tab -> SE a
+cuserrnd b1 b2 b3 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> unTab b3
+    where f a1 a2 a3 = opcs "cuserrnd" [(Ar,[Kr,Kr,Kr])
+                                  ,(Ir,[Ir,Ir,Ir])
+                                  ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3] 
+
+-- | duserrnd — Discrete USER-defined-distribution RaNDom generator.
+--
+-- Discrete USER-defined-distribution RaNDom generator.
+--
+-- > aout duserrnd ktableNum
+-- > iout duserrnd itableNum
+-- > kout duserrnd ktableNum
+--
+-- csound doc: <http://www.csounds.com/manual/html/duserrnd.html>
+--
+-- the tab should be done with tabDist, randDist or rangeDist
+duserrnd :: SigOrD a => Tab -> SE a
+duserrnd b1 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b1
+    where f a1 = opcs "duserrnd" [(Ar,[Kr])
+                                  ,(Ir,[Ir])
+                                  ,(Kr,[Kr])] [a1] 
+
+----------------------------------------------------------------
 -- tab args
 
 relativeArgs :: [Double] -> TabArgs
@@ -1174,4 +1214,6 @@ relativeArgsGen16 xs = ArgsPlain $ reader $ \size -> formRelativeGen16 size xs
 
 mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as
     where s = fromIntegral n / sum as
+
+
 

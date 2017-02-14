@@ -51,4 +51,5 @@ import Csound.Typed.Opcode hiding (
     lpshold, loopseg, loopxseg,
     partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2,
     line, delay,
-    metro, dust)
+    metro, dust,
+    duserrnd, cuserrnd, urd)
