@@ -96,6 +96,7 @@ Library
         Csound.Air.Wav
         Csound.Air.Spec
         Csound.Air.Fx
+        Csound.Air.Fx.FxBox
         Csound.Air.Live
         Csound.Air.Seg
         Csound.Air.Sampler

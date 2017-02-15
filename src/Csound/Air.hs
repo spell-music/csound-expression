@@ -26,6 +26,7 @@ module Csound.Air (
 
     -- | Effects: reverbs, choruses, delays etc.
     module Csound.Air.Fx,  
+    module Csound.Air.Fx.FxBox,  
 
     -- | Widgets to make live performances.
     module Csound.Air.Live, 
@@ -65,6 +66,7 @@ import Csound.Air.Granular
 import Csound.Air.Granular.Morpheus
 import Csound.Air.Spec
 import Csound.Air.Fx
+import Csound.Air.Fx.FxBox
 import Csound.Air.Live
 import Csound.Air.Looper
 import Csound.Air.Patch
