@@ -1,6 +1,3 @@
-GEN25 — Construct functions from segments of exponential curves in breakpoint fashion.
-GEN27 — Construct functions from segments of straight lines in breakpoint fashion.
-
 ----------------------
 -- hard to implement within the urrent model
 

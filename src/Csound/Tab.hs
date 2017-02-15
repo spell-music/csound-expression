@@ -67,7 +67,7 @@ module Csound.Tab (
     -- > lins [0, 1, 1, 3, 0]
     --
     -- all these expressions are equivalent. 
-    consts, lins, cubes, exps, splines, startEnds, tabseg,
+    consts, lins, cubes, exps, splines, startEnds, tabseg, bpLins, bpExps,
     -- ** Equally spaced interpolants
     econsts, elins, ecubes, eexps, esplines, estartEnds, etabseg,
 
@@ -430,6 +430,29 @@ estartEnds = startEnds . insertOnes16
         insertOnes16 xs = case xs of
             a:b:as  -> a : 1 : b : insertOnes16 as
             _       -> xs
+
+
+-- | Linear segments in breakpoint fashion:
+--
+-- > bpLins [x1, y1, x2, y2, ..., xN, yN]
+--
+-- csound docs: <http://www.csounds.com/manual/html/GEN27.html>
+-- 
+-- All x1, x2, .. should belong to the interval [0, 1]. The actual values are rescaled to fit the table size.
+bpLins :: [Double] -> Tab
+bpLins xs = preTab def idLinsBreakPoints $ bpRelativeArgs xs
+
+
+-- | Exponential segments in breakpoint fashion:
+--
+-- > bpExps [x1, y1, x2, y2, ..., xN, yN]
+--
+-- csound docs: <http://www.csounds.com/manual/html/GEN25.html>
+--
+-- All x1, x2, .. should belong to the interval [0, 1]. The actual values are rescaled to fit the table size.
+bpExps :: [Double] -> Tab
+bpExps xs = preTab def idExpsBreakPoints $ bpRelativeArgs xs
+
 
 type PartialNumber = Double
 type PartialStrength = Double
@@ -1288,11 +1311,23 @@ duserrnd b1 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b
 ----------------------------------------------------------------
 -- tab args
 
+bpRelativeArgs :: [Double] -> TabArgs
+bpRelativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
+    where
+        fromRelative n as = substOdds (makeRelative n $ getOdds as) as
+
+        getOdds xs = fmap snd $ filter fst $ zip (cycle [True,False]) xs
+
+        substOdds odds xs = zipWith3 go (cycle [True,False]) ((\a -> [a,a]) =<< odds) xs
+            where go flag odd x = if flag then odd else x
+
+        makeRelative size as = fmap ((fromIntegral :: (Int -> Double)) . round . (fromIntegral size * )) as
+
 relativeArgs :: [Double] -> TabArgs
 relativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
     where
-        fromRelative n as = substEvens (mkRelative n $ getEvens as) as
-          
+        fromRelative n as = substEvens (mkRelative n $ getEvens as) as          
+
         getEvens xs = case xs of
             [] -> []
             _:[] -> []
