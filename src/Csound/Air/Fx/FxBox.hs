@@ -111,10 +111,14 @@ module Csound.Air.Fx.FxBox(
 
     -- ** Ring modulation
     uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5
+
+    -- ** Compressor
+
    
 ) where
 
 import Csound.Typed
+import Csound.Typed.Opcode(ampdb, scale, expcurve, compress)
 import Csound.Typed.Gui
 
 import Csound.SigSpace
@@ -867,3 +871,4 @@ uiPongy2 = uiPongy' size2
 uiPongy3 = uiPongy' size3
 uiPongy4 = uiPongy' size4
 uiPongy5 = uiPongy' size5
+

@@ -15,7 +15,7 @@ module Csound.Air.Live (
 
     -- ** Fx units
     uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho,
-    uiFilter, uiReverb, uiGain, uiWhite, uiPink, uiFx, 
+    uiFilter, uiReverb, uiGain, uiCompress, uiWhite, uiPink, uiFx, 
     uiSig, uiMix, uiMidi, 
     -- uiPatch,
 
@@ -31,6 +31,7 @@ import Control.Monad
 import Data.Colour
 import Data.Boolean
 import qualified Data.Colour.Names as C
+import qualified Data.Colour.SRGB as C
 
 import Csound.Typed
 import Csound.Typed.Gui
@@ -432,3 +433,32 @@ genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
         fxs    = fmap getPatchFx patches
         
 -}
+
+
+-------------------------------
+
+-- | Compressor
+--
+-- > uiCompress thresh loknee hiknee ratio att rel gain
+uiCompress :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Source FxFun
+uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain = paintTo orange $ fxBox "Compress" fx True [("thresh", initThresh), ("loknee", initLoknee), ("hiknee", initHiknee), ("ratio", initRatio), ("att", initAtt), ("rel", initRel),  ("gain", initGain)]
+    where 
+        fx :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> FxFun
+        fx thresh loknee hiknee ratio att rel gain  = fromMonoFx (\x -> gain' * compress x x thresh' loknee' hiknee' ratio' att' rel' 0.05)
+            where 
+                gain' = ampdb $ onLin (-36, 36) gain
+                thresh' = onLin (0, 120) thresh
+                att' = onExp (0, 1) att
+                rel' = onExp (0, 1) rel
+                ratio' = onExp (1, 30000) ratio
+                loknee' = onLin (0, 120) loknee
+                hiknee' = onLin (0, 120) hiknee
+
+                onLin (min, max) val = min + val * (max - min)
+                onExp (min, max) val = scale (expcurve val 4) max min
+
+        paintTo = fxColor . C.sRGB24read
+        orange = "#FF851B"
+
+fromMonoFx :: (Sig -> Sig) -> FxFun
+fromMonoFx f = \asig2 -> return $ at f asig2        
