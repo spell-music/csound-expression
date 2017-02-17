@@ -1,9 +1,13 @@
 Release todo
 ============================
 
-* update docs for Patches
+* update docs for 
 
-* implement Iain FXs, update docs (almost done, need good EQ and compressor)
+    * Patches
+
+    * FXs
+
+    * GENs
 
 ----------------------------------------
 -- Done
@@ -11,6 +15,8 @@ Release todo
 * synth character for Patches (change filters)  maybe it's worth to add attack and decay?
 
 * all GENs are implemented (except 15)
+
+* FXs with presets and UIs
 
 ------------------------------
 -- future releases
