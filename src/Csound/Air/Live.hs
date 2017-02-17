@@ -6,7 +6,7 @@ module Csound.Air.Live (
 
     -- * Effects
     FxFun, FxUI(..), fxBox, uiBox,
-    fxColor, fxVer, fxHor, fxSca, fxApp,
+    fxColor, fxVer, fxHor, fxMatrix, fxSca, fxApp,
 
     -- * Instrument choosers
     hinstrChooser, vinstrChooser,
@@ -15,8 +15,8 @@ module Csound.Air.Live (
 
     -- ** Fx units
     uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho,
-    uiFilter, uiReverb, uiGain, uiWhite, uiPink, uiFx, uiRoom,
-    uiHall, uiCave, uiSig, uiMix, uiMidi, 
+    uiFilter, uiReverb, uiGain, uiWhite, uiPink, uiFx, 
+    uiSig, uiMix, uiMidi, 
     -- uiPatch,
 
      -- * Static widgets
@@ -208,6 +208,18 @@ fxHor = fxGroup hor
 fxVer :: [Source FxFun] -> Source FxFun
 fxVer = fxGroup ver
 
+-- | Creates a matrix of fx-boxes.
+--
+-- > fxMatrix columnsSize fxs
+--
+-- first argument is a number of columns in each row.
+fxMatrix :: Int -> [Source FxFun] -> Source FxFun
+fxMatrix columnsSize fxs = fxVer $ fmap fxHor $ splitList columnsSize fxs
+    where
+        splitList n xs = case splitAt n xs of
+            (res, []) -> [res]
+            (as,rest) -> as : splitList n rest
+
 -- | Applies a function to a signal processing function.
 fxApp :: FxFun -> Source FxFun -> Source FxFun 
 fxApp f = mapSource (>=> f)
@@ -291,18 +303,6 @@ uiPink isOn freq depth = sourceColor2 C.deeppink $ fxBox "Pink" fxPink2 isOn
 -- | The constructor for signal processing functions with no arguments (controlls).
 uiFx :: FxUI a => String -> a -> Bool -> Source FxFun
 uiFx name f isOn = fxBox name f isOn [] 
-
--- | The reverb for room.
-uiRoom :: Bool -> Source FxFun
-uiRoom isOn = sourceColor2 C.limegreen $ uiFx "Room" smallRoom2 isOn
-
--- | The reverb for hall.
-uiHall :: Bool -> Source FxFun
-uiHall isOn = sourceColor2 C.mediumseagreen $ uiFx "Hall" largeHall2 isOn
-
--- | The reverb for magic cave.
-uiCave :: Bool -> Source FxFun
-uiCave isOn = sourceColor2 C.darkviolet $ uiFx "Cave" magicCave2 isOn
 
 -- | Midi chooser implemented as FX-box.
 uiMidi :: [(String, Msg -> SE Sig2)] -> Int -> Source FxFun 

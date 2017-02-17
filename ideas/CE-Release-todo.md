@@ -3,7 +3,7 @@ Release todo
 
 * update docs for Patches
 
-* implement Iain FXs, update docs
+* implement Iain FXs, update docs (almost done, need good EQ and compressor)
 
 ----------------------------------------
 -- Done
