@@ -84,7 +84,7 @@ module Csound.Control.Instr(
     sched, retrig, schedHarp, schedUntil, schedToggle,
     sched_, schedUntil_, 
     schedBy, schedHarpBy,
-    withDur,
+    withDur, monoSched,
 
     -- * Api
     -- | We can create named instruments. then we can trigger the named instruments with Csound API.

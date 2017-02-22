@@ -5,10 +5,11 @@ module Csound.Control.Midi(
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
     -- * Mono-midi synth
-    monoMsg, holdMsg, trigNamedMono,
+    monoMsg, holdMsg, trigNamedMono, genMonoMsg, smoothMonoArg, 
+    genFilteredMonoMsg, genFilteredMonoMsgTemp,
 
     -- ** Custom temperament
-    monoMsgTemp, holdMsgTemp,
+    monoMsgTemp, holdMsgTemp, genMonoMsgTemp,
     -- * Midi event streams
     midiKeyOn, midiKeyOff,
     -- * Reading midi note parameters
@@ -29,6 +30,7 @@ import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
 import Csound.Control.Instr(alwaysOn)
 import Csound.Control.Evt(Tick)
+import Csound.Types
 
 import Csound.Tuning
 
@@ -89,7 +91,7 @@ cpsmidi'Sig (Temp t) key = cpstun 1 key t
 --
 -- > monoMsg channel portamentoTime releaseTime
 monoMsg :: MidiChn -> D -> D -> SE (Sig, Sig)
-monoMsg = genMonoMsg cpsmidi
+monoMsg = smoothMonoMsg cpsmidi
 
 -- | Produces midi amplitude and frequency as a signal.
 -- The signal fades out when nothing is pressed.
@@ -99,12 +101,39 @@ monoMsg = genMonoMsg cpsmidi
 --
 -- > monoMsgTemp temperament channel portamentoTime releaseTime
 monoMsgTemp :: Temp -> MidiChn -> D -> D -> SE (Sig, Sig)
-monoMsgTemp tm = genMonoMsg (cpsmidi' tm)
+monoMsgTemp tm = smoothMonoMsg (cpsmidi' tm)
 
-genMonoMsg :: (Msg -> D) -> MidiChn -> D -> D -> SE (Sig, Sig)
-genMonoMsg key2cps chn portTime relTime = do
-	(amp, cps, status) <- genAmpCpsSig key2cps (toMidiFun chn)
+-- | Produces an argument for monophonic midi-synth.
+-- The signal fades out when nothing is pressed.
+-- It can be used in mono-synths. 
+--
+-- > genMonoMsg channel
+genMonoMsg :: MidiChn -> SE MonoArg
+genMonoMsg chn = genAmpCpsSig cpsmidi (toMidiFun chn)
+
+-- | Just like mono @genMonoMsg@ but also we can alter the temperament. The temperament spec goes first. 
+--
+-- > genMonoMsgTemp temperament channel
+genMonoMsgTemp :: Temp -> MidiChn -> SE MonoArg
+genMonoMsgTemp tm chn = genAmpCpsSig (cpsmidi' tm) (toMidiFun chn)
+
+smoothMonoArg :: D -> MonoArg -> MonoArg
+smoothMonoArg time arg = arg { monoAmp = port (monoAmp arg) time, monoCps = port (monoCps arg) time }
+
+smoothMonoMsg :: (Msg -> D) -> MidiChn -> D -> D -> SE (Sig, Sig)
+smoothMonoMsg key2cps chn portTime relTime = do
+	(MonoArg amp cps status _) <- genAmpCpsSig key2cps (toMidiFun chn)
 	return (port amp portTime * port status relTime,  port cps portTime)
+
+
+genFilteredMonoMsg :: MidiChn -> (D -> BoolD) -> SE MonoArg
+genFilteredMonoMsg chn cond = filteredGenAmpCpsSig cpsmidi (toMidiFun chn) cond
+
+-- | Just like mono @genMonoMsg@ but also we can alter the temperament. The temperament spec goes first. 
+--
+-- > genMonoMsgTemp temperament channel
+genFilteredMonoMsgTemp :: Temp -> MidiChn -> (D -> BoolD) -> SE MonoArg
+genFilteredMonoMsgTemp tm chn cond = filteredGenAmpCpsSig (cpsmidi' tm) (toMidiFun chn) cond
 
 -- | Produces midi amplitude and frequency as a signal and holds the 
 -- last value till the next one is present.
@@ -132,18 +161,52 @@ genHoldMsg key2cps channel portTime = do
 	return (port amp portTime,  port cps portTime)
 
 
-genAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> SE (Sig, Sig, Sig)
+
+genAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> SE MonoArg
 genAmpCpsSig key2cps midiFun = do
-	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
-	status <- midiFun (instr ref)
-	let resStatus = ifB (downsamp status ==* 0) 0 1
-	(amp, cps) <- readRef ref
-	return (downsamp amp, downsamp cps, resStatus)
-	where 
-		instr :: Ref (Sig, Sig) -> Msg -> SE Sig
-		instr hNote msg = do
-			writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
-			return 1		
+    ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+    status <- midiFun (instr ref)
+    (amp, cps) <- readRef ref
+    return $ makeMonoArg (amp, cps) status	
+	where
+        makeMonoArg (amp, cps) status = MonoArg kamp kcps resStatus retrig
+            where
+                kamp = downsamp amp
+                kcps = downsamp cps
+                kstatus = downsamp status
+                resStatus = ifB (kstatus ==* 0) 0 1
+                retrig = changed [kamp, kcps, kstatus]
+
+        instr :: Ref (Sig, Sig) -> Msg -> SE Sig
+        instr hNote msg = do
+            writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
+            return 1		
+
+filteredGenAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> (D -> BoolD) -> SE MonoArg
+filteredGenAmpCpsSig key2cps midiFun cond  = do
+    ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+    status <- midiFun (instr ref)
+    (amp, cps) <- readRef ref
+    return $ makeMonoArg (amp, cps) status  
+    where
+        makeMonoArg (amp, cps) status = MonoArg kamp kcps resStatus retrig
+            where
+                kamp = downsamp amp
+                kcps = downsamp cps
+                kstatus = downsamp status
+                resStatus = ifB (kstatus ==* 0) 0 1
+                retrig = changed [kamp, kcps, kstatus]
+
+        instr :: Ref (Sig, Sig) -> Msg -> SE Sig
+        instr hNote msg = do
+            resRef <- newRef 0
+            whenElseD (cond $ key2cps msg)
+                (do
+                    writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
+                    writeRef resRef 1)
+                (do
+                    writeRef resRef 0)
+            readRef resRef            
 
 genHoldAmpCpsSig :: (Msg -> D) -> ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
 genHoldAmpCpsSig key2cps midiFun = do
@@ -165,8 +228,8 @@ genHoldAmpCpsSig key2cps midiFun = do
 -- > i "givenName" 0 pitchKey volumeKey     -- note off
 --
 -- The output is a pair of signals @(midiVolume, midiPitch)@.
-trigNamedMono :: D -> D -> String -> SE (Sig, Sig)
-trigNamedMono portTime relTime name = namedMonoMsg portTime relTime name
+trigNamedMono :: String -> SE MonoArg
+trigNamedMono name = namedMonoMsg name
 
 namedAmpCpsSig:: String -> SE (Sig, Sig, Sig)
 namedAmpCpsSig name = do

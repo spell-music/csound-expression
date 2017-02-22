@@ -42,7 +42,7 @@ module Csound.Types(
     quot', rem', div', mod', ceil', floor', round', int', frac',        
    
     -- ** Logic functions
-    boolSig, when1, whens, whenD1, whenDs, whileDo, untilDo, whileDoD, untilDoD, whenElseD, compareWhenD,
+    boolSig, when1, whens, whenElse, whenD1, whenDs, whileDo, untilDo, whileDoD, untilDoD, whenElseD, compareWhenD,
     equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
 
     -- ** Aliases 
@@ -71,6 +71,9 @@ module Csound.Types(
     Arg, atArg,
     -- *** Logic functions
     ifArg, guardedArg, caseArg, 
+
+    -- ** Monophonic arguments
+    MonoArg(..), MonoAdsr, adsrMonoSynt, monoAdsr,
 
     -- ** Outputs
     Sigs,
@@ -116,6 +119,9 @@ atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as
 
 whenElseD :: BoolD -> SE () -> SE () -> SE ()
 whenElseD cond ifDo elseDo = whenDs [(cond, ifDo)] elseDo
+
+whenElse :: BoolSig -> SE () -> SE () -> SE () 
+whenElse cond ifDo elseDo = whens [(cond, ifDo)] elseDo
 
 -- | Performs tree search f the first argument lies within the interval it performs the corresponding procedure.
 compareWhenD :: D -> [(D, SE ())] -> SE ()

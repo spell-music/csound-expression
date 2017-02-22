@@ -68,6 +68,7 @@ import Csound.Typed
 import Csound.SigSpace
 import Csound.Control.Midi
 import Csound.Control.Instr
+import Csound.Control.Evt(impulse)
 import Csound.Control.Sf
 import Csound.Air.Fx
 import Csound.Air.Filter(ResonFilter, mlp)
@@ -78,6 +79,9 @@ import Csound.Types
 type SyntSkin = ResonFilter
 type GenInstr a b = Reader SyntSkin (Instr a b)
 type GenFxSpec a = Reader SyntSkin (FxSpec a)
+type GenMonoInstr a = Reader SyntSkin (MonoInstr a)
+
+type MonoInstr a = MonoArg -> SE a
 
 -- | A simple csound note (good for playing with midi-keyboard).
 -- It's a pair of amplitude (0 to 1) and freuqncy (Hz).
@@ -147,7 +151,7 @@ instance Default PolySyntSpec where
 -- * layer of patches. That is a several patches that sound at the same time.
 --  the layer is a patch and the weight of volume for a given patch.
 data Patch a 
-    = MonoSynt MonoSyntSpec (GenInstr Sig a)
+    = MonoSynt MonoSyntSpec (GenMonoInstr a) -- (GenInstr Sig a)
     | PolySynt PolySyntSpec (GenInstr D   a)
     | SetSkin SyntSkin (Patch a)
     | FxChain [GenFxSpec a] (Patch a)
@@ -161,10 +165,16 @@ polySynt = PolySynt def . return
 polySyntFilter :: (ResonFilter -> Instr D a) -> Patch a
 polySyntFilter instr = PolySynt def $ reader instr
 
-monoSynt :: (Instr Sig a) -> Patch a
+adsrMono :: (MonoAdsr -> Instr Sig a) -> Patch a
+adsrMono f = monoSynt (adsrMonoSynt f)
+
+adsrMonoFilter :: (ResonFilter -> MonoAdsr -> Instr Sig a) -> Patch a
+adsrMonoFilter f = monoSyntFilter (\filter -> adsrMonoSynt (f filter))
+
+monoSynt :: (MonoInstr a) -> Patch a
 monoSynt = MonoSynt def . return
 
-monoSyntFilter :: (ResonFilter -> Instr Sig a) -> Patch a
+monoSyntFilter :: (ResonFilter -> MonoInstr a) -> Patch a
 monoSyntFilter instr = MonoSynt def $ reader instr
 
 fxSpec :: Sig -> Fx a -> GenFxSpec a
@@ -174,7 +184,7 @@ fxSpecFilter :: Sig -> (ResonFilter -> Fx a) -> GenFxSpec a
 fxSpecFilter ratio fx = reader $ \resonFilter -> FxSpec ratio (fx resonFilter)
 
 -- Maps all monophonic and polyphonic patches within the given patch.
-mapMonoPolyInstr :: (Instr Sig a -> Instr Sig a) -> (Instr D a -> Instr D a) -> Patch a -> Patch a
+mapMonoPolyInstr :: (MonoInstr a -> MonoInstr a) -> (Instr D a -> Instr D a) -> Patch a -> Patch a
 mapMonoPolyInstr mono poly x = case x of
     MonoSynt spec instr -> MonoSynt spec (fmap mono instr)
     PolySynt spec instr -> PolySynt spec (fmap poly instr)
@@ -249,7 +259,7 @@ atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote D -> SE a
 atNote p note = go Nothing p note
     where              
         go maybeSkin p note@(amp, cps) = case p of
-            MonoSynt spec instr -> (runSkin instr maybeSkin) (sig amp, sig cps)
+            MonoSynt spec instr -> (runSkin instr maybeSkin) (MonoArg (sig amp) (sig cps) 1 (impulse 0))
             PolySynt spec instr -> (runSkin instr maybeSkin) note
             SetSkin  skin p -> newSkin skin p
             FxChain fxs p -> getPatchFx maybeSkin fxs =<< rec p
@@ -297,11 +307,10 @@ atMidi x = go Nothing x
                 monoSynt spec instr = instr =<< getArg
                     where
                         getArg
-                            | monoSyntHold spec = holdMsg chn port
-                            | otherwise         = monoMsg chn port rel
+                            | monoSyntHold spec = error "hold midi is not implemented for mono-synt" -- holdMsg chn port
+                            | otherwise         = genMonoMsg chn 
 
-                        port = monoSyntSlideTime spec
-                        rel  = monoSyntRelease spec
+                        port = monoSyntSlideTime spec                        
                         chn  = monoSyntChn spec
 
 -- | Plays a patch with midi with given temperament (see @Csound.Tuning@).
@@ -322,31 +331,34 @@ atMidiTemp tm x = go Nothing x
                 monoSynt spec instr = instr =<< getArg
                     where
                         getArg
-                            | monoSyntHold spec = holdMsgTemp tm chn port
-                            | otherwise         = monoMsgTemp tm chn port rel
+                            | monoSyntHold spec = error "hold midi is not implemented for mono-synt" -- holdMsg chn port
+                            | otherwise         = genMonoMsgTemp tm chn 
 
-                        port = monoSyntSlideTime spec
-                        rel  = monoSyntRelease spec
+                        port = monoSyntSlideTime spec                        
                         chn  = monoSyntChn spec
 
+
 genMidiSplitPatch :: (SigSpace a, Sigs a) => Maybe SyntSkin -> (Msg -> (D, D)) -> Patch a -> D -> Patch a -> SE a
-genMidiSplitPatch maybeSkin midiArg = genSplitPatch maybeSkin $ \chn instr -> midiChn chn (instr . midiArg)
-
-genSplitPatch :: (SigSpace a, Sigs a) => Maybe SyntSkin -> (MidiChn -> (CsdNote D -> SE a) -> SE a) -> Patch a -> D -> Patch a -> SE a
-genSplitPatch maybeSkin playInstr a dt b = liftA2 (+) (leftSplit maybeSkin dt a) (rightSplit maybeSkin dt b)
+genMidiSplitPatch maybeSkin midiArg = genSplitPatch maybeSkin playMonoInstr playInstr 
     where
-        leftSplit  maybeSkin dt a = onCondPlay maybeSkin ( `lessThan` dt) a
-        rightSplit maybeSkin dt a = onCondPlay maybeSkin ( `greaterThanEquals` dt) a
+        playMonoInstr chn cond instr = instr =<< genFilteredMonoMsg chn cond
+        playInstr chn instr = midiChn chn (instr . midiArg)
 
-        onCondPlay maybeSkin cond x = case x of
-            MonoSynt spec instr -> error "Split doesn't work for monophonic synths. Pleas use only polyphonic synths."
+genSplitPatch :: (SigSpace a, Sigs a) => Maybe SyntSkin -> (MidiChn -> (D -> BoolD) -> MonoInstr a -> SE a)  -> (MidiChn -> (CsdNote D -> SE a) -> SE a) -> Patch a -> D -> Patch a -> SE a
+genSplitPatch maybeSkin playMonoInstr playInstr a dt b = liftA2 (+) (leftSplit maybeSkin dt a) (rightSplit maybeSkin dt b)
+    where
+        leftSplit  maybeSkin dt a = onCondPlay maybeSkin ( `lessThan` dt)          ( `lessThan` (sig dt))           a
+        rightSplit maybeSkin dt a = onCondPlay maybeSkin ( `greaterThanEquals` dt) ( `greaterThanEquals` (sig dt))  a
+
+        onCondPlay maybeSkin cond condSig x = case x of
+            MonoSynt spec instr -> playMonoInstr  (monoSyntChn spec) cond  (runSkin instr maybeSkin)
             PolySynt spec instr -> playInstr (polySyntChn spec) (restrictPolyInstr cond (runSkin instr maybeSkin))
-            SetSkin  skin p -> onCondPlay (Just skin) cond p
-            FxChain fxs p -> getPatchFx maybeSkin fxs =<< onCondPlay maybeSkin cond p
-            LayerPatch xs -> onLayered xs (onCondPlay maybeSkin cond)
+            SetSkin  skin p -> onCondPlay (Just skin) cond condSig p
+            FxChain fxs p -> getPatchFx maybeSkin fxs =<< onCondPlay maybeSkin cond condSig p
+            LayerPatch xs -> onLayered xs (onCondPlay maybeSkin cond condSig)
             SplitPatch a dt b -> liftA2 (+) 
-                        (onCondPlay maybeSkin (\x -> cond x &&* (x `lessThan` dt)) a) 
-                        (onCondPlay maybeSkin (\x -> cond x &&* (x `greaterThanEquals` dt)) b)
+                        (onCondPlay maybeSkin (\x -> cond x &&* (x `lessThan` dt))           (\x -> condSig x &&* (x `lessThan` (sig dt))) a) 
+                        (onCondPlay maybeSkin (\x -> cond x &&* (x `greaterThanEquals` dt))  (\x -> condSig x &&* (x `greaterThanEquals` (sig dt) ))  b)
 
 restrictPolyInstr :: (Sigs a) => (D -> BoolD) -> (CsdNote D -> SE a) -> CsdNote D -> SE a
 restrictPolyInstr cond instr note@(amp, cps) = do
@@ -356,6 +368,12 @@ restrictPolyInstr cond instr note@(amp, cps) = do
         (writeRef ref 0)
     readRef ref
 
+restrictMonoInstr :: (Sigs a) => (Sig -> BoolSig) -> MonoInstr a -> MonoInstr a
+restrictMonoInstr cond instr arg = instr $ arg { monoGate = monoGate arg * gate2 }
+    where
+        cps = monoCps arg 
+        gate2 = ifB (cond cps) 1 0
+
 --------------------------------------------------------------
 -- sched
 
@@ -364,33 +382,34 @@ atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco (CsdNote D)) -> SE a
 atSched x evt = go Nothing x evt
     where
         go maybeSkin x evt = case x of
-            MonoSynt _ instr -> error "atSched is not defined for monophonic synthesizers"
+            MonoSynt spec instr -> (runSkin instr maybeSkin) =<< (fmap (smoothMonoArg $ monoSyntSlideTime spec) $ monoSched evt)
             PolySynt _ instr -> playInstr (runSkin instr maybeSkin)
             SetSkin skin p -> newSkin skin p
             FxChain fxs p  -> getPatchFx maybeSkin fxs =<< rec p
             LayerPatch xs -> onLayered xs rec
-            SplitPatch a t b -> genSplitPatch maybeSkin (const playInstr) a t b
+            SplitPatch a t b -> genSplitPatch maybeSkin (const $ const playMonoInstr) (const playInstr) a t b
             where 
                 rec x = go maybeSkin x evt
                 newSkin skin x = go (Just skin) x evt
                 playInstr instr = return $ sched instr evt
-
+                playMonoInstr instr = instr =<< monoSched evt
 
 -- | Plays a patch with event stream with stop-note event stream. 
 atSchedUntil :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> Evt b -> SE a
 atSchedUntil x evt stop = go Nothing x evt stop
     where 
         go maybeSkin x evt stop = case x of     
-            MonoSynt _ instr -> error "atSchedUntil is not defined for monophonic synthesizers"
+            MonoSynt _ instr -> playMonoInstr (runSkin instr maybeSkin)
             PolySynt _ instr -> playInstr (runSkin instr maybeSkin)
             SetSkin skin p -> newSkin skin p
             FxChain fxs p  -> getPatchFx maybeSkin fxs =<< rec p
             LayerPatch xs -> onLayered xs rec
-            SplitPatch a cps b -> genSplitPatch maybeSkin (const playInstr) a cps b
+            SplitPatch a cps b -> genSplitPatch maybeSkin (const $ const playMonoInstr) (const playInstr) a cps b
             where 
                 rec x = go maybeSkin x evt stop
                 newSkin skin x = go (Just skin) x evt stop
                 playInstr instr = return $ schedUntil instr evt stop
+                playMonoInstr instr = instr =<< monoSchedUntil evt stop                
 
 --------------------------------------------------------------
 -- sco
@@ -463,7 +482,13 @@ setMonoHold = onMonoSyntSpec (\x -> x { monoSyntHold = True })
 
 -- | Transpose the patch by a given ratio. We can use the functions semitone, cent to calculate the ratio.
 transPatch :: D -> Patch a -> Patch a
-transPatch k = mapMonoPolyInstr (\instr -> instr . second ( * sig k)) (\instr -> instr . second ( * k))
+transPatch k = mapMonoPolyInstr (transMonoInstr k) (transPolyInstr k)
+
+transMonoInstr :: D -> MonoInstr a -> MonoInstr a
+transMonoInstr k instr = \arg -> instr (arg { monoCps = sig k * monoCps arg })
+
+transPolyInstr :: D -> Instr D a -> Instr D a
+transPolyInstr k instr = \(amp, cps) -> instr (amp, k * cps)
 
 -- | Adds an effect to the patch's instrument.
 addInstrFx :: Fx a -> Patch a -> Patch a
@@ -516,15 +541,15 @@ mixInstr k f p = LayerPatch [(k, f), (1, p)]
 harmonPatch :: (SigSpace b, Sigs b) => [Sig] -> [D] -> Patch b -> Patch b
 harmonPatch amps freqs = tfmInstr monoTfm polyTfm
     where
-        monoTfm instr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ instr (amp, cps * f)) amps (fmap sig freqs)
-        polyTfm instr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ instr (amp, cps * f)) amps freqs 
+        monoTfm instr = \arg -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ transMonoInstr f instr arg) amps freqs
+        polyTfm instr = \arg -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ transPolyInstr f instr arg) amps freqs 
 
 -- | Adds an octave below note for a given patch to make the sound deeper.
 deepPad :: (SigSpace b, Sigs b) => Patch b -> Patch b
 deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]
 
 -- | Transforms instrument functions for polyphonic and monophonic patches.
-tfmInstr :: ((CsdNote Sig -> SE b) -> (CsdNote Sig -> SE b)) -> ((CsdNote D -> SE b) -> (CsdNote D -> SE b)) -> Patch b -> Patch b
+tfmInstr :: (MonoInstr b -> MonoInstr b) -> ((CsdNote D -> SE b) -> (CsdNote D -> SE b)) -> Patch b -> Patch b
 tfmInstr monoTfm polyTfm x = case x of
     MonoSynt spec instr -> MonoSynt spec $ fmap monoTfm instr
     PolySynt spec instr -> PolySynt spec $ fmap polyTfm instr
@@ -611,18 +636,20 @@ genPatchByNameMidi monoKey2cps polyKey2cps name x = go Nothing x
                 rec = go maybeSkin
                 newSkin skin = go (Just skin)
 
-                monoSynt spec instr = instr =<< fmap convert (trigNamedMono portTime relTime name)
+                monoSynt spec instr = instr =<< (fmap (smoothMonoArg portTime . convert) $ trigNamedMono name)
                     where
-                        convert (vol, pch) = (vel2ampSig vol, monoKey2cps pch)
+                        convert arg = arg { monoAmp = vel2ampSig (monoAmp arg), monoCps = monoKey2cps (monoCps arg) }
                         portTime = monoSyntSlideTime spec
-                        relTime  = monoSyntRelease    spec
 
                 polySynt spec instr = trigByNameMidi name go
                     where
                         go :: (D, D, Unit) -> SE a
                         go (pitch, vol, _) = instr (vel2amp vol, polyKey2cps pitch)
 
-                splitPatch a cps b = genSplitPatch maybeSkin polySynt a cps b
+                splitPatch a cps b = genSplitPatch maybeSkin playMonoInstr playInstr a cps b
+
+                playMonoInstr chn cond instr = monoSynt (def { monoSyntChn = chn }) instr
+                playInstr chn instr = polySynt (def { polySyntChn = chn }) instr
 
 vel2amp :: D -> D
 vel2amp vol = ((vol / 64) ** 2) / 2
