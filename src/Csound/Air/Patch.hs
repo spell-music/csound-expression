@@ -5,7 +5,7 @@ module Csound.Air.Patch(
 	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
 	Patch1, Patch2, Patch(..), PolySyntSpec(..), MonoSyntSpec(..),
     SyntSkin, GenInstr, GenFxSpec,
-    polySynt, monoSynt, fxSpec, polySyntFilter, monoSyntFilter, fxSpecFilter,
+    polySynt, monoSynt, adsrMono, adsrMonoFilter, fxSpec, polySyntFilter, monoSyntFilter, fxSpecFilter,
 
     mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,	
     setFxMix, setFxMixes,

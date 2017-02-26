@@ -6,7 +6,7 @@ module Csound.Control.Evt(
     boolToEvt, evtToBool, sigToEvt, evtToSig, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
 
-    Snap, snapshot, snaps, snaps2, sync, syncBpm, 
+    Snap, snapshot, readSnap, snaps, snaps2, sync, syncBpm, 
     
     -- * Opcodes
     metro, gaussTrig, dust, metroSig, dustSig, dustSig2, impulseE, changedE, triggerE, loadbang, impulse, metroE,
