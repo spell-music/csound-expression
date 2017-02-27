@@ -427,7 +427,7 @@ There is a short-cut called just `gp`. We should use it with `exps` or `lins`.
 
 ### Specific tables
 
-There are a lot of GEN-routines [available](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-Tab.html). 
+There are a lot of GEN-routines [available](http://hackage.haskell.org/package/csound-expression/docs/Csound-Tab.html). 
 Let's briefly discuss the most usefull ones.
 
 We can write the specific numbers in the table if we want:
@@ -471,6 +471,10 @@ Special cases for harmonic series:
 ~~~{.haskell}
 sine, cosine, sigmoid :: Tab
 ~~~
+
+There are other tables. We can find the complete list in the module [Csound.Tab](http://hackage.haskell.org/package/csound-expression/docs/Csound-Tab.html). 
+In Csound the tables are created by specific integer identifiers but in CE they are defined with names (hopefully self-descriptive). If you are used 
+to integer identifiers you can check out the names in the Appendix to the documentation o the Csound.Tab module.
 
 Side effects (SE)
 ------------------------------------------------

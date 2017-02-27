@@ -133,6 +133,55 @@ module Csound.Tab (
 
     -- ** random generators from tables
     cuserrnd, duserrnd
+
+    -- * Appendix (original GEN identifiers lookup)
+    -- | We can find the CE name of the GEN routine by it's integer id.
+    --
+    -- * GEN01 — wavs, wavLeft, wavRight --  Transfers data from a soundfile into a function table.
+    -- * GEN02 — doubles -- Transfers data from immediate pfields into a function table.
+    -- * GEN03 — polys --  Generates a stored function table by evaluating a polynomial.
+    -- * GEN04 — normTab -- Generates a normalizing function.
+    -- * GEN05 — exps -- Constructs functions from segments of exponential curves.
+    -- * GEN06 — cubes -- Generates a function comprised of segments of cubic polynomials.
+    -- * GEN07 — lins -- Constructs functions from segments of straight lines.
+    -- * GEN08 — splines -- Generate a piecewise cubic spline curve.
+    -- * GEN09 — sines2, sines3 -- Generate composite waveforms made up of weighted sums of simple sinusoids.
+    -- * GEN10 — sines -- Generate composite waveforms made up of weighted sums of simple sinusoids.
+    -- * GEN11 — buzzes -- Generates an additive set of cosine partials.
+    -- * GEN12 — bessels -- Generates the log of a modified Bessel function of the second kind.
+    -- * GEN13 — chebs1 -- Stores a polynomial whose coefficients derive from the Chebyshev polynomials of the first kind.
+    -- * GEN14 — chebs2 -- Stores a polynomial whose coefficients derive from Chebyshevs of the second kind.
+    -- * GEN15 — (not implemented yet) -- Creates two tables of stored polynomial functions.
+    -- * GEN16 — startEnds -- Creates a table from a starting value to an ending value.
+    -- * GEN17 — consts -- Creates a step function from given x-y pairs.
+    -- * GEN18 — tabseg -- Writes composite waveforms made up of pre-existing waveforms.
+    -- * GEN19 — sines4 -- Generate composite waveforms made up of weighted sums of simple sinusoids.
+    -- * GEN20 — wins -- Generates functions of different windows.
+    -- * GEN21 — dist, uniDist, linDist, triDist, expDist, biexpDist, gaussDist, cauchyDist, pcauchyDist, betaDist, weibullDist, poissonDist -- Generates tables of different random distributions.
+    -- * GEN23 — readNumFile -- Reads numeric values from a text file.
+    -- * GEN24 — readNumTab --  Reads numeric values from another allocated function-table and rescales them.
+    -- * GEN25 — bpLins --  Construct functions from segments of exponential curves in breakpoint fashion.
+    -- * GEN27 — bpExps -- Construct functions from segments of straight lines in breakpoint fashion.
+    -- * GEN28 — readTrajectoryFile -- Reads a text file which contains a time-tagged trajectory.
+    -- * GEN30 — tabHarmonics -- Generates harmonic partials by analyzing an existing table.
+    -- * GEN31 — mixOnTab -- Mixes any waveform specified in an existing table.
+    -- * GEN32 — mixTabs -- Mixes any waveform, resampled with either FFT or linear interpolation.
+    -- * GEN33 — mixSines1 -- Generate composite waveforms by mixing simple sinusoids.
+    -- * GEN34 — mixSines2 -- Generate composite waveforms by mixing simple sinusoids.
+    -- * GEN40 — tabDist -- Generates a random distribution using a distribution histogram.
+    -- * GEN41 — randDist -- Generates a random list of numerical pairs.
+    -- * GEN42 — rangeDist Generates a random distribution of discrete ranges of values.
+    -- * GEN43 — readPvocex -- Loads a PVOCEX file containing a PV analysis.
+    -- * GEN49 — mp3s -- Transfers data from an MP3 soundfile into a function table.
+    -- * GEN51 — (see module Csound.Tuning) This subroutine fills a table with a fully customized micro-tuning scale, in the manner of Csound opcodes cpstun, cpstuni and cpstmid.
+    -- * GEN52 —  readMultichannel -- Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode.
+    -- * GENtanh — tanhTab, rescaleTanhTab Generate a table with values on the tanh function.
+    -- * GENexp — expTab, rescaleExpTab Generate a table with values on the exp function.
+    -- * GENsone — soneTab Generate a table with values of the sone function.
+    -- * GENquadbezier — (not implemented yet) Generate a table with values from a quadratic Bézier function.
+    -- * GENfarey — fareyTab -- Fills a table with the Farey Sequence Fn of the integer n.
+    -- * GENwave — waveletTab -- Generates a compactly supported wavelet function.
+    -- * GENpadsynth — pdsynth, bwSines Generate a sample table using the padsynth algorithm.     
 ) where
 
 import Control.Applicative hiding ((<*))
