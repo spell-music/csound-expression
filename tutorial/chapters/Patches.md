@@ -153,7 +153,7 @@ instr (amp, cps) = return $ sig amp * env * wave
         wave = osc (sig cps)
 
 
-patch = polyInstr instr
+patch = polySynt instr
 
 main = vdac $ atMidi patch
 ~~~
@@ -227,7 +227,7 @@ monoAdsr :: MonoArg -> MonoAdsr
 
 we can create monophonic instruments with smart constructors:
 
-~~~
+~~~haskell
 monoSynt :: (MonoInstr a) -> Patch a
 monoSyntFilter :: (ResonFilter -> MonoInstr a) -> Patch a
 
@@ -242,7 +242,7 @@ With `Filter` suffix we can parametrize the insturment by low-pass filter.
 
 Let's create a very basic mono-insturment:
 
-~~~
+~~~haskell
 instr adsrFun (amp, cps) = return $ amp * env * osc (port cps 0.007)
     where env = adsrFun 0.01 4 0.001 2
 
