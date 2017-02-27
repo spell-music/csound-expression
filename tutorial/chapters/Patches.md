@@ -25,6 +25,11 @@ use the plain old `dac`. This way we can play the patches with real MIDI-device:
 > dac $ mul 0.75 $ atMidi toneWheelOrgan
 ~~~
 
+There are many predefined instruments. Some goodies to try out: 
+vibraphone1, dreamPad, razorPad, epianoBright, xylophone, scrapeDahina, 
+noiz, mildWind, toneWheelOrgan, banyan, caveOvertonePad, flute, hulusiVibrato, 
+shortBassClarinet, pwBass, pwEnsemble, albertClockBellBelfast etc.
+
 The main type for the instrument is a `Patch`. The patch is a  data-type
 that holds a complete set up for the instrument to be played live or
 to apply it to musical scores. 
@@ -33,21 +38,62 @@ Let's look at the definition of the `Patch`:
 
 ~~~haskell
 data Patch a 
-    = MonoSynt MonoSyntSpec (Instr Sig a)
-    | PolySynt PolySyntSpec (Instr D a)
-    | FxChain [FxSpec a] (Patch a)
+    = MonoSynt MonoSyntSpec (GenMonoInstr a)
+    | PolySynt PolySyntSpec (GenInstr D   a)
+    | SetSkin SyntSkin (Patch a)
+    | FxChain [GenFxSpec a] (Patch a)
     | SplitPatch (Patch a) D (Patch a)
     | LayerPatch [(Sig, Patch a)]
 ~~~
 
-Let's discuss each case.
+We can 
+
+* create monophonic (`MonoSynt`) synthesizers
+
+* create polyphonic (`PolySynt`) synthesizers
+
+* set generic parameters for synthesizers (`SetSkin`) such as filter type, 
+
+* add effects (`FxChain`)
+
+* split keyboard on sections (`SplitPatch`). We can assign different patches to each section.
+
+* play several patches at the same time (`LayerPatch`)
+
+
+### Generic parameters for Patches
+
+The Gen-prefix for instruments and effects refers to one peculiarity of the Patch data type. 
+I'd like to be able to change some common parameters of the instrument after it's already constructed.
+Right now we can change only the type of the low-pass filter but some more parameters can be added in the future.
+
+In Haskell we can do this with `Reader` data type. `Reader` lets us parametrize the values with some common arguments
+and we can supply those arguments later. 
+
+The value: `Reader a b`  means that the result value `b` depends on argument `a` which we provide later.
+
+~~~haskell
+type SyntSkin = ResonFilter
+
+type GenInstr a b = Reader SyntSkin (Instr a b)
+type GenFxSpec a = Reader SyntSkin (FxSpec a)
+type GenMonoInstr a = Reader SyntSkin (MonoInstr a)
+~~~
+
+So the polyphonic and monophonic synthesizers and effects are parametrized with value of the type `SyntSkin`.
+The `SyntSkin` should contain some common parameters. We can change the filter type with it. By default it's set
+to `mlp` (moog low pass filter). But we can set other types with the constructor `SetSkin skin patch`.
+
+Let's discuss each case of the Patch data type.
 
 ### Polyphonic instruments
 
 Patch can be a polyphonic synth:
 
 ~~~haskell
-PolySynt PolySyntSpec (Instr D a)
+PolySynt PolySyntSpec (GenInstr D a)
+
+type GenInstr a b = Reader SyntSkin (Instr a b)
 
 type CsdNote a = (a, a)
 type Instr a b = CsdNote a -> SE b  
@@ -57,14 +103,11 @@ data PolySyntSpec = PolySyntSpec
 ~~~
 
 It converts notes to signals. With polyphonic instrument we can
-play several notes at the same time. The note is apair of amplitude and frequency.
-
-Also patch can be a monophonic synth. The monophonic synth can play
-only one note at the time (like flute or voice). But it converts not just
-notes but signals of amplitude and frequency.
+play several notes at the same time. The note is a pair of amplitude and frequency.
 
 With `PolySyntSpec` we can specify midi channel to play the instrument. 
 The `PolySyntSpec` has default instance with which we listen for midi messages on all channels.
+
 
 Let's play a polyphonic patch:
 
@@ -78,27 +121,139 @@ We can change the volume by signal multiplication:
 > vdac $ mul 0.5 $ atMidi whaleSongPad
 ~~~
 
-### Monophonic instruments
+We have played the predefined polyphonic synth. But we can also create our own! We can do it directly with constructor `PolySynt`
+and with smart constructors:
 
-~~~haskell
-MonoSynt MonoSyntSpec (Instr Sig a)
+~~~haskel
+polySynt :: (Instr D a) -> Patch a
 
-data MonoSyntSpec = MonoSyntSpec
-    { monoSyntChn       :: MidiChn  
-    , monoSyntHold      :: Bool
-    , monoSyntSlideTime :: D
-    , monoSyntRelease   :: D }
+polySyntFilter :: (ResonFilter -> Instr D a) -> Patch a
 ~~~
 
-The monosynt has some specific parameters to control the playback.
-The synth channel is a channel for midi messages. The hold is a boolean
-that specifies whether we need to hold the notes. When hold is on the synth
-is going to play current note forever until the next note is pressed.
-The slide time is a time of transition between the notes. 
-It's time to slide the frequency. The release time is a time for how long
-the synth plays after the key is released or note duration has finished.
+Let's create a simple polyphonic instrument. It' just plays pure sines waves with percussive shape of amplitude:
 
-Let's play a monophonic synth:
+~~~haskell
+> let instr (amp, cps) = return $ sig amp * xeg 0.01 4 0.001 2 * osc (sig cps)
+> let patch = polySynt instr
+> vdac $ atMidi patch
+~~~
+
+Reminder: `xeg` -- creates exponential ADSR-envelope, `osc` is for pure sine wave, with `sig` we convert
+constant. We use `return` to wrap the result in the SE-type.
+
+We can do it in the regular Haskell-file:
+
+~~~haskell
+import Csound.Base
+
+instr :: CsdNote D -> SE Sig
+instr (amp, cps) = return $ sig amp * env * wave
+    where
+        env  = xeg 0.01 4 0.001 2
+        wave = osc (sig cps)
+
+
+patch = polyInstr instr
+
+main = vdac $ atMidi patch
+~~~
+
+With `polySyntFilter` we can let the user decide which type of filter is going to be used:
+
+~~~haskell
+polySyntFilter :: (ResonFilter -> Instr D a) -> Patch a
+~~~
+
+We can create a simple instrument with generic filter:
+
+~~~haskell
+import Csound.Base
+
+instr :: ResonFilter -> CsdNote D -> SE Sig
+instr resonFilter (amp, cps) = return $ filter $ sig amp * env * wave
+    where
+        env  = xeg 0.01 4 0.001 2
+        wave = sqr (sig cps)
+        filter = resonFilter (200 + 1500 * env) 0.25
+
+patch = polySyntFilter instr
+
+main = vdac $ atMidi patch         
+~~~
+
+### Monophonic instruments
+
+Patch can be a monophonic synth. The monophonic synth can play
+only one note at the time (like flute or voice). But it converts not just
+notes but signals of amplitude and frequency.
+
+~~~haskell
+MonoSynt MonoSyntSpec (GenMonoInstr a)
+
+type GenMonoInstr a = Reader SyntSkin (MonoInstr a)
+
+type MonoInstr a = MonoArg -> SE a
+
+data MonoArg = MonoArg
+    { monoAmp  :: Sig
+    , monoCps  :: Sig
+    , monoGate :: Sig
+    , monoTrig :: Sig }
+
+data MonoSyntSpec = MonoSyntSpec
+    { monoSyntChn       :: MidiChn }
+~~~
+
+It looks like polyphonic synth but monophonic synt argument type is a bit more complicated. 
+It contains four components:
+
+* amplitude signal `monoAmp`
+
+* frequency signal `monoCps`
+
+* mask of when instrument is on `monoGate`. It equals to `1` when any note is played or `0` otherwise.
+
+* trigger signal. It equals to 1 when note is triggered and `0` otherwise.
+
+The argument type is designed to be used with the function adsr140 it creates complex ADSR envelope
+which is retriggered when note is played. There is a shortcut to create the ADSR-function out of the arguments:
+
+~~~haskell
+-- | ADSR that's used in monophonic instruments.
+type MonoAdsr = Sig -> Sig -> Sig -> Sig -> Sig
+
+monoAdsr :: MonoArg -> MonoAdsr
+~~~
+
+we can create monophonic instruments with smart constructors:
+
+~~~
+monoSynt :: (MonoInstr a) -> Patch a
+monoSyntFilter :: (ResonFilter -> MonoInstr a) -> Patch a
+
+adsrMono :: (MonoAdsr -> Instr Sig a) -> Patch a
+adsrMonoFilter :: (ResonFilter -> MonoAdsr -> Instr Sig a) -> Patch a
+~~~
+
+The `monoSynt` creates the synt out of raw value of type `MonoArg`.
+The `adsrMono` converts the arguments to a simpler form. It provides
+a retriggering adsr-envelope which is syncronized with notes and a pair of amplitude and frequency signals.
+With `Filter` suffix we can parametrize the insturment by low-pass filter.
+
+Let's create a very basic mono-insturment:
+
+~~~
+instr adsrFun (amp, cps) = return $ amp * env * osc (port cps 0.007)
+    where env = adsrFun 0.01 4 0.001 2
+
+patch = adsrMono instr
+
+main = vdac $ atMidi patch
+~~~
+
+We add a portamento to frequency signal to make transition between the notes smooth.
+
+Let's play some predefined monophonic synth:
 
 ~~~haskell
 > vdac $ atMidi nightPadm
@@ -112,7 +267,9 @@ with an `m` as a suffix.
 Also we can apply a chain of effects to the patch:
 
 ~~~haskell
-FxChain [FxSpec a] (Patch a)
+FxChain [GenFxSpec a] (Patch a)
+
+type GenFxSpec a = Reader SyntSkin (FxSpec a)
 
 type DryWetRatio = Sig
 
@@ -130,6 +287,15 @@ unprocessed (dry) and processed signal (wet). And the fx chain contains a list o
 and effect functions. Note that the list is reversed (like in haskell dot notation). The first 
 function in the list is going to be applied at the last moment.
 
+We can create effects in the chain with smart constructors:
+
+~~~haskell
+type Fx a = a -> SE a
+
+fxSpec :: Sig -> Fx a -> GenFxSpec a
+fxSpecFilter :: Sig -> (ResonFilter -> Fx a) -> GenFxSpec a
+~~~
+
 Almost all predefined patches have a bit of reverb. We can strip down the effect
 with useful function `dryPatch`:
 
@@ -138,6 +304,33 @@ with useful function `dryPatch`:
 ~~~
 
 It throws away all the effects.
+
+Also there are speciall functions to add effects to existing patch.
+We can add effects to the both ends of the chain:
+
+~~~haskell
+addPreFx, addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
+~~~
+
+There are functions to add monophonic effects:
+
+~~~haskell
+mapFx  :: SigSpace a => (Sig -> Sig)    -> Patch a -> Patch a
+bindFx :: BindSig a  => (Sig -> SE Sig) -> Patch a -> Patch a
+~~~
+
+There are variants to specify dry/wet ratio:
+
+~~~haskell
+mapFx'  :: SigSpace a => Sig -> (Sig -> Sig)    -> Patch a -> Patch a
+bindFx' :: BindSig a  => Sig -> (Sig -> SE Sig) -> Patch a -> Patch a
+~~~
+
+Let's add a delay to our patch:
+
+~~~
+> vdac $ mapFx' 0.5 (echo 0.5 0.65) patch
+~~~
 
 ### Layered patch
 
@@ -180,6 +373,9 @@ Let's play a pad in the low register and electric piano in the upper one:
 ~~~haskell
 vdac $ atMidi $ SplitPatch dreamPad (cpspch 8.00) epiano2
 ~~~
+
+Note that with split you can combine monophonic instruments with polyphonic ones.
+We can play even several monophonic instruments in the diferent areas of the keyboard.
 
 ## How to play a patch
 
@@ -317,6 +513,8 @@ instead of `vdac` if you have a real midi device):
 
 > vdac $ atMidi flute
 
+> vdac $ atMidi fmBass2
+
 > vdac $ atMidi hulusiVibrato
 
 > vdac $ atMidi shortBassClarinet
@@ -326,6 +524,8 @@ instead of `vdac` if you have a real midi device):
 > vdac $ atMidi pwEnsemble
 
 > vdac $ atMidi albertClockBellBelfast 
+
+> vdac $ atMidi $ vibhu 65
 ~~~
 
 There are 200+ of other instruments to try out! You can find the complete list

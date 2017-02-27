@@ -27,6 +27,11 @@ module Csound.Air.Patch(
 	-- * Fx
     addInstrFx, addPreFx, addPostFx,
 
+    -- ** Specific fx
+    fxSig, fxSigMix, fxSig2, fxSigMix2,
+    mapFx, mapFx', bindFx, bindFx',
+    mapPreFx, mapPreFx', bindPreFx, bindPreFx',
+
 	-- * Pads
 	harmonPatch, deepPad,
 
@@ -75,6 +80,8 @@ import Csound.Air.Filter(ResonFilter, mlp)
 import Csound.Typed.Opcode(cpsmidinn, ampdb)
 import Csound.Tuning
 import Csound.Types
+
+import Csound.SigSpace
 
 type SyntSkin = ResonFilter
 type GenInstr a b = Reader SyntSkin (Instr a b)
@@ -734,3 +741,57 @@ vel2ampSig :: Sig -> Sig
 vel2ampSig vol = ((vol / 64) ** 2) / 2
 
 -}
+
+
+--------------------------------------------------
+-- special functions to add effects
+
+-- | Make an effect out of a pure function.
+fxSig :: SigSpace a => (Sig -> Sig) -> GenFxSpec a
+fxSig f = fxSpec 1 (return . mapSig f)
+
+-- | Make an effect out of a pure function and specify dry/wet ratio.
+fxSigMix :: SigSpace a => Sig -> (Sig -> Sig) -> GenFxSpec a
+fxSigMix ratio f = fxSpec ratio (return . mapSig f)
+
+-- | Make an effect out of a stereo pure function.
+fxSig2 :: (Sig2 -> Sig2) -> GenFxSpec Sig2
+fxSig2 f = fxSpec 1 (return . f)
+
+-- | Make an effect out of a stereo pure function and specify dry/wet ratio.
+fxSigMix2 :: Sig -> (Sig2 -> Sig2) -> GenFxSpec Sig2
+fxSigMix2 ratio f = fxSpec ratio (return . f)
+
+
+-- | Adds post fx with pure signal function.
+mapFx :: SigSpace a => (Sig -> Sig) -> Patch a -> Patch a
+mapFx f = addPostFx 1 (return . mapSig f)
+
+-- | Adds post fx with pure signal function and specifies dry/wet ratio.
+mapFx' :: SigSpace a => Sig -> (Sig -> Sig) -> Patch a -> Patch a
+mapFx' rate f = addPostFx rate (return . mapSig f)
+
+-- | Adds post fx with effectful signal function.
+bindFx :: BindSig a => (Sig -> SE Sig) -> Patch a -> Patch a
+bindFx f = addPostFx 1 (bindSig f)
+
+-- | Adds post fx with effectful signal function and specifies dry/wet ratio.
+bindFx' :: BindSig a => Sig -> (Sig -> SE Sig) -> Patch a -> Patch a
+bindFx' rate f = addPostFx rate (bindSig f)
+
+
+-- | Adds pre fx with pure signal function.
+mapPreFx :: SigSpace a => (Sig -> Sig) -> Patch a -> Patch a
+mapPreFx f = addPreFx 1 (return . mapSig f)
+
+-- | Adds pre fx with pure signal function and specifies dry/wet ratio.
+mapPreFx' :: SigSpace a => Sig -> (Sig -> Sig) -> Patch a -> Patch a
+mapPreFx' rate f = addPreFx rate (return . mapSig f)
+
+-- | Adds pre fx with effectful signal function.
+bindPreFx :: BindSig a => (Sig -> SE Sig) -> Patch a -> Patch a
+bindPreFx f = addPreFx 1 (bindSig f)
+
+-- | Adds pre fx with effectful signal function and specifies dry/wet ratio.
+bindPreFx' :: BindSig a => Sig -> (Sig -> SE Sig) -> Patch a -> Patch a
+bindPreFx' rate f = addPreFx rate (bindSig f)
