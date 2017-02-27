@@ -173,7 +173,7 @@ tort kdrive ktone ain = P.fxDistortion 1 kdrive ktone ain
 --
 -- * @baseFrequencyRatio @ --  base frequency of the filter before modulation by the input dynamics (range: 0 to 1)
 --
--- ; @resonance          @ --  resonance of the lowpass filter (suggested range: 0 to 1)
+-- * @resonance          @ --  resonance of the lowpass filter (suggested range: 0 to 1)
 fowler :: SensitivitySig -> BaseCps -> Resonance -> Sig -> Sig
 fowler ksens kbaseFreq kreson = P.fxEnvelopeFollower ksens kbaseFreq (0.99 * kreson)
 
@@ -217,7 +217,7 @@ flan krate kdepth kdelay kfback ain = P.fxFlanger krate kdepth kdelay kfback ain
 --
 -- * @depth @ --  depth of lfo of the effect (range 0 to 1)
 --
--- * @freq  @ --  centre frequency of the phase shifting effect in octaves (suggested range 6 to 11)
+-- * @freq  @ --  centre frequency of the phase shifting effect in octaves (suggested range 0 to 1)
 --
 -- * @fback @ --  feedback and therefore intensity of the effect (range 0 to 1)  
 --
@@ -298,7 +298,7 @@ tremy tremWave kdepth krate = P.fxPanTrem kdepth krate 1 tremWave
 
 type EnvelopeModSig = Sig
 
--- RingModulator
+-- | RingModulator
 -- 
 -- An ring modulating effect with an envelope follower
 -- 

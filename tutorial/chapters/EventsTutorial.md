@@ -1,8 +1,4 @@
 Events
-================================
-
-
-Events
 =============================
 
 We have learned how to trigger an instrument with the score.

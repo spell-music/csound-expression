@@ -56,7 +56,7 @@ We can find a lot of soundfonts in the net. Some links to start:
 
 ----------------------------------------------------
 
-* <= [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Patches.md)
+* <= [FX family](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/FxFamily.md)
 
 * => [Custom temperament. Microtonal music](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Tuning.md)
 

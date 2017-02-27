@@ -117,7 +117,7 @@ instance FxUI a => FxUI (Sig -> a) where
 -- The parameters of the widget are updated with sliders.
 -- For example let's create a simple gain widget. It can be encoded like this:
 --
--- > uiGain :: Bool -> Double -> Source FxFun
+-- > uiGain :: Double -> Source FxFun
 -- > uiGain isOn gain = fxBox "Gain" fx isOn [("gain", gain)]
 -- >    where 
 -- >        fx :: Sig -> Sig2 -> Sig2
@@ -281,11 +281,11 @@ uiReverb :: Bool -> Double -> Double -> Source FxFun
 uiReverb isOn mix depth = sourceColor2 C.forestgreen $ fxBox "Reverb" (\mix depth asig -> mul (1 - mix) asig + mul mix (rever2 depth asig)) isOn
     [("mix", mix), ("depth", depth)]
 
--- | The gain widget. The arguments are
+-- | The gain widget, it's set to on by default. The arguments are
 --
--- > uiGain isOn amountOfGain
-uiGain :: Bool -> Double -> Source FxFun
-uiGain isOn gain = sourceColor2 C.black $ fxBox "Gain" fxGain isOn [("gain", gain)]
+-- > uiGain amountOfGain
+uiGain :: Double -> Source FxFun
+uiGain gain = sourceColor2 C.black $ fxBox "Gain" fxGain True [("gain", gain)]
 
 -- | The filtered white noize widget. The arguments are
 --

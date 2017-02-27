@@ -535,6 +535,6 @@ in the module `Csound.Patch`.
 
 * <= [Events](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/EventsTutorial.md)
 
-* => [Sound fonts](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SoundFontsTutorial.md)
+* => [FX family](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/FxFamily.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

@@ -36,6 +36,8 @@ Let's look at how we can create computer music with Haskell.
 
 * [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Patches.md)
 
+* [FX family](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/FxFamily.md)
+
 * [SoundFonts](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SoundFontsTutorial.md)
 
 * [Custom temperament. Microtonal music](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Tuning.md)
