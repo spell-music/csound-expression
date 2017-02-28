@@ -41,10 +41,9 @@ module Csound.Air.Fx(
     DriveSig, SensitivitySig, BaseCps, Resonance, TimeSig, BitsReductionSig, FoldoverSig,
     TremWaveSig, RatioSig, FftSize,
 
-    fxDistort, fxDistort2, stChorus2, fxPhaser, fxPhaser2,
-    fxFlanger, fxFlanger2, analogDelay, analogDelay2, fxEcho, fxEcho2,
-    fxFilter, fxFilter2,
-    fxWhite, fxWhite2, fxPink, fxPink2, equalizer, equalizer2, eq4, eq7,
+    fxDistort, stChorus2, fxPhaser, 
+    fxFlanger, analogDelay, fxEcho, fxFilter, 
+    fxWhite, fxPink, equalizer, eq4, eq7,
     fxGain, 
 
     fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter, {- , 
@@ -430,13 +429,7 @@ fxDistort klevel kdrive ktone ain = aout * (scale klevel 0.8 0) * kGainComp1
 
         kLPF = logScale 700 (200, 12000) ktone
 
--- | Stereo distortion.
-fxDistort2 :: Feedback -> Sig -> ToneSig -> Sig2 -> Sig2
-fxDistort2 klevel kdrive ktone (al, ar) = (fx al, fx ar)
-    where fx = fxDistort klevel kdrive ktone
-
 -- Stereo chorus
-
 
 -- | Stereo chorus.
 --
@@ -462,46 +455,6 @@ stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR
 --
 -- > fxPhaser mix rate depth freq feedback sigIn
 
-{-
-fxPhaser ::Balance -> Feedback -> RateSig -> DepthSig -> Sig -> Sig -> Sig
-fxPhaser kmix fb krate' kdepth kfreq ain = fxWet kmix ain aout
-    where       
-        krate = expScale 10 (0.01, 14) krate'
-        klfo  = kdepth * utri krate
-        aout  = phaser1 ain (cpsoct $ klfo + kfreq) 8 fb        
--}
-
--- | Stereo phaser.
-fxPhaser2 :: Feedback -> RateSig -> DepthSig -> Sig -> Sig2 -> Sig2
-fxPhaser2 fb krate kdepth kfreq (al, ar) = (fx al, fx ar)
-    where fx = fxPhaser fb krate kdepth kfreq  
-
--- Flanger
-
--- | Flanger
---
--- > fxFlanger mix feedback rate depth delay sigIn
-
-{-
-fxFlanger :: Balance -> Feedback -> RateSig -> DepthSig -> DelayTime -> Sig -> Sig
-fxFlanger kmix kfback krate' kdepth kdelay' ain = fxWet kmix ain aout
-    where
-        krate = expScale 50 (0.001, 14) krate'
-        kdelay = expScale 200 (0.0001, 0.1) kdelay'
-        ilfoshape = setSize 131072 $ sines4 [(0.5, 1, 180, 1)]
-        kporttime = linseg  [0, 0.001, 0.1]
-        adlt = interp $ portk kdelay kporttime
-        kdep = portk (kdepth*0.01) kporttime 
-        amod = oscili kdep krate ilfoshape      
-        adelsig = flanger ain (adlt + amod) kfback `withD` 1.2
-        aout = mean [ain, adelsig]
--}
-
--- | Stereo flanger
-fxFlanger2 :: Feedback -> RateSig -> DepthSig -> DelayTime -> Sig2 -> Sig2
-fxFlanger2 kfback krate kdepth kdelay  (al ,ar) = (fx al, fx ar)
-    where fx = P.fxFlanger kfback krate kdepth kdelay
-
 -- Analog delay
 
 -- | Analog delay.
@@ -522,11 +475,6 @@ analogDelay kmix kfback ktime  ktone'  ain = do
         kTone = portk   ktone kporttime
         aTime = interp  kTime
 
--- | Stereo analog delay.
-analogDelay2 :: Balance -> Feedback -> DelayTime -> ToneSig -> Sig2 -> SE Sig2
-analogDelay2 kmix kfback ktime ktone  = bindSig fx
-    where fx = analogDelay kmix kfback ktime ktone 
-
 -- Filter
 
 -- | Filter effect (a pair of butterworth low and high pass filters).
@@ -540,11 +488,6 @@ fxFilter kLPF' kHPF' kgain' ain = mul kgain $ app (blp kLPF) $ app (bhp kHPF) $ 
         kHPF = scaleFreq kHPF' 
         kgain = scale kgain' 20 0
         scaleFreq x = expScale 4 (20, 20000) x
-
--- | Stereo filter effect (a pair of butterworth low and high pass filters).
-fxFilter2 :: Sig -> Sig -> Sig -> Sig2 -> Sig2
-fxFilter2 kLPF kHPF kgain (al, ar) = (fx al, fx ar)
-    where fx = fxFilter kLPF kHPF kgain
 
 -- Equalizer
 
@@ -565,18 +508,13 @@ equalizer fs gain ain0 = case fs of
         kgain = table gain iGainCurve `withD` 1
         ain = kgain * ain0
 
--- | Stereo equalizer.
-equalizer2 :: [(Sig, Sig)] -> Sig -> Sig2 -> Sig2
-equalizer2 fs gain (al, ar) = (fx al, fx ar)
-    where fx = equalizer fs gain
-
 -- | Equalizer with frequencies: 100, 200, 400, 800, 1600, 3200, 6400
-eq7 :: [Sig] -> Sig -> Sig2 -> Sig2
-eq7 gs = equalizer2 (zip gs $ fmap (100 * ) [1, 2, 4, 8, 16, 32, 64])
+eq7 :: [Sig] -> Sig -> Sig -> Sig
+eq7 gs = equalizer (zip gs $ fmap (100 * ) [1, 2, 4, 8, 16, 32, 64])
 
 -- | Equalizer with frequencies: 100, 400, 1600, 6400
-eq4 :: [Sig] -> Sig -> Sig2 -> Sig2
-eq4 gs = equalizer2 (zip gs $ fmap (100 * ) [1, 4, 16, 64])
+eq4 :: [Sig] -> Sig -> Sig -> Sig
+eq4 gs = equalizer (zip gs $ fmap (100 * ) [1, 4, 16, 64])
 
 -- | Gain
 --
@@ -596,11 +534,6 @@ fxWhite freq depth ain = do
     return $ ain + 0.5 * depth * blp cps noise
     where cps = expScale 4 (20, 20000) freq
 
--- | Adds filtered white noize to the stereo signal
-fxWhite2 ::Sig -> Sig -> Sig2 -> SE Sig2
-fxWhite2 freq depth = bindSig fx 
-    where fx = fxWhite freq depth
-
 -- | Adds filtered pink noize to the signal
 --
 -- > fxWhite lfoFreq depth sigIn
@@ -609,11 +542,6 @@ fxPink freq depth ain = do
     noise <- pink
     return $ ain + 0.5 * depth * blp cps noise
     where cps = expScale 4 (20, 20000) freq
-
--- | Adds filtered pink noize to the stereo signal
-fxPink2 ::Sig -> Sig -> Sig2 -> SE Sig2
-fxPink2 freq depth = bindSig fx 
-    where fx = fxPink freq depth
 
 -- Echo
 
@@ -625,11 +553,6 @@ fxEcho maxLen ktime fback = fvdelay (5 * maxLen) (sig maxLen * 0.95 * kTime) fba
     where
         kporttime = linseg [0,0.001,0.1]
         kTime = portk   ktime  (kporttime*3)
-
--- | Simplified stereo delay.
-fxEcho2 :: D -> Sig -> Sig -> Sig2 -> Sig2
-fxEcho2 maxLen ktime fback = at fx
-    where fx = fxEcho maxLen ktime fback
 
 -- | Instrument plays an input signal in different modes. 
 -- The segments of signal can be played back and forth. 

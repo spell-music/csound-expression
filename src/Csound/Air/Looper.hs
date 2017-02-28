@@ -56,8 +56,8 @@ import Csound.Air.Misc
 --   See the docs for the type @LoopSpec@.
 data LoopSpec = LoopSpec 
 	{ loopMixVal  :: [Sig]
-	, loopPrefx  :: [FxFun]
-	, loopPostfx :: [FxFun]
+	, loopPrefx  :: [Fx2]
+	, loopPostfx :: [Fx2]
 	, loopPrefxVal :: [Sig]
 	, loopPostfxVal :: [Sig]	
 	, loopInitInstr :: Int
@@ -215,7 +215,7 @@ genLoop playInstr spec dtBpm times' instrs = do
 
 		maxDel = 3
 
-		f :: Tick -> Sig -> Sig -> (D, Int, Sig) -> (Sig, FxFun, Sig, FxFun, Sig) -> (Ref Sig, Ref Sig, a) -> SE Sig2
+		f :: Tick -> Sig -> Sig -> (D, Int, Sig) -> (Sig, Fx2, Sig, Fx2, Sig) -> (Ref Sig, Ref Sig, a) -> SE Sig2
 		f delEvt thr x (t, n, repeatFadeWeight) (mixCoeff, preFx, preCoeff, postFx, postCoeff) (delRef, silRef, instr) = do
 			silVal <- readRef silRef	
 			runEvt delEvt $ \_ -> do

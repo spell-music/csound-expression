@@ -53,7 +53,7 @@ module Csound.Air.Fx.FxBox(
 
     -- ** Ring modulation
     ringo',
-    ringo1, ringo2, ringo3, ringo4, ringo5,
+    ringo1, ringo2, ringo3, ringo4, ringo5
 
     -- * Presets with UIs
     -- | If we use prefix @ui@ we can create an image of our effect that looks like guitar stompbox.
@@ -87,6 +87,7 @@ module Csound.Air.Fx.FxBox(
     -- ** Reverb
 
     -- *** Rooms
+    {-
     uiRoom, uiRoom1, uiRoom2, uiRoom3, uiRoom4, uiRoom5,
 
     -- ** Chambers
@@ -138,6 +139,7 @@ module Csound.Air.Fx.FxBox(
 
     -- ** Ring modulation
     uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5
+    -}
 
     -- ** Compressor
 
@@ -159,7 +161,7 @@ import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig,
     DriveSig, TimeSig, WidthSig, 
     rever2, pingPong)
 
-import Csound.Air.Live(fxBox, FxFun, fxColor)
+import Csound.Air.Live(fxBox, fromMonoFx, fxColor)
 
 import qualified Data.Colour as C
 import qualified Data.Colour.SRGB as C
@@ -533,9 +535,6 @@ ringo5 = ringo' size5
 ----------------------------------------------------------
 -- UI 
 
-fromMonoFx :: (Sig -> Sig) -> FxFun
-fromMonoFx f = \asig2 -> return $ at f asig2
-
 setAll :: Double -> [String] -> [(String, Double)]
 setAll size names = fmap (\s -> (s, size)) ["rate", "depth", "del time", "fbk"]
 
@@ -574,6 +573,7 @@ olive = "#3D9970"
 
 -- Analog Delay
 
+{-
 uiAdeleBy :: Double -> Double -> Double -> Double -> Source FxFun
 uiAdeleBy initTone initFeedback initBalance initDelayTime = paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone)]
     where
@@ -899,3 +899,4 @@ uiPongy3 = uiPongy' size3
 uiPongy4 = uiPongy' size4
 uiPongy5 = uiPongy' size5
 
+-}

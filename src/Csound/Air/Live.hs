@@ -1,12 +1,13 @@
-{-# Language TypeSynonymInstances, FlexibleInstances #-}
+{-# Language ScopedTypeVariables, TypeFamilies, TypeSynonymInstances, FlexibleInstances, FlexibleContexts #-}
 -- | UIs for live performances
 module Csound.Air.Live (
     -- * Mixer
     mixer, hmixer, mixMono,
 
     -- * Effects
-    FxFun, FxUI(..), fxBox, uiBox,
+    fxBox, uiBox,
     fxColor, fxVer, fxHor, fxMatrix, fxSca, fxApp,
+    fromMonoFx,
 
     -- * Instrument choosers
     hinstrChooser, vinstrChooser,
@@ -14,8 +15,9 @@ module Csound.Air.Live (
 --    hpatchChooser, vpatchChooser,
 
     -- ** Fx units
-    uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho,
-    uiFilter, uiReverb, uiGain, uiCompress, uiWhite, uiPink, uiFx, 
+    uiDistort, uiChorus, 
+    {- uiFlanger, uiPhaser, uiDelay, uiEcho,
+    uiFilter, uiReverb, uiGain, uiCompress, uiWhite, uiPink, -} uiFx, uiDry,
     uiSig, uiMix, uiMidi, 
     -- uiPatch,
 
@@ -49,22 +51,15 @@ import Csound.Air.Misc
 ----------------------------------------------------------------------
 -- mixer
 
--- | The stereo signal processing function.
-type FxFun = Sig2 -> SE Sig2
-
-instance SigSpace FxFun where
-    mapSig f g = fmap (mapSig f) . g 
-
-
 -- | Widget that represents a mixer.
-mixer :: [(String, SE Sig2)] -> Source Sig2
+mixer :: (SigSpace a, Fractional a, Sigs a) => [(String, SE a)] -> Source a
 mixer = genMixer (ver, hor)
 
 -- | Widget that represents a mixer with horizontal grouping of elements.
-hmixer :: [(String, SE Sig2)] -> Source Sig2
+hmixer :: (SigSpace a, Fractional a, Sigs a) => [(String, SE a)] -> Source a
 hmixer = genMixer (hor, ver)
 
-genMixer :: ([Gui] -> Gui, [Gui] -> Gui) -> [(String, SE Sig2)] -> Source Sig2
+genMixer :: (SigSpace a, Fractional a, Sigs a) => ([Gui] -> Gui, [Gui] -> Gui) -> [(String, SE a)] -> Source a
 genMixer (parentGui, childGui) as = source $ do
     gTags <- mapM box names
     (gs, vols) <- fmap unzip $ mapM (const $ defSlider "") names
@@ -77,7 +72,7 @@ genMixer (parentGui, childGui) as = source $ do
                         (gMasterTag : gTags) (gMaster : gs) (gMasterMute : gMutes)
         muteVols = zipWith appMute mutes vols
         masterMuteVol = appMute masterMute masterVol
-    res <- mul masterMuteVol $ mean $ zipWith mul muteVols sigs
+    res <- fmap (mul masterMuteVol . mean) $ zipWithM (\v ain -> fmap (mul v) ain) muteVols sigs
     return (g, res)
     where 
         (names, sigs) = unzip as
@@ -93,25 +88,6 @@ defSlider tag = slider tag (linSpan 0 1) 0.5
 
 ----------------------------------------------------------------------
 -- effects
-
-class FxUI a where
-    applyFxArgs :: a -> [Sig] -> Sig2 -> SE Sig2
-    arityFx :: a -> Int
-
-instance FxUI (Sig2 -> Sig2) where
-    applyFxArgs f _ x = return $ f x
-    arityFx = const 0
-
-instance FxUI FxFun where
-    applyFxArgs f _ x = f x
-    arityFx = const 0
-
-instance FxUI a => FxUI (Sig -> a) where
-    applyFxArgs f (a:as) x = applyFxArgs (f a) as x
-    arityFx f = 1 + arityFx (proxy f)
-        where 
-            proxy :: (a -> b) -> b
-            proxy _ = undefined
 
 -- | Creates a widget that represents a stereo signal processing function.
 -- The parameters of the widget are updated with sliders.
@@ -137,21 +113,22 @@ instance FxUI a => FxUI (Sig -> a) where
 --
 -- It's cool to set the color of the widget with @fxColor@ function.
 -- we can make our widgets much more intersting to look at.
-fxBox :: FxUI a => String -> a -> Bool -> [(String, Double)] -> Source FxFun
+-- fxBox :: forall a. (FxUI a, Num  (FxArg a), Tuple (FxArg a)) => String -> a -> Bool -> [(String, Double)] -> Source (Fx (FxArg a))
+fxBox :: forall a. Sigs a => String -> ([Sig] -> Fx a) -> Bool -> [(String, Double)] -> Source (Fx a)
 fxBox name fx onOff args = source $ do
     (gOff0, off) <- toggleSig name onOff
     let gOff = setFontSize 25 gOff0
     offRef <- newGlobalRef (0 :: Sig)
     writeRef offRef off
-    let (names, initVals) = unzip $ take (arityFx fx) args  
+    let (names, initVals) = unzip args  
     (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals 
     let f x = do
-        ref <- newRef (0 :: Sig, 0 :: Sig)
+        ref <- newRef (0 :: a)
         goff <- readRef offRef
         writeRef ref x        
         when1 (goff ==* 1) $ do
             x2 <- readRef ref
-            writeRef ref =<< applyFxArgs fx as x2
+            writeRef ref =<< fx as x2
         res <- readRef ref        
         return res  
     let gui = setBorder UpBoxBorder $ go (length names) gOff gs
@@ -165,11 +142,11 @@ fxBox name fx onOff args = source $ do
 
 -- | Creates an FX-box from the given visual representation.
 -- It insertes a big On/Off button atop of the GUI.
-uiBox :: String -> Source FxFun -> Bool -> Source FxFun 
+uiBox :: (SigSpace a, Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
 uiBox name fx onOff = mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go off fx
     where
         off =  mapGuiSource (setFontSize 25) $ toggleSig name onOff 
-        go off fx arg = mul off $ fx arg
+        go off fx arg = fmap (mul off) $ fx arg
 
 uiOnOffSize = 1.7
 uiBoxSize   = 8
@@ -188,25 +165,25 @@ fxColor = sourceColor2
 
 -- combine effects
 
-fxGroup :: ([Gui] -> Gui) -> [Source FxFun] -> Source FxFun
+fxGroup :: ([Gui] -> Gui) -> [Source (Fx a)] -> Source (Fx a)
 fxGroup guiGroup as = do
     (gs, fs) <- fmap unzip $ sequence as    
     return (guiGroup gs, foldl (\a b -> a >=> b) return fs)
 
 -- | Scales the gui for signal processing widgets.
-fxSca :: Double -> Source FxFun -> Source FxFun
+fxSca :: Double -> Source (Fx a) -> Source (Fx a)
 fxSca d a = fxGroup (\xs -> sca d $ head xs) [a]
 
 -- | Groups the signal processing widgets. 
 -- The functions are composed the visuals are
 -- grouped  horizontaly.
-fxHor :: [Source FxFun] -> Source FxFun
+fxHor :: [Source (Fx a)] -> Source (Fx a)
 fxHor = fxGroup hor
 
 -- | Groups the signal processing widgets. 
 -- The functions are composed the visuals are
 -- grouped  verticaly.
-fxVer :: [Source FxFun] -> Source FxFun
+fxVer :: [Source (Fx a)] -> Source (Fx a)
 fxVer = fxGroup ver
 
 -- | Creates a matrix of fx-boxes.
@@ -214,7 +191,7 @@ fxVer = fxGroup ver
 -- > fxMatrix columnsSize fxs
 --
 -- first argument is a number of columns in each row.
-fxMatrix :: Int -> [Source FxFun] -> Source FxFun
+fxMatrix :: Int -> [Source (Fx a)] -> Source (Fx a)
 fxMatrix columnsSize fxs = fxVer $ fmap fxHor $ splitList columnsSize fxs
     where
         splitList n xs = case splitAt n xs of
@@ -222,30 +199,35 @@ fxMatrix columnsSize fxs = fxVer $ fmap fxHor $ splitList columnsSize fxs
             (as,rest) -> as : splitList n rest
 
 -- | Applies a function to a signal processing function.
-fxApp :: FxFun -> Source FxFun -> Source FxFun 
+fxApp :: Fx a -> Source (Fx a) -> Source (Fx a) 
 fxApp f = mapSource (>=> f)
 
 -- | The distortion widget. The arguments are
 --
 -- > uiDistort isOn levelOfDistortion drive tone
-uiDistort :: Bool -> Double -> Double -> Double -> Source FxFun
-uiDistort isOn level drive tone = sourceColor2 C.red $ fxBox "Distortion" fxDistort2 isOn 
+uiDistort :: BindSig a => Bool -> Double -> Double -> Double -> Source (Fx a) 
+uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $ fxBox "Distortion" (\[level, drive, tone] -> return . fxDistort level drive tone) isOn 
     [("level", level), ("drive", drive), ("tone", tone)]
+
 
 -- | The chorus widget. The arguments are
 --
 -- > uiChorus isOn mix rate depth width 
-uiChorus :: Bool -> Double -> Double -> Double -> Double -> Source FxFun
-uiChorus isOn mix rate depth width = sourceColor2 C.coral $ fxBox "Chorus" stChorus2 isOn
+uiChorus :: Bool -> Double -> Double -> Double -> Double -> Source Fx2
+uiChorus isOn mix rate depth width = sourceColor2 C.coral $ fxBox "Chorus" (\[mix, rate, depth, width] -> return . stChorus2 mix rate depth width) isOn
     [("mix",mix), ("rate",rate), ("depth",depth), ("width",width)]
+
+uiDry :: (Sigs a, BindSig a) => Source (Fx a)
+uiDry = fxBox "Thru" (\[] -> return) True []
 
 -- | The flanger widget. The arguments are
 --
--- > uiFlanger isOn mix feedback rate depth delay
-uiFlanger :: Bool -> Double -> Double -> Double -> Double -> Double -> Source FxFun
-uiFlanger isOn mix fback rate depth delay = sourceColor2 C.indigo $ fxBox "Flanger" fxFlanger2 isOn
-    [("mix", mix), ("fback", fback), ("rate",rate), ("depth",depth), ("delay",delay)]   
+-- > uiFlanger isOn  rate depth delay feedback
+uiFlanger :: BindSig a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indigo $ fxBox "Flanger" (\[fback, rate, depth, delay] -> return . fxFlanger fback rate depth delay) isOn
+    [("rate",rate), ("depth",depth), ("delay",delay), ("fback", fback)]   
 
+{-
 -- | The phaser widget. The arguments are
 --
 -- > uiPhaser isOn mix feedback rate depth frequency
@@ -300,13 +282,13 @@ uiWhite isOn freq depth = sourceColor2 C.dimgray $ fxBox "White" fxWhite2 isOn
 uiPink :: Bool -> Double -> Double -> Source FxFun
 uiPink isOn freq depth = sourceColor2 C.deeppink $ fxBox "Pink" fxPink2 isOn
     [("freq", freq), ("depth", depth)]
-
+-}
 -- | The constructor for signal processing functions with no arguments (controlls).
-uiFx :: FxUI a => String -> a -> Bool -> Source FxFun
-uiFx name f isOn = fxBox name f isOn [] 
+uiFx :: Sigs a => String -> Fx a -> Bool -> Source (Fx a)
+uiFx name f isOn = fxBox name (\[] -> f) isOn [] 
 
 -- | Midi chooser implemented as FX-box.
-uiMidi :: [(String, Msg -> SE Sig2)] -> Int -> Source FxFun 
+uiMidi :: (SigSpace a, Sigs a) => [(String, Msg -> SE a)] -> Int -> Source (Fx a) 
 uiMidi xs initVal = sourceColor2 C.forestgreen $ uiBox "Midi" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vmidiChooser xs initVal
 
@@ -318,7 +300,7 @@ uiPatch xs initVal = sourceColor2 C.forestgreen $ uiBox "Patch" fx True
 -}
 
 -- | the widget for mixing in a signal to the signal.
-uiSig :: String -> Bool -> Source Sig2 -> Source FxFun
+uiSig :: (SigSpace a, Sigs a) => String -> Bool -> Source a -> Source (Fx a)
 uiSig name onOff widget = source $ do
     (gs, asig) <- widget
     (gOff0, off) <- toggleSig name onOff
@@ -328,7 +310,7 @@ uiSig name onOff widget = source $ do
 
 -- | A mixer widget represented as an effect.
 -- The effect sums the signals with given wieghts.
-uiMix :: Bool -> [(String, SE Sig2)] -> Source FxFun
+uiMix :: (SigSpace a, Fractional a, Sigs a) => Bool -> [(String, SE a)] -> Source (Fx a)
 uiMix onOff as = sourceColor2 C.blue $ uiSig "Mix" onOff (mixer as)
 
 ----------------------------------------------------------------------
@@ -437,6 +419,7 @@ genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
 
 -------------------------------
 
+{-
 -- | Compressor
 --
 -- > uiCompress thresh loknee hiknee ratio att rel gain
@@ -457,8 +440,9 @@ uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain =
                 onLin (min, max) val = min + val * (max - min)
                 onExp (min, max) val = scale (expcurve val 4) max min
 
-        paintTo = fxColor . C.sRGB24read
+        paintTo = fxColor . C.sRGB24read  
         orange = "#FF851B"
+-}
 
-fromMonoFx :: (Sig -> Sig) -> FxFun
-fromMonoFx f = \asig2 -> return $ at f asig2        
+fromMonoFx :: BindSig a => (Sig -> Sig) -> Fx a
+fromMonoFx f = \asig2 -> bindSig (return . f) asig2        
