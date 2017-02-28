@@ -813,7 +813,7 @@ mixTabs xs = hideGE $ do
     args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (fmap fromIntegral $ renderTab tab) : fmap return [pn, strength, phs]]
     return $ plains idMixTabs args
 
---  | Normalizing table
+-- | Normalizing table
 --
 -- Csound GEN04: <http://www.csounds.com/manual/html/GEN04.html>
 normTab :: NormTabSpec -> Tab -> Tab
@@ -1022,14 +1022,20 @@ rangeDist xs = skipNorm $ gen idRandRanges xs
 ------------------------------------------------------
 
 -- | Reads numbers from file (GEN23)
+--
+-- csound doc: <http://www.csounds.com/manual/html/GEN23.html>
 readNumFile :: String -> Tab
 readNumFile filename = skipNorm $ preTab def idReadNumFile $ FileAccess filename []
 
 -- | Reads trajectory from file (GEN28)
+--
+-- csound doc: <http://www.csounds.com/manual/html/GEN28.html>
 readTrajectoryFile :: String -> Tab
 readTrajectoryFile filename = skipNorm $ preTab def idReadTrajectoryFile $ FileAccess filename []
 
 -- | Reads PVOCEX files (GEN43)
+--
+-- csound doc: <http://www.csounds.com/manual/html/GEN43.html>
 readPvocex :: String -> Int -> Tab
 readPvocex filename channel = preTab def idPvocex $ FileAccess filename [fromIntegral channel]
 

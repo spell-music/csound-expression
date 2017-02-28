@@ -201,7 +201,8 @@ data MonoArg = MonoArg
     , monoTrig :: Sig }
 
 data MonoSyntSpec = MonoSyntSpec
-    { monoSyntChn       :: MidiChn }
+    { monoSyntChn       :: MidiChn      
+    , monoSyntSlideTime :: Maybe D }    -- portamento for amplitude and frequency 
 ~~~
 
 It looks like polyphonic synth but monophonic synt argument type is a bit more complicated. 
