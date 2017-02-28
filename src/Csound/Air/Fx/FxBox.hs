@@ -6,7 +6,7 @@ module Csound.Air.Fx.FxBox(
 
     -- * Presets
     -- | For all presets we have 5 levels of strength. They are signified by numbers from 1 to 5. Also for some effects (delay and distortion)
-    -- we have miscellaneous way to alter preset by suffix b (means bright) and m (means muffled). It alters the one color of the effect.
+    -- we have miscellaneous way to alter preset by suffix b (means bright) and m (means muffled). It alters the tone color of the effect.
 
     -- ** Analog Delay
     adele1, adele2, adele3, adele4, adele5,
@@ -56,6 +56,33 @@ module Csound.Air.Fx.FxBox(
     ringo1, ringo2, ringo3, ringo4, ringo5,
 
     -- * Presets with UIs
+    -- | If we use prefix @ui@ we can create an image of our effect that looks like guitar stompbox.
+    --
+    -- Let's take a distortion fr instance:
+    --
+    -- > type FxFun = Sig2 -> SE Sig2 
+    -- >
+    -- > uiTort2 :: Source FxFun
+    --
+    -- We can combine the effects with functions:
+    --
+    -- > fxHor, fxVer :: [Source FxFun] -> Source FxFun
+    -- >
+    -- > fxMatrix :: Int -> [Source FxFun] -> Source FxFun
+    -- > fxMatrix numberOfColumns fxs = ...
+    --
+    -- All these functions stack the effects in the list
+    -- and align visuals. The visuals can be stacked horizontally, vertically
+    -- or placed on a square grid.
+    -- 
+    -- Let's create a chain of effects and apply it to the input signal:
+    --
+    -- > > let pedals ain = lift1 (\f -> f ain) $ fxHor [uiFlan1, uiAdele2 0.25 0.5, uiHall 0.2, uiGain 0.4]
+    -- >
+    -- > > vdac $ pedals =<< (atMidi $ dryPatch vibraphone)
+    --
+    -- With @uiGain@ we can change the volume of the output.    
+
 
     -- ** Reverb
 
