@@ -15,9 +15,8 @@ module Csound.Air.Live (
 --    hpatchChooser, vpatchChooser,
 
     -- ** Fx units
-    uiDistort, uiChorus, 
-    {- uiFlanger, uiPhaser, uiDelay, uiEcho,
-    uiFilter, uiReverb, uiGain, uiCompress, uiWhite, uiPink, -} uiFx, uiDry,
+    uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho, uiFilter, uiReverb,
+    uiGain, uiCompress, uiWhite, uiPink, uiFx, uiDry,
     uiSig, uiMix, uiMidi, 
     -- uiPatch,
 
@@ -227,62 +226,65 @@ uiFlanger :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (F
 uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indigo $ fxBox "Flanger" (\[fback, rate, depth, delay] -> return . fxFlanger fback rate depth delay) isOn
     [("rate",rate), ("depth",depth), ("delay",delay), ("fback", fback)]   
 
-{-
+
 -- | The phaser widget. The arguments are
 --
 -- > uiPhaser isOn mix feedback rate depth frequency
-uiPhaser :: Bool -> Double -> Double -> Double -> Double -> Double -> Source FxFun
-uiPhaser isOn mix fback rate depth freq = sourceColor2 C.orange $ fxBox "Phaser" fxPhaser2 isOn
-    [("mix", mix), ("fback", fback), ("rate",rate), ("depth",depth), ("freq", freq)]
+uiPhaser :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiPhaser isOn rate depth freq fback = mapSource bindSig $ sourceColor2 C.orange $ fxBox "Phaser" (\[rate, depth, frequency, feedback] -> return . fxPhaser rate depth frequency feedback) isOn
+    [("rate",rate), ("depth",depth), ("freq", freq), ("fback", fback)]
 
 -- | The delay widget. The arguments are
 --
 -- > uiDelay isOn mix feedback delayTime tone
-uiDelay :: Bool -> Double -> Double -> Double -> Double -> Source FxFun
-uiDelay isOn mix fback time tone = sourceColor2 C.dodgerblue $ fxBox "Delay" analogDelay2 isOn
+uiDelay :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiDelay isOn mix fback time tone = mapSource bindSig $ sourceColor2 C.dodgerblue $ fxBox "Delay" (\[mix, fback, time, tone] -> return . analogDelay mix fback time tone) isOn
     [("mix",mix), ("fback",fback), ("time",time), ("tone",tone)]
+
 
 -- | The simplified delay widget. The arguments are
 --
 -- > uiEcho isOn maxDelayTime delayTime feedback
-uiEcho :: Bool -> D -> Double -> Double -> Source FxFun
-uiEcho isOn maxDelTime time fback = sourceColor2 C.deepskyblue $ fxBox "Echo" (fxEcho2 maxDelTime) isOn
+uiEcho :: Sigs a => Bool -> D -> Double -> Double -> Source (Fx a)
+uiEcho isOn maxDelTime time fback = mapSource bindSig $ sourceColor2 C.deepskyblue $ fxBox "Echo" (\[time, fback] -> return . fxEcho maxDelTime time fback) isOn
     [("time", time), ("fback", fback)]
+
 
 -- | The pair of low and high pass filters
 --
 -- > uiFilter isOn lowPassfrequency highPassFrequency gain
-uiFilter :: Bool -> Double -> Double -> Double -> Source FxFun
-uiFilter isOn lpf hpf gain = fxBox "Filter" fxFilter2 isOn
+uiFilter :: Sigs a => Bool -> Double -> Double -> Double -> Source (Fx a)
+uiFilter isOn lpf hpf gain = mapSource bindSig $ fxBox "Filter" (\[lpf, hpf, gain] -> return . fxFilter lpf hpf gain) isOn
     [("lpf",lpf), ("hpf",hpf), ("gain",gain)]
+
 
 -- | The reverb widget. The arguments are:
 --
 -- > uiReverb mix depth
-uiReverb :: Bool -> Double -> Double -> Source FxFun
-uiReverb isOn mix depth = sourceColor2 C.forestgreen $ fxBox "Reverb" (\mix depth asig -> mul (1 - mix) asig + mul mix (rever2 depth asig)) isOn
+uiReverb :: Bool -> Double -> Double -> Source Fx2
+uiReverb isOn mix depth = sourceColor2 C.forestgreen $ fxBox "Reverb" (\[mix, depth] asig -> return $ cfd mix asig (rever2 depth asig)) isOn
     [("mix", mix), ("depth", depth)]
 
 -- | The gain widget, it's set to on by default. The arguments are
 --
 -- > uiGain amountOfGain
-uiGain :: Double -> Source FxFun
-uiGain gain = sourceColor2 C.black $ fxBox "Gain" fxGain True [("gain", gain)]
+uiGain :: Sigs a => Double -> Source (Fx a)
+uiGain gain = mapSource bindSig $ sourceColor2 C.black $ fxBox "Gain" (\[vol] -> return . fxGain vol) True [("gain", gain)]
 
 -- | The filtered white noize widget. The arguments are
 --
 -- > uiWhite isOn centerFreqOfFilter amountOfNoize 
-uiWhite :: Bool -> Double -> Double -> Source FxFun
-uiWhite isOn freq depth = sourceColor2 C.dimgray $ fxBox "White" fxWhite2 isOn 
+uiWhite :: Sigs a => Bool -> Double -> Double -> Source (Fx a)
+uiWhite isOn freq depth = mapSource bindSig $ sourceColor2 C.dimgray $ fxBox "White" (\[freq, depth] -> fxWhite freq depth) isOn 
     [("freq", freq), ("depth", depth)]
 
 -- | The filtered pink noize widget. The arguments are
 --
 -- > uiPink isOn centerFreqOfFilter amountOfNoize 
-uiPink :: Bool -> Double -> Double -> Source FxFun
-uiPink isOn freq depth = sourceColor2 C.deeppink $ fxBox "Pink" fxPink2 isOn
+uiPink :: Sigs a => Bool -> Double -> Double -> Source (Fx a)
+uiPink isOn freq depth = mapSource bindSig $ sourceColor2 C.deeppink $ fxBox "Pink" (\[freq, depth] -> fxPink freq depth) isOn
     [("freq", freq), ("depth", depth)]
--}
+
 -- | The constructor for signal processing functions with no arguments (controlls).
 uiFx :: Sigs a => String -> Fx a -> Bool -> Source (Fx a)
 uiFx name f isOn = fxBox name (\[] -> f) isOn [] 
@@ -419,30 +421,18 @@ genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
 
 -------------------------------
 
-{-
+
 -- | Compressor
 --
 -- > uiCompress thresh loknee hiknee ratio att rel gain
-uiCompress :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Source FxFun
-uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain = paintTo orange $ fxBox "Compress" fx True [("thresh", initThresh), ("loknee", initLoknee), ("hiknee", initHiknee), ("ratio", initRatio), ("att", initAtt), ("rel", initRel),  ("gain", initGain)]
+uiCompress :: Sigs a => Double -> Double -> Double -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain = mapSource bindSig $ paintTo orange $ fxBox "Compress" fx True 
+    [("thresh", initThresh), ("loknee", initLoknee), ("hiknee", initHiknee), ("ratio", initRatio), ("att", initAtt), ("rel", initRel),  ("gain", initGain)]
     where 
-        fx :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> FxFun
-        fx thresh loknee hiknee ratio att rel gain  = fromMonoFx (\x -> gain' * compress x x thresh' loknee' hiknee' ratio' att' rel' 0.05)
-            where 
-                gain' = ampdb $ onLin (-36, 36) gain
-                thresh' = onLin (0, 120) thresh
-                att' = onExp (0, 1) att
-                rel' = onExp (0, 1) rel
-                ratio' = onExp (1, 30000) ratio
-                loknee' = onLin (0, 120) loknee
-                hiknee' = onLin (0, 120) hiknee
-
-                onLin (min, max) val = min + val * (max - min)
-                onExp (min, max) val = scale (expcurve val 4) max min
+        fx [thresh, loknee, hiknee, ratio, att, rel, gain] = return . fxCompress thresh (loknee, hiknee) ratio (att, rel) gain 
 
         paintTo = fxColor . C.sRGB24read  
         orange = "#FF851B"
--}
 
 fromMonoFx :: Sigs a => (Sig -> Sig) -> Fx a
 fromMonoFx f = \asig2 -> bindSig (return . f) asig2        

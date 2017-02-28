@@ -156,6 +156,7 @@ import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
     fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
 
+import Csound.Air.Patch(Fx)
 import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig, 
     BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig, 
     DriveSig, TimeSig, WidthSig, 
@@ -573,23 +574,24 @@ olive = "#3D9970"
 
 -- Analog Delay
 
-{-
-uiAdeleBy :: Double -> Double -> Double -> Double -> Source FxFun
-uiAdeleBy initTone initFeedback initBalance initDelayTime = paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone)]
-    where
-        fx ::  Balance -> DelayTime -> Feedback -> ToneSig -> FxFun
-        fx balance delayTime feedback tone = fromMonoFx $ adele balance delayTime feedback tone
 
-uiAdeleBy_ :: Double -> Double -> Double -> Source FxFun
+uiAdeleBy :: Sigs a => Double -> Double -> Double -> Double -> Source (Fx a)
+uiAdeleBy initTone initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone)]
+    where        
+        fx [balance, delayTime, feedback, tone] = return . adele balance delayTime feedback tone
+
+uiAdeleBy_ :: Sigs a => Double -> Double -> Double -> Source (Fx a)
 uiAdeleBy_ = uiAdeleBy 0.5
 
-uiAdele1, uiAdele2, uiAdele3, uiAdele4, uiAdele5 :: Double -> Double -> Source FxFun
+uiAdele1, uiAdele2, uiAdele3, uiAdele4, uiAdele5 :: Sigs a => Double -> Double -> Source (Fx a)
 
 uiAdele1 = uiAdeleBy_ size1
 uiAdele2 = uiAdeleBy_ size2
 uiAdele3 = uiAdeleBy_ size3
 uiAdele4 = uiAdeleBy_ size4
 uiAdele5 = uiAdeleBy_ size5
+
+{-
 
 uiAdeleByB :: Double -> Double -> Double -> Source FxFun
 uiAdeleByB = uiAdeleBy 0.8

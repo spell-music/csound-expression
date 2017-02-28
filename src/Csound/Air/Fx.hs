@@ -48,6 +48,7 @@ module Csound.Air.Fx(
 
     fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter, {- , 
     fxRingModulator, , -}
+    fxCompress,
 
     -- Eq
     audaciousEq,
@@ -449,31 +450,13 @@ stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR
         aoutL = 0.6 * (aChoL + al)
         aoutR = 0.6 * (aChoR + ar)
 
--- Phaser
-
--- | Phaser
---
--- > fxPhaser mix rate depth freq feedback sigIn
-
 -- Analog delay
 
 -- | Analog delay.
 --
 -- > analogDelay mix feedback time tone sigIn
-analogDelay :: Balance -> Feedback -> DelayTime -> ToneSig -> Sig -> SE Sig
-analogDelay kmix kfback ktime  ktone'  ain = do
-    aBuffer <- delayr 5
-    atap <- deltap3 aTime
-    let atap1 = tone (clip atap 0 1) kTone
-    delayw $ ain + atap1*kfback
-    return $ ain*kDry + atap1 * kWet
-    where
-        ktone = expScale 4 (100, 12000) ktone'
-        (kDry, kWet) = dryWetMix kmix
-        kporttime = linseg [0,0.001,0.1]
-        kTime = portk   ktime  (kporttime*3)
-        kTone = portk   ktone kporttime
-        aTime = interp  kTime
+analogDelay :: Balance -> Feedback -> DelayTime -> ToneSig -> Sig -> Sig
+analogDelay kmix kfback ktime  ktone ain = P.fxAnalogDelay kmix kfback ktime  ktone ain
 
 -- Filter
 
@@ -519,9 +502,8 @@ eq4 gs = equalizer (zip gs $ fmap (100 * ) [1, 4, 16, 64])
 -- | Gain
 --
 -- > fxGain gain sigIn
-fxGain :: Sig -> Sig2 -> Sig2
+fxGain :: SigSpace a => Sig -> a -> a
 fxGain = mul
-
 
 -- Noise
 
@@ -851,3 +833,21 @@ fxPitchShifter ifftSize kmix ratio kfback = P.fxPitchShifter ifftSize kmix ratio
 -- ; kfback --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1)
 fxFreqShifter :: Balance -> Sig -> Sig -> Feedback -> Sig -> Sig
 fxFreqShifter kmix freq kmul kfback = P.fxFreqShifter kmix freq kmul kfback
+
+
+-- | Compressor. All arguments are relative (range in 0 to 1).
+--
+-- > fxCompress thresh (loknee, hiknee) ratio (att, rel) gain ain
+fxCompress :: Sig -> (Sig, Sig) -> Sig -> (Sig, Sig) -> Sig -> Sig -> Sig
+fxCompress thresh (loknee, hiknee) ratio (att, rel) gain  x = gain' * compress x x thresh' loknee' hiknee' ratio' att' rel' 0.05
+    where 
+        gain' = ampdb $ onLin (-36, 36) gain
+        thresh' = onLin (0, 120) thresh
+        att' = onExp (0, 1) att
+        rel' = onExp (0, 1) rel
+        ratio' = onExp (1, 30000) ratio
+        loknee' = onLin (0, 120) loknee
+        hiknee' = onLin (0, 120) hiknee
+
+        onLin (min, max) val = min + val * (max - min)
+        onExp (min, max) val = scale (expcurve val 4) max min
