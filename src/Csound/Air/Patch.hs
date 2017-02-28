@@ -2,9 +2,9 @@
 -- | Patches.
 module Csound.Air.Patch(
   
-	CsdNote, Instr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
+	CsdNote, Instr, MonoInstr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
 	Patch1, Patch2, Patch(..), PolySyntSpec(..), MonoSyntSpec(..),
-    SyntSkin, GenInstr, GenFxSpec,
+    SyntSkin, GenInstr, GenMonoInstr, GenFxSpec,
     polySynt, monoSynt, adsrMono, adsrMonoFilter, fxSpec, polySyntFilter, monoSyntFilter, fxSpecFilter,
 
     mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,	
@@ -15,8 +15,7 @@ module Csound.Air.Patch(
 	atMidi, 
 
 	-- * Events
-	atSched,
-	atSchedUntil,
+	atSched, atSchedUntil, atSchedHarp,
 
 	-- * Sco
 	atSco,
@@ -50,7 +49,7 @@ module Csound.Air.Patch(
 	sfPatch, sfPatchHall,
 
     -- * Monosynt params
-    onMonoSyntSpec, setMonoSharp, setMonoHold,
+    onMonoSyntSpec, setMonoSlide, setMonoSharp,
 	
     -- * Csound API
     patchByNameMidi,
@@ -83,11 +82,27 @@ import Csound.Types
 
 import Csound.SigSpace
 
+-- | Common parameters for patches. We use this type to parametrize the patch with some tpyes of arguments
+-- that we'd like to be able to change after patch is already constructed. For instance the filter type can greatly
+-- change the character of the patch. So by making patches depend on filter type we can let the user to change
+-- the filter type and  leave the algorithm the same. It's like changing between trademarks. Moog sound vs Korg sound.
+--
+-- The instruments in the patches depend on the @SyntSkin@ through the @Reader@ data type. 
+--
+-- If user doesn't supply any syntSkin value the default is used (`mlp` -- moog low pass filter). Right now
+-- the data type is just a synonym for filter but it can become a data type with more parameters in the future releases.
 type SyntSkin = ResonFilter
+
+-- | Generic polyphonic instrument. It depends on @SyntSkin@.
 type GenInstr a b = Reader SyntSkin (Instr a b)
+
+-- | Generic FX. It depends on @SyntSkin@.
 type GenFxSpec a = Reader SyntSkin (FxSpec a)
+
+-- | Generic monophonic instrument. It depends on @SyntSkin@.
 type GenMonoInstr a = Reader SyntSkin (MonoInstr a)
 
+-- | Data type for monophonic instruments.
 type MonoInstr a = MonoArg -> SE a
 
 -- | A simple csound note (good for playing with midi-keyboard).
@@ -123,23 +138,15 @@ type Patch2 = Patch Sig2
 -- 
 -- * Chn -- midi channel to listen on
 --
--- * Hold -- to hold the note or not
---
 -- * SlideTime -- time of transition between notes
---
--- * SyntRelease -- time of release
 data MonoSyntSpec = MonoSyntSpec
-    { monoSyntChn       :: MidiChn  
-    , monoSyntHold      :: Bool
-    , monoSyntSlideTime :: D
-    , monoSyntRelease   :: D }
+    { monoSyntChn       :: MidiChn      
+    , monoSyntSlideTime :: Maybe D }
 
 instance Default MonoSyntSpec where
     def = MonoSyntSpec 
-        { monoSyntChn = ChnAll
-        , monoSyntHold = False
-        , monoSyntSlideTime = 0.01
-        , monoSyntRelease = 0.1 }
+        { monoSyntChn = ChnAll        
+        , monoSyntSlideTime = Just 0.008 }
 
 data PolySyntSpec = PolySyntSpec
     { polySyntChn :: MidiChn }
@@ -149,7 +156,11 @@ instance Default PolySyntSpec where
 
 -- | The patch can be:
 --
--- *  a plain monophonic or polyphonic synthesizer
+-- *  a monophonic synt
+--
+-- * polyphonic synt
+--
+-- * set of common parameters (@SyntSkin@)
 --
 -- * patch with chain of effects, 
 --
@@ -166,27 +177,44 @@ data Patch a
     | LayerPatch [(Sig, Patch a)]
 
 
+smoothMonoSpec spec = maybe id smoothMonoArg (monoSyntSlideTime spec)
+
+-- | Constructor for polyphonic synthesizer. It expects a function from notes to signals.
 polySynt :: (Instr D a) -> Patch a
 polySynt = PolySynt def . return
 
+-- | Constructor for polyphonic synthesizer with flexible choice of the low-pass filter. 
+-- If we use the filter from the first argument user lately can change it to some another filter. It defaults to mlp.
 polySyntFilter :: (ResonFilter -> Instr D a) -> Patch a
 polySyntFilter instr = PolySynt def $ reader instr
 
+-- | Constructor for monophonic synth with envelope generator. The envelope generator is synced with note triggering.
+-- So it restarts itself when the note is retriggered. The envelope generator is a simple ADSR gennerator see the type @MonoAdsr@.
 adsrMono :: (MonoAdsr -> Instr Sig a) -> Patch a
 adsrMono f = monoSynt (adsrMonoSynt f)
 
+-- | Constructor for monophonic synth with envelope generator and flexible choice of filter. It's just like @adsrMono@
+-- but the user lately can change filter provided in the first argument to some another filter.
 adsrMonoFilter :: (ResonFilter -> MonoAdsr -> Instr Sig a) -> Patch a
 adsrMonoFilter f = monoSyntFilter (\filter -> adsrMonoSynt (f filter))
 
+-- | Constructor for monophonic synthesizer. The instrument is defned on the raw monophonic aruments (see @MonoArg@). 
 monoSynt :: (MonoInstr a) -> Patch a
 monoSynt = MonoSynt def . return
 
+-- | Constructor for monophonic synthesizer with flexible filter choice.
 monoSyntFilter :: (ResonFilter -> MonoInstr a) -> Patch a
 monoSyntFilter instr = MonoSynt def $ reader instr
 
+-- | Constructor for FX-specification. 
+--
+-- > fxSpec dryWetRatio fxFun
 fxSpec :: Sig -> Fx a -> GenFxSpec a
 fxSpec ratio fx = return $ FxSpec ratio fx
 
+-- | Constructor for FX-specification with flexible filter choice. 
+--
+-- > fxSpec dryWetRatio fxFun
 fxSpecFilter :: Sig -> (ResonFilter -> Fx a) -> GenFxSpec a
 fxSpecFilter ratio fx = reader $ \resonFilter -> FxSpec ratio (fx resonFilter)
 
@@ -313,11 +341,7 @@ atMidi x = go Nothing x
 
                 monoSynt spec instr = instr =<< getArg
                     where
-                        getArg
-                            | monoSyntHold spec = error "hold midi is not implemented for mono-synt" -- holdMsg chn port
-                            | otherwise         = genMonoMsg chn 
-
-                        port = monoSyntSlideTime spec                        
+                        getArg = fmap (smoothMonoSpec spec) $ genMonoMsg chn                         
                         chn  = monoSyntChn spec
 
 -- | Plays a patch with midi with given temperament (see @Csound.Tuning@).
@@ -337,11 +361,7 @@ atMidiTemp tm x = go Nothing x
 
                 monoSynt spec instr = instr =<< getArg
                     where
-                        getArg
-                            | monoSyntHold spec = error "hold midi is not implemented for mono-synt" -- holdMsg chn port
-                            | otherwise         = genMonoMsgTemp tm chn 
-
-                        port = monoSyntSlideTime spec                        
+                        getArg = fmap (smoothMonoSpec spec) $ genMonoMsgTemp tm chn                         
                         chn  = monoSyntChn spec
 
 
@@ -389,7 +409,7 @@ atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco (CsdNote D)) -> SE a
 atSched x evt = go Nothing x evt
     where
         go maybeSkin x evt = case x of
-            MonoSynt spec instr -> (runSkin instr maybeSkin) =<< (fmap (smoothMonoArg $ monoSyntSlideTime spec) $ monoSched evt)
+            MonoSynt spec instr -> (runSkin instr maybeSkin) =<< (fmap (smoothMonoSpec spec) $ monoSched evt)
             PolySynt _ instr -> playInstr (runSkin instr maybeSkin)
             SetSkin skin p -> newSkin skin p
             FxChain fxs p  -> getPatchFx maybeSkin fxs =<< rec p
@@ -417,6 +437,10 @@ atSchedUntil x evt stop = go Nothing x evt stop
                 newSkin skin x = go (Just skin) x evt stop
                 playInstr instr = return $ schedUntil instr evt stop
                 playMonoInstr instr = instr =<< monoSchedUntil evt stop                
+
+-- | Plays notes indefinetely (it's more useful for monophonic synthesizers).
+atSchedHarp :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> SE a
+atSchedHarp x evt = atSchedUntil  x evt mempty
 
 --------------------------------------------------------------
 -- sco
@@ -481,11 +505,11 @@ setMidiChn chn x = case x of
 
 -- | Sets the monophonic to sharp transition and quick release.
 setMonoSharp :: Patch a -> Patch a
-setMonoSharp = onMonoSyntSpec (\x -> x { monoSyntSlideTime = 0.005, monoSyntRelease = 0.05 })
+setMonoSharp = setMonoSlide 0.004
 
--- | Sets the monophonic patch to hold mode. All notes are held.
-setMonoHold :: Patch a -> Patch a
-setMonoHold = onMonoSyntSpec (\x -> x { monoSyntHold = True })
+-- | Sets the slide time for pitch and amplitude of monophomic synthesizers.
+setMonoSlide :: D -> Patch a -> Patch a
+setMonoSlide slideTime = onMonoSyntSpec (\x -> x { monoSyntSlideTime = Just slideTime })
 
 -- | Transpose the patch by a given ratio. We can use the functions semitone, cent to calculate the ratio.
 transPatch :: D -> Patch a -> Patch a
@@ -643,10 +667,9 @@ genPatchByNameMidi monoKey2cps polyKey2cps name x = go Nothing x
                 rec = go maybeSkin
                 newSkin skin = go (Just skin)
 
-                monoSynt spec instr = instr =<< (fmap (smoothMonoArg portTime . convert) $ trigNamedMono name)
+                monoSynt spec instr = instr =<< (fmap (smoothMonoSpec spec . convert) $ trigNamedMono name)
                     where
-                        convert arg = arg { monoAmp = vel2ampSig (monoAmp arg), monoCps = monoKey2cps (monoCps arg) }
-                        portTime = monoSyntSlideTime spec
+                        convert arg = arg { monoAmp = vel2ampSig (monoAmp arg), monoCps = monoKey2cps (monoCps arg) }                        
 
                 polySynt spec instr = trigByNameMidi name go
                     where
