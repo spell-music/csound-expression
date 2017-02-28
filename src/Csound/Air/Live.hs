@@ -52,14 +52,14 @@ import Csound.Air.Misc
 -- mixer
 
 -- | Widget that represents a mixer.
-mixer :: (SigSpace a, Fractional a, Sigs a) => [(String, SE a)] -> Source a
+mixer :: (Sigs a) => [(String, SE a)] -> Source a
 mixer = genMixer (ver, hor)
 
 -- | Widget that represents a mixer with horizontal grouping of elements.
-hmixer :: (SigSpace a, Fractional a, Sigs a) => [(String, SE a)] -> Source a
+hmixer :: (Sigs a) => [(String, SE a)] -> Source a
 hmixer = genMixer (hor, ver)
 
-genMixer :: (SigSpace a, Fractional a, Sigs a) => ([Gui] -> Gui, [Gui] -> Gui) -> [(String, SE a)] -> Source a
+genMixer :: (Sigs a) => ([Gui] -> Gui, [Gui] -> Gui) -> [(String, SE a)] -> Source a
 genMixer (parentGui, childGui) as = source $ do
     gTags <- mapM box names
     (gs, vols) <- fmap unzip $ mapM (const $ defSlider "") names
@@ -142,7 +142,7 @@ fxBox name fx onOff args = source $ do
 
 -- | Creates an FX-box from the given visual representation.
 -- It insertes a big On/Off button atop of the GUI.
-uiBox :: (SigSpace a, Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
+uiBox :: (Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
 uiBox name fx onOff = mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go off fx
     where
         off =  mapGuiSource (setFontSize 25) $ toggleSig name onOff 
@@ -205,7 +205,7 @@ fxApp f = mapSource (>=> f)
 -- | The distortion widget. The arguments are
 --
 -- > uiDistort isOn levelOfDistortion drive tone
-uiDistort :: BindSig a => Bool -> Double -> Double -> Double -> Source (Fx a) 
+uiDistort :: Sigs a => Bool -> Double -> Double -> Double -> Source (Fx a) 
 uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $ fxBox "Distortion" (\[level, drive, tone] -> return . fxDistort level drive tone) isOn 
     [("level", level), ("drive", drive), ("tone", tone)]
 
@@ -217,13 +217,13 @@ uiChorus :: Bool -> Double -> Double -> Double -> Double -> Source Fx2
 uiChorus isOn mix rate depth width = sourceColor2 C.coral $ fxBox "Chorus" (\[mix, rate, depth, width] -> return . stChorus2 mix rate depth width) isOn
     [("mix",mix), ("rate",rate), ("depth",depth), ("width",width)]
 
-uiDry :: (Sigs a, BindSig a) => Source (Fx a)
+uiDry :: (Sigs a) => Source (Fx a)
 uiDry = fxBox "Thru" (\[] -> return) True []
 
 -- | The flanger widget. The arguments are
 --
 -- > uiFlanger isOn  rate depth delay feedback
-uiFlanger :: BindSig a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiFlanger :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
 uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indigo $ fxBox "Flanger" (\[fback, rate, depth, delay] -> return . fxFlanger fback rate depth delay) isOn
     [("rate",rate), ("depth",depth), ("delay",delay), ("fback", fback)]   
 
@@ -288,7 +288,7 @@ uiFx :: Sigs a => String -> Fx a -> Bool -> Source (Fx a)
 uiFx name f isOn = fxBox name (\[] -> f) isOn [] 
 
 -- | Midi chooser implemented as FX-box.
-uiMidi :: (SigSpace a, Sigs a) => [(String, Msg -> SE a)] -> Int -> Source (Fx a) 
+uiMidi :: (Sigs a) => [(String, Msg -> SE a)] -> Int -> Source (Fx a) 
 uiMidi xs initVal = sourceColor2 C.forestgreen $ uiBox "Midi" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vmidiChooser xs initVal
 
@@ -300,7 +300,7 @@ uiPatch xs initVal = sourceColor2 C.forestgreen $ uiBox "Patch" fx True
 -}
 
 -- | the widget for mixing in a signal to the signal.
-uiSig :: (SigSpace a, Sigs a) => String -> Bool -> Source a -> Source (Fx a)
+uiSig :: (Sigs a) => String -> Bool -> Source a -> Source (Fx a)
 uiSig name onOff widget = source $ do
     (gs, asig) <- widget
     (gOff0, off) <- toggleSig name onOff
@@ -310,7 +310,7 @@ uiSig name onOff widget = source $ do
 
 -- | A mixer widget represented as an effect.
 -- The effect sums the signals with given wieghts.
-uiMix :: (SigSpace a, Fractional a, Sigs a) => Bool -> [(String, SE a)] -> Source (Fx a)
+uiMix :: (Sigs a) => Bool -> [(String, SE a)] -> Source (Fx a)
 uiMix onOff as = sourceColor2 C.blue $ uiSig "Mix" onOff (mixer as)
 
 ----------------------------------------------------------------------
@@ -444,5 +444,5 @@ uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain =
         orange = "#FF851B"
 -}
 
-fromMonoFx :: BindSig a => (Sig -> Sig) -> Fx a
+fromMonoFx :: Sigs a => (Sig -> Sig) -> Fx a
 fromMonoFx f = \asig2 -> bindSig (return . f) asig2        
