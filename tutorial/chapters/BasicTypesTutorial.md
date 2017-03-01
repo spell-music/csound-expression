@@ -889,6 +889,36 @@ In Csound there are plenty of opcodes to work with arrays. Almost all of them ar
 We can find out the complete list at the documentation for the module `Csound.Types` (see section for `Arrays`).
 Many functions are dedicated to manipulate spectral data. 
 
+#### Copy vs Allocation
+
+Some peculiarity of transition form Csound to Haskell way of thinking lies in array functions.
+In the Csound almost all array functions can perform two different operations. Thy are overloaded.
+If we write:
+
+~~~
+kOut[] array_operation kWin
+~~~
+
+It can do two distinct operations:
+
+* It can create new array if the value `kOut` was not previously initialized
+
+* It can copy the data of the result of operation to the array `kOut` if it was already allocated.
+
+In Haskell we often find two operations coresponding to the single Csound operation. 
+Take for example the function `fft`. It performs fast Fourier transform.
+In Haskell we have two operations:
+
+~~~haskell
+type SpecArr = Arr Sig Sig
+
+fftNew  :: SpecArr -> SE SpecArr
+fftCopy :: SpecArr -> SpecArr -> SE ()
+~~~
+
+The function `fftNew` allocates new array. But `fftCopy` just copies the data to existing array.
+Notice how the roles of the functions are signified with the signatures.
+
 ### An example of working with arrays
 
 **TODO**
