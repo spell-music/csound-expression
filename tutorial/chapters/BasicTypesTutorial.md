@@ -798,6 +798,100 @@ but `scalePitch` does it in semitones.
 If we have a spectrum we can process it with many functions from the 
 module [Spectral processing](http://hackage.haskell.org/package/csound-expression-opcodes-0.0.0/docs/Csound-Typed-Opcode-SpectralProcessing.html).
 
+Arrays (Arr)
+----------------------------------
+
+We can create arrays of values. The data type of array is parametrized with index and value.
+This typing scheme prevents us from reading or writing the wrong values to the arrays although
+it doesn't prevents us from out of bounds errors. 
+
+~~~haskell
+data Arr ix a
+~~~
+
+Notice that the data types for indexes and values can be tuples. It let's us easily create multidimensional
+array. If we want say 2D array we can use pairs as indexes. 
+
+### Creation of arrays
+
+Arrays can be global and local. Local arrays are accessible only within the body of single Csound
+instrument where they are created. The scope translated to Haskell is somewhat obscure. The global arrays
+are accessible at any point of the code. 
+
+We can create arrays with functions:
+
+~~~haskell
+newLocalArr  :: Tuple a => [D] -> [a] -> SE (Arr ix a)
+newGlobalArr :: Tuple a => [D] -> [a] -> SE (Arr ix a)
+~~~
+
+They accept the list of dimensions and list of initial values.
+Also arrays can contain audio or control rate signals. The aforementioned functions create audio-rate signals.
+If we want to create control rate signals we should use the functions:
+
+~~~haskell
+newLocalCtrlArr :: Tuple a => [D] -> [a] -> SE (Arr ix a)
+newGlobalCtrlArr :: Tuple a => [D] -> [a] -> SE (Arr ix a)
+~~~
+
+### Read and write operations
+
+To read and write the values from array we have two functions:
+
+~~~haskell
+writeArr :: (Tuple ix, Tuple a) => Arr ix a -> ix -> a -> SE ()
+readArr  :: (Tuple a, Tuple ix) => Arr ix a -> ix -> SE a
+~~~
+
+We can modify the value in the arry with function:
+
+~~~haskell
+modifyArr :: (Tuple a, Tuple ix) => Arr ix a -> ix -> (a -> a) -> SE ()
+~~~
+
+### Type synonyms for often used array data-types
+
+To save some typing there are some aliases defined for most frequntly used array data types:
+
+~~~haskell
+type Arr1  a = Arr Sig a
+type DArr1 a = Arr D a
+
+type Arr2  a = Arr (Sig, Sig) a
+type DArr2 a = Arr (D, D) a
+
+type Arr3  a = Arr (Sig, Sig, Sig) a
+type DArr3 a = Arr (D, D, D) a
+~~~
+
+Arrays that are parametrized with constant index (like `DArr1`) can be manipulated only at a single moment.
+We can only read and write constants to it.
+
+If an array is parametrized with signal index (like `Arr1`) it can be manipulated continuously. We can read and write signals to it.
+
+Also to help the type inference we can use the functions that do nothing with the values 
+(just pass them through) but they have strict data type so that type inference can derive the desired data type:
+
+~~~haskell
+arr1  :: SE (Arr Sig a) -> SE (Arr Sig a)
+darr1 :: SE (Arr D a) -> SE (Arr D a)
+
+arr2  :: SE (Arr (Sig, Sig) a) -> SE (Arr (Sig, Sig) a)
+darr2 :: SE (Arr (D, D) a) -> SE (Arr (D, D) a)
+
+arr3  :: SE (Arr (Sig, Sig, Sig) a) -> SE (Arr (Sig, Sig, Sig) a)
+darr3 :: SE (Arr (D, D, D) a) -> SE (Arr (D, D, D) a)
+~~~
+
+### Csound opcodes 
+
+In Csound there are plenty of opcodes to work with arrays. Almost all of them are supported.
+We can find out the complete list at the documentation for the module `Csound.Types` (see section for `Arrays`).
+Many functions are dedicated to manipulate spectral data. 
+
+### An example of working with arrays
+
+**TODO**
 
 ----------------------------------------------------
 
