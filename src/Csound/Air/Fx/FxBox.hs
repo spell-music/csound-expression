@@ -110,6 +110,20 @@ module Csound.Air.Fx.FxBox(
     -- *** Caves
     uiCave, uiCave1, uiCave2, uiCave3, uiCave4, uiCave5,
 
+    -- ** Mono Reverb
+
+    -- *** Rooms    
+    uiMonoRoom, uiRoom1m, uiRoom2m, uiRoom3m, uiRoom4m, uiRoom5m,
+
+    -- ** Chambers
+    uiMonoChamber, uiChamber1m, uiChamber2m, uiChamber3m, uiChamber4m, uiChamber5m,
+
+    -- *** Halls
+    uiMonoHall, uiHall1m, uiHall2m, uiHall3m, uiHall4m, uiHall5m,
+
+    -- *** Caves
+    uiMonoCave, uiCave1m, uiCave2m, uiCave3m, uiCave4m, uiCave5m,
+
     -- ** Delay
     uiAdele1, uiAdele2, uiAdele3, uiAdele4, uiAdele5,
     uiAdele1b, uiAdele2b, uiAdele3b, uiAdele4b, uiAdele5b,
@@ -172,13 +186,15 @@ import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
     fxPanTrem, fxMonoTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
 
-import Csound.Air.Patch(Fx, Fx2)
+import Csound.Air.Patch(Fx, Fx1, Fx2)
 import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig, 
     BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig, 
     DriveSig, TimeSig, WidthSig, 
     rever2, pingPong)
 
 import Csound.Air.Live(fxBox, fxColor)
+import Csound.Air.Wav(toMono)
+import Csound.Air.Misc(fromMono)
 
 import qualified Data.Colour as C
 import qualified Data.Colour.SRGB as C
@@ -959,6 +975,7 @@ uiRevsy initTime = mapSource bindSig $ paintTo revsyColor $ fxBox "Reverse" fx T
     where        
         fx [time] = return . revsy time
 
+------------------------------------------------------------
 -- Reverbs 
 
 uiRevBy :: Double -> Double -> Source Fx2
@@ -1025,3 +1042,60 @@ uiPongy2 = uiPongy' size2
 uiPongy3 = uiPongy' size3
 uiPongy4 = uiPongy' size4
 uiPongy5 = uiPongy' size5
+
+------------------------------------------------------------
+-- Mono Reverbs 
+
+rever1 :: Sig -> Sig -> Sig
+rever1 fbk = toMono . rever2 fbk . fromMono
+
+uiMonoRevBy :: Double -> Double -> Source Fx1
+uiMonoRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
+    where        
+        fx [balance, feedback] = \asig -> return $ mixAt balance (rever1 feedback) asig
+
+uiMonoRoom :: Double -> Source Fx1
+uiMonoRoom = uiMonoRevBy 0.6 
+
+uiRoom1m, uiRoom2m, uiRoom3m, uiRoom4m, uiRoom5m :: Source Fx1
+
+uiRoom1m = uiMonoRoom size1 
+uiRoom2m = uiMonoRoom size2 
+uiRoom3m = uiMonoRoom size3 
+uiRoom4m = uiMonoRoom size4 
+uiRoom5m = uiMonoRoom size5 
+
+uiMonoChamber :: Double -> Source Fx1
+uiMonoChamber = uiMonoRevBy 0.8
+
+uiChamber1m, uiChamber2m, uiChamber3m, uiChamber4m, uiChamber5m :: Source Fx1
+
+uiChamber1m = uiMonoChamber size1
+uiChamber2m = uiMonoChamber size2
+uiChamber3m = uiMonoChamber size3
+uiChamber4m = uiMonoChamber size4
+uiChamber5m = uiMonoChamber size5
+
+uiMonoHall :: Double -> Source Fx1
+uiMonoHall = uiMonoRevBy 0.9
+
+uiHall1m, uiHall2m, uiHall3m, uiHall4m, uiHall5m :: Source Fx1
+
+uiHall1m = uiMonoHall size1
+uiHall2m = uiMonoHall size2
+uiHall3m = uiMonoHall size3
+uiHall4m = uiMonoHall size4
+uiHall5m = uiMonoHall size5
+
+uiMonoCave :: Double -> Source Fx1
+uiMonoCave = uiMonoRevBy 0.99
+
+uiCave1m, uiCave2m, uiCave3m, uiCave4m, uiCave5m :: Source Fx1
+
+uiCave1m = uiMonoCave size1
+uiCave2m = uiMonoCave size2
+uiCave3m = uiMonoCave size3
+uiCave4m = uiMonoCave size4
+uiCave5m = uiMonoCave size5
+
+
