@@ -55,7 +55,7 @@ Almost all effects have normalized parameters (belong to the interval 0 to 1).
 It's single delay line with low-pass filter in the feedback:
 
 ~~~haskell
-adele :: Balance -> DelayTime -> Feedback -> ToneSig -> Sig -> Sig
+adele :: Sigs a => Balance -> DelayTime -> Feedback -> ToneSig -> a -> a
 ~~~
 
 arguments are:
@@ -102,7 +102,7 @@ The first argument is dry/wet ratio.
 Distortion can make your instrument scream.
 
 ~~~haskell
-tort :: DriveSig -> ToneSig -> Sig -> Sig
+tort :: Sigs a => DriveSig -> ToneSig -> a -> a
 ~~~
 
 The arguments are:
@@ -116,7 +116,7 @@ The arguments are:
 Envelope follower applies a low-pass filter to the audio and the center frequency is controlled by the amplitude of the signal (RMS-level).
 
 ~~~haskell
-fowler :: SensitivitySig -> BaseCps -> Resonance -> Sig -> Sig
+fowler :: Sigs a => SensitivitySig -> BaseCps -> Resonance -> a -> a
 ~~~
 
 Arguments:
@@ -132,7 +132,7 @@ Arguments:
 An effect that reverses an audio stream in chunks
 
 ~~~haskell
-revsy :: TimeSig -> Sig -> Sig
+revsy :: Sigs a => TimeSig -> a -> a
 ~~~
 
 `time` -- the size of the chunck in seconds.
@@ -142,7 +142,7 @@ revsy :: TimeSig -> Sig -> Sig
 A flanger effect following the typical design of a so called 'stomp box' 
 
 ~~~haskell
-flan :: RateSig -> DepthSig -> DelayTime -> Feedback -> Sig -> Sig
+flan :: Sigs a => RateSig -> DepthSig -> DelayTime -> Feedback -> a -> a
 ~~~
 
 Arguments
@@ -160,7 +160,7 @@ Arguments
 An phase shifting effect that mimics the design of a so called 'stomp box'
 
 ~~~haskell
-phasy :: RateSig -> DepthSig -> BaseCps -> Feedback -> Sig -> Sig
+phasy :: Sigs a => RateSig -> DepthSig -> BaseCps -> Feedback -> a -> a
 phasy rate depth freq fback ain
 ~~~
 
@@ -178,7 +178,7 @@ Arguments:
 ### Crusher - bit crusher
 
 ~~~haskell
-crusher :: BitsReductionSig -> FoldoverSig -> Sig -> Sig
+crusher :: Sigs a => BitsReductionSig -> FoldoverSig -> a -> a
 crusher  bits fold ain = ...
 ~~~
 
@@ -222,10 +222,12 @@ Arguments:
 
 * `depth` -- depth of the lfo of the effect (range 0 to 1)
 
+Also there are special functions with LFO-wave set to specific wave: `oscPany`, `triPany`, `sqrPany`.
+
 ### Tremy - tremolo
 
 ~~~haskell
-tremy :: TremWaveSig -> DepthSig -> RateSig -> Sig2 -> Sig2
+tremy :: Sigs a => TremWaveSig -> DepthSig -> RateSig -> a -> a
 tremy wave rate depth ain
 ~~~
 
@@ -238,10 +240,12 @@ tremy wave rate depth ain
 * `depth` -- depth of the lfo of the effect (range 0 to 1)
 
 
+Also there are special functions with LFO-wave set to specific wave: `oscTremy`, `triTremy`, `sqrTremy`.
+
 ### Ringo - An ring modulating effect with an envelope follower
 
 ~~~hskell
-ringo :: Balance -> RateSig -> EnvelopeModSig -> Sig -> Sig
+ringo :: Sigs a => Balance -> RateSig -> EnvelopeModSig -> a -> a
 ringo balance rate envelopeMod
 ~~~
 
@@ -267,17 +271,17 @@ If we use prefix `ui` we can create an image of our effect that looks like guita
 Let's take a distortion fr instance:
 
 ~~~haskell
-type FxFun = Sig2 -> SE Sig2 
+type Fx a = a -> SE a
 
-uiTort2 :: Source FxFun
+uiTort2 :: Sigs a => Source (Fx a)
 ~~~
 
 We can combine the effects with functions:
 
 ~~~haskell
-fxHor, fxVer :: [Source FxFun] -> Source FxFun
+fxHor, fxVer :: [Source (Fx a)] -> Source (Fx a)
 
-fxMatrix :: Int -> [Source FxFun] -> Source FxFun
+fxMatrix :: Int -> [Source (Fx a)] -> Source (Fx a)
 fxMatrix numberOfColumns fxs = ...
 ~~~
 
@@ -290,7 +294,7 @@ Let's create a chain of effects and apply it to the input signal:
 ~~~haskel
 > let pedals ain = lift1 (\f -> f ain) $ fxHor [uiFlan1, uiAdele2 0.25 0.5, uiHall 0.2, uiGain 0.4]
 
-> vdac $ pedals =<< (atMidi $ dryPatch vibraphone)
+> vdac $ pedals =<< (atMidi $ dryPatch vibraphone1)
 ~~~
 
 With `uiGain` we can change the volume of the output.
