@@ -1,0 +1,18 @@
+resolver: lts-8.3
+
+packages:
+- '.'
+- location:
+    git: git@github.com:spell-music/csound-expression-typed.git
+    commit: 27bcf9655cdc9fe4ceea2e007a4816cbe919786c
+  extra-dep: true
+- location:
+    git: git@github.com:spell-music/csound-expression-dynamic.git
+    commit: 59d9fc5c470707ecd8672b61f820d17e8a8cfa27
+  extra-dep: true
+
+extra-deps:
+- temporal-media-0.6.1
+- data-fix-0.0.3
+- data-fix-cse-0.0.2
+- csound-expression-opcodes-0.0.3.1
