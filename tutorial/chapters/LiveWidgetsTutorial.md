@@ -77,7 +77,7 @@ Using mixer
 We can mix several stereo signals together with the widget mixer.
 
 ~~~haskell
-mixer :: [(String, SE Sig2)] -> Source Sig2
+mixer :: Sigs a => [(String, SE a)] -> Source a
 ~~~
 
 Mixer takes in the list of pairs. The first element of the pair
@@ -118,64 +118,70 @@ There are many widgets to process stereo signals.
 The sound processing function is a function of the type:
 
 ~~~haskell
-type FxFun = Sig2 -> SE Sig2
+type Fx = a -> SE a
 ~~~
 
-To be truly interesting the sund processing function
+
+To be truly interesting the sound processing function
 should depend on parameters which control the behavior of
 the effect:
 
 ~~~haskell
-Sig -> Sig -> ... -> Sig -> FxFun
+Sigs a => Sig -> Sig -> ... -> Sig -> Fx a
 ~~~
 
 We can create a visual representation of this type
-with `fxBox`.
+with `fxBox`:
 
 ~~~haskell
-fxBox :: FxUI a => String -> a -> Bool -> [(String, Double)] -> Source FxFun
+fxBox :: FxUI a => String -> ([Sig] -> Fx a) -> Bool -> [(String, Double)] -> Source (Fx a)
 fxBox name fx isOn args = ...
 ~~~
 
 It expects the name of the widget, the sound processing function 
 the flag that turns on the widget (is it active at the start time)
 and the list of arguments. The result contains the widget and fx-function.
+The FX-processing function takes in a list of signal arguments, each argument 
+in the list is going to be represented with a slider. Names for the sliders are
+taken fron te last argument.
 
-The class `FxUI` contains the functions like:
-
-~~~haskell
-Sig2 -> SE Sig2
-Sig -> Sig2 -> SE Sig2
-Sig -> Sig -> Sig2 -> SE Sig2
-...
-
-Sig2 -> Sig2
-Sig -> Sig2 -> Sig2
-Sig -> Sig -> Sig2 -> Sig2
-...
-~~~
-
-I hope that you've got the pattern. The arguments are turned into
-sliders. There are many predefined widgets that implement typical
+There are many predefined widgets that implement typical
 effects (reverbs, distortion, chorus, flanger etc).
 
 ~~~haskell
+module Main where
+
+import Csound.Base
+import Csound.Sam
+
 main = dac $ do
-	(gui, fx) <- fxHor 
-		[ uiFilter False 0.5 0.5 0.5
-		, uiChorus False 0.5 0.5 0.5 0.5		
-		, uiPhaser False 0.5 0.5 0.5 0.5 0.5		
-		, uiReverb True  0.5 0.5
-		, uiGain   True  0.5 
-		]
-	win "main" (900, 400) gui
-	fx $ fromMono $ saw 110
+    (gui, fx) <- fxHor 
+        [ uiFilter False 0.5 0.5 0.5
+        , uiChorus False 0.5 0.5 0.5 0.5        
+        , uiPhaser False 0.5 0.5 0.5 0.5
+        , uiReverb True  0.5 0.5
+        , uiGain   0.5 
+        ]
+    win "main" (900, 300) gui
+    fx $ fromMono $ saw 110
 ~~~
 
 We can group the fx-widgets with functions `fxHor`, `fxVer` and `fxSca`.
 They group widgets horizontaly, verticaly and scale the widgets.
-There are many more widgets to consider you can find them in the module 
-`Csound.Air.Live`.
+There are many more widgets to consider you can find them in the modules 
+`Csound.Air.Live` and `Csound.Air.Fx.FxBox`.
+
+Let's look at the types of the functions `fxHor` and `fxVer` to see what's going on:
+
+~~~haskell
+fxHor, fxVer :: [Source (Fx a)] -> Source (Fx a)
+~~~
+
+So with those functions we stuck the visual representations in the line and compose 
+the FX-functions in the list.
+
+
+
 
 ----------------------------------------------------
 
