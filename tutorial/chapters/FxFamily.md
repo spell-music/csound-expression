@@ -281,8 +281,8 @@ We can combine the effects with functions:
 ~~~haskell
 fxHor, fxVer :: [Source (Fx a)] -> Source (Fx a)
 
-fxMatrix :: Int -> [Source (Fx a)] -> Source (Fx a)
-fxMatrix numberOfColumns fxs = ...
+fxGrid :: Int -> [Source (Fx a)] -> Source (Fx a)
+fxGrid numberOfColumns fxs = ...
 ~~~
 
 All these functions stack the effects in the list

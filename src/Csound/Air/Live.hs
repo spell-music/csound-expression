@@ -6,8 +6,8 @@ module Csound.Air.Live (
 
     -- * Effects
     fxBox, uiBox,
-    fxColor, fxVer, fxHor, fxMatrix, fxSca, fxMap, fxApply, atFx,
-    fxHorMS, fxVerMS,
+    fxColor, fxVer, fxHor, fxGrid, fxSca, fxMap, fxApply, atFx,
+    fxHorMS, fxVerMS, fxGridMS,
     fromMonoFx,
 
     -- * Instrument choosers
@@ -141,7 +141,7 @@ fxBox name fx onOff args = source $ do
             where f xs = uiGroupGui gOff (ver xs)
 
 -- | Creates an FX-box from the given visual representation.
--- It insertes a big On/Off button atop of the GUI.
+-- It inserts a big On/Off button atop of the GUI.
 uiBox :: (Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
 uiBox name fx onOff = mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go off fx
     where
@@ -202,16 +202,11 @@ fxVer = fxGroup ver
 
 -- | Creates a matrix of fx-boxes.
 --
--- > fxMatrix columnsSize fxs
+-- > fxGrid columnsSize fxs
 --
 -- first argument is a number of columns in each row.
-fxMatrix :: Int -> [Source (Fx a)] -> Source (Fx a)
-fxMatrix columnsSize fxs = fxVer $ fmap fxHor $ splitList columnsSize fxs
-    where
-        splitList n xs = case splitAt n xs of
-            (res, []) -> [res]
-            (as,rest) -> as : splitList n rest
-
+fxGrid :: Int -> [Source (Fx a)] -> Source (Fx a)
+fxGrid columnsSize fxs = fxGroup (grid columnsSize) fxs
 
 -- | @fxHor@ for chain that starts with mono effects and proceeds with stereo effects.
 -- The second argument can contain The transition widget (mono to stereo effect) or it can be empty.
@@ -224,6 +219,14 @@ fxHorMS = fxGroupMS hor
 --  If it's empty automatic conversion will be inserted.
 fxVerMS :: [Source Fx1] -> Maybe (Source (Sig -> SE Sig2)) -> [Source Fx2] -> Source (Sig -> SE Sig2)
 fxVerMS = fxGroupMS ver
+
+-- | Creates a matrix of fx-boxes. Stacks a list of mono and stereo FXs.
+--
+-- > fxGrid columnsSize monoFxs maybeBridge stereoFxs
+--
+-- first argument is a number of columns in each row.
+fxGridMS :: Int -> [Source Fx1] -> Maybe (Source (Sig -> SE Sig2)) -> [Source Fx2] -> Source (Sig -> SE Sig2)
+fxGridMS columnSize = fxGroupMS (grid columnSize)
 
 -- | Applies FX with UI to the input argument.
 fxApply :: Source (a -> SE b) -> a -> Source b

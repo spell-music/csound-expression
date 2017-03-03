@@ -10,9 +10,24 @@
 -- of the rectangles (by scaling one side of the rectangle). In place of rectangle
 -- we can put an empty space. 
 module Csound.Control.Gui.Layout (
-    hor, ver, space, sca, horSca, verSca, 
+    hor, ver, space, sca, horSca, verSca, grid,
     padding, margin
 ) where
 
 import Csound.Typed.Gui
+
+
+grid :: Int -> [Gui] -> Gui
+grid columnSize guis = ver $ fmap hor $ splitList columnSize guis
+    where
+        splitList n xs = case splitAt n xs of
+            (res, []) -> [res ++ spaceTail xs]
+            (as,rest) -> as : splitList n rest
+
+        spaceTail xs = replicate n space
+            where n = getMissingToEven (length xs)
+
+        getMissingToEven total =  case total `mod` columnSize of
+            0 -> 0
+            n -> columnSize - n
 

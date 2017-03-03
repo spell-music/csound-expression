@@ -178,9 +178,14 @@ fxHor, fxVer :: [Source (Fx a)] -> Source (Fx a)
 ~~~
 
 So with those functions we stuck the visual representations in the line and compose 
-the FX-functions in the list.
+the FX-functions in the list. Also there is a function `fxGrid`. We can create a matrix
+of Fx-widgets with it:
 
+~~~haskell
+fxGrid :: Int -> [Source (Fx a)] -> Source (Fx a)
+~~~
 
+The first argument is a number of cells per row.
 
 
 ----------------------------------------------------
