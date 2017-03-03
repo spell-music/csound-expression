@@ -291,13 +291,46 @@ or placed on a square grid.
 
 Let's create a chain of effects and apply it to the input signal:
 
-~~~haskel
+~~~haskell
 > let pedals ain = lift1 (\f -> f ain) $ fxHor [uiFlan1, uiAdele2 0.25 0.5, uiHall 0.2, uiGain 0.4]
 
-> vdac $ pedals =<< (atMidi $ dryPatch vibraphone1)
+> let player = atMidi $ dryPatch vibraphone1
+
+> vdac $ pedals =<< player
 ~~~
 
 With `uiGain` we can change the volume of the output.
+
+Noticw how we used a standard monadic bind operator (`=<<`) to apply the effects to the signal.
+How does it work? Let's check out the types:
+
+~~~haskell
+> :t pedals
+pedals :: Sig2 -> Source (SE Sig2)
+> :t player
+player :: SE Sig2
+~~~
+
+And bind expects the types to be:
+
+~~~
+(=<<) :: Monad m => (a -> m b) -> m a -> m b
+~~~
+
+The `SE` is a monad but the `Source` doesn't seem to match for `SE b` part of signature.
+It's ok! The `Source` is an alias for
+
+~~~haskell
+type Source a = SE (Gui, Input a)
+~~~
+
+So the uderlying type of `pedals` is:
+
+~~~haskell
+pedals :: Sig2 -> SE (Gui, Input (SE Sig2))
+~~~
+
+and it's just the right food for bind operator. 
 
 -------------------------------------------
 
