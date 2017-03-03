@@ -38,7 +38,14 @@ module Csound.IO (
     csd, csdBy,
 
     -- * Render and run with cabbage
-    runCabbage, runCabbageBy
+    runCabbage, runCabbageBy,
+
+    -- * Aliases for type inference
+    -- | Sometimes the type class @RenderCsd@ is too whide for us.
+    -- It cn be hard to use in the interpreter without explicit signatures.
+    -- There are functions to help the type inference.
+    -- ** For processing inputs
+    onCard1, onCard2, onCard4, onCard6, onCard8
 ) where
 
 import System.Process
@@ -447,3 +454,25 @@ runCabbageBy opt' a = do
     writeCsdBy opt "tmp.csd" a
     runWithUserInterrupt $ "Cabbage " ++ "tmp.csd" 
     where opt = opt' <> setCabbage
+
+------------------------------
+
+-- | Alias to process inputs of single input audio-card.
+onCard1 :: (Sig -> a) -> (Sig -> a)
+onCard1= id
+
+-- | Alias to process inputs of stereo input audio-card.
+onCard2 :: (Sig2 -> a) -> (Sig2 -> a)
+onCard2= id
+
+-- | Alias to process inputs of audio-card with 4 inputs.
+onCard4 :: (Sig4 -> a) -> (Sig4 -> a)
+onCard4= id
+
+-- | Alias to process inputs of audio-card with 6 inputs.
+onCard6 :: (Sig6 -> a) -> (Sig6 -> a)
+onCard6= id
+
+-- | Alias to process inputs of audio-card with 8 inputs.
+onCard8 :: (Sig8 -> a) -> (Sig8 -> a)
+onCard8= id    

@@ -332,6 +332,73 @@ pedals :: Sig2 -> SE (Gui, Input (SE Sig2))
 
 and it's just the right food for bind operator. 
 
+Also we can apply the UI-widget with FX processing function with the help of the function `fxApply`:
+
+~~~haskell
+fxApply :: Source (a -> SE b) -> a -> Source b
+~~~
+
+### Composing mono and stereo effects
+
+It's often happens when chain starts with monophonic processing units (`Sig -> SE Sig`)
+and then proceeds with stereophonic processing units (`Sig2 -> SE Sig2`). The reverb is often
+used as mono to stereo  transition.  To make it easy to create chains of effects from mixed up
+units there are analogs of functions `fxHor` and `fxVer`. They have suffix `MS` for Mono-To-Stereo:
+
+~~~haskell
+fxHorMS, fxVerMS :: 
+    [Source Fx1] -> 
+    Maybe (Source (Sig -> SE Sig2)) -> 
+    [Source Fx2] -> 
+    Source (Sig -> SE Sig2)
+~~~
+
+Type seems to be complicated but let's break it apart. The chain starts with the list of monophonic effects:
+
+~~~haskell
+[Source Fx1] -> 
+~~~
+
+Recall that `Fx1` is an alias for `Sig -> SE Sig`. Then we encounter a possible bridge from mono to stereo signals:
+
+~~~haskell
+Maybe (Source (Sig -> SE Sig2)) ->
+~~~
+
+It's wrapped in maybe type. We have to options. We can explicitly define the effect that takes us from mono to stereo (reverb is often used at this place).
+Also we can just omit it with `Nothing` case and then the identity mono to stereo converter will be inserted.
+
+Next we proceed with the chain of stereo effects:
+
+~~~haskell
+[Source Fx2] -> 
+~~~
+
+At the output we get UI-widget with the mono to stereo effect:
+
+~~~haskell
+Source (Sig -> SE Sig2)
+~~~
+
+An example:
+
+~~~haskell
+> let fx = fxHorMS [uiTort1, uiFlan2] def [uiChamber2]
+> :t fx
+fx :: Source (Sig -> SE Sig2)
+~~~
+
+We create the ui widget with a bit of distortion, slightly more flanger and not too big reverb.
+We use `def` as an alias for maybe's constructor `Nothing`. We can apply the effect to the imput signal
+received from say guitar pluged into audio card.
+
+~~~haskell
+> dac $ onCard2 $ \(aLeft, aRight) -> fxApply fx aLeft
+~~~
+
+The `onCard2` is a helper function to derive the types. It passes the argument through unchanged but it has more strict type signature. 
+The `dac` is to much overloaded for this case. We can do without it but then we need to specify the types explicitly.
+
 -------------------------------------------
 
 * <= [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Patches.md)

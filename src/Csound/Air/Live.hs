@@ -6,7 +6,8 @@ module Csound.Air.Live (
 
     -- * Effects
     fxBox, uiBox,
-    fxColor, fxVer, fxHor, fxMatrix, fxSca, fxApp,
+    fxColor, fxVer, fxHor, fxMatrix, fxSca, fxMap, fxApply, atFx,
+    fxHorMS, fxVerMS,
     fromMonoFx,
 
     -- * Instrument choosers
@@ -164,6 +165,20 @@ fxColor = sourceColor2
 
 -- combine effects
 
+fxGroupMS :: ([Gui] -> Gui) -> [Source Fx1] -> Maybe (Source (Sig -> SE Sig2)) -> [Source Fx2] -> Source (Sig -> SE Sig2)
+fxGroupMS guiGroup as bridge bs = do
+    (gsA, fA) <- getChain as
+    (gsB, fB) <- getChain bs
+    case bridge of
+        Nothing -> return $ (guiGroup $ gsA ++ gsB, fA >=> fB . fromMono)
+        Just widget -> do
+            (gBridge, fBridge) <- widget
+            return $ (guiGroup $ gsA ++ gBridge : gsB, fA >=> fBridge >=> fB)    
+    where
+        getChain xs = do
+            (gs, fs) <- fmap unzip $ sequence xs
+            return (gs, foldl (\a b -> a >=> b) return fs)
+
 fxGroup :: ([Gui] -> Gui) -> [Source (Fx a)] -> Source (Fx a)
 fxGroup guiGroup as = do
     (gs, fs) <- fmap unzip $ sequence as    
@@ -175,13 +190,13 @@ fxSca d a = fxGroup (\xs -> sca d $ head xs) [a]
 
 -- | Groups the signal processing widgets. 
 -- The functions are composed the visuals are
--- grouped  horizontaly.
+-- grouped  horizontally.
 fxHor :: [Source (Fx a)] -> Source (Fx a)
 fxHor = fxGroup hor
 
 -- | Groups the signal processing widgets. 
 -- The functions are composed the visuals are
--- grouped  verticaly.
+-- grouped  vertically.
 fxVer :: [Source (Fx a)] -> Source (Fx a)
 fxVer = fxGroup ver
 
@@ -197,9 +212,30 @@ fxMatrix columnsSize fxs = fxVer $ fmap fxHor $ splitList columnsSize fxs
             (res, []) -> [res]
             (as,rest) -> as : splitList n rest
 
+
+-- | @fxHor@ for chain that starts with mono effects and proceeds with stereo effects.
+-- The second argument can contain The transition widget (mono to stereo effect) or it can be empty.
+--  If it's empty automatic conversion will be inserted.
+fxHorMS :: [Source Fx1] -> Maybe (Source (Sig -> SE Sig2)) -> [Source Fx2] -> Source (Sig -> SE Sig2)
+fxHorMS = fxGroupMS hor
+
+-- | @fxVer@ for chain that starts with mono effects and proceeds with stereo effects.
+-- The second argument can contain The transition widget (mono to stereo effect) or it can be empty.
+--  If it's empty automatic conversion will be inserted.
+fxVerMS :: [Source Fx1] -> Maybe (Source (Sig -> SE Sig2)) -> [Source Fx2] -> Source (Sig -> SE Sig2)
+fxVerMS = fxGroupMS ver
+
+-- | Applies FX with UI to the input argument.
+fxApply :: Source (a -> SE b) -> a -> Source b
+fxApply fx a = joinSource $ lift1 (\f -> f a) fx
+
 -- | Applies a function to a signal processing function.
-fxApp :: Fx a -> Source (Fx a) -> Source (Fx a) 
-fxApp f = mapSource (>=> f)
+fxMap :: Fx a -> Source (Fx a) -> Source (Fx a) 
+fxMap f = mapSource (>=> f)
+
+-- | Applies FX to the Patch.
+atFx :: Source (Fx a) -> Patch a -> Source (Patch a)
+atFx uiFx patch = lift1 (\fx -> addPostFx 1 fx patch) uiFx
 
 -- | The distortion widget. The arguments are
 --
