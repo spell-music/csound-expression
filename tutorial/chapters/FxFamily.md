@@ -338,6 +338,12 @@ Also we can apply the UI-widget with FX processing function with the help of the
 fxApply :: Source (a -> SE b) -> a -> Source b
 ~~~
 
+If the argument is wrapped in `SE` we can use the bind operator `=<<`:
+
+~~~haskell
+fxApply fx =<< atMidi hammondOrgan
+~~~
+
 ### Composing mono and stereo effects
 
 It's often happens when chain starts with monophonic processing units (`Sig -> SE Sig`)
