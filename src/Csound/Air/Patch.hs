@@ -1,4 +1,4 @@
-{-# Language ScopedTypeVariables #-}
+{-# Language ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances #-}
 -- | Patches.
 module Csound.Air.Patch(
   
@@ -81,6 +81,7 @@ import Csound.Tuning
 import Csound.Types
 
 import Csound.SigSpace
+import Csound.IO
 
 -- | Common parameters for patches. We use this type to parametrize the patch with some tpyes of arguments
 -- that we'd like to be able to change after patch is already constructed. For instance the filter type can greatly
@@ -818,3 +819,9 @@ bindPreFx f = addPreFx 1 (bindSig f)
 -- | Adds pre fx with effectful signal function and specifies dry/wet ratio.
 bindPreFx' :: BindSig a => Sig -> (Sig -> SE Sig) -> Patch a -> Patch a
 bindPreFx' rate f = addPreFx rate (bindSig f)
+
+instance RenderCsd Patch1 where
+    renderCsdBy opt p = renderCsdBy opt (atMidi p)
+
+instance RenderCsd Patch2 where
+    renderCsdBy opt p = renderCsdBy opt (atMidi p)

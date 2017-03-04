@@ -649,7 +649,7 @@ ringo5 = ringo' size5
 -- UI 
 
 setAll :: Double -> [String] -> [(String, Double)]
-setAll size names = fmap (\s -> (s, size)) ["rate", "depth", "del time", "fbk"]
+setAll size names = fmap (\s -> (s, size)) names
 
 
 -- colors
@@ -836,8 +836,8 @@ uiChory' = paintTo choryColor $ fxBox "Chorus" fx True [("size", size1)]
 
 uiChoryBy :: Double -> Source Fx2
 uiChoryBy size = paintTo choryColor $ fxBox "Chorus" fx True $ setAll size ["rate", "depth", "width"]
-    where        
-        fx [rate, depth, width] = return . chory rate depth width
+    where            
+        fx [rate, depth, width] = return . chory rate depth width        
 
 uiChory1, uiChory2, uiChory3, uiChory4, uiChory5 :: Source Fx2
 
