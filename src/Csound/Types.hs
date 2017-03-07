@@ -86,11 +86,11 @@ module Csound.Types(
     arr1, darr1, arr2, darr2, arr3, darr3,  
 
     -- ** Array opcodes
-    fillLocalArrayNew, fillGlobalArrayNew, fillLocalCtrlArrayNew, fillGlobalCtrlArrayNew,
+    fillLocalArr, fillGlobalArr, fillLocalCtrlArr, fillGlobalCtrlArr,
     maparrayNew, lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray, 
     scalearray, slicearrayNew,
 
-    fillArrayCopy, maparrayCopy, slicearrayCopy,
+    maparrayCopy, slicearrayCopy,
 
     -- ** Spectral opcodes
     SpecArr, 

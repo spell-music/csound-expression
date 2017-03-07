@@ -786,6 +786,27 @@ listenOsc ref addr type =
 The function `listenOsc` produces a stream of OSC-messages that are
 coming on the given port, address and have a certain type.
 
+#### Listening for signals
+
+It's often happens that OSC-messages encode a continuous signal. The signal controls
+some parameter of the synth. In this case we can use a handy function:
+
+~~~haskell
+listenOscVal :: (Tuple a, OscVal a) => OscRef -> String -> a -> SE a
+listenOscVal oscRef address initValue
+~~~
+
+We listen on the specific port and address. The last argument is an initial value for the signal (or tuple of signals).
+When new value comes the output signal is set to that value. It's like sample and hold function
+only messages for signal update come from the OSC-channel.
+
+There are two useful aliases for this function. They read signals and pairsof signals:
+
+~~~haskell
+listenOscSig  :: (Tuple a, OscVal a) => OscRef -> String -> Sig  -> SE Sig
+listenOscSig2 :: (Tuple a, OscVal a) => OscRef -> String -> Sig2 -> SE Sig2
+~~~
+
 
 ### Sending messages
 
