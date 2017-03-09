@@ -85,6 +85,10 @@ module Csound.Types(
     Arr1, DArr1, Arr2, DArr2, Arr3, DArr3,
     arr1, darr1, arr2, darr2, arr3, darr3,  
 
+    -- ** Traverse and fold
+    foreachArr, foreachArrD, forRowArr, forColumnArr, forRowArrD, forColumnArrD,
+    foldArr, foldRowArr, foldColumnArr, foldRowsArrD, foldColumnsArrD,
+
     -- ** Array opcodes
     fillLocalArr, fillGlobalArr, fillLocalCtrlArr, fillGlobalCtrlArr,
     maparrayNew, lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray, 
@@ -106,6 +110,7 @@ module Csound.Types(
 
 import Data.Boolean
 import Csound.Typed.Types
+import Csound.Typed.Control
 import Csound.Control.SE
 
 -- | Gets an init-rate value from the list by index.
@@ -133,3 +138,6 @@ compareWhenD val conds = case conds of
     where
         (less, more) = splitAt (length conds `div` 2) conds
         rootCond = fst $ last less
+
+
+

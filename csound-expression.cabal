@@ -136,5 +136,4 @@ Library
         Csound.Control.Overload
         Csound.Control.Overload.Outs
         Csound.Control.Overload.MidiInstr
-        Csound.Control.Overload.SpecInstr
-
+        Csound.Control.Overload.SpecInstr     

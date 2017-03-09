@@ -919,9 +919,70 @@ fftCopy :: SpecArr -> SpecArr -> SE ()
 The function `fftNew` allocates new array. But `fftCopy` just copies the data to existing array.
 Notice how the roles of the functions are signified with the signatures.
 
-### An example of working with arrays
 
-**TODO**
+#### Functional traversals and folds
+
+There are special functions that make traversal and folding very easy. 
+
+##### Traverse
+
+We can traverse all elements in the array with function:
+
+
+
+~~~haskell
+foreachArr :: (Tuple ix, Tuple a) => Arr ix a -> ((ix, a) -> SE ()) -> SE ()
+foreachArr array proc
+~~~
+
+It takes an array and procedure that is defined on pairs of index and the value. 
+These procedure is applied to all elments in the array. Notice that it can be applied to
+arrays of any sizes. All of them are going to be processed in the uniform way.
+
+There are two useful special cases for 2D arrays:
+
+~~~haskell
+forRowArr, forColumnArr :: Tuple a => Sig -> Arr Sig2 a -> ((Sig, a) -> SE ()) -> SE ()
+
+forRowArr rowId array proc
+~~~
+
+They traverse only specific rows or columns. The index of the row (column) 
+is the first argument of the function.
+
+##### Fold
+
+We can fold the array with the function. The process of folding is a traversal with value accumulation.
+
+~~~haskell
+foldArr :: (Tuple ix, Tuple a, Tuple b) =>
+     ((ix, a) -> b -> SE b) -> b -> Arr ix a -> SE b
+~~~
+
+The `foldArr` function takes a procedure that updates the result of type `b`
+based on the current index and value and the value of accumulator from the previous step.
+Also it takes initial value for accumulator and array.
+
+There are specific foldfunctions to fold on rows and columns of 2D matrix:
+
+~~~haskell
+foldRowArr, foldColumnArr
+  :: (Tuple a, Tuple b) =>
+     ((Sig, a) -> b -> SE b) -> b -> Sig -> Arr Sig2 a -> SE b
+~~~
+
+##### Init vs control rate traversals
+
+In Csound there is a distinction between initial pass of the instrument. When everything gets initialized
+and control rate. When the audio goes on and we can control it. The aforementioned traversal functions
+work at control rate. But it's useful to be able to run them at init pass. To do it we have to use
+special variants of them with suffix `D`. The `D` is a synonym for constant number in the library
+that gets initialized and never changed at the control rate. So we have the functions:
+
+~~~haskell
+foreachArrD     forRowArrD      forColumnArrD
+foldArrD        foldRowArrD     foldColumnArrD
+~~~
 
 ----------------------------------------------------
 
