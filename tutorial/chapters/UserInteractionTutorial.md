@@ -314,6 +314,8 @@ sca   :: Double -> Gui -> Gui
 
 padding :: Int -> Gui -> Gui
 margin  :: Int -> Gui -> Gui
+
+resizeUi :: (Double, Double) -> Gui -> Gui
 ~~~
 
 The functions `hor` and `ver` are for horizontal and vertical grouping of the elements.
@@ -338,6 +340,31 @@ the saw waveform.
 
 I've added some formatting for readability in the last line. But to make it work
 in the ghci you have to type it a single line.
+
+We can scale the whole window size with function `resizeUi`. It takes in a pair of x and y scale factors.
+The difference between `sca` and `resizeUi` is that `sca` scales the *relative* size of the widget
+within a container but `resizeUi` affects the default all *absolute* sizes of UI-widgets. 
+
+The typical usage of resizeUi is when we created an intricated UI with many widgets
+and it doesn't fits the screen we can make everything smaller by calling something like `resizeUi (0.75, 0.75)` on it.
+
+If you find yoursel using this function to much it's probably the defaults of the library are not
+good for your screen. You can set the scaling factor globaly with options (see parameter `csdScaleUI`).
+We would like to make our own `dac` function that overrides the defaults:
+
+~~~haskell
+let run = dacBy (def { csdScaleUI = (1.5, 1.5) })
+~~~
+
+And then we can use our `run` function in place of `dac`.
+
+Note that there is a handy function to rescale sources. The widget source is the most frequently used. 
+So there is a shortcut to easily adjust the sizes:
+
+ ~~~haskell
+ resizeSource :: (Double, Double) -> Source a -> Source a
+ resizeSource factorXY = mapGuiSource (resizeUi factorXY)
+ ~~~
 
 ### Applicative style GUIs
 

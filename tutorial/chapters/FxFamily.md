@@ -344,6 +344,22 @@ If the argument is wrapped in `SE` we can use the bind operator `=<<`:
 fxApply fx =<< atMidi hammondOrgan
 ~~~
 
+***Reminder**: With functions like `fxHor` and `fxGrid` we can easily stack many stompboxes.
+We can stack so many of them that they no longer fit to the screen. To adjust the total size
+of the window we can use the function `resizeSource`:
+
+~~~haskell
+resizeSource :: (Double, Double) -> Source a -> Source a
+
+> dac $ resizeSource (0.75, 1) $ fxApply (fxHor [ ... many stompboxes ... ]) ourInput
+~~~
+
+Also we can set the default scaling factor parameters wit the options (see the paramter `csdScaleUI`):
+
+~~~haskell
+> dacBy (def { csdScaleUI = (2, 2) }) $ ...
+~~~
+
 ### Composing mono and stereo effects
 
 It's often happens when chain starts with monophonic processing units (`Sig -> SE Sig`)
