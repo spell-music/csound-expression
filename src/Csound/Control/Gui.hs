@@ -59,7 +59,7 @@ module Csound.Control.Gui (
     widget, sink, source, display, sinkSource, sinkSlice, sourceSlice,
     mapSource, mapGuiSource, 
     mhor, mver, msca,
-    joinSource, fromSource, fromSourceSE,
+    joinSource, fromSource, fromSourceSE, resizeSource,
 
     -- * Panels
     panel, win, panels, panelBy,
@@ -136,6 +136,14 @@ fromSource a = do
 
 fromSourceSE :: Source (SE a) -> SE a
 fromSourceSE = join . fromSource
+
+-- | Resizes all default minimal sizes for all elements in the source.
+-- It affects the total sizes of the widgets. So for example if our UI is too big
+-- and it doesn't fir to the screen we can make it smaller by scaling:
+--
+-- > resizeSource (0.75, 0.5) uiSource
+resizeSource :: (Double, Double) -> Source a -> Source a
+resizeSource scaleXY = mapGuiSource $ resizeGui scaleXY
 
 ----------------------------------------------------------------------------------
 -- easy grouppings for GUIs
