@@ -78,7 +78,7 @@ file and then load it in the ghci and invoke the function `main`
 
 ---------------------------------------------------------------------
 
-Roadmap: where are we going?
+Roadmap: [where are we going](https://github.com/spell-music/csound-expression/blob/master/ideas/Roadmap.md)?
 
 News
 -----------------------------
