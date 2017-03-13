@@ -76,8 +76,9 @@ invoke `runhaskell`. So the best is to write you program in the separate
 file and then load it in the ghci and invoke the function `main`
 (which runs the sound rendering with the function `dac`).
 
-
 ---------------------------------------------------------------------
+
+Roadmap: where are we going?
 
 News
 -----------------------------
