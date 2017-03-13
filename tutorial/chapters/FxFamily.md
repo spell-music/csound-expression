@@ -75,11 +75,11 @@ If tone is low the echoes are muddy (or muted) and if it's high the echoes are a
 It's a special version of ping-pong delay. The dry/wet ratio and feedback are controlled with the same parameter.
 
 ~~~haskell
-pongy :: MixAt Sig2 (SE Sig2) a => Feedback -> DelayTime -> a -> AtOut Sig2 (SE Sig2) a
+pongy :: Sigs a => Feedback -> DelayTime -> a -> SE a
 pongy feedback delayTime
 ~~~
 
-The signature can look scary but it's just a stereo function that is lifted with `at` function to work on many types.
+The signature is generic but it's intended to be used with stereo signals or tuples of stereo signals.
 It can be used like this:
 
 ~~~haskell
@@ -91,7 +91,7 @@ dac $ pongy $ loopWav 1 "vox.wav"
 There are usefull functions to easily add a reverb:
 
 ~~~haskell
-room, chamber, hall, cave :: MixAt Sig2 Sig2 a => Balance -> a -> AtOut Sig2 Sig2 a
+room, chamber, hall, cave :: Sigs a => Balance -> a -> a
 ~~~
 
 The first argument is dry/wet ratio.

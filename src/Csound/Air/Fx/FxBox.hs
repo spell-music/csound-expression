@@ -172,6 +172,7 @@ module Csound.Air.Fx.FxBox(
     uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5    
 
     -- ** Compressor
+    -- | TODO
 
    
 ) where
@@ -456,10 +457,10 @@ adele5m = adeleByM size5
 -- | Ping-pong delay
 --
 -- > pongy feedback delayTime
-pongy ::  MixAt Sig2 (SE Sig2) a => Feedback -> DelayTime -> a -> AtOut Sig2 (SE Sig2) a
-pongy fbk delTime = at (pingPong delTime fbk (fbk / 2.1))
+pongy ::  Sigs a => Feedback -> DelayTime -> a -> SE a
+pongy fbk delTime = bindSig2 (pingPong delTime fbk (fbk / 2.1))
 
-pongy1, pongy2, pongy3, pongy4, pongy5 :: MixAt Sig2 (SE Sig2) a => DelayTime -> a -> AtOut Sig2 (SE Sig2) a
+pongy1, pongy2, pongy3, pongy4, pongy5 :: Sigs a => DelayTime -> a -> SE a
 
 pongy1 = pongy size1
 pongy2 = pongy size2
@@ -548,10 +549,10 @@ phasy5 = phasy' size5
 
 -- Chorus
 
-chory' :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
-chory' size = at (chory size size size)
+chory' :: Sigs a => Sig -> a -> a
+chory' size = mapSig2 (chory size size size)
 
-chory1, chory2, chory3, chory4, chory5 :: MixAt Sig2 Sig2 a => a -> AtOut Sig2 Sig2 a
+chory1, chory2, chory3, chory4, chory5 :: Sigs a => a -> a
 
 chory1 = chory' size1
 chory2 = chory' size2
@@ -563,10 +564,10 @@ chory5 = chory' size5
 
 -- pany :: TremWaveSig -> DepthSig -> RateSig -> Sig2 -> Sig2
 
-oscPany' :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
-oscPany' size = at (oscPany size size)
+oscPany' :: Sigs a => Sig -> a -> a
+oscPany' size = mapSig2 (oscPany size size)
 
-oscPany1, oscPany2, oscPany3, oscPany4, oscPany5 :: MixAt Sig2 Sig2 a => a -> AtOut Sig2 Sig2 a
+oscPany1, oscPany2, oscPany3, oscPany4, oscPany5 :: Sigs a => a -> a
 
 oscPany1 = oscPany' size1
 oscPany2 = oscPany' size2
@@ -574,10 +575,10 @@ oscPany3 = oscPany' size3
 oscPany4 = oscPany' size4
 oscPany5 = oscPany' size5
 
-triPany' :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
-triPany' size = at (triPany size size)
+triPany' :: Sigs a => Sig -> a -> a
+triPany' size = mapSig2 (triPany size size)
 
-triPany1, triPany2, triPany3, triPany4, triPany5 :: MixAt Sig2 Sig2 a => a -> AtOut Sig2 Sig2 a
+triPany1, triPany2, triPany3, triPany4, triPany5 :: Sigs a => a -> a
 
 triPany1 = triPany' size1
 triPany2 = triPany' size2
@@ -585,10 +586,10 @@ triPany3 = triPany' size3
 triPany4 = triPany' size4
 triPany5 = triPany' size5
 
-sqrPany' :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
-sqrPany' size = at (sqrPany size size)
+sqrPany' :: Sigs a => Sig -> a -> a
+sqrPany' size = mapSig2 (sqrPany size size)
 
-sqrPany1, sqrPany2, sqrPany3, sqrPany4, sqrPany5 :: MixAt Sig2 Sig2 a => a -> AtOut Sig2 Sig2 a
+sqrPany1, sqrPany2, sqrPany3, sqrPany4, sqrPany5 :: Sigs a => a -> a
 
 sqrPany1 = sqrPany' size1
 sqrPany2 = sqrPany' size2
@@ -829,17 +830,17 @@ uiPhasy5 = uiPhasyBy size5
 
 -- Chorus
 
-uiChory' :: Source Fx2
+uiChory' :: Sigs a => Source (Fx a)
 uiChory' = paintTo choryColor $ fxBox "Chorus" fx True [("size", size1)]
     where         
         fx [size] = return . chory' size
 
-uiChoryBy :: Double -> Source Fx2
+uiChoryBy :: Sigs a => Double -> Source (Fx a)
 uiChoryBy size = paintTo choryColor $ fxBox "Chorus" fx True $ setAll size ["rate", "depth", "width"]
     where            
-        fx [rate, depth, width] = return . chory rate depth width        
+        fx [rate, depth, width] = return . mapSig2 (chory rate depth width)
 
-uiChory1, uiChory2, uiChory3, uiChory4, uiChory5 :: Source Fx2
+uiChory1, uiChory2, uiChory3, uiChory4, uiChory5 :: Sigs a => Source (Fx a)
 
 uiChory1 = uiChoryBy size1
 uiChory2 = uiChoryBy size2
@@ -978,15 +979,15 @@ uiRevsy initTime = mapSource bindSig $ paintTo revsyColor $ fxBox "Reverse" fx T
 ------------------------------------------------------------
 -- Reverbs 
 
-uiRevBy :: Double -> Double -> Source Fx2
+uiRevBy :: Sigs a => Double -> Double -> Source (Fx a)
 uiRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
     where        
-        fx [balance, feedback] = \asig -> return $ mixAt balance (rever2 feedback) asig
+        fx [balance, feedback] = \asig -> return $ mapSig2 (\x -> mixAt balance (rever2 feedback) x) asig
 
-uiRoom :: Double -> Source Fx2
+uiRoom :: Sigs a => Double -> Source (Fx a)
 uiRoom = uiRevBy 0.6 
 
-uiRoom1, uiRoom2, uiRoom3, uiRoom4, uiRoom5 :: Source Fx2
+uiRoom1, uiRoom2, uiRoom3, uiRoom4, uiRoom5 :: Sigs a => Source (Fx a)
 
 uiRoom1 = uiRoom size1 
 uiRoom2 = uiRoom size2 
@@ -994,10 +995,10 @@ uiRoom3 = uiRoom size3
 uiRoom4 = uiRoom size4 
 uiRoom5 = uiRoom size5 
 
-uiChamber :: Double -> Source Fx2
+uiChamber :: Sigs a => Double -> Source (Fx a)
 uiChamber = uiRevBy 0.8
 
-uiChamber1, uiChamber2, uiChamber3, uiChamber4, uiChamber5 :: Source Fx2
+uiChamber1, uiChamber2, uiChamber3, uiChamber4, uiChamber5 :: Sigs a => Source (Fx a)
 
 uiChamber1 = uiChamber size1
 uiChamber2 = uiChamber size2
@@ -1005,10 +1006,10 @@ uiChamber3 = uiChamber size3
 uiChamber4 = uiChamber size4
 uiChamber5 = uiChamber size5
 
-uiHall :: Double -> Source Fx2
+uiHall :: Sigs a => Double -> Source (Fx a)
 uiHall = uiRevBy 0.9
 
-uiHall1, uiHall2, uiHall3, uiHall4, uiHall5 :: Source Fx2
+uiHall1, uiHall2, uiHall3, uiHall4, uiHall5 :: Sigs a => Source (Fx a)
 
 uiHall1 = uiHall size1
 uiHall2 = uiHall size2
@@ -1016,8 +1017,10 @@ uiHall3 = uiHall size3
 uiHall4 = uiHall size4
 uiHall5 = uiHall size5
 
-uiCave :: Double -> Source Fx2
+uiCave :: Sigs a => Double -> Source (Fx a)
 uiCave = uiRevBy 0.99
+
+uiCave1, uiCave2, uiCave3, uiCave4, uiCave5 :: Sigs a => Source (Fx a)
 
 uiCave1 = uiCave size1
 uiCave2 = uiCave size2
@@ -1030,13 +1033,15 @@ uiCave5 = uiCave size5
 -- | Ping-pong delay
 --
 -- > uiPongy feedback delayTime
-uiPongy' :: Double -> Double -> Source Fx2
+uiPongy' :: Sigs a => Double -> Double -> Source (Fx a)
 uiPongy' initFeedback initDelayTime = paintTo pongColor $ fxBox "Pong" fx True [("mix", initBalance), ("fbk", initFeedback), ("del time", initDelayTime)]
     where
         initBalance = initFeedback / 2.1 
 
-        fx [balance, feedback, delTime] = pingPong delTime feedback balance
-   
+        fx [balance, feedback, delTime] = bindSig2 $ pingPong delTime feedback balance
+ 
+uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5 :: Sigs a => Double -> Source (Fx a)
+
 uiPongy1 = uiPongy' size1
 uiPongy2 = uiPongy' size2
 uiPongy3 = uiPongy' size3
