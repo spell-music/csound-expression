@@ -2,7 +2,7 @@
 
 -- | A friendly family of effects. These functions are kindly provided by Iain McCurdy (designed in Csound).
 module Csound.Air.Fx.FxBox(
-    adele, tort, fowler, revsy, flan, phasy, crusher, chory, pany, oscPany, triPany, sqrPany, tremy, oscTremy, triTremy, sqrTremy, ringo, EnvelopeModSig,
+    adele, pongy, tort, fowler, revsy, flan, phasy, crusher, chory, pany, oscPany, triPany, sqrPany, tremy, oscTremy, triTremy, sqrTremy, ringo, EnvelopeModSig,
 
     -- * Presets
     -- | For all presets we have 5 levels of strength. They are signified by numbers from 1 to 5. Also for some effects (delay and distortion)
@@ -15,8 +15,14 @@ module Csound.Air.Fx.FxBox(
     -- *** Muted
     adele1m, adele2m, adele3m, adele4m, adele5m,
 
-    -- ** Ping Pong Delay
-    pongy, pongy1, pongy2, pongy3, pongy4, pongy5,
+    -- ** Ping Pong Delay   
+    pongy1, pongy2, pongy3, pongy4, pongy5,
+
+    -- *** Bright
+    pongy1b, pongy2b, pongy3b, pongy4b, pongy5b,
+
+    -- *** Muted
+    pongy1m, pongy2m, pongy3m, pongy4m, pongy5m,
 
     -- ** Distortion
     tort1, tort2, tort3, tort4, tort5,
@@ -130,7 +136,9 @@ module Csound.Air.Fx.FxBox(
     uiAdele1m, uiAdele2m, uiAdele3m, uiAdele4m, uiAdele5m,
 
     -- ** Ping Pong Delay
-    uiPongy', uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5,
+    uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5,
+    uiPongy1b, uiPongy2b, uiPongy3b, uiPongy4b, uiPongy5b,
+    uiPongy1m, uiPongy2m, uiPongy3m, uiPongy4m, uiPongy5m,    
 
     -- ** Distortion
     uiTort1, uiTort2, uiTort3, uiTort4, uiTort5,
@@ -177,6 +185,8 @@ module Csound.Air.Fx.FxBox(
    
 ) where
 
+import Data.Default
+
 import Csound.Typed
 import Csound.Typed.Opcode(ampdb, scale, expcurve, compress)
 import Csound.Typed.Gui
@@ -191,7 +201,7 @@ import Csound.Air.Patch(Fx, Fx1, Fx2)
 import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig, 
     BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig, 
     DriveSig, TimeSig, WidthSig, 
-    rever2, pingPong)
+    rever2, pingPong, pingPong', PingPongSpec(..))
 
 import Csound.Air.Live(fxBox, fxColor)
 import Csound.Air.Wav(toMono)
@@ -456,17 +466,46 @@ adele5m = adeleByM size5
 
 -- | Ping-pong delay
 --
--- > pongy feedback delayTime
-pongy ::  Sigs a => Feedback -> DelayTime -> a -> SE a
-pongy fbk delTime = bindSig2 (pingPong delTime fbk (fbk / 2.1))
+-- > pongy kmix delayTime feedback tone ain
+pongy ::  Sigs a => Balance -> DelayTime -> Feedback -> ToneSig -> WidthSig -> a -> a
+pongy balance delTime fbk tone width = mapSig2 (pingPong' (def { pingPongDamp = absTone, pingPongWidth = width }) delTime fbk balance)
+    where absTone = scale (expcurve tone 4) 12000 100
 
-pongy1, pongy2, pongy3, pongy4, pongy5 :: Sigs a => DelayTime -> a -> SE a
+pongyBy :: Sigs a => ToneSig -> Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyBy tone size balance delTime width = pongy balance delTime size tone width
 
-pongy1 = pongy size1
-pongy2 = pongy size2
-pongy3 = pongy size3
-pongy4 = pongy size4
-pongy5 = pongy size5
+pongyBy_ :: Sigs a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyBy_ = pongyBy 0.5
+
+pongy1, pongy2, pongy3, pongy4, pongy5 :: Sigs a => Balance -> DelayTime -> WidthSig -> a -> a
+
+pongy1 = pongyBy_ size1
+pongy2 = pongyBy_ size2
+pongy3 = pongyBy_ size3
+pongy4 = pongyBy_ size4
+pongy5 = pongyBy_ size5
+
+pongyByB :: Sigs a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyByB = pongyBy 0.8
+
+pongy1b, pongy2b, pongy3b, pongy4b, pongy5b :: Sigs a => Balance -> DelayTime -> WidthSig -> a -> a
+
+pongy1b = pongyByB size1
+pongy2b = pongyByB size2
+pongy3b = pongyByB size3
+pongy4b = pongyByB size4
+pongy5b = pongyByB size5
+
+pongyByM :: Sigs a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyByM = pongyBy 0.2
+
+pongy1m, pongy2m, pongy3m, pongy4m, pongy5m :: Sigs a => Balance -> DelayTime -> WidthSig -> a -> a
+
+pongy1m = pongyByM size1
+pongy2m = pongyByM size2
+pongy3m = pongyByM size3
+pongy4m = pongyByM size4
+pongy5m = pongyByM size5
 
 -- Distortion
 
@@ -687,7 +726,6 @@ olive = "#3D9970"
 
 -- Analog Delay
 
-
 uiAdeleBy :: Sigs a => Double -> Double -> Double -> Double -> Source (Fx a)
 uiAdeleBy initTone initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone)]
     where        
@@ -725,6 +763,48 @@ uiAdele2m = uiAdeleByM size2
 uiAdele3m = uiAdeleByM size3
 uiAdele4m = uiAdeleByM size4
 uiAdele5m = uiAdeleByM size5
+
+-- Ping-pong delay
+
+uiPongyBy :: Sigs a => Double -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
+    where        
+        fx [balance, delayTime, feedback, tone, width] = return . pongy balance delayTime feedback tone width
+
+defWidth = 0.7
+
+uiPongyBy_ :: Sigs a => Double -> Double -> Double -> Source (Fx a)
+uiPongyBy_ = uiPongyBy 0.5 defWidth
+
+uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5 :: Sigs a => Double -> Double -> Source (Fx a)
+
+uiPongy1 = uiPongyBy_ size1
+uiPongy2 = uiPongyBy_ size2
+uiPongy3 = uiPongyBy_ size3
+uiPongy4 = uiPongyBy_ size4
+uiPongy5 = uiPongyBy_ size5
+
+uiPongyByB :: Sigs a => Double -> Double -> Double -> Source (Fx a)
+uiPongyByB = uiPongyBy 0.8 defWidth
+
+uiPongy1b, uiPongy2b, uiPongy3b, uiPongy4b, uiPongy5b :: Sigs a => Double -> Double -> Source (Fx a)
+
+uiPongy1b = uiPongyByB size1
+uiPongy2b = uiPongyByB size2
+uiPongy3b = uiPongyByB size3
+uiPongy4b = uiPongyByB size4
+uiPongy5b = uiPongyByB size5
+
+uiPongyByM :: Sigs a => Double -> Double -> Double -> Source (Fx a)
+uiPongyByM = uiPongyBy 0.2 defWidth
+
+uiPongy1m, uiPongy2m, uiPongy3m, uiPongy4m, uiPongy5m :: Sigs a => Double -> Double -> Source (Fx a)
+
+uiPongy1m = uiPongyByM size1
+uiPongy2m = uiPongyByM size2
+uiPongy3m = uiPongyByM size3
+uiPongy4m = uiPongyByM size4
+uiPongy5m = uiPongyByM size5
 
 -- Distortion
 
@@ -1027,26 +1107,6 @@ uiCave2 = uiCave size2
 uiCave3 = uiCave size3
 uiCave4 = uiCave size4
 uiCave5 = uiCave size5
-
--- Ping Pong delay
-
--- | Ping-pong delay
---
--- > uiPongy feedback delayTime
-uiPongy' :: Sigs a => Double -> Double -> Source (Fx a)
-uiPongy' initFeedback initDelayTime = paintTo pongColor $ fxBox "Pong" fx True [("mix", initBalance), ("fbk", initFeedback), ("del time", initDelayTime)]
-    where
-        initBalance = initFeedback / 2.1 
-
-        fx [balance, feedback, delTime] = bindSig2 $ pingPong delTime feedback balance
- 
-uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5 :: Sigs a => Double -> Source (Fx a)
-
-uiPongy1 = uiPongy' size1
-uiPongy2 = uiPongy' size2
-uiPongy3 = uiPongy' size3
-uiPongy4 = uiPongy' size4
-uiPongy5 = uiPongy' size5
 
 ------------------------------------------------------------
 -- Mono Reverbs 

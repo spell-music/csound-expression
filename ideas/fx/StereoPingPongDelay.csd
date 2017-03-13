@@ -168,6 +168,38 @@ instr	1	;GENERATES A SHORT SYNTHESISED IMPULSE SOUND
 	gasig		balance	asig2, asig1				;BALANCE FILTERED SIGNAL WITH UNFILTERED WHITE NOISE SIGNAL TO COMPENSATE FOR AMPLITUDE LOSS
 endin
 
+opcode StereoPingPongDelay, aa, aaKKKKKi
+    aInL, aInR, kdelayTime, kFeedback, kMix, kWidth, kDamp, iMaxDelayTime xin
+
+    iporttime   =       .1          ;PORTAMENTO TIME
+    kporttime   linseg      0, .001, iporttime  ;USE OF AN ENVELOPE VALUE THAT QUICKLY RAMPS UP FROM ZERO TO THE REQUIRED VALUE. THIS PREVENTS VARIABLES GLIDING TO THEIR REQUIRED VALUES EACH TIME THE INSTRUMENT IS STARTED
+    kdlt        portk       kdelayTime, kporttime    ;PORTAMENTO IS APPLIED TO THE VARIABLE 'gkdlt'. A NEW VARIABLE 'kdlt' IS CREATED.
+    adlt        interp      kdlt            ;A NEW A-RATE VARIABLE 'adlt' IS CREATED BY INTERPOLATING THE K-RATE VARIABLE 'kdlt' 
+
+    ;;;LEFT CHANNEL OFFSET;;;NO FEEDBACK!!;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    abufferL_OS delayr  iMaxDelayTime          ;CREATE A DELAY BUFFER OF imaxdelay SECONDS DURATION
+    adelsigL_OS     deltap3 adlt                ;TAP THE DELAY LINE AT adlt SECONDS
+    adelsigL_OS tone adelsigL_OS, kDamp
+            delayw  aInL                ;WRITE AUDIO SOURCE INTO THE BEGINNING OF THE BUFFER
+
+    ;;;LEFT CHANNEL DELAY;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    abufferL    delayr  iMaxDelayTime*2            ;CREATE A DELAY BUFFER OF 5 SECONDS DURATION (EQUIVALENT TO THE MAXIMUM DELAY TIME POSSIBLE USING THIS EXAMPLE)
+    adelsigL    deltap3 adlt*2              ;TAP THE DELAY LINE AT gkdlt SECONDS
+    adelsigL    tone adelsigL, kDamp
+            delayw  adelsigL_OS + (adelsigL * kFeedback)    ;WRITE AUDIO SOURCE FROM OFFSETTTING DELAY AND FEEDBACK SIGNAL INTO THE BEGINNING OF THE BUFFER
+    
+    abufferR    delayr  iMaxDelayTime*2            ;CREATE A DELAY BUFFER OF 5 SECONDS DURATION (EQUIVALENT TO THE MAXIMUM DELAY TIME POSSIBLE USING THIS EXAMPLE)
+    adelsigR    deltap3 adlt*2              ;TAP THE DELAY LINE AT gkdlt SECONDS
+    adelsigR    tone adelsigR, kDamp
+            delayw  aInR+(adelsigR*kFeedback)   ;WRITE AUDIO SOURCE AND FEEDBACK SIGNAL INTO THE BEGINNING OF THE BUFFER
+
+    ;CREATE LEFT AND RIGHT CHANNEL MIXES
+    aOutL       sum     (adelsigL  + adelsigL_OS)* kMix, aInL * (1-kMix), (1 - kWidth) * adelsigR
+    aOutR       sum     adelsigR                 * kMix, aInR * (1-kMix), (1 - kWidth) * adelsigL     
+            xout        aOutL, aOutR        ;CREATE A MIX BETWEEN THE WET AND THE DRY SIGNALS AT THE OUTPUT
+endop
+
+
 instr 	2	;STEREO PING-PONG DELAY INSTRUMENT - ALSO READS LIVE INPUT SIGNAL
 	gasig		init	0		;SET INITIAL STATE OF GLOBAL AUDIO SIGNAL (SILENCE)
 	if gkmethod!=0 kgoto SKIP
@@ -175,29 +207,31 @@ instr 	2	;STEREO PING-PONG DELAY INSTRUMENT - ALSO READS LIVE INPUT SIGNAL
 	aInL		=	(aInL * gkInGain) + gasig	;MIX LIVE AUDIO IN WITH GLOBAL AUDIO SIGNAL RECEIVED FROM INSTR 1
 	aInR		=	(aInR * gkInGain) + gasig		;MIX LIVE AUDIO IN WITH GLOBAL AUDIO SIGNAL RECEIVED FROM INSTR 1
 	
-	iporttime	=		.1			;PORTAMENTO TIME
-	kporttime	linseg		0, .001, iporttime	;USE OF AN ENVELOPE VALUE THAT QUICKLY RAMPS UP FROM ZERO TO THE REQUIRED VALUE. THIS PREVENTS VARIABLES GLIDING TO THEIR REQUIRED VALUES EACH TIME THE INSTRUMENT IS STARTED
-	kdlt		portk		gkdlt, kporttime 	;PORTAMENTO IS APPLIED TO THE VARIABLE 'gkdlt'. A NEW VARIABLE 'kdlt' IS CREATED.
-	adlt		interp		kdlt			;A NEW A-RATE VARIABLE 'adlt' IS CREATED BY INTERPOLATING THE K-RATE VARIABLE 'kdlt' 
-	
-	;;;LEFT CHANNEL OFFSET;;;NO FEEDBACK!!;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	abufferL_OS	delayr	gimaxdelay			;CREATE A DELAY BUFFER OF imaxdelay SECONDS DURATION
-	adelsigL_OS 	deltap3	adlt				;TAP THE DELAY LINE AT adlt SECONDS
-			delayw	aInL				;WRITE AUDIO SOURCE INTO THE BEGINNING OF THE BUFFER
-	
-	;;;LEFT CHANNEL DELAY;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	abufferL	delayr	gimaxdelay*2			;CREATE A DELAY BUFFER OF 5 SECONDS DURATION (EQUIVALENT TO THE MAXIMUM DELAY TIME POSSIBLE USING THIS EXAMPLE)
-	adelsigL 	deltap3	adlt*2				;TAP THE DELAY LINE AT gkdlt SECONDS
-			delayw	adelsigL_OS + (adelsigL * gkfeedamt)	;WRITE AUDIO SOURCE FROM OFFSETTTING DELAY AND FEEDBACK SIGNAL INTO THE BEGINNING OF THE BUFFER
-	
-	abufferR	delayr	gimaxdelay*2			;CREATE A DELAY BUFFER OF 5 SECONDS DURATION (EQUIVALENT TO THE MAXIMUM DELAY TIME POSSIBLE USING THIS EXAMPLE)
-	adelsigR 	deltap3	adlt*2				;TAP THE DELAY LINE AT gkdlt SECONDS
-			delayw	aInR+(adelsigR*gkfeedamt)	;WRITE AUDIO SOURCE AND FEEDBACK SIGNAL INTO THE BEGINNING OF THE BUFFER
+    aOutL, aOutR StereoPingPongDelay aInL, aInR, gkdlt, gkfeedamt, gkmix, 0.75, 3500, gimaxdelay
 
-	;CREATE LEFT AND RIGHT CHANNEL MIXES
-	aOutL		sum		(((adelsigL  + adelsigL_OS)* gkmix) + (aInL * (1-gkmix))) * gkamp
-	aOutR		sum		((adelsigR)                * gkmix) + (aInR * (1-gkmix))  * gkamp	
-			outs		aOutL, aOutR 		;CREATE A MIX BETWEEN THE WET AND THE DRY SIGNALS AT THE OUTPUT
+	; iporttime	=		.1			;PORTAMENTO TIME
+	; kporttime	linseg		0, .001, iporttime	;USE OF AN ENVELOPE VALUE THAT QUICKLY RAMPS UP FROM ZERO TO THE REQUIRED VALUE. THIS PREVENTS VARIABLES GLIDING TO THEIR REQUIRED VALUES EACH TIME THE INSTRUMENT IS STARTED
+	; kdlt		portk		gkdlt, kporttime 	;PORTAMENTO IS APPLIED TO THE VARIABLE 'gkdlt'. A NEW VARIABLE 'kdlt' IS CREATED.
+	; adlt		interp		kdlt			;A NEW A-RATE VARIABLE 'adlt' IS CREATED BY INTERPOLATING THE K-RATE VARIABLE 'kdlt' 
+	
+	; ;;;LEFT CHANNEL OFFSET;;;NO FEEDBACK!!;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; abufferL_OS	delayr	gimaxdelay			;CREATE A DELAY BUFFER OF imaxdelay SECONDS DURATION
+	; adelsigL_OS 	deltap3	adlt				;TAP THE DELAY LINE AT adlt SECONDS
+	; 		delayw	aInL				;WRITE AUDIO SOURCE INTO THE BEGINNING OF THE BUFFER
+	
+	; ;;;LEFT CHANNEL DELAY;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; abufferL	delayr	gimaxdelay*2			;CREATE A DELAY BUFFER OF 5 SECONDS DURATION (EQUIVALENT TO THE MAXIMUM DELAY TIME POSSIBLE USING THIS EXAMPLE)
+	; adelsigL 	deltap3	adlt*2				;TAP THE DELAY LINE AT gkdlt SECONDS
+	; 		delayw	adelsigL_OS + (adelsigL * gkfeedamt)	;WRITE AUDIO SOURCE FROM OFFSETTTING DELAY AND FEEDBACK SIGNAL INTO THE BEGINNING OF THE BUFFER
+	
+	; abufferR	delayr	gimaxdelay*2			;CREATE A DELAY BUFFER OF 5 SECONDS DURATION (EQUIVALENT TO THE MAXIMUM DELAY TIME POSSIBLE USING THIS EXAMPLE)
+	; adelsigR 	deltap3	adlt*2				;TAP THE DELAY LINE AT gkdlt SECONDS
+	; 		delayw	aInR+(adelsigR*gkfeedamt)	;WRITE AUDIO SOURCE AND FEEDBACK SIGNAL INTO THE BEGINNING OF THE BUFFER
+
+	; ;CREATE LEFT AND RIGHT CHANNEL MIXES
+	; aOutL		sum		(((adelsigL  + adelsigL_OS)* gkmix) + (aInL * (1-gkmix))) * gkamp
+	; aOutR		sum		((adelsigR)                * gkmix) + (aInR * (1-gkmix))  * gkamp	
+			outs		aOutL * gkamp, aOutR * gkamp 		;CREATE A MIX BETWEEN THE WET AND THE DRY SIGNALS AT THE OUTPUT
 	gasig		=	0				;CLEAR THE GLOBAL AUDIO SEND VARIABLES
 	SKIP:
 endin

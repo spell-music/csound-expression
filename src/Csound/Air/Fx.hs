@@ -75,7 +75,7 @@ import Csound.Typed.Plugins hiding(pitchShifterDelay,
 
 import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
-    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -297,25 +297,31 @@ instance Default PingPongSpec where
     def = PingPongSpec {
             pingPongMaxTime = 5,
             pingPongDamp    = 3500,
-            pingPongWidth   = 0.3
+            pingPongWidth   = 0.6 
         }
 
 -- | Ping-pong delay. 
 --
 -- > pingPong delayTime feedback mixLevel
-pingPong :: DelayTime -> Feedback -> Balance -> Sig2 -> SE Sig2
+pingPong :: DelayTime -> Feedback -> Balance -> Sig2 -> Sig2
 pingPong delTime feedback mixLevel (ainL, ainR) = pingPong' def delTime feedback mixLevel (ainL, ainR)
 
 -- | Ping-pong delay with miscellaneous arguments. 
 --
 -- > pingPong' spec delayTime feedback mixLevel
-pingPong' :: PingPongSpec -> DelayTime -> Feedback -> Balance -> Sig2 -> SE Sig2    
+pingPong' :: PingPongSpec -> DelayTime -> Feedback -> Balance -> Sig2 -> Sig2    
 pingPong' (PingPongSpec maxTime damp width) delTime feedback mixLevel (ainL, ainR) = 
     csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR)
 
 -- | Ping-pong delay defined in csound style. All arguments are present (nothing is hidden).
 -- 
 -- > csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR)
+csdPingPong :: MaxDelayTime -> DelayTime -> Sig -> Feedback -> Sig -> Balance -> Sig2 -> Sig2
+csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = P.fxPingPong maxTime mixLevel width damp delTime feedback (ainL, ainR)
+
+-- fxPingPong iMaxDelTime kmix kwidth ktone ktime kfeedback (ainL, ainR) = ...
+
+{- substituted with Csound UDO implementation
 csdPingPong :: MaxDelayTime -> DelayTime -> Sig -> Feedback -> Sig -> Balance -> Sig2 -> SE Sig2
 csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = do
     afirst <- offsetDelay ainL   
@@ -340,6 +346,7 @@ csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = do
         widthControl afirst (atapL, atapR) = (afirst + atapL + (1 - width) * atapR, atapR + (1 - width) * atapL)
 
         mixControl (atapL ,atapR) = (cfd mixLevel ainL atapL, cfd mixLevel ainR atapR)
+-}
 
 type DepthSig = Sig
 type RateSig  = Sig
