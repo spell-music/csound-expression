@@ -72,18 +72,18 @@ module Csound.Control.Gui (
 
     -- * Lifters
     -- | An easy way to combine visuals for sound sources.
-    hlifts, vlifts,
+    hlifts, vlifts, gridLifts,
 
     lift1, hlift2, vlift2, hlift3, vlift3, hlift4, vlift4, hlift5, vlift5,
 
     -- ** Lifters with visual scaling
-    hlifts', vlifts',
+    hlifts', vlifts', 
 
     hlift2', vlift2', hlift3', vlift3', hlift4', vlift4', hlift5', vlift5',
 
     -- * Monadic binds
     hbind, vbind, happly, vapply, hmapM, vmapM,
-    hbind', vbind', happly', vapply', hmapM', vmapM'
+    hbind', vbind', happly', vapply', hmapM', vmapM', gridMapM
 ) where
 
 import Control.Monad
@@ -155,6 +155,11 @@ hlifts = genLifts hor
 -- | Groups a list of Source-widgets. The visuals are vertically aligned.
 vlifts :: ([a] -> b) -> [Source a] -> Source b
 vlifts = genLifts ver
+
+-- | Groups a list of Source-widgets. The visuals are put on the grid. 
+-- The first argument is numer of elements i each row.
+gridLifts :: Int -> ([a] -> b) -> [Source a] -> Source b
+gridLifts rowLength = genLifts (grid rowLength)
 
 -- | Groups a list of Source-widgets. The visuals are horizontally aligned. 
 -- It uses the list of proportions.
@@ -332,17 +337,26 @@ genBind gui ma mf = source $ do
     (gb, b) <- mf a
     return (gui ga gb, b)
 
+-- | Creates a list of sources with mapping a function and stacks them horizontally.
 hmapM :: (a -> Source b) -> [a] -> Source [b]
 hmapM = genMapM hor
 
+-- | Creates a list of sources with mapping a function and stacks them vertically.
 vmapM :: (a -> Source b) -> [a] -> Source [b]
 vmapM = genMapM ver
 
+-- | It's like @hmapM@ but we can supply the list of relative sizes.
 hmapM' :: [Double] -> (a -> Source b) -> [a] -> Source [b]
 hmapM' ks = genMapM (\xs -> hor $ zipWith sca ks xs)
 
+-- | It's like @hvapM@ but we can supply the list of relative sizes.
 vmapM' :: [Double] -> (a -> Source b) -> [a] -> Source [b]
 vmapM' ks = genMapM (\xs -> ver $ zipWith sca ks xs)
+
+-- | Creates a list of sources with mapping a function and puts them on the grid.
+-- The first argument is the number of items in the row.
+gridMapM :: Int -> (a -> Source b) -> [a] -> Source [b]
+gridMapM rowLength = genMapM (grid rowLength)
 
 genMapM :: ([Gui] -> Gui) -> (a -> Source b) -> [a] -> Source [b]
 genMapM gui f xs = source $ do

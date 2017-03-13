@@ -17,6 +17,9 @@ module Csound.Control.Gui.Layout (
 import Csound.Typed.Gui
 
 
+-- | Layouts the widgets in grid. The first argument is the number of widgets in the row.
+--
+-- > grid rowLength widgets
 grid :: Int -> [Gui] -> Gui
 grid columnSize guis = ver $ fmap hor $ splitList columnSize guis
     where
