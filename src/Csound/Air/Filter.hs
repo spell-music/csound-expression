@@ -76,6 +76,8 @@ module Csound.Air.Filter(
     multiStatevar, multiSvfilter
 ) where
 
+import Control.Applicative
+
 import Csound.Typed
 import Csound.Typed.Plugins
 import Csound.SigSpace(bat)

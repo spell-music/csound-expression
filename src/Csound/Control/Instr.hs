@@ -108,6 +108,7 @@ module Csound.Control.Instr(
     newOutInstr, noteOn, noteOff
 ) where
 
+import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (str, Sco(..), when1, alwaysOn)
 
