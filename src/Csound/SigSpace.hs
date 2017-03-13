@@ -6,8 +6,10 @@
         FlexibleContexts #-}
 module Csound.SigSpace(
     SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..), bat, bmixAt,
-    cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, 
-    wsum        
+    cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, wsum,
+
+    -- * Stereo sig space
+    SigSpace2(..), BindSig2(..), mul2, mul2'    
 ) where
 
 import Control.Monad

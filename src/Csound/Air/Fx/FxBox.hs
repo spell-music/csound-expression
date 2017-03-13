@@ -767,7 +767,7 @@ uiAdele5m = uiAdeleByM size5
 -- Ping-pong delay
 
 uiPongyBy :: Sigs a => Double -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
+uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo pongyColor $ fxBox "Ping-pong" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
     where        
         fx [balance, delayTime, feedback, tone, width] = return . pongy balance delayTime feedback tone width
 
