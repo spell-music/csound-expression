@@ -767,7 +767,7 @@ uiAdele5m = uiAdeleByM size5
 -- Ping-pong delay
 
 uiPongyBy :: Sigs a => Double -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo pongyColor $ fxBox "Ping-pong" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
+uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Ping-pong" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
     where        
         fx [balance, delayTime, feedback, tone, width] = return . pongy balance delayTime feedback tone width
 
@@ -1062,7 +1062,7 @@ uiRevsy initTime = mapSource bindSig $ paintTo revsyColor $ fxBox "Reverse" fx T
 uiRevBy :: Sigs a => Double -> Double -> Source (Fx a)
 uiRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
     where        
-        fx [balance, feedback] = \asig -> return $ mapSig2 (\x -> mixAt balance (rever2 feedback) x) asig
+        fx [balance, feedback] = \asig -> return $ mapSig2 (\x -> mul (1 - balance) x + mul balance (rever2 feedback x)) asig
 
 uiRoom :: Sigs a => Double -> Source (Fx a)
 uiRoom = uiRevBy 0.6 
