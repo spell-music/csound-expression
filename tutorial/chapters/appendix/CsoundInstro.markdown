@@ -401,7 +401,7 @@ We have specified an aux parameter that changes the initial phase.
 
 The simplest possible program that produces a sound:
 
-~~~
+~~~haskell
 module Main where
  
 -- imports everything
