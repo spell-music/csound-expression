@@ -4,7 +4,7 @@ module Csound.Air.Envelope (
     leg, xeg,
 
     -- ADSR with retrigger for mono-synths
-    adsr140,
+    adsr140, trigTab,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,  
@@ -36,7 +36,6 @@ module Csound.Air.Envelope (
     seqAdsr, xseqAdsr, seqAdsr_, xseqAdsr_,
 
     seqPat, seqAsc, seqDesc, seqHalf
-
 ) where
 
 import Control.Monad
@@ -52,7 +51,7 @@ import Csound.Air.Wave
 import Csound.Tab(lins, exps, gp)
 import Csound.Air.Wave(oscBy)
 import Csound.Air.Filter(slide)
-import Csound.Typed.Plugins(adsr140)
+import Csound.Typed.Plugins(adsr140, delay1k)
 
 -- | Linear adsr envelope generator with release
 --
@@ -892,3 +891,15 @@ instance HumanizeValueTime ([D] -> D -> Sig) where
         where human1 (n, a)
                     | mod n 2 == 1 = rndValD drVal  a
                     | otherwise    = rndValD drTime a
+
+
+-----------------------------------------------------
+-- Trigger envelopes
+
+-- | Triggers the table based envelope when the trigger signal equals to 1
+-- and plays for dur seconds:
+--
+-- > trigTab table dur trigger
+trigTab :: Tab -> Sig -> Sig -> Sig
+trigTab ifn kdur ktrig = 
+    tablei (lineto ktrig (kdur * delay1 ktrig)) ifn `withD` 1

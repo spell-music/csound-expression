@@ -19,7 +19,7 @@ module Csound.Air.Misc(
     lpJoy,
 
     -- * Effects
-    delaySig,
+    delaySig, delay1k,
 
     -- * Wave shaper
     wshaper, genSaturator, saturator, mildSaturator, hardSaturator, hardSaturator2,
@@ -56,6 +56,7 @@ import Csound.Air.Filter
 import Csound.SigSpace
 import Csound.IO(writeSndBy)
 import Csound.Options(setRates)
+import Csound.Typed.Plugins(delay1k)
 
 --------------------------------------------------------------------------
 -- patterns
