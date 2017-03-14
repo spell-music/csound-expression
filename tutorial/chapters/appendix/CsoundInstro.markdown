@@ -2,7 +2,7 @@ Introduction to Csound for Haskell users
 =====================================================
     
 We are going to make electronic music. But what is Csound? 
-And why should we use it? [Csound](http://www.csounds.com/) is a domain specific programming language. 
+And why should we use it? [Csound](http://csound.github.io/) is a domain specific programming language. 
 It helps you to define synthesizers and make some music with them. 
 Csound was born in 1985 (a bit older than Haskell) at MIT by Barry Vercoe. 
 It's widely used in the academia. It has a long history. So with Csound we 
@@ -60,44 +60,115 @@ An event is a triple that contains:
 
 Where `t0` is a start time, `dt` is a duration of the event, `args` is
 a list of arguments for the instrument. 
-The Score is represented with the type:
+
+The underlying score is a list of events. But we'd like to have a musical structure on top of it.
+To organize the events in musical way we use the `Track` type from 
+the package [`temporal-media`](https://hackage.haskell.org/package/temporal-media/docs/Temporal-Media.html).
+
+The `Track` can be thought of as a list of events with a total duration in seconds of the whole segment.
+The vent is an aforementioned tripple of start time, duration and content:
 
 ~~~haskell
-data CsdEventList a = CsdEventList
-    { csdEventListDur       :: Double
-    , csdEventListNotes     :: CsdEvent a }
-    
-type CsdEvent a = (Double, Double, a)
+data Event t a = Event {
+    eventStart :: t
+    eventDur :: t
+    eventContent :: a
+}
 ~~~
 
-The start time and duration are in seconds. To invoke an instrument
-with Score we can use the functions:
+The Track data type is obscure. In CE we use a more specific data type where time is set to 
+constant Csound numbers (`D`s):
 
 ~~~haskell
-sco :: (CsdSco f, Arg a, Sigs b) => (a -> SE b)  -> f a -> f (Mix b)
-mix :: (CsdSco f, Sigs a) => f (Mix a) -> a
+data Track t a 
+
+type Sco a = Track D a
 ~~~
 
-The type `CsdEventList` is not to be used directly. 
-It's a canonical representation of the Csound score. 
-We should use something more higher level. That's why 
-we don't see it in the signatures. It's referenced indirectly 
-with type class `CsdSco`. The types of the type class `CsdSco`
-are things that can be converted to the canonical representation.
+We can create values of type `Track` with smart constructors and methods from the generic type classes
+for composition of temporal media. Here is the lis of most common functions. For convenience the signatures
+are specified to `Sco` data-type. But the actual functions come 
+from the [list of classes](https://hackage.haskell.org/package/temporal-media-0.6.1/docs/Temporal-Class.html).
+
+* Create an `Sco` with single event that lasts for one second and starts right away:
+
+    ~~~haskell
+    temp :: a -> Sco a
+    ~~~
+
+* Create a silence that lasts for the given duration:
+
+    ~~~haskell
+    rest :: D -> Sco a
+    ~~~
+
+* Harmonic composition. All scores are played together at the same time. The total duration equals to the maximum of all durations
+
+    ~~~haskell
+    har :: [Sco a] -> Sco a
+    ~~~
+
+* Melodic composition. Scores are played one after another. The total duration equals to the sum of all durations.
+
+    ~~~haskell
+    mel :: [Sco a] -> Sco a
+    ~~~
+
+* Stretch the Score in time domain by given constant factor. It makes the music slower or faster:
+
+    ~~~haskell
+    str :: D -> Sco a -> Sco a
+    ~~~
+
+* Delay the Score by the given time:
+
+    ~~~haskell
+    del :: D -> Sco a -> Sco a
+    ~~~
+
+* Loop several times:
+
+    ~~~haskell
+    loopBy :: Int -> Sco a -> Sca a
+    ~~~
+
+* Loop forever
+
+    ~~~haskell
+    loop  :: Sco a -> Sco a
+    ~~~
+
+* `Functor` instance to map over content:
+
+    ~~~haskell
+    fmap :: (a -> b) -> Sco a -> Sco b
+    ~~~
+
+To invoke an instrument with Score we can use the functions:
 
 ~~~haskell
-class CsdSco f where
-    toCsdEventList :: f a -> CsdEventList a
-    singleCsdEvent :: CsdEvent a -> f a
+sco :: (Sigs b, Arg a) => (a -> SE b) -> Sco a -> Sco (Mix b)
+mix :: Sigs a => Sco (Mix a) -> a
 ~~~
-
-The method `toCsdEventList` converts a given score representation 
-to the canonical one. The method `singleCsdEvent` constructs a scores 
-that contains only one event. it lasts for one second.
 
 The function `sco` applies an instrument to the score and 
 produces the score of signals. Then we can apply the function
-mix` to get the mixed signal.
+mix` to get the mixed signal. 
+
+Why do we need the two steps to convert the score to audio signal?
+The cool thing about this approach is that we can use the composition functions like `hor`, `mel` or `str`
+after we applied the instrument to scores. We can think of `sco` as a function or a single player
+in the orchestra. It applies a single instrument to the notes. But after that we'd like to be able
+to create an orchestration. We need to combine the parts from several players. If we convert
+to audio signal right away we will loose the information on the musical structore.
+
+So use the `sco` for a single player in  your orchestra and combine all the parts from
+different players with usual composition functions. At the last moment to send the audio to speakers
+or write to file use the `mix` function. 
+
+The wrapper `Mix` is needed to suppress the `Functor` instance. It's not possible to apply
+the transformations to the notes that contain signals (there are some implementational details
+that doesn't allow thsi to happen). 
 
 Scores are very simple yet powerful. Csound handles polyphony for us. If we trigger
 several notes at the same time on the same instrument we get three instances of the same
@@ -123,10 +194,12 @@ type `a -> SE ()` and applies it to all events in the stream.
 We have some primitive constructors:
 
 ~~~haskell
-metroE :: Sig -> Evt ()
+metro :: Sig -> Evt Unit
 ~~~
 
-It takes a frequency of the repetition. An empty tuple happens every now and then.
+It takes a frequency of the repetition. The `Unit` type is a Csound alias for `()`. We need it 
+for implementation reasons but the meaning is the same. The `unit` can contain only a single value.
+It's often used to represent the instruments that take no arguments. An empty tuple happens every now and then.
 We can process the events with functions:
 
 ~~~haskell
@@ -145,26 +218,36 @@ The `BoolD` is a Csound boolean value. It's instance of the type classes from
 the package `Boolean`. There is another boolean type `BoolSig` for the signals
 of boolean values.
 
-We can trigger instruments on the event streams with functions:
+And the `Evt` is a Functor and also `Monoid`:
 
 ~~~haskell
-trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
-sched :: (Arg a, sigs b) => (a -> SE b) -> Evt (D, a)    -> b
+fmap :: (a -> b) -> Evt a -> Evt b
+
+mempty  :: Evt a
+mappend :: Evt a -> Evt a -> Evt a
 ~~~
 
-The function `trig` applies an instrument to the event stream of notes.
-A note contains a delay of the event, the event duration and the arguments
-for the instrument. The function `sched` is the same as `trig` but
-all events happen immediately. 
+With `fmap` we map over the all values of the event. The `mempty` is a silent event. Nothing is going to happen on `mempty`.
+The `mappend` joins the events from several sources to a single event stream. 
+
+We can trigger instruments on the event streams with function:
+
+~~~haskell
+sched :: sched :: (Sigs b, Arg a) => (a -> SE b) -> Evt (Sco a) -> b
+~~~
+
+The `sched` takes an event of scores and applies an instrument when something happens.
 
 ### The Midi devices
 
 We can trigger an instrument with midi devices:
 
 ~~~haskell
+type Channel = Int
+
 midi   :: (Sigs a) => (Msg -> SE a) -> SE a
-midin  :: (Sigs a) => Int -> (Msg -> SE a) -> SE a
-pgmidi :: (Sigs a) => Int -> Maybe Int -> (Msg -> SE a) -> SE a
+midin  :: Sigs a => Channel -> (Msg -> SE a) -> SE a
+pgmidi :: Sigs a => Maybe Int -> Channel -> (Msg -> SE a) -> SE a
 ~~~
 
 The function `midi` starts to listen for the midi-messages (`Msg`)
@@ -179,11 +262,13 @@ We can query midi-messages for amplitude, frequency and other parameters
 ~~~haskell
 cpsmidi :: Msg -> D
 ampmidi :: Msg -> D -> D
-...
+
+ampCps :: Msg -> (D, D)
 ~~~
 
 The second argument of `ampmidi` is a scaling factor
-or maximum value for amplitude.
+or maximum value for amplitude. The `ampCps` reads both parameters.
+There also parameters for sensing control messages, aftertouch, bend and other midi-specific information. 
 
 
 ## Flags and options
@@ -303,9 +388,35 @@ this argument. Let's go through all types that you can find:
     
 Often you will see the auxiliary arguments, user can skip them in Csound. 
 So we can do it in Haskell too. But what if we want to supply them? 
-We can use the function `withInits` for this purpose.
+We can use the function `withInits` for this purpose or `withD`, `withDs` (for lists of `D`s), `withTab`.
+It is used like this:
+
+~~~haskell
+oscil3 1 220 (sines [1, 0, 0.25]) `withD` 0.25
+~~~
+
+We have specified an aux parameter that changes the initial phase.
        
-## Example (a concert A)
+## Example (Hello Wrold)
+
+The simplest possible program that produces a sound:
+
+~~~
+module Main where
+ 
+-- imports everything
+import Csound.Base
+
+-- Renders generated csd-file to the "tmp.csd".
+-- press Ctrl-C to stop
+main :: IO ()
+main = dac $ osc 440
+~~~
+
+It plays a concert `A` with a signal.
+The `osc` takes in a frequency and produces a pure tone signal.
+
+## Example (a concert A with scores)
     
 ~~~haskell
 module Main where
@@ -331,13 +442,38 @@ pureTone cps = return $ 0.5 * (myOsc $ sig cps)
 -- It plays a three notes. One starts at 0 and lasts for one second with frequency of 440,
 -- another one starts at 1 second and lasts for 2 seconds, and the last note lasts for 2 seconds
 -- at the frequency 220 Hz. 
-res = sco pureTone $ CsdEventList 5 [(0, 1, 440), (1, 2, 330), (3, 2, 220)]
+res = sco pureTone $ mel $ fmap temp [440, 330, 220]
 
 -- Renders generated csd-file to the "tmp.csd", invokes the csound on it 
 -- and directs the sound to speakers.
 main :: IO ()
 main = dac $ mix res
 ~~~
+
+## Example (a concert A with event stream of scores)
+
+Let's play that sequence forever with event streams.
+
+~~~haskell
+scores :: Sco D
+scores = str 0.25 $ mel $ fmap temp [440, 330, 220]
+
+main2 = dac $ sched pureTone $ fmap (const $ scores) $ metro 0.5
+~~~
+
+We create an event stream of ticks that happen twice a second 
+
+~~~haskell
+metro 0.5
+~~~
+
+Then we map all the ticks to the same scores:
+
+~~~
+fmap (const $ scores)
+~~~
+
+And we `schedule` the pureTone instrument from the previous example to play the notes.
 
 ## More examples
     
@@ -347,6 +483,8 @@ You can find many examples at:
     
 * A translation of the 
     [Amsterdam catalog of Csound computer instruments](https://github.com/anton-k/amsterdam)
+
+* [csound-bits](https://github.com/anton-k/csound-bits) repository contains some ideas and sketches.  
        
 ## References
     
