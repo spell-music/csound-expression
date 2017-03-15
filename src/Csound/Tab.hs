@@ -90,7 +90,7 @@ module Csound.Tab (
 
     -- * Windows  
     winHamming, winHanning,  winBartlett, winBlackman,
-    winHarris, winGaussian, winKaiser, winRectangle, winSync,
+    winHarris, winGauss, winKaiser, winRectangle, winSync,
 
     -- * Padsynth
     padsynth, PadsynthSpec(..), PadsynthShape(..), defPadsynthSpec,
@@ -628,19 +628,50 @@ chebs1 xint xamp hs = plains idChebs1 (xint : xamp : hs)
 chebs2 :: Double -> Double -> [Double] -> Tab
 chebs2 xint xamp hs = plains idChebs2 (xint : xamp : hs)
 
-winHamming, winHanning, winBartlett, winBlackman,
-    winHarris, winGaussian, winKaiser, winRectangle, winSync :: [Double] -> Tab
+-- | The Hamming window. The peak equals to 1.
+winHamming :: Tab
+winHamming      = wins Hamming [1]
+
+-- | The Hanning window. The peak equals to 1.
+winHanning :: Tab
+winHanning      = wins Hanning [1]
+
+-- | The Bartlett window. The peak equals to 1.
+winBartlett :: Tab
+winBartlett     = wins Bartlett [1]
 
 
-winHamming      = wins Hamming
-winHanning      = wins Hanning
-winBartlett     = wins Bartlett
-winBlackman     = wins Blackman
-winHarris       = wins Harris
-winRectangle    = wins Rectangle
-winSync         = wins Sync
-winGaussian     = wins Gaussian
-winKaiser       = wins Kaiser
+-- | The Blackman window. The peak equals to 1.
+winBlackman :: Tab
+winBlackman     = wins Blackman [1]
+
+-- | The Harris window. The peak equals to 1.
+winHarris :: Tab
+winHarris       = wins Harris [1]
+
+-- | The Rectangle window. The peak equals to 1.
+winRectangle :: Tab
+winRectangle    = wins Rectangle [1]
+
+-- | The Sync window. The peak equals to 1.
+winSync :: Tab
+winSync         = wins Sync [1]
+
+-- | This creates a function that contains a Gaussian window with a maximum value of 1. 
+-- The extra argument specifies how broad the window is, as the standard deviation of the curve; 
+-- in this example the s.d. is 2. The default value is 1. 
+--
+-- > winGauss 2
+winGauss :: Double -> Tab
+winGauss a = wins Gaussian [1, a]
+
+-- | This creates a function that contains a Kaiser window with a maximum value of 1. 
+-- The extra argument specifies how "open" the window is, for example a value of 0 results 
+-- in a rectangular window and a value of 10 in a Hamming like window. 
+--
+-- > winKaiser openness
+winKaiser :: Double -> Tab
+winKaiser openness = wins Kaiser [1, openness]
 
 data WinType 
     = Hamming | Hanning | Bartlett | Blackman

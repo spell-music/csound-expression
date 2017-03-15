@@ -184,7 +184,7 @@ instance Default PartikkelSpec where
 		, partikkelDisttab			= setSize 32768 $ lins [0, 1, 1]
 		, partikkelSync				= 0
 		, partikkelEnv2amt			= 1
-		, partikkelEnv2tab			= setSize 4096 $ winSync [1]
+		, partikkelEnv2tab			= setSize 4096 $ winSync
 		, partikkelEnv_attack		= noTab
 		, partikkelEnv_decay		= noTab
 		, partikkelSustain_amount	= 0
