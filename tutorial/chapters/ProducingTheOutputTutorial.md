@@ -186,6 +186,43 @@ The first option is for rate and the second set's higher degree
 of fidelity for functional tables. It affects the default table size.
 By default it's 13th degree of 2. But we have set it to 15.
 
+Global config parameters
+-----------------------------------
+
+We can create files that have some parameters which we can change with command line arguments.
+We render Haskell code to Csound file. After that we can run the file anywhere where Csound is installed.
+What if we want to change some aspects of performance without the need for recompilation.
+Some parameters like OSC-port or MIDI control change mappings. We can do it with Csound-Macroses.
+
+To read the macros there are functions:
+
+~~~haskell
+readMacrosString :: String -> String -> Str
+readMacrosDouble :: String -> Double -> D
+readMacrosInt :: String -> Int -> D
+~~~
+
+They take name and initial value which is used if no flag is set on command line.
+Let's create a pure tone with frequency parametrized with macros:
+
+~~~haskell
+> let freq = readMacrosDouble "FREQ" 440
+> dac $ osc (sig freq)
+~~~
+
+As simple as this! After rendering we have the file `tmp.csd` with Csound code.
+Let's run it with different frequencies:
+
+~~~
+> csound tmp.csd --omacro:FREQ=330
+
+> csound tmp.csd --omacro:FREQ=800
+~~~
+
+With flag `--omacro:Name=Value` we can assign the flag with given `Name`. 
+Notice that ofcaurse no type-checking is happening. If we assign integers to strings
+bad things can happen.
+
 ----------------------------------------------------
 
 * <= [Basic types](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md)
