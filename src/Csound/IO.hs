@@ -45,7 +45,23 @@ module Csound.IO (
     -- It cn be hard to use in the interpreter without explicit signatures.
     -- There are functions to help the type inference.
     -- ** For processing inputs
-    onCard1, onCard2, onCard4, onCard6, onCard8
+    onCard1, onCard2, onCard4, onCard6, onCard8,
+
+    -- * Config with command line arguments
+    -- | With the functions we can add global config parameters to the rendered file.
+    -- We can supply different parameters with @--omacro@ flag.
+    --
+    -- An example:
+    --
+    -- > dac $ osc (sig $ readMacrosDouble "FREQ" 440)
+    --
+    -- Here we define frequency as a global parameter. It's available by name @"FREQ"@.
+    -- If we run the program with no flags it would play the default 440 Hz. But we can change that like this:
+    --
+    -- > csound tmp.csd --omacro:FREQ=330
+    --
+    -- We can update the macro-arguments with flag @--omacro:NAME=VALUE@.
+    readMacrosString, readMacrosDouble, readMacrosInt
 ) where
 
 import System.Process

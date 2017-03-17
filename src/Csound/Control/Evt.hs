@@ -179,16 +179,16 @@ randList n = accumSE (0 :: D) $ const $ \s -> fmap (, s) $
 -- > randSkip prob
 --
 -- where @prob@ is probability of includinng the element in the output stream. 
-randSkip :: D -> Evt a -> Evt a
-randSkip d = filterSE (const $ fmap (<=* d) $ random (0::D) 1)
+randSkip :: Sig -> Evt a -> Evt a
+randSkip d = filterSE (const $ fmap (<=* ir d) $ random (0::D) 1)
 
 -- | Skips elements at random.
 --
 -- > randSkip probFun
 --
 -- It behaves just like @randSkip@, but probability depends on the value.
-randSkipBy :: (a -> D) -> Evt a -> Evt a
-randSkipBy d = filterSE (\x -> fmap (<=* d x) $ random (0::D) 1)
+randSkipBy :: (a -> Sig) -> Evt a -> Evt a
+randSkipBy d = filterSE (\x -> fmap (<=* ir (d x)) $ random (0::D) 1)
 
 -- | When something happens on the given event stream resulting
 -- event stream contains an application of some unary function to the 
@@ -226,7 +226,7 @@ oneOf :: (Tuple a, Arg a) => [a] -> Evt b -> Evt a
 oneOf vals evt = listAt vals $ randInts (0, int $ length vals) evt
 
 -- | Represents a values with frequency of occurence.
-type Rnds a = [(D, a)]
+type Rnds a = [(Sig, a)]
 
 
 -- | Constructs an event stream that contains values from the
@@ -239,9 +239,9 @@ freqOf rnds evt = fmap (takeByWeight accs vals) $ randDs evt
         accs = accumWeightList $ fmap fst rnds
         vals = fmap snd rnds
 
-takeByWeight :: (Tuple a, Arg a) => [D] -> [a] -> D -> a
+takeByWeight :: (Tuple a, Arg a) => [Sig] -> [a] -> D -> a
 takeByWeight accumWeights vals at = 
-    guardedArg (zipWith (\w val -> (at `lessThan` w, val)) accumWeights vals) (last vals)
+    guardedArg (zipWith (\w val -> (at `lessThan` ir w, val)) accumWeights vals) (last vals)
 
 accumWeightList :: Num a => [a] -> [a]
 accumWeightList = go 0

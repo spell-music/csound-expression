@@ -34,7 +34,7 @@ module Csound.Options(
     Displays(..), DisplayMode(..),
 
     -- * Performance Configuration and Control
-    Config(..)
+    Config(..)    
 ) where
 
 import Data.Monoid
