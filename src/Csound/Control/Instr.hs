@@ -73,7 +73,7 @@ module Csound.Control.Instr(
     -- the time domain (stretching the timeline) you can do it in the Mix-version
     -- (after the invokation of the instrument). All notes are rescaled all the
     -- way down the Score-structure. 
-    Sco, Mix, sco, mix, eff,
+    Sco, Mix, sco, mix, eff, monoSco,
     mixLoop, sco_, mix_, mixLoop_, mixBy, 
     infiniteDur,
 

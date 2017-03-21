@@ -451,7 +451,7 @@ atSco :: forall a . (SigSpace a, Sigs a) => Patch a -> Sco (CsdNote D) -> Sco (M
 atSco x sc = go Nothing x sc
     where         
         go maybeSkin x sc = case x of
-            MonoSynt _ instr -> error "atSco is not defined for monophonic synthesizers"
+            MonoSynt _ instr -> monoSco (runSkin instr maybeSkin) sc
             PolySynt _ instr -> sco (runSkin instr maybeSkin) sc 
             SetSkin skin p -> newSkin skin p
             FxChain fxs p  -> eff (getPatchFx maybeSkin fxs) $ rec p
@@ -468,7 +468,7 @@ atSco x sc = go Nothing x sc
                         rightSplit maybeSkin dt a = onCondPlay maybeSkin ( `greaterThanEquals` dt) a
 
                         onCondPlay maybeSkin cond x = case x of
-                            MonoSynt spec instr -> error "Split doesn't work for monophonic synths. Pleas use only polyphonic synths."
+                            MonoSynt spec instr -> error "Split doesn't work for monophonic synths with Scores. Please use only polyphonic synths in this case."
                             PolySynt spec instr -> sco (restrictPolyInstr cond (runSkin instr maybeSkin)) sc
                             SetSkin skin p -> onCondPlay (Just skin) cond p
                             FxChain fxs p -> eff (getPatchFx maybeSkin fxs) $ go maybeSkin p sc
