@@ -9,7 +9,7 @@ module Csound.Options(
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
     setMessageLevel, noTrace,
-    setCabbage,
+    setCabbage,   
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for 
@@ -61,6 +61,13 @@ setGain d = def { csdGain = Just d' }
 
 setJack :: String -> Options
 setJack name = def { csdFlags = def { rtaudio = Just $ Jack name "input" "output" } }
+
+-- | Defines a header for a Jacko opcodes. The Jacko opcodes allow for greater flexibility
+-- with definition of Jack-client. See the Csound docs for details and the datatype @Jacko@.
+--
+-- > csound doc: <http://csound.github.io/docs/manual/JackoOpcodes.html>
+setJacko :: Jacko -> Options
+setJacko jackoSpec = def { csdJacko = Just jackoSpec }
 
 setCoreAudio :: Options
 setCoreAudio = def { csdFlags = def { rtaudio = Just $ CoreAudio } }

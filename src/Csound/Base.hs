@@ -52,4 +52,5 @@ import Csound.Typed.Opcode hiding (
     partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2,
     line, delay,
     metro, dust,
-    duserrnd, cuserrnd, urd)
+    duserrnd, cuserrnd, urd,
+    jackoInfo, jackoFreewheel)
