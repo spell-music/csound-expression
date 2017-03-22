@@ -5,7 +5,8 @@ Creating plugins with Cabbage
 
 (since version 5.1)
 
-WARNING: Right now Cabbage is not stable on my environment (Ubuntu) so it's hard for me to test things out. It's hard to use. But when it will improve we are going to have 
+WARNING: Right now Cabbage is not stable on my environment (Ubuntu) 
+so it's hard for me to test things out. But when things will improve we are going to have 
 the set of tools to create cabbage instruments.
 
 The Cabbage is a cool program that let's you run Csound instruments and effects as VST-plugins.
