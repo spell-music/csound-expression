@@ -276,5 +276,30 @@ Experimental features:
 
     With imperative style instruments we can create and invoke the instruments in Csound way.
     we can create an instrument and get it's unique identifier. Than we can schedule a note by that identifier.
-    See the details at the [guide]()
+
+    We can create an instrument that produces a sound with function:
+
+    ~~~haskell
+    newOutInstr :: (Arg a, Sigs b) => (a -> SE b) -> SE (InstrRef a, b)
+    ~~~
+
+    It takes in a body of the instrument and gives back an instrument reference and 
+    a signal where the output is going to be written. Then we can invoke the notes just 
+    like we do it in the Csound with function `scheduleEvent`:
+
+    ~~~haskell
+    scheduleEvent :: Arg a => InstrRef a -> D -> D -> a -> SE ()
+    scheduleEvent instrRed delayStartTime duration arguments
+    ~~~
+
+    It takes in instrument reference, start time from the time of invocation, duration (all in seconds) and miscellaneous arguments.
+    Notice that the instrument reference is parametrized by the type of arguments. This way we can not feed the wrong messages to the instrument.
+
+    Also we can create procedures that produce no output but do something useful:
+
+    ~~~haskell
+    newInstr :: Arg a => (a -> SE ()) -> SE (InstrRef a)
+    ~~~ 
+
+
 

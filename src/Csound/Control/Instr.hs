@@ -104,7 +104,7 @@ module Csound.Control.Instr(
     Outs(..), onArg, AmpInstr(..), CpsInstr(..),
 
     -- * Imperative instruments
-    InstrRef, newInstr, scheduleEvent, negateInstrRef, addFracInstrRef,
+    InstrRef, newInstr, scheduleEvent, turnoff2, negateInstrRef, addFracInstrRef,
     newOutInstr, noteOn, noteOff
 ) where
 
@@ -113,7 +113,7 @@ import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (str, Sco(..), when1, alwaysOn)
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (initc7)
+import Csound.Typed.Opcode hiding (initc7, turnoff2)
 import Csound.Control.Overload
 import Temporal.Media(Event(..), mapEvents)
 

@@ -164,6 +164,6 @@ We can find out how to do it o the official [web-site](http://cabbageaudio.com/d
 
 * <= [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
 
-* => Happy Haskelling / Csounding
+* => [Imperative instruments](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ImperativeInstruments.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

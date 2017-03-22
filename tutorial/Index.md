@@ -56,6 +56,8 @@ Let's look at how we can create computer music with Haskell.
 
 * [Creating plugins with Cabbage](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md)
 
+* [Imperative instruments](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ImperativeInstruments.md)
+
 -------------------------------------------------------------------
 
 Appendix:

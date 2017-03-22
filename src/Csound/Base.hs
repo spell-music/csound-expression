@@ -53,4 +53,4 @@ import Csound.Typed.Opcode hiding (
     line, delay,
     metro, dust,
     duserrnd, cuserrnd, urd,
-    jackoInfo, jackoFreewheel)
+    jackoInfo, jackoFreewheel, turnoff2)
