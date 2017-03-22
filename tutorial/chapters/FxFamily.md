@@ -421,6 +421,68 @@ received from say guitar pluged into audio card.
 The `onCard2` is a helper function to derive the types. It passes the argument through unchanged but it has more strict type signature. 
 The `dac` is to much overloaded for this case. We can do without it but then we need to specify the types explicitly.
 
+## Example: Virtual pedalboard
+
+We can create a virtual pedalboard quite easily. Here is a complete example:
+
+~~~haskell
+import Csound.Base
+
+main = run proc
+
+run = dacBy (setAdc <> setJack "fx" <> setRates 44100 32 <> setBufs 64 32)
+
+proc :: Sig2 -> Source Sig2
+proc (a1, a2) = fxApply fx a1
+    where         
+        fx = fxGridMS 4 [uiTort1m, uiFlan1, uiPhasy2, uiAdele2 0.4 0.35] def [uiChory2, uiHall2, uiGain 0.6]
+~~~
+
+Let's take it apart. It uses JACK tool but you can also read from your sound card directly.
+
+With function `run` we set the global command line flags for JACK:
+
+~~~haskell
+run = dacBy (setAdc <> setJack "fx" <> setRates 44100 32 <> setBufs 64 32)
+~~~
+
+We set the jack client name to be `"fx"`. We set the rates and audio IO buffers like in the JACK settings.
+In your system there might be different settings. So adjust the example!
+
+The next thing is the procedure `proc` that takes in a stereo signal and produces UI-widget.
+
+~~~haskell
+proc :: Sig2 -> Source Sig2
+~~~
+
+In this function we create a chain of effects:
+
+~~~haskell
+fx = fxGridMS 4 [uiTort1m, uiFlan1, uiPhasy2, uiAdele2 0.4 0.35] def [uiChory2, uiHall2, uiGain 0.6]
+~~~
+
+Notice the usage `fxGridMS` function. It creates the chain of effects that start from mono effects
+and proceeds with stereo effects.
+
+We apply the chain of effects to the first input from the audio-card. This example is for
+2x2 audio-card but if your card is different you should adjust the input/output signatures.
+
+~~~haskell
+proc (a1, a2) = fxApply fx a1
+~~~
+
+Finally we render the function `proc` with our function `run`:
+
+~~~haskell
+main = run proc
+~~~
+
+If the `run` (`dacBy` in disguise) takes in a function the argument signals of the function
+are interpreted as input audio channels.  
+
+So this is how we can create a pedalboard with Haskell!
+
+
 -------------------------------------------
 
 * <= [Real-world instruments show case](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Patches.md)
