@@ -11,7 +11,7 @@
 -- we can put an empty space. 
 module Csound.Control.Gui.Layout (
     hor, ver, space, sca, horSca, verSca, grid,
-    padding, margin, resizeGui,
+    padding, margin, ScaleFactor, resizeGui,
 ) where
 
 import Csound.Typed.Gui

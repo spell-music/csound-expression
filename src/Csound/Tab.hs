@@ -160,8 +160,8 @@ module Csound.Tab (
     -- * GEN21 — dist, uniDist, linDist, triDist, expDist, biexpDist, gaussDist, cauchyDist, pcauchyDist, betaDist, weibullDist, poissonDist -- Generates tables of different random distributions.
     -- * GEN23 — readNumFile -- Reads numeric values from a text file.
     -- * GEN24 — readNumTab --  Reads numeric values from another allocated function-table and rescales them.
-    -- * GEN25 — bpLins --  Construct functions from segments of exponential curves in breakpoint fashion.
-    -- * GEN27 — bpExps -- Construct functions from segments of straight lines in breakpoint fashion.
+    -- * GEN25 — bpExps --  Construct functions from segments of exponential curves in breakpoint fashion.
+    -- * GEN27 — bpLins -- Construct functions from segments of straight lines in breakpoint fashion.
     -- * GEN28 — readTrajectoryFile -- Reads a text file which contains a time-tagged trajectory.
     -- * GEN30 — tabHarmonics -- Generates harmonic partials by analyzing an existing table.
     -- * GEN31 — mixOnTab -- Mixes any waveform specified in an existing table.

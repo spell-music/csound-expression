@@ -3,7 +3,7 @@ module Csound.Control.Evt(
     Evt(..), Bam, Tick, 
 
     -- * Core functions
-    boolToEvt, evtToBool, sigToEvt, evtToSig, stepper,
+    boolToEvt, evtToBool, evtToTrig, sigToEvt, evtToSig, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
 
     Snap, snapshot, readSnap, snaps, snaps2, sync, syncBpm, 
@@ -37,11 +37,18 @@ import Csound.Types(atArg)
 
 type Tick = Evt Unit
 
+-- | Converts event stream to signal. The first argument is initial value. It holds the value while nothing happens.
+-- If the event happens it overwrites the current value of the output signal.
 evtToSig :: D -> (Evt D) -> Sig
 evtToSig initVal evts = retrigs (return . sig) $ fmap return $ devt initVal loadbang <> evts
 
+-- | Converts an event stream to boolean signal. It's True when something happens and False otherwise.
 evtToBool :: Evt a -> BoolSig
 evtToBool a = ( ==* 1) $ changed $ return $ evtToSig 0 $ cycleE [1, 0] a
+
+-- | Creates a trigger signal out of event stream. It equals to 1 when something happens and 0 otherwise.
+evtToTrig :: Evt a -> Sig
+evtToTrig = (\b -> ifB b 1 0) . evtToBool
 
 -- | Constant event stream. It produces the same value (the first argument)
 -- all the time.

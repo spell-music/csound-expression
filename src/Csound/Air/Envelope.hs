@@ -52,6 +52,7 @@ import Csound.Tab(lins, exps, gp)
 import Csound.Air.Wave(oscBy)
 import Csound.Air.Filter(slide)
 import Csound.Typed.Plugins(adsr140, delay1k)
+import Csound.Control.Evt(evtToTrig)
 
 -- | Linear adsr envelope generator with release
 --
@@ -903,3 +904,11 @@ instance HumanizeValueTime ([D] -> D -> Sig) where
 trigTab :: Tab -> Sig -> Sig -> Sig
 trigTab ifn kdur ktrig = 
     tablei (lineto ktrig (kdur * delay1 ktrig)) ifn `withD` 1
+
+
+-- | Triggers the table based envelope when the something happens on the event stream
+-- and plays for dur seconds:
+--
+-- > trigTabEvt table dur trigger
+trigTabEvt :: Tab -> Sig -> Evt a -> Sig
+trigTabEvt ifn kdur ktrig = trigTab ifn kdur (evtToTrig ktrig)
