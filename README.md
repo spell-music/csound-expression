@@ -89,7 +89,7 @@ News
 
 **New features:**
 
-* Complete support for monophonic synthesizers:
+* **Complete support for monophonic synthesizers**:
 
     * The argument of mono synth was updated. 
 
@@ -106,7 +106,7 @@ News
 
     * atSco and atSched now work for mono synth too
 
-* The Patch type has changed. Know it supports the change in common parameters.
+* **The patch can change the skin**. The Patch type has changed. Know it supports the change in common parameters.
    Right now the ccommon parameters include only Low-pass filter type. But this can be extended in future releases.
 
    The idea is that we can parametrize the patch with some common arguments so that use can tweak them
@@ -120,7 +120,7 @@ News
    setFilter :: ResonFilter -> Patch a -> Patch a
    ~~~
 
-* Family of standard effects was added (see module `Csound.Air.Fx.FxBox` and the [guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/FxFamily.md)).
+* **Family of standard effects was added** (see module `Csound.Air.Fx.FxBox` and the [guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/FxFamily.md)).
     The effects are kindly provided by Iain McCurdy (recoded from his original implementation in Csound).
 
     The effects have catchy names and are defined on wide variety of types. Let's briefly discuss the naming conventions:
@@ -159,7 +159,7 @@ News
     dac $ hall 0.2 $ adele2 0.5 0.25 $ flan2 $ tort1m $ asigs
     ~~~
 
-* UI widgets for standard effects.
+* **UI widgets for standard effects**.
 
     Alongside with effects there are functions to create widgets (UI-controls). They have the same naming convention
     only the prefix `ui` is added. For example: `uiTort`, `uiAdele` or `uiHall`. Also there are predefined presets like `uiFlan2` or `uiPhasy3`.
@@ -175,7 +175,7 @@ News
     > dac $ fxApply pedals $ (sawSeq [1, 0.5, 0.25] 2) * sqr 220
     ~~~
 
-* Complete list of GEN routines. This release adds GEN:
+* **Complete list of GEN routines**. This release adds GEN:
 
         * 25 bpExps --  Construct functions from segments of exponential curves in breakpoint fashion., 
 
@@ -218,7 +218,7 @@ News
     See the [Csound docs](http://www.csounds.com/manualOLPC/ScoreGenRef.html) for details of what table they produce.
     Also the signatures for windows creating tabs was updated. It became more specific.
 
-* Global arguments defined with Macros. We can create a Csound `.csd` file in our program
+* **Global arguments** defined with **Macros**. We can create a Csound `.csd` file in our program
     and after that we can run it on anything which has Csound installed. It's desirable to be able
     to tweak some parameters after rendering or to have some global config arguments. 
     In Csound we can do it with macroses. We can use macros name in the code adn then we can change the value of the
@@ -235,7 +235,7 @@ News
     The first argument is a macro name and the second one is the default value
     which is used if no value is set in the flags.
 
-*  The useful function to trigger an table based envelope. It comes in two flavors. One is driven with event stream
+*  The useful function to **trigger an table based envelope**. It comes in two flavors. One is driven with event stream
     and another with just a signal. It's on when signal is non zero.
     
     ~~~haskell
@@ -248,7 +248,7 @@ News
     trigTabEvt tab duration triggerSignal    
     ~~~
 
-* New functions for UI widgets.
+* **New functions for UI widgets**.
 
     * We can change the relative size of the window. If the widget is too large or too small
         we can rescale it with functions:
@@ -283,7 +283,7 @@ News
 
     * UI default sizes are a bit smaller now.
 
-* It compiles on GHC-7.8 again
+* It compiles on **GHC-7.8** again
 
 * New function `whileRef` for imperative while loops.
 
@@ -296,7 +296,7 @@ News
     and the it starts to implement the body while the predicate returns true. Notice that
     the body is also updates the state.
 
-* New functions for OSC that make it easy to read OSC messages that are interpreted like signals. 
+* **New functions for OSC** that make it easy to read OSC messages that are interpreted like signals. 
     For example we have an OSC-routine for volume control. When message happens we update the value.
     It would be good to be able to just read the signal:
     
@@ -312,7 +312,8 @@ News
     listenOscSig2 :: OscRef -> String -> Sig2 -> SE Sig2
     ~~~
 
-* Adds loopers that preserve attacks when rescaling by tempo. They are based on `temposcal` Csound algorithm.
+* **Adds loopers that preserve attacks when rescaling by tempo**. 
+    They are based on `temposcal` Csound algorithm.
    The previous loopers were based on the `mincer` algorithm. It uses FFT under the hood which can smooth out the sharp attacks.
    It's undesirable for percussive loops. The `temposcal` adds the feature of preserving attacks.
 
@@ -343,7 +344,7 @@ News
    drumScale, harmScale :: TempoSig -> PitchSig -> String -> Sam
    ~~~
 
-* The type signatures for echo and pingPong where simplified. Now they don't use side effects
+* The type signatures for **echo and pingPong where simplified**. Now they don't use side effects
     and look like pure functions:
 
     ~~~haskell
@@ -351,17 +352,17 @@ News
     pingPong :: DelayTime -> Feedback -> Balance -> Sig2 -> Sig2
     ~~~
 
-* Type signatures for functions `randSkip` and `freqOf` where generalized. Now they use signals for probabilities
+* Type signatures for functions **`randSkip` and `freqOf` where generalized**. Now they use signals for probabilities
    instead of constant numbers. So we can change the probability of skip of the event during performance.
 
-* New monophonic instruments are added in csound-catalog: `fmBass1`, `fmBass2`, `dafunkLead` and one polyphonic `celloSynt`.
+* **New monophonic instruments are added in csound-catalog**: `fmBass1`, `fmBass2`, `dafunkLead` and one polyphonic `celloSynt`.
    Those instrument serve a good example for building monophonic synthesizers with sharp attacks.
 
 Experimental features:
 
-* Arrays, with all opcodes and functional traversals. See the guide for details [details](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md#arrays-arr).
+* **Arrays, with all opcodes** and functional traversals. See the guide for details [details](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md#arrays-arr).
 
-* Imperative style instruments.
+* **Imperative style instruments**.
 
     With imperative style instruments we can create and invoke the instruments in Csound way.
     we can create an instrument and get it's unique identifier. Than we can schedule a note by that identifier.
