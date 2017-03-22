@@ -85,7 +85,7 @@ Roadmap: [where are we going](https://github.com/spell-music/csound-expression/b
 News
 -----------------------------
 
-**The 5.2 is out. Virtual pedalboards, arrays, new OSC, full support for mono synthesizers, patch skins**
+**The 5.2 is out. Virtual pedalboards, arrays, new OSC, full support for mono synthesizers, patch skins, all GEN-routines are implemented**
 
 **New features:**
 
