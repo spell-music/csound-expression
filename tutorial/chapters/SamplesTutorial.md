@@ -11,7 +11,7 @@ To do it we need to install the library csound-sampler:
 > cabal install csound-sampler
 ~~~
 
-The detailed guide to th library can be found [here](https://github.com/anton-k/csound-sampler).
+The detailed guide to the library can be found [here](https://github.com/anton-k/csound-sampler).
 
 ----------------------------------------------------
 
