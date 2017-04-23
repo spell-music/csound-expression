@@ -291,6 +291,18 @@ instance (Sigs a) => RenderCsd (a -> Source Sig8) where
 instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt f = renderEffBy opt (fromSource . f)
 
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (fromSource . f)
+
 instance (Sigs a) => RenderCsd (a -> Source (Sig8, Sig8)) where
     renderCsdBy opt f = renderEffBy opt (fromSource . f)
 
@@ -325,6 +337,18 @@ instance (Sigs a) => RenderCsd (a -> Source (SE Sig8)) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
 
 instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+
+instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
 
 instance (Sigs a) => RenderCsd (a -> Source (SE (Sig8, Sig8))) where
