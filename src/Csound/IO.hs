@@ -381,6 +381,18 @@ instance RenderCsd (Source Sig8) where
 instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2), (c1, c2), (d1, d2)) -> (a1, a2, b1, b2, c1, c2, d1, d2)) a
 
+instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSource a
+
+instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSource a
+
+instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSource a
+
+instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSource a
+
 instance RenderCsd (Source (SE Sig)) where
     renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
@@ -404,6 +416,18 @@ instance RenderCsd (Source (SE Sig8)) where
 
 instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2))) where
     renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2), (c1, c2), (d1, d2)) -> (a1, a2, b1, b2, c1, c2, d1, d2)) a
+
+instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
+
+instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
+
+instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
+
+instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
+    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
 
 instance RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
