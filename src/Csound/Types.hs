@@ -12,22 +12,23 @@
 --
 -- * @Spec@ and @Wspec@ - sound spectrums
 --
---  A signal is a stream of numbers. Signals carry sound or time varied 
+--  A signal is a stream of numbers. Signals carry sound or time varied
 --  control values. Numbers are constants. 1-dimensional arrays contain some useful
 --  data which is calculated at the initial run of the program.
 --
 -- There is only one compound type. It's a tuple of Csound values. The empty tuple
--- is signified with special type called @Unit@. 
+-- is signified with special type called @Unit@.
 --
 module Csound.Types(
-    -- * Primitive types    
-    Sig, D, Tab, Str, Spec, Wspec,    
-    BoolSig, BoolD, Val(..), SigOrD,    
+    -- * Primitive types
+    Sig, D, Tab, Str, Spec, Wspec,
+    BoolSig, BoolD, Val(..), SigOrD,
 
     Sig2, Sig3, Sig4, Sig5, Sig6, Sig8,
+    Sig2_2, Sig2_3, Sig2_4, Sig2_5, Sig2_6, Sig2_7, Sig2_8,
     -- ** Constructors
-    double, int, text, 
-    
+    double, int, text,
+
     -- ** Constants
     idur, getSampleRate, getControlRate, getBlockSize,
 
@@ -35,32 +36,32 @@ module Csound.Types(
     ar, kr, ir, sig,
 
     -- ** Init values
-    withInits, withDs, withSigs, withTabs, 
+    withInits, withDs, withSigs, withTabs,
     withD, withSig, withTab, withSeed,
 
     -- ** Numeric functions
-    quot', rem', div', mod', ceil', floor', round', int', frac',        
-   
+    quot', rem', div', mod', ceil', floor', round', int', frac',
+
     -- ** Logic functions
     boolSig, when1, whens, whenElse, whenD1, whenDs, whileDo, untilDo, whileDoD, untilDoD, whenElseD, compareWhenD,
     equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
 
-    -- ** Aliases 
+    -- ** Aliases
     -- | Handy for functions that return tuples to specify the utput type
     --
     -- > (aleft, aright) = ar2 $ diskin2 "file.wav" 1
-    -- 
+    --
     -- or
     --
-    -- > asig = ar1 $ diskin2 "file.wav" 1    
+    -- > asig = ar1 $ diskin2 "file.wav" 1
     ar1, ar2, ar4, ar6, ar8,
 
     -- * Tuples
     Tuple(..), makeTupleMethods, Unit, unit, atTuple,
     -- *** Logic functions
-    ifTuple, guardedTuple, caseTuple, 
-    
-    -- * Instruments    
+    ifTuple, guardedTuple, caseTuple,
+
+    -- * Instruments
 
     -- | An instrument is a function that takes a tpule of csound values as an argument
     -- and returns a tuple of signals as an output. The type of the instrument is:
@@ -70,7 +71,7 @@ module Csound.Types(
     -- ** Arguments
     Arg, atArg,
     -- *** Logic functions
-    ifArg, guardedArg, caseArg, 
+    ifArg, guardedArg, caseArg,
 
     -- ** Monophonic arguments
     MonoArg(..), MonoAdsr, adsrMonoSynt, monoAdsr,
@@ -79,11 +80,11 @@ module Csound.Types(
     Sigs,
 
     -- * Arrays
-    Arr, newLocalArr, newGlobalArr, newLocalCtrlArr, newGlobalCtrlArr, 
+    Arr, newLocalArr, newGlobalArr, newLocalCtrlArr, newGlobalCtrlArr,
     writeArr, readArr, modifyArr, mixArr,
     -- ** Type inference helpers
     Arr1, DArr1, Arr2, DArr2, Arr3, DArr3,
-    arr1, darr1, arr2, darr2, arr3, darr3,  
+    arr1, darr1, arr2, darr2, arr3, darr3,
 
     -- ** Traverse and fold
     foreachArr, foreachArrD, forRowArr, forColumnArr, forRowArrD, forColumnArrD,
@@ -91,20 +92,20 @@ module Csound.Types(
 
     -- ** Array opcodes
     fillLocalArr, fillGlobalArr, fillLocalCtrlArr, fillGlobalCtrlArr,
-    maparrayNew, lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray, 
+    maparrayNew, lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray,
     scalearray, slicearrayNew,
 
     maparrayCopy, slicearrayCopy,
 
     -- ** Spectral opcodes
-    SpecArr, 
+    SpecArr,
 
-    fftNew, fftinvNew, rfftNew, rifftNew, pvs2tab, tab2pvs, cmplxprodNew, 
-    rect2polNew, pol2rectNew, pol2rect2New, windowArrayNew, 
+    fftNew, fftinvNew, rfftNew, rifftNew, pvs2tab, tab2pvs, cmplxprodNew,
+    rect2polNew, pol2rectNew, pol2rect2New, windowArrayNew,
     r2cNew, c2rNew, magsArrayNew, phsArrayNew,
 
-    fftCopy, fftinvCopy, rfftCopy, rifftCopy, cmplxprodCopy, 
-    rect2polCopy, pol2rectCopy, pol2rect2Copy, windowArrayCopy, 
+    fftCopy, fftinvCopy, rfftCopy, rifftCopy, cmplxprodCopy,
+    rect2polCopy, pol2rectCopy, pol2rect2Copy, windowArrayCopy,
     r2cCopy, c2rCopy, magsArrayCopy, phsArrayCopy
 ) where
 
@@ -125,14 +126,14 @@ atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as
 whenElseD :: BoolD -> SE () -> SE () -> SE ()
 whenElseD cond ifDo elseDo = whenDs [(cond, ifDo)] elseDo
 
-whenElse :: BoolSig -> SE () -> SE () -> SE () 
+whenElse :: BoolSig -> SE () -> SE () -> SE ()
 whenElse cond ifDo elseDo = whens [(cond, ifDo)] elseDo
 
 -- | Performs tree search f the first argument lies within the interval it performs the corresponding procedure.
 compareWhenD :: D -> [(D, SE ())] -> SE ()
 compareWhenD val conds = case conds of
     [] -> return ()
-    [(cond, ifDo)] -> ifDo 
+    [(cond, ifDo)] -> ifDo
     (cond1, do1):(cond2, do2): [] -> whenElseD (val `lessThan` cond1) do1 do2
     _ -> whenElseD (val `lessThan` rootCond) (compareWhenD val less) (compareWhenD val more)
     where
