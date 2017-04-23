@@ -121,7 +121,7 @@ News
    ~~~
 
 * **Family of standard effects was added** (see module `Csound.Air.Fx.FxBox` and the [guide](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/FxFamily.md)).
-    The effects are kindly provided by Iain McCurdy (recoded from his original implementation in Csound).
+  The effects are kindly provided by Iain McCurdy (recoded from his original implementation in Csound).
 
     The effects have catchy names and are defined on wide variety of types. Let's briefly discuss the naming conventions:
 
@@ -147,7 +147,7 @@ News
 
     * `revsy`  - reverse playback
 
-   Also there are set of presets that imply the notion of add a bit of effect or add a lot of effect.
+  Also there are set of presets that imply the notion of add a bit of effect or add a lot of effect.
     They are suffixed with number from 1 to 5. Like `flan1` or `tort3`. Also if the effect support the
     tone knob (center frequency of LP filter) ter are suffixes `b` for bright color and `m` for muted color.
     For example `tort2m` or `adele2b`.
@@ -155,9 +155,9 @@ News
 
     The effects are just functions from signals to signals:
 
-    ~~~haskell
-    dac $ hall 0.2 $ adele2 0.5 0.25 $ flan2 $ tort1m $ asigs
-    ~~~
+  ~~~haskell
+  dac $ hall 0.2 $ adele2 0.5 0.25 $ flan2 $ tort1m $ asigs
+  ~~~
 
 * **UI widgets for standard effects**.
 

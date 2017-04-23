@@ -1,12 +1,12 @@
 {-# Language FlexibleInstances #-}
 -- | Rendering of Csound files and playing the music in real time.
 --
--- How are we going to get the sound out of Haskell code? 
--- Instruments are ready and we have written all the scores for them. 
+-- How are we going to get the sound out of Haskell code?
+-- Instruments are ready and we have written all the scores for them.
 -- Now, it's time to use the rendering functions. We can render haskell expressions
 -- to Csound code. A rendering function takes a value that represents a sound (it's a tuple of signals)
--- and produces a string with Csound code. It can take a value that represents 
--- the flags for the csound compiler and global settings ('Csound.Options'). 
+-- and produces a string with Csound code. It can take a value that represents
+-- the flags for the csound compiler and global settings ('Csound.Options').
 -- Then we can save this string to file and convert it to sound with csound compiler
 --
 -- > csound -o music.wav music.csd
@@ -19,16 +19,16 @@
 --
 -- The main function of this module is 'Csound.IO.renderCsdBy'. Other function are nothing but
 -- wrappers that produce the Csound code and make something useful with it (saving to file,
--- playing with specific player or in real time).  
-module Csound.IO (    
+-- playing with specific player or in real time).
+module Csound.IO (
     -- * Rendering
     RenderCsd(..),
-    renderCsd, 
-    writeCsd, writeCsdBy, 
+    renderCsd,
+    writeCsd, writeCsdBy,
     writeSnd, writeSndBy,
-    
+
     -- * Playing the sound
-    playCsd, playCsdBy, 
+    playCsd, playCsdBy,
     mplayer, mplayerBy, totem, totemBy,
 
     -- * Live performance
@@ -76,10 +76,10 @@ import Csound.Control.Gui
 import Csound.Options(setSilent, setDac, setCabbage)
 
 render :: Sigs a => Options -> SE a -> IO String
-render = renderOutBy 
+render = renderOutBy
 
 render_ :: Options -> SE () -> IO String
-render_ = renderOutBy_ 
+render_ = renderOutBy_
 
 class RenderCsd a where
     renderCsdBy :: Options -> a -> IO String
@@ -111,10 +111,22 @@ instance RenderCsd Sig8 where
 instance RenderCsd (Sig2, Sig2, Sig2, Sig2) where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd (Sig8, Sig8) where  
+instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2) where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd (Sig8, Sig8, Sig8, Sig8) where  
+instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2) where
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2) where
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2) where
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd (Sig8, Sig8) where
+    renderCsdBy opt a = render opt (return a)
+
+instance RenderCsd (Sig8, Sig8, Sig8, Sig8) where
     renderCsdBy opt a = render opt (return a)
 
 instance RenderCsd (SE Sig) where
@@ -141,10 +153,22 @@ instance RenderCsd (SE Sig8) where
 instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE (Sig8, Sig8)) where  
+instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE (Sig8, Sig8, Sig8, Sig8)) where  
+instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE (Sig8, Sig8)) where
+    renderCsdBy opt a = render opt a
+
+instance RenderCsd (SE (Sig8, Sig8, Sig8, Sig8)) where
     renderCsdBy opt a = render opt a
 
 instance (Sigs a) => RenderCsd (a -> Sig) where
@@ -172,6 +196,18 @@ instance (Sigs a) => RenderCsd (a -> Sig8) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
 instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt (return . f)
+
+instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
 instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8)) where
@@ -208,6 +244,18 @@ instance (Sigs a) => RenderCsd (a -> SE Sig8) where
     renderCsdBy opt f = renderEffBy opt f
 
 instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
+    renderCsdBy opt f = renderEffBy opt f
+
+instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
     renderCsdBy opt f = renderEffBy opt f
 
 instance (Sigs a) => RenderCsd (a -> SE (Sig8, Sig8)) where
@@ -335,7 +383,7 @@ instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2))) where
 
 instance RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
-        (ui, _) <- src        
+        (ui, _) <- src
         panel ui
 
 instance RenderCsd (Source (SE ())) where
@@ -362,11 +410,11 @@ writeSndBy :: RenderCsd a => Options -> String -> a -> IO ()
 writeSndBy opt file a = do
     writeCsdBy opt fileCsd a
     runWithUserInterrupt $ "csound -o " ++ file ++ " " ++ fileCsd
-    where fileCsd = "tmp.csd"    
+    where fileCsd = "tmp.csd"
 
 -- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
--- 
--- > playCsd program file csd 
+--
+-- > playCsd program file csd
 --
 -- Produces files @file.csd@ (with 'Csound.Render.Mix.renderCsd') and @file.wav@ (with @csound@) and then invokes:
 --
@@ -382,7 +430,7 @@ playCsdBy opt player file a = do
     player fileWav
     return ()
     where fileCsd = file ++ ".csd"
-          fileWav = file ++ ".wav"  
+          fileWav = file ++ ".wav"
 
 simplePlayCsdBy :: (RenderCsd a) => Options -> String -> String -> a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
@@ -398,18 +446,18 @@ dac = dacBy def
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ "csound " ++ "tmp.csd" 
+    runWithUserInterrupt $ "csound " ++ "tmp.csd"
     where opt = opt' <> setDac
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()
-vdac = dacBy (setVirtual def) 
+vdac = dacBy (setVirtual def)
 
 -- | Output to dac with virtual midi keyboard with specified options.
 vdacBy :: (RenderCsd a) => Options -> a -> IO ()
-vdacBy opt = dacBy (setVirtual opt) 
+vdacBy opt = dacBy (setVirtual opt)
 
-setVirtual :: Options -> Options 
+setVirtual :: Options -> Options
 setVirtual a = a { csdFlags = (csdFlags a) { rtmidi = Just VirtualMidi, midiRT = m { midiDevice = Just "0" } } }
     where m = midiRT $ csdFlags a
 
@@ -421,7 +469,7 @@ csd = csdBy setSilent
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
     writeCsdBy (setSilent <> options) "tmp.csd" a
-    runWithUserInterrupt $ "csound tmp.csd" 
+    runWithUserInterrupt $ "csound tmp.csd"
 
 
 ----------------------------------------------------------
@@ -452,23 +500,23 @@ runWithUserInterrupt cmd = do
     E.catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
     where
         onUserInterrupt :: ProcessHandle -> E.AsyncException -> IO ()
-        onUserInterrupt pid x = case x of 
+        onUserInterrupt pid x = case x of
             E.UserInterrupt -> terminateProcess pid >> E.throw x
             e               -> E.throw e
 
 ----------------------------------------------------------
 
--- | Runs the csound files with cabbage engine. 
+-- | Runs the csound files with cabbage engine.
 -- It invokes the Cabbage command line utility and setts all default cabbage flags.
 runCabbage :: (RenderCsd a) => a -> IO ()
 runCabbage = runCabbageBy def
 
--- | Runs the csound files with cabbage engine with user defined options. 
+-- | Runs the csound files with cabbage engine with user defined options.
 -- It invokes the Cabbage command line utility and setts all default cabbage flags.
 runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ "Cabbage " ++ "tmp.csd" 
+    runWithUserInterrupt $ "Cabbage " ++ "tmp.csd"
     where opt = opt' <> setCabbage
 
 ------------------------------
@@ -491,4 +539,4 @@ onCard6= id
 
 -- | Alias to process inputs of audio-card with 8 inputs.
 onCard8 :: (Sig8 -> a) -> (Sig8 -> a)
-onCard8= id    
+onCard8= id
