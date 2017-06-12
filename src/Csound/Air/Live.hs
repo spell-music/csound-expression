@@ -18,12 +18,12 @@ module Csound.Air.Live (
     -- ** Fx units
     uiDistort, uiChorus, uiFlanger, uiPhaser, uiDelay, uiEcho, uiFilter, uiReverb,
     uiGain, uiCompress, uiWhite, uiPink, uiFx, uiDry,
-    uiSig, uiMix, uiMidi, 
+    uiSig, uiMix, uiMidi,
     -- uiPatch,
 
      -- * Static widgets
     AdsrBound(..), AdsrInit(..),
-    linAdsr, expAdsr, 
+    linAdsr, expAdsr,
     classicWaves,
     masterVolume, masterVolumeKnob
 ) where
@@ -67,14 +67,14 @@ genMixer (parentGui, childGui) as = source $ do
 
     gMasterTag <- box "master"
     (gMaster, masterVol) <- defSlider ""
-    (gMasterMute, masterMute) <- toggleSig "" False 
-    let g = parentGui $ zipWith3 (\tag slid mute -> childGui [sca 0.8 tag, sca 8 slid, sca 1.1 mute]) 
+    (gMasterMute, masterMute) <- toggleSig "" False
+    let g = parentGui $ zipWith3 (\tag slid mute -> childGui [sca 0.8 tag, sca 8 slid, sca 1.1 mute])
                         (gMasterTag : gTags) (gMaster : gs) (gMasterMute : gMutes)
         muteVols = zipWith appMute mutes vols
         masterMuteVol = appMute masterMute masterVol
     res <- fmap (mul masterMuteVol . mean) $ zipWithM (\v ain -> fmap (mul v) ain) muteVols sigs
     return (g, res)
-    where 
+    where
         (names, sigs) = unzip as
         appMute mute vol = (port (1 - mute) 0.05) * vol
 
@@ -95,7 +95,7 @@ defSlider tag = slider tag (linSpan 0 1) 0.5
 --
 -- > uiGain :: Double -> Source FxFun
 -- > uiGain isOn gain = fxBox "Gain" fx isOn [("gain", gain)]
--- >    where 
+-- >    where
 -- >        fx :: Sig -> Sig2 -> Sig2
 -- >        fx = mul
 --
@@ -105,10 +105,10 @@ defSlider tag = slider tag (linSpan 0 1) 0.5
 --
 -- * @name@ -- is the name of the widget
 --
--- * @fx@ -- is signal processing function (see the class @FxUI@). 
+-- * @fx@ -- is signal processing function (see the class @FxUI@).
 --
 -- * @isOn@ -- whether widget in the active state
--- 
+--
 -- * @args@ -- list of initial values for arguments and names of the arguments.
 --
 -- It's cool to set the color of the widget with @fxColor@ function.
@@ -120,20 +120,20 @@ fxBox name fx onOff args = source $ do
     let gOff = setFontSize 25 gOff0
     offRef <- newGlobalRef (0 :: Sig)
     writeRef offRef off
-    let (names, initVals) = unzip args  
-    (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals 
+    let (names, initVals) = unzip args
+    (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals
     let f x = do
         ref <- newRef (0 :: a)
         goff <- readRef offRef
-        writeRef ref x        
+        writeRef ref x
         when1 (goff ==* 1) $ do
             x2 <- readRef ref
             writeRef ref =<< fx as x2
-        res <- readRef ref        
-        return res  
+        res <- readRef ref
+        return res
     let gui = setBorder UpBoxBorder $ go (length names) gOff gs
     return (gui, f)
-    where 
+    where
         go n gOff gs
             | n == 0 = gOff
             | n < 4  = f (gs ++ replicate (4 - n) space)
@@ -145,13 +145,13 @@ fxBox name fx onOff args = source $ do
 uiBox :: (Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
 uiBox name fx onOff = mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go off fx
     where
-        off =  mapGuiSource (setFontSize 25) $ toggleSig name onOff 
+        off =  mapGuiSource (setFontSize 25) $ toggleSig name onOff
         go off fx arg = fmap (mul off) $ fx arg
 
 uiOnOffSize = 1.7
 uiBoxSize   = 8
 
-uiGroupGui :: Gui -> Gui -> Gui 
+uiGroupGui :: Gui -> Gui -> Gui
 uiGroupGui a b =ver [sca uiOnOffSize a, sca uiBoxSize b]
 
 sourceColor2 :: Color -> Source a -> Source a
@@ -173,7 +173,7 @@ fxGroupMS guiGroup as bridge bs = do
         Nothing -> return $ (guiGroup $ gsA ++ gsB, fA >=> fB . fromMono)
         Just widget -> do
             (gBridge, fBridge) <- widget
-            return $ (guiGroup $ gsA ++ gBridge : gsB, fA >=> fBridge >=> fB)    
+            return $ (guiGroup $ gsA ++ gBridge : gsB, fA >=> fBridge >=> fB)
     where
         getChain xs = do
             (gs, fs) <- fmap unzip $ sequence xs
@@ -181,20 +181,20 @@ fxGroupMS guiGroup as bridge bs = do
 
 fxGroup :: ([Gui] -> Gui) -> [Source (Fx a)] -> Source (Fx a)
 fxGroup guiGroup as = do
-    (gs, fs) <- fmap unzip $ sequence as    
+    (gs, fs) <- fmap unzip $ sequence as
     return (guiGroup gs, foldl (\a b -> a >=> b) return fs)
 
 -- | Scales the gui for signal processing widgets.
 fxSca :: Double -> Source (Fx a) -> Source (Fx a)
 fxSca d a = fxGroup (\xs -> sca d $ head xs) [a]
 
--- | Groups the signal processing widgets. 
+-- | Groups the signal processing widgets.
 -- The functions are composed the visuals are
 -- grouped  horizontally.
 fxHor :: [Source (Fx a)] -> Source (Fx a)
 fxHor = fxGroup hor
 
--- | Groups the signal processing widgets. 
+-- | Groups the signal processing widgets.
 -- The functions are composed the visuals are
 -- grouped  vertically.
 fxVer :: [Source (Fx a)] -> Source (Fx a)
@@ -233,7 +233,7 @@ fxApply :: Source (a -> SE b) -> a -> Source b
 fxApply fx a = joinSource $ lift1 (\f -> f a) fx
 
 -- | Applies a function to a signal processing function.
-fxMap :: Fx a -> Source (Fx a) -> Source (Fx a) 
+fxMap :: Fx a -> Source (Fx a) -> Source (Fx a)
 fxMap f = mapSource (>=> f)
 
 -- | Applies FX to the Patch.
@@ -243,14 +243,14 @@ atFx uiFx patch = lift1 (\fx -> addPostFx 1 fx patch) uiFx
 -- | The distortion widget. The arguments are
 --
 -- > uiDistort isOn levelOfDistortion drive tone
-uiDistort :: Sigs a => Bool -> Double -> Double -> Double -> Source (Fx a) 
-uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $ fxBox "Distortion" (\[level, drive, tone] -> return . fxDistort level drive tone) isOn 
+uiDistort :: Sigs a => Bool -> Double -> Double -> Double -> Source (Fx a)
+uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $ fxBox "Distortion" (\[level, drive, tone] -> return . fxDistort level drive tone) isOn
     [("level", level), ("drive", drive), ("tone", tone)]
 
 
 -- | The chorus widget. The arguments are
 --
--- > uiChorus isOn mix rate depth width 
+-- > uiChorus isOn mix rate depth width
 uiChorus :: Bool -> Double -> Double -> Double -> Double -> Source Fx2
 uiChorus isOn mix rate depth width = sourceColor2 C.coral $ fxBox "Chorus" (\[mix, rate, depth, width] -> return . stChorus2 mix rate depth width) isOn
     [("mix",mix), ("rate",rate), ("depth",depth), ("width",width)]
@@ -263,7 +263,7 @@ uiDry = fxBox "Thru" (\[] -> return) True []
 -- > uiFlanger isOn  rate depth delay feedback
 uiFlanger :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
 uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indigo $ fxBox "Flanger" (\[fback, rate, depth, delay] -> return . fxFlanger fback rate depth delay) isOn
-    [("rate",rate), ("depth",depth), ("delay",delay), ("fback", fback)]   
+    [("rate",rate), ("depth",depth), ("delay",delay), ("fback", fback)]
 
 
 -- | The phaser widget. The arguments are
@@ -312,30 +312,30 @@ uiGain gain = mapSource bindSig $ sourceColor2 C.black $ fxBox "Gain" (\[vol] ->
 
 -- | The filtered white noize widget. The arguments are
 --
--- > uiWhite isOn centerFreqOfFilter amountOfNoize 
+-- > uiWhite isOn centerFreqOfFilter amountOfNoize
 uiWhite :: Sigs a => Bool -> Double -> Double -> Source (Fx a)
-uiWhite isOn freq depth = mapSource bindSig $ sourceColor2 C.dimgray $ fxBox "White" (\[freq, depth] -> fxWhite freq depth) isOn 
+uiWhite isOn freq depth = mapSource bindSig $ sourceColor2 C.dimgray $ fxBox "White" (\[freq, depth] -> fxWhite freq depth) isOn
     [("freq", freq), ("depth", depth)]
 
 -- | The filtered pink noize widget. The arguments are
 --
--- > uiPink isOn centerFreqOfFilter amountOfNoize 
+-- > uiPink isOn centerFreqOfFilter amountOfNoize
 uiPink :: Sigs a => Bool -> Double -> Double -> Source (Fx a)
 uiPink isOn freq depth = mapSource bindSig $ sourceColor2 C.deeppink $ fxBox "Pink" (\[freq, depth] -> fxPink freq depth) isOn
     [("freq", freq), ("depth", depth)]
 
 -- | The constructor for signal processing functions with no arguments (controlls).
 uiFx :: Sigs a => String -> Fx a -> Bool -> Source (Fx a)
-uiFx name f isOn = fxBox name (\[] -> f) isOn [] 
+uiFx name f isOn = fxBox name (\[] -> f) isOn []
 
 -- | Midi chooser implemented as FX-box.
-uiMidi :: (Sigs a) => [(String, Msg -> SE a)] -> Int -> Source (Fx a) 
+uiMidi :: (Sigs a) => [(String, Msg -> SE a)] -> Int -> Source (Fx a)
 uiMidi xs initVal = sourceColor2 C.forestgreen $ uiBox "Midi" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vmidiChooser xs initVal
 
 {-
 -- | Patch chooser implemented as FX-box.
-uiPatch :: [(String, Patch2)] -> Int -> Source FxFun 
+uiPatch :: [(String, Patch2)] -> Int -> Source FxFun
 uiPatch xs initVal = sourceColor2 C.forestgreen $ uiBox "Patch" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vpatchChooser xs initVal
 -}
@@ -345,8 +345,8 @@ uiSig :: (Sigs a) => String -> Bool -> Source a -> Source (Fx a)
 uiSig name onOff widget = source $ do
     (gs, asig) <- widget
     (gOff0, off) <- toggleSig name onOff
-    let gOff = setFontSize 25 gOff0     
-        f x = return $ x + mul (portk off 0.05) asig  
+    let gOff = setFontSize 25 gOff0
+        f x = return $ x + mul (portk off 0.05) asig
     return (setBorder UpBoxBorder $ uiGroupGui gOff gs, f)
 
 -- | A mixer widget represented as an effect.
@@ -382,7 +382,7 @@ genAdsr :: (D -> D -> D -> D -> Sig)
 genAdsr mkAdsr name b inits = source $ do
     (gatt, att) <- knob "A" (linSpan expEps $ attBound b) (attInit inits)
     (gdec, dec) <- knob "D" (linSpan expEps $ decBound b) (decInit inits)
-    (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits) 
+    (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits)
     (grel, rel) <- knob "R" (linSpan expEps $ relBound b) (relInit inits)
     let val   = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
     gui <- setTitle name $ hor [gatt, gdec, gsus, grel]
@@ -391,7 +391,7 @@ genAdsr mkAdsr name b inits = source $ do
 -- | A widget with four standard waveforms: pure tone, triangle, square and sawtooth.
 -- The last parameter is a default waveform (it's set at init time).
 classicWaves :: String -> Int -> Source (Sig -> Sig)
-classicWaves name initVal = funnyRadio name 
+classicWaves name initVal = funnyRadio name
     [ ("osc", osc)
     , ("tri", tri)
     , ("sqr", sqr)
@@ -440,21 +440,21 @@ routeInstr instrs instrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> 
 ----------------------------------------------------
 -- effect choosers
 
-hpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a 
+hpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a
 hpatchChooser = genPatchChooser hradioSig
 
-vpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a 
+vpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a
 vpatchChooser = genPatchChooser vradioSig
 
 genPatchChooser :: (SigSpace a, Sigs a) => ([String] -> Int -> Source Sig) -> [(String, Patch D a)] -> Int -> Source a
 genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
-    where 
-        (names, patches) = unzip xs                
+    where
+        (names, patches) = unzip xs
         go instrId = routeInstr fxs instrId =<< midi (routeInstr instrs instrId . ampCps)
 
         instrs = fmap patchInstr patches
         fxs    = fmap getPatchFx patches
-        
+
 -}
 
 
@@ -465,13 +465,13 @@ genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
 --
 -- > uiCompress thresh loknee hiknee ratio att rel gain
 uiCompress :: Sigs a => Double -> Double -> Double -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain = mapSource bindSig $ paintTo orange $ fxBox "Compress" fx True 
+uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain = mapSource bindSig $ paintTo orange $ fxBox "Compress" fx True
     [("thresh", initThresh), ("loknee", initLoknee), ("hiknee", initHiknee), ("ratio", initRatio), ("att", initAtt), ("rel", initRel),  ("gain", initGain)]
-    where 
-        fx [thresh, loknee, hiknee, ratio, att, rel, gain] = return . fxCompress thresh (loknee, hiknee) ratio (att, rel) gain 
+    where
+        fx [thresh, loknee, hiknee, ratio, att, rel, gain] = return . fxCompress thresh (loknee, hiknee) ratio (att, rel) gain
 
-        paintTo = fxColor . C.sRGB24read  
+        paintTo = fxColor . C.sRGB24read
         orange = "#FF851B"
 
 fromMonoFx :: Sigs a => (Sig -> Sig) -> Fx a
-fromMonoFx f = \asig2 -> bindSig (return . f) asig2        
+fromMonoFx f = \asig2 -> bindSig (return . f) asig2

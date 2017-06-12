@@ -15,7 +15,7 @@ module Csound.Air.Fx.FxBox(
     -- *** Muted
     adele1m, adele2m, adele3m, adele4m, adele5m,
 
-    -- ** Ping Pong Delay   
+    -- ** Ping Pong Delay
     pongy1, pongy2, pongy3, pongy4, pongy5,
 
     -- *** Bright
@@ -57,17 +57,17 @@ module Csound.Air.Fx.FxBox(
     triPany1, triPany2, triPany3, triPany4, triPany5,
 
     sqrPany',
-    sqrPany1, sqrPany2, sqrPany3, sqrPany4, sqrPany5,    
+    sqrPany1, sqrPany2, sqrPany3, sqrPany4, sqrPany5,
 
     -- ** Tremolo
     oscTremy',
-    oscTremy1, oscTremy2, oscTremy3, oscTremy4, oscTremy5,    
+    oscTremy1, oscTremy2, oscTremy3, oscTremy4, oscTremy5,
 
     triTremy',
-    triTremy1, triTremy2, triTremy3, triTremy4, triTremy5,    
+    triTremy1, triTremy2, triTremy3, triTremy4, triTremy5,
 
     sqrTremy',
-    sqrTremy1, sqrTremy2, sqrTremy3, sqrTremy4, sqrTremy5,    
+    sqrTremy1, sqrTremy2, sqrTremy3, sqrTremy4, sqrTremy5,
 
     -- ** Ring modulation
     ringo',
@@ -78,7 +78,7 @@ module Csound.Air.Fx.FxBox(
     --
     -- Let's take a distortion fr instance:
     --
-    -- > type FxFun = Sig2 -> SE Sig2 
+    -- > type FxFun = Sig2 -> SE Sig2
     -- >
     -- > uiTort2 :: Source FxFun
     --
@@ -92,19 +92,19 @@ module Csound.Air.Fx.FxBox(
     -- All these functions stack the effects in the list
     -- and align visuals. The visuals can be stacked horizontally, vertically
     -- or placed on a square grid.
-    -- 
+    --
     -- Let's create a chain of effects and apply it to the input signal:
     --
     -- > > let pedals ain = lift1 (\f -> f ain) $ fxHor [uiFlan1, uiAdele2 0.25 0.5, uiHall 0.2, uiGain 0.4]
     -- >
     -- > > vdac $ pedals =<< (atMidi $ dryPatch vibraphone)
     --
-    -- With @uiGain@ we can change the volume of the output.    
+    -- With @uiGain@ we can change the volume of the output.
 
 
     -- ** Reverb
 
-    -- *** Rooms    
+    -- *** Rooms
     uiRoom, uiRoom1, uiRoom2, uiRoom3, uiRoom4, uiRoom5,
 
     -- ** Chambers
@@ -118,7 +118,7 @@ module Csound.Air.Fx.FxBox(
 
     -- ** Mono Reverb
 
-    -- *** Rooms    
+    -- *** Rooms
     uiMonoRoom, uiRoom1m, uiRoom2m, uiRoom3m, uiRoom4m, uiRoom5m,
 
     -- ** Chambers
@@ -138,7 +138,7 @@ module Csound.Air.Fx.FxBox(
     -- ** Ping Pong Delay
     uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5,
     uiPongy1b, uiPongy2b, uiPongy3b, uiPongy4b, uiPongy5b,
-    uiPongy1m, uiPongy2m, uiPongy3m, uiPongy4m, uiPongy5m,    
+    uiPongy1m, uiPongy2m, uiPongy3m, uiPongy4m, uiPongy5m,
 
     -- ** Distortion
     uiTort1, uiTort2, uiTort3, uiTort4, uiTort5,
@@ -177,12 +177,12 @@ module Csound.Air.Fx.FxBox(
     uiCrusher,
 
     -- ** Ring modulation
-    uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5    
+    uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5
 
     -- ** Compressor
     -- | TODO
 
-   
+
 ) where
 
 import Data.Default
@@ -194,13 +194,13 @@ import Csound.Typed.Gui
 import Csound.SigSpace
 
 import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
-    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
     fxPanTrem, fxMonoTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
 
 import Csound.Air.Patch(Fx, Fx1, Fx2)
-import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig, 
-    BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig, 
-    DriveSig, TimeSig, WidthSig, 
+import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig,
+    BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig,
+    DriveSig, TimeSig, WidthSig,
     rever2, pingPong, pingPong', PingPongSpec(..))
 
 import Csound.Air.Live(fxBox, fxColor)
@@ -234,9 +234,9 @@ size5 = 0.95
 --
 -- Note that the center frequency of the filter is measured in normalized units (form 0  to 1).
 tort :: Sigs a => DriveSig -> ToneSig -> a -> a
-tort kdrive ktone = mapSig $ P.fxDistortion 1 kdrive ktone 
+tort kdrive ktone = mapSig $ P.fxDistortion 1 kdrive ktone
 
--- | Envelope follower. 
+-- | Envelope follower.
 --
 -- > fowler sensitivity baseFrequencyRatio resonance ain
 --
@@ -260,8 +260,8 @@ revsy ktime = mapSig $ P.fxReverse ktime
 
 
 -- | A flanger effect following the typical design of a so called 'stomp box'
--- 
--- >  flan rate depth delayTime feedback ain = 
+--
+-- >  flan rate depth delayTime feedback ain =
 --
 -- Arguments
 --
@@ -281,47 +281,47 @@ flan krate kdepth kdelay kfback = mapSig $ P.fxFlanger krate kdepth kdelay kfbac
 -- | Phaser
 --
 -- An phase shifting effect that mimics the design of a so called 'stomp box'
--- 
+--
 -- > phasy rate depth freq fback ain
--- 
+--
 -- Arguments:
--- 
+--
 -- * @rate  @ --  rate of lfo of the effect (range 0 to 1)
 --
 -- * @depth @ --  depth of lfo of the effect (range 0 to 1)
 --
 -- * @freq  @ --  centre frequency of the phase shifting effect in octaves (suggested range 0 to 1)
 --
--- * @fback @ --  feedback and therefore intensity of the effect (range 0 to 1)  
+-- * @fback @ --  feedback and therefore intensity of the effect (range 0 to 1)
 --
 -- * @ain   @ --  input audio to be pitch shifted
 phasy :: Sigs a => RateSig -> DepthSig -> BaseCps -> Feedback -> a -> a
 phasy krate kdepth cps kfback = mapSig $ P.fxPhaser krate kdepth (6 + 5 * cps) kfback
 
 -- | LoFi (Bit Crusher)
--- 
+--
 -- 'Low Fidelity' distorting effects of bit reduction and downsampling (foldover)
--- 
+--
 -- > crusher  bits fold ain = ...
--- 
+--
 -- Arguments
--- 
+--
 -- * @bits  @ --  bit depth reduction (range 0 to 1)
 --
--- * @fold  @ --  amount of foldover (range 0 to 1)    
+-- * @fold  @ --  amount of foldover (range 0 to 1)
 --
 -- * @ain   @ --  input audio to have low fidelity distortion effects applied
 crusher :: Sigs a => BitsReductionSig -> FoldoverSig -> a -> a
 crusher kbits kfold = mapSig $ P.fxLoFi (0.6 * kbits) kfold
 
 -- | Stereo Chorus
--- 
+--
 -- A stereo chorus effect
--- 
+--
 -- > chory rate depth width (ainLeft, ainRight)
--- 
+--
 -- Arguments
--- 
+--
 -- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
 --
 -- * @depth @ --  depth of the lfo of the effect (range 0 to 1)
@@ -334,11 +334,11 @@ chory krate kdepth kwidth ain = P.fxChorus2 krate kdepth kwidth ain
 
 
 -- | Auto pan
--- 
+--
 -- > pany wave rate depth ain
--- 
+--
 -- ; Arguments:
--- 
+--
 -- * @wave  @ --  waveform used by the lfo (0=sine 1=triangle 2=square)
 --
 -- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
@@ -369,13 +369,13 @@ sqrPany = pany 2
 
 
 -- | Tremolo
--- 
+--
 -- tremolo effect
--- 
+--
 -- > tremy wave rate depth ain
--- 
+--
 -- ; Arguments:
--- 
+--
 -- * @wave  @ --  waveform used by the lfo (0=sine 1=triangle 2=square)
 --
 -- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
@@ -409,11 +409,11 @@ sqrTremy = tremy 2
 type EnvelopeModSig = Sig
 
 -- | RingModulator
--- 
+--
 -- An ring modulating effect with an envelope follower
--- 
+--
 -- > ringo balance rate envelopeMod ain
--- 
+--
 -- * @balance     @  --  dry / wet mix of the output signal (range 0 to 1)
 -- ; @rate        @  --  frequency of thew ring modulator *NOT IN HERTZ* (range 0 to 1)
 -- ; @envelopeMod @  --  amount of dynamic envelope following modulation of frequency (range 0 to 1)
@@ -467,17 +467,17 @@ adele5m = adeleByM size5
 -- | Ping-pong delay
 --
 -- > pongy kmix delayTime feedback tone ain
-pongy ::  Sigs a => Balance -> DelayTime -> Feedback -> ToneSig -> WidthSig -> a -> a
+pongy ::  Sig2s a => Balance -> DelayTime -> Feedback -> ToneSig -> WidthSig -> a -> a
 pongy balance delTime fbk tone width = mapSig2 (pingPong' (def { pingPongDamp = absTone, pingPongWidth = width }) delTime fbk balance)
     where absTone = scale (expcurve tone 4) 12000 100
 
-pongyBy :: Sigs a => ToneSig -> Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyBy :: Sig2s a => ToneSig -> Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
 pongyBy tone size balance delTime width = pongy balance delTime size tone width
 
-pongyBy_ :: Sigs a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyBy_ :: Sig2s a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
 pongyBy_ = pongyBy 0.5
 
-pongy1, pongy2, pongy3, pongy4, pongy5 :: Sigs a => Balance -> DelayTime -> WidthSig -> a -> a
+pongy1, pongy2, pongy3, pongy4, pongy5 :: Sig2s a => Balance -> DelayTime -> WidthSig -> a -> a
 
 pongy1 = pongyBy_ size1
 pongy2 = pongyBy_ size2
@@ -485,10 +485,10 @@ pongy3 = pongyBy_ size3
 pongy4 = pongyBy_ size4
 pongy5 = pongyBy_ size5
 
-pongyByB :: Sigs a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyByB :: Sig2s a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
 pongyByB = pongyBy 0.8
 
-pongy1b, pongy2b, pongy3b, pongy4b, pongy5b :: Sigs a => Balance -> DelayTime -> WidthSig -> a -> a
+pongy1b, pongy2b, pongy3b, pongy4b, pongy5b :: Sig2s a => Balance -> DelayTime -> WidthSig -> a -> a
 
 pongy1b = pongyByB size1
 pongy2b = pongyByB size2
@@ -496,10 +496,10 @@ pongy3b = pongyByB size3
 pongy4b = pongyByB size4
 pongy5b = pongyByB size5
 
-pongyByM :: Sigs a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
+pongyByM :: Sig2s a => Feedback -> Balance -> DelayTime -> WidthSig -> a -> a
 pongyByM = pongyBy 0.2
 
-pongy1m, pongy2m, pongy3m, pongy4m, pongy5m :: Sigs a => Balance -> DelayTime -> WidthSig -> a -> a
+pongy1m, pongy2m, pongy3m, pongy4m, pongy5m :: Sig2s a => Balance -> DelayTime -> WidthSig -> a -> a
 
 pongy1m = pongyByM size1
 pongy2m = pongyByM size2
@@ -588,10 +588,10 @@ phasy5 = phasy' size5
 
 -- Chorus
 
-chory' :: Sigs a => Sig -> a -> a
+chory' :: Sig2s a => Sig -> a -> a
 chory' size = mapSig2 (chory size size size)
 
-chory1, chory2, chory3, chory4, chory5 :: Sigs a => a -> a
+chory1, chory2, chory3, chory4, chory5 :: Sig2s a => a -> a
 
 chory1 = chory' size1
 chory2 = chory' size2
@@ -603,10 +603,10 @@ chory5 = chory' size5
 
 -- pany :: TremWaveSig -> DepthSig -> RateSig -> Sig2 -> Sig2
 
-oscPany' :: Sigs a => Sig -> a -> a
+oscPany' :: Sig2s a => Sig -> a -> a
 oscPany' size = mapSig2 (oscPany size size)
 
-oscPany1, oscPany2, oscPany3, oscPany4, oscPany5 :: Sigs a => a -> a
+oscPany1, oscPany2, oscPany3, oscPany4, oscPany5 :: Sig2s a => a -> a
 
 oscPany1 = oscPany' size1
 oscPany2 = oscPany' size2
@@ -614,10 +614,10 @@ oscPany3 = oscPany' size3
 oscPany4 = oscPany' size4
 oscPany5 = oscPany' size5
 
-triPany' :: Sigs a => Sig -> a -> a
+triPany' :: Sig2s a => Sig -> a -> a
 triPany' size = mapSig2 (triPany size size)
 
-triPany1, triPany2, triPany3, triPany4, triPany5 :: Sigs a => a -> a
+triPany1, triPany2, triPany3, triPany4, triPany5 :: Sig2s a => a -> a
 
 triPany1 = triPany' size1
 triPany2 = triPany' size2
@@ -625,10 +625,10 @@ triPany3 = triPany' size3
 triPany4 = triPany' size4
 triPany5 = triPany' size5
 
-sqrPany' :: Sigs a => Sig -> a -> a
+sqrPany' :: Sig2s a => Sig -> a -> a
 sqrPany' size = mapSig2 (sqrPany size size)
 
-sqrPany1, sqrPany2, sqrPany3, sqrPany4, sqrPany5 :: Sigs a => a -> a
+sqrPany1, sqrPany2, sqrPany3, sqrPany4, sqrPany5 :: Sig2s a => a -> a
 
 sqrPany1 = sqrPany' size1
 sqrPany2 = sqrPany' size2
@@ -636,7 +636,7 @@ sqrPany3 = sqrPany' size3
 sqrPany4 = sqrPany' size4
 sqrPany5 = sqrPany' size5
 
--- Tremolo 
+-- Tremolo
 
 oscTremy' :: Sigs a => Sig -> a -> a
 oscTremy' size = oscTremy size size
@@ -686,7 +686,7 @@ ringo4 = ringo' size4
 ringo5 = ringo' size5
 
 ----------------------------------------------------------
--- UI 
+-- UI
 
 setAll :: Double -> [String] -> [(String, Double)]
 setAll size names = fmap (\s -> (s, size)) names
@@ -694,7 +694,7 @@ setAll size names = fmap (\s -> (s, size)) names
 
 -- colors
 
-tortColor = red  
+tortColor = red
 fowlerColor = maroon
 adeleColor = blue
 pongColor = orange
@@ -706,7 +706,7 @@ choryColor = navy
 panyColor = aqua
 tremyColor = green
 ringoColor = maroon
-reverbColor = olive 
+reverbColor = olive
 
 paintTo = fxColor . C.sRGB24read
 
@@ -728,7 +728,7 @@ olive = "#3D9970"
 
 uiAdeleBy :: Sigs a => Double -> Double -> Double -> Double -> Source (Fx a)
 uiAdeleBy initTone initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone)]
-    where        
+    where
         fx [balance, delayTime, feedback, tone] = return . adele balance delayTime feedback tone
 
 uiAdeleBy_ :: Sigs a => Double -> Double -> Double -> Source (Fx a)
@@ -768,7 +768,7 @@ uiAdele5m = uiAdeleByM size5
 
 uiPongyBy :: Sigs a => Double -> Double -> Double -> Double -> Double -> Source (Fx a)
 uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Ping-pong" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
-    where        
+    where
         fx [balance, delayTime, feedback, tone, width] = return . pongy balance delayTime feedback tone width
 
 defWidth = 0.7
@@ -810,7 +810,7 @@ uiPongy5m = uiPongyByM size5
 
 uiTortBy :: Sigs a => Double -> Double -> Source (Fx a)
 uiTortBy initTone initDrive = mapSource bindSig $ paintTo tortColor $ fxBox "Distort" fx True [("drive", initDrive), ("tone", initTone)]
-    where        
+    where
         fx [drive, tone] = return . tort drive tone
 
 uiTortBy_ :: Sigs a => Double -> Source (Fx a)
@@ -850,12 +850,12 @@ uiTort5m = uiTortByM size5
 
 uiFowler' :: Sigs a => Source (Fx a)
 uiFowler' = mapSource bindSig $ paintTo fowlerColor $ fxBox "Follower" fx True [("size", size1)]
-    where        
+    where
         fx [size] = return . fowler' size
 
 uiFowlerBy :: Sigs a => Double -> Source (Fx a)
 uiFowlerBy size = mapSource bindSig $ paintTo fowlerColor $ fxBox "Follower" fx True [("sense", size), ("freq", size), ("reson", size)]
-    where        
+    where
         fx [sense, freq, resonance] = return . fowler sense freq resonance
 
 uiFowler1, uiFowler2, uiFowler3, uiFowler4, uiFowler5 :: Sigs a => Source (Fx a)
@@ -870,12 +870,12 @@ uiFowler5 = uiFowlerBy size5
 
 uiFlan' :: Sigs a => Source (Fx a)
 uiFlan' = mapSource bindSig $ paintTo flanColor $ fxBox "Flanger" fx True [("size", size1)]
-    where        
+    where
         fx [size] = return . flan' size
 
 uiFlanBy :: Sigs a => Double -> Source (Fx a)
 uiFlanBy size = mapSource bindSig $ paintTo flanColor $ fxBox "Flanger" fx True $ setAll size ["rate", "depth", "del time", "fbk"]
-    where        
+    where
         fx [rate, depth, delayTime, fbk] = return . flan rate depth delayTime fbk
 
 uiFlan1, uiFlan2, uiFlan3, uiFlan4, uiFlan5 :: Sigs a => Source (Fx a)
@@ -892,12 +892,12 @@ uiFlan5 = uiFlanBy size5
 
 uiPhasy' :: Sigs a => Source (Fx a)
 uiPhasy' = mapSource bindSig $ paintTo phasyColor $ fxBox "Phaser" fx  True $ [("size", size1)]
-    where        
+    where
         fx [x] = return . phasy' x
 
 uiPhasyBy :: Sigs a => Double -> Source (Fx a)
 uiPhasyBy size = mapSource bindSig $ paintTo phasyColor $ fxBox "Phaser" fx True $ setAll size ["rate", "depth", "cps", "fbk"]
-    where        
+    where
         fx [rate, depth, cps, fbk] = return . phasy rate depth cps fbk
 
 uiPhasy1, uiPhasy2, uiPhasy3, uiPhasy4, uiPhasy5 :: Sigs a => Source (Fx a)
@@ -910,17 +910,17 @@ uiPhasy5 = uiPhasyBy size5
 
 -- Chorus
 
-uiChory' :: Sigs a => Source (Fx a)
+uiChory' :: Sig2s a => Source (Fx a)
 uiChory' = paintTo choryColor $ fxBox "Chorus" fx True [("size", size1)]
-    where         
+    where
         fx [size] = return . chory' size
 
-uiChoryBy :: Sigs a => Double -> Source (Fx a)
+uiChoryBy :: Sig2s a => Double -> Source (Fx a)
 uiChoryBy size = paintTo choryColor $ fxBox "Chorus" fx True $ setAll size ["rate", "depth", "width"]
-    where            
+    where
         fx [rate, depth, width] = return . mapSig2 (chory rate depth width)
 
-uiChory1, uiChory2, uiChory3, uiChory4, uiChory5 :: Sigs a => Source (Fx a)
+uiChory1, uiChory2, uiChory3, uiChory4, uiChory5 :: Sig2s a => Source (Fx a)
 
 uiChory1 = uiChoryBy size1
 uiChory2 = uiChoryBy size2
@@ -934,18 +934,18 @@ uiChory5 = uiChoryBy size5
 
 genUiPany' :: (Sig -> Sig2 -> Sig2) -> Source Fx2
 genUiPany' mkPany = paintTo panyColor $ fxBox "Pan" fx True [("size", size1)]
-    where        
+    where
         fx [size] = return . mkPany size
 
 uiOscPany', uiTriPany', uiSqrPany' :: Source Fx2
 
-uiOscPany' = genUiPany' oscPany' 
+uiOscPany' = genUiPany' oscPany'
 uiTriPany' = genUiPany' triPany'
-uiSqrPany' = genUiPany' sqrPany' 
+uiSqrPany' = genUiPany' sqrPany'
 
 genUiPanyBy :: Sig -> Double -> Source Fx2
 genUiPanyBy wave size = paintTo panyColor $ fxBox "Pan" fx True $ setAll size ["depth", "rate"]
-    where         
+    where
         fx [depth, rate] = return . pany wave depth rate
 
 uiOscPanyBy, uiTriPanyBy, uiSqrPanyBy :: Double -> Source Fx2
@@ -976,11 +976,11 @@ uiSqrPany3 = uiSqrPanyBy size3
 uiSqrPany4 = uiSqrPanyBy size4
 uiSqrPany5 = uiSqrPanyBy size5
 
--- Tremolo 
+-- Tremolo
 
 genUiTremy' :: Sigs a => (Sig -> Sig -> Sig) -> Source (Fx a)
 genUiTremy' mkTremy = mapSource bindSig $ paintTo tremyColor $ fxBox "Tremolo" fx True [("size", size1)]
-    where        
+    where
         fx [size] = return . mkTremy size
 
 uiOscTremy', uiTriTremy', uiSqrTremy' :: Sigs a => Source (Fx a)
@@ -991,7 +991,7 @@ uiSqrTremy' = genUiTremy' sqrTremy'
 
 genUiTremyBy :: Sigs a => Sig -> Double -> Source (Fx a)
 genUiTremyBy wave size = mapSource bindSig $ paintTo tremyColor $ fxBox "Tremolo" fx True $ setAll size ["depth", "rate"]
-    where         
+    where
         fx [depth, rate] = return . tremy wave depth rate
 
 uiOscTremyBy, uiTriTremyBy, uiSqrTremyBy :: Sigs a => Double -> Source (Fx a)
@@ -1026,12 +1026,12 @@ uiSqrTremy5 = uiSqrTremyBy size5
 
 uiRingo' :: Sigs a => Source (Fx a)
 uiRingo' = mapSource bindSig $ paintTo ringoColor $ fxBox "Ringo" fx True [("size", size1)]
-    where        
+    where
         fx [size] = return . ringo' size
 
 uiRingoBy :: Sigs a => Double -> Source (Fx a)
 uiRingoBy size = mapSource bindSig $ paintTo ringoColor $ fxBox "Ring Mod" fx True $ setAll size ["mix", "rate", "env mod"]
-    where         
+    where
         fx [balance, rate, envMod] = return . ringo balance rate envMod
 
 uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5 :: Sigs a => Source (Fx a)
@@ -1046,39 +1046,39 @@ uiRingo5 = uiRingoBy size5
 
 uiCrusher :: Sigs a => Double -> Double -> Source (Fx a)
 uiCrusher initReduction initFoldover = mapSource bindSig $ paintTo revsyColor $ fxBox "LoFi" fx True [("redux", initReduction), ("foldover", initFoldover)]
-    where        
+    where
         fx [redux, foldover] = return . crusher redux foldover
 
 -- Reverse
 
 uiRevsy :: Sigs a => Double -> Source (Fx a)
 uiRevsy initTime = mapSource bindSig $ paintTo revsyColor $ fxBox "Reverse" fx True [("time", initTime)]
-    where        
+    where
         fx [time] = return . revsy time
 
 ------------------------------------------------------------
--- Reverbs 
+-- Reverbs
 
-uiRevBy :: Sigs a => Double -> Double -> Source (Fx a)
+uiRevBy :: Sig2s a => Double -> Double -> Source (Fx a)
 uiRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
-    where        
+    where
         fx [balance, feedback] = \asig -> return $ mapSig2 (\x -> mul (1 - balance) x + mul balance (rever2 feedback x)) asig
 
-uiRoom :: Sigs a => Double -> Source (Fx a)
-uiRoom = uiRevBy 0.6 
+uiRoom :: Sig2s a => Double -> Source (Fx a)
+uiRoom = uiRevBy 0.6
 
-uiRoom1, uiRoom2, uiRoom3, uiRoom4, uiRoom5 :: Sigs a => Source (Fx a)
+uiRoom1, uiRoom2, uiRoom3, uiRoom4, uiRoom5 :: Sig2s a => Source (Fx a)
 
-uiRoom1 = uiRoom size1 
-uiRoom2 = uiRoom size2 
-uiRoom3 = uiRoom size3 
-uiRoom4 = uiRoom size4 
-uiRoom5 = uiRoom size5 
+uiRoom1 = uiRoom size1
+uiRoom2 = uiRoom size2
+uiRoom3 = uiRoom size3
+uiRoom4 = uiRoom size4
+uiRoom5 = uiRoom size5
 
-uiChamber :: Sigs a => Double -> Source (Fx a)
+uiChamber :: Sig2s a => Double -> Source (Fx a)
 uiChamber = uiRevBy 0.8
 
-uiChamber1, uiChamber2, uiChamber3, uiChamber4, uiChamber5 :: Sigs a => Source (Fx a)
+uiChamber1, uiChamber2, uiChamber3, uiChamber4, uiChamber5 :: Sig2s a => Source (Fx a)
 
 uiChamber1 = uiChamber size1
 uiChamber2 = uiChamber size2
@@ -1086,10 +1086,10 @@ uiChamber3 = uiChamber size3
 uiChamber4 = uiChamber size4
 uiChamber5 = uiChamber size5
 
-uiHall :: Sigs a => Double -> Source (Fx a)
+uiHall :: Sig2s a => Double -> Source (Fx a)
 uiHall = uiRevBy 0.9
 
-uiHall1, uiHall2, uiHall3, uiHall4, uiHall5 :: Sigs a => Source (Fx a)
+uiHall1, uiHall2, uiHall3, uiHall4, uiHall5 :: Sig2s a => Source (Fx a)
 
 uiHall1 = uiHall size1
 uiHall2 = uiHall size2
@@ -1097,10 +1097,10 @@ uiHall3 = uiHall size3
 uiHall4 = uiHall size4
 uiHall5 = uiHall size5
 
-uiCave :: Sigs a => Double -> Source (Fx a)
+uiCave :: Sig2s a => Double -> Source (Fx a)
 uiCave = uiRevBy 0.99
 
-uiCave1, uiCave2, uiCave3, uiCave4, uiCave5 :: Sigs a => Source (Fx a)
+uiCave1, uiCave2, uiCave3, uiCave4, uiCave5 :: Sig2s a => Source (Fx a)
 
 uiCave1 = uiCave size1
 uiCave2 = uiCave size2
@@ -1109,26 +1109,26 @@ uiCave4 = uiCave size4
 uiCave5 = uiCave size5
 
 ------------------------------------------------------------
--- Mono Reverbs 
+-- Mono Reverbs
 
 rever1 :: Sig -> Sig -> Sig
 rever1 fbk = toMono . rever2 fbk . fromMono
 
 uiMonoRevBy :: Double -> Double -> Source Fx1
 uiMonoRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
-    where        
+    where
         fx [balance, feedback] = \asig -> return $ mixAt balance (rever1 feedback) asig
 
 uiMonoRoom :: Double -> Source Fx1
-uiMonoRoom = uiMonoRevBy 0.6 
+uiMonoRoom = uiMonoRevBy 0.6
 
 uiRoom1m, uiRoom2m, uiRoom3m, uiRoom4m, uiRoom5m :: Source Fx1
 
-uiRoom1m = uiMonoRoom size1 
-uiRoom2m = uiMonoRoom size2 
-uiRoom3m = uiMonoRoom size3 
-uiRoom4m = uiMonoRoom size4 
-uiRoom5m = uiMonoRoom size5 
+uiRoom1m = uiMonoRoom size1
+uiRoom2m = uiMonoRoom size2
+uiRoom3m = uiMonoRoom size3
+uiRoom4m = uiMonoRoom size4
+uiRoom5m = uiMonoRoom size5
 
 uiMonoChamber :: Double -> Source Fx1
 uiMonoChamber = uiMonoRevBy 0.8

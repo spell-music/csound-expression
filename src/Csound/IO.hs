@@ -1,4 +1,4 @@
-{-# Language FlexibleInstances #-}
+{-# Language FlexibleInstances, UndecidableInstances #-}
 -- | Rendering of Csound files and playing the music in real time.
 --
 -- How are we going to get the sound out of Haskell code?
@@ -84,357 +84,42 @@ render_ = renderOutBy_
 class RenderCsd a where
     renderCsdBy :: Options -> a -> IO String
 
-instance RenderCsd (SE ()) where
+instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
     renderCsdBy = render_
 
-instance RenderCsd Sig where
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd a where
     renderCsdBy opt a = render opt (return a)
 
-instance RenderCsd Sig2 where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd Sig4 where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd Sig6 where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd Sig8 where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2, Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig8, Sig8) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (Sig8, Sig8, Sig8, Sig8) where
-    renderCsdBy opt a = render opt (return a)
-
-instance RenderCsd (SE Sig) where
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (SE a) where
     renderCsdBy opt a = render opt a
 
-instance RenderCsd (SE Sig2) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE Sig4) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE Sig6) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE Sig8) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig8, Sig8)) where
-    renderCsdBy opt a = render opt a
-
-instance RenderCsd (SE (Sig8, Sig8, Sig8, Sig8)) where
-    renderCsdBy opt a = render opt a
-
-instance (Sigs a) => RenderCsd (a -> Sig) where
+instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> b) where
     renderCsdBy opt f = renderEffBy opt (return . f)
 
-instance (Sigs a) => RenderCsd (a -> Sig2) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> Sig3) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> Sig4) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> Sig6) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> Sig8) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> (Sig8, Sig8, Sig8, Sig8)) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-
-instance (Sigs a) => RenderCsd (a -> SE Sig) where
+instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
     renderCsdBy opt f = renderEffBy opt f
 
-instance (Sigs a) => RenderCsd (a -> SE Sig2) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE Sig3) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE Sig4) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE Sig5) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE Sig6) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE Sig8) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig8, Sig8)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> SE (Sig8, Sig8, Sig8, Sig8)) where
-    renderCsdBy opt f = renderEffBy opt f
-
-instance (Sigs a) => RenderCsd (a -> Source Sig) where
+instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> Source b) where
     renderCsdBy opt f = renderEffBy opt (fromSource . f)
 
-instance (Sigs a) => RenderCsd (a -> Source Sig2) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source Sig3) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source Sig4) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source Sig6) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source Sig8) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig8, Sig8)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (Sig8, Sig8, Sig8, Sig8)) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig)) where
+instance (Sigs a, Sigs b) => RenderCsd (a -> Source (SE b)) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
 
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
+instance {-# OVERLAPPING #-} (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
 
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig3)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig4)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig5)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig6)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE Sig8)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig8, Sig8))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance (Sigs a) => RenderCsd (a -> Source (SE (Sig8, Sig8, Sig8, Sig8))) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance RenderCsd (Source Sig) where
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source a) where
     renderCsdBy opt a = renderCsdBy opt (fromSource a)
 
-instance RenderCsd (Source Sig2) where
-    renderCsdBy opt a = renderCsdBy opt (fromSource a)
-
-instance RenderCsd (Source Sig4) where
-    renderCsdBy opt a = renderCsdBy opt (fromSource a)
-
-instance RenderCsd (Source (Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2)) -> (a1, a2, b1, b2)) a
-
-instance RenderCsd (Source Sig6) where
-    renderCsdBy opt a = renderCsdBy opt (fromSource a)
-
-instance RenderCsd (Source (Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2), (c1, c2)) -> (a1, a2, b1, b2, c1, c2)) a
-
-instance RenderCsd (Source Sig8) where
-    renderCsdBy opt a = renderCsdBy opt (fromSource a)
-
-instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ mapSource (\((a1, a2), (b1, b2), (c1, c2), (d1, d2)) -> (a1, a2, b1, b2, c1, c2, d1, d2)) a
-
-instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSource a
-
-instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSource a
-
-instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSource a
-
-instance RenderCsd (Source (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSource a
-
-instance RenderCsd (Source (SE Sig)) where
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source (SE a)) where
     renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
-instance RenderCsd (Source (SE Sig2)) where
-    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
-
-instance RenderCsd (Source (SE Sig4)) where
-    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
-
-instance RenderCsd (Source (SE (Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2)) -> (a1, a2, b1, b2)) a
-
-instance RenderCsd (Source (SE Sig6)) where
-    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
-
-instance RenderCsd (Source (SE (Sig2, Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2), (c1, c2)) -> (a1, a2, b1, b2, c1, c2)) a
-
-instance RenderCsd (Source (SE Sig8)) where
-    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
-
-instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ mapSource (fmap $ \((a1, a2), (b1, b2), (c1, c2), (d1, d2)) -> (a1, a2, b1, b2, c1, c2, d1, d2)) a
-
-instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
-
-instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
-
-instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
-
-instance RenderCsd (Source (SE (Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2, Sig2))) where
-    renderCsdBy opt a = renderCsdBy opt $ fromSourceSE a
-
-instance RenderCsd (Source ()) where
+instance {-# OVERLAPPING #-} RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
         (ui, _) <- src
         panel ui
 
-instance RenderCsd (Source (SE ())) where
+instance {-# OVERLAPPING #-} RenderCsd (Source (SE ())) where
     renderCsdBy opt src = renderCsdBy opt (joinSource src)
 
 -- | Renders Csound file.
@@ -518,7 +203,6 @@ csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
     writeCsdBy (setSilent <> options) "tmp.csd" a
     runWithUserInterrupt $ "csound tmp.csd"
-
 
 ----------------------------------------------------------
 -- players
