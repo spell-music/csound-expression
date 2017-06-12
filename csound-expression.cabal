@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       5.2.0
+Version:       5.2.1
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -11,15 +11,15 @@ Build-Type:    Simple
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
 
-Description:   
+Description:
     Welcome to the simplest textual synthesizer.
     .
     > dac $ osc 440
     .
     Csound-expression is a Haskell framework for computer music.
-    With the help of the library we can create our instruments on the fly. 
+    With the help of the library we can create our instruments on the fly.
     A few lines in the interpreter is enough to get the cool sound going
-    out of your speakers. It can be used for simple daily sound-file processing 
+    out of your speakers. It can be used for simple daily sound-file processing
     or for a full-blown live performances.
     .
     Got interested? Check out the guide: <https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md>
@@ -27,22 +27,22 @@ Description:
     Acknowledgements (I'd like to mention those who supported me a lot with their music and ideas):
     .
     * music: entertainment for the braindead, three pandas and the moon, odno no, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, loscil, boards of canada,
-    Hozan Yamamoto, Tony Scott and Shinichi Yuize. 
+    Hozan Yamamoto, Tony Scott and Shinichi Yuize.
     .
     * ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
 
     * Thanks a lot to all who patiently answered my questions and provided skillful solutions, encouragement and ideas:
     .
     Iain McCurdy, Victor Lazzarini, Rory Walsh, Steven Yi, John Ffitch, Joachim Heintz, Peter Burgess, Dr. Richard Boulanger, Michael Gogins, Oeyvind Brandtsegg,
-    Richard Dobson, Partev Barr Sarkissian, Dave Phillips, Guillermo Senna, Art Hunkins, 
+    Richard Dobson, Partev Barr Sarkissian, Dave Phillips, Guillermo Senna, Art Hunkins,
     Ben McAllister, Michael Rhoades, Gleb Rogozinsky, Eugene Cherny, Brian Merchant, Wolf Peuker, Hlöðver Sigurðsson, Aaron Krister Johnson, Andy Fillebrown and friends :)
-   
-Extra-Source-Files : 
+
+Extra-Source-Files :
     examples/README.txt
-    
+
     examples/Test.hs
     examples/Heartbeat.hs
-    
+
     examples/Color.hs
     examples/Gm.hs
     examples/Tibetan.hs
@@ -53,10 +53,10 @@ Extra-Source-Files :
     examples/Events.hs
     examples/DubBass.hs
 
-    examples/Gui/Button.hs          
-    examples/Gui/Harmonics.hs      
-    examples/Gui/EnvelopeAndHarmonics.hs      
-    examples/Gui/Key.hs        
+    examples/Gui/Button.hs
+    examples/Gui/Harmonics.hs
+    examples/Gui/EnvelopeAndHarmonics.hs
+    examples/Gui/Key.hs
     examples/Gui/Waves.hs
 
     examples/Api/message.py
@@ -85,7 +85,7 @@ Library
   Exposed-Modules:
         Csound.Base
 
-        Csound.Air        
+        Csound.Air
         Csound.Air.Wave
         Csound.Air.Wave.Sync
         Csound.Air.Granular
@@ -105,9 +105,9 @@ Library
         Csound.Air.Misc
         Csound.Air.Hvs
         Csound.Air.Fm
-        Csound.Air.Pan 
-        Csound.Air.Padsynth       
-        
+        Csound.Air.Pan
+        Csound.Air.Padsynth
+
         Csound.Types
         Csound.Tab
         Csound.SigSpace
@@ -120,7 +120,7 @@ Library
         Csound.Control.Evt
         Csound.Control.Instr
         Csound.Control.SE
-        
+
         Csound.Control.Midi
         Csound.Control.Sf
         Csound.Control.Osc
@@ -136,4 +136,4 @@ Library
         Csound.Control.Overload
         Csound.Control.Overload.Outs
         Csound.Control.Overload.MidiInstr
-        Csound.Control.Overload.SpecInstr     
+        Csound.Control.Overload.SpecInstr
