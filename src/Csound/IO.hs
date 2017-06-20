@@ -37,6 +37,9 @@ module Csound.IO (
     -- * Render and run
     csd, csdBy,
 
+    -- * Save user options
+    saveUserOptions,
+
     -- * Render and run with cabbage
     runCabbage, runCabbageBy,
 
