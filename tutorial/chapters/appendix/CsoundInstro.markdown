@@ -302,7 +302,7 @@ the whole note. So we can see that signal is filtered at audio rate but
 the center frequency of the filter changes at the control rate. 
 In this library the types are merged together (`Sig`). 
 If you plug a signal into `kfreq` we can infer that you want this
-signal to be control rate. In Csound some opcodes exist go in pairs. 
+signal to be control rate. In Csound some opcodes exist that go in pairs. 
 One that produces audio signals and one that produces control rate signals. 
 By default if there is no constraint for the signal it is rendered
 at the audio rate except for those units that produce sound envelopes 
