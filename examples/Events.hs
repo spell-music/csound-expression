@@ -32,7 +32,7 @@ e4 = appendE 0 (+) $ repeatE 1 src
 e5 = mappendE e2
 
 e51 :: Evt (D, D)
-e51 = mappend 
+e51 = mappend
         (repeatE (0.7, 220) (metro (2/7)))
         (cycleE [(0.5, 440), (0.5, 330)] (metro 2))
 
@@ -42,12 +42,12 @@ e6 = randDs src
 
 e7 = randInts (0, 10) src
 
-e8 = oneOf [100, 200, 300] src
+e8 = oneOf [100, 200, 300, 400, 500, 600, 700] src
 
 e9 = avgSum $ freqOf [(0.1, 0), (0.9, 1)] src
 
 avgSum :: Evt D -> Evt D
-avgSum = accumE (0, 0) $ \a (s, n) ->     
+avgSum = accumE (0, 0) $ \a (s, n) ->
     let s1 = s + a
         n1 = n + 1
     in  (s1 / n1, (s1, n1))
@@ -55,7 +55,7 @@ avgSum = accumE (0, 0) $ \a (s, n) ->
 -- mask
 
 e10 :: Evt (Sco D)
-e10 = withDur 0.5 $ filterE (>* 110) $ mconcat 
+e10 = withDur 0.5 $ filterE (>* 110) $ mconcat
     [ every 0 [5,7] $ repeatE 330 src
     , every 3 [11] $ repeatE 550 src
     , every 2 [2] $ repeatE 440 src
@@ -68,5 +68,5 @@ res e = sched_ echo $ withDur 0.1 e
 -- output with sound
 resSnd e = sched pureTone $ withDur 0.1 e
 
-main = dac $ res e7
+main = dac $ res e8
 

@@ -119,7 +119,7 @@ instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source (SE a)) where
 
 instance {-# OVERLAPPING #-} RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
-        (ui, _) <- src
+        (ui, _) <- unSource src
         panel ui
 
 instance {-# OVERLAPPING #-} RenderCsd (Source (SE ())) where

@@ -61,13 +61,13 @@ hmixer = genMixer (hor, ver)
 
 genMixer :: (Sigs a) => ([Gui] -> Gui, [Gui] -> Gui) -> [(String, SE a)] -> Source a
 genMixer (parentGui, childGui) as = source $ do
-    gTags <- mapM box names
-    (gs, vols) <- fmap unzip $ mapM (const $ defSlider "") names
-    (gMutes, mutes) <- fmap unzip $ mapM (const $ toggleSig "" False) names
+    gTags <- mapM (unDisplay . box) names
+    (gs, vols) <- fmap unzip $ mapM (const $ unSource $ defSlider "") names
+    (gMutes, mutes) <- fmap unzip $ mapM (const $ unSource $ toggleSig "" False) names
 
-    gMasterTag <- box "master"
-    (gMaster, masterVol) <- defSlider ""
-    (gMasterMute, masterMute) <- toggleSig "" False
+    gMasterTag <- unDisplay $ box "master"
+    (gMaster, masterVol) <- unSource $ defSlider ""
+    (gMasterMute, masterMute) <- unSource $ toggleSig "" False
     let g = parentGui $ zipWith3 (\tag slid mute -> childGui [sca 0.8 tag, sca 8 slid, sca 1.1 mute])
                         (gMasterTag : gTags) (gMaster : gs) (gMasterMute : gMutes)
         muteVols = zipWith appMute mutes vols
@@ -116,12 +116,12 @@ defSlider tag = slider tag (linSpan 0 1) 0.5
 -- fxBox :: forall a. (FxUI a, Num  (FxArg a), Tuple (FxArg a)) => String -> a -> Bool -> [(String, Double)] -> Source (Fx (FxArg a))
 fxBox :: forall a. Sigs a => String -> ([Sig] -> Fx a) -> Bool -> [(String, Double)] -> Source (Fx a)
 fxBox name fx onOff args = source $ do
-    (gOff0, off) <- toggleSig name onOff
+    (gOff0, off) <- unSource $ toggleSig name onOff
     let gOff = setFontSize 25 gOff0
     offRef <- newGlobalRef (0 :: Sig)
     writeRef offRef off
     let (names, initVals) = unzip args
-    (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals
+    (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> unSource $ slider name (linSpan 0 1) initVal) $ zip names initVals
     let f x = do
         ref <- newRef (0 :: a)
         goff <- readRef offRef
@@ -155,7 +155,7 @@ uiGroupGui :: Gui -> Gui -> Gui
 uiGroupGui a b =ver [sca uiOnOffSize a, sca uiBoxSize b]
 
 sourceColor2 :: Color -> Source a -> Source a
-sourceColor2 col a = source $ do
+sourceColor2 col (Source a) = source $ do
     (g, x) <- a
     return (setColor2 col g, x)
 
@@ -166,22 +166,22 @@ fxColor = sourceColor2
 -- combine effects
 
 fxGroupMS :: ([Gui] -> Gui) -> [Source Fx1] -> Maybe (Source (Sig -> SE Sig2)) -> [Source Fx2] -> Source (Sig -> SE Sig2)
-fxGroupMS guiGroup as bridge bs = do
+fxGroupMS guiGroup as bridge bs = Source $ do
     (gsA, fA) <- getChain as
     (gsB, fB) <- getChain bs
     case bridge of
         Nothing -> return $ (guiGroup $ gsA ++ gsB, fA >=> fB . fromMono)
         Just widget -> do
-            (gBridge, fBridge) <- widget
+            (gBridge, fBridge) <- unSource widget
             return $ (guiGroup $ gsA ++ gBridge : gsB, fA >=> fBridge >=> fB)
     where
         getChain xs = do
-            (gs, fs) <- fmap unzip $ sequence xs
+            (gs, fs) <- fmap unzip $ sequence $ fmap unSource xs
             return (gs, foldl (\a b -> a >=> b) return fs)
 
 fxGroup :: ([Gui] -> Gui) -> [Source (Fx a)] -> Source (Fx a)
-fxGroup guiGroup as = do
-    (gs, fs) <- fmap unzip $ sequence as
+fxGroup guiGroup as = Source $ do
+    (gs, fs) <- fmap unzip $ sequence $ fmap unSource as
     return (guiGroup gs, foldl (\a b -> a >=> b) return fs)
 
 -- | Scales the gui for signal processing widgets.
@@ -343,8 +343,8 @@ uiPatch xs initVal = sourceColor2 C.forestgreen $ uiBox "Patch" fx True
 -- | the widget for mixing in a signal to the signal.
 uiSig :: (Sigs a) => String -> Bool -> Source a -> Source (Fx a)
 uiSig name onOff widget = source $ do
-    (gs, asig) <- widget
-    (gOff0, off) <- toggleSig name onOff
+    (gs, asig) <- unSource widget
+    (gOff0, off) <- unSource $ toggleSig name onOff
     let gOff = setFontSize 25 gOff0
         f x = return $ x + mul (portk off 0.05) asig
     return (setBorder UpBoxBorder $ uiGroupGui gOff gs, f)
@@ -380,10 +380,10 @@ expAdsr = genAdsr $ \a d s r -> expsegr [double expEps, a, 1, d, s] r (double ex
 genAdsr :: (D -> D -> D -> D -> Sig)
     -> String -> AdsrBound -> AdsrInit -> Source Sig
 genAdsr mkAdsr name b inits = source $ do
-    (gatt, att) <- knob "A" (linSpan expEps $ attBound b) (attInit inits)
-    (gdec, dec) <- knob "D" (linSpan expEps $ decBound b) (decInit inits)
-    (gsus, sus) <- knob "S" (linSpan expEps 1)       (susInit inits)
-    (grel, rel) <- knob "R" (linSpan expEps $ relBound b) (relInit inits)
+    (gatt, att) <- unSource $ knob "A" (linSpan expEps $ attBound b) (attInit inits)
+    (gdec, dec) <- unSource $ knob "D" (linSpan expEps $ decBound b) (decInit inits)
+    (gsus, sus) <- unSource $ knob "S" (linSpan expEps 1)       (susInit inits)
+    (grel, rel) <- unSource $ knob "R" (linSpan expEps $ relBound b) (relInit inits)
     let val   = mkAdsr (ir att) (ir dec) (ir sus) (ir rel)
     gui <- setTitle name $ hor [gatt, gdec, gsus, grel]
     return (gui, val)

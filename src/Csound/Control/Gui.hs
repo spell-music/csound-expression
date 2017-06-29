@@ -1,29 +1,29 @@
-{-# Language 
-    TypeSynonymInstances, 
-    FlexibleInstances, 
-    MultiParamTypeClasses, 
-    FlexibleContexts, 
+{-# Language
+    TypeSynonymInstances,
+    FlexibleInstances,
+    MultiParamTypeClasses,
+    FlexibleContexts,
     TypeFamilies #-}
--- | GUI (Graphical User Interface) elements are handy to change 
--- the parameters of the sound in real time. It includes sliders, 
--- knobs, rollers, buttons and other widgets. 
+-- | GUI (Graphical User Interface) elements are handy to change
+-- the parameters of the sound in real time. It includes sliders,
+-- knobs, rollers, buttons and other widgets.
 --
 -- A GUI element consists of two parts. They are view (how it looks)
 -- and logic (what's going on with it). For example a slider can be
--- horizontal or vertical or green or yellow or small or big. It's the view 
--- of the slider. And a slider can produce a continuous signal within the 
--- given interval. It's a logic of the slider. 
+-- horizontal or vertical or green or yellow or small or big. It's the view
+-- of the slider. And a slider can produce a continuous signal within the
+-- given interval. It's a logic of the slider.
 --
 -- Let's talk about the view. The view is divided on two parts:
 --
--- * where element is placed or Layout. 
+-- * where element is placed or Layout.
 --
--- * all other  properties or just Properties. 
+-- * all other  properties or just Properties.
 --
--- The layout is defined with very simple functions. There are vertical and horizontal grouping 
+-- The layout is defined with very simple functions. There are vertical and horizontal grouping
 -- of the elements. We can scale the element within the group and include an empty
--- space in the group. Everything is aligned (see "Csound.Gui.Layout"). 
--- Other properties include colors, fonts (size and type), borders, specific properties 
+-- space in the group. Everything is aligned (see "Csound.Gui.Layout").
+-- Other properties include colors, fonts (size and type), borders, specific properties
 -- of the widgets (see "Csound.Gui.Props").
 --
 -- Let's consider the logic. The logic consists of three parts:
@@ -34,7 +34,7 @@
 --
 -- * what's going on inside ('Csound.Gui.Inner')
 --
--- A widget can react on values, produce values or do something useful. 
+-- A widget can react on values, produce values or do something useful.
 -- There are special types of widgets:
 --
 -- * 'Csound.Gui.Source'  - they produce values only
@@ -42,22 +42,22 @@
 -- * 'Csound.Gui.Sink'    - they consume values only
 --
 -- * 'Csound.Gui.Display' - something is going on inside them (for example, it can show a "hello world" message)
--- 
+--
 --
 -- Widgets can be simple and compound. Simple widgets are primitive elements
--- (sliders, knobs, rollers, buttons). We have a special constructors that 
+-- (sliders, knobs, rollers, buttons). We have a special constructors that
 -- produce simple widgets (see "Csound.Gui.Widget"). Compound widgets glue together
--- several widgets. That is the view contains several elements and all of them 
+-- several widgets. That is the view contains several elements and all of them
 -- involved in the logic of the widget.
 --
 --
 module Csound.Control.Gui (
     -- * Gui
-    Gui, 
+    Gui,
     Widget, Input, Output, Inner,
-    Sink, Source, Display, SinkSource,
+    Sink(..), Source(..), Display(..), SinkSource(..),
     widget, sink, source, display, sinkSource, sinkSlice, sourceSlice,
-    mapSource, mapGuiSource, 
+    mapSource, mapGuiSource,
     mhor, mver, msca,
     joinSource, fromSource, fromSourceSE, resizeSource,
 
@@ -77,7 +77,7 @@ module Csound.Control.Gui (
     lift1, hlift2, vlift2, hlift3, vlift3, hlift4, vlift4, hlift5, vlift5,
 
     -- ** Lifters with visual scaling
-    hlifts', vlifts', 
+    hlifts', vlifts',
 
     hlift2', vlift2', hlift3', vlift3', hlift4', vlift4', hlift5', vlift5',
 
@@ -123,16 +123,16 @@ keyWin name (x, y) = keyPanelBy name (Just $ Rect 0 0 x y)
 
 -- | Hides the SE inside Source.
 joinSource :: Source (SE a) -> Source a
-joinSource a = do
-    (g, mv) <- a
+joinSource a = Source $ do
+    (g, mv) <- unSource a
     v <- mv
     return (g, v)
 
 fromSource :: Source a -> SE a
 fromSource a = do
-    (gui, asig) <- a
+    (gui, asig) <- unSource a
     panel gui
-    return asig   
+    return asig
 
 fromSourceSE :: Source (SE a) -> SE a
 fromSourceSE = join . fromSource
@@ -156,12 +156,12 @@ hlifts = genLifts hor
 vlifts :: ([a] -> b) -> [Source a] -> Source b
 vlifts = genLifts ver
 
--- | Groups a list of Source-widgets. The visuals are put on the grid. 
+-- | Groups a list of Source-widgets. The visuals are put on the grid.
 -- The first argument is numer of elements i each row.
 gridLifts :: Int -> ([a] -> b) -> [Source a] -> Source b
 gridLifts rowLength = genLifts (grid rowLength)
 
--- | Groups a list of Source-widgets. The visuals are horizontally aligned. 
+-- | Groups a list of Source-widgets. The visuals are horizontally aligned.
 -- It uses the list of proportions.
 hlifts' :: [Double] -> ([a] -> b) -> [Source a] -> Source b
 hlifts' props = genLifts (applyProportionsToList props hor)
@@ -175,8 +175,8 @@ applyProportionsToList :: [Double] -> ([Gui] -> Gui) -> [Gui] -> Gui
 applyProportionsToList props f as = f $ zipWith sca (props ++ repeat 1) as
 
 genLifts :: ([Gui] -> Gui) -> ([a] -> b) -> [Source a] -> Source b
-genLifts gf f as = fmap phi $ sequence as
-    where 
+genLifts gf f as = Source $ fmap phi $ mapM unSource as
+    where
         phi xs = (gf gs, f vs)
             where (gs, vs) = unzip xs
 
@@ -187,20 +187,20 @@ lift1 = mapSource
 
 lift2 :: (Gui -> Gui -> Gui) -> (a -> b -> c) -> Source a -> Source b -> Source c
 lift2 gf f ma mb = source $ do
-    (ga, a) <- ma
-    (gb, b) <- mb
+    (ga, a) <- unSource ma
+    (gb, b) <- unSource mb
     return $ (gf ga gb, f a b)
 
 lift2' a b gf = lift2 (tfm2 a b gf)
     where tfm2 sa sb gf = \a b -> gf (sca sa a) (sca sb b)
 
 -- | Combines two sound sources. Visuals are aligned horizontally
--- and the sound sources a grouped with the given function. 
+-- and the sound sources a grouped with the given function.
 hlift2 :: (a -> b -> c) -> Source a -> Source b -> Source c
 hlift2 = lift2 (\a b -> hor [a, b])
 
 -- | Combines two sound sources. Visuals are aligned vertically
--- and the sound sources a grouped with the given function. 
+-- and the sound sources a grouped with the given function.
 vlift2 :: (a -> b -> c) -> Source a -> Source b -> Source c
 vlift2 = lift2 (\a b -> ver [a, b])
 
@@ -214,9 +214,9 @@ vlift2' sa sb = lift2' sa sb (\a b -> ver [a, b])
 
 lift3 :: (Gui -> Gui -> Gui -> Gui) -> (a -> b -> c -> d) -> Source a -> Source b -> Source c -> Source d
 lift3 gf f ma mb mc = source $ do
-    (ga, a) <- ma
-    (gb, b) <- mb
-    (gc, c) <- mc
+    (ga, a) <- unSource $ ma
+    (gb, b) <- unSource $ mb
+    (gc, c) <- unSource $ mc
     return $ (gf ga gb gc, f a b c)
 
 lift3' sa sb sc gf = lift3 (tfm3 sa sb sc gf)
@@ -240,10 +240,10 @@ vlift3' a b c = lift3' a b c (\a b c -> ver [a, b, c])
 
 lift4 :: (Gui -> Gui -> Gui -> Gui -> Gui) -> (a -> b -> c -> d -> e) -> Source a -> Source b -> Source c -> Source d -> Source e
 lift4 gf f ma mb mc md = source $ do
-    (ga, a) <- ma
-    (gb, b) <- mb
-    (gc, c) <- mc
-    (gd, d) <- md
+    (ga, a) <- unSource $ ma
+    (gb, b) <- unSource $ mb
+    (gc, c) <- unSource $ mc
+    (gd, d) <- unSource $ md
     return $ (gf ga gb gc gd, f a b c d)
 
 lift4' sa sb sc sd gf = lift4 (tfm3 sa sb sc sd gf)
@@ -268,11 +268,11 @@ vlift4' a b c d = lift4' a b c d (\a b c d -> ver [a, b, c, d])
 
 lift5 :: (Gui -> Gui -> Gui -> Gui -> Gui -> Gui) -> (a1 -> a2 -> a3 -> a4 -> a5 -> b) -> Source a1 -> Source a2 -> Source a3 -> Source a4 -> Source a5 -> Source b
 lift5 gf f ma1 ma2 ma3 ma4 ma5 = source $ do
-    (ga1, a1) <- ma1
-    (ga2, a2) <- ma2
-    (ga3, a3) <- ma3
-    (ga4, a4) <- ma4
-    (ga5, a5) <- ma5
+    (ga1, a1) <- unSource $ ma1
+    (ga2, a2) <- unSource $ ma2
+    (ga3, a3) <- unSource $ ma3
+    (ga4, a4) <- unSource $ ma4
+    (ga5, a5) <- unSource $ ma5
     return $ (gf ga1 ga2 ga3 ga4 ga5, f a1 a2 a3 a4 a5)
 
 lift5' sa sb sc sd se gf = lift5 (tfm3 sa sb sc sd se gf)
@@ -333,8 +333,8 @@ vapply' ka kb = flip $ genBind (\a b -> ver [sca kb b, sca ka a])
 
 genBind :: (Gui -> Gui -> Gui) -> Source a -> (a -> Source b) -> Source b
 genBind gui ma mf = source $ do
-    (ga, a) <- ma
-    (gb, b) <- mf a
+    (ga, a) <- unSource ma
+    (gb, b) <- unSource $ mf a
     return (gui ga gb, b)
 
 -- | Creates a list of sources with mapping a function and stacks them horizontally.
@@ -360,5 +360,5 @@ gridMapM rowLength = genMapM (grid rowLength)
 
 genMapM :: ([Gui] -> Gui) -> (a -> Source b) -> [a] -> Source [b]
 genMapM gui f xs = source $ do
-    (gs, vs) <- fmap unzip $ mapM f xs
-    return (gui gs, vs) 
+    (gs, vs) <- fmap unzip $ mapM (unSource . f) xs
+    return (gui gs, vs)
