@@ -892,7 +892,7 @@ Many functions are dedicated to manipulate spectral data.
 #### Copy vs Allocation
 
 Some peculiarity of transition form Csound to Haskell way of thinking lies in array functions.
-In the Csound almost all array functions can perform two different operations. Thy are overloaded.
+In the Csound almost all array functions can perform two different operations. They are overloaded.
 If we write:
 
 ~~~
