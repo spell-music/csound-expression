@@ -292,10 +292,22 @@ The `readWav` and `loopWav` can read the file with given speed.
 The 1 is a normal speed. The -1 is playing in reverse.
 Negative speed works only for `loopWav`.
 
-So we can read our friends record like this:
+So we can read *.wav file like this:
 
 ~~~{.haskell}
-let sample = loopSnd "Composite.wav"
+$ ghci
+Prelude> :m +Csound.Base
+Prelude Csound.Base> -- play the *.wav file
+Prelude Csound.Base> dac $ readSnd "Composite.wav"
+Prelude Csound.Base> -- continuously play the *.wav file
+Prelude Csound.Base> dac $ loopSnd "Composite.wav"
+Prelude Csound.Base> -- set period of continuous play to 2 seconds
+Prelude Csound.Base> dac $ loopSndBy 2 "Composite.wav"
+Prelude Csound.Base> -- set speed of playback
+Prelude Csound.Base> dac $ readWav 2 "Composite.wav"
+Prelude Csound.Base> -- continuously play at the set speed
+Prelude Csound.Base> dac $ loopWav 3 "Composite.wav"
+Prelude Csound.Base> :q
 ~~~
 
 If we want only a portion of the sound to be played we can use the
