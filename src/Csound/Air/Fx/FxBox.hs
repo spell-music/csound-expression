@@ -3,6 +3,7 @@
 -- | A friendly family of effects. These functions are kindly provided by Iain McCurdy (designed in Csound).
 module Csound.Air.Fx.FxBox(
     adele, pongy, tort, fowler, revsy, flan, phasy, crusher, chory, pany, oscPany, triPany, sqrPany, tremy, oscTremy, triTremy, sqrTremy, ringo, EnvelopeModSig,
+    magnus,
 
     -- * Presets
     -- | For all presets we have 5 levels of strength. They are signified by numbers from 1 to 5. Also for some effects (delay and distortion)
@@ -135,6 +136,9 @@ module Csound.Air.Fx.FxBox(
     uiAdele1b, uiAdele2b, uiAdele3b, uiAdele4b, uiAdele5b,
     uiAdele1m, uiAdele2m, uiAdele3m, uiAdele4m, uiAdele5m,
 
+    -- ** Tape echo
+    uiMagnus,
+
     -- ** Ping Pong Delay
     uiPongy1, uiPongy2, uiPongy3, uiPongy4, uiPongy5,
     uiPongy1b, uiPongy2b, uiPongy3b, uiPongy4b, uiPongy5b,
@@ -201,7 +205,9 @@ import Csound.Air.Patch(Fx, Fx1, Fx2)
 import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig,
     BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig,
     DriveSig, TimeSig, WidthSig,
-    rever2, pingPong, pingPong', PingPongSpec(..))
+    rever2, pingPong, pingPong', PingPongSpec(..),
+    EchoGain, RandomSpreadSig,
+    tapeEcho)
 
 import Csound.Air.Live(fxBox, fxColor)
 import Csound.Air.Wav(toMono)
@@ -461,6 +467,10 @@ adele2m = adeleByM size2
 adele3m = adeleByM size3
 adele4m = adeleByM size4
 adele5m = adeleByM size5
+
+-- Tape echo
+magnus :: Sigs a => Int -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> a -> SE a
+magnus size delt fb echoGain ktone randomSpread = bindSig (tapeEcho size delt fb echoGain ktone randomSpread)
 
 -- Ping Pong delay
 
@@ -763,6 +773,13 @@ uiAdele2m = uiAdeleByM size2
 uiAdele3m = uiAdeleByM size3
 uiAdele4m = uiAdeleByM size4
 uiAdele5m = uiAdeleByM size5
+
+-- Tape echo
+
+uiMagnus :: Sigs a => Int -> Double -> Double -> Double -> Double -> Double -> Source (Fx a)
+uiMagnus size initDelayTime initFeedback initEchoGain initTone initSpread  = mapSource bindSig $ paintTo adeleColor $ fxBox "Tape echo" fx True [("del time", initDelayTime), ("fbk", initFeedback), ("echo gain", initEchoGain), ("tone", initTone), ("tape qty", initSpread)]
+    where
+        fx [delayTime, feedback, echoGain, tone, spread] = magnus size delayTime feedback echoGain tone spread
 
 -- Ping-pong delay
 

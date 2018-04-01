@@ -1,6 +1,6 @@
 {-# Language FlexibleContexts #-}
 -- | Effects
-module Csound.Air.Fx(    
+module Csound.Air.Fx(
     -- * Reverbs
     reverbsc1, rever1, rever2, reverTime,
     smallRoom, smallHall, largeHall, magicCave,
@@ -11,8 +11,8 @@ module Csound.Air.Fx(
     -- ** Impulse Responce convolution reverbs
     --
     -- | Be careful with volumes. Some IRs can require scaling with really small coefficients like 0.01.
-    -- 
-    monoIR, stereoIR, stereoIR2, pmonoIR, pstereoIR, pstereoIR2, 
+    --
+    monoIR, stereoIR, stereoIR2, pmonoIR, pstereoIR, pstereoIR2,
     monoIR', stereoIR', stereoIR2',
     ZConvSpec(..), zconv, zconv',
 
@@ -20,6 +20,11 @@ module Csound.Air.Fx(
     MaxDelayTime, DelayTime, Feedback, Balance,
     echo, fvdelay, fvdelays, funDelays, tabDelay,
     PingPongSpec(..), pingPong, pingPong', csdPingPong,
+
+    -- ** Tape echo
+    EchoGain, RandomSpreadSig,
+    tapeRead, tapeWrite,
+    tapeEcho,
 
     -- * Distortion
     distortion,
@@ -41,12 +46,12 @@ module Csound.Air.Fx(
     DriveSig, SensitivitySig, BaseCps, Resonance, TimeSig, BitsReductionSig, FoldoverSig,
     TremWaveSig, RatioSig, FftSize,
 
-    fxDistort, stChorus2, fxPhaser, 
-    fxFlanger, analogDelay, fxEcho, fxFilter, 
+    fxDistort, stChorus2, fxPhaser,
+    fxFlanger, analogDelay, fxEcho, fxFilter,
     fxWhite, fxPink, equalizer, eq4, eq7,
-    fxGain, 
+    fxGain,
 
-    fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter, {- , 
+    fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter, {- ,
     fxRingModulator, , -}
     fxCompress,
 
@@ -70,12 +75,12 @@ import Csound.Tab
 import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
 import Csound.Typed.Plugins hiding(pitchShifterDelay,
-    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
     fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
 
 import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
-    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi, 
-    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong)
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong, tapeRead, tapeWrite)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -90,7 +95,7 @@ reverbsc1 x k co = 0.5 * (a + b)
 
 -- | Reverb with given time.
 reverTime :: DelayTime -> Sig -> Sig
-reverTime dt a =  nreverb a dt 0.3 
+reverTime dt a =  nreverb a dt 0.3
 
 -- | Mono reverb (based on reverbsc)
 --
@@ -139,25 +144,25 @@ magicCave2 = rever2 0.99
 
 ---------------------------------------------------------------------------------
 
--- | An alias for 
+-- | An alias for
 --
 -- > let room dryWet asig = mixAt dryWet smallRoom2 asig
 room :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
 room mx ain = mixAt mx smallRoom2 ain
 
--- | An alias for 
+-- | An alias for
 --
 -- > let room dryWet asig = mixAt dryWet smallHall2 asig
 chamber :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
 chamber mx ain = mixAt mx smallHall2 ain
 
--- | An alias for 
+-- | An alias for
 --
 -- > let room dryWet asig = mixAt dryWet largeHall2 asig
 hall :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
 hall mx ain = mixAt mx largeHall2 ain
 
--- | An alias for 
+-- | An alias for
 --
 -- > let room dryWet asig = mixAt dryWet magicCave2 asig
 cave :: MixAt Sig2 Sig2 a => Sig -> a -> AtOut Sig2 Sig2 a
@@ -210,7 +215,7 @@ pstereoIR fileName (ainL, ainR) = pconvolve ((ainL + ainR) * 0.5) (text fileName
 
 pstereoIR2 :: (FilePath, FilePath) -> Sig2 -> Sig2
 pstereoIR2 (file1, file2) (ainL, ainR) = (pmonoIR file1 ainL, pmonoIR file2 ainR)
-    
+
 
 ---------------------------------------------------------------------------------
 -- Delays
@@ -233,7 +238,7 @@ type Balance = Sig
 echo :: MaxDelayTime -> Feedback -> Sig -> Sig
 echo len fb x = x + flanger x (sig len) fb `withD` (len + 0.005)
 
--- | Delay with feedback. 
+-- | Delay with feedback.
 --
 -- > fdelay maxDelayLength delayLength feedback balance
 fvdelay :: MaxDelayTime -> DelayTime -> Feedback -> Sig -> Sig
@@ -245,12 +250,12 @@ fvdelay len dt fb a = a + flanger a dt fb `withD` len
 -- > fdelay maxDelayLength  delays balance asig
 fvdelays :: MaxDelayTime -> [(DelayTime, Feedback)] -> Balance -> Sig -> SE Sig
 fvdelays len dtArgs mx a = funDelays len (zip dts fs) mx a
-    where 
+    where
         (dts, fbks) = unzip dtArgs
         fs = map (*) fbks
 
 
--- | Generic multitap delay. It's just like @fvdelays@ but instead of constant feedbackLevel 
+-- | Generic multitap delay. It's just like @fvdelays@ but instead of constant feedbackLevel
 -- it expects a function for processing a delayed signal on the tap.
 --
 -- > fdelay maxDelayLength  delays balance asig
@@ -259,7 +264,7 @@ funDelays len dtArgs mx a = do
     _ <- delayr len
     aDels <- mapM deltap3 dts
     delayw $ a + sum (zipWith ($) fs aDels)
-    return $ a + mx * sum aDels 
+    return $ a + mx * sum aDels
     where (dts, fs) = unzip dtArgs
 
 -- | Delay for functions that use some table (as a buffer). As granular synth or mincer.
@@ -267,13 +272,13 @@ funDelays len dtArgs mx a = do
 -- > tabDelay fn maxDelayTime delayTime feedback balance asig
 tabDelay :: (Tab -> Sig -> SE Sig) -> MaxDelayTime -> DelayTime -> Feedback -> Balance -> Sig -> SE Sig
 tabDelay go maxLength delTim  kfeed kbalance asig = do
-    buf <- newTab tabLen    
+    buf <- newTab tabLen
     ptrRef <- newRef (0 :: Sig)
-    aresRef <- newRef (0 :: Sig)  
+    aresRef <- newRef (0 :: Sig)
     ptr <- readRef ptrRef
     when1 (ptr >=* sig tabLen) $ do
         writeRef ptrRef 0
-    ptr <- readRef ptrRef 
+    ptr <- readRef ptrRef
 
     let kphs = (ptr / sig tabLen) - (delTim/(sig $ tabLen / getSampleRate))
     awet <-go buf (wrap kphs 0 1)
@@ -284,37 +289,37 @@ tabDelay go maxLength delTim  kfeed kbalance asig = do
     where
         tabLen = tabSizeSecondsPower2 maxLength
 
--- | Aux parameters for ping pong delay. 
+-- | Aux parameters for ping pong delay.
 -- They are maximum delay time, low pass filter center frequency and Pan width.
 -- The defaults are @(5 sec, 3500, 0.3)@.
 data PingPongSpec = PingPongSpec {
         pingPongMaxTime :: MaxDelayTime,
         pingPongDamp    :: Sig,
-        pingPongWidth   :: Sig    
+        pingPongWidth   :: Sig
     }
 
 instance Default PingPongSpec where
     def = PingPongSpec {
             pingPongMaxTime = 5,
             pingPongDamp    = 3500,
-            pingPongWidth   = 0.6 
+            pingPongWidth   = 0.6
         }
 
--- | Ping-pong delay. 
+-- | Ping-pong delay.
 --
 -- > pingPong delayTime feedback mixLevel
 pingPong :: DelayTime -> Feedback -> Balance -> Sig2 -> Sig2
 pingPong delTime feedback mixLevel (ainL, ainR) = pingPong' def delTime feedback mixLevel (ainL, ainR)
 
--- | Ping-pong delay with miscellaneous arguments. 
+-- | Ping-pong delay with miscellaneous arguments.
 --
 -- > pingPong' spec delayTime feedback mixLevel
-pingPong' :: PingPongSpec -> DelayTime -> Feedback -> Balance -> Sig2 -> Sig2    
-pingPong' (PingPongSpec maxTime damp width) delTime feedback mixLevel (ainL, ainR) = 
+pingPong' :: PingPongSpec -> DelayTime -> Feedback -> Balance -> Sig2 -> Sig2
+pingPong' (PingPongSpec maxTime damp width) delTime feedback mixLevel (ainL, ainR) =
     csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR)
 
 -- | Ping-pong delay defined in csound style. All arguments are present (nothing is hidden).
--- 
+--
 -- > csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR)
 csdPingPong :: MaxDelayTime -> DelayTime -> Sig -> Feedback -> Sig -> Balance -> Sig2 -> Sig2
 csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = P.fxPingPong maxTime mixLevel width damp delTime feedback (ainL, ainR)
@@ -324,7 +329,7 @@ csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = P.fxPing
 {- substituted with Csound UDO implementation
 csdPingPong :: MaxDelayTime -> DelayTime -> Sig -> Feedback -> Sig -> Balance -> Sig2 -> SE Sig2
 csdPingPong maxTime delTime damp feedback width mixLevel (ainL, ainR) = do
-    afirst <- offsetDelay ainL   
+    afirst <- offsetDelay ainL
     atapL  <- channelDelay afirst
     atapR  <- channelDelay ainR
     return $ mixControl $ widthControl afirst (atapL, atapR)
@@ -355,7 +360,7 @@ type ToneSig  = Sig
 
 -- Distortion
 
--- | Distortion. 
+-- | Distortion.
 --
 -- > distort distLevel asig
 distortion :: Sig -> Sig -> Sig
@@ -387,7 +392,7 @@ flange alfo fbk mx asig = ntrpol asig (flanger asig ulfo fbk) mx
 
 -- | First order phaser.
 phase1 :: Sig -> Lfo -> Feedback -> Balance -> Sig -> Sig
-phase1 ord alfo fbk mx asig = ntrpol asig (phaser1 asig (20 + unipolar alfo) ord fbk) mx  
+phase1 ord alfo fbk mx asig = ntrpol asig (phaser1 asig (20 + unipolar alfo) ord fbk) mx
 
 -- | Second order phaser. Sweeping gaps in the timbre are placed harmonicaly
 harmPhase :: Sig -> Lfo -> Sig -> Sig -> Feedback -> Balance -> Sig -> Sig
@@ -408,7 +413,7 @@ logScale :: Sig -> (Sig, Sig) -> Sig -> Sig
 logScale steep (min, max) a = scale (logcurve a steep) max min
 
 dryWetMix :: Sig -> (Sig, Sig)
-dryWetMix kmix = (kDry, kWet) 
+dryWetMix kmix = (kDry, kWet)
     where
         iWet = setSize 1024 $ elins [0, 1, 1]
         iDry = setSize 1024 $ elins [1, 1, 0]
@@ -419,7 +424,7 @@ fxWet :: (Num a, SigSpace a) => Sig -> a -> a -> a
 fxWet mix ain aout = mul dry ain + mul wet aout
     where (dry, wet) = dryWetMix mix
 
--- Distortion 
+-- Distortion
 
 -- | Distortion
 --
@@ -444,7 +449,7 @@ fxDistort klevel kdrive ktone ain = aout * (scale klevel 0.8 0) * kGainComp1
 -- > stChorus2 mix rate depth width sigIn
 stChorus2 :: Balance -> RateSig -> DepthSig -> WidthSig -> Sig2 -> Sig2
 stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR)
-    where 
+    where
         krate = expScale 20 (0.001, 7) krate'
         ilfoshape = setSize 131072 $ sines4 [(1, 0.5, 0, 0.5)]
         kporttime = linseg  [0, 0.001, 0.02]
@@ -469,13 +474,13 @@ analogDelay kmix kfback ktime  ktone ain = P.fxAnalogDelay kmix kfback ktime  kt
 
 -- | Filter effect (a pair of butterworth low and high pass filters).
 --
--- > fxFilter lowPassfFreq highPassFreq gain 
+-- > fxFilter lowPassfFreq highPassFreq gain
 fxFilter :: Sig -> Sig -> Sig -> Sig -> Sig
-fxFilter kLPF' kHPF' kgain' ain = mul kgain $ app (blp kLPF) $ app (bhp kHPF) $ ain 
-    where 
+fxFilter kLPF' kHPF' kgain' ain = mul kgain $ app (blp kLPF) $ app (bhp kHPF) $ ain
+    where
         app f = f . f
-        kLPF = scaleFreq kLPF' 
-        kHPF = scaleFreq kHPF' 
+        kLPF = scaleFreq kLPF'
+        kHPF = scaleFreq kHPF'
         kgain = scale kgain' 20 0
         scaleFreq x = expScale 4 (20, 20000) x
 
@@ -543,30 +548,30 @@ fxEcho maxLen ktime fback = fvdelay (5 * maxLen) (sig maxLen * 0.95 * kTime) fba
         kporttime = linseg [0,0.001,0.1]
         kTime = portk   ktime  (kporttime*3)
 
--- | Instrument plays an input signal in different modes. 
--- The segments of signal can be played back and forth. 
--- 
+-- | Instrument plays an input signal in different modes.
+-- The segments of signal can be played back and forth.
+--
 -- > trackerSplice maxLength segLength mode
--- 
+--
 -- * @maxLength@ -- the maximum length of the played segment (in seconds)
 --
 -- * @segLength@ -- the segment length in seconds
 --
 -- * @mode@ -- mode of the playing. If it's 1 - only a part of the sample is plyaed and
 --   it's played forward. The portion of the signal starts from the current playback point.
---   It lasts for segLength. If it's 2 - the segment is played in reverse. 
+--   It lasts for segLength. If it's 2 - the segment is played in reverse.
 --   Other values produce the normal input signal.
 --
 -- Original author: Rory Walsh
 --
 -- Example:
 --
--- > main = dac $ do    
+-- > main = dac $ do
 -- >    let ev ch1 ch2 dt = fmap (\x -> (x, dt)) $ mconcat [
--- >          fmap (const 1.5) $ charOn ch1 
--- >        , fmap (const 2.5) $ charOn ch2 
+-- >          fmap (const 1.5) $ charOn ch1
+-- >        , fmap (const 2.5) $ charOn ch2
 -- >        , fmap (const 0) $ charOff ch1 <> charOff ch2]
--- > 
+-- >
 -- >    (k, dt) <- stepper (0, 0.1) $ ev 'q' 'w' 0.1 <> ev 'a' 's' 0.2 <> ev 'z' 'x' 0.4
 -- >    mul 1.3 $ trackerSplice 0.8 dt (int' k) $ fst $ loopWav 1 "drumLoop.wav"
 trackerSplice :: D -> Sig -> Sig -> Sig -> SE Sig
@@ -585,9 +590,9 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
     let apos = samphold (andx1 * sig (ftlen buf)) (sig ksamp)
 
     whens [
-        (kmode >=* 1 &&* kmode `lessThan` 2, do             
-                kindx <- readRef kindxRef                             
-                writeRef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)                
+        (kmode >=* 1 &&* kmode `lessThan` 2, do
+                kindx <- readRef kindxRef
+                writeRef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)
                 kindx <- readRef kindxRef
                 when1 (kindx + apos >* sig (ftlen buf)) $ do
                     writeRef kindxRef $ (-segLength)
@@ -596,12 +601,12 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 
                 writeRef aoutRef $ table (apos + kindx) buf `withDs` [0, 1]
                 writeRef ksampRef 0
-        ), (kmode >=* 2 &&* kmode `lessThan` 3, do              
+        ), (kmode >=* 2 &&* kmode `lessThan` 3, do
                 kindx <- readRef kindxRef
                 writeRef kindxRef $ ifB ((kindx+apos) <=* 0) (sig (ftlen buf) - apos) (kindx-1)
                 kindx <- readRef kindxRef
                 writeRef aoutRef $ table (apos+kindx) buf `withDs` [0, 1]
-                writeRef ksampRef 0   
+                writeRef ksampRef 0
         )] (do
                 writeRef ksampRef 1
                 writeRef aoutRef asig)
@@ -619,9 +624,9 @@ mean xs = sum xs / (fromIntegral $ length xs)
 -- rename the arguments and comment
 
 -- | PitchShifterDelay
--- 
+--
 -- A pitch shifter effect that employs delay lines
--- 
+--
 -- > pitchShifterDelay maxDelayTime delayTime (feedback1, feedback2) transposeRatio ain
 --
 -- Arguments
@@ -630,11 +635,11 @@ mean xs = sum xs / (fromIntegral $ length xs)
 --
 -- * @transposeRatio @ --  pitch transposition (in semitones)
 --
--- * @delayTime      @ --  delay time employed by the pitch shifter effect (should be within the range ksmps/sr and imaxdlt) 
+-- * @delayTime      @ --  delay time employed by the pitch shifter effect (should be within the range ksmps/sr and imaxdlt)
 --
 -- * @feedback1      @ --  feedback using method 1 (output from delay taps are fed back directly into their own buffers before enveloping and mixing)
 --
--- * @feedback2      @ --  feedback using method 2 (enveloped and mixed output from both taps is fed back into both buffers)-- 
+-- * @feedback2      @ --  feedback using method 2 (enveloped and mixed output from both taps is fed back into both buffers)--
 --
 -- * @ain            @ --  input audio to be pitch shifted
 pitchShifterDelay :: MaxDelayTime -> (Feedback, Feedback) -> DelayTime -> Sig -> Sig -> Sig
@@ -663,7 +668,7 @@ type SensitivitySig = Sig
 type BaseCps = Sig
 type Resonance = Sig
 
--- | Envelope follower. 
+-- | Envelope follower.
 --
 -- > fxFollower sensitivity baseFrequencyRatio resonance ain
 --
@@ -688,8 +693,8 @@ fxReverse :: TimeSig -> Sig -> Sig
 fxReverse ktime = P.fxReverse ktime
 
 -- | A flanger effect following the typical design of a so called 'stomp box'
--- 
--- >  fxFlanger rate depth delayTime feedback ain = 
+--
+-- >  fxFlanger rate depth delayTime feedback ain =
 --
 -- Arguments
 --
@@ -708,18 +713,18 @@ fxFlanger krate kdepth kdelay kfback ain = P.fxFlanger krate kdepth kdelay kfbac
 -- | Phaser
 --
 -- An phase shifting effect that mimics the design of a so called 'stomp box'
--- 
+--
 -- > fxPhaser rate depth freq fback ain
--- 
+--
 -- Arguments:
--- 
+--
 -- * @rate  @ --  rate of lfo of the effect (range 0 to 1)
 --
 -- * @depth @ --  depth of lfo of the effect (range 0 to 1)
 --
 -- * @freq  @ --  centre frequency of the phase shifting effect in octaves (suggested range 6 to 11)
 --
--- * @fback @ --  feedback and therefore intensity of the effect (range 0 to 1)  
+-- * @fback @ --  feedback and therefore intensity of the effect (range 0 to 1)
 --
 -- * @ain   @ --  input audio to be pitch shifted
 fxPhaser :: RateSig -> DepthSig -> BaseCps -> Feedback -> Sig -> Sig
@@ -729,29 +734,29 @@ type BitsReductionSig = Sig
 type FoldoverSig = Sig
 
 -- | LoFi
--- 
+--
 -- 'Low Fidelity' distorting effects of bit reduction and downsampling (foldover)
--- 
+--
 -- > fxLoFi  bits fold ain = ...
--- 
+--
 -- Arguments
--- 
+--
 -- * @bits  @ --  bit depth reduction (range 0 to 1)
 --
--- * @fold  @ --  amount of foldover (range 0 to 1)    
+-- * @fold  @ --  amount of foldover (range 0 to 1)
 --
 -- * @ain   @ --  input audio to have low fidelity distortion effects applied
 fxLoFi :: BitsReductionSig -> FoldoverSig -> Sig -> Sig
 fxLoFi kbits kfold ain = P.fxLoFi (0.6 * kbits) kfold ain
 
 -- | Stereo Chorus
--- 
+--
 -- A stereo chorus effect
--- 
+--
 -- > fxChorus2 rate depth width (ainLeft, ainRight)
--- 
+--
 -- Arguments
--- 
+--
 -- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
 --
 -- * @depth @ --  depth of the lfo of the effect (range 0 to 1)
@@ -765,11 +770,11 @@ fxChorus2 krate kdepth kwidth ain = P.fxChorus2 krate kdepth kwidth ain
 type TremWaveSig = Sig
 
 -- | Auto pan
--- 
+--
 -- > fxAutoPan wave rate depth ain
--- 
+--
 -- ; Arguments:
--- 
+--
 -- * @wave  @ --  waveform used by the lfo (0=sine 1=triangle 2=square)
 --
 -- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
@@ -783,13 +788,13 @@ fxAutoPan :: TremWaveSig -> DepthSig -> RateSig -> Sig2 -> Sig2
 fxAutoPan tremWave kdepth krate = P.fxPanTrem kdepth krate 0 tremWave
 
 -- | Tremolo
--- 
+--
 -- tremolo effect
--- 
+--
 -- > fxTrem wave rate depth ain
--- 
+--
 -- ; Arguments:
--- 
+--
 -- * @wave  @ --  waveform used by the lfo (0=sine 1=triangle 2=square)
 --
 -- * @rate  @ --  rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
@@ -806,20 +811,20 @@ type RatioSig = Sig
 type FftSize  = D
 
 -- | PitchShifter
--- 
+--
 --  A pitch shifter effect based on FFT technology
--- 
+--
 -- > fxPitchShifter  fftSize mixRatio transposeRatio feedback ain
--- 
+--
 -- Arguments
--- 
+--
 -- * @fftSize  @ -- size for FFT analysis (good values 1024, 512, 256, 2048), the higher values introduce latency but lower values are less accurate.
 --
 -- * @mix      @ --  dry / wet mix of the output signal (range 0 to 1)
 --
 -- * @transpose@ -- pitch ratio
 --
--- * @feedback @ --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1) 
+-- * @feedback @ --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1)
 --
 -- * @ain      @ --  input audio to be pitch shifted
 fxPitchShifter :: FftSize -> Balance -> RatioSig -> Feedback -> Sig -> Sig
@@ -847,7 +852,7 @@ fxFreqShifter kmix freq kmul kfback = P.fxFreqShifter kmix freq kmul kfback
 -- > fxCompress thresh (loknee, hiknee) ratio (att, rel) gain ain
 fxCompress :: Sig -> (Sig, Sig) -> Sig -> (Sig, Sig) -> Sig -> Sig -> Sig
 fxCompress thresh (loknee, hiknee) ratio (att, rel) gain  x = gain' * compress x x thresh' loknee' hiknee' ratio' att' rel' 0.05
-    where 
+    where
         gain' = ampdb $ onLin (-36, 36) gain
         thresh' = onLin (0, 120) thresh
         att' = onExp (0, 1) att
@@ -858,3 +863,53 @@ fxCompress thresh (loknee, hiknee) ratio (att, rel) gain  x = gain' * compress x
 
         onLin (min, max) val = min + val * (max - min)
         onExp (min, max) val = scale (expcurve val 4) max min
+
+-------------------------------
+-- tape echo
+
+{-}
+opcode TapeEcho4, a, akkkkk
+  aIn, kDelay, kEchoGain, kFbGain, kTone, kRandomSpread xin
+
+  aDummy delayr 16
+  aEcho1 tapeRead aIn, kDelay, kRandomSpread
+  aEcho2 tapeRead aIn, (kDelay * 2), kRandomSpread
+  aEcho3 tapeRead aIn, (kDelay * 4), kRandomSpread
+  aEcho4 tapeRead aIn, (kDelay * 8), kRandomSpread
+  aOut  = aIn + kEchoGain * aEcho1 + 0.5 * kEchoGain * aEcho2 + 0.25 * kEchoGain * aEcho3  + 0.2 * kEchoGain * aEcho4
+
+  aOut tone aOut, kTone
+  tapeWrite aIn, aOut, kFbGain
+  xout aOut
+endop
+-}
+
+type EchoGain = Sig
+type RandomSpreadSig = Sig
+
+-- | Tape echo - simulates tape echo/delay
+--
+-- > tapeEcho size feedback echoGain tone randomSpread ain
+--
+-- * size - how many heads in the tape
+-- * feedback
+-- * echo gain
+-- * tone - normalized center frequency of the filter (0  to 1)
+-- * randomSpread - quality of the tape (the higher - the worser)
+tapeEcho :: Int -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> Sig -> SE Sig
+tapeEcho n dt fb echoGain ktoneNorm spread ain = do
+    aDummy <- delayr minDt
+    aout <- fmap ((\echoes -> tone (ain + echoGain * echoes) ktone) . sum . zipWith (*) halves) $
+        mapM (\step -> tapeRead ain (dt * step) spread) doubles
+    tapeWrite ain aout fb
+    return aout
+    where
+        halves  = take n $ iterate ( / 2) 1
+        doubles = take n $ iterate ( * 2) 1
+
+        minDt = int $ 16 `max` (n * 4)
+
+        ktone = fromNormTone ktoneNorm
+
+fromNormTone :: Sig -> Sig
+fromNormTone ktoneNorm = portk (scale (expcurve ktoneNorm 4) 12000 100) 0.1
