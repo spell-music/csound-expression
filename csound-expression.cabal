@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       5.2.2
+Version:       5.3.0
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -80,7 +80,7 @@ Library
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0, colour >= 2.0, transformers >= 0.3, containers,
         csound-expression-typed >= 0.2.0.2, csound-expression-dynamic >= 0.3.2, temporal-media >= 0.6.1,
-        csound-expression-opcodes >= 0.0.3.2
+        csound-expression-opcodes >= 0.0.4.0
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
@@ -115,6 +115,9 @@ Library
         Csound.Options
         Csound.Tuning
         Csound.Cabbage
+
+        Csound.Compat
+        Csound.Compat.Filter
 
         Csound.Control
         Csound.Control.Evt

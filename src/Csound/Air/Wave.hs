@@ -1,8 +1,8 @@
--- | Basic waveforms that are used most often. 
+-- | Basic waveforms that are used most often.
 -- A waveform function takes in a time varied frequency (in Hz).
 module Csound.Air.Wave (
-    Wave, 
-    
+    Wave,
+
 	 -- * Bipolar
     osc, oscBy, saw, isaw, pulse, sqr, pw, tri, ramp, blosc,
 
@@ -10,7 +10,7 @@ module Csound.Air.Wave (
     osc', oscBy', saw', isaw', pulse', sqr', pw', tri', ramp', blosc',
 
     -- ** With random phase
-    rndOsc, rndOscBy, rndSaw, rndIsaw, rndPulse, rndSqr, rndPw, rndTri, rndRamp, rndBlosc,    
+    rndOsc, rndOscBy, rndSaw, rndIsaw, rndPulse, rndSqr, rndPw, rndTri, rndRamp, rndBlosc,
     rndPhs,
 
     -- ** Raw analog waves (no band limiting)
@@ -24,7 +24,7 @@ module Csound.Air.Wave (
     uosc', uoscBy', usaw', uisaw', upulse', usqr', upw', utri', uramp', ublosc',
 
     -- ** With random phase
-    urndOsc, urndOscBy, urndSaw, urndIsaw, urndPulse, urndSqr, urndPw, urndTri, urndRamp, urndBlosc,        
+    urndOsc, urndOscBy, urndSaw, urndIsaw, urndPulse, urndSqr, urndPw, urndTri, urndRamp, urndBlosc,
 
     -- ** Raw analog waves (no band limiting)
     -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
@@ -49,7 +49,7 @@ module Csound.Air.Wave (
     urspline, birspline,
 
     -- * Buzzes
-    buz, gbuz, buz', gbuz'    
+    buz, gbuz, buz', gbuz'
 ) where
 
 import Csound.Typed
@@ -61,7 +61,7 @@ type Wave = Sig -> SE Sig
 
 -- | A pure tone (sine wave).
 osc :: Sig -> Sig
-osc cps = oscil3 1 cps sine 
+osc cps = oscil3 1 cps sine
 
 -- | A pure tone (sine wave) with initial phase (the first argiment).
 osc' :: D -> Sig -> Sig
@@ -119,7 +119,7 @@ ublosc tb = unipolar . blosc tb
 
 -- | Unipolar random splines.
 -- It generates the splines with unipolar output (ranges from 0 to 1).
--- Arguments affect the frequency for generation of new values. 
+-- Arguments affect the frequency for generation of new values.
 --
 -- > urspline cpsMin cpsMax
 urspline :: Sig -> Sig -> SE Sig
@@ -127,7 +127,7 @@ urspline cpsMin cpsMax = rspline 0 1 cpsMin cpsMax
 
 -- | Bipolar random splines.
 -- It generates the splines with bipolar output (ranges from -1 to 1).
--- Arguments affect the frequency for generation of new values. 
+-- Arguments affect the frequency for generation of new values.
 --
 -- > birspline cpsMin cpsMax
 birspline :: Sig -> Sig -> SE Sig
@@ -177,13 +177,13 @@ uramp duty cps = unipolar $ ramp duty cps
 -- unipolar oscils with phase control
 
 unipolar' :: (D -> Sig -> Sig) -> (D -> Sig -> Sig)
-unipolar' f phs cps = unipolar $ f phs cps 
+unipolar' f phs cps = unipolar $ f phs cps
 
 uosc' = unipolar' osc'
-uoscBy' a = unipolar' (oscBy' a) 
+uoscBy' a = unipolar' (oscBy' a)
 usaw' = unipolar' saw'
-uisaw' = unipolar' isaw' 
-upulse' = unipolar' pulse' 
+uisaw' = unipolar' isaw'
+upulse' = unipolar' pulse'
 usqr' = unipolar' sqr'
 upw' a = unipolar' (pw' a)
 utri' = unipolar' tri'
@@ -199,7 +199,7 @@ rndPhs f cps = fmap (\x -> f x cps) $ rnd 1
 
 rndOsc = rndPhs osc'
 rndOscBy a = rndPhs (oscBy' a)
-rndSaw = rndPhs saw' 
+rndSaw = rndPhs saw'
 rndIsaw = rndPhs isaw'
 rndPulse = rndPhs pulse'
 rndSqr = rndPhs sqr'
@@ -213,7 +213,7 @@ rndBlosc a = rndPhs (blosc' a)
 
 urndOsc = rndPhs uosc'
 urndOscBy a = rndPhs (uoscBy' a)
-urndSaw = rndPhs usaw' 
+urndSaw = rndPhs usaw'
 urndIsaw = rndPhs uisaw'
 urndPulse = rndPhs upulse'
 urndSqr = rndPhs usqr'
@@ -228,13 +228,13 @@ urndBlosc a = rndPhs (ublosc' a)
 
 -- | Constant random signal. It updates random numbers with given frequency.
 --
--- > constRnd freq 
+-- > constRnd freq
 rndh :: Sig -> SE Sig
 rndh = randh 1
 
 -- | Linear random signal. It updates random numbers with given frequency.
 --
--- > rndi freq 
+-- > rndi freq
 rndi :: Sig -> SE Sig
 rndi = randi 1
 
@@ -247,7 +247,7 @@ urndi :: Sig -> SE Sig
 urndi = fmap unipolar . rndi
 
 -- | White noise.
-white :: SE Sig 
+white :: SE Sig
 white = noise 1 0
 
 -- | Pink noise.
@@ -273,26 +273,26 @@ lfo shape depth rate = depth * shape rate
 --
 -- > detune (semitone 2 * cent 15) osc
 detune :: Sig -> (Sig -> a) -> (Sig -> a)
-detune k f cps = f (k * cps) 
+detune k f cps = f (k * cps)
 
 --------------------------------------------------------------------------
 
-linRange n amount = fmap (\x -> amount * sig (2 * double x - 1)) [0, (1 / fromIntegral n) .. 1] 
+linRange n amount = fmap (\x -> amount * sig (2 * double x - 1)) [0, (1 / fromIntegral n) .. 1]
 
--- | Unision by Hertz. It creates n oscillators that are playing 
+-- | Unision by Hertz. It creates n oscillators that are playing
 -- the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in Hz.
 --
 -- > multiHz numberOfUnits amountHz wave
-multiHz :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a) 
+multiHz :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a)
 multiHz n amount f cps = mean $ fmap (f . (cps + )) $ linRange n amount
 
--- | Unision by Cents. It creates n oscillators that are playing 
+-- | Unision by Cents. It creates n oscillators that are playing
 -- the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in cents.
 --
 -- > multiCent numberOfUnits amountCent wave
-multiCent :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a) 
+multiCent :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a)
 multiCent n amount f cps = mean $ fmap (f . (cps * ) . cent) $ linRange n amount
-    
+
 -- | Oscillators are detuned randomly in the given interval.
 --
 -- > multiRnd numberOfUnits amountCent wave

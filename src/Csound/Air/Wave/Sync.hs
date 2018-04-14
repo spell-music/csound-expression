@@ -29,7 +29,7 @@ module Csound.Air.Wave.Sync(
     -- *** With absolute slave frequency
 	rawTriSyncAbs, 	rawSqrSyncAbs, rawSawSyncAbs, rawPwSyncAbs,
     rawTriSyncAbsBy, rawSqrSyncAbsBy, rawSawSyncAbsBy, rawPwSyncAbsBy,
-    
+
    -- * Soft sync
 
    -- *** With relative slave frequency
@@ -55,7 +55,7 @@ rndPhsSync :: (D -> Sig -> Sig -> Sig) -> (Sig -> Sig -> SE Sig)
 rndPhsSync f ratio cps = fmap (\x -> f x ratio cps) $ rnd 1
 
 -- | Hard sync with saw waveform and randomized phase.
-rndSawSync :: Sig -> Sig -> SE Sig 
+rndSawSync :: Sig -> Sig -> SE Sig
 rndSawSync = rndPhsSync sawSync'
 
 -- | Hard sync with integral saw waveform and randomized phase.
@@ -63,11 +63,11 @@ rndIsawSync :: Sig -> Sig -> SE Sig
 rndIsawSync = rndPhsSync isawSync'
 
 -- | Hard sync with pulse waveform and randomized phase.
-rndPulseSync :: Sig -> Sig -> SE Sig 
+rndPulseSync :: Sig -> Sig -> SE Sig
 rndPulseSync = rndPhsSync pulseSync'
 
 -- | Hard sync with square waveform and randomized phase.
-rndSqrSync :: Sig -> Sig -> SE Sig 
+rndSqrSync :: Sig -> Sig -> SE Sig
 rndSqrSync = rndPhsSync sqrSync'
 
 -- | Hard sync with triangle waveform and randomized phase.
@@ -75,7 +75,7 @@ rndTriSync :: Sig -> Sig -> SE Sig
 rndTriSync = rndPhsSync triSync'
 
 -- | Hard sync with band-limited table waveform waveform and randomized phase.
-rndBloscSync :: Tab -> Sig -> Sig -> SE Sig 
+rndBloscSync :: Tab -> Sig -> Sig -> SE Sig
 rndBloscSync t = rndPhsSync (bloscSync' t)
 
 -------------------------------------------------------------------------
@@ -161,14 +161,14 @@ oscSyncBy tab smoothType cpsRatio cps = oscSyncAbsBy tab smoothType (cpsRatio * 
 -- | Hard-sync with non-bandlimited waves.
 oscSyncAbsBy :: Tab -> SyncSmooth -> Sig -> Sig -> Sig
 oscSyncAbsBy tab smoothType slaveCps cps = (\smoothFun -> syncOsc smoothFun tab (ar slaveCps) (ar cps)) $ case smoothType of
-    RawSync      -> (\_ _ -> 1)                   
-    SawSync      -> (\amaster _ -> (1 - amaster)) 
-    TriSync      -> (const $ readSync uniTriTab)  
-    TrapSync     -> (const $ readSync uniTrapTab) 
-    UserSync gen -> (const $ readSync gen)        
+    RawSync      -> (\_ _ -> 1)
+    SawSync      -> (\amaster _ -> (1 - amaster))
+    TriSync      -> (const $ readSync uniTriTab)
+    TrapSync     -> (const $ readSync uniTrapTab)
+    UserSync gen -> (const $ readSync gen)
     where
-        readSync ft async = table3 async ft `withD` 1        
-        
+        readSync ft async = table3 async ft `withD` 1
+
 uniSawTab  = setSize 4097 $ elins [1, 0]
 uniTriTab  = setSize 4097 $ elins [0, 1, 0]
 uniTrapTab = setSize 4097 $ elins [1, 1, 0]
@@ -263,10 +263,10 @@ genSoftSyncAbs cpsSwitchWave smoothTabWave smoothType wave slaveCps cps = flip m
     TriSync  -> smoothTabWave uniTriTab cps
     TrapSync -> smoothTabWave uniTrapTab cps
     UserSync t -> smoothTabWave t cps
-    where 
-        rawSync = wave (ar $ ar slaveCps * (ar $ cpsSwitchWave cps)) 
+    where
+        rawSync = wave (ar $ ar slaveCps * (ar $ cpsSwitchWave cps))
 
 ------------------------------------------------------
 -- PW and Ramp hard sync
 
--- pwSync 
+-- pwSync

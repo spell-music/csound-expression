@@ -127,7 +127,7 @@ segments dt = withDur dt $ metroE (sig $ recip dt)
 readSnd :: String -> (Sig, Sig)
 readSnd fileName
     | isMp3 fileName = mp3in (text fileName)
-    | otherwise      = diskin2 (text fileName) 1
+    | otherwise      = diskin2 (text fileName)
 
 -- | Reads stereo signal from the sound-file (wav or mp3 or aiff)
 -- and loops it with the given period (in seconds).
@@ -142,24 +142,24 @@ loopSnd fileName = loopSndBy (lengthSnd fileName) fileName
 -- | Reads the wav file with the given speed (if speed is 1 it's a norma playback).
 -- We can use negative speed to read file in reverse.
 readWav :: Sig -> String -> (Sig, Sig)
-readWav speed fileName = diskin2 (text fileName) speed
+readWav speed fileName = diskin2 (text fileName) `withSig` speed
 
 -- | Reads th wav file and loops over it.
 loopWav :: Sig -> String -> (Sig, Sig)
-loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
+loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) `withSig` speed
 
 -- | Reads a segment from wav file.
 readSegWav :: D -> D -> Sig -> String -> (Sig, Sig)
-readSegWav start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
+readSegWav start end speed fileName = takeSnd (end - start) $ (diskin2 (text fileName) `withSig` speed) `withDs` [start, 1]
 
 -- | Reads the wav file with the given speed (if speed is 1 it's a norma playback).
 -- We can use negative speed to read file in reverse. Scales the tempo with first argument.
 tempoReadWav :: Sig -> String -> (Sig, Sig)
-tempoReadWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ diskin2 (text fileName) speed
+tempoReadWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ diskin2 (text fileName) `withSig` speed
 
 -- | Reads th wav file and loops over it. Scales the tempo with first argument.
 tempoLoopWav :: Sig -> String -> (Sig, Sig)
-tempoLoopWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) speed
+tempoLoopWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) `withSig` speed
 
 -- Mono
 
@@ -167,7 +167,7 @@ tempoLoopWav speed fileName = mapSig (scaleSpec (1 / abs speed)) $ flip withDs [
 readSnd1 :: String -> Sig
 readSnd1 fileName
     | isMp3 fileName = toMono $ readSnd fileName
-    | otherwise      = diskin2 (text fileName) 1
+    | otherwise      = diskin2 (text fileName)
 
 -- | The mono variant of the function @loopSndBy@.
 loopSndBy1 :: D -> String -> Sig
@@ -179,15 +179,15 @@ loopSnd1 fileName = loopSndBy1 (lengthSnd fileName) fileName
 
 -- | The mono variant of the function @readWav@.
 readWav1 :: Sig -> String -> Sig
-readWav1 speed fileName = diskin2 (text fileName) speed
+readWav1 speed fileName = diskin2 (text fileName) `withSig` speed
 
 -- | The mono variant of the function @loopWav@.
 loopWav1 :: Sig -> String -> Sig
-loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) speed
+loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) `withSig` speed
 
 -- | Reads a segment from wav file.
 readSegWav1 :: D -> D -> Sig -> String -> Sig
-readSegWav1 start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) speed `withDs` [start, 1]
+readSegWav1 start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) `withSig` speed `withDs` [start, 1]
 
 -- | Reads the mono wav file with the given speed (if speed is 1 it's a norma playback).
 -- We can use negative speed to read file in reverse. Scales the tempo with first argument.
@@ -278,44 +278,6 @@ writeAiff1 file = writeAiff file . \x -> (x, x)
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 -- mincer
-
--- | mincer — Phase-locked vocoder processing.
---
--- mincer implements phase-locked vocoder processing
--- using function tables containing sampled-sound sources,
--- with GEN01, and mincer will accept deferred allocation tables.
---
--- This opcode allows for time and frequency-independent scaling.
--- Time is controlled by a time index (in seconds) to the function
--- table position and can be moved forward and backward at any
--- chosen speed, as well as stopped at a given position ("frozen").
--- The quality of the effect is generally improved with phase locking switched on.
---
--- > asig mincer atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
---
--- csound doc: <http://www.csounds.com/manual/html/mincer.html>
-mincer ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
-mincer b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "mincer" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
-
--- | temposcal — Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.
---
--- temposcal implements phase-locked vocoder processing using function tables containing
--- sampled-sound sources, with GEN01, and temposcal will accept deferred allocation tables.
---
--- This opcode allows for time and frequency-independent scaling. Time is advanced internally,
--- but controlled by a tempo scaling parameter; when an onset is detected, timescaling is
--- momentarily stopped to avoid smearing of attacks. The quality of the effect is generally
--- improved with phase locking switched on.
---
--- temposcal will also scale pitch, independently of frequency, using a transposition factor (k-rate).
---
--- > asig temposcal ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, ithresh]
---
--- csound doc: <http://www.csounds.com/manual/html/temposcal.html>
-temposcal :: Sig -> Sig -> Sig -> Tab -> Sig -> Sig
-temposcal b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "temposcal" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | Mincer. We can playback a table and scale by tempo and pitch.
 --

@@ -8,7 +8,7 @@ module Csound.Air.Filter(
     -- * Simple filters
     lp, hp, bp, br, alp,
     bp2, br2,
-    
+
     -- * Butterworth filters
     blp, bhp, bbp, bbr,
 
@@ -32,25 +32,22 @@ module Csound.Air.Filter(
 
     alp1, alp2, alp3, alp4, ahp,
 
-    -- ** Low level analog filters    
-    mvchpf, mvclpf1, mvclpf2, mvclpf3, mvclpf4,
-
     -- * Zero delay filters
 
     -- ** One pole filters
     zdf1, zlp1, zhp1, zap1,
 
     -- ** Two pole filters
-    zdf2, zlp, zbp, zhp, zdf2_notch, zbr,
+    zdf2, zlp, zhp, zbp, zubp, zbr, zap, zpeak,
 
     -- ** Ladder filter
-    zladder, 
+    zladder,
 
     -- ** Four poles filters
-    zdf4, zlp4, zbp4, zhp4, 
+    -- zdf4, zlp4, zbp4, zhp4,
 
     -- ** Eq-filters
-    peakEq, highShelf, lowShelf,
+    -- peakEq, highShelf, lowShelf,
 
     -- * Classic analog-like filters
 
@@ -61,13 +58,14 @@ module Csound.Air.Filter(
     hpCheb1, hpCheb1', hpCheb2, hpCheb2', chp, chp',
 
     -- * Named resonant low pass filters
-    plastic, wobble, trumpy, harsh, 
+    plastic, wobble, trumpy, harsh,
 
     -- * TB303 filter
-    tbf, diode, linDiode, noNormDiode,
+    tbf, diode, fdiode, linDiode,
 
     -- Korg 35 filters
-    linKorg_lp, linKorg_hp, korg_lp, korg_hp,
+    linKorg_lp, linKorg_hp, linKorg_bp, korg_lp, korg_hp, korg_bp,
+    klp, khp, kbp,
 
     -- * Statevariable filters
     slp, shp, sbp, sbr,
@@ -79,7 +77,13 @@ module Csound.Air.Filter(
 import Control.Applicative
 
 import Csound.Typed
-import Csound.Typed.Plugins
+import Csound.Typed.Plugins hiding (
+        zdf1, zlp1, zhp1, zap1,
+        zdf2, zlp, zbp, zhp, zdf2_notch, zbr,
+        zladder,
+        diode, linDiode, noNormDiode,
+        linKorg_lp, linKorg_hp, korg_lp, korg_hp)
+
 import Csound.SigSpace(bat)
 import Csound.Typed.Opcode
 
@@ -139,7 +143,7 @@ bbp freq band a = butbp a freq band
 -- | Band-regect filter.
 --
 -- > bbr cutoff bandwidth sig
-bbr :: Sig -> Sig -> Sig -> Sig 
+bbr :: Sig -> Sig -> Sig -> Sig
 bbr freq band a = butbr a freq band
 
 
@@ -158,16 +162,18 @@ slide = flip lineto
 -- | Produces smooth transitions between values in the signals.
 -- The first value defines a duration in seconds for a transition from one
 -- value to another in piecewise constant signals.
+--
+-- > smooth transTime asig
 smooth :: Sig -> Sig -> Sig
 smooth = flip portk
 
 -- | Resonant filter.
--- 
+--
 -- > f centerFreq q asig
 type ResonFilter = Sig -> Sig -> Sig -> Sig
 
 -- | Filter without a resonance.
--- 
+--
 -- > f centerFreq q asig
 type FlatFilter  = Sig -> Sig -> Sig
 
@@ -197,10 +203,14 @@ lp18 dist cfq q asig = lpf18 asig cfq q dist
 
 -- | Another implementation of moog low pass filter (it's moogladder in Csound).
 -- The arguments have are just like in the @mlp@ filter.
+--
+-- > mlp2 centerFreq q asig
 mlp2 :: Sig -> Sig -> Sig -> Sig
 mlp2 cfq q asig = moogladder asig cfq q
 
 -- | Mooglowpass filter with 18 dB.
+--
+-- > mlp3 centerFreq q asig
 mlp3 :: Sig -> Sig -> Sig -> Sig
 mlp3 = lp18 0
 
@@ -216,13 +226,13 @@ lp1 cfq asig = tone asig cfq
 hp1 :: Sig -> Sig -> Sig
 hp1 cfq asig = atone asig cfq
 
--- | Resonance band pass filter (yet another implementation, it's reson in Csound) 
+-- | Resonance band pass filter (yet another implementation, it's reson in Csound)
 --
 -- > bp2 centerFreq q asig
 bp2 :: Sig -> Sig -> Sig -> Sig
 bp2 cfq q asig = reson asig cfq q
 
--- | Resonance band reject filter (yet another implementation, it's areson in Csound) 
+-- | Resonance band reject filter (yet another implementation, it's areson in Csound)
 --
 -- > br2 centerFreq q asig
 br2 :: Sig -> Sig -> Sig -> Sig
@@ -259,7 +269,7 @@ singO2 :: Sig -> Sig
 singO2 = bat (formant bp2 anO2)
 
 anO  = [(280, 20), (650, 25), (2200, 30), (3450, 40), (4500, 50)]
-anA  = [(650, 50), (1100, 50), (2860, 50), (3300, 50), (4500, 50)] 
+anA  = [(650, 50), (1100, 50), (2860, 50), (3300, 50), (4500, 50)]
 anE  = [(500, 50), (1750, 50), (2450, 50), (3350, 50), (5000, 50)]
 anIY = [(330, 50), (2000, 50), (2800, 50), (3650, 50), (5000, 50)]
 anO2 = [(400, 50), (840, 50), (2800, 50), (3250, 50), (4500, 50)]
@@ -288,7 +298,17 @@ alp3 freq reson asig = mvclpf3 asig freq reson
 -- | Analog-like low-pass filter
 --
 -- > alpf4 centerFrequency resonance asig
-alp4 :: Sig -> Sig -> Sig -> Sig
+--
+-- Analog outputs
+--
+-- * asig1 -- 6dB/oct low-pass response output.
+--
+-- * asig2 -- 12dB/oct low-pass response output.
+--
+-- * asig3 -- 18dB/oct low-pass response output..
+--
+-- * asig4 -- 24dB/oct low-pass response output.
+alp4 :: Sig -> Sig -> Sig -> (Sig, Sig, Sig, Sig)
 alp4 freq reson asig = mvclpf4 asig freq reson
 
 -- | Analog-like high-pass filter
@@ -296,55 +316,6 @@ alp4 freq reson asig = mvclpf4 asig freq reson
 -- > ahp centerFrequency asig
 ahp :: Sig -> Sig -> Sig
 ahp freq asig = mvchpf asig freq
-
--- | 
--- Moog ladder lowpass filter.
---
--- Moogladder is an new digital implementation of the Moog ladder filter based on 
--- the work of Antti Huovilainen, described in the paper "Non-Linear Digital 
--- Implementation of the Moog Ladder Filter" (Proceedings of DaFX04, Univ of Napoli). 
--- This implementation is probably a more accurate digital representation of 
--- the original analogue filter.
---
--- > asig  moogladder  ain, kcf, kres[, istor]
---
--- csound doc: <http://www.csounds.com/manual/html/moogladder.html>
-
-
--- | Emulator of analog high pass filter.
---
--- > mvchpf asig xfreq
-mvchpf :: Sig -> Sig -> Sig
-mvchpf b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "mvchpf" [(Ar,[Ar,Xr,Ir])] [a1,a2]
-
--- | Emulators of analog filters (requires Csound >= 6.07). 
---
--- > mvclpf1 asig xfreq xresonance 
-mvclpf1 :: Sig -> Sig -> Sig -> Sig
-mvclpf1 = genMvclpf "mvclpf1"
-
--- | Emulators of analog filters.
---
--- > mvclpf2 asig xfreq xresonance 
-mvclpf2 :: Sig -> Sig -> Sig -> Sig
-mvclpf2 = genMvclpf "mvclpf2"
-
--- | Emulators of analog filters.
---
--- > mvclpf3 asig xfreq xresonance 
-mvclpf3 :: Sig -> Sig -> Sig -> Sig
-mvclpf3 = genMvclpf "mvclpf3"
-
--- | Emulators of analog filters.
---
--- > mvclpf4 asig xfreq xresonance 
-mvclpf4 :: Sig -> Sig -> Sig -> Sig
-mvclpf4 = genMvclpf "mvclpf4"
-
-genMvclpf :: String -> Sig -> Sig -> Sig -> Sig
-genMvclpf name b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs name [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 
 -----------------------------------------------
@@ -355,52 +326,76 @@ genMvclpf name b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 -- low pass
 
 -- | Chebyshev  type I low pass filter (with 2 poles).
+--
+-- lpCheb1 centerFreq asig
 lpCheb1 :: Sig -> Sig -> Sig
 lpCheb1 = lpCheb1' 2
 
 -- | Chebyshev  type I low pass filter (with given number of poles, first argument).
+--
+-- lpCheb1' npols centerFreq asig
 lpCheb1' :: D -> Sig -> Sig -> Sig
 lpCheb1' npoles kcf asig = clfilt asig kcf 0 npoles `withD` 1
 
 -- | Chebyshev  type II low pass filter (with 2 poles).
-lpCheb2 :: Sig -> Sig -> Sig 
+--
+-- lpCheb2 centerFreq asig
+lpCheb2 :: Sig -> Sig -> Sig
 lpCheb2 = lpCheb2' 2
 
 -- | Chebyshev  type II low pass filter (with given number of poles, first argument).
+--
+-- lpCheb2' npols centerFreq asig
 lpCheb2' :: D -> Sig -> Sig -> Sig
 lpCheb2' npoles kcf asig = clfilt asig kcf 0 npoles `withD` 2
 
 -- | Butterworth lowpass filter based on clfilt opcode (with 2 poles).
+--
+-- clp centerFreq asig
 clp :: Sig -> Sig -> Sig
 clp = clp' 2
 
 -- | Butterworth lowpass filter based on clfilt opcode (with given number of poles, first argument).
+--
+-- clp' npols centerFreq asig
 clp' :: D -> Sig -> Sig -> Sig
 clp' npoles kcf asig = clfilt asig kcf 0 npoles `withD` 0
 
 -- high pass
 
 -- | Chebyshev  type I high pass filter (with 2 poles).
+--
+-- hpCheb1 centerFreq asig
 hpCheb1 :: Sig -> Sig -> Sig
 hpCheb1 = hpCheb1' 2
 
 -- | Chebyshev  type I high pass filter (with given number of poles, first argument).
+--
+-- hpCheb1' npols centerFreq asig
 hpCheb1' :: D -> Sig -> Sig -> Sig
 hpCheb1' npoles kcf asig = clfilt asig kcf 1 npoles `withD` 1
 
 -- | Chebyshev  type II high pass filter (with 2 poles).
-hpCheb2 :: Sig -> Sig -> Sig 
+--
+-- hpCheb2 centerFreq asig
+hpCheb2 :: Sig -> Sig -> Sig
 hpCheb2 = hpCheb2' 2
 
 -- | Chebyshev  type II high pass filter (with given number of poles, first argument).
+--
+-- hpCheb2' npols centerFreq asig
 hpCheb2' :: D -> Sig -> Sig -> Sig
 hpCheb2' npoles kcf asig = clfilt asig kcf 1 npoles `withD` 2
 
 -- | Butterworth high pass filter based on clfilt opcode (with 2 poles).
+--
+-- chp centerFreq asig
 chp :: Sig -> Sig -> Sig
 chp = clp' 2
 
 -- | Butterworth high pass filter based on clfilt opcode (with given number of poles, first argument).
+--
+-- chp' npols centerFreq asig
 chp' :: D -> Sig -> Sig -> Sig
 chp' npoles kcf asig = clfilt asig kcf 1 npoles `withD` 0
 
@@ -415,19 +410,19 @@ bpCheb1 :: Sig -> Sig -> Sig -> Sig
 bpCheb1 = bpCheb1' 2
 
 bpCheb1' :: D -> Sig -> Sig -> Sig -> Sig
-bpCheb1' npoles = mkBp (lpCheb1' npoles) (hpCheb1' npoles) 
+bpCheb1' npoles = mkBp (lpCheb1' npoles) (hpCheb1' npoles)
 
 bpCheb2 :: Sig -> Sig -> Sig -> Sig
 bpCheb2 = bpCheb2' 2
 
 bpCheb2' :: D -> Sig -> Sig -> Sig -> Sig
-bpCheb2' npoles = mkBp (lpCheb2' npoles) (hpCheb2' npoles) 
+bpCheb2' npoles = mkBp (lpCheb2' npoles) (hpCheb2' npoles)
 
 cbp :: Sig -> Sig -> Sig -> Sig
 cbp = cbp' 2
 
 cbp' :: D -> Sig -> Sig -> Sig -> Sig
-cbp' npoles = mkBp (clp' npoles) (chp' npoles) 
+cbp' npoles = mkBp (clp' npoles) (chp' npoles)
 
 
 ---------------------------------------------
@@ -437,43 +432,58 @@ mkReson :: FlatFilter -> FlatFilter -> ResonFilter
 mkReson lowPass highPass kcf res asig = 0.5 * (lowPass (kcf * 2) asig + bandPass bw kcf asig)
     where
         bw = kcf / (0.001 + abs res)
-        bandPass = mkBp lowPass highPass   
+        bandPass = mkBp lowPass highPass
 
 cheb1 :: Sig -> Sig -> Sig -> Sig
 cheb1 = cheb1' 2
 
 cheb1' :: D -> Sig -> Sig -> Sig -> Sig
-cheb1' npoles = mkReson (lpCheb1' npoles) (hpCheb1' npoles) 
+cheb1' npoles = mkReson (lpCheb1' npoles) (hpCheb1' npoles)
 
 cheb2 :: Sig -> Sig -> Sig -> Sig
 cheb2 = cheb2' 2
 
 cheb2' :: D -> Sig -> Sig -> Sig -> Sig
-cheb2' npoles = mkReson (lpCheb2' npoles) (hpCheb2' npoles) 
+cheb2' npoles = mkReson (lpCheb2' npoles) (hpCheb2' npoles)
 
 vcf :: Sig -> Sig -> Sig -> Sig
 vcf = cbp' 2
 
 vcf' :: D -> Sig -> Sig -> Sig -> Sig
-vcf' npoles = mkReson (clp' npoles) (chp' npoles) 
+vcf' npoles = mkReson (clp' npoles) (chp' npoles)
 
 -- moog ladder
 
+-- | Moog ladder filter
+--
+-- > ladder centerFreq q asig
 ladder :: Sig -> Sig -> Sig -> Sig
 ladder kcf res asig = moogladder asig kcf res
 
 -----------------------------------------
 -- named filters
 
+-- | plastic sound
+--
+-- > plastic centerFreq q asig
 plastic :: Sig -> Sig -> Sig -> Sig
 plastic kcf res asig = rezzy asig kcf (1 + 99 * res)
 
+-- | wobble sound
+--
+-- > wobble centerFreq q asig
 wobble :: Sig -> Sig -> Sig -> Sig
 wobble kcf res asig = lowres asig kcf res
 
+-- | trumpy sound
+--
+-- > trumpy centerFreq q asig
 trumpy :: Sig -> Sig -> Sig -> Sig
 trumpy kcf res asig = vlowres asig kcf (res* 0.15) 6 (4 + res * 20)
 
+-- | harsh sound
+--
+-- > harsh centerFreq q asig
 harsh :: Sig -> Sig -> Sig -> Sig
 harsh kcf res asig = bat (\x -> bqrez x kcf (1 + 90 * res)) asig
 
@@ -487,18 +497,22 @@ tbf dist kcf res asig = tbvcf asig (1010 + kcf) res (0.5 + 3.5 * dist) 0.5
 -----------------------------
 -- state variable filter
 
+-- | State variable low-pass filter
 slp :: Sig -> Sig -> Sig -> Sig
 slp kcf res asig = lows
     where (_, lows, _, _) = statevar asig kcf res
 
+-- | State variable high-pass filter
 shp :: Sig -> Sig -> Sig -> Sig
 shp kcf res asig = highs
     where (highs, _, _, _) = statevar asig kcf res
 
+-- | State variable band-pass filter
 sbp :: Sig -> Sig -> Sig -> Sig
 sbp kcf res asig = mids
     where (_, _, mids, _) = statevar asig kcf res
 
+-- | State variable band-reject filter
 sbr :: Sig -> Sig -> Sig -> Sig
 sbr kcf res asig = sides
     where (_, _, _, sides) = statevar asig kcf res
@@ -512,3 +526,157 @@ multiSvfilter :: (Sig, Sig, Sig) -> Sig -> Sig -> Sig -> Sig
 multiSvfilter (weightLows, wieghtHighs, weightMids) kcf res asig = weightLows * lows + wieghtHighs * highs + weightMids * mids
     where (highs, lows, mids) = svfilter asig kcf res
 
+
+--------------------------------
+
+-- | Zero-delay feedback implementation of 1 pole filter.
+--
+-- ouputs low-pass and high-pass signals.
+--
+-- > zdf1 centerFreq asig = (alp, ahp)
+zdf1 :: Sig -> Sig -> (Sig, Sig)
+zdf1 cfq asig = zdf_1pole_mode asig cfq
+
+-- | Zero-delay feedback implementation of 1 pole low-pass filter.
+--
+-- > zlp1 centerFreq asig
+zlp1 :: Sig -> Sig -> Sig
+zlp1 cfq asig = zdf_1pole asig cfq `withSig` 0
+
+-- | Zero-delay feedback implementation of 1 pole high-pass filter.
+--
+-- > zhp1 centerFreq asig
+zhp1 :: Sig -> Sig -> Sig
+zhp1 cfq asig = zdf_1pole asig cfq `withSig` 1
+
+-- | Zero-delay feedback implementation of 1 pole allpass filter.
+--
+-- > zap1 centerFreq asig
+zap1 :: Sig -> Sig -> Sig
+zap1 cfq asig = zdf_1pole asig cfq `withSig` 2
+
+-- | zero delay feedback 2 pole filter
+--
+-- > zdf2 centerFreq q asig = (alp, abp, ahp)
+zdf2 :: Sig -> Sig -> Sig -> (Sig, Sig, Sig)
+zdf2 cfq q asig = zdf_2pole_mode asig cfq (uon 0.5 25 q)
+
+zpole2 :: D -> Sig -> Sig -> Sig -> Sig
+zpole2 n cfq q asig = zdf_2pole asig cfq (uon 0.5 25 q) `withSig` 0
+
+-- | zero delay feedback 2 pole Low pass filter. Q is unipolar [0, 1]
+--
+-- > zlp centerFreq q asig
+zlp :: Sig -> Sig -> Sig -> Sig
+zlp = zpole2 0
+
+-- | zero delay feedback 2 pole High pass filter. Q is unipolar [0, 1]
+--
+-- > zhp centerFreq q asig
+zhp :: Sig -> Sig -> Sig -> Sig
+zhp = zpole2 1
+
+-- | zero delay feedback 2 pole Band pass. Q is unipolar [0, 1]
+--
+-- > zbp centerFreq q asig
+zbp :: Sig -> Sig -> Sig -> Sig
+zbp = zpole2 2
+
+-- | Unity-gain bandpass (zero delay feedback 2 pole). Q is unipolar [0, 1]
+--
+-- > zubp centerFreq q asig
+zubp :: Sig -> Sig -> Sig -> Sig
+zubp = zpole2 3
+
+-- | zero delay feedback 2 pole Notch (band reject). Q is unipolar [0, 1]
+--
+-- > zbr centerFreq q asig
+zbr :: Sig -> Sig -> Sig -> Sig
+zbr = zpole2 4
+
+-- | zero delay feedback 2 pole Allpass filter. Q is unipolar [0, 1]
+--
+-- > zap centerFreq q asig
+zap :: Sig -> Sig -> Sig -> Sig
+zap = zpole2 5
+
+-- | zero delay feedback 2 pole Peak filter. Q is unipolar [0, 1]
+--
+-- > zpeak centerFreq q asig
+zpeak :: Sig -> Sig -> Sig -> Sig
+zpeak = zpole2 6
+
+-- |  Zero-delay feedback implementation of 4 pole ladder filter. Q is unipolar [0, 1]
+--
+-- > zladder centerFreq q asig
+zladder :: Sig -> Sig -> Sig -> Sig
+zladder cfq q asig = zdf_ladder asig cfq (uon 0.5 25 q)
+
+-- |  Zero-delay feedback implementation of 4 pole diode ladder filter  (24 dB/oct) .
+-- This filter design was originally used in the EMS VCS3 and was the resonant filter in the Roland TB-303.
+--
+-- * Q is unipolar [0, 1]
+--
+-- * saturation - amount to use for non-linear processing. Values > 1 increase the steepness of the NLP curve.
+--
+-- > diode saturation centerFreq q asig
+diode :: D -> Sig -> Sig -> Sig -> Sig
+diode isaturation cfq fbk asig = diode_ladder asig cfq (17 * fbk)  `withDs` [1, isaturation]
+
+-- | Faster diode, but lesser quality
+--
+-- > fdiode saturation centerFreq q asig
+fdiode :: D -> Sig -> Sig -> Sig -> Sig
+fdiode isaturation cfq fbk asig = diode_ladder asig cfq (17 * fbk) `withDs` [2, isaturation]
+
+-- | Linear diode, no saturation involved
+--
+-- > linDiode centerFreq q asig
+linDiode :: Sig -> Sig -> Sig -> Sig
+linDiode cfq fbk asig = diode_ladder asig cfq (17 * fbk)  `withDs` [0]
+
+-- | Korg35 resonant low-pass filter. Q is unipolar [0, 1]
+--
+-- > korg_lp saturation centerFreq q asig
+korg_lp :: D -> Sig -> Sig -> Sig -> Sig
+korg_lp isaturation cfq q asig = k35_lpf asig cfq (uon 1 10 q) `withDs` [1, isaturation]
+
+-- | Korg35 resonant high-pass filter. Q is unipolar [0, 1]
+--
+-- > korg_hp saturation centerFreq q asig
+korg_hp :: D -> Sig -> Sig -> Sig -> Sig
+korg_hp isaturation cfq q asig = k35_hpf asig cfq (uon 1 10 q) `withDs` [1, isaturation]
+
+-- | Korg35 resonant band-pass filter. Q is unipolar [0, 1]
+--
+-- > korg_bp saturation centerFreq q asig
+korg_bp :: D -> Sig -> Sig -> Sig -> Sig
+korg_bp isaturation cfq q asig = korg_hp isaturation cfq q $ korg_lp isaturation cfq q asig
+
+-- | Linear Korg35 resonant low-pass filter
+--
+-- > linKorg_lp centerFreq q asig
+linKorg_lp :: Sig -> Sig -> Sig -> Sig
+linKorg_lp cfq q asig = k35_lpf asig cfq (uon 1 10 q) `withDs` [0]
+
+-- | Linear Korg35 resonant high-pass filter
+--
+-- > linKorg_hp centerFreq q asig
+linKorg_hp :: Sig -> Sig -> Sig -> Sig
+linKorg_hp cfq q asig = k35_hpf asig cfq (uon 1 10 q) `withDs` [0]
+
+-- Linear Korg35 resonant band-pass filter
+linKorg_bp :: Sig -> Sig -> Sig -> Sig
+linKorg_bp cfq q asig = linKorg_hp cfq q $ linKorg_lp cfq q asig
+
+-- | Alias for korg_lp
+klp :: D -> Sig -> Sig -> Sig -> Sig
+klp = korg_lp
+
+-- | Alias for korg_hp
+khp :: D -> Sig -> Sig -> Sig -> Sig
+khp = korg_hp
+
+-- | Alias for korg_bp
+kbp :: D -> Sig -> Sig -> Sig -> Sig
+kbp = korg_bp
