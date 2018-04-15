@@ -561,8 +561,8 @@ zap1 cfq asig = zdf_1pole asig cfq `withSig` 2
 zdf2 :: Sig -> Sig -> Sig -> (Sig, Sig, Sig)
 zdf2 cfq q asig = zdf_2pole_mode asig cfq (uon 0.5 25 q)
 
-zpole2 :: D -> Sig -> Sig -> Sig -> Sig
-zpole2 n cfq q asig = zdf_2pole asig cfq (uon 0.5 25 q) `withSig` 0
+zpole2 :: Sig -> Sig -> Sig -> Sig -> Sig
+zpole2 n cfq q asig = zdf_2pole asig cfq (uon 0.5 25 q) `withSig` n
 
 -- | zero delay feedback 2 pole Low pass filter. Q is unipolar [0, 1]
 --
