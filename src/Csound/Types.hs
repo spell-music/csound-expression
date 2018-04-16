@@ -32,6 +32,9 @@ module Csound.Types(
     -- ** Constants
     idur, getSampleRate, getControlRate, getBlockSize,
 
+    -- ** BPM
+    getBpm, setBpm, syn, synSec,
+
     -- ** Converters
     ar, kr, ir, sig,
 
@@ -140,5 +143,11 @@ compareWhenD val conds = case conds of
         (less, more) = splitAt (length conds `div` 2) conds
         rootCond = fst $ last less
 
+-- | It's used to synchronize changes with BPM.
+-- Useful with LFO's or delay times.
+syn :: Sig -> Sig
+syn x = (bpm / 60) * x
+    where bpm = getBpm
 
-
+synSec :: Sig -> Sig
+synSec = recip . syn
