@@ -1,6 +1,6 @@
 {-# Language TypeFamilies #-}
 module Csound.Air.Seg (
-	Seg, toSeg, runSeg,	
+	Seg, toSeg, runSeg,
 	constLim, constDel, constRest, limSnd
 ) where
 
@@ -16,20 +16,20 @@ import Csound.Control
 
 import Csound.Air.Wav hiding (Loop)
 
--- | A segment of the signal. 
+-- | A segment of the signal.
 -- The signal segment is a limited span of signal in time.
 -- The time can be measured in seconds or in events!
 -- The time span which is measured in events is the first
--- occurence of the event in the event stream. 
+-- occurence of the event in the event stream.
 --
 -- There are handy functions for scheduling the signal segments.
 -- we can delay the segment or loop over it or limit it with tme interval
 -- or play a sequence of segments. The main feature of the segments is the
--- ability to schedule the signals with event streams (like button clicks or midi-events). 
-data Seg a 
+-- ability to schedule the signals with event streams (like button clicks or midi-events).
+data Seg a
 	= Unlim a
 	| Lim Tick (Seg a)
-	| ConstLim D (Seg a)
+	| ConstLim Sig (Seg a)
 	| Seq [Seg a]
 	| Par [Seg a]
 	| Loop (Seg a)
@@ -51,7 +51,7 @@ type instance DurOf (Seg a) = Tick
 instance Sigs a => Melody (Seg a) where
 	mel = sflow
 
-instance Sigs a => Harmony (Seg a) where	
+instance Sigs a => Harmony (Seg a) where
 	har = spar
 
 instance Sigs a => Compose (Seg a) where
@@ -83,7 +83,7 @@ slim da x = case x of
 	_        -> Lim da x
 
 -- | Limits the length of the segment with constant length in seconds.
-constLim :: D -> Seg a -> Seg a
+constLim :: Sig -> Seg a -> Seg a
 constLim da x = case x of
 	Par as   -> Par (fmap (constLim da) as)
 	_        -> ConstLim da x
@@ -91,7 +91,7 @@ constLim da x = case x of
 -- | Plays the sequence of segments one ofter another.
 sflow :: [Seg a] -> Seg a
 sflow as = Seq $ flatten =<< as
-	where 
+	where
 		flatten x = case x of
 			Seq as -> as
 			_      -> [x]
@@ -100,7 +100,7 @@ sflow as = Seq $ flatten =<< as
 -- the total length equals to the biggest length of all segments.
 spar :: [Seg a] -> Seg a
 spar as = Par $ flatten =<< as
-	where 
+	where
 		flatten x = case x of
 			Par as -> as
 			_      -> [x]
@@ -126,15 +126,15 @@ runSeg x = case x of
 	Unlim a -> a
 
 	Lim dt (Unlim a) -> elim dt a
-	Lim dt (Seq as)  -> uncurry (evtLoopOnce (Just dt)) (getEvtAndSig $ rmTailAfterUnlim as)	
+	Lim dt (Seq as)  -> uncurry (evtLoopOnce (Just dt)) (getEvtAndSig $ rmTailAfterUnlim as)
 	Lim dt (Loop (Seq as)) -> uncurry (evtLoop (Just dt)) (getEvtAndSig $ rmTailAfterUnlim as)
 	Lim dt (Loop a) -> elim dt (runSeg (Loop a))
 	Lim dt a -> elim dt (runSeg a)
 
 
 	ConstLim dt (Unlim a) -> takeSnd dt a
-	ConstLim dt (Seq as)  -> uncurry (evtLoopOnce (Just $ impulseE dt)) (getEvtAndSig $ rmTailAfterUnlim as)	
-	ConstLim dt (Loop (Seq as)) -> uncurry (evtLoop (Just $ impulseE dt)) (getEvtAndSig $ rmTailAfterUnlim as)
+	ConstLim dt (Seq as)  -> uncurry (evtLoopOnce (Just $ impulseE $ ir dt)) (getEvtAndSig $ rmTailAfterUnlim as)
+	ConstLim dt (Loop (Seq as)) -> uncurry (evtLoop (Just $ impulseE $ ir dt)) (getEvtAndSig $ rmTailAfterUnlim as)
 	ConstLim dt (Loop a) -> takeSnd dt (runSeg (Loop a))
 	ConstLim dt a -> takeSnd dt (runSeg a)
 
@@ -146,18 +146,18 @@ runSeg x = case x of
 
 	Par as -> maybeElim (getDur x) $ sum $ fmap (\a -> maybeElim (getDur a) $ runSeg a) as
 
-getDur :: Seg a -> Maybe (Either D Tick)
+getDur :: Seg a -> Maybe (Either Sig Tick)
 getDur x = case x of
 	Unlim _ -> Nothing
-	Loop  _ -> Nothing 
+	Loop  _ -> Nothing
 	Lim dt _ -> Just $ Right dt
 	ConstLim dt _ -> Just $ Left dt
 	Seq as -> fromListT sum aftT' as
 	Par as -> fromListT (foldl1 maxB) simT' as
-	where 
-		fromListT g f as 
+	where
+		fromListT g f as
 			| all isJust ds = Just $ phi g f $ fmap fromJust ds
-			| otherwise     = Nothing 
+			| otherwise     = Nothing
 			where ds = fmap getDur as
 
 		phi g f xs
@@ -169,21 +169,21 @@ getDur x = case x of
 			Left d -> Just d
 			_      -> Nothing
 
-		toEvt = either impulseE id
+		toEvt = either (impulseE . ir) id
 
 getEvtAndSig :: (Num a, Sigs a) => [Seg a] -> ([SE a], [Tick])
 getEvtAndSig as = unzip $ fmap (\x -> (return (runSeg x), getTick $ getDur x)) as
-	where getTick = maybe mempty (either impulseE id)
+	where getTick = maybe mempty (either (impulseE . ir) id)
 
 
 rmTailAfterUnlim :: [Seg a] -> [Seg a]
-rmTailAfterUnlim = takeByIncludeLast isUnlim 
-	where 
+rmTailAfterUnlim = takeByIncludeLast isUnlim
+	where
 		isUnlim x = case x of
 			Unlim _ -> True
 			Loop  _ -> True
 			Par  as -> any isUnlim as
-			_       -> False 
+			_       -> False
 
 takeByIncludeLast :: (a -> Bool) -> [a] -> [a]
 takeByIncludeLast f xs = case xs of
@@ -202,11 +202,11 @@ sdel :: (Sigs a, Num a) => Tick -> Seg a -> Seg a
 sdel dt a = sflow [srest dt, a]
 
 -- | A pause. Plays nothing for the given time interval in seconds.
-constRest :: Num a => D -> Seg a
+constRest :: Num a => Sig -> Seg a
 constRest dt = constLim dt $ toSeg 0
 
 -- | Delays a segment by a given time interval in seconds.
-constDel :: Num a => D -> Seg a -> Seg a
+constDel :: Num a => Sig -> Seg a -> Seg a
 constDel dt a = sflow [constRest dt, a]
 
 -----------------------------------------------------------
@@ -214,10 +214,10 @@ constDel dt a = sflow [constRest dt, a]
 elim :: Sigs a => Tick -> a -> a
 elim dt asig = schedUntil (const $ return $ asig) (impulseE 0) dt
 
-maybeElim :: (Num a, Sigs a) => Maybe (Either D Tick) -> a -> a
+maybeElim :: (Num a, Sigs a) => Maybe (Either Sig Tick) -> a -> a
 maybeElim mdt a = case mdt of
 	Nothing -> a
-	Just x  -> case x of 
+	Just x  -> case x of
 		Left d  -> takeSnd d a
 		Right t -> elim t a
 
@@ -230,7 +230,7 @@ take1 = fmap fst . filterE ((==* 0) . snd) . accumE (0 :: D) (\a s -> ((a, s), s
 
 aftT' :: [Tick] -> Tick
 aftT' evts = take1 $ sigToEvt $ evtLoop Nothing asigs evts
-	where 
+	where
 		asigs :: [SE Sig]
 		asigs = fmap (return . sig) $ (replicate (length evts - 1) 0) ++ [1]
 
@@ -246,7 +246,7 @@ simT' as = Evt $ \bam -> do
 	when1 (sig isAwaiting ==* 1 &&* sig countDown ==* 0) $ do
 		bam unit
 		writeRef isAwaitingRef 0
-	where 
+	where
 		mkEvt ref e = do
 			notFiredRef <- newRef (1 :: D)
 			notFired <- readRef notFiredRef

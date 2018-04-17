@@ -20,15 +20,15 @@ wobbly spb coeff cps = a2
 spb = dspb
 dspb = 0.45
 
-instr (coeff, cps) = return $ wobbly (sig spb) (sig coeff) (sig $ cpspch cps)
+instr (coeff, cps) = return $ wobbly spb (sig coeff) (sig $ cpspch cps)
 
 
-main = dac $ mix $ str (dspb * 2) $ loopBy 2 $ sco instr $ melMap temp $ 
+main = dac $ mix $ str (dspb * 2) $ loopBy 2 $ sco instr $ melMap temp $
     [ (2, 6.04)
     , (1/3, 7.04)
     , (2, 6.04)
     , (1/1.5, 7.07)
-    
+
     , (2, 5.09)
     , (1, 6.09)
     , (1/1.5, 5.09)
@@ -37,13 +37,13 @@ main = dac $ mix $ str (dspb * 2) $ loopBy 2 $ sco instr $ melMap temp $
     , (1, 6.04)
     , (1/3, 7.04)
     , (2, 6.04)
-    , (1/1.5, 7.07) 
-    
+    , (1/1.5, 7.07)
+
     , (2, 6.09)
     , (1, 7.09)
     , (1/1.5, 6.11)
-    , (1/3, 6.07) 
-    
+    , (1/3, 6.07)
+
     , (2, 6.04)
     , (1/3, 7.04)
     , (2, 6.04)

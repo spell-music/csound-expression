@@ -5,12 +5,12 @@ import Csound.Base
 
 main = dac $ do
     -- Creates a master volume slider.
-    (gvol, vol) <- masterVolume
+    (gvol, vol) <- unSource $ masterVolume
 
     -- We use a standard element to experiment with four classic waveforms.
     -- The return value of the widget is a function that takes a frequency
     -- and returns the signal.
-    (gw, f) <- classicWaves "waves" 0
+    (gw, f) <- unSource $ classicWaves "waves" 0
 
     -- Let's create a simple instrument that uses the waveform.
     let instr x = fades 0.1 0.1 * f x

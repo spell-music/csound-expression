@@ -7,7 +7,7 @@ import Csound.Base
 -- orchestra
 
 -- | An instrument that implements a wind sound.
-wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) = 
+wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) =
     fmap fromRnd $ rand (sig $ amp / 400)
     where
         valu1 = 100
@@ -16,10 +16,10 @@ wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) =
         ramp a b = linseg [a, idur, b]
         fromRnd a = (sig pan * aout, (1 - sig pan) * aout )
             where
-                a2 = butbp a  (ramp freqRise freqDec) (ramp bandRise bandDec) 
+                a2 = butbp a  (ramp freqRise freqDec) (ramp bandRise bandDec)
                 a3 = butbp a2 (ramp (freqRise - valu1) (freqDec + valu2))
                               (ramp (bandRise + valu1) (bandDec - valu2))
-                
+
                 aout = (a2 + a3) * linseg [0, idur * winds, 1, idur * winde, 0]
 
 -------------------------------------------------------------
@@ -27,7 +27,7 @@ wind (amp, bandRise, bandDec, freqRise, freqDec, pan, winds) =
 
 -- | This example shows the flexibility of the Haskell. Here we can
 -- write the scores in the manner of the native Csound style.
-i21 t0 dt amp bandRise bandDec freqRise freqDec pan winds = 
+i21 t0 dt amp bandRise bandDec freqRise freqDec pan winds =
     del t0 $ dt *| temp (amp, bandRise, bandDec, freqRise, freqDec, pan, winds)
 
 windRes :: Sco (Mix Sig2)
@@ -55,7 +55,7 @@ windRes = sco (onArg wind) $ har
     , i21  40   15   70   500  0    555  111  0     0.4
     , i21  44   10   74   600  0    444  111  0.5   0.6
     , i21  48   8    77   500  0    333  111  0.7   0.7
-    , i21  48.5 9    76   500  0    222  111  0.9   0.9 
+    , i21  48.5 9    76   500  0    222  111  0.9   0.9
 
     , i21  50   12   72   500  0    666  222  0.1   0.6
     , i21  55   15   74   500  0    333  333  0.5   0.7

@@ -107,7 +107,7 @@ impulseE :: D -> Evt Unit
 impulseE = sigToEvt . impulse
 
 -- | Makes an event stream from list of events.
-eventList :: [(D, D, a)] -> Evt (Sco a)
+eventList :: [(Sig, Sig, a)] -> Evt (Sco a)
 eventList es = fmap (const $ har $ fmap singleEvent es) loadbang
     where singleEvent (start, duration, content) = del start $ str duration $ temp content
 

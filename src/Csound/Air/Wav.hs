@@ -67,39 +67,39 @@ import Csound.Air.Spec
 -- Signal manipulation
 
 -- | Takes only given amount (in seconds) from the signal (the rest is silence).
-takeSnd :: Sigs a => D -> a -> a
+takeSnd :: Sigs a => Sig -> a -> a
 takeSnd dt asig = sched (const $ return asig) $ withDur dt $ loadbang
 
 -- | Delays signals by the given amount (in seconds).
-delaySnd :: Sigs a => D -> a -> a
+delaySnd :: Sigs a => Sig -> a -> a
 delaySnd dt = segmentSnd dt infiniteDur
 
 -- | Delays a signal by the first argument and takes only second argument amount
 -- of signal (everything is measured in seconds).
-segmentSnd ::Sigs a => D -> D -> a -> a
+segmentSnd ::Sigs a => Sig -> Sig -> a -> a
 segmentSnd dt dur asig = sched (const $ return asig) $ fmap (del dt) $ withDur dur $ loadbang
 
 -- | Repeats the signal with the given period.
-repeatSnd :: Sigs a => D -> a -> a
+repeatSnd :: Sigs a => Sig -> a -> a
 repeatSnd dt asig = sched (const $ return asig) $ segments dt
 
 -- | Plays the first signal for some time (in seconds) and then switches to the next one.
 --
 -- > afterSnd dur sig1 sig2
-afterSnd :: (Num b, Sigs b) => D -> b -> b -> b
+afterSnd :: (Num b, Sigs b) => Sig -> b -> b -> b
 afterSnd dt a b = takeSnd dt a + delaySnd dt b
 
 -- | Creates a sequence of signals. Each segment lasts for
 -- fixed amount of time given in the first argument.
-lineSnd :: (Num a, Sigs a) => D -> [a] -> a
+lineSnd :: (Num a, Sigs a) => Sig -> [a] -> a
 lineSnd dt xs = foldr1 go xs
     where
         go a b = afterSnd dt a b
 
 -- | Creates a sequence of signals and loops over the sequence.
 -- Each segment lasts for  fixed amount of time given in the first argument.
-loopLineSnd :: (Num a, Sigs a) => D -> [a] -> a
-loopLineSnd dt xs = repeatSnd (dt * (int $ length xs)) $ lineSnd dt xs
+loopLineSnd :: (Num a, Sigs a) => Sig -> [a] -> a
+loopLineSnd dt xs = repeatSnd (dt * (sig $ int $ length xs)) $ lineSnd dt xs
 
 --------------------------------------------------------------------------
 -- sound files playback
@@ -118,8 +118,8 @@ lengthSnd fileName
     | otherwise         = filelen $ text fileName
 
 -- | Produces repeating segments with the given time in seconds.
-segments :: D -> Evt (Sco Unit)
-segments dt = withDur dt $ metroE (sig $ recip dt)
+segments :: Sig -> Evt (Sco Unit)
+segments dt = withDur dt $ metroE (recip dt)
 
 -- Stereo
 
@@ -131,13 +131,13 @@ readSnd fileName
 
 -- | Reads stereo signal from the sound-file (wav or mp3 or aiff)
 -- and loops it with the given period (in seconds).
-loopSndBy :: D -> String -> (Sig, Sig)
+loopSndBy :: Sig -> String -> (Sig, Sig)
 loopSndBy dt fileName = repeatSnd dt $ readSnd fileName
 
 -- | Reads stereo signal from the sound-file (wav or mp3 or aiff)
 -- and loops it with the file length.
 loopSnd :: String -> (Sig, Sig)
-loopSnd fileName = loopSndBy (lengthSnd fileName) fileName
+loopSnd fileName = loopSndBy (sig $ lengthSnd fileName) fileName
 
 -- | Reads the wav file with the given speed (if speed is 1 it's a norma playback).
 -- We can use negative speed to read file in reverse.
@@ -150,7 +150,7 @@ loopWav speed fileName = flip withDs [0, 1] $ ar2 $ diskin2 (text fileName) `wit
 
 -- | Reads a segment from wav file.
 readSegWav :: D -> D -> Sig -> String -> (Sig, Sig)
-readSegWav start end speed fileName = takeSnd (end - start) $ (diskin2 (text fileName) `withSig` speed) `withDs` [start, 1]
+readSegWav start end speed fileName = takeSnd (sig $ end - start) $ (diskin2 (text fileName) `withSig` speed) `withDs` [start, 1]
 
 -- | Reads the wav file with the given speed (if speed is 1 it's a norma playback).
 -- We can use negative speed to read file in reverse. Scales the tempo with first argument.
@@ -170,12 +170,12 @@ readSnd1 fileName
     | otherwise      = diskin2 (text fileName)
 
 -- | The mono variant of the function @loopSndBy@.
-loopSndBy1 :: D -> String -> Sig
+loopSndBy1 :: Sig -> String -> Sig
 loopSndBy1 dt fileName = repeatSnd dt $ readSnd1 fileName
 
 -- | The mono variant of the function @loopSnd@.
 loopSnd1 :: String -> Sig
-loopSnd1 fileName = loopSndBy1 (lengthSnd fileName) fileName
+loopSnd1 fileName = loopSndBy1 (sig $ lengthSnd fileName) fileName
 
 -- | The mono variant of the function @readWav@.
 readWav1 :: Sig -> String -> Sig
@@ -187,7 +187,7 @@ loopWav1 speed fileName = flip withDs [0, 1] $ diskin2 (text fileName) `withSig`
 
 -- | Reads a segment from wav file.
 readSegWav1 :: D -> D -> Sig -> String -> Sig
-readSegWav1 start end speed fileName = takeSnd (end - start) $ diskin2 (text fileName) `withSig` speed `withDs` [start, 1]
+readSegWav1 start end speed fileName = takeSnd (sig $ end - start) $ diskin2 (text fileName) `withSig` speed `withDs` [start, 1]
 
 -- | Reads the mono wav file with the given speed (if speed is 1 it's a norma playback).
 -- We can use negative speed to read file in reverse. Scales the tempo with first argument.
