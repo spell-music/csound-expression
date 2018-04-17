@@ -166,14 +166,14 @@ getControls a =
 	, (\f -> f "through" False) $ maybe toggleSig (toggleSig' . evtToSig (-1))  (loopThrough a))
 
 genLoop :: forall a. (BoolSig -> a -> SE Sig2) -> LoopSpec -> D -> [D] -> [a] -> Source Sig2
-genLoop playInstr spec dtBpm times' instrs = Source $ do
-	(preFxKnobGui, preFxKnobWrite, preFxKnobRead) <- unSinkSource $ setKnob "pre" (linSpan 0 1) 0.5
-	(postFxKnobGui, postFxKnobWrite, postFxKnobRead) <- unSinkSource $ setKnob "post" (linSpan 0 1) 0.5
-	(mixKnobGui, mixKnobWrite, mixKnobRead) <- unSinkSource $ setKnob "mix" (linSpan 0 1) 0.5
+genLoop playInstr spec dtBpm times' instrs = do
+	(preFxKnobGui, preFxKnobWrite, preFxKnobRead) <- setKnob "pre" (linSpan 0 1) 0.5
+	(postFxKnobGui, postFxKnobWrite, postFxKnobRead) <- setKnob "post" (linSpan 0 1) 0.5
+	(mixKnobGui, mixKnobWrite, mixKnobRead) <- setKnob "mix" (linSpan 0 1) 0.5
 
 	let knobGuis = ver [mixKnobGui, preFxKnobGui, postFxKnobGui]
 
-	unSource $ mapGuiSource (\gs -> hor [knobGuis, sca 12 gs]) $ joinSource $ vlift3 (\(thr, delEvt) x sils -> do
+	mapGuiSource (\gs -> hor [knobGuis, sca 12 gs]) $ joinSource $ vlift3 (\(thr, delEvt) x sils -> do
 		-- knobs
 		mixCoeffs <- tabSigs mixKnobWrite mixKnobRead x initMixVals
 		preCoeffs <- tabSigs preFxKnobWrite preFxKnobRead x initPreVals

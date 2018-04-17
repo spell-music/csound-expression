@@ -10,9 +10,9 @@ harms ks cps = sum $ zipWith f ks (fmap (sig . double) [1 .. ])
 
 main = dac $ do
     -- Let's create a list of coefficients.
-    (g, ks) <- unSource $ sliderBank "Harmonics"  (1 : replicate 13 0)
-    (gv, v) <- unSource $ masterVolume
-    (gcps, cps)  <- unSource $ slider "frequency"  (expSpan 50 1000) 220
+    (g, ks) <- sliderBank "Harmonics"  (1 : replicate 13 0)
+    (gv, v) <- masterVolume
+    (gcps, cps)  <- slider "frequency"  (expSpan 50 1000) 220
 
     -- A simple instrument that plays a harmonic series
     -- with the given coefficients.

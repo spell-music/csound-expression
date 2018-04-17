@@ -79,8 +79,8 @@ readMatrix xn yn as = transp $ take (xn * yn) $ as ++ repeat (head as)
 -- | A radio button. It takes a list of values with labels.
 radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
 radioButton title as initVal = source $ do
-    (g, ind) <- unSource $ butBank1 "" 1 (length as) (0, initVal)
-    gnames   <- mapM (unDisplay . box) names
+    (g, ind) <- butBank1 "" 1 (length as) (0, initVal)
+    gnames   <- mapM box names
     let val = listAt vals ind
     gui <- setTitle title $ padding 0 $ hor [sca 0.15 g, ver gnames]
     return (gui, val)
@@ -89,7 +89,7 @@ radioButton title as initVal = source $ do
 -- | A matrix of values.
 matrixButton :: Arg a => String -> Int -> Int -> [a] -> (Int, Int) -> Source (Evt a)
 matrixButton name xn yn vals initVal = source $ do
-    (gui, ind) <- unSource $ butBank1 name xn yn initVal
+    (gui, ind) <- butBank1 name xn yn initVal
     let val = listAt allVals ind
     return (gui, val)
     where allVals = readMatrix xn yn vals
@@ -97,7 +97,7 @@ matrixButton name xn yn vals initVal = source $ do
 -- | Radio button that returns functions. Useful for picking a waveform or type of filter.
 funnyRadio :: Tuple b => String -> [(String, a -> b)] -> Int -> Source (a -> b)
 funnyRadio name as initVal = source $ do
-    (gui, ind) <- unSource $ radioButton name (zip names (fmap int [0 ..])) initVal
+    (gui, ind) <- radioButton name (zip names (fmap int [0 ..])) initVal
     contInd <- stepper (sig $ int initVal) $ fmap sig ind
     let instr x = guardedTuple (
                 zipWith (\n f -> (contInd ==* (sig $ int n), f x)) [0 ..] funs
@@ -108,7 +108,7 @@ funnyRadio name as initVal = source $ do
 -- | Matrix of functional values.
 funnyMatrix :: Tuple b => String -> Int -> Int -> [(a -> b)] -> (Int, Int) -> Source (a -> b)
 funnyMatrix name xn yn funs initVal@(x0, y0) = source $ do
-    (gui, ind) <- unSource $ butBank1 name xn yn initVal
+    (gui, ind) <- butBank1 name xn yn initVal
     contInd <- stepper flattenInitVal $ fmap sig ind
     let instr x = guardedTuple (
                 zipWith (\n f -> (contInd ==* (sig $ int n), f x)) [0 ..] allFuns
@@ -187,7 +187,7 @@ vnumbers = genNumbers ver
 genNumbers :: ([Gui] -> Gui) -> [Double] -> Source Sig
 genNumbers gx as@(d:ds) = source $ do
     ref <- newGlobalCtrlRef (sig $ double d)
-    (gs, evts) <- fmap unzip $ mapM (unSource . button . show) as
+    (gs, evts) <- fmap unzip $ mapM (button . show) as
     zipWithM_ (\x e -> runEvt e $ \_ -> writeRef ref (sig $ double x)) as evts
     res <- readRef ref
     return (gx gs, res)
@@ -241,7 +241,7 @@ genPad mk initVal width height names as = source $ do
     let f x y = (vals !! y) !! x
     return $ (gui, f)
     where
-        mkRow xs = fmap reGroupRow $ mapM (unSource . uncurry mk) xs
+        mkRow xs = fmap reGroupRow $ mapM (uncurry mk) xs
 
         inits = split height width $ zip (names ++ repeat "") (as ++ repeat initVal)
 
@@ -277,7 +277,7 @@ radioGroup gcat names initVal = mapSource snaps $ radioGroupSig gcat names initV
 
 radioGroupSig  :: ([Gui] -> Gui) -> [String] -> Int -> Source Sig
 radioGroupSig gcat names initVal = source $ do
-    (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> unSinkSource $ flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
+    (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
     curRef <- newGlobalCtrlRef (sig $ int initVal)
     current <- readRef curRef
     zipWithM_ (\w i -> w $ ifB (current ==* i) 1 0) writes ids
@@ -399,7 +399,7 @@ button' ctrl name = mapSource (mappend ctrl) $ button name
 -- The first argument is for external control.
 toggle' :: Evt D -> String -> Bool -> Source (Evt D)
 toggle' ctrl name initVal = source $ do
-    (gui, output, input) <- unSinkSource $ setToggle name initVal
+    (gui, output, input) <- setToggle name initVal
     output ctrl
     return $ (gui, mappend ctrl input)
 
@@ -452,7 +452,7 @@ radioGroup' gcat ctrl names initVal =  mapSource snaps $ radioGroupSig' gcat (ev
 
 radioGroupSig'  :: ([Gui] -> Gui) -> Sig -> [String] -> Int -> Source Sig
 radioGroupSig' gcat ctrl names initVal = source $ do
-    (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> unSinkSource $ flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
+    (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
     curRef <- newGlobalCtrlRef (sig $ int initVal)
 
     when1 (changed [ctrl] ==* 1) $ writeRef curRef ctrl
@@ -474,7 +474,7 @@ radioGroupSig' gcat ctrl names initVal = source $ do
 
 ctrlSig :: D -> Sig -> SinkSource Sig -> Source Sig
 ctrlSig initVal ctrl v = source $ do
-    (gui, output, input) <- unSinkSource v
+    (gui, output, input) <- v
     ref <- newGlobalCtrlRef (sig initVal)
     when1 (changed [ctrl] ==* 1) $ writeRef ref ctrl
     when1 (changed [input] ==* 1) $ writeRef ref input

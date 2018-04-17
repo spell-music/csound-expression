@@ -123,14 +123,14 @@ keyWin name (x, y) = keyPanelBy name (Just $ Rect 0 0 x y)
 
 -- | Hides the SE inside Source.
 joinSource :: Source (SE a) -> Source a
-joinSource a = Source $ do
-    (g, mv) <- unSource a
+joinSource a = do
+    (g, mv) <- a
     v <- mv
     return (g, v)
 
 fromSource :: Source a -> SE a
 fromSource a = do
-    (gui, asig) <- unSource a
+    (gui, asig) <- a
     panel gui
     return asig
 
@@ -175,7 +175,7 @@ applyProportionsToList :: [Double] -> ([Gui] -> Gui) -> [Gui] -> Gui
 applyProportionsToList props f as = f $ zipWith sca (props ++ repeat 1) as
 
 genLifts :: ([Gui] -> Gui) -> ([a] -> b) -> [Source a] -> Source b
-genLifts gf f as = Source $ fmap phi $ mapM unSource as
+genLifts gf f as = fmap phi $ sequence as
     where
         phi xs = (gf gs, f vs)
             where (gs, vs) = unzip xs
@@ -187,8 +187,8 @@ lift1 = mapSource
 
 lift2 :: (Gui -> Gui -> Gui) -> (a -> b -> c) -> Source a -> Source b -> Source c
 lift2 gf f ma mb = source $ do
-    (ga, a) <- unSource ma
-    (gb, b) <- unSource mb
+    (ga, a) <- ma
+    (gb, b) <- mb
     return $ (gf ga gb, f a b)
 
 lift2' a b gf = lift2 (tfm2 a b gf)
@@ -214,9 +214,9 @@ vlift2' sa sb = lift2' sa sb (\a b -> ver [a, b])
 
 lift3 :: (Gui -> Gui -> Gui -> Gui) -> (a -> b -> c -> d) -> Source a -> Source b -> Source c -> Source d
 lift3 gf f ma mb mc = source $ do
-    (ga, a) <- unSource $ ma
-    (gb, b) <- unSource $ mb
-    (gc, c) <- unSource $ mc
+    (ga, a) <- ma
+    (gb, b) <- mb
+    (gc, c) <- mc
     return $ (gf ga gb gc, f a b c)
 
 lift3' sa sb sc gf = lift3 (tfm3 sa sb sc gf)
@@ -240,10 +240,10 @@ vlift3' a b c = lift3' a b c (\a b c -> ver [a, b, c])
 
 lift4 :: (Gui -> Gui -> Gui -> Gui -> Gui) -> (a -> b -> c -> d -> e) -> Source a -> Source b -> Source c -> Source d -> Source e
 lift4 gf f ma mb mc md = source $ do
-    (ga, a) <- unSource $ ma
-    (gb, b) <- unSource $ mb
-    (gc, c) <- unSource $ mc
-    (gd, d) <- unSource $ md
+    (ga, a) <- ma
+    (gb, b) <- mb
+    (gc, c) <- mc
+    (gd, d) <- md
     return $ (gf ga gb gc gd, f a b c d)
 
 lift4' sa sb sc sd gf = lift4 (tfm3 sa sb sc sd gf)
@@ -268,11 +268,11 @@ vlift4' a b c d = lift4' a b c d (\a b c d -> ver [a, b, c, d])
 
 lift5 :: (Gui -> Gui -> Gui -> Gui -> Gui -> Gui) -> (a1 -> a2 -> a3 -> a4 -> a5 -> b) -> Source a1 -> Source a2 -> Source a3 -> Source a4 -> Source a5 -> Source b
 lift5 gf f ma1 ma2 ma3 ma4 ma5 = source $ do
-    (ga1, a1) <- unSource $ ma1
-    (ga2, a2) <- unSource $ ma2
-    (ga3, a3) <- unSource $ ma3
-    (ga4, a4) <- unSource $ ma4
-    (ga5, a5) <- unSource $ ma5
+    (ga1, a1) <- ma1
+    (ga2, a2) <- ma2
+    (ga3, a3) <- ma3
+    (ga4, a4) <- ma4
+    (ga5, a5) <- ma5
     return $ (gf ga1 ga2 ga3 ga4 ga5, f a1 a2 a3 a4 a5)
 
 lift5' sa sb sc sd se gf = lift5 (tfm3 sa sb sc sd se gf)
@@ -333,8 +333,8 @@ vapply' ka kb = flip $ genBind (\a b -> ver [sca kb b, sca ka a])
 
 genBind :: (Gui -> Gui -> Gui) -> Source a -> (a -> Source b) -> Source b
 genBind gui ma mf = source $ do
-    (ga, a) <- unSource ma
-    (gb, b) <- unSource $ mf a
+    (ga, a) <- ma
+    (gb, b) <- mf a
     return (gui ga gb, b)
 
 -- | Creates a list of sources with mapping a function and stacks them horizontally.
@@ -360,5 +360,5 @@ gridMapM rowLength = genMapM (grid rowLength)
 
 genMapM :: ([Gui] -> Gui) -> (a -> Source b) -> [a] -> Source [b]
 genMapM gui f xs = source $ do
-    (gs, vs) <- fmap unzip $ mapM (unSource . f) xs
+    (gs, vs) <- fmap unzip $ mapM f xs
     return (gui gs, vs)
