@@ -79,7 +79,7 @@ Library
   Ghc-Options:    -Wall
   Build-Depends:
         base >= 4, base < 5, process, data-default, Boolean >= 0.1.0, colour >= 2.0, transformers >= 0.3, containers,
-        csound-expression-typed >= 0.2.1.0, csound-expression-dynamic >= 0.3.2, temporal-media >= 0.6.1,
+        csound-expression-typed >= 0.2.2.0, csound-expression-dynamic >= 0.3.3, temporal-media >= 0.6.2,
         csound-expression-opcodes >= 0.0.4.0
   Hs-Source-Dirs:      src/
   Exposed-Modules:
