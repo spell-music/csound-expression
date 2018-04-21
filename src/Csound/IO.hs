@@ -1,4 +1,4 @@
-{-# Language FlexibleInstances, UndecidableInstances #-}
+{-# Language FlexibleInstances, UndecidableInstances, CPP #-}
 -- | Rendering of Csound files and playing the music in real time.
 --
 -- How are we going to get the sound out of Haskell code?
@@ -90,11 +90,19 @@ class RenderCsd a where
 instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
     renderCsdBy = render_
 
+#if __GLASGOW_HASKELL__ >= 710
 instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd a where
     renderCsdBy opt a = render opt (return a)
 
 instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (SE a) where
     renderCsdBy opt a = render opt a
+
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source a) where
+    renderCsdBy opt a = renderCsdBy opt (fromSource a)
+
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source (SE a)) where
+    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
+#endif
 
 instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> b) where
     renderCsdBy opt f = renderEffBy opt (return . f)
@@ -110,12 +118,6 @@ instance (Sigs a, Sigs b) => RenderCsd (a -> Source (SE b)) where
 
 instance {-# OVERLAPPING #-} (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source a) where
-    renderCsdBy opt a = renderCsdBy opt (fromSource a)
-
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source (SE a)) where
-    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
 
 instance {-# OVERLAPPING #-} RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
@@ -275,3 +277,64 @@ onCard6= id
 -- | Alias to process inputs of audio-card with 8 inputs.
 onCard8 :: (Sig8 -> a) -> (Sig8 -> a)
 onCard8= id
+
+
+#if __GLASGOW_HASKELL__ < 710
+
+-- Sig
+
+instance RenderCsd Sig                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig2
+
+instance RenderCsd Sig2                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig2)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig2)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig2))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig3
+
+instance RenderCsd Sig3                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig3)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig3)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig3))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig4
+
+instance RenderCsd Sig4                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig4)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig4)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig4))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig5
+
+instance RenderCsd Sig5                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig5)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig5)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig5))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig6
+
+instance RenderCsd Sig6                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig6)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig6)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig6))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig7
+
+instance RenderCsd Sig7                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig7)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig7)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig7))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+-- Sig8
+
+instance RenderCsd Sig8                  where { renderCsdBy opt a = render opt (return a) }
+instance RenderCsd (SE Sig8)             where { renderCsdBy opt a = render opt a }
+instance RenderCsd (Source Sig8)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
+instance RenderCsd (Source (SE Sig8))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+
+#endif
