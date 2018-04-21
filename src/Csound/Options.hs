@@ -3,16 +3,16 @@ module Csound.Options(
 
     -- * Shortcuts
     setDur,
-    setRates, setBufs, setGain, 
+    setRates, setBufs, setGain,
     setJack, setAlsa, setCoreAudio, setMme,
-    setOutput, setInput, 
+    setOutput, setInput,
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
     setMessageLevel, noTrace,
-    setCabbage,   
+    setCabbage,
 
     -- * Flags
-    -- | Csound's command line flags. See original documentation for 
+    -- | Csound's command line flags. See original documentation for
     -- detailed overview: <http://www.csounds.com/manual/html/CommandFlagsCategory.html>
     Flags(..),
 
@@ -23,7 +23,7 @@ module Csound.Options(
 
     -- * Realtime Audio Input/Output
     Rtaudio(..), PulseAudio(..),
-       
+
     -- * MIDI File Input/Ouput
     MidiIO(..),
 
@@ -34,7 +34,7 @@ module Csound.Options(
     Displays(..), DisplayMode(..),
 
     -- * Performance Configuration and Control
-    Config(..)    
+    Config(..)
 ) where
 
 import Data.Monoid
@@ -45,7 +45,7 @@ import Csound.Typed
 --
 -- > setRates sampleRate blockSize
 setRates :: Int -> Int -> Options
-setRates sampleRate blockSize = def 
+setRates sampleRate blockSize = def
     { csdSampleRate = Just sampleRate
     , csdBlockSize  = Just blockSize }
 
@@ -92,13 +92,13 @@ setOutput a = def { csdFlags = def { audioFileOutput = def { output = Just a } }
 
 setDacBy :: String -> Options
 setDacBy port = setOutput name
-    where name 
+    where name
             | null port = "dac"
             | otherwise = "dac:" ++ port
- 
+
 setAdcBy :: String -> Options
 setAdcBy port = setInput name
-    where name 
+    where name
             | null port = "adc"
             | otherwise = "adc:" ++ port
 
@@ -127,4 +127,4 @@ noTrace = setMessageLevel 0
 
 setCabbage :: Options
 setCabbage = setRates 48000 64 <> setNoRtMidi <> setMidiDevice "0"
-    where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }} 
+    where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }}

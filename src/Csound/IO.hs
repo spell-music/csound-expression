@@ -76,7 +76,7 @@ import Data.Default
 import Csound.Typed
 import Csound.Control.Gui
 
-import Csound.Options(setSilent, setDac, setCabbage)
+import Csound.Options(setSilent, setDac, setAdc, setCabbage)
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy
@@ -173,7 +173,7 @@ simplePlayCsdBy opt player = playCsdBy opt phi
     where phi file = do
             runWithUserInterrupt $ player ++ " " ++ file
 
--- | Renders csound code to file @tmp.csd@ with flags set to @-odac@ and @-Ma@
+-- | Renders csound code to file @tmp.csd@ with flags set to @-odac@, @-iadc@ and @-Ma@
 -- (sound output goes to soundcard in real time).
 dac :: (RenderCsd a) => a -> IO ()
 dac = dacBy def
@@ -183,7 +183,7 @@ dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
     runWithUserInterrupt $ "csound " ++ "tmp.csd"
-    where opt = opt' <> setDac
+    where opt = opt' <> setDac <> setAdc
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()
