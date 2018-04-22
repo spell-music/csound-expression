@@ -31,7 +31,7 @@ module Csound.Air.Wave (
     urawTri, urawSaw, urawSqr, urawPw, urawTri', urawSaw', urawSqr', urawPw', urndRawTri, urndRawSaw, urndRawSqr, urndRawPw,
 
     -- * Noise
-    rndh, urndh, rndi, urndi, white, pink,
+    rndh, urndh, rndi, urndi, white, pink, brown,
 
     -- * Frequency modulation
     fosc,
@@ -253,6 +253,10 @@ white = noise 1 0
 -- | Pink noise.
 pink :: SE Sig
 pink = pinkish 1
+
+-- | Brownian noise
+brown :: SE Sig
+brown = fmap (dcblock . integ . (* 0.1)) white
 
 --------------------------------------------------------------------------
 -- lfo

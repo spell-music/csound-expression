@@ -10,12 +10,12 @@ Welcome to the simplest textual synthesizer.
 ~~~
 
 Csound-expression is a Haskell framework for computer music.
-With the help of the library we can create our instruments on the fly. 
+With the help of the library we can create our instruments on the fly.
 A couple of lines in the interpreter is enough to get the cool sound going
-out of your speakers. It can be used for simple daily sound-file processing 
+out of your speakers. It can be used for simple daily sound-file processing
 or for a full-blown live performances. It's available on [Hackage](http://hackage.haskell.org/package/csound-expression).
 
-Let's look at how we can create computer music with Haskell. 
+Let's look at how we can create computer music with Haskell.
 
 -------------------------------------------------------------------
 
@@ -23,6 +23,8 @@ Let's look at how we can create computer music with Haskell.
 * [Introduction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Intro.md)
 
 * [Basic types](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md)
+
+* [Signals everywhere](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SignalTfm.md)
 
 * [Rendering Csound files](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ProducingTheOutputTutorial.md)
 
@@ -54,6 +56,10 @@ Let's look at how we can create computer music with Haskell.
 
 * [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
 
+* [Spectrums](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Spectrums.md)
+
+* [Arrays](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Arrays.md)
+
 * [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
 
 * [Creating plugins with Cabbage](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md)
@@ -70,11 +76,11 @@ Appendix:
 
 -------------------------------------------------------------------
 
-WARNING: the library works best within ghci. The real-time sound rendering 
-function `dac` spawns a child process in the background which may continue 
-to execute after you stop the main process that runs the programm. 
-It's not so in vim but it happens in the Sublime Editor and when you 
-invoke `runhaskell`. So the best is to write you program in the separate 
+WARNING: the library works best within ghci. The real-time sound rendering
+function `dac` spawns a child process in the background which may continue
+to execute after you stop the main process that runs the programm.
+It's not so in vim but it happens in the Sublime Editor and when you
+invoke `runhaskell`. So the best is to write you program in the separate
 file and then load it in the ghci and invoke the function `main`
 (which runs the sound rendering with the function `dac`).
 
@@ -91,7 +97,7 @@ News
 
 * **Complete support for monophonic synthesizers**:
 
-    * The argument of mono synth was updated. 
+    * The argument of mono synth was updated.
 
         Previously it was a pair of amplitude and frequency signals.
         But this representation doesn't captures the notion of note retrigger.
@@ -101,7 +107,7 @@ News
         mono synths with fixed attacks
 
     * monoSco  - for playing scores with mono-synths
-    
+
     * monoSched - for playing event streams with mono synt
 
     * atSco and atSched now work for mono synth too
@@ -110,9 +116,9 @@ News
    Right now the ccommon parameters include only Low-pass filter type. But this can be extended in future releases.
 
    The idea is that we can parametrize the patch with some common arguments so that use can tweak them
-   without revriting the algorithm. 
+   without revriting the algorithm.
 
-   The low-pass filter is a vital tool that defines the character of the synthesizer. 
+   The low-pass filter is a vital tool that defines the character of the synthesizer.
    With recent addition of several modern filter emulators (like Korg (korg_lp), or acid filter diode)
    it's good to be able to quickly switch the filters. We can do it for patches with function
 
@@ -177,7 +183,7 @@ News
 
 * **Complete list of GEN routines**. This release adds GEN:
 
-        * 25 bpExps --  Construct functions from segments of exponential curves in breakpoint fashion., 
+        * 25 bpExps --  Construct functions from segments of exponential curves in breakpoint fashion.,
 
         * 27 bpLins --  Construct functions from segments of straight lines in breakpoint fashion.
 
@@ -207,11 +213,11 @@ News
 
         * 21 dist, uniDist, linDist, triDist, expDist, biexpDist, gaussDist, cauchyDist, pcauchyDist, betaDist, weibullDist, poissonDist -- Generates tables of different random distributions.
 
-        * 18 tabseg -- Writes composite waveforms made up of pre-existing waveforms. 
+        * 18 tabseg -- Writes composite waveforms made up of pre-existing waveforms.
 
-        * 31 mixOnTab -- Mixes any waveform specified in an existing table. 
+        * 31 mixOnTab -- Mixes any waveform specified in an existing table.
 
-        * 32 mixTabs -- Mixes any waveform, resampled with either FFT or linear interpolation. 
+        * 32 mixTabs -- Mixes any waveform, resampled with either FFT or linear interpolation.
 
         * 30 tabHarmonics -- Generates harmonic partials by analyzing an existing table.
 
@@ -220,9 +226,9 @@ News
 
 * **Global arguments** defined with **Macros**. We can create a Csound `.csd` file in our program
     and after that we can run it on anything which has Csound installed. It's desirable to be able
-    to tweak some parameters after rendering or to have some global config arguments. 
+    to tweak some parameters after rendering or to have some global config arguments.
     In Csound we can do it with macroses. We can use macros name in the code adn then we can change the value of the
-    macros with command line flag `--omacro:Name=Value`. 
+    macros with command line flag `--omacro:Name=Value`.
 
     From now on it's possible to do it with Haskell too. There are functions:
 
@@ -237,15 +243,15 @@ News
 
 *  The useful function to **trigger an table based envelope**. It comes in two flavors. One is driven with event stream
     and another with just a signal. It's on when signal is non zero.
-    
+
     ~~~haskell
     trigTab :: Tab -> Sig -> Sig -> Sig
-    trigTab tab duration triggerSignal 
+    trigTab tab duration triggerSignal
 
     type Tick = Evt Unit
 
     trigTabEvt :: Tab -> Sig -> Tick -> Sig
-    trigTabEvt tab duration triggerSignal    
+    trigTabEvt tab duration triggerSignal
     ~~~
 
 * **New functions for UI widgets**.
@@ -296,10 +302,10 @@ News
     and the it starts to implement the body while the predicate returns true. Notice that
     the body is also updates the state.
 
-* **New functions for OSC** that make it easy to read OSC messages that are interpreted like signals. 
+* **New functions for OSC** that make it easy to read OSC messages that are interpreted like signals.
     For example we have an OSC-routine for volume control. When message happens we update the value.
     It would be good to be able to just read the signal:
-    
+
     ~~~haskell
     listenOscVal :: (Tuple a, OscVal a) => OscRef -> String -> a -> SE a
     listenOscVal oscRef address initValue
@@ -312,7 +318,7 @@ News
     listenOscSig2 :: OscRef -> String -> Sig2 -> SE Sig2
     ~~~
 
-* **Adds loopers that preserve attacks when rescaling by tempo**. 
+* **Adds loopers that preserve attacks when rescaling by tempo**.
     They are based on `temposcal` Csound algorithm.
    The previous loopers were based on the `mincer` algorithm. It uses FFT under the hood which can smooth out the sharp attacks.
    It's undesirable for percussive loops. The `temposcal` adds the feature of preserving attacks.
@@ -373,8 +379,8 @@ Experimental features:
     newOutInstr :: (Arg a, Sigs b) => (a -> SE b) -> SE (InstrRef a, b)
     ~~~
 
-    It takes in a body of the instrument and gives back an instrument reference and 
-    a signal where the output is going to be written. Then we can invoke the notes just 
+    It takes in a body of the instrument and gives back an instrument reference and
+    a signal where the output is going to be written. Then we can invoke the notes just
     like we do it in the Csound with function `scheduleEvent`:
 
     ~~~haskell
@@ -389,7 +395,7 @@ Experimental features:
 
     ~~~haskell
     newInstr :: Arg a => (a -> SE ()) -> SE (InstrRef a)
-    ~~~ 
+    ~~~
 
 
 --------------------------------------
@@ -403,20 +409,20 @@ csound-expression
    The polyphonic and monophonic patches are united with single data-type so we can play them with the same functions.
    Also now we can create layered patches to play several patches at the same time and also we can split the keyboard
    on sections to play different patches on different sections. It's useful feature available in many modern synthesizers.
-   But here we can include any number of layers! and we can mix mono and poly instruments together! 
+   But here we can include any number of layers! and we can mix mono and poly instruments together!
 
    See the [guide on patches](https://github.com/spell-music/csound-expression/blob/master/tutorial/chapters/Patches.md) to read the details.
 
 * **Hard and soft sync**. Lots of functions added for hard and soft sync. Check out the module `Csound.Air.Wave.Sync`.
 
-* **Morpheus is here**. New cool granular synthesizer is included. It's based on partikkel opcode. 
+* **Morpheus is here**. New cool granular synthesizer is included. It's based on partikkel opcode.
    The aim is to simplify the work-flow with partikkel opcode. The API is experimental right now and might change.
    See the module `Csound.Air.Granular.Morpheus` for details.
 
 * **Rewrite for filters**. Filters get new names that suppose the audio-quality of the filter. Also many filters were redesigned
    to unify the parameters (order of arguments and ranges). Check out the module `Csound.Air.Filter`.
 
-* **Many great filters were added** thanks to the work of Steven Yi. Now we can use 
+* **Many great filters were added** thanks to the work of Steven Yi. Now we can use
 
    * zero-delay filters: `zlp`, `zhp`, `zbp`, `zladder`, `zdf2`, `zdf4`.
 
@@ -452,7 +458,7 @@ csound-expression
 * **Adds table read and write opcodes**. Adds opcodes `tablewa`, `tablew`, `readTab`, `readTable`, `readTable3`, `readTablei`.
     See the module `Csound.Tab` for details.
 
-* **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, `mp3Left`, `mp3Right` to read  
+* **Convenient aliases for reading from audio-files to tables**. New names `wavLeft`, `wavRight`, `mp3Left`, `mp3Right` to read
    audio by channels. Also we can read both channels with functions `wavs` and `mp3s`.
 
 * **Support for up to 8 outputs**. More instances for `RenderCsd` were added. Now we can play back up to 8 signals at the same time!
@@ -474,7 +480,7 @@ csound-expression
 * **Microtonal tunings**. We can use custom temperaments with insturments, patches, soundfonts and MIDI-instruments.
    Check out the guide on tuning and microtonal music (see also module `Csound.Tuning`).
    There are many predefined tunings (including ancient ones).
-   Now we can play the authentic Bach music with Haskell! 
+   Now we can play the authentic Bach music with Haskell!
    See [Custom temperament. Microtonal music](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Tuning.md)
    for details.
 
@@ -485,10 +491,10 @@ csound-expression
      for details.
 
 * **Padsynth algorithm** (need Csound 6.05). There are functions that makes it easy to use wonderful PADsynth algorithm,
-    This algorithm is designed to make "alive" instruments, natural pads. 
+    This algorithm is designed to make "alive" instruments, natural pads.
     There are not only function that explore the algorithm but also new PAtches in the
     package csound-catalog that are based on it! See the section in the guide on the PADsynth.
-    Lot's of padsynth instruments are mode with morphing support. We can crossfade between 2 or even 4 timbres.    
+    Lot's of padsynth instruments are mode with morphing support. We can crossfade between 2 or even 4 timbres.
     See [Padsynth algorithm](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Padsynth.md)
     for details.
 
@@ -531,7 +537,7 @@ the whole graph of FM-units (with feedback). Check out the module `Csound.Air.Fm
 
 * Easy to use Binaural panning. See the module `Csound.Air.Pan`
 
-* Construction of patches for sound fonts (`sfPatch`, `sfPatchHall`). 
+* Construction of patches for sound fonts (`sfPatch`, `sfPatchHall`).
 
 * Table of tables. We can create a table that contains tables.
 
@@ -547,9 +553,9 @@ csound-catalog
 * Many mono-synth were added. You can use them with function `atMono`
   in place of `atMidi`. The mono versions of patches have suffix `m`.
 
-* SHARC instruments. SHARC db contains a FFT-samples for sustain notes. 
+* SHARC instruments. SHARC db contains a FFT-samples for sustain notes.
    It includes many orchestra instruments. There are many new patches that
-   use natural sounding timbres taken from the SHARC library. 
+   use natural sounding timbres taken from the SHARC library.
    Check out functions `soloSharc`, `padSharc`, `dreamSharc`.
 
 csound-sampler
@@ -568,12 +574,12 @@ It tries to solve the problem present in the most open source music-production l
 It's often the pack of beautiful sounds/timbres is missing. User is presented with
 many audio primitives but no timbres are present to show the real power of the framework.
 This release solves this problem. See the friend package csound-catalog on Hackage.
-It defines 200+ beautiful instruments ready to be used. 
+It defines 200+ beautiful instruments ready to be used.
 
-The csound-expression defines a new type called `Patch` for description of an instrument 
+The csound-expression defines a new type called `Patch` for description of an instrument
 with  a chain of effects. It's good place to start the journey to the world of music production.
 
-There are new functions for synchronized reaction on events. The triggering of events 
+There are new functions for synchronized reaction on events. The triggering of events
 can be synchronized with given BPM.
 
 There examples are fixed and should work.
@@ -584,14 +590,14 @@ The library is updated for GHC-7.10!
 
 This release improves oscillators in many ways.
 Adds phase control to many standard oscillators.
-There are functions to detune oscillator and create unisions of oscillators 
-(multioscillators or chorus effect). 
+There are functions to detune oscillator and create unisions of oscillators
+(multioscillators or chorus effect).
 
 Adds support for randomly generating events (with random frequency).
 
 **The 4.8 is out! New features:**
 
-A multitap looper is implemented (see `Csound.Air.Looper`). It's  a powerful widget 
+A multitap looper is implemented (see `Csound.Air.Looper`). It's  a powerful widget
 with lots of controls. We can create unlimited number of taps.
 And the length of the loops doesn't have to be the same for all taps.
 We can insert effects and even external controllers. And all this is packed
@@ -600,10 +606,10 @@ Three types of loopers are available one is for raw signal inputs,
 another for midi instruments and the last one is for soundfonts.
 You can see it in action at [youtube](https://www.youtube.com/watch?v=cQQt9bu_x-A).
 
-There are lots of new step sequencers available. 
+There are lots of new step sequencers available.
 Pre 4.8 step sequencers could only produce signals
-with equal time segments but new step sequencers can 
-play a tiny melodies. The API of temporal-media is 
+with equal time segments but new step sequencers can
+play a tiny melodies. The API of temporal-media is
 supported for step sequencers (see `Csound.Air.Envelope`).
 There is a new type called `Seq`. It's for step sequencers
 that can play monophonic melodies.
@@ -611,14 +617,14 @@ that can play monophonic melodies.
 There is a type class for humanization of envelopes.
 It works for linseg and step sequencers. It adds some amount
 of randomness to durations or values (see `Csound.Air.Envelope` `HumanValue`
-and `HumanTime`). 
+and `HumanTime`).
 
-A midi chooser ui-box was implemented (see `Csound.Air.Live`, `hmidiChooser`, `uiMidi`). 
+A midi chooser ui-box was implemented (see `Csound.Air.Live`, `hmidiChooser`, `uiMidi`).
 It makes it easy to choose a midi instrument among several alternatives. There are stand alone
 widgets and widgets implemented as an effect-box.
 
-The class `Compose` from `temporal-media` package was broken 
-to two classes: `Harmony` (with function `hor`) 
+The class `Compose` from `temporal-media` package was broken
+to two classes: `Harmony` (with function `hor`)
 and `Melody` (with function `mel`).
 
 **The 4.7 is out! New features:**
@@ -628,13 +634,13 @@ with more advanced and flexible type `Sco`. The instruments are triggered not
 with pairs or triplets (individual events) but with scores!
 
 The lib now depends on common APIs for delaying and composing values.
-There are common type classes for composition. 
+There are common type classes for composition.
 
 There is a simple API for composition of samples, notes and signal segments.
 The `mel` plays units sequentially, The `hor` plays units at the same time.
 The `del` delays the unit by given amount of time, The `lim` limits the unit in time.
 the `loop` creates infinite loops. The `loopBy` creates finite loops.
-The list of all functions can be found in the package temporal-media. See 
+The list of all functions can be found in the package temporal-media. See
 the module `Temporal.Class`.
 
 I need to update the guide for changes!
@@ -644,31 +650,31 @@ I need to update the guide for changes!
 * Granular delays and effects (see `Csound.Air.Granular`)
 
 * It's possible to create tables not only for reading but also for writing.
-  We can create sound buffers (see `newTab` and `newGlobalTab` in the module `Csound.Tab`). 
+  We can create sound buffers (see `newTab` and `newGlobalTab` in the module `Csound.Tab`).
 
 * Hyper Vectorial Synthesis (HVS). Easy to use functions for HVS (see `Csound.Air.Hvs`)
-   With HVS we can control lots of parameters with a couple of sliders. 
+   With HVS we can control lots of parameters with a couple of sliders.
    The HVS can reduce the size of control parameters by interpolating between snapshots of parameters.
 
 * New spectral functions for spectral fusion: `crossSpecFilter` and `crossSpecVocoder` (see `Csound.Air.Spec`)
 
-* New effect for playing input samples in segments (back and forth) `trackerSplice` 
-  (original design by Rory Walsh). With it we can extract segments of live audio and 
+* New effect for playing input samples in segments (back and forth) `trackerSplice`
+  (original design by Rory Walsh). With it we can extract segments of live audio and
   repeat them or play in reverse.
 
 **The 4.5 is out! New features:**
 
 * Easy to use granular synthesis (see `Csound.Air.Granular`)
 
-* Support for opcode `mincer`. It's possible to scale pitch and tempo 
-  of audio files independently (see `Csound.Air.Wav` ram reading functions). 
+* Support for opcode `mincer`. It's possible to scale pitch and tempo
+  of audio files independently (see `Csound.Air.Wav` ram reading functions).
 
 **The 4.4 is out! New features:**
 
 * Signal segments.  With signal segments we can schedule audio signals
     with event streams. We can limit audio signals with clicks of the buttons
-    or some other live events. We can retrigger samples, play them in sequence and 
-    perform many more actions shich are tied to the event streams. 
+    or some other live events. We can retrigger samples, play them in sequence and
+    perform many more actions shich are tied to the event streams.
 
-* Triggering samples with keyboard and midi-events (see `Csound.Air.Sampler`). 
+* Triggering samples with keyboard and midi-events (see `Csound.Air.Sampler`).
 

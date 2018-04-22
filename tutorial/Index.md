@@ -8,12 +8,12 @@ Welcome to the simplest textual synthesizer.
 ~~~
 
 Csound-expression is a Haskell framework for computer music.
-With the help of the library we can create our instruments on the fly. 
+With the help of the library we can create our instruments on the fly.
 A couple of lines in the interpreter is enough to get the cool sound going
-out of your speakers. It can be used for simple daily sound-file processing 
+out of your speakers. It can be used for simple daily sound-file processing
 or for a full-blown live performances. It's available on [Hackage](http://hackage.haskell.org/package/csound-expression).
 
-Let's look at how we can create computer music with Haskell. 
+Let's look at how we can create computer music with Haskell.
 
 -------------------------------------------------------------------
 
@@ -21,6 +21,8 @@ Let's look at how we can create computer music with Haskell.
 * [Introduction](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Intro.md)
 
 * [Basic types](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md)
+
+* [Signals everywhere](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SignalTfm.md)
 
 * [Rendering Csound files](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ProducingTheOutputTutorial.md)
 
@@ -52,6 +54,10 @@ Let's look at how we can create computer music with Haskell.
 
 * [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
 
+* [Spectrums](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Spectrums.md)
+
+* [Arrays](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Arrays.md)
+
 * [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
 
 * [Creating plugins with Cabbage](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md)
@@ -68,10 +74,10 @@ Appendix:
 
 -------------------------------------------------------------------
 
-WARNING: the library works best within ghci. The real-time sound rendering 
-function `dac` spawns a child process in the background which may continue 
-to execute after you stop the main process that runs the programm. 
-It's not so in vim but it happens in the Sublime Editor and when you 
-invoke `runhaskell`. So the best is to write you program in the separate 
+WARNING: the library works best within ghci. The real-time sound rendering
+function `dac` spawns a child process in the background which may continue
+to execute after you stop the main process that runs the programm.
+It's not so in vim but it happens in the Sublime Editor and when you
+invoke `runhaskell`. So the best is to write you program in the separate
 file and then load it in the ghci and invoke the function `main`
 (which runs the sound rendering with the function `dac`).

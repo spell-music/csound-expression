@@ -2,7 +2,7 @@ Argument modifiers
 ===========================
 
 Argument modifiers make it easy to add an LFO or small amount of noise to parameters
-of synthesizer. 
+of synthesizer.
 
 Let's consider a plain sine wave:
 
@@ -28,7 +28,7 @@ What if we want to add a noisy vibrato:
 ~~~
 
 Ooops, we've got an error! That's because `osc 2` has type `Sig`
-and `white` has type `SE Sig`. There is a type mismatch and 
+and `white` has type `SE Sig`. There is a type mismatch and
 compiler just reminds us about it.
 
 But can we abstract out this pattern of vibrato and devise such a function
@@ -72,8 +72,8 @@ Sig, Sig2, SE Sig, SE Sig2
 Also there are siblings: `modArg2`, `modArg3` and `modArg4`. They can modify second,  third and fourth arguments of the function.
 All functions take in depth of modulation, modulation signal and the function to transform.
 The functions are defined so that the wiring is hidden from the user. If modulated
-signal is pure it's just applied to the argument if it contains side effects than 
-function output will have side effects too! 
+signal is pure it's just applied to the argument if it contains side effects than
+function output will have side effects too!
 
 Let's look at another example. Let's modulate the filter's center frequency:
 
@@ -162,7 +162,7 @@ There are severl types of noises:
 
 * gauss noise with frequency of generation of new random values: `gaussiArgN depth cps`.
 
-* jitter noise: `jitArgN depth cpsMin cpsMax`. It generates random nombers from -1 to 1 
+* jitter noise: `jitArgN depth cpsMin cpsMax`. It generates random nombers from -1 to 1
    within the given interval of frequency of generation of new numbers.
 
 The rest arguments are the same as with oscillators. They are `depth` and `function`.
@@ -227,10 +227,10 @@ It's often useful to modulate the center frequency of the envelope:
 > dac $ at (adsrArg1 1 0.5 0.5 0.1 0.3 mlp 1500 0.1) $ saw 110
 ~~~
 
--------------------------------------------
+-----------------------------------------------
 
 * <= [Granular synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/GranularSynthesisTutorial.md)
 
-* => [Csound API. Using generated code with another languages](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CsoundAPI.md)
+* => [Spectrums](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Spectrums.md)
 
 * [Home](https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md)

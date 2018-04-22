@@ -4,7 +4,7 @@ Rendering Csound files
 We know how to play the sound live. We can use the function `dac`
 for it. Also we know how to use virtual midi-device. We can use `vdac` for it.
 But there are many other ways to render the Csound file. Let's study them.
-The functions that we are going to look at live in the 
+The functions that we are going to look at live in the
 module [Csound.IO](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-IO.html).
 
 Producing the Csound code
@@ -27,8 +27,8 @@ writeCsd fileName csd = ...
 ~~~
 
 These functions are useful if we want to use the Csound code
-without Haskell. For instance we can take it on some computer 
-that doesn't have the Haskell installed on it and run it with Csound. 
+without Haskell. For instance we can take it on some computer
+that doesn't have the Haskell installed on it and run it with Csound.
 It can be used on mobile devices inside of the other programs
 with Csound API. We can send it to our friend by mail. So that
 he can render it at home and hear the music.
@@ -67,12 +67,12 @@ vdac :: RenderCsd a => a -> IO ()
 ~~~
 
 The `dac` is for sending the sound to sound card and
-the `vdac` is for playing with virtual midi device.  
+the `vdac` is for playing with virtual midi device.
 If you have the real midi-controller you can use it
 with `dac` function. Just use the plain `midi`-function
 and everything should work out of the box.
 
-Playing the sound with player 
+Playing the sound with player
 --------------------------------------------------------
 
 We can render the file to sound file and play it with sound player.
@@ -86,7 +86,7 @@ Render-able types
 ----------------------------------------------------------
 
 It's time to take a closer look at the arguments of the functions.
-What does type class `RenderCsd` mean? 
+What does type class `RenderCsd` mean?
 
 We have seen how we can play a mono and stereo signals with it.
 But can we do anything else? Yes, we can.
@@ -120,7 +120,7 @@ SE ()
 
 In this case we are using Csound to do something useful
 but without making any noise about it. Maybe we are going
-to manipulate some sound-files or receive Midi-messages 
+to manipulate some sound-files or receive Midi-messages
 and silently print them on the screen.
 
 There is also support for GUIs. We are going to encounter it soon.
@@ -133,9 +133,9 @@ Source Sig, Source (Sig, Sig), ...
 Options
 ----------------------------------------------------
 
-We don't care much about sound rates for the output or 
+We don't care much about sound rates for the output or
 what sound card to use or what size does internal sound buffers have.
-But if we do? 
+But if we do?
 
 Can we alter the sample rate? The default is 44100. It's good enough
 for real-time performance. If we want to produce the high quality audio
@@ -151,9 +151,9 @@ writeSndBy 	:: RenderCsd a => Options -> String -> a -> IO ()
 ...
 ~~~
 
-They take in one more argument. It's `Options` 
-([Csound.Options](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-Options.html)). 
-With `Options` we can do a lot of fine tuning. 
+They take in one more argument. It's `Options`
+([Csound.Options](http://hackage.haskell.org/package/csound-expression-3.3.2/docs/Csound-Options.html)).
+With `Options` we can do a lot of fine tuning.
 we can alter audio sample rate, alter the default size for
 functional tables, assign settings for JACK-instruments and so on.
 
@@ -166,7 +166,7 @@ That's how we can alter the sound-rates:
 
 The sound rates contain two integers. The former is the result audio rate
 and the latter is for the length of the single audio array. The latter is called
-blackSize (it's ksmps in Csound). It affects the rate of control signals. 
+blackSize (it's ksmps in Csound). It affects the rate of control signals.
 We produce the audio signals in frames of the `blockSize` length.
 When we are done with one frame we can listen for the control signals
 and then apply them in the production of the next frame.
@@ -181,7 +181,7 @@ Let's see how we can combine different settings:
 > writeSndBy opt result
 ~~~
 
-We combine the two options with Monoid's `mappend` function. 
+We combine the two options with Monoid's `mappend` function.
 The first option is for rate and the second set's higher degree
 of fidelity for functional tables. It affects the default table size.
 By default it's 13th degree of 2. But we have set it to 15.
@@ -219,13 +219,13 @@ Let's run it with different frequencies:
 > csound tmp.csd --omacro:FREQ=800
 ~~~
 
-With flag `--omacro:Name=Value` we can assign the flag with given `Name`. 
+With flag `--omacro:Name=Value` we can assign the flag with given `Name`.
 Notice that ofcaurse no type-checking is happening. If we assign integers to strings
 bad things can happen.
 
 ----------------------------------------------------
 
-* <= [Basic types](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/BasicTypesTutorial.md)
+* <= [Signals everywhere](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SignalTfm.md)
 
 * => [Basics of sound synthesis](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/SynthTutorial.md)
 

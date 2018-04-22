@@ -3,27 +3,27 @@ Csound API. Using generated code with other languages
 ==================================================================
 
 The cool thing about Csound is that it's not only a text to audio converter.
-It's also a C-library! Also it has bindings to many languages! 
+It's also a C-library! Also it has bindings to many languages!
 Python, Java, Clojure, Lua, Clojure, Csharp,  C++, racket, VB!
-Also it works on Android, iOS, and RaspPi. 
+Also it works on Android, iOS, and RaspPi.
 
-We can create audio engine with Haskell and then we can 
+We can create audio engine with Haskell and then we can
 wrap it in the UI written in some another language!
 Let's look at how it can be done.
 
 Interaction with generated code.
 -------------------------------------------------------
 
-We can interact with Csound with two main methods. 
+We can interact with Csound with two main methods.
 
 * Channels for updating values.
 
 * Named instruments for triggering instruments.
-    
+
 ### Channels
 
 With channel we can update specific value inside Csound code.
-We can create a global channel and then send write or read values 
+We can create a global channel and then send write or read values
 with another program.
 
 We can make a channel and the we can read/write values.
@@ -74,7 +74,7 @@ The source code with examples can be found at [the github directory](https://git
 There is a cool GitHub project [Csound API examples](https://github.com/csound/csoundAPI_examples)
 that shows how to ue the Csound with various languages.
 We can quikly check how to use the audio engine that we have generated
-with our language of choice. We are going to illustrate the 
+with our language of choice. We are going to illustrate the
 Csound API workflow with Python. The python examples is based on the information
 from this repo.
 
@@ -86,10 +86,10 @@ class Controll:
     def __init__(self, volume, frequency):
         engine = csnd6.Csound()
         engine.SetOption("-odac")
-        engine.Compile("osc.csd") 
+        engine.Compile("osc.csd")
 
-        thread = csnd6.CsoundPerformanceThread(engine) 
-        thread.Play()              
+        thread = csnd6.CsoundPerformanceThread(engine)
+        thread.Play()
 
         self.engine = engine
         self.thread = thread
@@ -104,8 +104,8 @@ class Controll:
         self.engine.SetChannel("frequency", frequency)
 
     def close(self):
-        self.thread.Stop()        
-        self.thread.Join()        
+        self.thread.Stop()
+        self.thread.Join()
 ~~~
 
 We create an object that can start a Csound engine and update volume and frequency.
@@ -115,9 +115,9 @@ and start csound in the separate thread:
 ~~~python
         engine = csnd6.Csound()
         engine.SetOption("-odac")
-        engine.Compile("osc.csd") 
+        engine.Compile("osc.csd")
 
-        thread = csnd6.CsoundPerformanceThread(engine) 
+        thread = csnd6.CsoundPerformanceThread(engine)
         thread.Play()
 ~~~
 
@@ -135,7 +135,7 @@ and set the initial values for frequency and volume:
         self.set_frequency(frequency)
 ~~~
 
-These functions update values for csound channels. 
+These functions update values for csound channels.
 So with channels we can propagate changes from python to csound:
 
 ~~~python
@@ -147,11 +147,11 @@ The last method `close` stops the engine:
 
 ~~~
     def close(self):
-        self.thread.Stop()        
-        self.thread.Join()        
+        self.thread.Stop()
+        self.thread.Join()
 ~~~
 
-What's interesting with thism code is that we can control our engine within 
+What's interesting with thism code is that we can control our engine within
 the python interpreter. It's very simple skeleton for creation of Live coding with python and haskell combo!
 Let's try some commands. Navigate to the directory with our python file `oscil.py`:
 
@@ -186,13 +186,13 @@ With Csound API we can also trigger the instruments with notes or messages.
 We can send messages to instruments. To send the message we need to know
 the numeric identifier of the instrument. When we use Csound directly
 we know what numbers do we assign to the instruments. But Haskell wrapper
-hides this process from us. 
+hides this process from us.
 
 Csound also provides named instruments. We can assign not only unique numeric
 value to the instrument, but also a name as a string. There is no need to use
 the named instruments in the haskell wrapper since we can use plain haskell values
 to construct instruments and framework will take care about allocation
-of integer identifiers. But named insturments can help us when we want 
+of integer identifiers. But named insturments can help us when we want
 to trigger instrument with program that is written in another language through Csound API.
 
 There is a function:
@@ -203,9 +203,9 @@ trigByName name instrument = aout
 ~~~
 
 It takes an instrument name and instrument definition and creates
-an instrument with the given name. We can not use this instrument 
+an instrument with the given name. We can not use this instrument
 with Haskell. There are no way to trigger it. But we can trigger it
-with Csound API. 
+with Csound API.
 
 All basic Csound API functions can be found in the module `Csound.Control.Instr` (see the API section).
 
@@ -222,13 +222,13 @@ instr (amp, cps) = return $ (sig amp) * fades 0.01 0.1 * osc (sig cps)
 main = writeCsd "message.csd" $ trigByName "osc" instr
 ~~~
 
-If we run this code with `runhaskell` it will produce the `message.csd` file that 
+If we run this code with `runhaskell` it will produce the `message.csd` file that
 contains the definition of our audio engine.
 
 We create an instrument  that has name `osc`. It takes in amplitude and frequency and produces mono output.
 
 The Csound API the csound thread object has a method `InputMessage`.
-That takes in a string with Csound note-triggering expression. 
+That takes in a string with Csound note-triggering expression.
 If you know the Csound the syntax of `i-score` statment should be straightforward to you.
 But don't skip the next section. It explains not only the Csound syntax but also
 how it's related to Haskell code.
@@ -268,20 +268,20 @@ class Audio:
     def __init__(self):
         engine = csnd6.Csound()
         engine.SetOption("-odac")
-        engine.Compile("message.csd") 
+        engine.Compile("message.csd")
 
-        thread = csnd6.CsoundPerformanceThread(engine) 
-        thread.Play()              
+        thread = csnd6.CsoundPerformanceThread(engine)
+        thread.Play()
 
         self.engine = engine
-        self.thread = thread        
+        self.thread = thread
 
     def play(self, delay, duration, volume, frequency):
         self.thread.InputMessage("i \"%s\" %f %f %f %f" % ("osc", delay, duration, volume, frequency))
 
     def close(self):
-        self.thread.Stop()        
-        self.thread.Join()     
+        self.thread.Stop()
+        self.thread.Join()
 ~~~
 
 The initialization and termination of audio engine are the same as in the previous example.
@@ -303,7 +303,7 @@ $ python
 
 Sometimes we don't want to produce the sound as the response to messages.
 Sometimes we want to update some parameters. You can imagine a drone sound going on
-or arpeggiator and we want to update a note or LFO rate with message. 
+or arpeggiator and we want to update a note or LFO rate with message.
 To do it we can use the function:
 
 ~~~haskell
@@ -316,7 +316,7 @@ The procedure can be called with Csound API just in the same way as
 an ordinary instrument. It's useful to know the `turnoff` function.
 It turns the instrument off. By default all Csound instrument last
 for some time. With `turnoff` we can simulate instant reaction procedure.
-It does some work (robably updates the global parameters) and then 
+It does some work (robably updates the global parameters) and then
 it turns itself off. The pattern of usage looks like this:
 
 ~~~haskell
@@ -324,16 +324,16 @@ procedure args = do
     doSomeStuff
     turnoff
 
-main = trigByName_ "update_param" procedure 
+main = trigByName_ "update_param" procedure
 ~~~
 
 #### Creation of MIDI-controlled instruments
 
 If we want to create a VST plugin we want to be able to control
-our csound insturment in the MIDI-like manner. 
+our csound insturment in the MIDI-like manner.
 We want to send note on and note off messages. This functionality
 can be simulated with `trigByName_` function and global variables.
-There are predefined library function that already implement this 
+There are predefined library function that already implement this
 behavior:
 
 ~~~haskell
@@ -342,7 +342,7 @@ trigByNameMidi name instrument = ...
 ~~~
 
 The instrument takes in two mandatory arguments: pitch and amplitude midi-keys.
-It produces an audio signal as output. We can use it with Csound API 
+It produces an audio signal as output. We can use it with Csound API
 just as in previous examples. We have special format for Csound arguments
 to simulate note-on/off behavior:
 
@@ -351,7 +351,7 @@ i "givenName" delay duration 1 pitchKey volumeKey auxParams     -- note on
 i "givenName" delay duration 0 pitchKey volumeKey auxParams     -- note off
 ~~~
 
-Alongside with delay and duration we have another hidden argument. It's  the fourth argument. 
+Alongside with delay and duration we have another hidden argument. It's  the fourth argument.
 It's `1` for note on and `0` for note off. Which note to turn off is determined by pitch key.
 
 There is a procedure version of the function:
@@ -397,7 +397,7 @@ monoSharpPatchByNameMidi name patch = ...
 If you are interested in non-trivial application that uses Csound API
 you can look at the python synthesizer called [tiny-synth](https://github.com/anton-k/tiny-synth).
 It uses functions for named midi-controlled patches. It features 100+ patches from the standard
-collection of `csound-expression` instruments. 
+collection of `csound-expression` instruments.
 
 ## Example: Audio player
 
@@ -421,7 +421,7 @@ playMp3 :: Str -> SE Sig2
 playMp3 file = return $ declick $ mp3in file
 
 stop :: Unit -> SE ()
-stop _ = do 
+stop _ = do
     turnoffByName "wav" 0 0.1
     turnoffByName "mp3" 0 0.1
     turnoff
@@ -460,7 +460,7 @@ that play wavs and mp3s.
 
 ~~~haskell
 stop :: Unit -> SE ()
-stop _ = do 
+stop _ = do
     turnoffByName "wav" 0 0.1
     turnoffByName "mp3" 0 0.1
     turnoff
@@ -499,13 +499,13 @@ class Player:
     def __init__(self):
         engine = csnd6.Csound()
         engine.SetOption("-odac")
-        engine.Compile("player.csd") 
+        engine.Compile("player.csd")
 
-        thread = csnd6.CsoundPerformanceThread(engine) 
-        thread.Play()              
+        thread = csnd6.CsoundPerformanceThread(engine)
+        thread.Play()
 
         self.engine = engine
-        self.thread = thread        
+        self.thread = thread
 
     def play_file_by_ext(self, ext, file):
         self.thread.InputMessage("i \"%s\" 0 -1 \"%s\"" % (ext, file))
@@ -515,18 +515,18 @@ class Player:
         time.sleep(0.02)
 
     def play(self, file):
-        self.stop()        
-        if is_mp3(file):            
+        self.stop()
+        if is_mp3(file):
             self.play_file_by_ext("mp3", file)
         else:
-            self.play_file_by_ext("wav", file)       
+            self.play_file_by_ext("wav", file)
 
     def close(self):
-        self.thread.Stop()        
-        self.thread.Join()             
+        self.thread.Stop()
+        self.thread.Join()
 ~~~
 
-The initialization and termination are the same as in previous examples. 
+The initialization and termination are the same as in previous examples.
 In the body of the instrument  we use a trick to play note forever.
 To play note forever in the Csound we have to invoke it with negative duration.
 Look at the code for triggering the notes:
@@ -541,11 +541,11 @@ In the `play` function we stop all previous instances and then start new note. W
 
 ~~~python
     def play(self, file):
-        self.stop()        
-        if is_mp3(file):            
+        self.stop()
+        if is_mp3(file):
             self.play_file_by_ext("mp3", file)
         else:
-            self.play_file_by_ext("wav", file)  
+            self.play_file_by_ext("wav", file)
 ~~~
 
 
@@ -563,7 +563,7 @@ $ python
 
 --------------------------------------------------
 
-* <= [Arguments modulation](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/ModArg.md)
+* <= [Arrays](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/Arrays.md)
 
 * => [Creating VST-plugins with Cabbage](https://github.com/anton-k/csound-expression/blob/master/tutorial/chapters/CabbageTutorial.md)
 
