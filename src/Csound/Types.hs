@@ -33,7 +33,7 @@ module Csound.Types(
     idur, getSampleRate, getControlRate, getBlockSize,
 
     -- ** BPM
-    getBpm, setBpm, syn, synSec,
+    getBpm, setBpm, syn, takt,
 
     -- ** Converters
     ar, kr, ir, sig,
@@ -149,5 +149,8 @@ syn :: Sig -> Sig
 syn x = (bpm / 60) * x
     where bpm = getBpm
 
-synSec :: Sig -> Sig
-synSec = recip . syn
+-- | Calculates seconds in ratio to global BPM.
+-- It measures time according to changes in the BPM.
+-- It's reciprocal to @syn@.
+takt :: Sig -> Sig
+takt = recip . syn
