@@ -14,15 +14,15 @@ In CE we have a type `Sig` to represent both audio and control signals.
 For ease of use some context is hidden from the user. But sometimes we need
 to distinguish them.
 
-Audio signals work on audio rate (44.1 KHz or 48 KHz) while control signals
-are update on much lower rate (like 1/64 or 1/128 fraction of audio rate).
+Audio signals work on audio rate (typical values are 44.1 KHz or 48 KHz) while control signals
+are updated on much lower rate (like 1/64 or 1/128 fraction of audio rate).
 Using control signals can save a lot of CPU.
 
 For instance we can use them with LFOs or envelope generators or
 to modify with time any sort of parameter of synthesizer.
 
 If you want to know the gory details of it.
-The audio- and control-rate signals are represented with different data structures.
+Under the hood the audio- and control-rate signals are represented with different data structures.
 Audio-rate signal is array of doubles and control rate is just a single double value.
 But for the ease of use they are represented with the same type in CE.
 
