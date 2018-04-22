@@ -8,7 +8,7 @@ Midi-instruments
 ------------------------------------
 
 The simplest way to create a responsive instrument is
-to make a midi-instrument. A Midi-instrument is something 
+to make a midi-instrument. A Midi-instrument is something
 that expects a midi-message and produces sound output.
 A midi-message contains pitch and volume of the note and
 possibly some control data (to change the parameters of the synth).
@@ -26,7 +26,7 @@ ampCps  :: Msg -> (D, D)    -- ampmidi & cpsmidi, amplitude is 0 to 1
 
 We can extract amplitude and frequency (Hz) with function `ampCps`.
 
-The midi-intrument listens for message on the specified channel (It's 
+The midi-intrument listens for message on the specified channel (It's
 an integer from 1 to 16):
 
 ~~~haskell
@@ -51,7 +51,7 @@ pgmidi :: Sigs a => Maybe Int -> Channel -> (Msg -> SE a) -> SE a
 
 They allow to specify a midi-channel and probably a midi-program.
 Shortly after creation of the Midi-protocol it was understood that
-1 to 16 channels is not enough. So there come the programs. You can 
+1 to 16 channels is not enough. So there come the programs. You can
 specify a midi instrument with 16 channels and 128 programs.
 We can specify a program with function `pgmidi`.
 
@@ -60,19 +60,19 @@ you can start to play along with it in csound-expression. Just type:
 
 ~~~haskell
 > ghci
-> :m +Csound.Base
-> let instr msg = return $ 0.25 * (fades 0.1 0.5) * (sig $ ampmidi msg 1) * saw (sig $ cpsmidi msg)
-> dac $ mixAt 0.25 smallRoom2 $ fmap fromMono $ midi instr
+> import Csound.Base
+> instr msg = return $ 0.25 * (fades 0.1 0.5) * (sig $ ampmidi msg 1) * saw (sig $ cpsmidi msg)
+> dac $ room 0.25 $ fmap fromMono $ midi instr
 ~~~
 
 If we don't have the midi-device we can test the instrument with virtual one.
 We need to use `vdac` in place of `dac`:
 
 ~~~haskell
-> vdac $ mixAt 0.25 smallRoom2 $ fmap fromMono $ midi instr
+> vdac $ room 0.25 $ fmap fromMono $ midi instr
 ~~~
 
-We have created a simple saw-based instrument. The function `fades` adds 
+We have created a simple saw-based instrument. The function `fades` adds
 the attack and release phase for the instrument. It fades in with time of the
 first argument and fades out after release with time of the second argument.
 We used a lot the function `sig :: D -> Sig`. It's just a converter.
@@ -92,7 +92,7 @@ class MidiInstr a where
 	onMsg :: a -> Msg -> SE (MidiInstrOut a)
 ~~~
 
-It converts a value of type `a` to midi-instrument. 
+It converts a value of type `a` to midi-instrument.
 There are plenty of instances for this class. We can check them out
 in the docs. Among them we can find the instance for the type:
 
@@ -106,8 +106,8 @@ is a wave-form. To convert it to midi-instrument we apply midi-frequency to it
 our instrument like this:
 
 ~~~haskell
-> let instr = onMsg $ mul (0.25 * fades 0.1 1) . saw
-> dac $ mixAt 0.25 smallRoom2 $ fmap fromMono $ midi instr
+> instr = onMsg $ mul (0.25 * fades 0.1 1) . saw
+> dac $ room 0.25 $ fmap fromMono $ midi instr
 ~~~
 
 The function `mul` scales the signal-output like types.
@@ -119,7 +119,7 @@ They are all tuples of `Sig` probably wrapped in the type `SE`.
 So far every midi-instrument has triggered the instrument in the separate note instance.
 In the end we get the sum of all notes. It's polyphonic mode. But what if we
 want to use synth in monophonic mode. So that frequency and amplitude are continuous
-signals that we can use in the other instruments. 
+signals that we can use in the other instruments.
 
 There are two functions for this mode:
 
@@ -129,15 +129,15 @@ data MidiChn = ChnAll | Chn Int | Pgm (Maybe Int) Int
 monoMsg :: MidiChn -> D -> D -> SE (Sig, Sig)
 monoMsg portamentoTime releaseTime
 
-holdMsg :: MidiChn -> D -> SE (Sig, Sig) 
+holdMsg :: MidiChn -> D -> SE (Sig, Sig)
 holdMsg portamentoTime
 ~~~
 
 Both of them produce amplitude and frequency as time varied signals.
 The former fades out when nothing is pressed and the latter holds the
-last value until the next one is present. 
+last value until the next one is present.
 
-The first argument for both of them is specification of the midi channel. 
+The first argument for both of them is specification of the midi channel.
 The second argument is portamento time. It's
 time in second that it takes for transition from one value to another.
 The function `monoMsg` takes another parameter that specifies a release time.
@@ -146,16 +146,16 @@ Time it takes for the note to fade out or fade in.
 Let's play with these functions:
 
 ~~~haskell
-> vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * tri cps) $ monoMsg ChnAll 0.1 1
-> vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * tri cps) $ holdMsg ChnAll 0.5 
+> vdac $ chamber 0.2 $ fmap (\(amp, cps) -> amp * tri cps) $ monoMsg ChnAll 0.1 1
+> vdac $ chamber 0.2 $ fmap (\(amp, cps) -> amp * tri cps) $ holdMsg ChnAll 0.5
 ~~~
 
 
 Midi-controls
 ------------------------------------
 
-If our midi-device has some sliders or knobs we can 
-send the control-messages. Control messages allow us 
+If our midi-device has some sliders or knobs we can
+send the control-messages. Control messages allow us
 to change parameters for the instruments during performance.
 
 We can use the function `ctrl7`:
@@ -166,12 +166,12 @@ ctrl7 chno ctrlId imin imax
 ~~~
 
 It expects the channel number (where we listen for the control messages),
-the identity number of control parameter, and two parameters for minimum 
+the identity number of control parameter, and two parameters for minimum
 and maximum of the output range. Let's apply the filter to the output of
 the previous example:
 
 ~~~haskell
-> vdac $ fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 1 50 5000) (ctrl7 1 2 0.1 0.9) (tri cps)) $ holdMsg 0.5
+> vdac $ room 0.2 $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 1 50 5000) (ctrl7 1 2 0.1 0.9) (tri cps)) $ holdMsg ChnAll 0.5
 ~~~
 
 You can try to use the first slider at the virtual midi. It should control the filter parameters in real-time.
@@ -186,8 +186,8 @@ initc7 chno ctrlId val 				-- value ranges from 0 to 1
 It sets the initial value for the midi control.
 
 ~~~haskell
-> let ctrl = 1
-> let out = fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 ctrl 50 5000) 0.5 (tri cps)) $ holdMsg ChnAll 0.5
+> ctrl = 1
+> out = fmap smallRoom $ fmap (\(amp, cps) -> amp * mlp (ctrl7 1 ctrl 50 5000) 0.5 (tri cps)) $ holdMsg ChnAll 0.5
 > dac $ do { initc7 1 ctrl 0.5; out }
 ~~~
 
@@ -200,8 +200,8 @@ midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
 midiCtrl7 chanNum ctrlNum initVal min max
 ~~~
 
-It combines the functions `ctrl7` and `initc7`. So that we don't have to 
-specify the same channel number and control number twice. 
+It combines the functions `ctrl7` and `initc7`. So that we don't have to
+specify the same channel number and control number twice.
 
 There are functions for specific ranges
 
@@ -220,15 +220,15 @@ It can be done easily with GUI-elements. Csound has support for GUI-widgets.
 GUI-widgets live in the module `Csound.Control.Gui`.
 
 Let's study how can we use them. First of all let's define the notion of
-widget. A widget is something that contains graphical representation 
+widget. A widget is something that contains graphical representation
 (it's what we see on the screen) and behaviour (what we can do with it).
 
-A slider for instance is represented as a moving small line segment in the box. 
+A slider for instance is represented as a moving small line segment in the box.
 It's a graphical representation of the slider. At the same time the slider can give us a time
 varying signal. It's behaviour of the slider. There are different types of behaviour.
-Some widgets can produce the values (like sliders or buttons). They are sources. 
+Some widgets can produce the values (like sliders or buttons). They are sources.
 Some widgets can wait for the value (like text box that shows the value on the screen).
-They are sinks. Some widgets can do all this in the same time and some widgets can 
+They are sinks. Some widgets can do all this in the same time and some widgets can
 do neither (like static text. It's only visible but it can not do anything).
 
 In the Haskell type system we can express it like this:
@@ -270,7 +270,7 @@ expSpan min max
 Let's define a slider in the ghci:
 
 ~~~haskell
-> let vol = slider "volume" (linSpan 0 1) 0.5
+> vol = slider "volume" (linSpan 0 1) 0.5
 > dac $ do { (gui, v) <- vol; panel gui; return (v * osc 440) }
 ~~~
 
@@ -288,13 +288,13 @@ it updates the values in reverse. The top is lowest value
 and the bottom is for the highest value. It's strange implementation
 of the vertical sliders in the Csound. We can only take it for granted.
 
-Ok. That it's good but how about using two sliders at the same time? 
+Ok. That it's good but how about using two sliders at the same time?
 We can create the second slider and place it right beside the other with
 function `hor`. It groups a list of widgets and shows them side by side:
 
 ~~~haskell
-> let vol = slider "volume" (linSpan 0 1) 0.5
-> let pch = slider "pitch" (expSpan 20 3000) 440
+> vol = slider "volume" (linSpan 0 1) 0.5
+> pch = slider "pitch" (expSpan 20 3000) 440
 > dac $ do { (vgui, v) <- vol; (pgui, p) <- pch ; panel (hor [vgui, pgui]); return (v * osc p) }
 ~~~
 
@@ -322,28 +322,29 @@ The functions `hor` and `ver` are for horizontal and vertical grouping of the el
 The `space` creates an empty space. The `sca`  can scale GUIs. The `margin` and `padding`
 are well .. mm .. for setting the margin and padding of the element in pixels.
 
-We can stack as many sliders as we want. Let's explore the low-pass filtering of 
+We can stack as many sliders as we want. Let's explore the low-pass filtering of
 the saw waveform.
 
 ~~~haskell
-> let cfq = slider "center frequency" (expSpan 100 5000) 2000
-> let q = slider "resonance" (linSpan 0.1 0.9) 0.5
-> dac $ do { 
-	(vgui, v) <- vol; 
-	(pgui, p) <- pch; 
-	(cgui, c) <- cfq; 
-	(qgui, qv) <- q; 
-	panel (ver [vgui, pgui, cgui, qgui]); 
-	return (v * mlp c qv (saw p)) 
+> cfq = slider "center frequency" (expSpan 100 5000) 2000
+> q = slider "resonance" (linSpan 0.1 0.9) 0.5
+> :set +m
+> dac $ do {
+	(vgui, v) <- vol;
+	(pgui, p) <- pch;
+	(cgui, c) <- cfq;
+	(qgui, qv) <- q;
+	panel (ver [vgui, pgui, cgui, qgui]);
+	return (v * mlp c qv (saw p))
 }
 ~~~
 
-I've added some formatting for readability in the last line. But to make it work
-in the ghci you have to type it a single line.
+With `:set +m` we enter the multiline mode in REPL.
+The last expressions spreads across multiple lines.
 
 We can scale the whole window size with function `resizeUi`. It takes in a pair of x and y scale factors.
 The difference between `sca` and `resizeUi` is that `sca` scales the *relative* size of the widget
-within a container but `resizeUi` affects the default all *absolute* sizes of UI-widgets. 
+within a container but `resizeUi` affects the default all *absolute* sizes of UI-widgets.
 
 The typical usage of resizeUi is when we created an intricated UI with many widgets
 and it doesn't fits the screen we can make everything smaller by calling something like `resizeUi (0.75, 0.75)` on it.
@@ -353,12 +354,12 @@ good for your screen. You can set the scaling factor globaly with options (see p
 We would like to make our own `dac` function that overrides the defaults:
 
 ~~~haskell
-let run = dacBy (def { csdScaleUI = (1.5, 1.5) })
+run = dacBy (def { csdScaleUI = Just (1.5, 1.5) })
 ~~~
 
 And then we can use our `run` function in place of `dac`.
 
-Note that there is a handy function to rescale sources. The widget source is the most frequently used. 
+Note that there is a handy function to rescale sources. The widget source is the most frequently used.
 So there is a shortcut to easily adjust the sizes:
 
  ~~~haskell
@@ -371,13 +372,13 @@ So there is a shortcut to easily adjust the sizes:
 Let's turn back to the example with pitch and volume sliders:
 
 ~~~haskell
-> let vol = slider "volume" (linSpan 0 1) 0.5
-> let pch = slider "pitch" (expSpan 20 3000) 440
+> vol = slider "volume" (linSpan 0 1) 0.5
+> pch = slider "pitch" (expSpan 20 3000) 440
 > dac $ do { (vgui, v) <- vol; (pgui, p) <- pch ; panel (ver [vgui, pgui]); return (v * osc p) }
 ~~~
 
 There is a much more convenient way of writing widgets like this.
-We can use applicative style GUIs. There are functions that combine 
+We can use applicative style GUIs. There are functions that combine
 visual representation and behavior of the UIs at the same time:
 
 ~~~haskell
@@ -400,27 +401,27 @@ is responsible for catenation of the visuals. `h` -- means horizontal and
 Let's rewrite the last line of our example:
 
 ~~~haskell
-> dac $ vlift2 (\v p -> v * tri p) vol pch 
+> dac $ vlift2 (\v p -> v * tri p) vol pch
 ~~~
 
 The `(Sigs a => Source a)` is also renderable type and we can apply `dac` to it.
-The cool thing is that result of the `vlift2` is an ordinary source-widget. We can 
+The cool thing is that result of the `vlift2` is an ordinary source-widget. We can
 apply another `lift`-function to it.
 
 Let's add a filter:
 
 ~~~haskell
-> let cfq = slider "center frequency" (expSpan 100 5000) 2000
-> let q = slider "resonance" (linSpan 0.1 0.9) 0.5
-> let filter = vlift2 (\cps res -> mlp cps res) cfq q
+> cfq = slider "center frequency" (expSpan 100 5000) 2000
+> q = slider "resonance" (linSpan 0.1 0.9) 0.5
+> filter = vlift2 (\cps res -> mlp cps res) cfq q
 ~~~
 
 Notice that our widget produces a function. Like any real functional programming language
 Haskell can do it! Let's apply the filter:
 
 ~~~haskell
-> let wave = vlift2 (\v p -> v * tri p) vol pch 
-> dac $ hlift2 ($) filter wave 
+> wave = vlift2 (\v p -> v * tri p) vol pch
+> dac $ hlift2 ($) filter wave
 ~~~
 
 Also there are functions to stack a list of similar widgets:
@@ -432,22 +433,22 @@ hlifts, vlifts :: ([a] -> b) -> [Source a] -> Source b
 Let's create a widget to study harmonics:
 
 ~~~haskell
-> let harmonics cps weights = mul (1.3 / sum weights) $ 
+> harmonics cps weights = mul (1.3 / sum weights) $
 		sum $ zipWith (\n w -> w * osc (cps * n))(fmap (sig . int) [1 .. ]) weights
 > dac $ mul 0.75 $ hlifts (harmonics 110) (uslider 0.75 : (replicate 9 $ uslider 0))
 ~~~
 
 The `uslider` is convenient alias for creation of linear unipolar anonymous sliders.
 The only value it takes is an initial value. That's it! We have created a widget
-with ten sliders for harmonic series exploration with just two lines of code! 
-Also there is a function `xslider` for exponential anonymous sliders. It has the 
+with ten sliders for harmonic series exploration with just two lines of code!
+Also there is a function `xslider` for exponential anonymous sliders. It has the
 arguments:
 
 ~~~haskell
 type Range a = (a, a)
 
 xslider :: Range Double -> Double -> Source Sig
-xslider (min, max) init 
+xslider (min, max) init
 ~~~
 
 The same functions are defined for knobs: `uknob`, `xknob`.
@@ -456,7 +457,7 @@ Let's add a couple of controls. We want to change pitch and volume.
 We already have the required sliders `vol` and `pch`:
 
 ~~~haskell
-> let harms = hlifts (flip harmonics) (replicate 10 $ uslider 0)
+> harms = hlifts (flip harmonics) (replicate 10 $ uslider 0)
 > dac $ vlift3 (\amp cps f -> amp * f cps) vol pch harms
 ~~~
 
@@ -489,31 +490,16 @@ There are many more widgets. Let's turn some sliders into knobs.
 The knob is a sort of circular slider:
 
 ~~~haskell
-> let vol = knob "volume" (linSpan 0 1) 0.5
-> let pch = knob "pitch" (expSpan 20 3000) 440
-> dac $ do { 
-	(vgui, v) <- vol; 
-	(pgui, p) <- pch; 
-	(cgui, c) <- cfq; 
-	(qgui, qv) <- q; 
-	panel (ver [vgui, pgui, hor [cgui, qgui]]); 
-	return (v * mlp c qv (saw p)) 
-}
-~~~
-
-Now the sliders look to big we can change it with function `sca`:
-
-~~~haskell
-	...
-	panel (ver [vgui, pgui, sca 1.5 $ hor [cgui, qgui]]); 
-	...
+> vol = knob "volume" (linSpan 0 1) 0.5
+> pch = knob "pitch" (expSpan 20 3000) 440
+> dac $ vlift3 (\v p f -> v * f (saw p))  vol pch filter
 ~~~
 
 Also there are aliases. Produces unipolar linear anonymous knob:
 
 ~~~haskell
 uknob :: Double -> Source Sig
-uknob initVal = ... 
+uknob initVal = ...
 ~~~
 
 Produces exponential anonymous knob:
@@ -522,13 +508,13 @@ Produces exponential anonymous knob:
 type Range a = (a, a)
 
 xknob :: Range Double -> Double -> Source Sig
-xknob (min, max) init 
+xknob (min, max) init
 ~~~
 
 #### Numeric values
 
-Numeric creates a time varying signal like a slider. 
-But it's graphical representation is different. It's 
+Numeric creates a time varying signal like a slider.
+But it's graphical representation is different. It's
 a box with a number inside it. You can change the value by dragging
 the mouse from the box.
 
@@ -546,28 +532,18 @@ toggleSig :: String -> Bool -> Source Sig
 ~~~
 
 This function just creates a button that produces a signal that
-is 1 whenthe button is on and 0 when it's off. The button is 
+is 1 whenthe button is on and 0 when it's off. The button is
 initialized with value Bool.
 
 ~~~haskell
-> let switch = toggleSig "On/Off" true
-> dac $ do { 
-	(sgui, sw) <- switch;
-	(vgui, v) <- vol; 
-	(pgui, p) <- pch; 
-	(cgui, c) <- cfq; 
-	(qgui, qv) <- q; 
-	panel (ver [vgui, pgui, hor [sgui, cgui, qgui]]); 
-	return (sw * v * mlp c qv (saw p)) 
-}
+> switch = toggleSig "On/Off" true
+> dac $ vlift3 (\v p (sw, f) -> sw * v * f (saw p))  vol pch (hlift2 (,) switch filter)
 ~~~
 
 We can make the gradual change wit portamento:
 
 ~~~haskell
-...
-	return (port sw 0.7 * v * mlp c qv (saw p)) 
-...
+..	smooth 0.7 sw * v * mlp c qv (saw p) ..
 ~~~
 
 Buttons can produce the event streams:
@@ -588,42 +564,34 @@ runEvt :: Evt a -> (a -> SE ()) -> SE ()
 Also event streams can trigger notes with:
 
 ~~~haskell
-trig  :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, D, a) -> b
-sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
+type Sco a = Track Sig a -- holds notes
+sched :: (Arg a, Sigs b) => (a -> SE b) -> Evt (Sco a) -> b
 ~~~
-The function `trig` invokes an instrument `a -> SE b` when 
-the event happens. The note is a triple `(D, D, a)`. It's
-`(delayTime, durationTime, instrumentArgument)`. The function 
-`sched` is just like `trig` but delay time is set to zero
-for all events. So that we need only a pair in place of the triple.
+
+The `sched` invokes the instrument on event stream.
+Each event contains score of notes.
 
 Let's create two buttons that play notes:
 
 ~~~haskell
-> let n1 = button "330"
-> let n2 = button "440"
-> let instr x = return $ fades 0.1 0.5 * osc x
-> let go x evt = sched (const $ instr x) (withDur 2 evt)
-> dac $ do { 
-	(g1, p1) <- n1; 
-	(g2, p2) <- n2; 
-	panel $ hor [g1, g2]; 
-	return $ mul 0.25 $ go 330 p1 + go 440 p2 
-}
+> n1 = button "330"
+> n2 = button "440"
+> instr x = return $ fades 0.1 0.5 * osc x
+> go x evt = sched (const $ instr x) (withDur 1 evt)
+> dac $ hlift2 (\p1 p2 -> mul 0.25 $ go 330 p1 + go 440 p2) n1 n2
 ~~~
 
-The new function `withDur` turns a single value into
-pair that contsants a duration of the note in the first cell.
+The new function `withDur` turns a single value into Score with single note with passed duration.
 
 We can do it with a little bit more simple expression if we know
-that events are functors and monoids. With Monoid's append we can get 
+that events are functors and monoids. With Monoid's append we can get
 a single event stream that contains events from both event streams.
 
 Let's redefine our buttons:
 
 ~~~haskell
-> let n1 = mapSource (fmap (const (330 :: D))) $ button "330"
-> let n2 = mapSource (fmap (const (440 :: D))) $ button "440"
+> n1 = mapSource (fmap (const (330 :: D))) $ button "330"
+> n2 = mapSource (fmap (const (440 :: D))) $ button "440"
 ~~~
 
 The function `mapSource` maps over the value of the producer widget.
@@ -632,33 +600,31 @@ Let's merge two streams together and invoke the instrument on the
 single stream. The result should be the same:
 
 ~~~haskell
-> let instr x = return $ fades 0.1 0.5 * osc x
-> dac $ do { 
-	(g1, p1) <- n1; 
-	(g2, p2) <- n2; 
-	panel (hor [g1, g2]); 
-	return $ mul 0.25 $ sched (instr . sig) (withDur 2 $ p1 <> p2)   
-}
+> instr x = return $ fades 0.1 0.5 * osc x
+> dac $ hlift2 (\p1 p2 -> mul 0.25 $ sched (instr . sig) (withDur 1 $ p1 <> p2)) n1 n2
 ~~~
 
 #### Box
 
-With boxes we can just show the user some message. 
+With boxes we can just show the user some message.
 
 ~~~haskell
-box :: String -> Display 
+box :: String -> Display
 ~~~
 
-Let's say something to the user. 
+Let's say something to the user.
 
 ~~~haskell
-> dac $ do { 
-	gmsg <- box "Two buttons. Here we are."
-	(g1, p1) <- n1; 
-	(g2, p2) <- n2; 
-	panel (ver [gmsg, hor [g1, g2]]); 
-	return $ mul 0.25 $ sched (instr . sig) (withDur 2 $ p1 <> p2)   
-}
+> gmsg = box "Two buttons. Here we are."
+> dac $ gmsg >>= \msg ->
+          mapGuiSource (\g -> ver [msg, g]) $
+          hlift2 (\p1 p2 -> mul 0.25 $ sched (instr . sig) (withDur 1 $ p1 <> p2)) n1 n2
+~~~
+
+The function `mapGuiSource` - maps over Gui value of the source:
+
+~~~haskell
+mapGuiSource :: (Gui -> Gui) -> Source a -> Source a
 ~~~
 
 #### Radio-buttons
@@ -672,12 +638,8 @@ radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
 Let's redefine our previous example:
 
 ~~~haskell
-> let ns = radioButton "two notes" [("330", 330 :: D), ("440", 440)] 0
-> dac $ do { 
-	(gui, p) <- ns; 
-	panel gui; 
-	return $ mul 0.25 $ sched (instr . sig) (withDur 2 p) 
-}
+> ns = radioButton "two notes" [("330", 330 :: D), ("440", 440)] 0
+> dac $ lift1 (\p -> mul 0.25 $ sched (instr . sig) (withDur 2 p)) ns
 ~~~
 
 #### Meter
@@ -690,48 +652,38 @@ It shows the output as the slider:
 > let sa = slider "a" (linSpan 1 10) 5
 > let sb = slider "b" (linSpan 1 10) 5
 > let res = setNumeric "a + b" (linDiap 2 20) 1 10
-> dac $ do { 
-	(ga, a) <- sa; 
-	(gb, b) <- sb; 
-	(gres, r) <- res; 
-	panel $ ver [ga, gb, gres]; 
-	r (a + b) 
+> dac $ do {
+	(ga, a) <- sa;
+	(gb, b) <- sb;
+	(gres, r) <- res;
+	panel $ ver [ga, gb, gres];
+	r (a + b)
 }
 ~~~
 
-### Making reusable widgets
+### Making reusable source
 
-We can make reusable widgets with functions:
+The applicative style lets us create reusable combos of widgets.
 
-~~~haskell
-sink    :: SE (Gui, Output a) -> Sink a
-source  :: SE (Gui, Input a) -> Source a
-display :: SE Gui -> Display
-~~~
-
-Let's make a reusable widget for a Moog low-pass filter. 
-It's a producer or source. It's going to produce a 
+Let's make a reusable widget for a Moog low-pass filter.
+It's a producer or source. It's going to produce a
 transformation `Sig -> Sig`:
 
 ~~~haskell
 import Csound.Base
 
 mlpWidget :: Source (Sig -> Sig)
-mlpWidget = source $ do
-	(gcfq, cfq) <- slider "center frequency" (expSpan 100 5000)  2000
-	(gq,   q)   <- slider "resonance"        (linSpan 0.01 0.9)  0.5	
-	return (ver [gcfq, gq], mlp cfq q)
+mlpWidget = vlift2 mlp cfq q
+  where
+    cfq = slider "center frequency" (expSpan 100 5000)  2000
+    q   = slider "resonance"        (linSpan 0.01 0.9)  0.5
 ~~~
 
-Let's save this definition in the file and load it in ghci. 
+Let's save this definition in the file and load it in ghci.
 Now we can use it as a custom widget:
 
 ~~~haskell
-> dac $ do { 
-	(g, filt) <- mlpWidget; 
-	panel g; 
-	return $ mul 0.5 $ filt $ saw 220 
-}
+dac $ lift1 (\f -> mul 0.5 $ f $ saw 220) mlpWidget
 ~~~
 
 Notice that a widget can produce a function as a value!
@@ -740,22 +692,68 @@ Let's define another widget for saw-oscillator:
 
 ~~~haskell
 sawWidget :: Source Sig
-sawWidget = source $ do
-	(gamp, amp) <- slider "amplitude" (linSpan 0 1) 0.5	
-	(gcps, cps) <- slider "frequency" (expSpan 50 10000) 220
-	return (ver [gamp, gcps], amp * saw cps)	
+sawWidget = vlift2 (\a c -> a * saw c) amp cps
+  where
+    amp = slider "amplitude" (linSpan 0 1) 0.5
+    cps = slider "frequency" (expSpan 50 10000) 220
 ~~~
 
 Now let's use them together:
 
 ~~~haskell
- dac $ do { 
- 	(gw, wave) <- sawWidget; 
- 	(gf, filt) <- mlpWidget; 
- 	panel $ ver [gw, gf]; 
- 	return $ filt wave 
- }
+dac $ vlift2 (\wave filt -> filt wave) sawWidget mlpWidget
 ~~~
+
+### Low-level representation of widgets
+
+Note that any widget is made with just handful of functions:
+
+~~~haskell
+type Output a = a -> SE ()
+type Input a = a
+type Display = SE Gui
+
+sink    :: SE (Gui, Output a) -> Sink a
+source  :: SE (Gui, Input a) -> Source a
+display :: SE Gui -> Display
+sinkSource :: SE (Gui, Output a, Input a) -> SinkSource a
+~~~
+
+Thy specify low level behaviour of the widget.
+
+* sink - widget that consumes the value. So it has visual representation
+   and function to consume the value.
+
+* source - widget that produces value. So it has  visual  representation
+   and holds the value.
+
+* display - has only visuals
+
+* sinkSource - combines all behaviours into one.
+
+Let's see how one of the widgets from the previous example can be made
+with low level functions. Let's look at the moog filter widget:
+
+~~~haskell
+import Csound.Base
+
+mlpWidget :: Source (Sig -> Sig)
+mlpWidget = source $ do
+	(gcfq, cfq) <- slider "center frequency" (expSpan 100 5000)  2000
+	(gq,   q)   <- slider "resonance"        (linSpan 0.01 0.9)  0.5
+	return (ver [gcfq, gq], mlp cfq q)
+~~~
+
+Now we can apply it to the value with low level functions:
+
+~~~haskell
+> dac $ do {
+	(g, filt) <- mlpWidget;
+	panel g;
+	return $ mul 0.5 $ filt $ saw 220
+}
+~~~
+
 
 Open sound control protocol (OSC)
 --------------------------------------
@@ -766,7 +764,7 @@ lightweight and efficient. It can be used over network to
 orchestrate a lot of instruments.
 
 We can send or receive the data over network on the specified port.
-We should declare the port, the address of the data and 
+We should declare the port, the address of the data and
 the type of the expected data.
 
 The port is an integer. The address is a path-like string:
@@ -777,7 +775,7 @@ The port is an integer. The address is a path-like string:
 ~~~
 
 The type of the data is a string of special characters.
-The string can contain the characters "cdfhis" which stand 
+The string can contain the characters "cdfhis" which stand
 for character, double, float, 64-bit integer, 32-bit integer, and string.
 
 There are special type synonyms for all these terms:
@@ -789,8 +787,8 @@ type OscType = String
 type OscHost = String
 ~~~
 
-There are two modes. We can listen for the OSC-messages or we can 
-send them. 
+There are two modes. We can listen for the OSC-messages or we can
+send them.
 
 ### Listening for messages
 
@@ -819,10 +817,11 @@ It's often happens that OSC-messages encode a continuous signal. The signal cont
 some parameter of the synth. In this case we can use a handy function:
 
 ~~~haskell
-listenOscVal :: (Tuple a, OscVal a) => OscRef -> String -> a -> SE a
+listenOscVal :: (OscVal a) => OscRef -> String -> a -> SE a
 listenOscVal oscRef address initValue
 ~~~
 
+The `OscVal` signnifies all sorts of tuples of `Str`'s and `Sig`'s.
 We listen on the specific port and address. The last argument is an initial value for the signal (or tuple of signals).
 When new value comes the output signal is set to that value. It's like sample and hold function
 only messages for signal update come from the OSC-channel.
@@ -851,9 +850,9 @@ We also specify the OSC-address (it's a path-like string) and type of the messag
 Jack-instruments
 ---------------------------------------
 
-With Jack-interface (native for Linux, also there are ports for OSX and PC) 
-we can stream the output of one program to the input of another one. 
-With Jack we can use our Csound instruments in DAW-software 
+With Jack-interface (native for Linux, also there are ports for OSX and PC)
+we can stream the output of one program to the input of another one.
+With Jack we can use our Csound instruments in DAW-software
 (like Ardour, Cubase, Ableton or BitWig).
 
 We can create Jack-instrument if we set the proper options.
@@ -887,13 +886,13 @@ setBufs totalBufferSize  singlePeriodSize
 To send or receive the values from the JACK Csound uses the buffer.
 We have to define the size of the whole buffer (the first argument)
 and the one period of the buffer (it should be integer multiplier of
-the blockSize). 
+the blockSize).
 
 To set all these properties we need to use the `Monoid` instance for `Options`.
 We need to append all the options:
 
 ~~~haskell
-> options = mconcat [ setJack "anInstrument", setRates 44800 64, setBufs 192 64 ] 
+> options = mconcat [ setJack "anInstrument", setRates 44800 64, setBufs 192 64 ]
 > dacBy options asig
 ~~~
 

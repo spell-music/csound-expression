@@ -1,8 +1,8 @@
 -- | Open Sound Control.
 module Csound.Control.Osc(
-    OscHost, OscPort, OscAddress, OscType,
+    OscHost, OscPort, OscAddress, OscType, OscRef,
     -- * Server
-    initOsc, listenOsc, ListenOsc, OscVal, 
+    initOsc, listenOsc, ListenOsc, OscVal,
     listenOscVal, listenOscSig, listenOscSig2,
     -- * Client
     sendOsc
