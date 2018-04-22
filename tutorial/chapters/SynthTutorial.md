@@ -562,8 +562,8 @@ Let's change the parameters of the filter with sliders:
 
 ~~~haskell
 > dac $ vlift2 (\(amp, cps) (cflt, q)  -> mul amp $ mlp cflt q $ saw cps)
-	(hlift2 (,) (uknob 0.5) (xknob (50, 600) 110))
-	(vlift2 (,) (xslider (250, 7000) 1500) (mul 0.95 $ uslider 0.5))
+	  (hlift2 (,) (uknob 0.5) (xknob (50, 600) 110))
+	  (vlift2 (,) (xslider (250, 7000) 1500) (mul 0.95 $ uslider 0.5))
 ~~~
 
 We can see the picture of the talking robot.
@@ -651,7 +651,7 @@ We can change parameters in real-time with EG's and LFO's.
 Let's create an envelope and apply it to the amplitude and center frequency:
 
 ~~~haskell
-> let env = leg 0.1 0.5 0.3 1
+> env = leg 0.1 0.5 0.3 1
 > run (0.15 * env) (lp (1500 * env) 1.5 . saw)
 ~~~
 
@@ -686,11 +686,48 @@ run (0.15 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw (x * (1 + 0.1 *
 We can increase an order of the resonant filter applying it several times.
 There is a function `filt` that does it:
 
-~~~
+~~~haskell
 run (0.15 * env) (\x -> filt 2 lp (x + 500 * env) (3 + 2 * sqr 4) $ saw x)
 ~~~
 
 You can find lots of filters in the module `Csound.Air.Filter`.
+
+Let's quickly review the most interesting of them:
+
+* `mlp`, `mlp3`, `ladder`, `alp1`, `alp2`, `alp3` - various implementations of Moog ladder filter
+
+* `zlp`, `zhp`, `zladder`, `zbp`, `zbr` - zero delay feedback filters
+
+* `klp`, `khp`, `kbp` - Korg 35 filter
+
+* `blp`, `bhp`, `bbp`, `bbr` - Butterworth filters
+
+* `diode` - resonant filter for Roland TB-303
+
+* `formant` - filter that vocalizes the sound, it resembles the harmonics of human voice.
+    There are special cases: `singA`, `singO`, `singE`, `singU`.
+
+* `smooth time asig` - useful to smooth control signals. For familiar with Csound it's `portk`
+     with reversed order of arguments.
+
+and many other the general rule is that watch out for the suffix:
+
+* `lp` - low-pass
+
+* `hp` - high-pass
+
+* `bp` - band-pass
+
+* `br` - band-reject
+
+For the filter arguments. The center frequency is always first argument,
+but sometimes filter has distortion and it precedes, than goes resonance (if present)
+and the last one is processed signal.
+
+Notice for Csound users: The arguments are reversed in order since it's
+more convenient to use them that way in Haskell. It makes easy to
+compose the functions with dot operator.
+
 
 Effects
 ---------------------------------
@@ -708,7 +745,7 @@ the instrument. It includes the mixed sound from all notes that are played.
 Let's modify our definition for function `run`:
 
 ~~~haskell
-let run eff k f = vdac $ (eff =<< ) $ midi $ onMsg (mul k . f . (/ 2))
+run eff k f = vdac $ (eff =<< ) $ midi $ onMsg (mul k . f . (/ 2))
 ~~~
 
 The first argument now applies some effect to the output signal.
@@ -716,6 +753,35 @@ The first argument now applies some effect to the output signal.
 ### Time/Based
 
 #### Reverb
+
+#### Handy reverbs
+
+Reverb is so important that there are very useful shortcuts:
+
+~~~haskell
+room, chamber, hall, cave :: Sig -> a -> a
+~~~
+
+First argument is dry/wet ratio, the last one is processed signal
+or tuples of signals or many other processable units.
+
+Let's apply hall to the simple synt:
+
+~~~haskell
+vdac $ mul 0.5 $ hall 0.25 $ midi $ onMsg $ mul (fades 0.05 0.2) . osc
+~~~
+
+or we can create dream pad with cave:
+
+~~~haskell
+> filt = mlp (700 * fadeIn 0.5) 0.1
+> instr x = sqr x + pw (0.5 + 0.2 * osc 0.25) (x * 0.5)
+> env2 = fades 0.75 0.2
+> vdac $ mul 0.3 $ cave 0.25 $ midi $ onMsg $ filt . mul env2 . instr
+~~~
+
+
+#### Low level reverbs
 
 Reverb places the sound in some room, cave or hall.
 We can apply reverb with function `reverTime`:
@@ -738,13 +804,13 @@ rever1 :: Sig -> Sig -> (Sig, Sig)
 ~~~
 
 It's base on very cool Csound unit `reverbsc`. It takes in feedback level (0 to 1)
-and input signal and produces the processed output. There are several ready to use
-shortcuts: `smallRoom`, `smallHall`, `largeRoom`, `largeHall` and `magicCave`.
+and input signal and produces the processed output. The shortcuts like cave or hall
+are based on this function.
 
 Let's place our sound in the magic cave:
 
 ~~~haskell
-run (return . magicCave) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (return . cave 0.15) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 You can hear how dramatically an effect can change the sound.
@@ -766,31 +832,19 @@ the delayed signal. So thats why the output contains side-effects.
 Let's try it out:
 
 ~~~haskell
-run (echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (return . echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
 Let's add some reverberation:
 
 ~~~haskell
-run (fmap smallHall . echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
+run (return . hall 0.2 . echo  0.5 0.4) (0.05 * env) (\x -> lp (x + 500 * env) (7 + 3 * sqr 4) $ saw x)
 ~~~
 
-We are using the `fmap` function to apply the next effect in chain to the value with side-effects.
-The `SE`-wrapper type is `Monad` and hence it's `Applicative` and `Functor`.
-The `echo` function is a specification of generic function:
+There is the very generic function `fvdelay`. With it we can vary the delay time:
 
 ~~~haskell
-fdelay :: D -> Sig -> Sig -> Sig -> SE Sig
-fdelay len fbk mix asig
-~~~
-
-It takes a delay time, ratio of sound attenuation, the mix level (we add the initial sound
-with processed one which is scaled by amount of `mix`) and the input signal.
-
-There is the last most generic function `fvdelay`. With it we can vary the delay time:
-
-~~~haskell
-fvdelay :: D -> Sig -> Sig -> Sig -> Sig -> SE Sig
+fvdelay :: MaxDelayTime -> DelayTime -> Feedback -> Sig -> Sig
 fvdelay maxDelTime delTime fbk mix asig
 ~~~
 
@@ -827,7 +881,7 @@ Let's review briefly some other cool effects.
 Chorus makes sound more natural by adding slightly transformed versions of the original sound:
 
 ~~~haskell
-chorus :: Sig -> Sig -> Sig -> SE Sig
+chorus :: DepthSig -> RateSig -> Balance -> Sig -> SE Sig
 chorus rate depth asig
 ~~~
 
@@ -842,8 +896,8 @@ adding electronic flavor to the natural sounds.
 The flanger can be applied with function `flange`:
 
 ~~~haskell
-flange :: Lfo -> Sig -> Sig -> Sig -> Sig -> Sig
-flange lfo fbk mx asig
+flange :: Lfo -> Feedback -> Balance -> Sig -> Sig
+flange lfo fbk balance asig
 ~~~
 
 Where arguments are: an LFO signal, feedback level, balance level between
@@ -863,7 +917,7 @@ of all-pass filters. We can simulate a sweeping phase effect with phaser.
 There are three types of phasers. The simplest one is
 
 ~~~haskell
-phase1 :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig
+phase1 :: Sig -> Lfo -> Feedback -> Balance -> Sig -> Sig
 phase1 ord lfo fbk mx asig
 ~~~
 
@@ -877,7 +931,7 @@ pure and processed signals, the input signal.
 There are two more phasers:
 
 ~~~haskell
-harmPhase, powerPhase :: Sig -> Lfo -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+harmPhase, powerPhase :: Sig -> Lfo -> Sig -> Sig -> Feedback -> Balance -> Sig -> Sig
 harmPhase ord lfo q sep fbk mx asig = ...
 ~~~
 
@@ -905,13 +959,13 @@ The `urnds `varies between 0 and 1. The `rnds` varies between -1 and 1.
 We can generate colored noises with:
 
 ~~~haskell
-white, pink :: SE Sig
+white, pink, brown, pinker :: SE Sig
 ~~~
 
 Let's create a simple wind instrument:
 
 ~~~haskell
-> let simpleWind x = do { cfq <- 2000 * urndi 0.5; asig <- white; return $ mlp (x + cfq) 0.6 asig }
+> simpleWind x = do { cfq <- 2000 * urndi 0.5; asig <- white; return $ mlp (x + cfq) 0.6 asig }
 ~~~
 
 We filter the white noise with filter. The center frequency randomly varies
