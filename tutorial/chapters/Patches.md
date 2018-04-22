@@ -7,7 +7,7 @@ They can be found at the package `csound-catalog` (available on Hackage).
 Let's load the module:
 
 ~~~haskell
-> :m +Csound.Patch
+> import Csound.Patch
 ~~~
 
 Now we can play a patch:
@@ -25,19 +25,19 @@ use the plain old `dac`. This way we can play the patches with real MIDI-device:
 > dac $ mul 0.75 $ atMidi toneWheelOrgan
 ~~~
 
-There are many predefined instruments. Some goodies to try out: 
-vibraphone1, dreamPad, razorPad, epianoBright, xylophone, scrapeDahina, 
-noiz, mildWind, toneWheelOrgan, banyan, caveOvertonePad, flute, hulusiVibrato, 
+There are many predefined instruments. Some goodies to try out:
+vibraphone1, dreamPad, razorPad, epianoBright, xylophone, scrapeDahina,
+noiz, mildWind, toneWheelOrgan, banyan, caveOvertonePad, flute, hulusiVibrato,
 shortBassClarinet, pwBass, pwEnsemble, albertClockBellBelfast etc.
 
 The main type for the instrument is a `Patch`. The patch is a  data-type
 that holds a complete set up for the instrument to be played live or
-to apply it to musical scores. 
+to apply it to musical scores.
 
 Let's look at the definition of the `Patch`:
 
 ~~~haskell
-data Patch a 
+data Patch a
     = MonoSynt MonoSyntSpec (GenMonoInstr a)
     | PolySynt PolySyntSpec (GenInstr D   a)
     | SetSkin SyntSkin (Patch a)
@@ -46,13 +46,13 @@ data Patch a
     | LayerPatch [(Sig, Patch a)]
 ~~~
 
-We can 
+We can
 
 * create monophonic (`MonoSynt`) synthesizers
 
 * create polyphonic (`PolySynt`) synthesizers
 
-* set generic parameters for synthesizers (`SetSkin`) such as filter type, 
+* set generic parameters for synthesizers (`SetSkin`) such as filter type,
 
 * add effects (`FxChain`)
 
@@ -63,12 +63,12 @@ We can
 
 ### Generic parameters for Patches
 
-The Gen-prefix for instruments and effects refers to one peculiarity of the Patch data type. 
+The Gen-prefix for instruments and effects refers to one peculiarity of the Patch data type.
 I'd like to be able to change some common parameters of the instrument after it's already constructed.
 Right now we can change only the type of the low-pass filter but some more parameters can be added in the future.
 
 In Haskell we can do this with `Reader` data type. `Reader` lets us parametrize the values with some common arguments
-and we can supply those arguments later. 
+and we can supply those arguments later.
 
 The value: `Reader a b`  means that the result value `b` depends on argument `a` which we provide later.
 
@@ -96,7 +96,7 @@ PolySynt PolySyntSpec (GenInstr D a)
 type GenInstr a b = Reader SyntSkin (Instr a b)
 
 type CsdNote a = (a, a)
-type Instr a b = CsdNote a -> SE b  
+type Instr a b = CsdNote a -> SE b
 
 data PolySyntSpec = PolySyntSpec
     { polySyntChn :: MidiChn }
@@ -105,7 +105,7 @@ data PolySyntSpec = PolySyntSpec
 It converts notes to signals. With polyphonic instrument we can
 play several notes at the same time. The note is a pair of amplitude and frequency.
 
-With `PolySyntSpec` we can specify midi channel to play the instrument. 
+With `PolySyntSpec` we can specify midi channel to play the instrument.
 The `PolySyntSpec` has default instance with which we listen for midi messages on all channels.
 
 
@@ -133,8 +133,8 @@ polySyntFilter :: (ResonFilter -> Instr D a) -> Patch a
 Let's create a simple polyphonic instrument. It' just plays pure sines waves with percussive shape of amplitude:
 
 ~~~haskell
-> let instr (amp, cps) = return $ sig amp * xeg 0.01 4 0.001 2 * osc (sig cps)
-> let patch = polySynt instr
+> instr (amp, cps) = return $ sig amp * xeg 0.01 4 0.001 2 * osc (sig cps)
+> patch = polySynt instr
 > vdac $ atMidi patch
 ~~~
 
@@ -178,8 +178,10 @@ instr resonFilter (amp, cps) = return $ filter $ sig amp * env * wave
 
 patch = polySyntFilter instr
 
-main = vdac $ atMidi patch         
+main = vdac $ atMidi patch
 ~~~
+
+We can alter the filter with `SetSkin` constructor.
 
 ### Monophonic instruments
 
@@ -201,11 +203,11 @@ data MonoArg = MonoArg
     , monoTrig :: Sig }
 
 data MonoSyntSpec = MonoSyntSpec
-    { monoSyntChn       :: MidiChn      
-    , monoSyntSlideTime :: Maybe D }    -- portamento for amplitude and frequency 
+    { monoSyntChn       :: MidiChn
+    , monoSyntSlideTime :: Maybe D }    -- portamento for amplitude and frequency
 ~~~
 
-It looks like polyphonic synth but monophonic synt argument type is a bit more complicated. 
+It looks like polyphonic synth but monophonic synt argument type is a bit more complicated.
 It contains four components:
 
 * amplitude signal `monoAmp`
@@ -276,16 +278,16 @@ type DryWetRatio = Sig
 
 data FxSpec a = FxSpec
     { fxMix :: DryWetRatio
-    , fxFun :: Fx a 
+    , fxFun :: Fx a
     }
 
-type Fx a = a -> SE a    
+type Fx a = a -> SE a
 ~~~
 
 An effect is a function that transforms signals (can be as single signal or a tuple of signals).
 An effect unit comes with a main parameter that's called dry/wet ratio. It signifies the ratio of
-unprocessed (dry) and processed signal (wet). And the fx chain contains a list of pairs of ratios 
-and effect functions. Note that the list is reversed (like in haskell dot notation). The first 
+unprocessed (dry) and processed signal (wet). And the fx chain contains a list of pairs of ratios
+and effect functions. Note that the list is reversed (like in haskell dot notation). The first
 function in the list is going to be applied at the last moment.
 
 We can create effects in the chain with smart constructors:
@@ -335,7 +337,7 @@ Let's add a delay to our patch:
 
 ### Layered patch
 
-Sometimes we want to play several instruments by the same key press. 
+Sometimes we want to play several instruments by the same key press.
 We can achieve it with ease by layered patches:
 
 ~~~haskell
@@ -392,28 +394,27 @@ dac $ atNote overtonePad (0.5, 110)
 We can apply the patch to scores:
 
 ~~~haskell
-> let ns = fmap temp [(0.5, 220), (0.75, 330), (1, 440)]
-> let notes = str 0.25 $ mel [mel ns, har ns, rest 4]
+> ns = fmap temp [(0.5, 220), (0.75, 330), (1, 440)]
+> notes = str 0.25 $ mel [mel ns, har ns, rest 4]
 > dac $ mul 0.75 $ mix $ atSco banyan notes
 ~~~
 
 We can play the patch with an event stream:
 
 ~~~haskell
-> let notes = cycleE [(1, 220), (0.5, 220 * 5/ 4), (0.25, 330), (0.5, 440)]
+> notes = cycleE [(1, 220), (0.5, 220 * 5/ 4), (0.25, 330), (0.5, 440)]
 > dac $ atSched hammondOrgan (withDur 0.15 $ notes $ metro 6)
 ~~~
 
 ## Useful functions for patches
 
 We can play a dry patch (throw away all the effects).
-Can be useful if you like the tone of the instruments 
+Can be useful if you like the tone of the instruments
 but want to apply you own effect:
 
 ~~~haskell
 vdac $ atMidi $ dryPatch $ scrapeXylophone
 ~~~
-
 
 We can transpose a patch two semitones up:
 
@@ -431,7 +432,7 @@ We can add an effect to the patch. Note that we can append from both ends of the
 Let's add a delay to the sound:
 
 ~~~haskell
-> vdac $ atMidi $ addPreFx 0.5 (at $ echo 0.25 0.75) banyan
+> vdac $ atMidi $ addPreFx 0.5 (return . (mapSig $ echo 0.25 0.75)) banyan
 ~~~
 
 We can use the function `addPostFx` to add the effect to the end of the chain
@@ -440,7 +441,7 @@ and the function `addPreFx` to add effect to the beginning of the effect chain.
 We can change the amount of dry-wet ratio for the last effect in the chain with function `setFxMix`:
 
 ~~~haskell
-vdac $ atMidi $ setFxMix 0 $ addPostFx 0.5 (at $ echo 0.25 0.75) banyan
+vdac $ atMidi $ setFxMix 0 $ addPostFx 0.5 (return . (mapSig $ echo 0.25 0.75)) banyan
 ~~~
 
 In this example we add post-delay, but set the ratio to zero so we can hear no delay.
@@ -453,7 +454,7 @@ With `deepPad` we can add a second note that plays an octave below to deepen the
 > vdac $ atMidi $ deepPad cathedralOrgan
 ~~~
 
-There is a more generic function that let's us to add any number of harmonics 
+There is a more generic function that let's us to add any number of harmonics
 that are played with the given patch:
 
 ~~~haskell
@@ -496,11 +497,11 @@ instead of `vdac` if you have a real midi device):
 
 > vdac $ atMidi $ deepPad razorPad
 
-> vdac $ atMidi epianoBright 
+> vdac $ atMidi epianoBright
 
 > vdac $ atMidi xylophone
 
-> vdac $ atMidi scrapeDahina 
+> vdac $ atMidi scrapeDahina
 
 > vdac $ atMidi noiz
 
@@ -524,7 +525,7 @@ instead of `vdac` if you have a real midi device):
 
 > vdac $ atMidi pwEnsemble
 
-> vdac $ atMidi albertClockBellBelfast 
+> vdac $ atMidi albertClockBellBelfast
 
 > vdac $ atMidi $ vibhu 65
 ~~~
