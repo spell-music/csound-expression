@@ -258,6 +258,12 @@ real-time events on the screen while csound plays. We can save the options:
 > saveUserOptions (setRates 48000 128 <> noTrace)
 ~~~
 
+If you don't like the new defaults and want to get back to library defaults
+just remove the file `.csound-expression-rc` or overwrite it with default:
+
+~~~haskell
+> saveUserOptions def
+~~~
 
 Common options
 -------------------------------------
@@ -270,7 +276,7 @@ But some options are so much important that there are special shortcuts to acces
 Let's take review.
 
 * Set rates - alter audio rate of rendering and block size
-  The affect the audio quality of the audio and control signals.
+  It affects the audio quality of the audio and control signals.
   The higher the better, but if they are too high we can end up with
   not enough CPU for real-time problems.
 
@@ -310,7 +316,7 @@ setAdc, setDac :: Options
 
 * Keeps the command line output to minimum, no trace messages: `noTrace :: Options`
 
-* Sets how much output do we need (for level value consult the Csound docs).
+* Sets how much output do we need (for level value consult the [Csound docs](http://csound.com/docs/manual/CommandFlagsCategory.html)).
 
 ~~~haskell
 setMessageLevel :: Int -> Options

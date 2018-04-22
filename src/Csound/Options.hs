@@ -55,10 +55,12 @@ setRates sampleRate blockSize = def
 setBufs :: Int -> Int -> Options
 setBufs hw io = def { csdFlags = def { config = def { hwBuf = Just hw, ioBuf = Just io } } }
 
+-- | Sets the default gain for the output signal (should be in range 0 to 1).
 setGain :: Double -> Options
 setGain d = def { csdGain = Just d' }
     where d' = max 0 $ min 1 $ d
 
+-- | Runs as JACK unit with given name (first argument).
 setJack :: String -> Options
 setJack name = def { csdFlags = def { rtaudio = Just $ Jack name "input" "output" } }
 
@@ -69,39 +71,49 @@ setJack name = def { csdFlags = def { rtaudio = Just $ Jack name "input" "output
 setJacko :: Jacko -> Options
 setJacko jackoSpec = def { csdJacko = Just jackoSpec }
 
+-- | Sets real-time driver to Core Audio (use on OSX).
 setCoreAudio :: Options
 setCoreAudio = def { csdFlags = def { rtaudio = Just $ CoreAudio } }
 
+-- | Sets real-time driver to Alsa (use on Linux).
 setAlsa :: Options
 setAlsa = def { csdFlags = def { rtaudio = Just $ Alsa } }
 
+-- | Sets real-time driver to Mme (use on Windows).
 setMme :: Options
 setMme = def { csdFlags = def { rtaudio = Just $ Mme } }
 
+-- | Sends output to speakers.
 setDac :: Options
 setDac = setDacBy ""
 
+-- | Reads input from audio-card inputs.
 setAdc :: Options
 setAdc = setAdcBy ""
 
+-- | Set's the input name of the device or file.
 setInput :: String -> Options
 setInput a = def { csdFlags = def { audioFileOutput = def { input = Just a } } }
 
+-- | Set's the output name of the device or file.
 setOutput :: String -> Options
 setOutput a = def { csdFlags = def { audioFileOutput = def { output = Just a } } }
 
+-- | Provides name identifier for dac.
 setDacBy :: String -> Options
 setDacBy port = setOutput name
     where name
             | null port = "dac"
             | otherwise = "dac:" ++ port
 
+-- | Provides name identifier for adc.
 setAdcBy :: String -> Options
 setAdcBy port = setInput name
     where name
             | null port = "adc"
             | otherwise = "adc:" ++ port
 
+-- | Sets both dac and adc.
 setThru :: Options
 setThru = mappend setDac setAdc
 
@@ -109,7 +121,15 @@ setThru = mappend setDac setAdc
 setSilent :: Options
 setSilent = (def { csdFlags = def { audioFileOutput = def { nosound = True } } })
 
--- | Sets midi device
+-- | Sets midi device. It's an string identifier of the device.
+--
+-- Read MIDI events from device DEVICE. If using ALSA MIDI (-+rtmidi=alsa),
+-- devices are selected by name and not number. So, you need to use an option
+-- like -M hw:CARD,DEVICE where CARD and DEVICE are the card and device numbers (e.g. -M hw:1,0).
+-- In the case of PortMidi and MME, DEVICE should be a number, and if it is out of range,
+-- an error occurs and the valid device numbers are printed. When using PortMidi,
+-- you can use '-Ma' to enable all devices. This is also convenient when you
+-- don't have devices as it will not generate an error.
 setMidiDevice :: String -> Options
 setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } }
 
@@ -117,14 +137,20 @@ setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } 
 setMa :: Options
 setMa = setMidiDevice "a"
 
+-- | Sets message level. For input integer value consult
+-- the Csound docs
+--
+-- <http://csound.com/docs/manual/CommandFlagsCategory.html>
 setMessageLevel :: Int -> Options
 setMessageLevel n = def { csdFlags = def { displays = def { messageLevel = Just n }}}
 
+-- | Sets the tracing or debug info of csound console to minimum.
 noTrace :: Options
 noTrace = setMessageLevel 0
 
 ---------------------------------------------
 
+-- | Provides options for Cabbage VST-engine.
 setCabbage :: Options
 setCabbage = setRates 48000 64 <> setNoRtMidi <> setMidiDevice "0"
     where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }}
