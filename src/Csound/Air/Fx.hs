@@ -76,11 +76,11 @@ import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
 import Csound.Air.Filter
 import Csound.Typed.Plugins hiding(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, tapeEcho)
 
 import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong, tapeRead, tapeWrite)
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong, tapeRead, tapeWrite, tapeEcho)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -867,23 +867,6 @@ fxCompress thresh (loknee, hiknee) ratio (att, rel) gain  x = gain' * compress x
 -------------------------------
 -- tape echo
 
-{-}
-opcode TapeEcho4, a, akkkkk
-  aIn, kDelay, kEchoGain, kFbGain, kTone, kRandomSpread xin
-
-  aDummy delayr 16
-  aEcho1 tapeRead aIn, kDelay, kRandomSpread
-  aEcho2 tapeRead aIn, (kDelay * 2), kRandomSpread
-  aEcho3 tapeRead aIn, (kDelay * 4), kRandomSpread
-  aEcho4 tapeRead aIn, (kDelay * 8), kRandomSpread
-  aOut  = aIn + kEchoGain * aEcho1 + 0.5 * kEchoGain * aEcho2 + 0.25 * kEchoGain * aEcho3  + 0.2 * kEchoGain * aEcho4
-
-  aOut tone aOut, kTone
-  tapeWrite aIn, aOut, kFbGain
-  xout aOut
-endop
--}
-
 type EchoGain = Sig
 type RandomSpreadSig = Sig
 
@@ -896,19 +879,9 @@ type RandomSpreadSig = Sig
 -- * echo gain
 -- * tone - normalized center frequency of the filter (0  to 1)
 -- * randomSpread - quality of the tape (the higher - the worser)
-tapeEcho :: Int -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> Sig -> SE Sig
-tapeEcho n dt fb echoGain ktoneNorm spread ain = do
-    aDummy <- delayr minDt
-    aout <- fmap ((\echoes -> tone (ain + echoGain * echoes) ktone) . sum . zipWith (*) halves) $
-        mapM (\step -> tapeRead ain (dt * step) spread) doubles
-    tapeWrite ain aout fb
-    return aout
+tapeEcho :: D -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> Sig -> Sig
+tapeEcho n dt fb echoGain ktoneNorm spread ain = P.tapeEcho n dt echoGain fb ktone spread ain
     where
-        halves  = take n $ iterate ( / 2) 1
-        doubles = take n $ iterate ( * 2) 1
-
-        minDt = int $ 16 `max` (n * 4)
-
         ktone = fromNormTone ktoneNorm
 
 fromNormTone :: Sig -> Sig

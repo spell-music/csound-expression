@@ -6,13 +6,13 @@ It's created by Paul Nasca in his famous synthesizer ZynAddSubFX.
 It was ported to Csound by Michael Gogins. It requires at least Csound 6.05.
 
 The main idea lies in the notion that all cool sounds are inharmonic.
-They can be harmonic but there are tiny fluctuations and digressions 
-from the ideal shape. The human ear catches those tiny fluctuations and 
+They can be harmonic but there are tiny fluctuations and digressions
+from the ideal shape. The human ear catches those tiny fluctuations and
 this what can make a difference between dull digital sound and warm analog sound.
 
 The main idea is to add continuous sidebands to each harmonic, then we
 can apply invere fourier transform to the spectrum and get inharmonic wave.
-Then we can write the audio wave to table and play it back with an oscillator. 
+Then we can write the audio wave to table and play it back with an oscillator.
 It's going to be periodic. But the period of repetition is quite large (about 5-10 seconds).
 
 So in place of single harmonics we get Gaussian curves with peaks at the given harmonics:
@@ -25,7 +25,7 @@ Also you can read the Csound [docs](http://csound.github.io/docs/manual/GENpadsy
 
 The Csound provides only GEN routine to create the PADsynth long ftables.
 But the algorithm is so much useful that I've decided to supply many more
-functions to make it easy to create beautiful PADsynth-instruments. 
+functions to make it easy to create beautiful PADsynth-instruments.
 There are predefined patches that use the algorithm.
 
 Let's start with simplest functions and then we can dive deeper.
@@ -104,9 +104,9 @@ Let's look at those parameters:
 -- | Padsynth parameters.
 --
 -- see for details: <http://csound.github.io/docs/manual/GENpadsynth.html>
-data PadsynthSpec = PadsynthSpec 
+data PadsynthSpec = PadsynthSpec
     { padsynthFundamental     :: Double
-    , padsynthBandwidth       :: Double    
+    , padsynthBandwidth       :: Double
     , padsynthPartialScale    :: Double
     , padsynthHarmonicStretch :: Double
     , padsynthShape           :: PadsynthShape
@@ -117,15 +117,15 @@ data PadsynthSpec = PadsynthSpec
 data PadsynthShape = GaussShape | SquareShape | ExpShape
 ~~~
 
-Wow! Lots of parameters. 
+Wow! Lots of parameters.
 
 * Fundamental -- is the frequency of the note that is stored in the table.
 
 * Bandwidth -- is the bandwidth of harmonic. How wide we should spread the harmonics.
 
-* PartialScale -- Is the ratio with which we increase the bandwidth for each subsequent harmonic. 
-    There is a notion that for the sound to sound natural the bandwidth should become bigger 
-    when we go from lower harmonics to higher. This parameter declares 
+* PartialScale -- Is the ratio with which we increase the bandwidth for each subsequent harmonic.
+    There is a notion that for the sound to sound natural the bandwidth should become bigger
+    when we go from lower harmonics to higher. This parameter declares
 
 * HarmonicStretch -- ratio of stretch of the overtones
 
@@ -165,7 +165,7 @@ padsynthOscMultiCps :: [(Double, PadsynthSpec)] -> D -> SE Sig
 padsynthOscMultiCps specs frequency = ...
 ~~~
 
-The list of pairs contains thresholds for frequencies and padsynth specifications. 
+The list of pairs contains thresholds for frequencies and padsynth specifications.
 The given padsynth specification is going to be applied to all notes
 with frequencies that are below the given threshold and above of the threshold of
 the previous element in the list.
@@ -201,8 +201,8 @@ padsynth :: PadsynthSpec -> Tab
 
 ## PADsynth instruments
 
-The package `csound-catalog` contains many predefined instruments that are based 
-on padsynth algorithm. They take in a spectrum of Sharc instrument 
+The package `csound-catalog` contains many predefined instruments that are based
+on padsynth algorithm. They take in a spectrum of Sharc instrument
 and create a padsynth instrument with it:
 
 ~~~haskell
@@ -220,14 +220,14 @@ Let's listen to some of them (recall that  we need to import the `Csound.Patch` 
 
 ~~~haskell
 > :m +Csound.Patch
-> vdac $ atMidi $ psSoftPadSharc shAltoFlute
-> vdac $ atMidi $ psOrganSharc shCello
-> vdac $ atMidi $ psPiano shTrumpetC
+> vdac $ mul 0.5 $ atMidi $ psSoftPadSharc shAltoFlute
+> vdac $ mul 0.5 $ atMidi $ psOrganSharc shCello
+> vdac $ mul 0.5 $ atMidi $ psPiano shTrumpetC
 ~~~
 
 The timbre of an instrument can be altered by changing the bandwidth of padsynth.
 There are special versions of aforementioned functions that allows to alter
-specific parameters (The function name stays the same but it's followed by `'`). 
+specific parameters (The function name stays the same but it's followed by `'`).
 
 ~~~haskell
 data PadSharcSpec = PadSharcSpec {
@@ -238,7 +238,7 @@ data PadSharcSpec = PadSharcSpec {
 psPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 ~~~
 
-The type `PadSharcSpec` is defined in the module `Csound.Catalog.Wave` (see SHARC section). 
+The type `PadSharcSpec` is defined in the module `Csound.Catalog.Wave` (see SHARC section).
 It contains two parameters:
 
 * Bandwidth -- bandwidth for padsynth ftables
@@ -270,7 +270,7 @@ vdac $ atMidi $ psLargeOrganSharcHifi shAltoFlute
 ### Deep pads
 
 The padsynth algorithm is super cool for creation of pads. There are predefined functions that
-create great pads. They have vedic names: 
+create great pads. They have vedic names:
 
 ~~~haskell
 vibhu, rishi, agni, prakriti, rajas, avatara, bhumi :: PadsynthBandwidth -> Patch2
@@ -291,7 +291,7 @@ attached to your computer.
 ### Pads with crossfades
 
 There are cool instruments that allow to morph between several timbres.
-Right now they are defined only for pads. They have got suffix `Cfd` 
+Right now they are defined only for pads. They have got suffix `Cfd`
 for morphing of two timbres and `Cfd4` for morphing four timbres:
 
 ~~~haskell
@@ -306,7 +306,7 @@ The `cfdLevel` lies in the interval `(0, 1)`. The `0` produces only first instru
 the `1` produces only second instrument. So we have the mixture of two timbres.
 Also we can create the mixture of four signals. But in this case we have two levels:
 `cfdLevelX` and `cfdLevelY`. We can imagine that timbres lie at the corners of the rectangle.
-The levels define the coordinates of the point that lies inside the rectangle. 
+The levels define the coordinates of the point that lies inside the rectangle.
 The output timbre is produced with bilinear interpolation of timbres that lie at the corners of the rectangle.
 The values for levels lie at the interval `(0, 1)`. The `0` means left corner (or bottom) and `1`
 stands for right corner (or top corner).
@@ -337,7 +337,7 @@ vedicPadCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcIns
 vedicPadCfd4 cfdLevelX cfdLevelY instr1 instr2 instr3 instr4 bandwidth = ...
 ~~~
 
-They are particularly useful to test timbres with different values for bandwidth (it's the last input argument). 
+They are particularly useful to test timbres with different values for bandwidth (it's the last input argument).
 Good values lie at the interval `(0.01, 130)`.
 
 There are crossfade versions of specific pads: `vibhuRishi`, `vibhuAgni`, `rishiPrakriti` and so on.

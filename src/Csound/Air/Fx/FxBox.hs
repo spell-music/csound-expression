@@ -468,9 +468,17 @@ adele3m = adeleByM size3
 adele4m = adeleByM size4
 adele5m = adeleByM size5
 
--- Tape echo
-magnus :: Sigs a => Int -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> a -> SE a
-magnus size delt fb echoGain ktone randomSpread = bindSig (tapeEcho size delt fb echoGain ktone randomSpread)
+-- | magnus - simulates magnetic tape echo/delay
+--
+-- > magnus size feedback echoGain tone randomSpread ain
+--
+-- * size - how many heads in the tape
+-- * feedback
+-- * echo gain
+-- * tone - normalized center frequency of the filter (0  to 1)
+-- * randomSpread - quality of the tape (the higher - the worser)
+magnus :: Sigs a => D -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> a -> a
+magnus size delt fb echoGain ktone randomSpread = mapSig (tapeEcho size delt fb echoGain ktone randomSpread)
 
 -- Ping Pong delay
 
@@ -779,7 +787,7 @@ uiAdele5m = uiAdeleByM size5
 uiMagnus :: Sigs a => Int -> Double -> Double -> Double -> Double -> Double -> Source (Fx a)
 uiMagnus size initDelayTime initFeedback initEchoGain initTone initSpread  = mapSource bindSig $ paintTo adeleColor $ fxBox "Tape echo" fx True [("del time", initDelayTime), ("fbk", initFeedback), ("echo gain", initEchoGain), ("tone", initTone), ("tape qty", initSpread)]
     where
-        fx [delayTime, feedback, echoGain, tone, spread] = magnus size delayTime feedback echoGain tone spread
+        fx [delayTime, feedback, echoGain, tone, spread] = return . magnus (int size) delayTime feedback echoGain tone spread
 
 -- Ping-pong delay
 

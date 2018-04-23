@@ -12,9 +12,9 @@ text   :: String -> Str
 sig    :: D -> Sig
 ~~~
 
-## The primitive wave forms 
+## The primitive wave forms
 
-They convert the time varied frequency to the signal: 
+They convert the time varied frequency to the signal:
 
 ~~~haskell
 osc :: Sig -> Sig       -- pure tone
@@ -41,13 +41,13 @@ linseg :: [D] -> Sig                -- linear envelope
 expseg :: [D] -> Sig                -- exponential envelope
 
                                     -- with release:
-linsegr :: [D] -> D -> D -> Sig     -- linear envelope 
+linsegr :: [D] -> D -> D -> Sig     -- linear envelope
 expsegr :: [D] -> D -> D -> Sig     -- exponential envelope
 ~~~
 
 ## Filters
 
-Parameters: the last argument is always the signal to filter 
+Parameters: the last argument is always the signal to filter
 the first parameter is cut-off frequency for `lp` and `hp`
 and the center frequency for `bp` and `br`. The second argument
 is a band-width (resonance).
@@ -74,7 +74,7 @@ reverbsc :: Tuple a => Sig -> Sig -> Sig -> Sig -> a
 reverbsc aleft aright feedBackLevel cutOffFrequency
 ~~~
 
-It's a stereo processing. It takes a two signals the feedback level (0 to 1) 
+It's a stereo processing. It takes a two signals the feedback level (0 to 1)
 and cut off frequency of the low pass filter (usually it's 10000).
 
 
@@ -101,22 +101,21 @@ Low-level functions:
 
 ~~~haskell
 mp3in   :: Tuple a => Str -> a
-diskin2 :: Tuple a => Str -> Sig -> a
+diskin2 :: Tuple a => Str -> a
 ~~~
 
-The function `diskin2` reads only wav-files. The additional parameter is
-the speed of the playback.
+The function `diskin2` reads only wav-files.
 
 
 ## Constructing the arrays
 
 ~~~haskell
-sines :: [Double] -> Tab    -- list of the partials to sine harmonics 
-lins  :: [Double] -> Tab    -- array of linear segments 
+sines :: [Double] -> Tab    -- list of the partials to sine harmonics
+lins  :: [Double] -> Tab    -- array of linear segments
                             -- (parameters are like in `linseg`)
 exps  :: [Double] -> Tab    -- array of exponential segments
-                            -- (parameters are like in `expseg`)                        
-~~~             
+                            -- (parameters are like in `expseg`)
+~~~
 
 ## Noises
 
@@ -133,7 +132,7 @@ pinkish :: Sig -> SE Sig            -- pink noise
 Simplified noises:
 
 ~~~haskell
-white, pink :: SE Sig
+white, pink, brown, pinker :: SE Sig
 ~~~
 
 ## Events
@@ -143,26 +142,26 @@ Defined in the module `Csound.Control.Evt`
 The event stream `Evt` is a `Functor` and `Monoid`
 
 ~~~haskell
-metroE   :: Sig -> Evt ()
+metro    :: Sig -> Evt ()
 filterE  :: (a -> BoolD) -> Evt a -> Evt a
 repeatE  :: a -> Evt b -> Evt a
 cycleE   :: (Arg a) => [a] -> Evt b -> Evt a
 oneOf    :: (Arg a) => [a] -> Evt b -> Evt a
-randSkip :: D -> Evt a -> Evt a
+randSkip :: Sig -> Evt a -> Evt a
 ~~~
 
 ## Invoking the instruments
 
 ~~~haskell
--- renderes the midi instrument    
-midi    :: Sigs a => (Msg -> SE a) -> SE a         
+-- renderes the midi instrument
+midi    :: Sigs a => (Msg -> SE a) -> SE a
 
--- renderes the midi instrument 
+-- renderes the midi instrument
 -- on the given channel
-midin   :: Sigs a => Int -> (Msg -> SE a) -> SE a  
+midin   :: Sigs a => Int -> (Msg -> SE a) -> SE a
 
 -- mix the signals from score
-mix     :: (CsdSco f, Sigs a) => f (Mix a) -> a 
+mix     :: (CsdSco f, Sigs a) => f (Mix a) -> a
 
 -- invokes an instrument on the score
 sco     :: (CsdSco f, Arg a, Sigs b) => (a -> SE b) -> f a -> f (Mix b)
@@ -170,7 +169,7 @@ sco     :: (CsdSco f, Arg a, Sigs b) => (a -> SE b) -> f a -> f (Mix b)
 -- applies an effect to the score
 eff     :: (CsdSco f, Sigs a, Sigs b) => (a -> SE b) -> f (Mix a) -> f (Mix b)
 
--- invokes an instrument on the event stream 
+-- invokes an instrument on the event stream
 
 -- event stream contains duration of the note
 sched   :: (Arg a, Sigs b) => (a -> SE b) -> Evt (D, a) -> b
@@ -186,7 +185,7 @@ schedUntil :: (Arg a, Sigs b) => (a -> SE b) -> Evt a -> Evt c -> b
 ## Truncating/repeating the signal
 
 ~~~haskell
-takeSnd   :: Sigs a => Double -> a -> a   
+takeSnd   :: Sigs a => Double -> a -> a
 repeatSnd :: Sigs a => D      -> a -> a
 ~~~
 
@@ -202,11 +201,11 @@ The type class `RenderCsd` contains the sings that can be rendered to file.
 It's something that produces the sound or triggers the Csound procedures.
 
 ~~~haskell
--- plays a signal in real time 
-dac     :: RenderCsd a => a -> IO ()            
+-- plays a signal in real time
+dac     :: RenderCsd a => a -> IO ()
 
 -- plays a signal in real time with virtual midi-keyboard
-vdac     :: RenderCsd a => a -> IO ()            
+vdac     :: RenderCsd a => a -> IO ()
 
 -- saves the csound file with the given name
 writeCsd :: RenderCsd a => String -> a -> IO ()
@@ -220,7 +219,7 @@ csd :: RenderCsd a => a -> IO ()
 Defined in the module `Csound.Options`.
 
 With options we can set the global settings of the rendering process.
-The type `Options` is a monoid with the meaning that we can 
+The type `Options` is a monoid with the meaning that we can
 concatenate partially defined options and get more specified ones.
 
 To specify the options we use the rendering functions with suffix `By`:
@@ -238,7 +237,7 @@ The most common options:
 setRates :: Int -> Int -> Options
 
 -- sets the buffer sizes (the define the granularity of the real-time performance)
-setBufs :: Int -> Int -> Options 
+setBufs :: Int -> Int -> Options
 
 -- where to direct the output
 setOutput :: String -> Options
@@ -292,7 +291,7 @@ loop :: Int -> Score a -> Score a
 Main elements:
 
 ~~~haskell
---        Label     Diapason   Init      Result   
+--        Label     Diapason   Init      Result
 --                  of the     value
 --                  value
 
@@ -304,7 +303,7 @@ toggle :: String -> Source (Evt D)
 
 --                      Label     Alternatives     Id of the
 --                                                 default
---                                                 value 
+--                                                 value
 radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
 
 -- shows a static text
@@ -337,7 +336,7 @@ hor :: [Gui] -> Gui
 ver :: [Gui] -> Gui
 
 -- scaling of the element within the group
--- (element is contained in the horizontal 
+-- (element is contained in the horizontal
 -- or vertical container)
 sca :: Double -> Gui -> Gui
 ~~~

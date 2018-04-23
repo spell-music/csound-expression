@@ -2,8 +2,8 @@ Widgets for live performances
 =====================================
 
 Since the version 4.2.0 there are many widgets tageted
-at real-time performance. They should make it easy to 
-mix and process audio live. 
+at real-time performance. They should make it easy to
+mix and process audio live.
 
 It's assumed that the library `csound-sampler` is installed.
 
@@ -21,18 +21,15 @@ import Csound.Sam
 a1 = infSig1 $ osc 220
 a2 = infSig1 $ osc 330
 
-main = dac $ do
-	(g, sam) <- sim 4 [("220", a1), ("330", a2)]
-	panel g
-	mul 0.5 $ runSam 120 sam
+main = dac $ mul 0.5 $ lift1 (runSam 120) $ sim 4 [("220", a1), ("330", a2)]~~~
 ~~~
 
-For simplicity we use pure sine waves but we can use samples 
-with cool sounds instead. 
+For simplicity we use pure sine waves but we can use samples
+with cool sounds instead.
 
 The first argument for `sim` (it's 4 in the example above)
 is responsible for syncronization. The samples are started only
-on every n'th beat. 
+on every n'th beat.
 
 we can toggle between samples with the function `tog`.
 The example is the same but write `tog` in place of `sim`.
@@ -57,13 +54,11 @@ c1 = infSig1 $ tri 220
 c2 = infSig1 $ tri 330
 c3 = infSig1 $ tri 440
 
-main = dac $ do
-	(g, sam) <- live 4 ["triangle", "square"] 
-		[ c1, b1
-		, c2, b3
-		, c3, b3]
-	panel g
-	mul 0.3 $ runSam 120 sam
+main = dac $ mul 0.3 $ lift1 (runSam 120) $
+  live 4 ["triangle", "square"]
+    [ c1, b1
+    , c2, b3
+    , c3, b3]
 ~~~
 
 the function `live` takes in the number of beats for syncronization,
@@ -138,10 +133,10 @@ fxBox :: FxUI a => String -> ([Sig] -> Fx a) -> Bool -> [(String, Double)] -> So
 fxBox name fx isOn args = ...
 ~~~
 
-It expects the name of the widget, the sound processing function 
+It expects the name of the widget, the sound processing function
 the flag that turns on the widget (is it active at the start time)
 and the list of arguments. The result contains the widget and fx-function.
-The FX-processing function takes in a list of signal arguments, each argument 
+The FX-processing function takes in a list of signal arguments, each argument
 in the list is going to be represented with a slider. Names for the sliders are
 taken fron te last argument.
 
@@ -155,12 +150,12 @@ import Csound.Base
 import Csound.Sam
 
 main = dac $ do
-    (gui, fx) <- fxHor 
+    (gui, fx) <- fxHor
         [ uiFilter False 0.5 0.5 0.5
-        , uiChorus False 0.5 0.5 0.5 0.5        
+        , uiChorus False 0.5 0.5 0.5 0.5
         , uiPhaser False 0.5 0.5 0.5 0.5
         , uiReverb True  0.5 0.5
-        , uiGain   0.5 
+        , uiGain   0.5
         ]
     win "main" (900, 300) gui
     fx $ fromMono $ saw 110
@@ -168,7 +163,7 @@ main = dac $ do
 
 We can group the fx-widgets with functions `fxHor`, `fxVer` and `fxSca`.
 They group widgets horizontaly, verticaly and scale the widgets.
-There are many more widgets to consider you can find them in the modules 
+There are many more widgets to consider you can find them in the modules
 `Csound.Air.Live` and `Csound.Air.Fx.FxBox`.
 
 Let's look at the types of the functions `fxHor` and `fxVer` to see what's going on:
@@ -177,7 +172,7 @@ Let's look at the types of the functions `fxHor` and `fxVer` to see what's going
 fxHor, fxVer :: [Source (Fx a)] -> Source (Fx a)
 ~~~
 
-So with those functions we stuck the visual representations in the line and compose 
+So with those functions we stuck the visual representations in the line and compose
 the FX-functions in the list. Also there is a function `fxGrid`. We can create a matrix
 of Fx-widgets with it:
 

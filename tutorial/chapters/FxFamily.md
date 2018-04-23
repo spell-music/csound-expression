@@ -1,12 +1,11 @@
 Family of effects
 ====================================
 
-There is a family of effects that are common to electronic music. 
-The module `Csound.Air.Fx.FxBox' defines many typical effects. 
+There is a family of effects that are common to electronic music.
+The module `Csound.Air.Fx.FxBox' defines many typical effects.
 This code can turn your code into a pedalboard! We can use effects as spice for the tibre.
-
 It defines useful functions for typical guitar effects and defines
-shortcuts to quickly add the effects to your instrument, also it has 
+shortcuts to quickly add the effects to your instrument, also it has
 support for UI. We can not only add effects but also  tweak them in real time
 just like we do it with guitar stompboxes.
 
@@ -18,6 +17,8 @@ the family of effects:
 * `adele` - analog delay
 
 * `pongy` - ping-pong delay
+
+* `magnus` - magnetic tape echo
 
 * `tort`  - distortion
 
@@ -86,6 +87,24 @@ It can be used like this:
 dac $ pongy $ loopWav 1 "vox.wav"
 ~~~
 
+### Magnus - magnetic tape echo/delay
+
+It's a simulation of magnetic tape delay (as found in Roland Space Echo).
+Original code is developed by Jon Downing, then it was ported to CE.
+
+~~~haskell
+magnus :: Sigs a => D -> DelayTime -> Feedback -> EchoGain -> ToneSig -> RandomSpreadSig -> a -> a
+magnus size feedback echoGain tone randomSpread ain
+~~~
+
+Arguments:
+
+* `size` - how many heads in the tape
+* `feedback` - controls the number of repeats
+* `echo gain` - prominence of echo effect
+* `tone` - normalized center frequency of the filter (0  to 1)
+* `randomSpread` - quality of the tape (the higher - the worser)
+
 ### Reverbs
 
 There are usefull functions to easily add a reverb:
@@ -139,7 +158,7 @@ revsy :: Sigs a => TimeSig -> a -> a
 
 ### Flan - flanger
 
-A flanger effect following the typical design of a so called 'stomp box' 
+A flanger effect following the typical design of a so called 'stomp box'
 
 ~~~haskell
 flan :: Sigs a => RateSig -> DepthSig -> DelayTime -> Feedback -> a -> a
@@ -150,7 +169,7 @@ Arguments
 * `rate` -- rate control of the lfo of the effect *NOT IN HERTZ* (range 0 to 1)
 
 * `depth` -- depth of the lfo of the effect (range 0 to 1)
-    
+
 * `delayTime` -- static delay offset of the flanging effect (range 0 to 1)
 
 * `feedback` -- feedback and therefore intensity of the effect (range 0 to 1)
@@ -169,11 +188,11 @@ Arguments:
 * `rate` -- rate of lfo of the effect (range 0 to 1)
 
 * `depth` -- depth of lfo of the effect (range 0 to 1)
-    
+
 * `freq` -- centre frequency of the phase shifting effect in octaves (suggested range 0 to 1)
-    
+
 * `fback` -- feedback and therefore intensity of the effect (range 0 to 1)
-   
+
 
 ### Crusher - bit crusher
 
@@ -259,10 +278,10 @@ ringo balance rate envelopeMod
 
 Sometimes we want to quickly add some effect. We don't care that much about particular numbers for parameters.
 We just want to add a bit of distortion, lot's of delay and spoonful of flanger. To achieve that easily we have
-a predefined presets for every member of fx-family. 
+a predefined presets for every member of fx-family.
 
 The preset name is a name of the member followed by a number 1 to 5 (means small to large coloring). For some members (`adele` and `tort`)
-it has auxiliary suffix `m` (muted) or `b` (bright) like `adele2m` or `tort3b`. This suffix relates to the effects 
+it has auxiliary suffix `m` (muted) or `b` (bright) like `adele2m` or `tort3b`. This suffix relates to the effects
 that have built-in low-pass filter or tone parameter.
 
 ## UI stompboxes
@@ -330,7 +349,7 @@ So the uderlying type of `pedals` is:
 pedals :: Sig2 -> SE (Gui, Input (SE Sig2))
 ~~~
 
-and it's just the right food for bind operator. 
+and it's just the right food for bind operator.
 
 Also we can apply the UI-widget with FX processing function with the help of the function `fxApply`:
 
@@ -368,17 +387,17 @@ used as mono to stereo  transition.  To make it easy to create chains of effects
 units there are analogs of functions `fxHor` and `fxVer`. They have suffix `MS` for Mono-To-Stereo:
 
 ~~~haskell
-fxHorMS, fxVerMS :: 
-    [Source Fx1] -> 
-    Maybe (Source (Sig -> SE Sig2)) -> 
-    [Source Fx2] -> 
+fxHorMS, fxVerMS ::
+    [Source Fx1] ->
+    Maybe (Source (Sig -> SE Sig2)) ->
+    [Source Fx2] ->
     Source (Sig -> SE Sig2)
 ~~~
 
 Type seems to be complicated but let's break it apart. The chain starts with the list of monophonic effects:
 
 ~~~haskell
-[Source Fx1] -> 
+[Source Fx1] ->
 ~~~
 
 Recall that `Fx1` is an alias for `Sig -> SE Sig`. Then we encounter a possible bridge from mono to stereo signals:
@@ -393,7 +412,7 @@ Also we can just omit it with `Nothing` case and then the identity mono to stere
 Next we proceed with the chain of stereo effects:
 
 ~~~haskell
-[Source Fx2] -> 
+[Source Fx2] ->
 ~~~
 
 At the output we get UI-widget with the mono to stereo effect:
@@ -418,7 +437,7 @@ received from say guitar pluged into audio card.
 > dac $ onCard2 $ \(aLeft, aRight) -> fxApply fx aLeft
 ~~~
 
-The `onCard2` is a helper function to derive the types. It passes the argument through unchanged but it has more strict type signature. 
+The `onCard2` is a helper function to derive the types. It passes the argument through unchanged but it has more strict type signature.
 The `dac` is to much overloaded for this case. We can do without it but then we need to specify the types explicitly.
 
 ## Example: Virtual pedalboard
@@ -434,7 +453,7 @@ run = dacBy (setAdc <> setJack "fx" <> setRates 44100 32 <> setBufs 64 32)
 
 proc :: Sig2 -> Source Sig2
 proc (a1, a2) = fxApply fx a1
-    where         
+    where
         fx = fxGridMS 4 [uiTort1m, uiFlan1, uiPhasy2, uiAdele2 0.4 0.35] def [uiChory2, uiHall2, uiGain 0.6]
 ~~~
 
@@ -478,7 +497,7 @@ main = run proc
 ~~~
 
 If the `run` (`dacBy` in disguise) takes in a function the argument signals of the function
-are interpreted as input audio channels.  
+are interpreted as input audio channels.
 
 So this is how we can create a pedalboard with Haskell!
 
