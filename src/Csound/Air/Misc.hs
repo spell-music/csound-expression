@@ -1,12 +1,12 @@
 {-# Language FlexibleContexts #-}
 -- | Patterns
 module Csound.Air.Misc(
-    mean, vibrate, randomPitch, chorusPitch, resons, resonsBy, modes, dryWet, 
+    mean, vibrate, randomPitch, chorusPitch, resons, resonsBy, modes, dryWet,
     once, onceBy, several, fromMono,
     -- * List functions
     odds, evens,
     -- * Random functions
-    rndPan, rndPan2, rndVol, gaussVol, 
+    rndPan, rndPan2, rndVol, gaussVol,
     -- * Choose signals
     selector,
     -- * Saving to file
@@ -27,21 +27,28 @@ module Csound.Air.Misc(
     -- * Function composition
     funSeq, funPar,
 
-    -- * Metronome 
+    -- * Metronome
     ticks, nticks,
     ticks2, nticks2,
     ticks3, nticks3,
     ticks4, nticks4,
 
     -- * Drone
-    testDrone, testDrone2, testDrone3, testDrone4
+    testDrone, testDrone2, testDrone3, testDrone4,
+
+    -- * Attack detection
+    attackTrig,
+    attackTrigSig,
+
+    -- * Ambient guitar FX
+    ambiEnv
 ) where
 
 import Control.Monad
 import Data.Boolean
 import Data.Default
 
-import Csound.Dynamic hiding (int)
+import Csound.Dynamic hiding (int, when1)
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (metro)
@@ -63,23 +70,23 @@ import Csound.Typed.Plugins(delay1k)
 
 -- | Selects odd elements from the list.
 odds :: [a] -> [a]
-odds as = fmap snd $ filter fst $ zip (cycle [True, False]) as 
+odds as = fmap snd $ filter fst $ zip (cycle [True, False]) as
 
 -- | Selects even elements from the list.
 evens :: [a] -> [a]
-evens as 
+evens as
     | null as   = []
     | otherwise = odds $ tail as
 
--- | Reads table once during the note length. 
+-- | Reads table once during the note length.
 once :: Tab -> Sig
 once = onceBy idur
 
--- | Reads table once during a given period of time. 
+-- | Reads table once during a given period of time.
 onceBy :: D -> Tab -> Sig
-onceBy dt tb = kr $ oscBy tb (1 / sig dt) 
+onceBy dt tb = kr $ oscBy tb (1 / sig dt)
 
--- | Reads table several times during the note length.  
+-- | Reads table several times during the note length.
 several :: Tab -> Sig -> Sig
 several tb rate = kr $ oscil3 1 (rate / sig idur) tb
 
@@ -87,12 +94,12 @@ several tb rate = kr $ oscil3 1 (rate / sig idur) tb
 mean :: Fractional a => [a] -> a
 mean xs = sum xs / (fromIntegral $ length xs)
 
--- | Adds vibrato to the sound unit. Sound units is a function that takes in a frequency. 
+-- | Adds vibrato to the sound unit. Sound units is a function that takes in a frequency.
 vibrate :: Sig -> Sig -> (Sig -> a) -> (Sig -> a)
 vibrate vibDepth vibRate f cps = f (cps * (1 + kvib))
-    where kvib = vibDepth * kr (osc vibRate) 
+    where kvib = vibDepth * kr (osc vibRate)
 
--- | Adds a random vibrato to the sound unit. Sound units is a function that takes in a frequency. 
+-- | Adds a random vibrato to the sound unit. Sound units is a function that takes in a frequency.
 randomPitch :: Sig -> Sig -> (Sig -> a) -> (Sig -> SE a)
 randomPitch rndAmp rndCps f cps = fmap go $ randh (cps * rndAmp) rndCps
     where go krand = f (cps + krand)
@@ -104,7 +111,7 @@ chorusPitch n wid = phi dts
         phi :: [Sig] -> (Sig -> Sig) -> Sig -> Sig
         phi ks f = \cps -> mean $ fmap (f . (+ cps)) ks
 
-        dts = fmap (\x -> - wid + fromIntegral x * dt) [0 .. n-1] 
+        dts = fmap (\x -> - wid + fromIntegral x * dt) [0 .. n-1]
 
         dt = 2 * wid / fromIntegral n
 
@@ -123,7 +130,7 @@ resons = resonsBy bp
 resonsBy :: (cps -> bw -> Sig -> Sig) -> [(cps, bw)] -> Sig -> Sig
 resonsBy filt ps asig = mean $ fmap (( $ asig) . uncurry filt) ps
 
--- | Mixes dry and wet signals. 
+-- | Mixes dry and wet signals.
 --
 -- > dryWet ratio effect asig
 --
@@ -138,7 +145,7 @@ dryWet k ef asig = k * asig + (1 - k) * ef asig
 
 -- | Chain of mass-spring-damping filters.
 --
--- > modes params baseCps exciter 
+-- > modes params baseCps exciter
 --
 -- * params - a list of pairs @(resonantFrequencyRatio, filterQuality)@
 --
@@ -150,11 +157,11 @@ modes = relResonsBy (\cf q asig -> mode asig cf q)
 
 relResonsBy :: (Sig -> a -> Sig -> Sig) -> [(Sig, a)] -> Sig -> Sig -> Sig
 relResonsBy resonator ms baseCps apulse = (recip normFactor * ) $ sum $ fmap (\(cf, q) -> harm cf q apulse) ms
-    where 
-        -- limit modal frequency to prevent explosions by 
+    where
+        -- limit modal frequency to prevent explosions by
         -- skipping if the maximum value is exceeded (with a little headroom)
         gate :: Sig -> Sig
-        gate cps = ifB (sig getSampleRate >* pi * cps) 1 0        
+        gate cps = ifB (sig getSampleRate >* pi * cps) 1 0
 
         normFactor = sum $ fmap (gate . (* baseCps) . fst) ms
 
@@ -174,11 +181,11 @@ rndPan2 (a, b) = rndPan $ mean [a, b]
 
 -- | Random panning
 rndPan :: Sig -> SE Sig2
-rndPan a = do   
+rndPan a = do
     fmap (pan2 a . sig) (rnd (1 :: D))
 
 -- | Random volume (with gauss distribution)
--- 
+--
 -- > gaussVol radiusOfDistribution
 gaussVol :: SigSpace a => D -> a -> SE a
 gaussVol k a = do
@@ -186,7 +193,7 @@ gaussVol k a = do
     return $ mul (sig $ level + 1) a
 
 -- | Random volume
--- 
+--
 -- > gaussVol (minVolume, maxVolume)
 rndVol :: SigSpace a => (D, D) -> a -> SE a
 rndVol (kMin, kMax) a = do
@@ -207,16 +214,16 @@ selector :: (Num a, SigSpace a) => [a] -> Sig -> a
 selector as k = sum $ zipWith choice [0..] as
     where choice n a = mul (port (ifB (sig (int n) ==* k) 1 0) 0.02) a
 
--- | Creates running arpeggios. 
+-- | Creates running arpeggios.
 --
 -- > arpeggiBy ampWeights pitches instrument cps
 --
 -- It plays an instrument with fast sequence of notes. We can specify
 -- the pitches and amplitude weights of the notes as well as frequency of repetition.
 arpeggi :: SigSpace a => [Sig] -> [Sig] -> (Sig -> a) -> Sig -> a
-arpeggi = arpBy triSeq sqrSeq 
+arpeggi = arpBy triSeq sqrSeq
 
--- | Creates running arpeggios. 
+-- | Creates running arpeggios.
 --
 -- > arpeggiBy ampWave pitchwave ampWeights pitches instrument cps
 --
@@ -271,7 +278,7 @@ rndAmp a = do
 
 rndVal :: D -> D -> D -> SE D
 rndVal total amount x = do
-    k <- birnd amount 
+    k <- birnd amount
     return $ x  + k * total
 
 rndDur amt x = rndVal x amt x
@@ -283,11 +290,11 @@ rndSpec spec = do
     dur  <- rndDur'
     tune <- rndTune'
     cps  <- rndCps'
-    return $ spec 
-        { trDur  = dur 
+    return $ spec
+        { trDur  = dur
         , trTune = tune
         , trCps  = cps }
-    where 
+    where
         rndDur'  = (maybe return rndDur $ (trRnd spec)) $ trDur spec
         rndTune' = (maybe return rndTune $ (trRnd spec)) $ trTune spec
         rndCps'  = (maybe return rndCps $ (trRnd spec)) $ trCps spec
@@ -316,7 +323,7 @@ nticks4 :: [Int] -> Sig -> Sig
 nticks4 = nticks' highConga'
 
 nticks' :: (TrSpec -> SE Sig) -> [Int] -> Sig -> Sig
-nticks' drum ns = genTicks drum (cycleE $ ns >>= getAccent)    
+nticks' drum ns = genTicks drum (cycleE $ ns >>= getAccent)
 
 -- | Metronome.
 --
@@ -334,13 +341,13 @@ ticks4 :: Int -> Sig -> Sig
 ticks4 = ticks' highConga'
 
 ticks' :: (TrSpec -> SE Sig) -> Int -> Sig -> Sig
-ticks' drum n 
+ticks' drum n
     | n <= 1    = genTicks drum (devt 0.5)
     | otherwise = genTicks drum (cycleE $ getAccent n)
 
 genTicks :: (TrSpec -> SE Sig) -> (Tick -> Evt D) -> Sig -> Sig
-genTicks drum f x = mul 3 $ mlp 4000 0.1 $ 
-    sched (\amp -> mul (sig amp) $ drum (TrSpec (amp + 1) 0 (1200 * (amp + 0.5)) (Just 0.05))) $ 
+genTicks drum f x = mul 3 $ mlp 4000 0.1 $
+    sched (\amp -> mul (sig amp) $ drum (TrSpec (amp + 1) 0 (1200 * (amp + 0.5)) (Just 0.05))) $
     withDur 0.5 $ f $ metro (x / 60)
 
 rimShot' spec = pureRimShot' =<< rndSpec spec
@@ -357,7 +364,7 @@ pureRimShot' spec = rndAmp =<< addDur =<< (mul 0.8 $ aring + anoise)
 
         -- ring
         aenv1 = expsega [1,fullDur,0.001]
-        ifrq1 = sig $ cps * octave tune     
+        ifrq1 = sig $ cps * octave tune
         aring = mul (0.5 * (aenv1 - 0.001)) $ at (bbp ifrq1 (ifrq1 * 8)) $ rndOscBy tabTR808RimShot ifrq1
 
         -- noise
@@ -418,7 +425,7 @@ testDrone2 cps = atNote (deepPad nightPad) (0.8, cps)
 testDrone3 cps = atNote (deepPad caveOvertonePad) (0.8, cps)
 testDrone4 cps = atNote (deepPad pwEnsemble) (0.8, cps)
 
-pwEnsemble = withSmallHall $ polySynt $ at fromMono . mul 0.55 . onCps impPwEnsemble    
+pwEnsemble = withSmallHall $ polySynt $ at fromMono . mul 0.55 . onCps impPwEnsemble
 nightPad   = withLargeHall $ polySynt $ mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . impNightPad 0.5)
 
 data RazorPad = RazorPad { razorPadSpeed :: Sig }
@@ -427,12 +434,12 @@ instance Default RazorPad where
     def = RazorPad 0.5
 
 razorPad = razorPad' def
-razorPad' (RazorPad speed) = withLargeHall' 0.35 $ polySynt $ at fromMono . mul 0.6 . onCps (uncurry $ impRazorPad speed)    
+razorPad' (RazorPad speed) = withLargeHall' 0.35 $ polySynt $ at fromMono . mul 0.6 . onCps (uncurry $ impRazorPad speed)
 
 overtonePad = withLargeHall' 0.35 $ polySynt overtoneInstr
-    
+
 overtoneInstr :: CsdNote D -> SE Sig2
-overtoneInstr = mul 0.65 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (tibetan 11 0.012 cps) + mul (fades 0.25 1) (tibetan 13 0.015 (cps * 0.5)))    
+overtoneInstr = mul 0.65 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (tibetan 11 0.012 cps) + mul (fades 0.25 1) (tibetan 13 0.015 (cps * 0.5)))
 
 caveOvertonePad =  FxChain (fx1 0.2 (magicCave2 . mul 0.8)) $ polySynt overtoneInstr
 
@@ -452,7 +459,7 @@ impPwEnsemble x = mul 0.3 $ at (mlp (3500 + x * 2) 0.1) $ mul (leg 0.5 0 1 1) $ 
 -- * n - the number of sinusoids (the best is 9)
 --
 -- * off - frequency step of the harmonics ~ (0.01, 0.03)
--- 
+--
 -- * cps - the frequency of the note
 tibetan :: Int -> Sig -> D -> Sig
 tibetan n off cps = chorusPitch n (2 * off * fromIntegral n) (oscBy wave) (sig cps)
@@ -464,7 +471,7 @@ impRazorPad speed amp cps = f cps + 0.75 * f (cps * 0.5)
 
 genRazor filter speed amp cps = mul amp $ do
     a1 <- ampSpline 0.01
-    a2 <- ampSpline 0.02    
+    a2 <- ampSpline 0.02
 
     return $ filter (1000 + 2 * cps + 500 * amp) 0.1 $ mean [
           fosc 1 3 (a1 * uosc (speed)) cps
@@ -473,12 +480,12 @@ genRazor filter speed amp cps = mul amp $ do
     where ampSpline c = rspline ( amp) (3.5 + amp) ((speed / 4) * (c - 0.1)) ((speed / 4) * (c  + 0.1))
 
 
--- | 
+-- |
 -- > nightPad fadeInTime cps
 impNightPad :: D -> Sig -> Sig
 impNightPad dt = (fadeIn dt * ) . stringPad 1
 
--- | 
+-- |
 --
 -- > stringPad amplitude cps
 stringPad :: Sig -> Sig -> Sig
@@ -519,15 +526,15 @@ type Feedback = Sig
 --
 -- > wshaper table amount asig
 --
--- wave shaper transforms the input signal with the table. 
--- The amount of transformation scales the signal from 0 to 1. 
+-- wave shaper transforms the input signal with the table.
+-- The amount of transformation scales the signal from 0 to 1.
 -- the amount is ratio of scaling. It expects the values from the interval [0, 1].
--- 
+--
 wshaper :: Tab -> Sig -> Sig -> Sig
 wshaper t amt asig = tablei (10 * amt * asig / 20) t `withDs` [1, 0.5]
 
 -- | Wave shaper with sigmoid.
--- 
+--
 -- > genSaturator sigmoidRadius amount asig
 --
 -- * sigmoid radius is 5 to 100.
@@ -560,3 +567,80 @@ hardSaturator = genSaturator 3.5
 hardSaturator2 :: Sig -> Sig -> Sig
 hardSaturator2 = genSaturator 6.5
 
+
+-----------------------------------------
+-- attack detection
+
+-- | Detects attacks in the signal. Outputs event stream of attack events.
+--
+-- > attackTrig threshold sigIn
+--
+-- threshhold cnmtrols the sensitivity of attack detection.
+-- Try out different values in [0, 0.2]
+attackTrig :: Sig -> Sig -> SE (Evt Unit)
+attackTrig thresh ain = fmap sigToEvt $ attackTrigSig thresh ain
+
+-- | Detects attacks in the signal. Outputs trigger-signal
+-- where 1 is when attack happens and 0 otherwise.
+attackTrigSig :: Sig -> Sig -> SE Sig
+attackTrigSig thresh x = do
+  kTime <- newCtrlRef (iWait + 1)
+  kTrig <- newCtrlRef 0
+
+  writeRef kTrig 0
+  timeVal <- readRef kTime
+
+  when1 (da >* thresh &&* timeVal >* iWait) $ do
+    printk 0 timeVal
+    writeRef kTrig 1
+    writeRef kTime 0
+
+  modifyRef kTime (+1)
+
+  readRef kTrig
+  where
+    da = diffSig 0.01 $ rms x
+    iWait :: Sig
+    iWait = 100
+
+    diffSig :: D -> Sig -> Sig
+    diffSig dt x = x - delaySig dt x
+
+
+------------------------------
+-- ambient envelope
+
+-- | Make smooth attacks for the input guitar or piano-like sounds.
+-- It simulates automatic volume control pedal. It detects striken attacks
+-- and makes them sound more PAD-like.
+--
+-- first argument is threshold that controls sensitivity of attack detection.
+-- The values like ~ 0.01, 0.02 is good start.
+--
+-- To use it with guitar it's good to add a bit of distortion and compression
+-- to the signal to make it brighter and then to apply several delays to prolong the sustain
+-- and release phases. And it's good to add some reverb at the end.
+--
+-- Here is an example of how to make ambient guitar with this effect:
+--
+-- > main = dac proc
+-- >
+-- > -- | Let's assume we read guitar from the first input of sound card
+-- > proc :: Sig2 -> SE Sig2
+-- > proc (x, _) = mul 1 $ hall 0.25 $
+-- >          fmap ( fromMono . (adele 0.35 1 0.65 0.34) . (adele 0.35 0.25 0.75 0.34) .
+-- >                 saturator 0.3  . tort 0.1 0.25 .
+-- >                 magnus 2 0.25 1.1 0.6 0.4 1.8) $
+-- >           ambiEnv 0.02 x
+-- >
+--
+-- So I've added a tape echo with magnus,
+-- then goes combo of saturator (compressor) and tort (distortion)
+-- then goes a couple of delays (adele)
+-- and the last part is sweet reverb (hall).
+ambiEnv :: Sig -> Sig -> SE Sig
+ambiEnv thresh ain = do
+  attacks <- attackTrigSig thresh ain
+  return $ delaySig 0.1 (env attacks) * ain
+  where
+    env tr = adsr140 (rms ain - 0.05) tr 4 1 1 3

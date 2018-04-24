@@ -7,24 +7,24 @@ module Csound.Air.Envelope (
     adsr140, trigTab,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
-    onDur, lindurBy, expdurBy, linendurBy,  
+    onDur, lindurBy, expdurBy, linendurBy,
 
     -- * Faders
     fadeIn, fadeOut, fades, expFadeIn, expFadeOut, expFades, slope, expSlope,
 
-    -- * Humanize    
+    -- * Humanize
     HumanizeValue(..), HumanizeTime(..), HumanizeValueTime(..),
     hval, htime, hvalTime,
 
-    -- * Looping envelopes   
+    -- * Looping envelopes
 
     -- ** Simple
     lpshold, loopseg, loopxseg, lpsholdBy, loopsegBy, loopxsegBy,
     holdSeq, linSeq, expSeq,
-    linloop, exploop, sah, stepSeq, 
+    linloop, exploop, sah, stepSeq,
     constSeq, triSeq, sqrSeq, sawSeq, isawSeq, xsawSeq, ixsawSeq, isqrSeq, xtriSeq,
     pwSeq, ipwSeq, rampSeq, irampSeq, xrampSeq, ixrampSeq,
-    adsrSeq, xadsrSeq, adsrSeq_, xadsrSeq_,  
+    adsrSeq, xadsrSeq, adsrSeq_, xadsrSeq_,
 
     -- ** Complex
     Seq, toSeq, onBeat, onBeats,
@@ -70,7 +70,7 @@ xeg a d s r = mxadsr a d (s + 0.00001) r
 --
 -- > onIdur [a, t1, b, t2, c]
 --
--- becomes: 
+-- becomes:
 --
 -- > [a, t1 * idur, b, t2 * idur, c]
 onIdur :: [D] -> [D]
@@ -80,7 +80,7 @@ onIdur = onDur idur
 --
 -- > onDur dt [a, t1, b, t2, c]
 --
--- becomes: 
+-- becomes:
 --
 -- > [a, t1 * dt, b, t2 * dt, c]
 onDur :: D -> [D] -> [D]
@@ -88,22 +88,22 @@ onDur dur xs = case xs of
     a:b:as -> a : b * dur : onDur dur as
     _ -> xs
 
--- | The opcode 'Csound.Opcode.linseg' with time intervals 
+-- | The opcode 'Csound.Opcode.linseg' with time intervals
 -- relative to the total duration of the note.
 lindur :: [D] -> Sig
 lindur = linseg . onIdur
 
--- | The opcode 'Csound.Opcode.expseg' with time intervals 
+-- | The opcode 'Csound.Opcode.expseg' with time intervals
 -- relative to the total duration of the note.
 expdur :: [D] -> Sig
 expdur = expseg . onIdur
 
--- | The opcode 'Csound.Opcode.linseg' with time intervals 
+-- | The opcode 'Csound.Opcode.linseg' with time intervals
 -- relative to the total duration of the note given by the user.
 lindurBy :: D -> [D] -> Sig
 lindurBy dt = linseg . onDur dt
 
--- | The opcode 'Csound.Opcode.expseg' with time intervals 
+-- | The opcode 'Csound.Opcode.expseg' with time intervals
 -- relative to the total duration of the note given by the user.
 expdurBy :: D -> [D] -> Sig
 expdurBy dt = expseg . onDur dt
@@ -121,7 +121,7 @@ linendur = linendurBy idur
 linendurBy :: D -> Sig -> D -> D -> Sig
 linendurBy dt asig ris dec = linen asig (ris * dt) dt (dec * dt)
 
-        
+
 -- | Fades in with the given attack time.
 fadeIn :: D -> Sig
 fadeIn att = linseg [0, att, 1]
@@ -137,7 +137,7 @@ fadeOut dec = linsegr [1] dec 0
 slope :: D -> D -> Sig
 slope dt1 dt2 = linseg [0, dt1, 0, dt2, 1 ]
 
--- | Exponential slope (See the function @slope@). 
+-- | Exponential slope (See the function @slope@).
 expSlope :: D -> D -> Sig
 expSlope dt1 dt2 = linseg [0.001, dt1, 0.001, dt2, 1 ]
 
@@ -179,7 +179,7 @@ stepSeq as = lpshold (intersperseEnd 1 [1] as)
 -- The period of the repetition equals to the sum of all durations.
 sah :: [Sig] -> Sig
 sah as = stepSeq as (1 / period)
-    where 
+    where
         period = sumDts as
 
         sumDts xs = case xs of
@@ -211,7 +211,7 @@ genLoop f as = f (tfmList as) (1 / len)
 
 -- | Sample and hold sequence. It outputs the looping sequence of constan elements.
 constSeq :: [Sig] -> Sig -> Sig
-constSeq = genSeq stepSeq id 
+constSeq = genSeq stepSeq id
 
 -- | Step sequencer with unipolar triangle.
 triSeq :: [Sig] -> Sig -> Sig
@@ -277,18 +277,18 @@ ixrampSeq duty xs = genSeq loopxseg (irampList (head xs) duty) xs
 
 
 sawList xs = case xs of
-    []  -> []       
+    []  -> []
     [a] -> a : 1 : 0 : []
     a:rest -> a : 1 : 0 : 0 : sawList rest
-        
+
 isawList xs = case xs of
-    []  -> []  
+    []  -> []
     [a] -> 0 : 1 : a : []
     a:rest -> 0 : 1 : a : 0 : isawList rest
 
 triList xs = case xs of
     [] -> [0, 0]
-    a:rest -> 0 : 1 : a : 1 : triList rest 
+    a:rest -> 0 : 1 : a : 1 : triList rest
 
 pwList k xs = case xs of
     []   -> []
@@ -301,16 +301,16 @@ ipwList k xs = case xs of
 rampList a1 duty xs = case xs of
     [] -> []
     [a] -> 0.5 * a : d1 : a : d1 : 0.5 * a : d2 : 0 : d2 : 0.5 * a1 : []
-    a:as -> 0.5 * a : d1 : a : d1 : 0.5 * a : d2 : 0 : d2 : rampList a1 duty as  
-    where 
+    a:as -> 0.5 * a : d1 : a : d1 : 0.5 * a : d2 : 0 : d2 : rampList a1 duty as
+    where
         d1 = duty / 2
         d2 = (1 - duty) / 2
 
 irampList a1 duty xs = case xs of
     [] -> []
     [a] -> 0.5 * a : d1 : 0 : d1 : 0.5 * a : d2 : a : d2 : 0.5 * a1 : []
-    a:as -> 0.5 * a : d1 : 0 : d1 : 0.5 * a : d2 : a : d2 : rampList a1 duty as  
-    where 
+    a:as -> 0.5 * a : d1 : 0 : d1 : 0.5 * a : d2 : a : d2 : rampList a1 duty as
+    where
         d1 = duty / 2
         d2 = (1 - duty) / 2
 
@@ -325,7 +325,7 @@ intersperseEnd :: a -> [a] -> [a] -> [a]
 intersperseEnd val end xs = case xs of
     [] -> end
     [a] -> a : end
-    a:as -> a : val : intersperseEnd val end as 
+    a:as -> a : val : intersperseEnd val end as
 
 ------------------------------------------------------------------
 
@@ -342,7 +342,7 @@ fixEnd = ( ++ [0])
 -- It's a list of values and durations. The durations are relative
 -- to the period of repetition. The period is specified with the second argument.
 -- The second argument is the frequency of repetition measured in Hz.
--- 
+--
 -- > lpshold valDurs frequency
 lpshold :: [Sig] -> Sig -> Sig
 lpshold as cps = smooth $ C.lpshold cps 0 0 as
@@ -354,7 +354,7 @@ lpshold as cps = smooth $ C.lpshold cps 0 0 as
 -- It's a list of values and durations. The durations are relative
 -- to the period of repetition. The period is specified with the second argument.
 -- The second argument is the frequency of repetition measured in Hz.
--- 
+--
 -- > loopseg valDurs frequency
 loopseg :: [Sig] -> Sig -> Sig
 loopseg as cps = smooth $ C.loopseg cps 0 0 (fixEnd as)
@@ -366,7 +366,7 @@ loopseg as cps = smooth $ C.loopseg cps 0 0 (fixEnd as)
 -- It's a list of values and durations. The durations are relative
 -- to the period of repetition. The period is specified with the second argument.
 -- The second argument is the frequency of repetition measured in Hz.
--- 
+--
 -- > loopxseg valDurs frequency
 loopxseg :: [Sig] -> Sig -> Sig
 loopxseg as cps = smooth $ C.loopxseg cps 0 0 (fixEnd as)
@@ -387,7 +387,7 @@ loopxsegBy phase as cps = smooth $ C.loopxseg cps 0 phase (fixEnd as)
 --
 -- > xadsrSeq attack decay sustain release weights frequency
 --
--- The sum of attack, decay, sustain and release time durations 
+-- The sum of attack, decay, sustain and release time durations
 -- should be equal to one.
 adsrSeq :: Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
 adsrSeq a d s r = linSeq (adsrList a d s r)
@@ -397,7 +397,7 @@ adsrSeq a d s r = linSeq (adsrList a d s r)
 --
 -- > xadsrSeq attack decay sustain release weights frequency
 --
--- The sum of attack, decay, sustain and release time durations 
+-- The sum of attack, decay, sustain and release time durations
 -- should be equal to one.
 xadsrSeq :: Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
 xadsrSeq a d s r = expSeq (adsrList a d s r)
@@ -406,7 +406,7 @@ xadsrSeq a d s r = expSeq (adsrList a d s r)
 --
 -- > adsrSeq attack decay sustain release rest weights frequency
 --
--- The sum of attack, decay, sustain, release and rest time durations 
+-- The sum of attack, decay, sustain, release and rest time durations
 -- should be equal to one.
 adsrSeq_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
 adsrSeq_ a d s r rest = linSeq (adsrList_ a d s r rest)
@@ -416,7 +416,7 @@ adsrSeq_ a d s r rest = linSeq (adsrList_ a d s r rest)
 --
 -- > xadsrSeq_ attack decay sustain release rest weights frequency
 --
--- The sum of attack, decay, sustain, release and rest time durations 
+-- The sum of attack, decay, sustain, release and rest time durations
 -- should be equal to one.
 xadsrSeq_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Sig] -> Sig -> Sig
 xadsrSeq_ a d s r rest = expSeq (adsrList_ a d s r rest)
@@ -477,18 +477,18 @@ expSeq = genSegSeq loopxseg
 
 genSegSeq :: ([Sig] -> Sig -> Sig) -> [Sig] -> [Sig] -> Sig -> Sig
 genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) weights) (cps / len)
-    where 
+    where
         len = sig $ int $ length weights
         scaleVals xs k = case xs of
             [] -> []
             [a] -> [a * k]
-            a:da:rest -> (a * k) : da : scaleVals rest k    
+            a:da:rest -> (a * k) : da : scaleVals rest k
 
         groupSegs :: [[Sig]] -> [Sig]
         groupSegs as = concat $ intersperse [0] as
 
 
--- | The seq is a type for step sequencers. 
+-- | The seq is a type for step sequencers.
 -- The step sequencer is a monophonic control signal.
 -- Most often step sequencer is a looping segment of
 -- some values. It's used to create bas lines or conrtrol the frequency of
@@ -501,8 +501,8 @@ genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) we
 --
 -- each pair defines a segment of height valN that lasts for durN.
 -- The sequence is repeated with the given frequency. Each segment
--- has certain shape. It can be a constant or line segment or 
--- fragment of square wave or fragment of an adsr envelope. 
+-- has certain shape. It can be a constant or line segment or
+-- fragment of square wave or fragment of an adsr envelope.
 -- There are many predefined functions.
 --
 -- With Seq we can construct control signals in very flexible way.
@@ -520,7 +520,7 @@ genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) we
 newtype Seq = Seq { unSeq :: [Seq1] }
 
 data Seq1 = Rest {
-        seq1Dur :: Sig } 
+        seq1Dur :: Sig }
     | Seq1 {
           seq1Dur :: Sig
         , seq1Val :: Sig
@@ -538,13 +538,13 @@ instance Delay Seq where
     del t a = mel [rest t, a]
 
 instance Melody Seq where
-    mel as = Seq $ as >>= unSeq    
+    mel as = Seq $ as >>= unSeq
 
 instance Stretch Seq where
     str t (Seq as) = Seq $ fmap (updateDur t) as
         where updateDur k a = a { seq1Dur = k * seq1Dur a }
 
--- | Creates a 
+-- | Creates a
 toSeq :: Sig -> Seq
 toSeq a = Seq [Seq1 1 a]
 
@@ -692,14 +692,14 @@ xseqAdsr_ a d s r rest = seqx (adsr1_ a d s r rest)
 
 renderSeq0 :: (Sig -> Sig -> [Sig]) -> Seq -> [Sig]
 renderSeq0 f (Seq as) = as >>= phi
-    where 
+    where
         phi x = case x of
             Seq1 dt val -> f dt val
             Rest dt     -> [0, dt]
 
 renderSeq1 :: (Sig -> Sig -> [Sig]) -> Seq -> [Sig]
 renderSeq1 f (Seq as) = as >>= phi
-    where 
+    where
         phi x = case x of
             Seq1 dt val -> f dt val
             Rest dt     -> [0, dt, 0, 0]
@@ -708,12 +708,12 @@ renderSeq1 f (Seq as) = as >>= phi
 
 genSeqPat :: (Int -> [Double]) -> [Int] -> Seq
 genSeqPat g ns = mel (ns >>= f)
-    where f n 
+    where f n
             | n <= 0 = []
             | n == 1 = [1]
             | otherwise = fmap (toSeq . sig . double) $ g n
 
--- | Function for creation of accented beats. 
+-- | Function for creation of accented beats.
 -- The steady beat pattern of accents is repeated.
 -- The first argument describes the list of integers.
 -- Each integer is a main beat and the length of the beat.
@@ -722,7 +722,7 @@ genSeqPat g ns = mel (ns >>= f)
 -- > dac $ mul (seqSaw [seqPat [3, 3, 2]] 1) white
 seqPat :: [Int] -> Seq
 seqPat ns = mel (ns >>= f)
-    where f n 
+    where f n
             | n <= 0 = []
             | n == 1 = [1]
             | otherwise = [1, rest $ sig $ int $ n - 1]
@@ -736,7 +736,7 @@ rowDesc n = [1, 1 - recipN .. recipN ]
 -- > dac $ mul (seqSaw [seqDesc [3, 3, 2]] 1) white
 seqDesc :: [Int] -> Seq
 seqDesc = genSeqPat rowDesc
-    
+
 -- | It's like @seqPat@ but inplace of rests it fills the gaps with
 -- segments ascending in value.
 --
@@ -771,7 +771,7 @@ hvalTime = humanValTime
 -- so that all values are sumed with some random value. The amplitude of the
 -- random value is given with the first argument.
 --
--- It can transform linseg, expseg, sequence producers and simplified sequence producers. 
+-- It can transform linseg, expseg, sequence producers and simplified sequence producers.
 --
 -- An example:
 --
@@ -821,7 +821,7 @@ instance HumanizeValue ([D] -> D -> Sig) where
 -- so that all durations are sumed with some random value. The amplitude of the
 -- random value is given with the first argument.
 --
--- It can transform linseg, expseg, sequence producers and simplified sequence producers. 
+-- It can transform linseg, expseg, sequence producers and simplified sequence producers.
 --
 -- An example:
 --
@@ -860,7 +860,7 @@ instance HumanizeTime ([D] -> D -> Sig) where
 -- so that all values and durations are sumed with some random value. The amplitude of the
 -- random value is given with the first two arguments.
 --
--- It can transform linseg, expseg, sequence producers and simplified sequence producers. 
+-- It can transform linseg, expseg, sequence producers and simplified sequence producers.
 --
 -- An example:
 --
@@ -902,7 +902,7 @@ instance HumanizeValueTime ([D] -> D -> Sig) where
 --
 -- > trigTab table dur trigger
 trigTab :: Tab -> Sig -> Sig -> Sig
-trigTab ifn kdur ktrig = 
+trigTab ifn kdur ktrig =
     tablei (lineto ktrig (kdur * delay1 ktrig)) ifn `withD` 1
 
 
@@ -912,3 +912,4 @@ trigTab ifn kdur ktrig =
 -- > trigTabEvt table dur trigger
 trigTabEvt :: Tab -> Sig -> Evt a -> Sig
 trigTabEvt ifn kdur ktrig = trigTab ifn kdur (evtToTrig ktrig)
+

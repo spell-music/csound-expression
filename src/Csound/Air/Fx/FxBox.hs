@@ -181,12 +181,16 @@ module Csound.Air.Fx.FxBox(
     uiCrusher,
 
     -- ** Ring modulation
-    uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5
+    uiRingo', uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5,
 
     -- ** Compressor
     -- | TODO
 
 
+    -- * Misc
+
+    -- ** Ambi guitar
+    ambiGuitar
 ) where
 
 import Data.Default
@@ -211,7 +215,7 @@ import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig,
 
 import Csound.Air.Live(fxBox, fxColor)
 import Csound.Air.Wav(toMono)
-import Csound.Air.Misc(fromMono)
+import Csound.Air.Misc(fromMono, ambiEnv, saturator)
 
 import qualified Data.Colour as C
 import qualified Data.Colour.SRGB as C
@@ -1188,4 +1192,27 @@ uiCave3m = uiMonoCave size3
 uiCave4m = uiMonoCave size4
 uiCave5m = uiMonoCave size5
 
+type ThreshSig = Sig
 
+-------------------------------------
+-- ambient guitar
+
+-- | Ambient guitar patch. It uses @ambiEnv@ with stack of delays and a bit of compression and distortion.
+-- No reverb is added. The reverb is for user to add.
+--
+-- > ambiGuitar thresh delayTime feedback tone driveLevel sig
+--
+-- For thresh try out values like 0.01, 0.02
+--
+-- Example, we read guitar input from soundcard first input,
+-- apply ambient guitar effect and a bit of reverb:
+--
+-- > main = dac proc
+-- >
+-- > proc :: Sig2 -> SE Sig2
+-- > proc (x, _) = hall 0.25 $ ambiGuitar 0.02 1 0.7 0.4 0.1 x
+ambiGuitar :: ThreshSig -> DelayTime -> Feedback -> ToneSig -> DriveSig -> Sig -> SE Sig
+ambiGuitar thresh dt fbk toneSig drv ain = do
+    envSig <- ambiEnv thresh ain
+    return $ ( adele 0.35 dt fbk toneSig . adele 0.5 (dt / 4) (fbk * 1.25) toneSig .
+              saturator 0.3  . tort drv 0.25) envSig

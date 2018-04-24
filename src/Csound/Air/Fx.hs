@@ -55,12 +55,11 @@ module Csound.Air.Fx(
     fxRingModulator, , -}
     fxCompress,
 
-    -- Eq
+    -- * Eq
     audaciousEq,
 
     -- * Misc
     trackerSplice, pitchShifterDelay
-
 ) where
 
 import Data.Boolean
