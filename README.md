@@ -127,7 +127,7 @@ Let's look at the new features.
     Like rendering functions with arbitrary number of inputs and outputs
     and rendering of functions augmented with UIs.
 
-* New useful functions: `brown` for brownian noise, `rescalGui`
+* New useful functions: `brown` for brownian noise, `resizeGui`
     for scaling GUIs window size.
 
 **The 5.2 is out. Virtual pedalboards, arrays, new OSC, full support for mono synthesizers, patch skins, all GEN-routines are implemented**
