@@ -91,6 +91,45 @@ Roadmap: [where are we going](https://github.com/spell-music/csound-expression/b
 News
 -----------------------------
 
+**The new version 5.3 is out. Support for modern Haskell and Csound, sync with global BPM**
+
+Let's look at the new features.
+
+* The project was updated to compile with new GHC 8.4.x.
+    Also it was tested on previous compilers down to 7.8.
+    So the CE should compile across 7.8 to 8.4 GHC compilers.
+
+* The library was updated to support latest Csound stable release 6.10.
+    There are many new DSP algorithms available with this update.
+    Among them there are many great filters like emulation of Korg 35 analog filter,
+    or emulation of Roland TB-303 resonant filter, zero-delay feedback filters.
+    You can find them at the module `Csound.Air.Filter`.
+
+* Also documentation, examples and tutorial were updated for
+    recent changes.
+
+* This release features new effects useful for guitars.
+    Like emulation of Roland Space echo (function `tapeEcho` or `magnus`)
+    and ambient guitar effect (`ambiEnv`, `ambiGuitar`).
+    The Space echo simulates behaviour of magnetic tape delay.
+    Ambient guitar detects strike attacks in the audio signal and
+    smoothes them down, so that they sound like pads.
+
+* New addition is built in BPM synchronization. User can set global BPM
+    with function `setBpm`. Then it's possible to use functions that
+    synchronize Hzs (function `syn`) and seconds (function `takt`) to
+    global BPM. It's useful to align delay times and LFO rates with
+    global BPM. Also module `csound-sampler` was updated to respond
+    to changes in global BPM.
+
+* There are some additions to improve usability of the library
+    like adding new instances for rendering to Csound files.
+    Like rendering functions with arbitrary number of inputs and outputs
+    and rendering of functions augmented with UIs.
+
+* New useful functions: `brown` for brownian noise, `rescalGui`
+    for scaling GUIs window size.
+
 **The 5.2 is out. Virtual pedalboards, arrays, new OSC, full support for mono synthesizers, patch skins, all GEN-routines are implemented**
 
 **New features:**
