@@ -25,13 +25,19 @@ module Csound.Air.Live (
     AdsrBound(..), AdsrInit(..),
     linAdsr, expAdsr,
     classicWaves,
-    masterVolume, masterVolumeKnob
+    masterVolume, masterVolumeKnob,
+
+    -- * Live row
+    LiveClip(..), ClipParam(..),
+    liveRow, liveRows
 ) where
 
 import Control.Monad
 
+import Data.Bool
 import Data.Colour
 import Data.Boolean
+import Data.Default
 import qualified Data.Colour.Names as C
 import qualified Data.Colour.SRGB as C
 
@@ -47,6 +53,9 @@ import Csound.Air.Wave
 import Csound.Air.Fx
 import Csound.Air.Patch
 import Csound.Air.Misc
+import Csound.Tab
+
+import qualified Csound.Typed.Plugins as P
 
 ----------------------------------------------------------------------
 -- mixer
@@ -475,3 +484,89 @@ uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain =
 
 fromMonoFx :: Sigs a => (Sig -> Sig) -> Fx a
 fromMonoFx f = \asig2 -> bindSig (return . f) asig2
+
+-----------------------------------------------
+-- live rows
+
+-- | Live row triggers audio clips in sync.
+--
+-- > liveRow clips bpm barSize clipIndex
+--
+-- * @clips@ - contains file path to audio clips
+--
+-- * @bpm@ - the BPM of the track
+--
+-- * @barLength@ - length of the bar in quater notes. So 4 means 4/4
+--
+-- * @clipIndex@ - identity of the clip to launch on the next bar.
+liveRow :: [LiveClip] -> D -> D -> Sig -> Sig
+liveRow clips iBpm iBeatDur kUserIndex = P.liveRow iTabSize iTabs iBpm iBeatDur kUserIndex iAuxParams
+    where
+        iTabSize = int $ length clips
+        iTabs = tabList $ fmap (wavLeft . liveClipFile) clips
+        iAuxParams = getAuxClipParams clips
+
+-- | Stereo version of liveRow
+liveRows :: [LiveClip] -> D -> D -> Sig -> Sig2
+liveRows clips iBpm iBeatDur kUserIndex = P.liveRows iTabSize iLeftTabs iRightTabs iBpm iBeatDur kUserIndex iAuxParams
+    where
+        iTabSize = int $ length clips
+        iLeftTabs  = tabList $ fmap (wavLeft  . liveClipFile) clips
+        iRightTabs = tabList $ fmap (wavRight . liveClipFile) clips
+        iAuxParams = getAuxClipParams clips
+
+-- | Clip and it's parameters
+data LiveClip = LiveClip
+    { liveClipFile  :: FilePath
+    -- ^ path to the file of audio clip
+    , liveClipParam :: ClipParam
+    -- ^ clip launch parameters
+    }
+
+data ClipParam = ClipParam
+    { clipParamSize     :: !Int
+    -- ^ Clip size in bars
+    , clipParamDel      :: !Int
+    -- ^ Clip offset from beginning in bars
+    , clipParamTail     :: !Int
+    -- ^ Clip skip time at the end of the clip
+    , clipParamNext     :: !Int
+    -- ^ Next clip to play after this one is finished. If it's -1 then play the same clip
+    , clipParamRetrig   :: !Bool
+    -- ^ Should we retrigger clip from the start or continue play where we left out.
+    , clipParamVol      :: !Double
+    -- ^ Volume scaling factor for the clip
+    }
+
+instance Default ClipParam where
+    def = ClipParam
+        { clipParamSize   = -1
+        , clipParamDel    = 0
+        , clipParamTail   = 0
+        , clipParamNext   = -1
+        , clipParamRetrig = False
+        , clipParamVol    = 1
+        }
+
+toClipParam :: ClipParam -> [Double]
+toClipParam x =
+        [ fromIntegral $ clipParamSize x
+        , fromIntegral $ clipParamDel x
+        , fromIntegral $ clipParamTail x
+        , fromIntegral $ clipParamNext x
+        , bool 0 1 (clipParamRetrig x)
+        , clipParamVol x]
+
+getAuxClipParams :: [LiveClip] -> Tab
+getAuxClipParams xs = doubles $ fillTabToPowerOfTwo $
+    toClipParam . liveClipParam =<< xs
+
+fillTabToPowerOfTwo :: [Double]  -> [Double]
+fillTabToPowerOfTwo xs = xs ++ replicate (nextPow - n) 0
+    where
+        n = length xs
+        nextPow
+            | frac == 0 = n
+            | otherwise = 2 ^ (integ + 1)
+            where
+                (integ, frac) = properFraction $ logBase 2 (fromIntegral n)
