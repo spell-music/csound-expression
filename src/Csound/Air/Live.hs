@@ -29,7 +29,8 @@ module Csound.Air.Live (
 
     -- * Live row
     LiveClip(..), ClipParam(..),
-    liveRow, liveRows
+    liveRow, liveRows,
+    ambiRow, ambiRowMp3
 ) where
 
 import Control.Monad
@@ -570,3 +571,17 @@ fillTabToPowerOfTwo xs = xs ++ replicate (nextPow - n) 0
             | otherwise = 2 ^ (integ + 1)
             where
                 (integ, frac) = properFraction $ logBase 2 (fromIntegral n)
+
+
+ambiRow :: [String] -> Sig -> Sig -> D -> SE Sig2
+ambiRow files kSpeed kIndex iFadeTime = do
+  arr <- newGlobalCtrlArr [int $ length files]
+  zipWithM_ (\n f -> writeArr arr n $ text f) (fmap (sig . int) [0..]) files
+  return $ P.ambiRow arr kSpeed kIndex iFadeTime
+
+ambiRowMp3 :: [String] -> Sig -> Sig -> D -> SE Sig2
+ambiRowMp3 files kSpeed kIndex iFadeTime = do
+  arr <- newGlobalCtrlArr [int $ length files]
+  zipWithM_ (\n f -> writeArr arr n $ text f) (fmap (sig . int) [0..]) files
+  return $ P.ambiRowMp3 arr kSpeed kIndex iFadeTime
+
