@@ -133,14 +133,14 @@ fxBox name fx onOff args = source $ do
     let (names, initVals) = unzip args
     (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals
     let f x = do
-        ref <- newRef (0 :: a)
-        goff <- readRef offRef
-        writeRef ref x
-        when1 (goff ==* 1) $ do
-            x2 <- readRef ref
-            writeRef ref =<< fx as x2
-        res <- readRef ref
-        return res
+          ref <- newRef (0 :: a)
+          goff <- readRef offRef
+          writeRef ref x
+          when1 (goff ==* 1) $ do
+              x2 <- readRef ref
+              writeRef ref =<< fx as x2
+          res <- readRef ref
+          return res
     let gui = setBorder UpBoxBorder $ go (length names) gOff gs
     return (gui, f)
     where
