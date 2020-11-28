@@ -20,7 +20,6 @@ module Csound.Typed.GlobalState.Options (
     Jacko(..), JackoConnect, renderJacko
 ) where
 
-import Data.Monoid
 import Control.Applicative
 import Data.Default
 
@@ -231,7 +230,7 @@ instance Default Jacko where
 
 renderJacko :: Jacko -> String
 renderJacko spec = unlines $ filter ( /= "")
-    [ "JackoInit " ++ (str $ jackoServer spec) ++ ", " ++ (str $ jackoClient spec)
+    [ "JackoInit " ++ (show $ jackoServer spec) ++ ", " ++ (show $ jackoClient spec)
     , if (jackoFreewheel spec) then "JackoFreewheel 1" else ""
     , if (jackoInfo spec) then "JackoInfo" else ""
     , renderConnections "JackoAudioInConnect" $ jackoAudioIns spec
@@ -242,6 +241,5 @@ renderJacko spec = unlines $ filter ( /= "")
     where
         renderConnections name links = unlines $ fmap (renderLink name) links
 
-        renderLink name (a, b) = name ++ " " ++ (str a) ++ ", " ++  (str b)
+        renderLink name (a, b) = name ++ " " ++ (show a) ++ ", " ++  (show b)
 
-        str x = "\"" ++ x ++ "\""

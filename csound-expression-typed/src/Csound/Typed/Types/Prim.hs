@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# Language TypeFamilies, FlexibleInstances, FlexibleContexts, ScopedTypeVariables, Rank2Types, CPP #-}
 module Csound.Typed.Types.Prim(
     Sig(..), unSig, D(..), unD, Tab(..), unTab, Str(..), Spec(..), Wspec(..), renderTab,
@@ -32,8 +33,6 @@ module Csound.Typed.Types.Prim(
     when1, whens, untilDo, whileDo, boolSig,
     equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
     whenD1, whenDs, untilDoD, whileDoD, untilBeginD,
-
-    module Data.NumInstances.Tuple
 ) where
 
 import Prelude hiding ((<*))
@@ -41,11 +40,9 @@ import Prelude hiding ((<*))
 import Control.Applicative hiding ((<*))
 import Control.Monad
 import Control.Monad.Trans.Class
-import Data.Monoid
 import qualified Data.IntMap    as IM
 import qualified Data.Map       as M
 
-import Data.NumInstances.Tuple
 
 import Control.Monad.Trans.Reader
 
@@ -53,7 +50,7 @@ import Data.Default
 import Data.Boolean
 import Data.String
 
-import Csound.Dynamic hiding (double, int, str, when1, whens, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, untilDo, whileBegin, whileEnd, whileDo)
+import Csound.Dynamic hiding (genId, double, int, str, when1, whens, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, untilDo, whileBegin, whileEnd, whileDo)
 import qualified Csound.Dynamic as D(double, int, str, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, whileBegin, whileEnd)
 import Csound.Typed.GlobalState.GE
 import Csound.Typed.GlobalState.SE
@@ -249,6 +246,7 @@ skipNorm x = case x of
     Tab _ -> error "you can skip normalization only for primitive tables (made with gen-routines)"
     TabPre a -> TabPre $ a{ preTabGen = skipNormGenId $ preTabGen a }
 
+skipNormGenId :: GenId -> GenId
 skipNormGenId = mapIntGenId (negate . abs)
 
 -- | Force normalization (sets table size to positive value).
@@ -258,6 +256,7 @@ forceNorm x = case x of
     Tab _ -> error "you can force normalization only for primitive tables (made with gen-routines)"
     TabPre a -> TabPre $ a{ preTabGen = normGenId $ preTabGen a }
 
+normGenId :: GenId -> GenId
 normGenId = mapIntGenId abs
 
 mapIntGenId :: (Int -> Int) -> GenId -> GenId
@@ -282,7 +281,7 @@ data TabList = TabList { unTabList :: GE E }
 tabList :: [Tab] -> TabList
 tabList xs = TabList $ saveTabs =<< mapM fromPreTab (getPreTabs xs)
     where
-        getPreTabs xs = case xs of
+        getPreTabs = \case
             []            -> []
             Tab    _ : as -> getPreTabs as
             TabPre a : as -> a : getPreTabs as
@@ -351,13 +350,13 @@ setBpm x = fromDep_ $ hideGEinDep $ fmap (writeVar bpmVar) (toGE x)
 ar :: Sig -> Sig
 ar x = case x of
     PrimSig a -> PrimSig a
-    Sig exp   -> Sig $ fmap (setRate Ar) exp
+    Sig expr  -> Sig $ fmap (setRate Ar) expr
 
 -- | Sets a rate of the signal to control rate.
 kr :: Sig -> Sig
 kr x = case x of
     PrimSig a -> PrimSig a
-    Sig exp   -> Sig $ fmap (setRate Kr) exp
+    Sig expr  -> Sig $ fmap (setRate Kr) expr
 
 -- | Converts a signal to the number (initial value of the signal).
 ir :: Sig -> D
@@ -369,7 +368,7 @@ ir x = case x of
 sig :: D -> Sig
 sig x = case x of
     PrimD a -> PrimSig a
-    D exp   -> Sig $ fmap (setRate Kr) exp
+    D expr  -> Sig $ fmap (setRate Kr) expr
 
 -------------------------------------------------------------------------------
 -- single wrapper
@@ -628,28 +627,28 @@ instance Boolean BoolD    where { true = PrimBoolD   True;  false = PrimBoolD   
 
 instance IfB Sig  where
     ifB x a b = case x of
-        PrimBoolSig cond -> if cond then a else b
+        PrimBoolSig c -> if c then a else b
         _                -> on3 ifB x a b
 
 instance IfB D    where
     ifB x a b = case x of
-        PrimBoolD cond -> if cond then a else b
+        PrimBoolD c -> if c then a else b
         _              -> on3 ifB x a b
 
 instance IfB Tab  where
     ifB x a b = case x of
-        PrimBoolD cond -> if cond then a else b
+        PrimBoolD c -> if c then a else b
         _              -> on3 ifB x a b
 
 instance IfB Str  where
     ifB x a b = case x of
-        PrimBoolD cond -> if cond then a else b
+        PrimBoolD c -> if c then a else b
         _              -> on3 ifB x a b
 
 instance IfB Spec where
     ifB x a b = case x of
-        PrimBoolD cond -> if cond then a else b
-        _              -> on3 ifB x a b
+        PrimBoolD c -> if c then a else b
+        _           -> on3 ifB x a b
 
 instance EqB Sig  where { (==*) = op2 (==) (==*);    (/=*) = op2 (/=) (/=*) }
 instance EqB D    where { (==*) = op2 (==) (==*);    (/=*) = op2 (/=) (/=*) }

@@ -2,28 +2,27 @@
 module Csound.Typed.Control.InstrRef(
     InstrRef, newInstr, scheduleEvent, turnoff2, negateInstrRef, addFracInstrRef,
     newOutInstr, noteOn, noteOff
-) where    
+) where
 
 import Control.Monad
 import Control.Monad.Trans.Class
 
-import Control.Applicative
 import Data.Default
 import Csound.Dynamic(InstrId(..), Rate(..), DepT, depT_, opcs)
 import qualified Csound.Typed.GlobalState.Elements as C
 
 import Csound.Typed.Types
-import Csound.Typed.GlobalState hiding (turnoff2) 
+import Csound.Typed.GlobalState hiding (turnoff2)
 import Csound.Typed.Control.Ref
 
 -- | Fractional part of the instrument dentifier.
-data InstrFrac = InstrFrac 
-    { instrFracValue :: D
-    , instrFracSize  :: D    
+data InstrFrac = InstrFrac
+    { _instrFracValue :: D
+    , _instrFracSize  :: D
     }
 
 -- | Instrument reference. we can invoke or stop the instrument by the identifier.
-data InstrRef a = InstrRef 
+data InstrRef a = InstrRef
     { instrRefMain :: D
     , instrRefFrac :: Maybe InstrFrac }
 
@@ -31,7 +30,7 @@ data InstrRef a = InstrRef
 newInstr ::  (Arg a) => (a -> SE ()) -> SE (InstrRef a)
 newInstr instr = geToSe $ fmap fromInstrId $ saveInstr $ instr toArg
 
--- | Schedules an event for the instrument. 
+-- | Schedules an event for the instrument.
 --
 -- > scheduleEvent instrRef delay duration args
 --
@@ -42,10 +41,10 @@ scheduleEvent instrRef start end args = SE $ hideGEinDep $ fmap C.event $ C.Even
 getInstrId :: InstrRef a -> D
 getInstrId (InstrRef value frac) = value + maybe 0 fromFrac frac
     where
-        fromFrac (InstrFrac value size) = (value * 10 + 1) / (size * 10)
+        fromFrac (InstrFrac val size) = (val * 10 + 1) / (size * 10)
 
 -- | Negates the instrument identifier. This trick is used in Csound to update the instrument arguments while instrument is working.
-negateInstrRef :: InstrRef a -> InstrRef a 
+negateInstrRef :: InstrRef a -> InstrRef a
 negateInstrRef ref = ref { instrRefMain = negate $ instrRefMain ref }
 
 -- | Adds fractional part to the instrument reference. This trick is used in Csound to identify the notes (or specific instrument invokation).
@@ -54,8 +53,8 @@ addFracInstrRef maxSize value instrRef = instrRef { instrRefFrac = Just (InstrFr
 
 fromInstrId :: InstrId -> InstrRef a
 fromInstrId x = case x of
-    InstrId frac ceil -> InstrRef (int ceil) Nothing
-    InstrLabel _    -> error "No reference for string instrument id. (Csound.Typed.Control.Instr.hs: fromInstrId)"
+    InstrId _frac ceil -> InstrRef (int ceil) Nothing
+    InstrLabel _       -> error "No reference for string instrument id. (Csound.Typed.Control.Instr.hs: fromInstrId)"
 
 -- | Creates an insturment that produces a value.
 newOutInstr :: (Arg a, Sigs b) => (a -> SE b) -> SE (InstrRef a, b)
@@ -70,7 +69,7 @@ noteOn :: (Arg a) => D -> D -> InstrRef a -> a -> SE ()
 noteOn maxSize noteId instrId args = scheduleEvent (addFracInstrRef maxSize noteId instrId) 0 (-1) args
 
 -- | Stops a note with fractional instrument reference.
-noteOff :: (Default a, Arg a) => D -> D -> InstrRef a -> SE () 
+noteOff :: (Default a, Arg a) => D -> D -> InstrRef a -> SE ()
 noteOff maxSize noteId instrId = scheduleEvent (negateInstrRef $ addFracInstrRef maxSize noteId instrId) 0 0.01 def
 
 -- | Turns off the note played on the given instrument.
@@ -78,13 +77,13 @@ noteOff maxSize noteId instrId = scheduleEvent (negateInstrRef $ addFracInstrRef
 --
 -- > turnoff2 instrRef mode releaseTime
 --
--- The mode is sum of the following values: 
--- 
--- * 0, 1, or 2: turn off all instances (0), oldest only (1), or newest only (2) 
--- 
--- * 4: only turn off notes with exactly matching (fractional) instrument number, rather than ignoring fractional part 
+-- The mode is sum of the following values:
 --
--- * 8: only turn off notes with indefinite duration (idur < 0 or MIDI) 
+-- * 0, 1, or 2: turn off all instances (0), oldest only (1), or newest only (2)
+--
+-- * 4: only turn off notes with exactly matching (fractional) instrument number, rather than ignoring fractional part
+--
+-- * 8: only turn off notes with indefinite duration (idur < 0 or MIDI)
 --
 -- @releaseTime@  if non-zero, the turned off instances are allowed to release, otherwise are deactivated immediately (possibly resulting in clicks).
 turnoff2 :: InstrRef a -> Sig -> Sig -> SE ()

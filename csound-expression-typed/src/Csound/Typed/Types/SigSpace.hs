@@ -17,6 +17,7 @@ import Control.Monad
 import Control.Applicative
 import Csound.Typed.Types.Prim
 import Csound.Typed.GlobalState.SE
+import Data.NumInstances.Tuple()
 
 -- | A class for easy way to process the outputs of the instruments.
 class SigSpace a where
@@ -58,7 +59,7 @@ mul2' k = bindSig2 (\(xa, xb) -> fmap (\(ka, kb) -> (ka * xa, kb * xb)) k)
 -- > on a b biSig
 on :: SigSpace a => Sig -> Sig -> a -> a
 on a b x = uon a b $ mapSig unipolar x
-    where unipolar a = 0.5 + 0.5 * a
+    where unipolar v = 0.5 + 0.5 * v
 
 -- | Rescaling of the unipolar signal (0, 1) -> (a, b)
 --
@@ -541,6 +542,7 @@ instance At Sig Sig2 (SE Sig2) where
 ---------------------------------------------------------
 -- Sig2 -> Sig2
 
+fromMono :: Sig -> Sig2
 fromMono a = (a, a)
 
 instance At Sig2 Sig2 Sig where

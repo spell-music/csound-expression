@@ -8,7 +8,7 @@ import Data.List(sort, find)
 import qualified Data.Map as M
 
 import Data.Maybe(fromJust)
-import Data.Fix(Fix(..), cata)
+import Data.Fix(Fix(..), foldFix)
 import Data.Fix.Cse(fromDag, cseFramed, FrameInfo(..))
 
 import qualified Text.PrettyPrint.Leijen as P
@@ -20,6 +20,7 @@ import Csound.Dynamic.Tfm.Liveness
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Build(getRates, isMultiOutSignature)
 import Csound.Dynamic.Render.Pretty
+import qualified Csound.Dynamic.Types as T(Var)
 
 type Dag f = [(Int, f Int)]
 
@@ -57,7 +58,7 @@ getFrameInfo x = case ratedExpExp x of
 
 
 trimByArgLength :: E -> E
-trimByArgLength = cata $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
+trimByArgLength = foldFix $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
     where phi x = case x of
             Tfm info xs -> Tfm (info{infoSignature = trimInfo (infoSignature info) xs}) xs
             _ -> x
@@ -200,6 +201,10 @@ rateExp curRate expr = case expr of
     ReadMacrosInt name -> ReadMacrosInt name
     ExpBool _           -> error $ msg "ExpBool expression should be substituted"
     ConvertRate _ _ _   -> error $ msg "ConvertRate couldn't be here. It's introduced on the later stages of processing"
+    Seq _ _           -> error "No rateExp for Seq"
+    Ends _            -> error "No rateExp for Ends"
+    InitMacrosInt _ _ -> error "No rateExp for InitMacrosInt"
+    Starts            -> error "No rateExp for Starts"
     where ratesFromSignature rate signature = case signature of
               SingleRate table -> table M.! rate
               MultiRate _ rs   -> rs
@@ -214,6 +219,7 @@ rateExp curRate expr = case expr of
 
           msg txt = "Csound.Dynamic.Render.Instr.rateExp: " ++ txt
 
+arrIndexVarRate :: T.Var -> Rate
 arrIndexVarRate v = case varRate v of
     Ir -> Ir
     _  -> Kr

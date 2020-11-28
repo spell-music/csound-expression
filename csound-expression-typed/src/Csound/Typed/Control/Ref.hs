@@ -9,10 +9,8 @@ module Csound.Typed.Control.Ref(
 ) where
 
 import Data.Boolean
-import Control.DeepSeq(deepseq)
 
 import Control.Monad
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (when1, newLocalVars, writeArr, readArr, whileRef)
 
@@ -53,6 +51,7 @@ newRef t = fmap Ref $ newLocalVars (tupleRates t) (fromTuple t)
 newCtrlRef :: Tuple a => a -> SE (Ref a)
 newCtrlRef t = fmap Ref $ newLocalVars (fmap toCtrlRate $ tupleRates t) (fromTuple t)
 
+toCtrlRate :: Rate -> Rate
 toCtrlRate x = case x of
     Ar -> Kr
     Kr -> Ir
@@ -133,30 +132,8 @@ newGlobalTab size = do
     ref <- newGlobalCtrlRef ((fromGE $ saveWriteTab size) :: D)
     fmap (fromGE . toGE) $ readRef ref
 
-{-
-    identifier <- geToSe $ getNextGlobalGenId
-    ref <- newGlobalRef (0 :: D)
-    tabId <- ftgenonce 0 (Csound.Typed.Types.Prim.int identifier) size 7 0 [size, 0]
-    writeRef ref (fromGE $ toGE tabId)
-    fmap (fromGE . toGE) $ readRef ref
--}
-
 -----------------------------------------------------------------------
 -- some opcodes that I have to define upfront
-
-
--- |
--- Generate a function table from within an instrument definition, without duplication of data.
---
--- Enables the creation of function tables entirely inside
---       instrument definitions, without any duplication of data.
---
--- > ifno  ftgenonce  ip1, ip2dummy, isize, igen, iarga, iargb, ...
---
--- csound doc: <http://www.csounds.com/manual/html/ftgenonce.html>
-ftgenonce ::  D -> D -> D -> D -> D -> [D] -> SE Tab
-ftgenonce b1 b2 b3 b4 b5 b6 = fmap ( Tab . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> mapM unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "ftgenonce" [(Ir,(repeat Ir))] ([a1,a2,a3,a4,a5] ++ a6)
 
 -- |
 -- Generate a score function table from within the orchestra, which is deleted at the end of the note.
@@ -171,34 +148,10 @@ ftgentmp ::  D -> D -> D -> D -> D -> [D] -> SE Tab
 ftgentmp b1 b2 b3 b4 b5 b6 = fmap ( Tab . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> mapM unD b6
     where f a1 a2 a3 a4 a5 a6 = opcs "ftgentmp" [(Ir,(repeat Ir))] ([a1,a2,a3,a4,a5] ++ a6)
 
-------------------------------------------------
-
-{-
-whileSE :: SE BoolSig -> SE () -> SE ()
-whileSE mcond body = do
-    ref <- newCtrlRef $ (0 :: Sig)
-    writeCond ref
-    whileRefBegin ref
-    body
-    writeCond ref
-    whileRefEnd
-    where
-        writeCond :: Ref Sig -> SE ()
-        writeCond ref = writeRef ref =<< fmap (\x -> ifB x 1 0) mcond
-
--- ifBegin :: BoolSig -> SE ()
--- ifBegin a = fromDep_ $ D.ifBegin Kr =<< lift (toGE a)
-
-whileRefBegin :: Ref Sig -> SE ()
-whileRefBegin (Ref [var]) = fromDep_ $ D.whileBegin ((D.prim $ D.PrimVar D.Kr var) ==* 1)
-
-whileRefEnd :: SE ()
-whileRefEnd = fromDep_ D.whileEnd
--}
 --------------------------------------------------------------------
 
 whileRef :: forall st . Tuple st => st -> (st -> SE BoolSig) -> (st -> SE st) -> SE ()
-whileRef initVal cond body = do
+whileRef initVal c body = do
     refSt   <- newCtrlRef initVal
     refCond <- newRef =<< condSig =<< readRef refSt
     whileRefBegin refCond
@@ -207,11 +160,11 @@ whileRef initVal cond body = do
     fromDep_ whileEnd
     where
         condSig :: st -> SE Sig
-        condSig   = fmap (\b -> ifB b 1 0) . cond
+        condSig   = fmap (\b -> ifB b 1 0) . c
 
 
 whileRefD :: forall st . Tuple st => st -> (st -> SE BoolD) -> (st -> SE st) -> SE ()
-whileRefD initVal cond body = do
+whileRefD initVal c body = do
     refSt   <- newCtrlRef initVal
     refCond <- newRef =<< condSig =<< readRef refSt
     whileRefBegin refCond
@@ -220,7 +173,7 @@ whileRefD initVal cond body = do
     fromDep_ whileEnd
     where
         condSig :: st -> SE D
-        condSig   = fmap (\b -> ifB b 1 0) . cond
+        condSig   = fmap (\b -> ifB b 1 0) . c
 
 whileRefBegin :: SigOrD a => Ref a -> SE ()
 whileRefBegin (Ref vars) = fromDep_ $ D.whileRef $ head vars

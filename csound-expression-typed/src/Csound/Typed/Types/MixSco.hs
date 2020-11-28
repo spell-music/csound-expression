@@ -9,7 +9,7 @@ import Control.Monad
 import Csound.Dynamic hiding (int)
 import Csound.Typed.GlobalState.Elements
 import Csound.Typed.GlobalState.Opcodes
-import Csound.Typed.GlobalState.GE
+import Csound.Typed.GlobalState.GE hiding (notes)
 import Csound.Typed.GlobalState.SE
 import Csound.Typed.Control.Ref
 import Csound.Typed.Types.Prim
@@ -30,9 +30,6 @@ rescaleCsdEventList = T.str
 delayCsdEventList :: Sig -> CsdEventList a -> CsdEventList a
 delayCsdEventList = T.del
 
-
-type TupleMonoArg = (E,E,E,E)
-type RawMonoInstr = TupleMonoArg -> Dep [E]
 
 data M
     = Snd InstrId (CsdEventList [E])
@@ -123,7 +120,7 @@ renderMixSco_ evts = mapM_ onEvent $ csdEventListNotes evts
             mkEvent instrId start dur []
             renderMixSco_ es
 
-        onMonoSnd instr arg es = undefined
+        onMonoSnd = undefined
 
 
 mkEvent :: InstrId -> Sig -> Sig -> [E] -> Dep ()

@@ -6,12 +6,12 @@ module Csound.Typed.Control.Osc(
     OscVal, listenOscVal
 ) where
 
-import Data.Boolean (ifB, (==*))
+import Data.Boolean ((==*))
 import Csound.Dynamic(Rate(..))
 
 import Csound.Typed.Types
 import Csound.Typed.GlobalState hiding (oscInit, oscListen, oscSend)
-import qualified Csound.Typed.GlobalState as C(oscInit, oscListen, oscSend)
+import qualified Csound.Typed.GlobalState as C(oscListen, oscSend)
 
 import Csound.Typed.Control.Ref
 

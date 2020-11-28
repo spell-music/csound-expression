@@ -12,7 +12,6 @@ import qualified Data.Map as M
 import Data.Default
 import Data.Maybe
 import Data.Tuple
-import Data.Monoid
 import Data.Ord
 import Data.List(sortBy, groupBy)
 import qualified Data.IntMap as IM
@@ -98,14 +97,14 @@ renderHistory mnchnls_i nchnls opt = do
         sco     = Sco (Just $ pureGetTotalDurForF0 $ totalDur hist3)
                       (renderGens (genMap hist3) (writeGenMap hist3)) $
                       ((fmap alwaysOn $ alwaysOnInstrs hist3) ++ (getNoteEvents $ notes hist3))
-    let plugins = getPlugins opt hist3
+    let plugins = getPlugins hist3
     return $ Csd flags orc sco plugins
     where
         renderGens gens writeGens = (fmap swap $ M.toList $ idMapContent  gens) ++ writeGens
         maybeAppend ma = maybe id (:) ma
         getNoteEvents = fmap $ \(instrId, evt) -> (instrId, [evt])
 
-        getPlugins opt hist = case cabbageGui hist of
+        getPlugins hist = case cabbageGui hist of
                 Nothing -> []
                 Just x  -> [(Plugin "Cabbage" (displayS (renderPretty 1 10000 $ ppCabbage x) ""))]
 

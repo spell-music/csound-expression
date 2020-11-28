@@ -5,7 +5,6 @@ module Csound.Dynamic.Types.CsdFile(
     intInstr, alwaysOn
 ) where
 
-import Csound.Dynamic.Build.Numeric
 import Csound.Dynamic.Types.Exp
 import Csound.Dynamic.Types.Flags
 

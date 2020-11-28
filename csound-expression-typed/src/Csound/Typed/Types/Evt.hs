@@ -6,7 +6,6 @@ module Csound.Typed.Types.Evt(
     Snap, snapshot, snaps, readSnap
 ) where
 
-import Data.Monoid
 import Data.Default
 import Data.Boolean
 
@@ -46,6 +45,7 @@ instance Monoid (Evt a) where
 
 #endif
 
+mappendEvt :: Evt a -> Evt a -> Evt a
 mappendEvt a b = Evt $ \bam -> runEvt a bam >> runEvt b bam
 
 -- | Converts booleans to events.

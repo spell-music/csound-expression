@@ -5,8 +5,6 @@ module Csound.Typed.Plugins.TapeEcho(
 ) where
 
 import Control.Monad.Trans.Class
-import Control.Applicative
-
 import Csound.Dynamic
 
 import Csound.Typed.Types
@@ -29,7 +27,7 @@ tapeRead :: Sig -> Sig -> Sig -> SE Sig
 tapeRead ain kdel kRandomSpread = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ do
   addUdoPlugin E.tapeEchoPlugin
   f <$> toGE ain <*> toGE kdel <*> toGE kRandomSpread
-  where f ain kdel krand = opcs "tapeRead" [(Ar, [Ar, Kr, Kr])] [ain, kdel, krand]
+  where f ain' kdel' krand' = opcs "tapeRead" [(Ar, [Ar, Kr, Kr])] [ain', kdel', krand']
 
 
 -- | Function to write to tape
@@ -44,7 +42,7 @@ tapeRead ain kdel kRandomSpread = fmap (Sig . return) $ SE $ (depT =<<) $ lift $
 tapeWrite :: Sig -> Sig -> Sig -> SE ()
 tapeWrite ain aout kFeedback = SE $ (depT_ =<<) $ lift $ do
   f <$> toGE ain <*> toGE aout <*> toGE kFeedback
-  where f ain aout kfb = opcs "tapeWrite" [(Xr, [Ar, Ar, Kr])] [ain, aout, kfb]
+  where f ain' aout' kfb' = opcs "tapeWrite" [(Xr, [Ar, Ar, Kr])] [ain', aout', kfb']
 
 -- | Generic multi-tap echo opcode.
 --
@@ -61,4 +59,4 @@ tapeEcho :: D -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 tapeEcho iSize kDelay kEchoGain kFbGain kTone kRandomSpread aIn = fromGE $ do
   addUdoPlugin E.tapeEchoPlugin
   f <$> toGE aIn <*> toGE kDelay <*> toGE kEchoGain <*> toGE kFbGain <*> toGE kTone <*> toGE kRandomSpread <*> toGE iSize
-  where f aIn kDelay kEchoGain kFbGain kTone kRandomSpread iSize = opcs "TapeEchoN" [(Ar, [Ar, Kr, Kr, Kr, Kr, Kr, Ir])] [aIn, kDelay, kEchoGain, kFbGain, kTone, kRandomSpread, iSize]
+  where f aIn' kDelay' kEchoGain' kFbGain' kTone' kRandomSpread' iSize' = opcs "TapeEchoN" [(Ar, [Ar, Kr, Kr, Kr, Kr, Kr, Ir])] [aIn', kDelay', kEchoGain', kFbGain', kTone', kRandomSpread', iSize']

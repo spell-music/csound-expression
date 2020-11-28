@@ -1,15 +1,15 @@
 {-# Language GeneralizedNewtypeDeriving  #-}
-module Csound.Typed.Gui.Cabbage.Cabbage(    
-    Cab, CabProp, Col(..), runCab, 
-    
+module Csound.Typed.Gui.Cabbage.Cabbage(
+    Cab, CabProp, Col(..), runCab,
+
     -- * Widgets
-    button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable, 
+    button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable,
     hrange, vrange, form, groupbox, image, keyboard, label, hslider, vslider,
     rslider, soundfiler, signaldisplay, textbox, texteditor, xypad,
 
     -- * Properties
-    bounds, channel, text1, text2, value, colour, colour0, colour1, backgroundcolour, textcolour, trackercolour, outlinecolour, 
-    fontcolour, fontcolour0, fontcolour1, latched, identchannel, rotate, alpha, visible, caption, widgetarray, popuptext, 
+    bounds, channel, text1, text2, value, colour, colour0, colour1, backgroundcolour, textcolour, trackercolour, outlinecolour,
+    fontcolour, fontcolour0, fontcolour1, latched, identchannel, rotate, alpha, visible, caption, widgetarray, popuptext,
     active, svgfile, populate, mode, file, shape, corners, channeltype, align, sliderincr, max, min, textbox', trackerthickness,
     linethickness, range, range2, size, pluginid, guirefresh, plant, child, show, middlec, keywidth, scrollbars, fontstyle,
     scrubberpos, zoom, displaytype, updaterate, wrap
@@ -20,17 +20,16 @@ import Prelude hiding (show, min, max)
 
 import Data.Maybe
 import Control.Monad.Trans.Writer.Strict
-import Control.Applicative
 
-import Csound.Typed.Gui.Cabbage.CabbageLang	
+import Csound.Typed.Gui.Cabbage.CabbageLang
 
 type Cab = Cab' ()
 type CabProp = CabProp' ()
 
--- | The Cab is a monad for Cabbage markup language. 
+-- | The Cab is a monad for Cabbage markup language.
 -- The markup description can be constructed in the same way as blaze-html markup.
 newtype Cab' a = Cab' { unCab' :: Writer [Line] a }
-	deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad)
 
 runCab :: Cab -> [Line]
 runCab = snd . runWriter . unCab'
@@ -49,34 +48,34 @@ widget name props = Cab' $ tell [Line name $ runCabProp props]
 
 ---------------------------------------
 
-button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable, 
+button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable,
     hrange, vrange, form, groupbox, image, keyboard, label, hslider, vslider,
     rslider, soundfiler, signaldisplay, textbox, texteditor, xypad :: CabProp -> Cab
 
-button 			= widget "button"
-filebutton 		= widget "filebutton"
-infobutton 		= widget "infobutton"
-checkbox 		= widget "checkbox"
-combobox 		= widget "combobox"
-csoundoutput	= widget "csoundoutput"
-encoder 		= widget "encoder"
-gentable 		= widget "gentable"
-hrange 			= widget "hrange"
-vrange 			= widget "vrange"
-form 			= widget "form"
-groupbox 		= widget "groupbox"
-image 			= widget "image"
-keyboard 		= widget "keyboard"
-label 			= widget "label"
-hslider 		= widget "hslider"
-vslider 		= widget "vslider"
-rslider 		= widget "rslider"
-soundfiler 		= widget "soundfiler"
-signaldisplay	= widget "signaldisplay"
-textbox 		= widget "textbox"
-texteditor 		= widget "texteditor"
-xypad 			= widget "xypad"
-	
+button      = widget "button"
+filebutton    = widget "filebutton"
+infobutton    = widget "infobutton"
+checkbox    = widget "checkbox"
+combobox    = widget "combobox"
+csoundoutput  = widget "csoundoutput"
+encoder     = widget "encoder"
+gentable    = widget "gentable"
+hrange      = widget "hrange"
+vrange      = widget "vrange"
+form      = widget "form"
+groupbox    = widget "groupbox"
+image       = widget "image"
+keyboard    = widget "keyboard"
+label       = widget "label"
+hslider     = widget "hslider"
+vslider     = widget "vslider"
+rslider     = widget "rslider"
+soundfiler    = widget "soundfiler"
+signaldisplay = widget "signaldisplay"
+textbox     = widget "textbox"
+texteditor    = widget "texteditor"
+xypad       = widget "xypad"
+
 ---------------------------------------
 -- properties
 
@@ -85,11 +84,13 @@ mkProperty name args = CabProp' $ tell [Property name args]
 
 data Col = Hash String | Rgb Int Int Int
 
+colProp :: Col -> [Arg]
 colProp x = case x of
-	Hash a -> [StringArg a]
-	Rgb r g b -> fmap IntArg [r, g, b]
+  Hash a -> [StringArg a]
+  Rgb r g b -> fmap IntArg [r, g, b]
 
-boolProp x = IntArg $ if x then 1 else 0	
+boolProp :: Bool -> Arg
+boolProp x = IntArg $ if x then 1 else 0
 
 bounds :: Int -> Int -> Int -> Int -> CabProp
 bounds x y w h = mkProperty "bounds" (fmap IntArg [x, y, w, h])
@@ -164,7 +165,7 @@ active :: Bool -> CabProp
 active a = mkProperty "active" [boolProp a]
 
 svgfile :: String -> String -> CabProp
-svgfile ty file = mkProperty "svgfile" (fmap StringArg [ty, file])
+svgfile ty fileName = mkProperty "svgfile" (fmap StringArg [ty, fileName])
 
 populate :: String -> String -> CabProp
 populate filetype dir = mkProperty "populate" (fmap StringArg [filetype, dir])
@@ -206,10 +207,10 @@ linethickness :: Float -> CabProp
 linethickness a = mkProperty "linethickness" [FloatArg a]
 
 range :: Float -> Float -> (Float, Float) -> CabProp
-range min max value = range2 min max value Nothing Nothing
+range minVal maxVal val = range2 minVal maxVal val Nothing Nothing
 
 range2 :: Float -> Float -> (Float, Float) -> Maybe Float -> Maybe Float -> CabProp
-range2 min max value mskew mincr = mkProperty "range" $ catMaybes [Just $ FloatArg min, Just $ FloatArg max, Just $ (uncurry ColonArg) value, fmap FloatArg mskew, fmap FloatArg mincr]
+range2 minVal maxVal val mskew mincr = mkProperty "range" $ catMaybes [Just $ FloatArg minVal, Just $ FloatArg maxVal, Just $ (uncurry ColonArg) val, fmap FloatArg mskew, fmap FloatArg mincr]
 
 size :: Int -> Int -> CabProp
 size w h = mkProperty "size" (fmap IntArg [w, h])

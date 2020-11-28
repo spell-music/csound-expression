@@ -7,10 +7,8 @@ module Csound.Typed.Gui.BoxModel(
 ) where
 
 import Control.Monad
-import Control.Applicative
 import Control.Monad.Trans.State.Strict
 import Data.Default
-import Data.Monoid
 
 data Interval = Interval
     { start :: Int

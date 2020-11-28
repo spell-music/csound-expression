@@ -1,4 +1,5 @@
 -- | Main types
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# Language
         DeriveFunctor, DeriveFoldable, DeriveTraversable,
         DeriveGeneric,

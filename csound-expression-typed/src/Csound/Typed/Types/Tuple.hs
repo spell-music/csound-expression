@@ -35,8 +35,6 @@ import Control.Monad.Trans.Class
 import Data.Default
 import Data.Boolean
 
-import Data.NumInstances.Tuple
-
 import Csound.Dynamic
 import Csound.Typed.Types.Prim
 import Csound.Typed.Types.SigSpace

@@ -1,6 +1,6 @@
 module Csound.Typed.GlobalState.Opcodes(
     sprintf,
-    -- * channel opcodes    
+    -- * channel opcodes
     ChnRef(..), chnRefFromParg, chnRefAlloc, readChn, writeChn, overWriteChn, freeChn, chnName, chnget, chnset, chngetK, chnsetK, initSig, active, activeKr,
     readChnEvtLoop,
     chnUpdateUdo, masterUpdateChnAlive, servantUpdateChnAlive,
@@ -45,7 +45,7 @@ import Csound.Dynamic
 
 -- channels
 
-data ChnRef = ChnRef 
+data ChnRef = ChnRef
     { chnRefId      :: E
     , chnRefNames   :: [E] }
 
@@ -56,7 +56,7 @@ chnRefAlloc :: Monad m => Int -> DepT m ChnRef
 chnRefAlloc arity = do
     chnId <- freeChn
     return $ ChnRef chnId $ fmap (flip chnName chnId) [1 .. arity]
-    
+
 readChn :: Monad m => ChnRef -> DepT m [E]
 readChn ref = do
     res <- mapM chnget $ chnRefNames ref
@@ -68,11 +68,11 @@ writeChn ref sigs = zipWithM_ chnmix sigs $ chnRefNames ref
 
 overWriteChn :: Monad m => ChnRef -> [E] -> DepT m ()
 overWriteChn ref sigs = zipWithM_ chnset (chnRefNames ref) sigs
-    
+
 clearChn :: Monad m => ChnRef -> DepT m ()
 clearChn = mapM_ chnclear . chnRefNames
 
--- | 
+-- |
 -- > chnName outputPortNumber freeChnId
 chnName :: Int -> E -> E
 chnName name chnId = sprintf formatString [chnId]
@@ -86,7 +86,7 @@ masterUpdateChnRetrig ref count = chnsetK (chnRetrigName $ chnRefId ref) count
 
 servantUpdateChnAlive :: Monad m => Int -> DepT m ()
 servantUpdateChnAlive pargId = do
-    let sName = chnAliveName (pn pargId) 
+    let sName = chnAliveName (pn pargId)
     kAlive <- chngetK sName
     when1 Kr (kAlive <* -10) $ do
         turnoff
@@ -97,15 +97,15 @@ getRetrigVal pargId = pn $ pargId + 1
 
 servantUpdateChnRetrig :: Monad m => Int -> DepT m ()
 servantUpdateChnRetrig pargId = do
-    let sName = chnRetrigName (pn pargId) 
+    let sName = chnRetrigName (pn pargId)
     let retrigVal = pn $ pargId + 1
     kRetrig <- chngetK sName
     when1 Kr (kRetrig /=* retrigVal) $ do
-        turnoff    
+        turnoff
 
 servantUpdateChnEvtLoop :: Monad m => Int -> DepT m ()
 servantUpdateChnEvtLoop pargId = do
-    let sName = chnEvtLoopName (pn pargId) 
+    let sName = chnEvtLoopName (pn pargId)
     kEvtLoop <- chngetK sName
     chnsetK sName (ifB (kEvtLoop ==* 0) 1 0)
     turnoff
@@ -186,19 +186,19 @@ event_i :: Monad m => Event -> DepT m ()
 event_i = eventBy "event_i" Ir
 
 eventBy :: Monad m => String -> Rate -> Event -> DepT m ()
-eventBy name rate a = depT_ $ opcs name [(Xr, Sr : repeat rate)] 
+eventBy name rate a = depT_ $ opcs name [(Xr, Sr : repeat rate)]
     (str "i" : (eventInstrId a) : (eventStart a) : (eventDur a) : (eventArgs a))
 
 appendChn :: E -> Event -> Event
 appendChn chn a = a { eventArgs = eventArgs a ++ [chn] }
 
 subinstr :: Int -> InstrId -> [E] -> [E]
-subinstr outArity instrId args = ( $ outArity) $ mopcs "subinstr" 
-    (repeat Ar, Ir : repeat Kr) 
+subinstr outArity instrId args = ( $ outArity) $ mopcs "subinstr"
+    (repeat Ar, Ir : repeat Kr)
     (prim (PrimInstrId instrId) : args)
 
 subinstr_ :: Monad m => InstrId -> [E] -> DepT m ()
-subinstr_ instrId args = depT_ $ head $ ($ 1) $  mopcs "subinstr" 
+subinstr_ instrId args = depT_ $ head $ ($ 1) $  mopcs "subinstr"
     (repeat Ar, Ir : repeat Kr)
     (prim (PrimInstrId instrId) : args)
 
@@ -222,7 +222,7 @@ outs as = depT_ $ opcsNoInlineArgs "outs" [(Xr, repeat Ar)] as
 -- safe out
 
 -- clipps values by 0dbfs
-safeOut :: Double -> [E] -> [E] 
+safeOut :: Double -> [E] -> [E]
 safeOut gainLevel = fmap (( * double gainLevel) . limiter)
 
 limiter :: E -> E
@@ -230,17 +230,17 @@ limiter x = opcs "compress" [(Ar, [Ar, Ar, Kr, Kr, Kr, Kr, Kr, Kr, Ir])] [x, 1, 
 
 autoOff :: Monad m => E -> [E] -> DepT m [E]
 autoOff dt a = do
-    ihold    
+    ihold
     when1 Kr (trig a)
         turnoff
     return a
     where
-        trig = (<* eps) . (env + ) . setRate Kr . flip follow dt . l2 
+        trig = (<* eps) . (env + ) . setRate Kr . flip follow dt . l2
 
         eps = 1e-5
 
         l2 :: [E] -> E
-        l2 xs = sqrt $ sum $ zipWith (*) xs xs 
+        l2 xs = sqrt $ sum $ zipWith (*) xs xs
 
         env = linseg [1, dt/2, 1, dt/2, 0, 1, 0]
 
@@ -270,9 +270,9 @@ linseg = opcs "linseg" [(Kr, repeat Ir)]
 -- ares oscilikt xamp, xcps, kfn [, iphs] [, istor]
 -- kres oscilikt kamp, kcps, kfn [, iphs] [, istor]
 oscilikt :: E -> E -> E -> Maybe E -> E
-oscilikt amp cps fn mphase = opcs "oscilikt" 
+oscilikt amp cps fn mphase = opcs "oscilikt"
     [ (Ar, [Xr, Xr, Kr, Ir, Ir])
-    , (Kr, [Kr, Kr, Kr, Ir, Ir])]     
+    , (Kr, [Kr, Kr, Kr, Ir, Ir])]
     (case mphase of
         Nothing  -> [amp, cps, fn]
         Just phs -> [amp, cps, fn, phs]
@@ -283,12 +283,12 @@ oscilikt amp cps fn mphase = opcs "oscilikt"
 oscili :: E -> E -> E -> Maybe E -> E
 oscili amp cps fn mphase = opcs "oscili"
     [ (Ar, [Xr, Xr, Ir, Ir, Ir])
-    , (Kr, [Kr, Kr, Ir, Ir, Ir])]     
+    , (Kr, [Kr, Kr, Ir, Ir, Ir])]
     (case mphase of
         Nothing  -> [amp, cps, fn]
         Just phs -> [amp, cps, fn, phs]
     )
-    
+
 
 -- kfn vco2ft kcps, iwave [, inyx]
 vco2ft :: E -> E -> E
@@ -304,7 +304,7 @@ ftgen n g = opcs "ftgen" [(Ir, repeat Ir)]
     ++ (fmap double $ genArgs g)
 
 genIdE :: GenId -> E
-genIdE genId = case genId of
+genIdE = \case
     IntGenId n -> int n
     StringGenId a -> str a
 
@@ -316,14 +316,14 @@ syncphasor xcps asyncin mphase = getPair $ mopcs "syncphasor" ([Ar, Ar], [Xr, Ar
     Nothing     -> [xcps, asyncin]
     Just phase  -> [xcps, asyncin, phase]
 
-tableikt :: E -> E -> E 
+tableikt :: E -> E -> E
 tableikt xndx kfn  = opcs "tableikt" [(Ar, [Xr, Kr, Ir, Ir, Ir])] [xndx, kfn, 1]
 
 -----------------------------------------------------------
 -- OSC
 
 oscInit :: E -> E
-oscInit port = opcs "OSCinit" [(Ir, [Ir])] [port]
+oscInit portExpr = opcs "OSCinit" [(Ir, [Ir])] [portExpr]
 
 oscListen :: Monad m => E -> E -> E -> [Var] -> DepT m E
 oscListen oscHandle addr oscType vars = depT $ opcs "OSClisten" [(Kr, Ir:Ir:Ir:repeat Xr)] (oscHandle : addr : oscType : fmap inlineVar vars)
@@ -362,7 +362,7 @@ fluidLoad :: Monad m => String -> E -> DepT m E
 fluidLoad sfName engine = depT $ opcs "fluidLoad" [(Ir, [Sr, Ir, Ir])] [str sfName, engine, 1]
 
 fluidProgramSelect :: Monad m => E -> E -> Int -> Int -> DepT m E
-fluidProgramSelect engine sfInstr bank prog = depT $ opcs "fluidProgramSelect" 
+fluidProgramSelect engine sfInstr bank prog = depT $ opcs "fluidProgramSelect"
     [(Xr, replicate 5 Ir)] [engine, 1, sfInstr, int bank, int prog]
 
 -----------------------------------------------------------
@@ -382,7 +382,7 @@ sfSetList fileName presets = do
     sf <- sfload fileName
     sfplist sf
     forM_ presets $ \(bank, prog, index) -> sfpreset bank prog sf index
-    
+
 -----------------------------------------------------------
 -- midi volume factor (normalize by number of notes)
 
@@ -393,13 +393,13 @@ midiVolumeFactor idx = ifB (n <* 2) 1 (recip sqrtN)
     where sqrtN = sqrt n
           n     = activeIr idx
 
-active :: E -> E    
+active :: E -> E
 active instrId = opcs "active" [(Kr, [Ir]), (Ir, [Ir])] [instrId]
 
-activeIr :: E -> E    
+activeIr :: E -> E
 activeIr instrId = opcs "active" [(Ir, [Ir])] [instrId]
 
-activeKr :: E -> E    
+activeKr :: E -> E
 activeKr instrId = opcs "active" [(Kr, [Ir])] [instrId]
 
 port :: E -> E -> E
@@ -410,6 +410,7 @@ downsamp a = opcs "downsamp" [(Kr, [Ar])] [a]
 
 -----------------------------------------------------------
 
+getPair :: (Int -> [a]) -> (a, a)
 getPair mout = (a, b)
     where [a, b] = mout 2
 

@@ -33,7 +33,7 @@ whens rate bodies el = case bodies of
         ifBegin rate (fst a)
         snd a
         elseIfs as
-        elseBegin 
+        elseBegin
         el
         foldl1 (>>) $ replicate (1 + length as) ifEnd
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin rate p >> body)
@@ -90,11 +90,11 @@ type instance BooleanOf E = E
 
 instance IfB E where
     ifB = condExp
-    
+
 instance EqB E where
     (==*) = boolOp2 Equals
     (/=*) = boolOp2 NotEquals
-    
+
 instance OrdB E where
     (<*) = boolOp2 Less
     (>*) = boolOp2 Greater
@@ -112,10 +112,10 @@ boolExp = PreInline
 condExp :: E -> E -> E -> E
 condExp = mkCond . condInfo
     where mkCond :: CondInfo (PrimOr E) -> E -> E -> E
-          mkCond pr th el 
+          mkCond pr th el
             | isTrue pr = th
             | isFalse pr = el
-            | otherwise = noRate $ If pr (toPrimOr th) (toPrimOr el)            
+            | otherwise = noRate $ If pr (toPrimOr th) (toPrimOr el)
 
 condInfo :: E -> CondInfo (PrimOr E)
 condInfo p = go $ toPrimOr p
@@ -124,14 +124,14 @@ condInfo p = go $ toPrimOr p
         go expr = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' expr) 0
         condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
         condInfo' e = maybe (onLeaf e) (onExpr e) $ parseNode e
-        onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)  
+        onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)
         onExpr  _ (op, args) = fmap mkNode $ mapM condInfo' args
-            where mkNode as = (InlineExp op (map fst as), concat $ map snd as) 
+            where mkNode as = (InlineExp op (map fst as), concat $ map snd as)
 
         parseNode :: PrimOr E -> Maybe (CondOp, [PrimOr E])
         parseNode x = case unPrimOr $ fmap toExp x of
           Right (ExpBool (PreInline op args)) -> Just (op, args)
-          _ -> Nothing    
+          _ -> Nothing
 
 --------------------------------------------------------------------------------
 -- constructors for boolean expressions
@@ -145,14 +145,6 @@ boolOp2 :: CondOp -> E -> E -> E
 boolOp0 op = boolOps op []
 
 boolOp2 op a b = boolOps op [a, b]
-
-fromBoolOpt :: Either Bool E -> E
-fromBoolOpt = either (\x -> if x then true else false) id 
-
-toNumOpt :: E -> Either Double E
-toNumOpt x = case toExp x of
-    ExpPrim (PrimDouble d) -> Left d
-    _ -> Right x
 
 -----------------------------------------------------------------------------
 -- no support for not in csound so we perform not-elimination
@@ -170,5 +162,5 @@ notE x = onExp phi x
             LessEquals        -> boolExp Greater        args
             GreaterEquals     -> boolExp Less           args
 
-          phi _ = error "Logic.hs:notE - expression is not Boolean"  
+          phi _ = error "Logic.hs:notE - expression is not Boolean"
 

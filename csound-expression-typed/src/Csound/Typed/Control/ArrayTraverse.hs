@@ -1,6 +1,6 @@
 {-# Language ScopedTypeVariables #-}
 -- | Array traversals and folds
-module Csound.Typed.Control.ArrayTraverse(        
+module Csound.Typed.Control.ArrayTraverse(
     foreachArr, foreachArrD, forRowArr, forColumnArr, forRowArrD, forColumnArrD,
     foldArr, foldRowArr, foldColumnArr, foldRowsArrD, foldColumnsArrD
 ) where
@@ -9,7 +9,7 @@ import Csound.Typed.Types
 import Csound.Typed.Control.Ref
 import Csound.Typed.GlobalState
 import Data.Boolean
-import qualified Csound.Dynamic as D  
+import qualified Csound.Dynamic as D
 
 -------------------------------------------------------------------------
 -- Functional style traversals
@@ -42,16 +42,16 @@ foreachArrBy getArrayLength array body = do
         recWhile :: [Ref b] -> [(Int, Ref b, Ref b)] -> SE ()
         recWhile vars xs = case xs of
             [] -> do
-                ix <- readRef $ concatRef vars
+                ix <- readRef $ concatRefs vars
                 val <- readArr array ix
                 body (ix, val)
             (n, var, condVar) : rest -> do
-                whileRefBegin condVar 
+                whileRefBegin condVar
 
                 recWhile vars rest
 
                 modifyRef var (+ 1)
-                ix <- readRef var                
+                ix <- readRef var
                 writeRef condVar (ifB (ix `lessThan` getArrayLength n array) 1 0)
 
                 fromDep_ D.whileEnd
@@ -61,14 +61,14 @@ foreachArrBy getArrayLength array body = do
         proxy :: Arr ix a -> ix
         proxy = const undefined
 
-        concatRef :: [Ref b] -> Ref ix
-        concatRef vs = Ref $ vs >>= \(Ref xs) -> xs
+        concatRefs :: [Ref b] -> Ref ix
+        concatRefs vs = Ref $ vs >>= \(Ref xs) -> xs
 
 -- | Traverses all elements in the given row of 2D array at the signal rate and applies a procedure to all elements.
 forRowArr :: (Tuple a) => Sig -> Arr Sig2 a -> ((Sig, a) -> SE ()) -> SE ()
-forRowArr rowId array phi = whileRef 0 cond body
+forRowArr rowId array phi = whileRef 0 condition body
     where
-        cond ix = return $ ix `lessThan` lenarray array `withD` 2
+        condition ix = return $ ix `lessThan` lenarray array `withD` 2
 
         body ix = do
             val <- readArr array (rowId, ix)
@@ -78,9 +78,9 @@ forRowArr rowId array phi = whileRef 0 cond body
 
 -- | Traverses all elements in the given column of 2D array at the signal rate and applies a procedure to all elements.
 forColumnArr :: (Tuple a) => Sig -> Arr Sig2 a -> ((Sig, a) -> SE ()) -> SE ()
-forColumnArr colId array phi = whileRef 0 cond body
+forColumnArr colId array phi = whileRef 0 condition body
     where
-        cond ix = return $ ix `lessThan` lenarray array `withD` 1
+        condition ix = return $ ix `lessThan` lenarray array `withD` 1
 
         body ix = do
             val <- readArr array (ix, colId)
@@ -88,10 +88,10 @@ forColumnArr colId array phi = whileRef 0 cond body
             return $ ix + 1
 
 -- | Traverses all elements in the given row of 2D array at the init rate and applies a procedure to all elements.
-forRowArrD :: Tuple a => D -> Arr D2 a -> ((D, a) -> SE ()) -> SE () 
-forRowArrD rowId array phi = whileRefD 0 cond body
+forRowArrD :: Tuple a => D -> Arr D2 a -> ((D, a) -> SE ()) -> SE ()
+forRowArrD rowId array phi = whileRefD 0 condition body
     where
-        cond ix = return $ ix `lessThan` lenarray array `withD` 2
+        condition ix = return $ ix `lessThan` lenarray array `withD` 2
 
         body ix = do
             val <- readArr array (rowId, ix)
@@ -100,9 +100,9 @@ forRowArrD rowId array phi = whileRefD 0 cond body
 
 -- | Traverses all elements in the given column of 2D array at the init rate and applies a procedure to all elements.
 forColumnArrD :: Tuple a => D -> Arr D2 a -> ((D, a) -> SE ()) -> SE ()
-forColumnArrD colId array phi = whileRefD 0 cond body
+forColumnArrD colId array phi = whileRefD 0 condition body
     where
-        cond ix = return $ ix `lessThan` lenarray array `withD` 1
+        condition ix = return $ ix `lessThan` lenarray array `withD` 1
 
         body ix = do
             val <- readArr array (ix, colId)
@@ -119,7 +119,7 @@ foldArr phi z array = do
 toFoldFun :: Tuple b => (a -> b -> SE b) -> Ref b -> a -> SE ()
 toFoldFun phi ref a = writeRef ref =<< phi a =<< readRef ref
 
--- | Traverses a row in the array and accumulates a value. We invoke the function 
+-- | Traverses a row in the array and accumulates a value. We invoke the function
 -- with accumulator function, initial value and the array with signal of the row number.
 --
 -- > foldRowArr accum initValue rowId array
@@ -129,7 +129,7 @@ foldRowArr phi z rowId array = do
     forRowArr rowId array $ toFoldFun phi res
     readRef res
 
--- | Traverses a column in the array and accumulates a value. We invoke the function 
+-- | Traverses a column in the array and accumulates a value. We invoke the function
 -- with accumulator function, initial value and the array with signal of the row number.
 --
 -- > foldColumnArr accum initValue columnId array
@@ -139,7 +139,7 @@ foldColumnArr phi z rowId array = do
     forColumnArr rowId array $ toFoldFun phi res
     readRef res
 
--- | Traverses a row at the **init rate** in the array and accumulates a value. We invoke the function 
+-- | Traverses a row at the **init rate** in the array and accumulates a value. We invoke the function
 -- with accumulator function, initial value and the array with signal of the row number.
 --
 -- > foldRowArr accum initValue rowId array
@@ -149,7 +149,7 @@ foldRowsArrD phi z rowId array = do
     forRowArrD rowId array $ toFoldFun phi res
     readRef res
 
--- | Traverses a column at the **init rate** in the array and accumulates a value. We invoke the function 
+-- | Traverses a column at the **init rate** in the array and accumulates a value. We invoke the function
 -- with accumulator function, initial value and the array with signal of the row number.
 --
 -- > foldColumnArr accum initValue columnId array

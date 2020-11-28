@@ -6,13 +6,11 @@ module Csound.Typed.Control.Instr(
     apInstr, apInstr0
 ) where
 
-import Data.Default
 import Csound.Dynamic(InstrId(..))
 import qualified Csound.Typed.GlobalState.Elements as C
 
 import Csound.Typed.Types
 import Csound.Typed.GlobalState
-import Csound.Typed.GlobalState.Opcodes(primInstrId)
 
 funProxy :: (a -> f b) -> (a, b)
 funProxy = const (msg, msg)

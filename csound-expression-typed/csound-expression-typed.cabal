@@ -162,3 +162,5 @@ Library
     Paths_csound_expression_typed
 
   Default-Language: Haskell2010
+  Default-extensions:
+    LambdaCase

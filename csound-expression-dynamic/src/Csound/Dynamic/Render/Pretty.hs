@@ -29,68 +29,68 @@ func :: String -> Doc -> Doc
 func op a = text op <> parens a
 
 ppCsdFile :: Doc -> Doc -> Doc -> [Plugin] -> Doc
-ppCsdFile flags orc sco plugins = 
+ppCsdFile flags orc sco plugins =
     tag "CsoundSynthesizer" $ vcatSep [
         tag "CsOptions" flags,
         tag "CsInstruments" orc,
         tag "CsScore" sco,
         ppPlugins plugins
-        ]   
+        ]
 
 ppPlugins :: [Plugin] -> Doc
 ppPlugins plugins = vcatSep $ fmap (\(Plugin name body) -> tag name (text body)) plugins
 
 tag :: String -> Doc -> Doc
 tag name content = vcatSep [
-    char '<' <> text name <> char '>', 
-    content, 
-    text "</" <> text name <> char '>']  
+    char '<' <> text name <> char '>',
+    content,
+    text "</" <> text name <> char '>']
 
 ppNotes :: InstrId -> [CsdEvent] -> Doc
 ppNotes instrId = vcat . fmap (ppNote instrId)
 
 ppNote :: InstrId -> CsdEvent -> Doc
-ppNote instrId evt = char 'i' 
-    <+> ppInstrId instrId 
-    <+> double (csdEventStart evt) <+> double (csdEventDur evt) 
+ppNote instrId evt = char 'i'
+    <+> ppInstrId instrId
+    <+> double (csdEventStart evt) <+> double (csdEventDur evt)
     <+> hsep (fmap ppPrim $ csdEventContent evt)
 
 ppPrim :: Prim -> Doc
 ppPrim x = case x of
     P n -> char 'p' <> int n
     PrimInstrId a -> ppInstrId a
-    PString a -> int a    
+    PString a -> int a
     PrimInt n -> int n
     PrimDouble d -> double d
     PrimString s -> dquotes $ text s
     PrimVar targetRate v -> ppConverter targetRate (varRate v) $ ppVar v
     where
-        ppConverter dst src t 
-            | dst == src = t            
-            | dst == Ar && src == Kr = a(t) 
-            | dst == Ar && src == Ir = a(k(t))            
+        ppConverter dst src t
+            | dst == src = t
+            | dst == Ar && src == Kr = a(t)
+            | dst == Ar && src == Ir = a(k(t))
             | dst == Kr  = k(t)
             | dst == Ir && src == Kr = i(t)
             | dst == Ir && src == Ar = i(k(t))
             | otherwise = t
-            where 
-                tfm ch v = hcat [char ch, parens v]    
+            where
+                tfm ch v = hcat [char ch, parens v]
                 a = tfm 'a'
                 k = tfm 'k'
                 i = tfm 'i'
 
-    
+
 ppGen :: Int -> Gen -> Doc
-ppGen tabId ft = char 'f' 
-    <>  int tabId 
-    <+> int 0 
+ppGen tabId ft = char 'f'
+    <>  int tabId
+    <+> int 0
     <+> (int $ genSize ft)
-    <+> (ppGenId $ genId ft) 
+    <+> (ppGenId $ genId ft)
     <+> (maybe empty (text . show) $ genFile ft)
     <+> (hsep $ map double $ genArgs ft)
 
 ppGenId :: GenId -> Doc
-ppGenId genId = case genId of
+ppGenId x = case x of
     IntGenId a      -> int a
     StringGenId a   -> dquotes $ text a
 
@@ -102,27 +102,27 @@ ppInstr instrId body = vcat [
 
 ppInstrHeadId :: InstrId -> Doc
 ppInstrHeadId x = case x of
-    InstrId den nom -> int nom <> maybe empty ppAfterDot den 
+    InstrId den nom -> int nom <> maybe empty ppAfterDot den
     InstrLabel name -> text name
     where ppAfterDot a = text $ ('.': ) $ reverse $ show a
 
 ppInstrId :: InstrId -> Doc
 ppInstrId x = case x of
-    InstrId den nom -> int nom <> maybe empty ppAfterDot den 
+    InstrId den nom -> int nom <> maybe empty ppAfterDot den
     InstrLabel name -> dquotes $ text name
     where ppAfterDot a = text $ ('.': ) $ reverse $ show a
 
 type TabDepth = Int
 
 ppStmt :: [RatedVar] -> Exp RatedVar -> State TabDepth Doc
-ppStmt outs expr = maybe (ppExp (ppOuts outs) expr) id (maybeStringCopy outs expr) 
+ppStmt outs expr = maybe (ppExp (ppOuts outs) expr) id (maybeStringCopy outs expr)
 
 maybeStringCopy :: [RatedVar] -> Exp RatedVar -> Maybe (State TabDepth Doc)
 maybeStringCopy outs expr = case (outs, expr) of
-    ([R.Var n Sr], ExpPrim (PrimVar rate var)) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
-    ([R.Var n Sr], ReadVar var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
+    ([R.Var _ Sr], ExpPrim (PrimVar _rate var)) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
+    ([R.Var _ Sr], ReadVar var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
     ([], WriteVar outVar a) | varRate outVar == Sr  -> Just $ tab $ ppStringCopy (ppVar outVar) (ppPrimOrVar a)
-    ([R.Var n Sr], ReadArr var as) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
+    ([R.Var _ Sr], ReadArr var as) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
     ([], WriteArr outVar bs a) | varRate outVar == Sr -> Just $ tab $ ppStringCopy (ppArrIndex outVar $ fmap ppPrimOrVar bs) (ppPrimOrVar a)
     _ -> Nothing
 
@@ -144,7 +144,7 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     ReadVar v                       -> tab $ res $= ppVar v
 
     InitArr v as                    -> tab $ ppOpc (ppArrVar (length as) v) "init" as
-    ReadArr v as                    -> tab $ if (varRate v /= Sr) then res $= ppReadArr v as else res <+> text "strcpy" <+> ppReadArr v as 
+    ReadArr v as                    -> tab $ if (varRate v /= Sr) then res $= ppReadArr v as else res <+> text "strcpy" <+> ppReadArr v as
     WriteArr v as b                 -> tab $ ppWriteArr v as b
     WriteInitArr v as b             -> tab $ ppWriteInitArr v as b
     TfmArr isInit v op [a,b]| isInfix  op  -> tab $ ppTfmArrOut isInit v <+> binary (infoName op) a b
@@ -152,7 +152,7 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     TfmArr isInit v op xs                  -> tab $ ppOpc (ppTfmArrOut isInit v) (infoName op) xs
 
     IfBegin _ a                     -> succTab          $ text "if "     <> ppCond a <> text " then"
---     ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")    
+--     ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")
     ElseBegin                       -> left >> (succTab $ text "else")
     IfEnd                           -> left >> (tab     $ text "endif")
     UntilBegin a                    -> succTab          $ text "until " <> ppCond a <> text " do"
@@ -166,16 +166,18 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     ReadMacrosString name           -> tab $ res <+> text "strcpy" <+> readMacro name
     ReadMacrosDouble name           -> tab $ res $= readMacro name
     ReadMacrosInt name              -> tab $ res $= readMacro name
-    EmptyExp                        -> return empty    
+    EmptyExp                        -> return empty
     Verbatim str                    -> return $ text str
     x -> error $ "unknown expression: " ++ show x
 
 
 -- pp macros
- 
+
+readMacro :: String -> Doc
 readMacro name = char '$' <> text name
 
-initMacros name initValue = vcat 
+initMacros :: Doc -> Doc -> Doc
+initMacros name initValue = vcat
     [ text "#ifndef" <+> name
     , text "#define " <+> name <+> char '#' <> initValue <> char '#'
     , text "#end"
@@ -183,38 +185,53 @@ initMacros name initValue = vcat
 
 -- pp arrays
 
+ppTfmArrOut :: Bool -> Var -> Doc
 ppTfmArrOut isInit v = ppVar v <> (if isInit then (text "[]") else empty)
 
+ppArrIndex :: Var -> [Doc] -> Doc
 ppArrIndex v as = ppVar v <> (hcat $ fmap brackets as)
+
+ppArrVar :: Int -> Var -> Doc
 ppArrVar n v = ppVar v <> (hcat $ replicate n $ text "[]")
 
+ppReadArr :: Var -> [Doc] -> Doc
 ppReadArr v as = ppArrIndex v as
 
+ppWriteArr :: Var -> ArrIndex Doc -> Doc -> Doc
 ppWriteArr v as b = ppArrIndex v as <+> equalsWord <+> b
     where equalsWord = if (varRate v == Sr) then text "strcpy" else equals
 
+ppWriteInitArr :: Var -> [Doc] -> Doc -> Doc
 ppWriteInitArr v as b = ppArrIndex v as <+> initWord <+> b
     where initWord = text $ if (varRate v == Sr) then "strcpy" else "init"
 
 -------------------------------------
 
-tab doc = fmap (shiftByTab doc) get 
+tab :: Monad m => Doc -> StateT TabDepth m Doc
+tab doc = fmap (shiftByTab doc) get
+
+tabWidth :: TabDepth
 tabWidth = 4
+
+shiftByTab :: Doc -> TabDepth -> Doc
 shiftByTab doc n
     | n == 0    = doc
-    | otherwise = (text $ replicate (tabWidth * n) ' ') <> doc 
+    | otherwise = (text $ replicate (tabWidth * n) ' ') <> doc
 
+left :: State TabDepth ()
 left = modify pred
 
+succTab :: Monad m => Doc -> StateT TabDepth m Doc
 succTab doc = do
     a <- tab doc
     modify succ
     return a
 
+prefix :: String -> [Doc] -> Doc
 prefix name args = text name <> tupled args
 
 ppCond :: Inline CondOp Doc -> Doc
-ppCond = ppInline ppCondOp 
+ppCond = ppInline ppCondOp
 
 ($=) :: Doc -> Doc -> Doc
 ($=) a b = a <+> equals <+> b
@@ -227,14 +244,14 @@ ppPrimOrVar x = either ppPrim ppRatedVar $ unPrimOr x
 
 ppStrget :: Doc -> Int -> Doc
 ppStrget out n = ppOpc out "strget" [char 'p' <> int n]
- 
+
 ppIf :: Doc -> Doc -> Doc -> Doc -> Doc
-ppIf res p t e = vcat 
+ppIf res p t e = vcat
     [ text "if" <+> p <+> text "then"
     , text "    " <> res <+> char '=' <+> t
     , text "else"
     , text "    " <> res <+> char '=' <+> e
-    , text "endif" 
+    , text "endif"
     ]
 
 ppOpc :: Doc -> String -> [Doc] -> Doc
@@ -260,14 +277,14 @@ ppVarType x = case x of
 
 ppConvertRate :: Doc -> Rate -> Rate -> Doc -> Doc
 ppConvertRate out to from var = case (to, from) of
-    (Ar, Kr) -> upsamp var 
+    (Ar, Kr) -> upsamp var
     (Ar, Ir) -> upsamp $ k var
     (Kr, Ar) -> downsamp var
     (Kr, Ir) -> out $= k var
     (Ir, Ar) -> downsamp var
     (Ir, Kr) -> out $= i var
     (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
-    where 
+    where
         upsamp x = ppOpc out "upsamp" [x]
         downsamp x = ppOpc out "downsamp" [x]
         k = func "k"
@@ -276,16 +293,16 @@ ppConvertRate out to from var = case (to, from) of
 -- expressions
 
 ppInline :: (a -> [Doc] -> Doc) -> Inline a Doc -> Doc
-ppInline ppNode a = iter $ inlineExp a    
+ppInline ppNode a = iter $ inlineExp a
     where iter x = case x of
               InlinePrim n        -> inlineEnv a IM.! n
-              InlineExp op args   -> ppNode op $ fmap iter args  
+              InlineExp op args   -> ppNode op $ fmap iter args
 
 -- booleans
 
-ppCondOp :: CondOp -> [Doc] -> Doc  
+ppCondOp :: CondOp -> [Doc] -> Doc
 ppCondOp op = case op of
-    TrueOp            -> const $ text "(1 == 1)"                
+    TrueOp            -> const $ text "(1 == 1)"
     FalseOp           -> const $ text "(0 == 1)"
     And               -> bi "&&"
     Or                -> bi "||"
@@ -293,10 +310,10 @@ ppCondOp op = case op of
     NotEquals         -> bi "!="
     Less              -> bi "<"
     Greater           -> bi ">"
-    LessEquals        -> bi "<="    
-    GreaterEquals     -> bi ">="                         
-    where bi  = binaries 
-          
+    LessEquals        -> bi "<="
+    GreaterEquals     -> bi ">="
+    where bi  = binaries
+
 -- numeric
 
 ppNumOp :: NumOp -> [Doc] -> Doc
@@ -305,10 +322,10 @@ ppNumOp op = case  op of
     Sub -> bi "-"
     Mul -> bi "*"
     Div -> bi "/"
-    Neg -> uno "-"    
-    Pow -> bi "^"    
+    Neg -> uno "-"
+    Pow -> bi "^"
     Mod -> bi "%"
-    where 
+    where
         bi  = binaries
         uno = unaries
 
@@ -319,7 +336,7 @@ ppRate :: Rate -> Doc
 ppRate x = case x of
     Sr -> char 'S'
     _  -> phi x
-    where phi = text . map toLower . show 
+    where phi = text . map toLower . show
 
 ppTotalDur :: Double -> Doc
 ppTotalDur d = text "f0" <+> double d

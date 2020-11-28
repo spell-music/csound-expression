@@ -185,6 +185,7 @@ getNextGlobalGenId = onHistory globalGenCounter (\a h -> h{ globalGenCounter = a
 saveGen :: Gen -> GE Int
 saveGen = onGenMap . newGen
 
+onGenMap :: State GenMap a -> GE a
 onGenMap = onHistory genMap (\val h -> h{ genMap = val })
 
 saveWriteGen :: Gen -> GE E
@@ -193,6 +194,7 @@ saveWriteGen = onWriteGenMap . newWriteGen
 saveWriteTab :: Int -> GE E
 saveWriteTab = onWriteGenMap . newWriteTab
 
+onWriteGenMap :: State WriteGenMap a -> GE a
 onWriteGenMap = onHistory writeGenMap (\val h -> h{ writeGenMap = val })
 
 saveTabs :: [Gen] -> GE E
@@ -577,9 +579,9 @@ readMacrosInt :: String -> Int -> GE E
 readMacrosInt    = readMacrosBy D.readMacrosInt    MacrosInitInt
 
 readMacrosBy :: (String ->  E) -> (String -> a -> MacrosInit) -> String -> a -> GE E
-readMacrosBy reader allocator name initValue = do
+readMacrosBy extract allocator name initValue = do
     onMacrosInits $ initMacros $ allocator name initValue
-    return $ reader name
+    return $ extract name
     where onMacrosInits = onHistory macrosInits (\val h -> h { macrosInits = val })
 
 -----------------------------------------------

@@ -5,7 +5,6 @@ module Csound.Typed.GlobalState.InstrApi(
     turnoff, turnoff2
 ) where
 
-import Control.Monad
 import Control.Monad.Trans.Class
 
 import Csound.Dynamic hiding (InstrId, when1)
@@ -18,11 +17,11 @@ import Csound.Typed.Types.Prim
 import Csound.Typed.GlobalState.Port
 
 
-import qualified Csound.Typed.GlobalState.Opcodes as Opcodes(Event(..), event, eventi, turnoff2, turnoff, initSig, activeKr)
+import qualified Csound.Typed.GlobalState.Opcodes as Opcodes(Event(..), event, eventi, turnoff2, turnoff, activeKr)
 
 data InstrId a
-    = InstrId { unInstrId :: GE E }
-    | InstrLinkedId { instrLivenessPort :: PortCtrl Sig, unInstrId :: GE E }
+    = InstrId { _unInstrId :: GE E }
+    | InstrLinkedId { _instrLivenessPort :: PortCtrl Sig, _unInstrId :: GE E }
 
 newInstr :: Arg a => (a -> SE ()) -> InstrId a
 newInstr instr = InstrId $ fmap instrIdE $ saveInstr (instr toArg)
@@ -44,8 +43,8 @@ getEvent (InstrId idx) (start, dur, args) = SE $ lift $ do
             d <- toGE dur
             as <- fromTuple args
             return $ Opcodes.Event i s d as
-getEvent (InstrLinkedId port idx) (start, dur, arg) = do
-    getEvent (InstrId idx) (start, dur, (arg, port))
+getEvent (InstrLinkedId port idx) (start, dur, argument) = do
+    getEvent (InstrId idx) (start, dur, (argument, port))
 
 
 getEventi :: Tuple a => InstrId a -> (D, D, a) -> SE Opcodes.Event
@@ -55,12 +54,14 @@ getEventi (InstrId idx) (start, dur, args) = SE $ lift $ do
             d <- toGE dur
             as <- fromTuple args
             return $ Opcodes.Event i s d as
-getEventi (InstrLinkedId port idx) (start, dur, arg) = do
-    getEventi (InstrId idx) (start, dur, (arg, port))
+getEventi (InstrLinkedId port idx) (start, dur, argument) = do
+    getEventi (InstrId idx) (start, dur, (argument, port))
 
 
 turnoff2 :: InstrId a -> SE ()
-turnoff2 (InstrId expr) = SE $ Opcodes.turnoff2 =<< lift expr
+turnoff2 = \case
+  InstrId expr -> SE $ Opcodes.turnoff2 =<< lift expr
+  InstrLinkedId _ _ -> error "turnoff2 is undefined for InstrLinkedId"
 
 turnoff :: SE ()
 turnoff = SE $ Opcodes.turnoff
@@ -75,8 +76,8 @@ newInstrLinked instr = do
     return resInstrId
     where
         instr' :: (a, PortCtrl Sig) -> SE ()
-        instr' (arg, port) = do
-            instr arg
+        instr' (argument, port) = do
+            instr argument
             testLiveness port
 
 testLiveness :: PortCtrl Sig -> SE ()

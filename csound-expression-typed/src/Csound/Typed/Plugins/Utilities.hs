@@ -1,10 +1,6 @@
-module Csound.Typed.Plugins.Utilities(  
-	delay1k 
+module Csound.Typed.Plugins.Utilities(
+  delay1k
 ) where
-
-import Data.Boolean
-import Control.Monad.Trans.Class
-import Control.Applicative
 
 import Csound.Dynamic
 
@@ -20,4 +16,4 @@ delay1k :: Sig -> Sig
 delay1k ain = fromGE $ do
     addUdoPlugin E.delay1kPlugin
     f <$> toGE ain
-    where f ain = opcs "Delay1k" [(Kr, [Kr])] [ain]
+    where f x = opcs "Delay1k" [(Kr, [Kr])] [x]

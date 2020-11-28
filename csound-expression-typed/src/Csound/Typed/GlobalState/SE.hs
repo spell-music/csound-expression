@@ -1,13 +1,12 @@
 module Csound.Typed.GlobalState.SE(
-    SE(..), LocalHistory(..), 
-    runSE, execSE, evalSE, execGEinSE, hideGEinDep, 
+    SE(..), LocalHistory(..),
+    runSE, execSE, evalSE, execGEinSE, hideGEinDep,
     fromDep, fromDep_, geToSe,
     newLocalVar, newLocalVars, newGlobalVars, newClearableGlobalVars,
     -- array variables
     newLocalArrVar, newGlobalArrVar, newTmpArrVar
 ) where
 
-import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Class
 
@@ -50,11 +49,11 @@ hideGEinDep :: GE (Dep a) -> Dep a
 hideGEinDep = join . lift
 
 fromDep :: Dep a -> SE (GE a)
-fromDep = fmap return . SE 
+fromDep = fmap return . SE
 
 fromDep_ :: Dep () -> SE ()
 fromDep_ = SE
-            
+
 evalSE :: SE a -> GE a
 evalSE = evalDepT . unSE
 

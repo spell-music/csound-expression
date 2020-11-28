@@ -57,7 +57,7 @@ import Data.Default
 import qualified Data.Map as M
 import qualified Data.IntMap as IM
 
-import Csound.Dynamic.Types
+import Csound.Dynamic.Types hiding (genId)
 import Csound.Dynamic.Build
 import Csound.Dynamic.Build.Numeric()
 
@@ -103,9 +103,9 @@ newTabOfGens = (saveGenId . intTab =<<) . mapM saveGenId
 nextPowOfTwo :: Int -> Int
 nextPowOfTwo n
     | frac == 0 = n
-    | otherwise = 2 ^ (integ + 1)
+    | otherwise = 2 ^ ((integ :: Int) + 1)
     where
-        (integ, frac) = properFraction $ logBase 2 (fromIntegral n)
+        (integ, frac) = (properFraction $ logBase 2 (fromIntegral n)) :: (Int, Double)
 
 saveGenId :: Ord a => a -> State (IdMap a) Int
 saveGenId a = state $ \s ->
@@ -219,6 +219,7 @@ bandLimitedIdToExpr x = case x of
     SimpleBandLimitedWave simpleId -> int simpleId
     UserBandLimitedWave   userId   -> noRate $ ReadVar $ bandLimitedVar userId
 
+bandLimitedVar :: Show a => a -> Var
 bandLimitedVar userId = Var GlobalVar Ir ("BandLim" ++ show userId)
 
 data BandLimitedMap = BandLimitedMap
@@ -282,38 +283,11 @@ renderBandLimited genMap blMap =
         renderVcoVarAssignment n = writeVar (bandLimitedVar n) =<< (fmap negate $ readVar (ftVar n))
 
         renderVco :: Monad m => (BandLimited, BandLimitedId) -> DepT m ()
-        renderVco (bandLimited, blId) = case blId of
+        renderVco (_bandLimited, blId) = case blId of
             SimpleBandLimitedWave waveId -> do
                 free <- readVar freeVcoVar
                 writeVar freeVcoVar $ vco2init [int waveId, free]
             UserBandLimitedWave   _      -> return ()
-
-
-{-
-            renderFirstVco n (head vcos)
-            mapM_ renderTailVco (tail vcos)
-
-        getUserGens as = phi =<< as
-            where phi (x, gId) = case x of
-                        UserGen g   -> [(g, gId)]
-                        _           -> []
-
-        renderGen (g, n) = toDummy $ ftgen (int n) g
-
-        renderFirstVco n x = renderVco (int n) x
-        renderTailVco x = renderVco (readOnlyVar vcoVar) x
-
-        renderVco ftId (wave, waveId) = toVcoVar $ vco2init $ case wave of
-            UserGen _   -> [ int waveId, ftId, 1.05, -1, -1, int $ negate waveId ]
-            _           -> [ int waveId, ftId ]
-
-        vcoVar = dummyVar
-        toVcoVar = toDummy
-
-        dummyVar = Var LocalVar Ir "ft"
-
-        toDummy = writeVar dummyVar
--}
 
 readBandLimited :: Maybe E -> BandLimitedId -> E -> E
 readBandLimited mphase n cps = oscilikt 1 cps (vco2ft cps (bandLimitedIdToExpr n)) mphase
@@ -322,7 +296,7 @@ readHardSyncBandLimited :: Maybe BandLimitedId -> Maybe E -> BandLimitedId -> E 
 readHardSyncBandLimited msmoothShape mphase n slaveCps masterCps = smoothWave * readShape n phasorSlave slaveCps
     where
         (phasorMaster, syncMaster) = syncphasor masterCps 0 Nothing
-        (phasorSlave,  syncSlave)  = syncphasor slaveCps syncMaster mphase
+        (phasorSlave,  _syncSlave) = syncphasor slaveCps syncMaster mphase
 
         smoothWave = case msmoothShape of
             Nothing    -> 1
@@ -353,12 +327,12 @@ data Globals = Globals
     , globalsVars   :: [AllocVar] }
 
 data AllocVar = AllocVar
-        { allocVarType     :: GlobalVarType
-        , allocVar         :: Var
-        , allocVarInit     :: E }
+        { _allocVarType     :: GlobalVarType
+        , _allocVar         :: Var
+        , _allocVarInit     :: E }
     | AllocArrVar
-        { allocArrVar :: Var
-        , allocArrVarSizes :: [E] }
+        { _allocArrVar :: Var
+        , _allocArrVarSizes :: [E] }
 
 data GlobalVarType = PersistentGlobalVar | ClearableGlobalVar
     deriving (Eq)
@@ -403,12 +377,12 @@ renderGlobals a = (initAll, clear)
         gs = globalsVars a
 
         initAlloc x = case x of
-            AllocVar _  var init  -> initVar var init
-            AllocArrVar var sizes -> initArr var sizes
+            AllocVar _  var initProc -> initVar var initProc
+            AllocArrVar var sizes    -> initArr var sizes
 
         clearAlloc x = case x of
-            AllocVar _  var init  ->  writeVar var init
-            AllocArrVar _ _       -> return ()
+            AllocVar _  var initProc -> writeVar var initProc
+            AllocArrVar _ _          -> return ()
 
         isClearable x = case x of
             AllocVar ty _ _ -> ty == ClearableGlobalVar
@@ -532,20 +506,20 @@ chnPargId arityIns = 4 + arityIns
 --------------------------------------------------------
 -- Osc listeners
 
-newtype OscListenPorts = OscListenPorts { unOscListenPorts :: IM.IntMap Var }
+newtype OscListenPorts = OscListenPorts (IM.IntMap Var)
 
 instance Default OscListenPorts where
     def = OscListenPorts IM.empty
 
 getOscPortVar :: Int -> State (OscListenPorts, Globals) Var
-getOscPortVar port = state $ \st@(OscListenPorts m, globals) -> case IM.lookup port m of
+getOscPortVar portId = state $ \st@(OscListenPorts m, globals) -> case IM.lookup portId m of
         Just a  -> (a, st)
-        Nothing -> onNothing port m globals
+        Nothing -> onNothing m globals
     where
-        onNothing port m globals = (var, (OscListenPorts m1, newGlobals))
+        onNothing m globals = (var, (OscListenPorts m1, newGlobals))
             where
-                (var, newGlobals) = runState (allocOscPortVar port) globals
-                m1 = IM.insert port var m
+                (var, newGlobals) = runState (allocOscPortVar portId) globals
+                m1 = IM.insert portId var m
 
 
 allocOscPortVar :: Int -> State Globals Var
@@ -583,6 +557,13 @@ tabQueue2Plugin = UdoPlugin "tabQueue2"
 
 ----------------------------------------------------------
 -- Steven Yi wonderful UDOs
+
+zdfPlugin, solinaChorusPlugin, audaciouseqPlugin, adsr140Plugin, diodePlugin, korg35Plugin,
+  zeroDelayConvolutionPlugin, analogDelayPlugin, distortionPlugin, envelopeFolollowerPlugin,
+  flangerPlugin, freqShifterPlugin, loFiPlugin, panTremPlugin, monoTremPlugin, phaserPlugin,
+  pitchShifterPlugin, pitchShifterDelayPlugin, reversePlugin, ringModulatorPlugin, stChorusPlugin,
+  stereoPingPongDelayPlugin, tapeEchoPlugin, delay1kPlugin,
+  ambiRowPlugin, ambiRowMp3Plugin, liveRowPlugin, liveRowsPlugin, tabQueuePlugin, tabQueue2Plugin :: UdoPlugin
 
 zdfPlugin           = UdoPlugin "zdf"               -- Zero delay filters
 solinaChorusPlugin  = UdoPlugin "solina_chorus"     -- solina chorus

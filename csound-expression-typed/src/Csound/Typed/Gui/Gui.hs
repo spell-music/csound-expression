@@ -31,24 +31,17 @@ module Csound.Typed.Gui.Gui (
 
 import Prelude hiding(elem, span)
 
-import Control.Applicative(Alternative(..))
 import Data.Default
-import Data.Char(toLower)
 import Data.Maybe(isNothing)
 import Data.Monoid
-
-import Data.Colour
-import Data.Colour.Names(white, gray)
-import Data.Colour.SRGB
 
 import qualified Data.IntMap as IM
 import Text.PrettyPrint.Leijen(Doc)
 
 import Csound.Dynamic(DepT, depT_, Var(..), VarType(..), Rate(..), noRate, MainExp(..), InstrId(..))
 
-import qualified Text.PrettyPrint.Leijen as P(int, double, vcat, hcat, hsep, punctuate, comma, empty, text, char, (<+>))
+import qualified Text.PrettyPrint.Leijen as P(int, double, vcat, empty, text)
 import qualified Csound.Typed.Gui.BoxModel as Box
-import Csound.Typed.Gui.BoxModel(Rect(..))
 import Csound.Typed.Constants(infiniteDur)
 
 import Csound.Typed.Gui.Types

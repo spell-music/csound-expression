@@ -11,7 +11,6 @@ import Csound.Typed.Types.Prim
 import Csound.Typed.GlobalState.GE
 import Csound.Typed.GlobalState.SE
 import Csound.Typed.GlobalState.Options
-import Csound.Typed.GlobalState.Cache
 import Csound.Typed.GlobalState.Opcodes(turnoff2, exitnow, servantUpdateChnAlive, servantUpdateChnRetrig)
 import Csound.Typed.GlobalState.Elements(getInstrIds)
 
@@ -35,24 +34,24 @@ retrigWatch arity = fromDep_ $ servantUpdateChnRetrig (C.chnPargId $ arityIns ar
 saveSourceInstrCachedWithLivenessWatch :: Arity -> InsExp -> GE InstrId
 saveSourceInstrCachedWithLivenessWatch arity instr = saveInstr $ do
     toOut =<< instr
-    livenessWatch arity 
+    livenessWatch arity
     where toOut = SE . C.sendChn (arityIns arity) (arityOuts arity)
 
 saveSourceInstrCachedWithLivenessWatchAndRetrig :: Arity -> InsExp -> GE InstrId
 saveSourceInstrCachedWithLivenessWatchAndRetrig arity instr = saveInstr $ do
     toOut =<< instr
     retrigWatch arity
-    livenessWatch arity    
+    livenessWatch arity
     where toOut = SE . C.sendChn (arityIns arity) (arityOuts arity)
 
 saveSourceInstrCachedWithLivenessWatchAndRetrigAndEvtLoop :: Arity -> InsExp -> UnitExp -> GE (InstrId, InstrId)
-saveSourceInstrCachedWithLivenessWatchAndRetrigAndEvtLoop arity instr evtInstr = do 
+saveSourceInstrCachedWithLivenessWatchAndRetrigAndEvtLoop arity instr evtInstr = do
     instrId <- saveSourceInstrCachedWithLivenessWatchAndRetrig arity instr
     evtInstrId <- saveInstr (evtInstr >> retrigWatch evtInstrArity >> livenessWatch evtInstrArity)
     return (instrId, evtInstrId)
-    where 
+    where
         evtInstrArity = Arity 0 0
-        
+
 saveSourceInstrCached :: Arity -> InsExp -> GE InstrId
 saveSourceInstrCached arity instr = saveInstr $ toOut =<< instr
     where toOut = SE . C.sendChn (arityIns arity) (arityOuts arity)
@@ -61,12 +60,12 @@ saveSourceInstrCached_ :: UnitExp -> GE InstrId
 saveSourceInstrCached_ instr = saveInstr instr
 
 saveSourceInstrCachedWithLivenessWatch_ :: Arity -> UnitExp -> GE InstrId
-saveSourceInstrCachedWithLivenessWatch_ arity instr = saveInstr $ 
+saveSourceInstrCachedWithLivenessWatch_ arity instr = saveInstr $
     instr >> livenessWatch arity
 
 saveEffectInstr :: Arity -> EffExp -> GE InstrId
 saveEffectInstr arity eff = saveInstr $ setOuts =<< eff =<< getIns
-    where 
+    where
         setOuts = SE . C.writeChn (C.chnRefFromParg 5 (arityOuts arity))
         getIns  = SE $ C.readChn  $ C.chnRefFromParg 4 (arityIns  arity)
 
@@ -82,7 +81,7 @@ saveMixInstr_ a = do
 
 saveMasterInstr :: Arity -> InsExp -> GE ()
 saveMasterInstr arity sigs = do
-    gainLevel <- fmap defGain getOptions 
+    gainLevel <- fmap defGain getOptions
     saveAlwaysOnInstr =<< (saveInstr $ (SE . C.sendOut (arityOuts arity) . C.safeOut gainLevel) =<< sigs)
 
 saveMidiInstr :: C.MidiType -> C.Channel -> Arity -> InsExp -> GE [E]
@@ -92,7 +91,7 @@ saveMidiInstr midiType channel arity instr = do
     let expr = (SE . zipWithM_ (appendVarBy (+)) vars) =<< instr
     instrId <- saveInstr expr
     saveMidi $ MidiAssign midiType channel instrId
-    return $ fmap readOnlyVar vars 
+    return $ fmap readOnlyVar vars
 
 saveMidiMap :: GE ()
 saveMidiMap = do
@@ -100,14 +99,14 @@ saveMidiMap = do
     mapM_ (\(C.MidiKey midiType channel, instrExpr) -> saveMidiInstr_ midiType channel (SE instrExpr)) $ toList m
 
 saveMidiInstr_ :: C.MidiType -> C.Channel -> UnitExp -> GE ()
-saveMidiInstr_ midiType channel instr = do    
+saveMidiInstr_ midiType channel instr = do
     instrId <- saveInstr instr
-    saveMidi $ MidiAssign midiType channel instrId   
+    saveMidi $ MidiAssign midiType channel instrId
 
 saveIns0 :: Int -> [Rate] -> SE [E] -> GE [E]
 saveIns0 arity rates as = do
     vars <- onGlobals $ zipWithM C.newPersistentGlobalVar rates (replicate arity 0)
-    saveUserInstr0 $ unSE $ (SE . zipWithM_ writeVar vars) =<< as 
+    saveUserInstr0 $ unSE $ (SE . zipWithM_ writeVar vars) =<< as
     return $ fmap readOnlyVar vars
 
 terminatorInstr :: GE (SE ())

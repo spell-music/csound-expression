@@ -5,14 +5,10 @@ module Csound.Typed.Control.Evt(
     retrigs, evtLoop, evtLoopOnce
 ) where
 
-import System.Mem.StableName
-
-import Data.Monoid
 import Data.Boolean
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.IO.Class
 
 import qualified Temporal.Media as T(render, Event(..))
 
@@ -122,12 +118,12 @@ evtLoopOnce :: (Num a, Tuple a, Sigs a) => Maybe (Evt Unit) -> [SE a] -> [Evt Un
 evtLoopOnce = evtLoopGen False
 
 evtLoopGen :: (Num a, Tuple a, Sigs a) => Bool -> Maybe (Evt Unit) -> [SE a] -> [Evt Unit] -> a
-evtLoopGen mustLoop maybeOffEvt instrs evts = apInstr0 $ do
+evtLoopGen mustLoop maybeOffEvt instruments evts = apInstr0 $ do
     (instrId, evtInstrId) <- saveSourceInstrCachedWithLivenessWatchAndRetrigAndEvtLoop (constArity instr) (insExp $ toInstrExp instr) (toSingleEvt evts)
     saveEvtLoopInstr mustLoop loopLength maybeOffEvt (arityOuts $ constArity instr) instrId evtInstrId
     where
-        loopLength = int $ lcm (length instrs) (length evts)
-        instr = toSingleInstr instrs
+        loopLength = int $ lcm (length instruments) (length evts)
+        instr = toSingleInstr instruments
 
         toInstrExp :: a -> (Unit -> a)
         toInstrExp = const
@@ -143,9 +139,9 @@ evtLoopGen mustLoop maybeOffEvt instrs evts = apInstr0 $ do
                 f ref n ix a = when1 (n ==* ix) $ writeRef ref =<< a
 
         toSingleEvt :: [Evt Unit] -> SE ()
-        toSingleEvt evts = do
-            let n = mod' (fromE $ getRetrigVal 4) (sig $ int $ length evts)
-            zipWithM_ (f n) (fmap (sig . int) [0 .. ]) evts
+        toSingleEvt es = do
+            let n = mod' (fromE $ getRetrigVal 4) (sig $ int $ length es)
+            zipWithM_ (f n) (fmap (sig . int) [0 .. ]) es
             where
                 f :: Sig -> Sig -> Evt Unit -> SE ()
                 f n ix evt = when1 (n ==* ix) $ evtLoopInstr evt
@@ -184,8 +180,8 @@ saveEvtLoopInstr mustLoop loopLength maybeOffEvt arity instrId evtInstrId = save
         go = goBy (+ 1)
 
         goBy :: (D -> D) -> Ref D -> Ref D -> GE C.ChnRef -> Evt Unit -> SE ()
-        goBy updateRetrig aliveCountRef retrigWatchRef mchnId events =
-            runEvt events $ \es -> do
+        goBy updateRetrig _aliveCountRef retrigWatchRef mchnId events =
+            runEvt events $ \_es -> do
                 modifyRef retrigWatchRef updateRetrig
                 chnId <- geToSe mchnId
                 currentRetrig <- readRef retrigWatchRef
@@ -208,7 +204,7 @@ saveEvtLoopInstr mustLoop loopLength maybeOffEvt arity instrId evtInstrId = save
         audioEvent = fireEventFor eventForAudioInstr
         evtEvent   = fireEventFor eventForEvtInstr
 
-        startEvtInstr chnId currentRetrig = C.event $ eventForEvtInstr chnId currentRetrig
+        -- startEvtInstr chnId currentRetrig = C.event $ eventForEvtInstr chnId currentRetrig
 
         initStartInstrs mchnId = fromDep_ $ hideGEinDep $ do
             chnId <- mchnId
@@ -256,35 +252,19 @@ saveEvtInstr_ :: Arg a => C.InstrId -> Evt [(Sig, Sig, a)] -> Dep ()
 saveEvtInstr_ instrId evts = unSE $ runEvt evts $ \es -> fromDep_ $ mapM_ event es
     where event (start, dur, args) = hideGEinDep $ fmap C.event $ C.Event (primInstrId instrId) <$> toGE start <*> toGE dur <*> toNote args
 
--------------------------------------------------------------------
-
-evtKey :: a -> b -> GE EvtKey
-evtKey a b = liftIO $ EvtKey <$> hash a <*> hash b
-    where hash x = hashStableName <$> makeStableName x
-
-
--------------------------------------------------------------------
--- sample level triggering
-
-samNext :: (Sigs a) => Evt Unit -> a -> a -> a
-samNext = undefined
-
-samLoop :: (Sigs a) => Evt Unit -> a -> a
-samLoop = undefined
-
 -------------------------------------------------------------
 -- monophonic scheduling
 
 -- | Turns
 monoSched :: Evt (Sco (D, D)) -> SE MonoArg
-monoSched evts = evtPort instr evts read
+monoSched evts = evtPort instr evts readP
     where
         instr ((amp, cps), p) = do
             (_, _, gate) <- I.readPort p
             I.writePort p (sig amp, sig cps, gate + 1)
 
-        read :: I.Port (Sig, Sig, Sig) -> SE MonoArg
-        read p = do
+        readP :: I.Port (Sig, Sig, Sig) -> SE MonoArg
+        readP p = do
             (amp, cps, gate) <- I.readPort p
             I.writePort p (amp, cps, 0)
             return $ MonoArg amp cps (ifB (gate `equalsTo` 0) 0 1) (changed [amp, cps, gate])
@@ -305,9 +285,9 @@ monoSchedUntil evts stop = do
         ons ref (amp, cps) =
             writeRef ref $ MonoArg { monoAmp = sig amp, monoCps = sig cps, monoGate = 1, monoTrig = 1 }
 
-        offs ref = modifyRef ref $ \arg -> arg { monoGate = 0 }
+        offs ref = modifyRef ref $ \a -> a { monoGate = 0 }
 
-        clearTrig ref = modifyRef ref $ \arg -> arg { monoTrig = 0 }
+        clearTrig ref = modifyRef ref $ \a -> a { monoTrig = 0 }
 
 -- | Plays the note until next note comes
 monoSchedHarp :: Evt (D, D) -> SE MonoArg
@@ -315,11 +295,11 @@ monoSchedHarp evts = monoSchedUntil evts mempty
 
 
 evtPort :: (Arg a, Sigs p) => ((a, I.Port p) -> SE ()) -> Evt (Sco a) -> (I.Port p -> SE b) -> SE b
-evtPort instr evts read = do
+evtPort instr evts readP = do
     port <- I.freePort
     idx <- I.newInstrLinked instr
     runSco evts $ go idx port
-    read port
+    readP port
     where
         go idx port (start,dur,a) = I.event idx (start, dur, (a, port))
 

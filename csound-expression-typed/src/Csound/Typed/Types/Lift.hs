@@ -11,27 +11,25 @@ module Csound.Typed.Types.Lift(
     -- ** Procedure
     Procedure, procedure,
 
-    -- ** Pure multi 
+    -- ** Pure multi
     PureMulti, Pm, fromPm, pureMulti,
 
     -- ** Dirty multi
     DirtyMulti, Dm, fromDm, dirtyMulti
-        
-) where
 
-import Control.Applicative
+) where
 
 import Csound.Dynamic
 import Csound.Typed.Types.Prim
 import Csound.Typed.Types.Tuple
 import Csound.Typed.GlobalState
-    
+
 pureSingle :: PureSingle a => ([E] -> E) -> a
 pureSingle = pureSingleGE . return
-    
+
 dirtySingle :: DirtySingle a => ([E] -> Dep E) -> a
 dirtySingle = dirtySingleGE . return
-    
+
 procedure :: Procedure a => ([E] -> Dep ()) -> a
 procedure = procedureGE . return
 
@@ -53,10 +51,10 @@ class DirtySingle a where
 
 class Procedure a where
     procedureGE :: GE ([E] -> Dep ()) -> a
-    
+
 class PureMulti a where
     pureMultiGE :: GE ([E] -> MultiOut [E]) -> a
-    
+
 class DirtyMulti a where
     dirtyMultiGE :: GE ([E] -> MultiOut (Dep [E])) -> a
 
@@ -68,7 +66,7 @@ fromPm (Pm a) = res
 
 fromDm :: Tuple a => Dm -> SE a
 fromDm (Dm a) = res
-    where 
+    where
         res = fmap toTuple $ fromDep $ hideGEinDep $ fmap ( $ (tupleArity $ proxy res)) a
 
         proxy :: SE a -> a
@@ -84,7 +82,7 @@ instance PureSingle b => PureSingle (GE E -> b) where
 
 instance PureSingle b => PureSingle (GE [E] -> b) where
     pureSingleGE mf = \mas -> pureSingleGE $ (\f as bs -> f (as ++ bs)) <$> mf <*> mas
-    
+
 ps0 :: (Val a) => GE ([E] -> E) -> a
 ps0 = fromGE . pureSingleGE
 
@@ -117,10 +115,10 @@ instance (PureSingle b) => PureSingle (Msg -> b)    where   pureSingleGE f = con
 
 instance DirtySingle (SE (GE E)) where
     dirtySingleGE = fromDep . hideGEinDep . fmap ($ [])
-    
+
 instance DirtySingle b => DirtySingle (GE E -> b) where
     dirtySingleGE mf = \ma -> dirtySingleGE $ (\f a as -> f (a:as)) <$> mf <*> ma
-    
+
 instance DirtySingle b => DirtySingle (GE [E] -> b) where
     dirtySingleGE mf = \mas -> dirtySingleGE $ (\f as bs -> f (as ++ bs)) <$> mf <*> mas
 
@@ -159,10 +157,10 @@ instance Procedure (SE ()) where
 
 instance Procedure b => Procedure (GE E -> b) where
     procedureGE mf = \ma -> procedureGE $ (\f a as -> f (a:as)) <$> mf <*> ma
-    
+
 instance Procedure b => Procedure (GE [E] -> b) where
     procedureGE mf = \mas -> procedureGE $ (\f as bs -> f (as ++ bs)) <$> mf <*> mas
-    
+
 pr1 :: (Val a, Procedure b) => GE ([E] -> Dep ()) -> a -> b
 pr1 f = procedureGE f . toGE
 
@@ -188,7 +186,7 @@ instance PureMulti Pm where
 
 instance PureMulti b => PureMulti (GE E -> b) where
     pureMultiGE mf = \ma -> pureMultiGE $ (\f a as -> f (a:as)) <$> mf <*> ma
-    
+
 instance PureMulti b => PureMulti (GE [E] -> b) where
     pureMultiGE mf = \mas -> pureMultiGE $ (\f as bs -> f (as ++ bs)) <$> mf <*> mas
 
@@ -196,7 +194,7 @@ pm1 :: (Val a, PureMulti b) => GE ([E] -> MultiOut [E]) -> (a -> b)
 pm1 f = pureMultiGE f . toGE
 
 pms :: (Val a, PureMulti b) => GE ([E] -> MultiOut [E]) -> ([a] -> b)
-pms f = pureMultiGE f . mapM toGE 
+pms f = pureMultiGE f . mapM toGE
 
 instance (PureMulti b) => PureMulti (Sig -> b)    where   pureMultiGE = pm1
 instance (PureMulti b) => PureMulti (D -> b)      where   pureMultiGE = pm1

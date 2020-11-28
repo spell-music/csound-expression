@@ -5,7 +5,7 @@ module Csound.Typed.Gui.Widget(
     keyPanels, panelBy, keyPanelBy, tabsBy, keyTabsBy,
 
     -- * Types
-    Input(..), Output(..), Inner(..),
+    Input, Output, Inner,
     noInput, noOutput, noInner,
     Widget, widget, Source, source, Sink, sink, Display, display, SinkSource, sinkSource, sourceSlice, sinkSlice,
     mapSource, mapGuiSource, mhor, mver, msca,
@@ -21,17 +21,14 @@ module Csound.Typed.Gui.Widget(
     KeyEvt(..), Key(..), keyIn
 ) where
 
-import Control.Applicative
 import Control.Arrow
 import Control.Monad
 import Control.Monad.Trans.Class
 
-import Data.Monoid
 import Data.Boolean
 
 import Csound.Dynamic hiding (int, when1)
 import qualified Csound.Typed.GlobalState.Elements as C
-import qualified Csound.Typed.GlobalState.Opcodes as C
 
 import Csound.Typed.Gui.Gui
 import Csound.Typed.GlobalState

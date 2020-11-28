@@ -1,6 +1,6 @@
 module Csound.Typed.Constants(
-	infiniteDur
+  infiniteDur
 ) where
 
 infiniteDur :: Num a => a
-infiniteDur = 7 * 24 * 60 * 60 -- a week 
+infiniteDur = 7 * 24 * 60 * 60 -- a week

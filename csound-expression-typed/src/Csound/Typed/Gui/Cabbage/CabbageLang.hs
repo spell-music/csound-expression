@@ -1,20 +1,20 @@
 module Csound.Typed.Gui.Cabbage.CabbageLang(
-	Lang, Line(..), Property(..), Arg(..), ppCabbage
+  Lang, Line(..), Property(..), Arg(..), ppCabbage
 ) where
 
 import Text.PrettyPrint.Leijen
 
 type Lang = [Line]
 
-data Line = Line 
-	{ lineDef :: String
-	, lineProperties :: [Property]
-	}
+data Line = Line
+  { lineDef :: String
+  , lineProperties :: [Property]
+  }
 
-data Property = Property 
-	{ propertyName :: String
-	, propertyArgs :: [Arg] 
-	}
+data Property = Property
+  { propertyName :: String
+  , propertyArgs :: [Arg]
+  }
 
 data Arg = StringArg String | FloatArg Float | IntArg Int | ColonArg Float Float
 
@@ -32,7 +32,7 @@ ppProp (Property name args) = text name <> tupled (fmap ppArg args)
 
 ppArg :: Arg -> Doc
 ppArg x = case x of
-	StringArg s -> dquotes (text s)
-	FloatArg a  -> float a
-	IntArg a    -> int a
-	ColonArg a b -> float a <> colon <> float b
+  StringArg s -> dquotes (text s)
+  FloatArg a  -> float a
+  IntArg a    -> int a
+  ColonArg a b -> float a <> colon <> float b

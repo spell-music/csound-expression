@@ -3,7 +3,7 @@ module Csound.Typed.Control.Vco(
     saw, isaw, pulse, tri, sqr, blosc,
     saw', isaw', pulse', tri', sqr', blosc',
 
-    -- * Hard sync 
+    -- * Hard sync
     SyncSmooth(..),
 
     sawSync, isawSync, pulseSync, triSync, sqrSync, bloscSync,
@@ -30,8 +30,6 @@ import Csound.Dynamic(Gen(..), GenId(..))
 import Csound.Typed.GlobalState
 import Csound.Typed.Types
 
-import Csound.Typed.GlobalState
-
 --------------------------------------------------------------
 -- no phase
 
@@ -48,7 +46,7 @@ tri :: Sig -> Sig
 tri = noPhaseWave Triangle
 
 -- | Pulse (not normalized).
-pulse :: Sig -> Sig 
+pulse :: Sig -> Sig
 pulse = noPhaseWave Pulse
 
 -- | A square wave.
@@ -77,7 +75,7 @@ tri' :: D -> Sig -> Sig
 tri' = withPhaseWave Triangle
 
 -- | Pulse (not normalized).
-pulse' :: D -> Sig -> Sig 
+pulse' :: D -> Sig -> Sig
 pulse' = withPhaseWave Pulse
 
 -- | A square wave.
@@ -113,14 +111,14 @@ relativeSync f ratioCps masterCps = f (ratioCps * masterCps) masterCps
 
 -- | Sawtooth oscillator with hard-sync.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > sawSync ratio cps
 sawSync :: Sig -> Sig -> Sig
 sawSync = relativeSync sawSyncAbs
 
 -- | Integrated sawtooth oscillator with hard-sync.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > isawSync ratio cps
 isawSync :: Sig -> Sig -> Sig
 isawSync = relativeSync isawSyncAbs
@@ -128,28 +126,28 @@ isawSync = relativeSync isawSyncAbs
 
 -- | Triangle oscillator with hard-sync.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > triSync ratio cps
 triSync :: Sig -> Sig -> Sig
 triSync = relativeSync triSyncAbs
 
 -- | Pulse oscillator with hard-sync.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > pulseSync ratio cps
 pulseSync :: Sig -> Sig -> Sig
 pulseSync = relativeSync pulseSyncAbs
 
 -- | Square oscillator with hard-sync.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > sqrSync ratio cps
 sqrSync :: Sig -> Sig -> Sig
 sqrSync = relativeSync sqrSyncAbs
 
 -- | Band-limited oscillator with hard-sync.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > bloscSync tab ratio cps
 bloscSync :: Tab -> Sig -> Sig -> Sig
 bloscSync t = relativeSync (bloscSyncAbs t)
@@ -162,42 +160,42 @@ relativeSync' f phase ratioCps masterCps = f phase (ratioCps * masterCps) master
 
 -- | Sawtooth oscillator with hard-sync with phase.
 -- The second argument is a ration between slave and master oscillators.
--- 
+--
 -- > sawSync' phase ratio cps
 sawSync' :: D -> Sig -> Sig -> Sig
 sawSync' = relativeSync' sawSyncAbs'
 
 -- | Integrated sawtooth oscillator with hard-sync with phase.
 -- The second argument is a ration between slave and master oscillators.
--- 
+--
 -- > isawSync' phase ratio cps
 isawSync' :: D -> Sig -> Sig -> Sig
 isawSync' = relativeSync' isawSyncAbs'
 
 -- | Triangle oscillator with hard-sync with phase.
 -- The second argument is a ration between slave and master oscillators.
--- 
+--
 -- > triSync' phase ratio cps
 triSync' :: D -> Sig -> Sig -> Sig
 triSync' = relativeSync' triSyncAbs'
 
 -- | Pulse oscillator with hard-sync with phase.
 -- The second argument is a ration between slave and master oscillators.
--- 
+--
 -- > pulseSync' phase ratio cps
 pulseSync' :: D -> Sig -> Sig -> Sig
 pulseSync' = relativeSync' pulseSyncAbs'
 
 -- | Square oscillator with hard-sync with phase.
 -- The second argument is a ration between slave and master oscillators.
--- 
+--
 -- > sqrSync' phase ratio cps
 sqrSync' :: D -> Sig -> Sig -> Sig
 sqrSync' = relativeSync' sqrSyncAbs'
 
 -- | Band-limited oscillator with hard-sync with phase.
 -- The second argument is a ration between slave and master oscillators.
--- 
+--
 -- > bloscSync' phase tab ratio cps
 bloscSync' :: Tab -> D -> Sig -> Sig -> Sig
 bloscSync' t = relativeSync' (bloscSyncAbs' t)
@@ -210,45 +208,45 @@ relativeSyncBy f smoothType ratioCps masterCps = f smoothType (ratioCps * master
 
 -- | Sawtooth oscillator with hard-sync. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > sawSyncBy spec ratio cps
 sawSyncBy :: SyncSmooth -> Sig -> Sig -> Sig
 sawSyncBy = relativeSyncBy sawSyncAbsBy
 
 -- | Integrated sawtooth oscillator with hard-sync. We can specify the smoothness type.
 -- The first argument is a ration between slave and master oscillators.
--- 
+--
 -- > isawSyncB specy ratio cps
 isawSyncBy :: SyncSmooth -> Sig -> Sig -> Sig
 isawSyncBy = relativeSyncBy isawSyncAbsBy
 
 -- | Triangle oscillator with hard-sync. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > triSyncBy spec ratio cps
 triSyncBy :: SyncSmooth -> Sig -> Sig -> Sig
 triSyncBy = relativeSyncBy triSyncAbsBy
 
 -- | Pulse oscillator with hard-sync. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > pulseSyncBy spec ratio cps
 pulseSyncBy :: SyncSmooth -> Sig -> Sig -> Sig
 pulseSyncBy = relativeSyncBy pulseSyncAbsBy
 
 -- | Square oscillator with hard-sync. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > sawSyncBy spec ratio cps
 sqrSyncBy :: SyncSmooth -> Sig -> Sig -> Sig
 sqrSyncBy = relativeSyncBy sqrSyncAbsBy
 
 -- | Bandlimited table oscillator with hard-sync. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > bloscSyncBy spec tab ratio cps
 bloscSyncBy :: SyncSmooth -> Tab -> Sig -> Sig -> Sig
-bloscSyncBy smoothType t = relativeSyncBy (\smoothType -> bloscSyncAbsBy smoothType t) smoothType
+bloscSyncBy smoothType t = relativeSyncBy (\smoothTy -> bloscSyncAbsBy smoothTy t) smoothType
 
 ------------------------------------------------------------
 -- phase
@@ -258,86 +256,86 @@ relativeSyncBy' f smoothType phase ratioCps masterCps = f smoothType phase (rati
 
 -- | Sawtooth oscillator with hard-sync with phase. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > sawSyncBy' spec phase ratio cps
 sawSyncBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 sawSyncBy' = relativeSyncBy' sawSyncAbsBy'
 
 -- | Integrated sawtooth oscillator with hard-sync with phase. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > isawSyncBy' spec phase ratio cps
 isawSyncBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 isawSyncBy' = relativeSyncBy' isawSyncAbsBy'
 
 -- | Triangle oscillator with hard-sync with phase. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > triSyncBy' spec phase ratio cps
 triSyncBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 triSyncBy' = relativeSyncBy' triSyncAbsBy'
 
 -- | Pulse oscillator with hard-sync with phase. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > pulseSyncBy' spec phase ratio cps
 pulseSyncBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 pulseSyncBy' = relativeSyncBy' pulseSyncAbsBy'
 
 -- | Square oscillator with hard-sync with phase. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > sawSyncBy' spec phase ratio cps
 sqrSyncBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 sqrSyncBy' = relativeSyncBy' sqrSyncAbsBy'
 
 -- | Bandlimited table oscillator with hard-sync with phase. We can specify the smoothness type.
 -- The @ratio@ argument is a ration between slave and master oscillators.
--- 
+--
 -- > bloscSyncBy' spec phase tab ratio cps
 bloscSyncBy' :: SyncSmooth -> Tab -> D -> Sig -> Sig -> Sig
-bloscSyncBy' smoothType t = relativeSyncBy' (\smoothType -> bloscSyncAbsBy' smoothType t) smoothType
+bloscSyncBy' smoothType t = relativeSyncBy' (\smoothTy -> bloscSyncAbsBy' smoothTy t) smoothType
 
 ------------------------------------------------------------
 
 -- | Sawtooth oscillator with hard-sync.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > sawSyncAbs freq slaveCps masterCps
 sawSyncAbs :: Sig -> Sig -> Sig
 sawSyncAbs = sawSyncAbsBy def
 
 -- | Integrated sawtooth oscillator with hard-sync.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > isawSyncAbs freq slaveCps masterCps
 isawSyncAbs :: Sig -> Sig -> Sig
 isawSyncAbs = isawSyncAbsBy def
 
 -- | Triangle oscillator with hard-sync.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > triSyncAbs freq slaveCps masterCps
 triSyncAbs :: Sig -> Sig -> Sig
 triSyncAbs = triSyncAbsBy def
 
 -- | Pulse oscillator with hard-sync.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > pulseSyncAbs freq slaveCps masterCps
 pulseSyncAbs :: Sig -> Sig -> Sig
 pulseSyncAbs = pulseSyncAbsBy def
 
 -- | Square oscillator with hard-sync.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > sqrSyncAbs freq slaveCps masterCps
 sqrSyncAbs :: Sig -> Sig -> Sig
 sqrSyncAbs = sqrSyncAbsBy def
 
 -- | Bandlimited table oscillator with hard-sync.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > bloscSyncAbs tab freq slaveCps masterCps
 bloscSyncAbs :: Tab -> Sig -> Sig -> Sig
 bloscSyncAbs = bloscSyncAbsBy def
@@ -346,42 +344,42 @@ bloscSyncAbs = bloscSyncAbsBy def
 
 -- | Sawtooth oscillator with hard-sync with phase.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > sawSyncAbs' phase freq slaveCps masterCps
 sawSyncAbs' :: D -> Sig -> Sig -> Sig
 sawSyncAbs' = sawSyncAbsBy' def
 
 -- | Integrated sawtooth oscillator with hard-sync with phase.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > isawSyncAbs' phase freq slaveCps masterCps
 isawSyncAbs' :: D -> Sig -> Sig -> Sig
 isawSyncAbs' = isawSyncAbsBy' def
 
 -- | Triangle oscillator with hard-sync with phase.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > triSyncAbs' phase freq slaveCps masterCps
 triSyncAbs' :: D -> Sig -> Sig -> Sig
 triSyncAbs' = triSyncAbsBy' def
 
 -- | Pulse oscillator with hard-sync with phase.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > pulseSyncAbs' phase freq slaveCps masterCps
 pulseSyncAbs' :: D -> Sig -> Sig -> Sig
 pulseSyncAbs' = pulseSyncAbsBy' def
 
 -- | Square oscillator with hard-sync with phase.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > sqrSyncAbs' phase freq slaveCps masterCps
 sqrSyncAbs' :: D -> Sig -> Sig -> Sig
 sqrSyncAbs' = sqrSyncAbsBy' def
 
 -- | Bandlimited table oscillator with hard-sync with phase.
 -- The @freq@ argument is an absolute frequency of a slave oscillator.
--- 
+--
 -- > bloscSyncAbs' phase tab freq slaveCps masterCps
 bloscSyncAbs' :: Tab -> D -> Sig -> Sig -> Sig
 bloscSyncAbs' = bloscSyncAbsBy' def
@@ -410,7 +408,7 @@ triSyncAbsBy = noPhaseWaveHardSync Triangle
 -- | A hard sync for pulse wave with absolute slave frequency.
 --
 -- > pulseSyncAbs syncType salveCps masterCps
-pulseSyncAbsBy :: SyncSmooth -> Sig -> Sig -> Sig 
+pulseSyncAbsBy :: SyncSmooth -> Sig -> Sig -> Sig
 pulseSyncAbsBy = noPhaseWaveHardSync Pulse
 
 -- | A hard sync for square wave with absolute slave frequency.
@@ -443,7 +441,7 @@ triSyncAbsBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 triSyncAbsBy' = withPhaseWaveHardSync Triangle
 
 -- | Pulse (not normalized).
-pulseSyncAbsBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig 
+pulseSyncAbsBy' :: SyncSmooth -> D -> Sig -> Sig -> Sig
 pulseSyncAbsBy' = withPhaseWaveHardSync Pulse
 
 -- | A square wave.
@@ -459,7 +457,7 @@ bloscSyncAbsBy' smoothType tab phs ratioCps cps = hideGE $ do
 -----------------------------------------------
 
 -- | Type of smooth shape to make smooth transitions on retrigger.
--- Available types are: 
+-- Available types are:
 --
 -- * No smooth: @RawSync@
 --

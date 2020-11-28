@@ -3,7 +3,7 @@ module Csound.Typed.Control.Mix(
     Mix,
     sco, eff, mix, mixBy, monoSco,
     sco_, mix_, mixBy_,
-    Sco, CsdEventList(..), CsdEvent
+    Sco, CsdEventList, CsdEvent
 ) where
 
 import Data.Boolean

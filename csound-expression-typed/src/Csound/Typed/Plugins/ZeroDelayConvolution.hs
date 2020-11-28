@@ -1,11 +1,8 @@
 module Csound.Typed.Plugins.ZeroDelayConvolution(
-	 ZConvSpec(..), zconv, zconv'
+   ZConvSpec(..), zconv, zconv'
 ) where
 
-import Data.Boolean
 import Data.Default
-import Control.Monad.Trans.Class
-import Control.Applicative
 
 import Csound.Dynamic
 
@@ -50,4 +47,4 @@ zconv' :: ZConvSpec -> Tab -> Sig -> Sig
 zconv' (ZConvSpec ipart irat inp) ifn ain = fromGE $ do
     addUdoPlugin E.zeroDelayConvolutionPlugin
     f <$> toGE ain <*> toGE ipart <*> toGE irat <*> toGE inp <*> toGE ifn
-    where f ain ipart irat inp ifn = opcs "ZConv" [(Ar, [Ar, Ir, Ir, Ir, Ir])] [ain, ipart, irat, inp, ifn]
+    where f ain' ipart' irat' inp' ifn' = opcs "ZConv" [(Ar, [Ar, Ir, Ir, Ir, Ir])] [ain', ipart', irat', inp', ifn']
