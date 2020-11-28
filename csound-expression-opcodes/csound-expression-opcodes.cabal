@@ -1,0 +1,47 @@
+Name:          csound-expression-opcodes
+Version:       0.0.4.0
+Cabal-Version: >= 1.6
+License:       BSD3
+License-file:  LICENSE
+Author:	       Anton Kholomiov
+Synopsis:      opcodes for the library csound-expression
+Stability:     Experimental
+Tested-With:   GHC==7.6
+Build-Type:    Simple
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+
+Description:   opcodes for the library csound-expression
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+        base >= 4, base < 5, transformers, csound-expression-typed, csound-expression-dynamic
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+    Csound.Typed.Opcode
+    Csound.Typed.Opcode.SignalGenerators
+    Csound.Typed.Opcode.SignalIO
+    Csound.Typed.Opcode.SignalModifiers
+    Csound.Typed.Opcode.InstrumentControl
+    Csound.Typed.Opcode.JackoOpcodes
+    Csound.Typed.Opcode.SerialIO
+    Csound.Typed.Opcode.TableControl
+    Csound.Typed.Opcode.FLTK
+    Csound.Typed.Opcode.MathematicalOperations
+    Csound.Typed.Opcode.PitchConverters
+    Csound.Typed.Opcode.RealtimeMIDI
+    Csound.Typed.Opcode.SignalFlowGraphOpcodes
+    Csound.Typed.Opcode.SpectralProcessing
+    Csound.Typed.Opcode.Strings
+    Csound.Typed.Opcode.Vectorial
+    Csound.Typed.Opcode.ZakPatchSystem
+    Csound.Typed.Opcode.PluginHosting
+    Csound.Typed.Opcode.OSC
+    Csound.Typed.Opcode.FaustOpcodes
+    Csound.Typed.Opcode.Network
+    Csound.Typed.Opcode.RemoteOpcodes
+    Csound.Typed.Opcode.MixerOpcodes
+    Csound.Typed.Opcode.AbletonLinkOpcodes
+    Csound.Typed.Opcode.ImageProcessingOpcodes
+    Csound.Typed.Opcode.Miscellaneous

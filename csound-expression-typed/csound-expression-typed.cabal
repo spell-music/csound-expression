@@ -1,0 +1,164 @@
+Name:          csound-expression-typed
+Version:       0.2.3.1
+Cabal-Version: >= 1.22
+License:       BSD3
+License-file:  LICENSE
+Author:	       Anton Kholomiov
+Synopsis:      typed core for the library csound-expression
+Stability:     Experimental
+Tested-With:   GHC==7.10
+Build-Type:    Simple
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+
+Description:
+
+Data-Files :
+    data/hrtf-44100-left.dat
+    data/hrtf-44100-right.dat
+
+    data/hrtf-48000-left.dat
+    data/hrtf-48000-right.dat
+
+    data/hrtf-96000-left.dat
+    data/hrtf-96000-right.dat
+
+    data/opcodes/tabQueue.udo
+    data/opcodes/tabQueue2.udo
+
+    data/opcodes/zdf.udo
+    data/opcodes/solina_chorus.udo
+    data/opcodes/adsr140.udo
+    data/opcodes/audaciouseq.udo
+    data/opcodes/tdf2.udo
+    data/opcodes/diode.udo
+    data/opcodes/korg35.udo
+    data/opcodes/zero-delay-convolution.udo
+    data/opcodes/PitchShifterDelay.udo
+    data/opcodes/AmbiRow.udo
+    data/opcodes/AmbiRowMp3.udo
+    data/opcodes/LiveRow.udo
+    data/opcodes/LiveRows.udo
+    data/opcodes/MultiFX/AnalogDelay.udo
+    data/opcodes/MultiFX/Distortion.udo
+    data/opcodes/MultiFX/EnvelopeFollower.udo
+    data/opcodes/MultiFX/Flanger.udo
+    data/opcodes/MultiFX/FreqShifter.udo
+    data/opcodes/MultiFX/LoFi.udo
+    data/opcodes/MultiFX/PanTrem.udo
+    data/opcodes/MultiFX/MonoTrem.udo
+    data/opcodes/MultiFX/Phaser.udo
+    data/opcodes/MultiFX/PitchShifter.udo
+    data/opcodes/MultiFX/Reverse.udo
+    data/opcodes/MultiFX/RingModulator.udo
+    data/opcodes/MultiFX/StChorus.udo
+    data/opcodes/MultiFX/StereoPingPongDelay.udo
+    data/opcodes/MultiFX/TapeEcho.udo
+    data/opcodes/Utility/Delay1k.udo
+
+Homepage:        https://github.com/anton-k/csound-expression-typed
+Bug-Reports:     https://github.com/anton-k/csound-expression-typed/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression-typed
+
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+        base >= 4.6,
+        base < 5,
+        ghc-prim,
+        containers,
+        transformers >= 0.3,
+        Boolean >= 0.1.0,
+        colour >= 2.0,
+        data-default,
+        deepseq,
+        NumInstances,
+        filepath,
+        directory,
+        wl-pprint >= 1.2.1,
+        csound-expression-dynamic >= 0.3.5,
+        temporal-media >= 0.6.3,
+        hashable
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+    Csound.Typed
+
+    Csound.Typed.Types
+    Csound.Typed.Control
+    Csound.Typed.Render
+
+    Csound.Typed.Gui
+    Csound.Typed.Gui.Cab
+
+    Csound.Typed.Types.Prim
+    Csound.Typed.Types.Evt
+    Csound.Typed.Types.Tuple
+    Csound.Typed.Types.Lift
+    Csound.Typed.Types.Array
+    Csound.Typed.Types.MonoArg
+    Csound.Typed.Types.SigSpace
+
+    Csound.Typed.Plugins
+
+  Other-Modules:
+    Csound.Typed.GlobalState
+    Csound.Typed.GlobalState.Options
+    Csound.Typed.GlobalState.GE
+    Csound.Typed.GlobalState.SE
+    Csound.Typed.GlobalState.Instr
+    Csound.Typed.GlobalState.InstrApi
+    Csound.Typed.GlobalState.Cache
+    Csound.Typed.GlobalState.Elements
+    Csound.Typed.GlobalState.Opcodes
+    Csound.Typed.GlobalState.Port
+    Csound.Typed.InnerOpcodes
+
+    Csound.Typed.Types.TupleHelpers
+    Csound.Typed.Types.MixSco
+
+    Csound.Typed.Control.Evt
+    Csound.Typed.Control.Vco
+    Csound.Typed.Control.Mix
+    Csound.Typed.Control.Midi
+    Csound.Typed.Control.Api
+    Csound.Typed.Control.Sf2
+    Csound.Typed.Control.Osc
+    Csound.Typed.Control.Channel
+    Csound.Typed.Control.Ref
+    Csound.Typed.Control.Instr
+    Csound.Typed.Control.InstrRef
+    Csound.Typed.Control.ArrayTraverse
+    Csound.Typed.Control.MacrosArgs
+
+    Csound.Typed.Gui.Gui
+    Csound.Typed.Gui.Widget
+    Csound.Typed.Gui.Pretty
+    Csound.Typed.Gui.Types
+    Csound.Typed.Gui.BoxModel
+    Csound.Typed.Gui.Cabbage.CabbageLang
+    Csound.Typed.Gui.Cabbage.Cabbage
+
+    Csound.Typed.Constants
+    Csound.Typed.Misc
+
+    Csound.Typed.Plugins.TabQueue
+    Csound.Typed.Plugins.TapeEcho
+    Csound.Typed.Plugins.Zdf
+    Csound.Typed.Plugins.Diode
+    Csound.Typed.Plugins.Korg35
+    Csound.Typed.Plugins.Adsr140
+    Csound.Typed.Plugins.Audaciouseq
+    Csound.Typed.Plugins.SolinaChorus
+    Csound.Typed.Plugins.ZeroDelayConvolution
+    Csound.Typed.Plugins.Iain
+    Csound.Typed.Plugins.AmbiRow
+    Csound.Typed.Plugins.LiveRow
+    Csound.Typed.Plugins.Utilities
+
+    Paths_csound_expression_typed
+
+  Default-Language: Haskell2010

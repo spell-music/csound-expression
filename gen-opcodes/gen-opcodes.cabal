@@ -1,0 +1,64 @@
+Name:           gen-opcodes
+Version:        0.0
+Cabal-Version:  >= 1.10
+License:        BSD3
+Author:         Anton Kholomiov
+Synopsis:       Generates opcodes for csound-expression
+Build-Type:     Simple
+
+Description:
+    Makes an executable program @gen-opcodes@ that generates
+    packages for dynamic and typed opcodes in the current directory.
+
+Data-Files:
+    resources/csound-expression-opcodes-dynamic.cabal
+    resources/csound-expression-opcodes.cabal
+    resources/LICENSE
+    resources/Setup.hs
+    resources/MiscQuickref.html
+    resources/docs.txt
+
+Library
+  Hs-Source-Dirs: src
+
+  Build-Depends:  base >= 4, base < 5, shelly, xml, containers, transformers, wl-pprint, split, http-conduit
+
+  Exposed-modules:
+        Csound.Gen.Types
+        Csound.Gen.Pretty
+        Csound.Gen.Parse
+
+Executable gen-opcodes
+  Hs-Source-Dirs: src
+
+  Build-Depends:  base >= 4, base < 5, shelly, xml, containers, transformers, wl-pprint, split, lifted-base, filepath, http-conduit
+
+  Main-Is:        Main.hs
+
+Executable gen-opcodes-unparsed
+  Hs-Source-Dirs: src
+
+  Build-Depends:  base >= 4, base < 5, shelly, xml, containers, transformers, wl-pprint, split
+
+  Main-Is:        Unparsed.hs
+
+  Ghc-Options:    -main-is Unparsed
+
+Executable gen-opcodes-prepare-docs
+  Hs-Source-Dirs: src
+
+  Build-Depends:  base >= 4, base < 5
+                , shelly
+                , xml
+                , containers
+                , filepath
+                , transformers
+                , wl-pprint
+                , split
+                , terminal-progress-bar >= 0.2
+                , vector
+
+  Main-Is:        Prepare.hs
+
+  Ghc-options:   -main-is Prepare
+

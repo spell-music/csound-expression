@@ -1,3 +1,5 @@
 dist
 *~
 .stack-work
+docs
+stack.yaml.lock

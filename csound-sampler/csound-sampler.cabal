@@ -1,0 +1,36 @@
+name:                csound-sampler
+version:             0.0.9.0
+license:             BSD3
+license-file:        LICENSE
+author:              Anton Kholomiov
+maintainer:          <anton.kholomiov@gmail.com>
+Tested-With:         GHC==7.10
+stability:           Experimental
+category:            Music
+build-type:          Simple
+cabal-version:       >=1.8
+synopsis:            A musical sampler based on Csound
+description:         A simple sampler based on the library csound-expression. We can define loops
+                     and patterns of samples. An intricate pattern of sound is just few strokes away.
+                     The library works in the interpreter. We can listen the results right in the ghci.
+                     Here is the tutorial <https://github.com/anton-k/csound-sampler>
+
+Homepage:            https://github.com/anton-k/csound-sampler
+Bug-Reports:         https://github.com/anton-k/csound-sampler/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-sampler
+
+library
+  Ghc-Options:    -Wall
+  Hs-Source-Dirs:      src/
+  build-depends:       base >= 4, base < 5, transformers >= 0.3, csound-expression >= 5.3.2
+  exposed-modules:
+    Csound.Sam
+    Csound.Sam.Core
+    Csound.Sam.Ui
+    Csound.Sam.Chord
+    Csound.Sam.Trig
+
+
