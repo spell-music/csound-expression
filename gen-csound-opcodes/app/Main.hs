@@ -12,25 +12,25 @@ import Csound.Gen.Types
 import Csound.Gen.Parse
 import Csound.Gen.Pretty
 
-import Paths_gen_opcodes
+import Paths_gen_csound_opcodes
 
-main = do 
+main = do
     -- mainBy Dynamic
     mainBy Typed
 
 -- print "hi" -- mainBy Dynamic
 
 mkProjectDir :: PackageType -> IO ()
-mkProjectDir packageType = shelly $ mkdirTree $ 
-    (fromString $ packageName packageType) # 
-        [ "src" # 
+mkProjectDir packageType = shelly $ mkdirTree $
+    (fromString packageName ) #
+        [ "src" #
             [ "Csound" #
                 [ (fromString $ show packageType) #
-                    [ "Opcode" # []] 
+                    [ "Opcode" # []]
                 ]
             ]
         ]
-    where 
+    where
         (#) = T.Node
 
 mainBy :: PackageType -> IO ()
@@ -50,32 +50,32 @@ parsed = parseBy
     where
         getDocTab :: String -> DocTab
         getDocTab = M.fromList . read
-    
+
 
 saveFile :: PackageType -> String -> String -> IO ()
 saveFile packageType fileName fileText = writeFile (fullPath packageType fileName) fileText
-    
+
 saveMainModule :: PackageType -> [Chap] -> IO ()
 saveMainModule packageType a = writeFile (mainModulePath packageType) $ mainModule packageType a
 
 saveCabalFile :: PackageType -> [Chap] -> IO ()
-saveCabalFile packageType chaps = 
-    writeFile (libCabalFileName packageType) . appendDepsToCabalFile packageType chaps 
-        =<< readFile =<< getDataFileName ("resources/" ++ cabalFileName packageType)
+saveCabalFile packageType chaps =
+    writeFile (libCabalFileName packageType) . appendDepsToCabalFile packageType chaps
+        =<< readFile =<< getDataFileName ("resources/" ++ resourceCabalFileName packageType)
 
 appendDepsToCabalFile :: PackageType -> [Chap] -> String -> String
-appendDepsToCabalFile packageType as = ( ++ deps) 
-    where 
+appendDepsToCabalFile packageType as = ( ++ deps)
+    where
         deps = unlines $ fmap nest $ (mainModuleName packageType : ) $ fmap (fullModuleName packageType . nodeName) as
         nest = (replicate 4 ' ' ++ )
-        
+
 saveLicenseFile :: PackageType -> IO ()
 saveLicenseFile packageType =
-    writeFile (packageName packageType ++ "/LICENSE") 
+    writeFile (packageName ++ "/LICENSE")
     =<< readFile =<< getDataFileName ("resources/LICENSE")
-        
+
 saveSetupFile :: PackageType -> IO ()
 saveSetupFile packageType =
-    writeFile (packageName packageType ++ "/Setup.hs") 
+    writeFile (packageName ++ "/Setup.hs")
     =<< readFile =<< getDataFileName ("resources/Setup.hs")
 

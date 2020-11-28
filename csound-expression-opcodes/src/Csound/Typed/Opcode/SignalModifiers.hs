@@ -46,7 +46,6 @@ module Csound.Typed.Opcode.SignalModifiers (
     -- * Comparators and Accumulators.
     cmp, max', max_k, maxabs, maxabsaccum, maxaccum, min', minabs, minabsaccum, minaccum) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

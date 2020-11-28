@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.RemoteOpcodes (
     
     insglobal, insremot, midglobal, midremot) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

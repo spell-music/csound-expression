@@ -19,7 +19,6 @@ module Csound.Typed.Opcode.SignalIO (
     -- * Soundfile Queries.
     filebit, filelen, filenchnls, filepeak, filesr, filevalid, mp3len) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

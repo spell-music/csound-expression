@@ -13,7 +13,6 @@ module Csound.Typed.Opcode.MathematicalOperations (
     -- * Opcode Equivalents of Functions.
     divz, mac, maca, polynomial, pow, product', sum', taninv2) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

@@ -7,7 +7,6 @@ module Csound.Typed.Opcode.PluginHosting (
     -- * VST.
     vstaudio, vstaudiog, vstbankload, vstedit, vstinfo, vstinit, vstmidiout, vstnote, vstparamset, vstparamget, vstprogset) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

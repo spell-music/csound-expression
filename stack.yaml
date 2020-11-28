@@ -2,12 +2,14 @@ resolver:
   url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/23.yaml
 
 packages:
+  # - gen-csound-opcodes
+
   - csound-expression-dynamic
   - csound-expression-typed
   - csound-expression-opcodes
-  - csound-expression
-  - csound-sampler
-  - csound-catalog
+    # - csound-expression
+    # - csound-sampler
+    # - csound-catalog
 
 extra-deps:
   - data-fix-0.3.0@sha256:058a266d1e658500e0ffb8babe68195b0ce06a081dcfc3814afc784b083fd9a5,1645

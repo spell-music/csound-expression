@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.JackoOpcodes (
     
     jackoAudioIn, jackoAudioInConnect, jackoAudioOut, jackoAudioOutConnect, jackoInit, jackoMidiInConnect, jackoMidiOut, jackoMidiOutConnect, jackoNoteOut, jackoOn, jackoTransport) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

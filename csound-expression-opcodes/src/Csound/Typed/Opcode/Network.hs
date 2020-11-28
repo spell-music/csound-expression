@@ -2,9 +2,8 @@ module Csound.Typed.Opcode.Network (
     
     
     
-    remoteport, sockrecv, sockrecvs, sockrecv, strecv, socksend, socksends, stsend) where
+    remoteport, sockrecv, sockrecvs, strecv, socksend, socksends, stsend) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

@@ -25,7 +25,6 @@ module Csound.Typed.Opcode.Vectorial (
     -- * Cellular Automata.
     cell, vcella) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

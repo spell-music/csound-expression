@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.SerialIO (
     
     serialBegin, serialEnd, serialFlush, serialPrint, serialRead, serialWrite, serialWrite_i) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

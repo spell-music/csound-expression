@@ -7,8 +7,6 @@ module Csound.Typed.Opcode.PitchConverters (
     -- * Tuning Opcodes.
     cps2pch, cpstun, cpstuni, cpsxpch) where
 
-import Control.Applicative
-import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed
 

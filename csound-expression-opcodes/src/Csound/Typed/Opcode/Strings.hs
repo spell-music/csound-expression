@@ -10,7 +10,6 @@ module Csound.Typed.Opcode.Strings (
     -- * Conversion.
     strchar, strchark, strlower, strlowerk, strtod, strtodk, strtol, strtolk, strupper, strupperk) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

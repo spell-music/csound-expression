@@ -52,7 +52,6 @@ module Csound.Typed.Opcode.SignalGenerators (
     -- * Waveguide Physical Modeling.
     pluck, repluck, streson, wgbow, wgbowedbar, wgbrass, wgclar, wgflute, wgpluck, wgpluck2) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

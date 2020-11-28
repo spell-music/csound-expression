@@ -6,13 +6,13 @@ import qualified Data.Vector as V
 
 import Csound.Gen.Types
 import Csound.Gen.Parse
-import Paths_gen_opcodes
+import Paths_gen_csound_opcodes
 
 main = writeFile "docs.txt" . show =<< getDocs =<< readFile =<< getDataFileName "resources/MiscQuickref.html"
 
 getDocs :: String -> IO [(String, (String, String))]
 getDocs quickRef = do
-    progRef <- fmap fst $ startProgress noLabel (\p -> mconcat [exact p, " | ", showOpcode p]) 40 (Progress 0 $ fromIntegral $ V.length nameVec)
+    progRef <- newProgressBar defStyle 40 (Progress 0 (fromIntegral $ V.length nameVec) ())
     docs <- mapM (download progRef) opcs
     return $ zip names docs
     where
@@ -26,6 +26,8 @@ getDocs quickRef = do
             return res
 
         showOpcode = fmt . maybe "" id . (nameVec V.!? ) . fromIntegral . progressDone
-            where fmt x = printf "% 14s" x
+            where
+              fmt :: String -> String
+              fmt x = printf "% 14s" x
 
 

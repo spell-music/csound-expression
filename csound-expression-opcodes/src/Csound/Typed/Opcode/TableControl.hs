@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.TableControl (
     
     ftfree, ftgen, ftgentmp, getftargs, sndload) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

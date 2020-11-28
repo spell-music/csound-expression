@@ -1,0 +1,119 @@
+Name:          gen-csound-opcodes
+Version:       0.0
+Cabal-Version: >= 1.10
+License:       BSD3
+License-file:  LICENSE
+Author:        Anton Kholomiov
+Synopsis:      generates csound opcodes
+Stability:     Experimental
+Tested-With:   GHC==7.6
+Build-Type:    Simple
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+
+Description:
+
+Homepage:        https://github.com/anton-k/csound-expression-dynamic
+Bug-Reports:     https://github.com/anton-k/csound-expression-dynamic/issues
+
+Data-Files:
+    resources/csound-expression-opcodes-dynamic.cabal-template
+    resources/csound-expression-opcodes.cabal-template
+    resources/LICENSE
+    resources/Setup.hs
+    resources/MiscQuickref.html
+    resources/docs.txt
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression
+
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+      base >= 4,
+      shelly,
+      xml,
+      containers,
+      transformers,
+      wl-pprint,
+      split,
+      http-conduit,
+      filepath,
+      lifted-base
+
+  Exposed-modules:
+        Csound.Gen.Types
+        Csound.Gen.Pretty
+        Csound.Gen.Parse
+        Paths_gen_csound_opcodes
+  Hs-Source-Dirs:      src/
+  default-language: Haskell2010
+
+Executable gen-csound-opcodes
+  Hs-Source-Dirs: app
+
+  Build-Depends:
+    base >= 4, base < 5,
+    shelly,
+    xml,
+    containers,
+    transformers,
+    wl-pprint,
+    split,
+    lifted-base,
+    filepath,
+    http-conduit,
+    gen-csound-opcodes
+  Other-modules:
+        Paths_gen_csound_opcodes
+
+  Main-Is:        Main.hs
+
+Executable gen-csound-opcodes-unparsed
+  Hs-Source-Dirs: app
+
+  Build-Depends:
+    base >= 4, base < 5,
+    shelly,
+    xml,
+    containers,
+    transformers,
+    wl-pprint,
+    split,
+    filepath,
+    lifted-base,
+    http-conduit,
+    gen-csound-opcodes
+  Other-modules:
+        Paths_gen_csound_opcodes
+
+  Main-Is:        Unparsed.hs
+
+  Ghc-Options:    -main-is Unparsed
+
+Executable gen-csound-opcodes-prepare-docs
+  Hs-Source-Dirs: app
+
+  Build-Depends:  base >= 4, base < 5
+                , shelly
+                , xml
+                , containers
+                , filepath
+                , transformers
+                , wl-pprint
+                , split
+                , terminal-progress-bar >= 0.2
+                , vector
+                , filepath
+                , lifted-base
+                , http-conduit
+                , gen-csound-opcodes
+  Other-modules:
+        Paths_gen_csound_opcodes
+
+  Main-Is:        Prepare.hs
+
+  Ghc-options:   -main-is Prepare
+

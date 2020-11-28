@@ -2,6 +2,8 @@ module Csound.Gen.Pretty(
     prettyModules, mainModule
 ) where
 
+import Control.Arrow (second)
+
 import qualified Data.Map as M
 
 import Data.List
@@ -34,18 +36,14 @@ type RenderOpc = Opc -> Doc
 
 renderOpc :: PackageType -> RenderOpc
 renderOpc x = case x of
-    Dynamic -> prettyOpcDynamic
     Typed   -> pretty
 
 data Import = SimpleImport String | QualifiedImport String String
 
-imports :: PackageType -> [Import]
-imports x = case x of
-    Dynamic  -> [SimpleImport "Csound.Dynamic"]
-    Typed    ->
-        [ SimpleImport "Control.Applicative"
-        , SimpleImport "Control.Monad.Trans.Class"
-        , SimpleImport "Csound.Dynamic"
+imports :: PackageType -> Bool -> [Import]
+imports x needTrans = case x of
+    Typed    -> (if needTrans then (SimpleImport "Control.Monad.Trans.Class" : ) else id) $
+        [ SimpleImport "Csound.Dynamic"
         , SimpleImport "Csound.Typed" ]
 
 anAlias :: String
@@ -55,7 +53,7 @@ anAlias = "D"
 
 prettyModules :: PackageType -> [Chap] -> [(String, String)]
 prettyModules packageType =
-    fmap $ \x -> (nodeName x, pp (pChap packageType (imports packageType) (renderOpc packageType) $ removeEmptySecs x))
+    fmap $ \x -> (nodeName x, pp (pChap packageType (imports packageType (chapNeedTrans x)) (renderOpc packageType) $ removeEmptySecs x))
 
 pp a = displayS (renderPretty 0.5 200 a) ""
 
@@ -263,12 +261,6 @@ prettyDynCons a = case verbatimBody $ opcName a of
 
 ---------------------------------------------------------------------------------------
 -- pretty dynamic opcode
-
-prettyOpcDynamic :: Opc -> Doc
-prettyOpcDynamic a = vcat
-    [ pretty $ opcDoc a
-    , hsFun (hsOpcName a) (opcDynamicSignature a) (opcDynamicBody a) ]
-
 
 opcDynamicSignature :: Opc -> Doc
 opcDynamicSignature a = context <+> ins <+> outs
@@ -521,7 +513,7 @@ hsOpcName = resolveCollisions . toHsName . opcName
 
 hsHeader :: String -> [(String, [String])] -> Doc
 hsHeader name secs = text "module" <+> text name <+> nest 4 (parens
-    (vCat (line : (punctuate comma $ fmap (uncurry fromSec) secs)))) <+> text "where"
+    (vCat (line : (punctuate comma $ fmap (uncurry fromSec) $ fmap (second nub) secs)))) <+> text "where"
     where
         fromSec title funs = vcat
             [ if null title then empty else text "-- *" <+> text title

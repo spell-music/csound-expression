@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.ImageProcessingOpcodes (
     
     imagecreate, imagefree, imagegetpixel, imageload, imagesave, imagesetpixel, imagesize) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

@@ -28,7 +28,6 @@ module Csound.Typed.Opcode.InstrumentControl (
     -- * Time Reading.
     date, dates, readclock, rtclock, timeinstk, timeinsts, timek, times) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.SignalFlowGraphOpcodes (
     
     ftgenonce, inleta, inletf, inletk, inletkid, inletv, outleta, outletf, outletk, outletkid, outletv) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

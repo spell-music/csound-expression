@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.ZakPatchSystem (
     
     zacl, zakinit, zamod, zar, zarg, zaw, zawm, zir, ziw, ziwm, zkcl, zkmod, zkr, zkw, zkwm) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

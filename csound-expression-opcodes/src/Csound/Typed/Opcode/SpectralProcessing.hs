@@ -22,7 +22,6 @@ module Csound.Typed.Opcode.SpectralProcessing (
     -- * Other.
     centroid, filescal, mincer, mp3scal, paulstretch, temposcal) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

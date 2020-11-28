@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.MixerOpcodes (
     
     mixerClear, mixerGetLevel, mixerReceive, mixerSend, mixerSetLevel, mixerSetLevel_i) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

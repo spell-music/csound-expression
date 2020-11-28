@@ -4,7 +4,6 @@ module Csound.Typed.Opcode.Miscellaneous (
     
     directory, fareylen, fareyleni, modmatrix, pwd, select, system_i, system, tableshuffle, tableshufflei) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic
 import Csound.Typed

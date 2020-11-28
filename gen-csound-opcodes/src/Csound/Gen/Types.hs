@@ -3,10 +3,10 @@ module Csound.Gen.Types where
 import Data.Char
 import Data.Maybe
 
-data PackageType = Dynamic | Typed
+data PackageType = Typed
     deriving (Show)
 
-data Node a = Node 
+data Node a = Node
     { nodeName  :: String
     , nodeItems :: [a]
     } deriving (Show)
@@ -23,17 +23,17 @@ type Sec    = Node Opc
 data Opc = Opc
     { opcName       :: String
     , opcSignature  :: Signature
-    , opcDoc        :: OpcDoc 
+    , opcDoc        :: OpcDoc
     } deriving (Show)
 
 data Signature = Signature
     { rates         :: Rates
-    , types         :: Types 
+    , types         :: Types
     } deriving (Show)
 
-data Rates 
+data Rates
     = Single [(Rate, RateList)] | Multi RateList RateList
-    | Opr1 | Opr1k | InfOpr 
+    | Opr1 | Opr1k | InfOpr
     | SingleOpr [(Rate, RateList)]
     deriving (Show)
 
@@ -42,14 +42,14 @@ data RateList = JustList [Rate] | Repeat Rate | Append RateList RateList
 
 data Types = Types
     { inTypes   :: InTypes
-    , outTypes  :: OutTypes 
+    , outTypes  :: OutTypes
     } deriving (Show)
 
 newtype InTypes = InTypes [Type]
     deriving (Show)
 
-data OutTypes 
-    = OutTuple | Tuple | TheTuple [Type] 
+data OutTypes
+    = OutTuple | Tuple | TheTuple [Type]
     | SingleOut Type | SE OutTypes | OutNone
     deriving (Show)
 
@@ -60,20 +60,30 @@ data OpcDoc = OpcDoc
     , opcDocLink                :: String
     } deriving (Show)
 
-data Rate = Xr | Ar | Kr | Ir | Sr | Fr | Wr | Tvar 
+-- | Needs transformers package imported
+chapNeedTrans :: Chap -> Bool
+chapNeedTrans ch = any opcNeedTrans $ nodeItems =<< nodeItems ch
+  where
+    opcNeedTrans opc = case opcType opc of
+      DirtySingle -> True
+      Procedure   -> True
+      _           -> False
+
+
+data Rate = Xr | Ar | Kr | Ir | Sr | Fr | Wr | Tvar
     deriving (Show, Eq)
 
 data Type = Sig | D | Tab | Str | Spec | Wspec | Sf | TvarType | Msg | TypeList Type | SigOrD
     deriving (Show, Eq)
 
-data OpcType 
-    = PureSingle | DirtySingle | Procedure 
+data OpcType
+    = PureSingle | DirtySingle | Procedure
     | PureMulti  | DirtyMulti
     deriving (Show, Eq)
-    
-isConstant :: Opc -> Bool 
+
+isConstant :: Opc -> Bool
 isConstant = isConst . rates . opcSignature
-    where 
+    where
         isConst x = case x of
             Single rs   -> all (isNull . snd) rs
             Multi _ ins -> isNull ins
@@ -82,7 +92,7 @@ isConstant = isConst . rates . opcSignature
         isNull x = case x of
             JustList []     -> True
             _               -> False
-  
+
 opcType :: Opc -> OpcType
 opcType a = case outTypes $ types $ opcSignature a of
     SingleOut _         -> PureSingle
@@ -91,18 +101,18 @@ opcType a = case outTypes $ types $ opcSignature a of
     SE OutNone          -> Procedure
     x    | isTuple x    -> PureMulti
     SE x | isTuple x    -> DirtyMulti
-    where 
+    where
         isTuple x = case x of
             OutTuple    -> True
             Tuple       -> True
             TheTuple _  -> True
             _           -> False
-    
+
 getSingleRateList :: RateList -> Maybe Rate
 getSingleRateList x = case x of
     JustList [a]    -> Just a
     _               -> Nothing
-    
+
 isSingleRateList :: RateList -> Bool
 isSingleRateList = isJust . getSingleRateList
 
@@ -124,7 +134,7 @@ isDirty x = case opcType x of
     Procedure   -> True
     DirtyMulti  -> True
     _           -> False
-    
+
 isPure :: Opc -> Bool
 isPure = not . isDirty
 
@@ -144,20 +154,21 @@ isMulti x = case opcType x of
     PureMulti   -> True
     DirtyMulti  -> True
     _           -> False
-    
 
-packageName packageType = "csound-expression-opcodes-" ++ firstLower (show packageType)
+
+packageName = "csound-expression-opcodes"
+
+resourceCabalFileName packageType =  cabalFileName packageType ++ "-template"
 
 cabalFileName packageType = case packageType of
-    Dynamic -> packageName packageType ++ ".cabal"
     Typed   -> "csound-expression-opcodes.cabal"
 
-libCabalFileName packageType = packageName packageType ++ "/" ++ cabalFileName packageType 
+libCabalFileName packageType = packageName ++ "/" ++ cabalFileName packageType
 
 fullModuleName packageType name =  "Csound." ++ show packageType ++  ".Opcode." ++ name
-fullPath packageType name = packageName packageType ++ "/src/Csound/" ++ show packageType ++ "/Opcode/" ++ name ++ ".hs"
+fullPath packageType name = packageName ++ "/src/Csound/" ++ show packageType ++ "/Opcode/" ++ name ++ ".hs"
 mainModuleName packageType = "Csound." ++ show packageType ++ ".Opcode"
-mainModulePath packageType =  packageName packageType ++ "/src/Csound/" ++ show packageType ++ "/Opcode.hs"
+mainModulePath packageType =  packageName ++ "/src/Csound/" ++ show packageType ++ "/Opcode.hs"
 
 ----------------------------------------------------------
 
@@ -169,5 +180,5 @@ firstLower x = toLower (head x) : tail x
 
 allOpcs :: Chap -> [Opc]
 allOpcs = (nodeItems =<< ) . nodeItems
-    
+
 
