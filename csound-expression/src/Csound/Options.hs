@@ -8,7 +8,7 @@ module Csound.Options(
     setOutput, setInput,
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
-    setMessageLevel, noTrace,
+    setMessageLevel, noMessages, setTrace,
     setCabbage,
     setJacko,
 
@@ -145,8 +145,11 @@ setMessageLevel :: Int -> Options
 setMessageLevel n = def { csdFlags = def { displays = def { messageLevel = Just n }}}
 
 -- | Sets the tracing or debug info of csound console to minimum.
-noTrace :: Options
-noTrace = setMessageLevel 0
+noMessages :: Options
+noMessages = setMessageLevel 0
+
+setTrace :: Options
+setTrace = def { csdTrace = Just True }
 
 ---------------------------------------------
 

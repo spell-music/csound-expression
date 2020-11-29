@@ -17,11 +17,14 @@ module Csound.Typed.GlobalState.Options (
     -- *** String identifiers
     idPadsynth, idTanh, idExp, idSone, idFarey, idWave,
     -- * Jacko
-    Jacko(..), JackoConnect, renderJacko
+    Jacko(..), JackoConnect, renderJacko,
+    -- * Debug trace
+    csdNeedTrace
 ) where
 
 import Control.Applicative
 import Data.Default
+import Data.Maybe
 
 import qualified Data.IntMap as IM
 import qualified Data.Map    as M
@@ -45,10 +48,11 @@ data Options = Options
     , csdTabFi          :: Maybe TabFi              -- ^ Default fidelity of the arrays
     , csdScaleUI        :: Maybe (Double, Double)   -- ^ Scale factors for UI-window
     , csdJacko          :: Maybe Jacko
+    , csdTrace          :: Maybe Bool
     } deriving (Eq, Show, Read)
 
 instance Default Options where
-    def = Options def def def def def def def
+    def = Options def def def def def def def def
 
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Options where
@@ -73,7 +77,8 @@ mappendOptions a b = Options
     , csdGain           = csdGain a <|> csdGain b
     , csdTabFi          = csdTabFi a <|> csdTabFi b
     , csdScaleUI        = csdScaleUI a <|> csdScaleUI b
-    , csdJacko          = csdJacko a <|> csdJacko b }
+    , csdJacko          = csdJacko a <|> csdJacko b
+    , csdTrace          = csdTrace a <|> csdTrace b }
 
 defScaleUI :: Options -> (Double, Double)
 defScaleUI = maybe (1, 1) id . csdScaleUI
@@ -243,3 +248,6 @@ renderJacko spec = unlines $ filter ( /= "")
 
         renderLink name (a, b) = name ++ " " ++ (show a) ++ ", " ++  (show b)
 
+
+csdNeedTrace :: Options -> Bool
+csdNeedTrace opt = fromMaybe False $ csdTrace opt

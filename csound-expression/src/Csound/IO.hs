@@ -95,6 +95,9 @@ class RenderCsd a where
 hasInputs :: RenderCsd a => a -> Bool
 hasInputs = ( > 0) . csdArity'inputs . csdArity
 
+hasOutputs :: RenderCsd a => a -> Bool
+hasOutputs = ( > 0) . csdArity'outputs . csdArity
+
 instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
     renderCsdBy = render_
     csdArity _ = CsdArity 0 0
@@ -184,8 +187,13 @@ writeSnd = writeSndBy def
 writeSndBy :: RenderCsd a => Options -> String -> a -> IO ()
 writeSndBy opt file a = do
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt $ "csound -o " ++ file ++ " " ++ fileCsd
+    runWithUserInterrupt $ unwords ["csound -o", file, fileCsd, logTrace opt]
     where fileCsd = "tmp.csd"
+
+logTrace :: Options -> String
+logTrace opt
+  | csdNeedTrace opt = ""
+  | otherwise        = "--logfile=null"
 
 -- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
 --
@@ -201,7 +209,7 @@ playCsd = playCsdBy def
 playCsdBy :: (RenderCsd a) => Options -> (String -> IO ()) -> String -> a -> IO ()
 playCsdBy opt player file a = do
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt $ "csound -o " ++ fileWav ++ " " ++ fileCsd
+    runWithUserInterrupt $ unwords ["csound -o", fileWav, fileCsd, logTrace opt]
     player fileWav
     return ()
     where fileCsd = file ++ ".csd"
@@ -210,7 +218,7 @@ playCsdBy opt player file a = do
 simplePlayCsdBy :: (RenderCsd a) => Options -> String -> String -> a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
     where phi file = do
-            runWithUserInterrupt $ player ++ " " ++ file
+            runWithUserInterrupt $ unwords [player, file]
 
 -- | Renders csound code to file @tmp.csd@ with flags set to @-odac@, @-iadc@ and @-Ma@
 -- (sound output goes to soundcard in real time).
@@ -221,11 +229,15 @@ dac = dacBy def
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ "csound " ++ "tmp.csd"
+    runWithUserInterrupt $ unwords ["csound tmp.csd", logTrace opt']
     where
-      opt = opt' <> setDac <> adc
+      opt = opt' <> withDac <> withAdc
 
-      adc
+      withDac
+        | hasOutputs a = setDac
+        | otherwise    = mempty
+
+      withAdc
         | hasInputs a = setAdc
         | otherwise   = mempty
 
@@ -249,7 +261,7 @@ csd = csdBy setSilent
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
     writeCsdBy (setSilent <> options) "tmp.csd" a
-    runWithUserInterrupt $ "csound tmp.csd"
+    runWithUserInterrupt $ unwords ["csound tmp.csd", logTrace options]
 
 ----------------------------------------------------------
 -- players
@@ -280,7 +292,7 @@ runWithUserInterrupt cmd = do
     where
         onUserInterrupt :: ProcessHandle -> E.AsyncException -> IO ()
         onUserInterrupt pid x = case x of
-            E.UserInterrupt -> terminateProcess pid >> E.throw x
+            E.UserInterrupt -> terminateProcess pid
             e               -> E.throw e
 
 ----------------------------------------------------------
@@ -295,7 +307,7 @@ runCabbage = runCabbageBy def
 runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ "Cabbage " ++ "tmp.csd"
+    runWithUserInterrupt $ "Cabbage tmp.csd"
     where opt = opt' <> setCabbage
 
 ------------------------------

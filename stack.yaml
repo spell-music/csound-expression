@@ -5,13 +5,13 @@ resolver:
   url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/23.yaml
 
 packages:
-  # - gen-csound-opcodes
-
+  # - gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
   - csound-expression-dynamic
   - csound-expression-typed
   - csound-expression-opcodes
   - csound-expression
-  - csound-sampler
+    # - csound-sampler
+    #- csound-controllers
     # - csound-catalog
 
 extra-deps:

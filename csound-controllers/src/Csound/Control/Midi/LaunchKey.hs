@@ -1,3 +1,4 @@
+-- | Functions to play with Novation LaunchKey midi-controller
 module Csound.Control.Midi.LaunchKey(
     LkChn(..)
   , knob
