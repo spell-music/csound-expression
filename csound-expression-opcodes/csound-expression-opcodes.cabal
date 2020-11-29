@@ -1,5 +1,5 @@
 Name:          csound-expression-opcodes
-Version:       0.0.4.0
+Version:       0.0.5.0
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -16,7 +16,7 @@ Description:   opcodes for the library csound-expression
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers, csound-expression-typed >= 0.2.3.1, csound-expression-dynamic >= 0.3.5
+        base >= 4, base < 5, transformers, csound-expression-typed >= 0.2.4, csound-expression-dynamic >= 0.3.6
   Hs-Source-Dirs:      src/
   Exposed-Modules:
     Csound.Typed.Opcode

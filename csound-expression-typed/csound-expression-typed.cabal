@@ -1,5 +1,5 @@
 Name:          csound-expression-typed
-Version:       0.2.3.1
+Version:       0.2.4
 Cabal-Version: >= 1.22
 License:       BSD3
 License-file:  LICENSE
@@ -11,7 +11,7 @@ Build-Type:    Simple
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
 
-Description: typed core for library csound-expression
+Description: typed core for library csound-expression. Provides typed core lang for csound
 
 Data-Files :
     data/hrtf-44100-left.dat
@@ -80,7 +80,7 @@ Library
         filepath,
         directory,
         wl-pprint >= 1.2.1,
-        csound-expression-dynamic >= 0.3.5,
+        csound-expression-dynamic >= 0.3.6,
         temporal-media >= 0.6.3,
         hashable
   Hs-Source-Dirs:      src/

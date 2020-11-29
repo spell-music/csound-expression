@@ -1,4 +1,14 @@
 @@ -- means breaking compatibility
+5.3.4
+    
+    Improves building cycle by moving to stack build system.
+    Creates multi-project.
+    Fixes all code warinings
+    Silences all debug console log output from csound as default 
+    Implements jack-connection to ports from Options
+    Does not includes flag adc if there are no inputs
+    Does not inlclude flag dac if there are no outputs
+    fixes gen-csound-opcodes package (updates deps and makes it generate csound-expression-opcodes without warnings)
 
 4.0.0
 

@@ -1,6 +1,9 @@
 # Build with wall:
 # stack build --file-watch --pedantic --ghc-options="-Wall -Werror"
 
+# Generate packages for Hackage into dir 'dist'
+# stack sdist --tar-dir dist --ignore-check
+
 resolver:
   url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/23.yaml
 
@@ -21,26 +24,3 @@ extra-deps:
   - wl-pprint-1.2.1@sha256:aea676cff4a062d7d912149d270e33f5bb0c01b68a9db46ff13b438141ff4b7c,734
   - sharc-timbre-0.2@sha256:b6bc95680069e6962d683d1cc214045c5eea6277e7383cb99656c85bdcef822f,2725
 
-# Override default flag values for local packages and extra-deps
-# flags: {}
-
-# Extra package databases containing global packages
-# extra-package-dbs: []
-
-# Control whether we use the GHC we find on the path
-# system-ghc: true
-#
-# Require a specific version of stack, using version ranges
-# require-stack-version: -any # Default
-# require-stack-version: ">=2.5"
-#
-# Override the architecture used by stack, especially useful on Windows
-# arch: i386
-# arch: x86_64
-#
-# Extra directories used by stack for building
-# extra-include-dirs: [/path/to/dir]
-# extra-lib-dirs: [/path/to/dir]
-#
-# Allow a newer minor version of GHC than the snapshot specifies
-# compiler-check: newer-minor

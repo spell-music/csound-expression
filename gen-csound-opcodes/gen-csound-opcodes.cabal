@@ -1,6 +1,6 @@
 Name:          gen-csound-opcodes
-Version:       0.0
-Cabal-Version: >= 1.10
+Version:       0.1
+Cabal-Version: >= 1.22
 License:       BSD3
 License-file:  LICENSE
 Author:        Anton Kholomiov
@@ -17,7 +17,6 @@ Homepage:        https://github.com/anton-k/csound-expression-dynamic
 Bug-Reports:     https://github.com/anton-k/csound-expression-dynamic/issues
 
 Data-Files:
-    resources/csound-expression-opcodes-dynamic.cabal-template
     resources/csound-expression-opcodes.cabal-template
     resources/LICENSE
     resources/Setup.hs
