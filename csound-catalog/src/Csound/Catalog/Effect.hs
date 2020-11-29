@@ -1,6 +1,6 @@
 -- | A gallery of sound processors (effects).
 module Csound.Catalog.Effect(
-    nightChorus, nightReverb, 
+    nightChorus, nightReverb,
     vibroDelay, delayLine, bassEnhancment, declick,
     sweepFilter, loopSweepFilter,
     -- * Presets
@@ -9,9 +9,9 @@ module Csound.Catalog.Effect(
 
 import Control.Monad
 
-import Csound.Base
+import Csound.Base hiding (dur, filt, del)
 
--- | A signal goes throgh the chain of varible delays. 
+-- | A signal goes throgh the chain of varible delays.
 -- Delay time is affected by vibrato.
 --
 -- > aout = vibroDelay n delayBufferSize vibDepth vibRate asig
@@ -40,9 +40,9 @@ vibroDelay order delayBufSize vibDepth vibRate asig = balance aout asig
 -- * iscale -- amplitude of the vibrato on delay time (in milliseconds).
 nightChorus :: D -> D -> Sig -> Sig
 nightChorus idlym iscale asig = 0.5 * aout
-    where 
+    where
         phi cps maxDel = vdelay3 asig (sig (idlym / 5) + sig (idlym / iscale) * osc cps) maxDel
-        aout = sum $ zipWith phi 
+        aout = sum $ zipWith phi
             [1, 0.995, 1.05, 1]
             [900, 700, 700, 900]
 
@@ -50,11 +50,11 @@ nightChorus idlym iscale asig = 0.5 * aout
 
 -- | Reverb
 --
--- A bunch of delay lines FDN reverb, with feedback matrix based upon 
+-- A bunch of delay lines FDN reverb, with feedback matrix based upon
 -- physical modeling scattering junction of 8 lossless waveguides
--- of equal characteristic impedance. Based on Julius O. Smith III, 
+-- of equal characteristic impedance. Based on Julius O. Smith III,
 -- \"A New Approach to Digital Reverberation using Closed Waveguide
--- Networks,\" Proceedings of the International Computer Music 
+-- Networks,\" Proceedings of the International Computer Music
 -- Conference 1985, p. 47-53 (also available as a seperate
 -- publication from CCRMA), as well as some more recent papers by
 -- Smith and others.
@@ -70,13 +70,13 @@ nightChorus idlym iscale asig = 0.5 * aout
 --                      a good small \"live\" room sound, 0.8
 --                      a small hall, 0.9 a large hall,
 --                      0.99 an enormous stone cavern.
---  
+--
 --  * @ipitchmod@      -- amount of random pitch modulation
 --                     for the delay lines. 1 is the \"normal\"
 --                     amount, but this may be too high for
 --                     held pitches such as piano tones.
 --                     adjust to taste.
---  
+--
 --  * @itone@           -- cutoff frequency of lowpass filters
 --                       in feedback loops of delay lines,
 --                       in hz. lower cutoff frequencies results
@@ -86,15 +86,15 @@ nightChorus idlym iscale asig = 0.5 * aout
 nightReverb :: Int -> D -> D -> D -> Sig -> SE (Sig, Sig)
 nightReverb n igain ipitchmod itone asig = do
     afiltRefs   <- mapM newRef $ replicate n 0
-    afilts1     <- mapM readRef afiltRefs 
+    afilts1     <- mapM readRef afiltRefs
     let apj     = (2 / fromIntegral n) * sum afilts1
     adels       <- sequence $ zipWith3 (del apj) idels ks afilts1
     zipWithM_ (\ref x -> writeRef ref $ filt x) afiltRefs adels
     afilts2     <- mapM readRef afiltRefs
-    return (mean $ odds afilts2, mean $ evens afilts2)    
+    return (mean $ odds afilts2, mean $ evens afilts2)
     where
         idels = cycle $ fmap ( / getSampleRate) [2473, 2767, 3217, 3557, 3907, 4127, 2143, 1933]
-        ks    = cycle $ zipWith3 (\a b c -> randi a b `withSeed` c) 
+        ks    = cycle $ zipWith3 (\a b c -> randi a b `withSeed` c)
             [0.001, 0.0011, 0.0017, 0.0006, 0.001, 0.0011, 0.0017, 0.0006]
             [3.1,   3.5,    1.11,   3.973,  2.341, 1.897,  0.891,  3.221]
             [0.06,  0.9,    0.7,    0.3,    0.63,  0.7,    0.9,    0.44]
@@ -117,8 +117,8 @@ bassEnhancment cfq k asig = sig k * butlp asig (sig cfq) + asig
 -- | A chain of delay lines.
 --
 -- > delayLine n k dt asig
--- 
--- A signal (@asig@) is passed through the chain of fixed time delays (A @dt@ is the delay time 
+--
+-- A signal (@asig@) is passed through the chain of fixed time delays (A @dt@ is the delay time
 -- @n@ is a number of filters, k - is scale of the signals that is passed through each delay line).
 delayLine :: Int -> D -> D -> Sig -> (Sig, Sig)
 delayLine n k dt asig = (mean $ asig : odds asigs, mean $ asig : evens asigs)
@@ -147,14 +147,14 @@ loopSweepFilter dur start end bandWidth = bp centerFreq bandWidth
 bayAtNight :: Sig -> SE (Sig, Sig)
 bayAtNight
     = mapOut (bassEnhancment 100 1.5)
-    . nightReverb 8 0.98 0.8 20000 
+    . nightReverb 8 0.98 0.8 20000
     . nightChorus 2 30
     where mapOut f = fmap (\(a, b) -> (f a, f b))
 
 -- | The effect that was used in the piece \"Vestige of time\".
 vestigeOfTime :: Sig -> (Sig, Sig)
-vestigeOfTime 
-    = mapOut ((* 0.3) . (\x -> reverb2 x 2 0.2))     
+vestigeOfTime
+    = mapOut ((* 0.3) . (\x -> reverb2 x 2 0.2))
     . delayLine 6 1.2 0.9
     where mapOut f (a, b) = (f a, f b)
 

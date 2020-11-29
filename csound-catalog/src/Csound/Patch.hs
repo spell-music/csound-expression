@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 -- | Patches
 --
 -- Collection of beautiful timbres. To try the instrument with midi device just type in the interpreter:
@@ -10,224 +11,225 @@
 -- The function @atMidi@ invokes a @Patch@ with midi.
 module Csound.Patch(
 
-	-- * Electric piano
-	Epiano1(..), epiano1, epiano1',
-	MutedPiano(..), mutedPiano, mutedPiano',
-	amPiano, fmPiano,
-	epiano2, epianoHeavy, epianoBright,
-	vibraphonePiano1, vibraphonePiano2,
-	addHammer,
+  -- * Electric piano
+  Epiano1(..), epiano1, epiano1',
+  MutedPiano(..), mutedPiano, mutedPiano',
+  amPiano, fmPiano,
+  epiano2, epianoHeavy, epianoBright,
+  vibraphonePiano1, vibraphonePiano2,
+  addHammer,
 
-	-- * Organ
-	cathedralOrgan, toneWheelOrgan,
-	HammondOrgan(..), hammondOrgan, hammondOrgan',
-	sawOrgan, triOrgan, sqrOrgan, pwOrgan, waveOrgan,
+  -- * Organ
+  cathedralOrgan, toneWheelOrgan,
+  HammondOrgan(..), hammondOrgan, hammondOrgan',
+  sawOrgan, triOrgan, sqrOrgan, pwOrgan, waveOrgan,
 
-	hammondOrganm, hammondOrganm', sawOrganm, triOrganm, sqrOrganm, pwOrganm, waveOrganm,
+  hammondOrganm, hammondOrganm', sawOrganm, triOrganm, sqrOrganm, pwOrganm, waveOrganm,
 
-	-- * Accordeon
-	accordeon, accordeonBright1, accordeonBright2, brokenAccordeon,
-	accordeon', Accordeon(..),
+  -- * Accordeon
+  accordeon, accordeonBright1, accordeonBright2, brokenAccordeon, accordeonHeavy,
+  accordeon', Accordeon(..),
 
-	-- * Choir
-	choirA, choirO, choirU, choirE,
-	Choir(..), choirA', choirO', choirU', choirE',
+  -- * Choir
+  choirA, choirO, choirU, choirE,
+  Choir(..), choirA', choirO', choirU', choirE',
 
-	windSings, noisyChoir, longNoisyChoir, noisyChoir', longNoisyChoir', NoisyChoir(..),
-	noisyRise, noisySpiral, noisySpiral',
+  windSings, noisyChoir, longNoisyChoir, noisyChoir', longNoisyChoir', NoisyChoir(..),
+  noisyRise, noisySpiral, noisySpiral',
 
-	-- * Pad
-	pwPad, triPad, nightPad, overtonePad, caveOvertonePad,
-	chorusel, pwEnsemble, fmDroneSlow, fmDroneMedium, fmDroneFast, vibrophonePad,
-	RazorPad(..), razorPadSlow, razorPadFast, razorPadTremolo, razorPad, razorPad',
-	dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad, dreamPadBy,
-	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad', dreamPad',
+  -- * Pad
+  pwPad, triPad, nightPad, overtonePad, caveOvertonePad,
+  chorusel, pwEnsemble, fmDroneSlow, fmDroneMedium, fmDroneFast, vibrophonePad,
+  RazorPad(..), razorPadSlow, razorPadFast, razorPadTremolo, razorPad, razorPad',
+  dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad, dreamPadBy,
+  dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad',
 
-	-- ** Pad Monosynth
-	pwPadm, triPadm, nightPadm, overtonePadm, caveOvertonePadm, choruselm,
-	pwEnsemblem, fmDroneSlowm, fmDroneMediumm, fmDroneFastm,
-	razorPadSlowm, razorPadFastm, razorPadTremolom, razorPadm, razorPadm',
-	dreamPadm, dreamPadBym, underwaterPadm, lightIsTooBrightPadm, whaleSongPadm, dreamPadm', underwaterPadm', dreamPadBym',
-	lightIsTooBrightPadm', whaleSongPadm',
+  -- ** Pad Monosynth
+  pwPadm, triPadm, nightPadm, overtonePadm, caveOvertonePadm, choruselm,
+  pwEnsemblem, fmDroneSlowm, fmDroneMediumm, fmDroneFastm,
+  razorPadSlowm, razorPadFastm, razorPadTremolom, razorPadm, razorPadm',
+  dreamPadm, dreamPadBym, underwaterPadm, lightIsTooBrightPadm, whaleSongPadm, dreamPadm', underwaterPadm', dreamPadBym',
+  lightIsTooBrightPadm', whaleSongPadm',
 
-	-- * Lead
-	polySynth,
-	phasingLead, RazorLead(..), razorLeadSlow, razorLeadFast, razorLeadTremolo,
-	razorLead, razorLead',
-	overtoneLead,
+  -- * Lead
+  polySynth,
+  phasingLead, RazorLead(..), razorLeadSlow, razorLeadFast, razorLeadTremolo,
+  razorLead, razorLead',
+  overtoneLead,
 
-	-- ** Lead Monosynth
-	polySynthm, dafunkLead,
+  -- ** Lead Monosynth
+  polySynthm, dafunkLead,
 
-	-- * Bass
-	simpleBass, pwBass, deepBass, withDeepBass,
-	fmBass1, fmBass2,
+  -- * Bass
+  simpleBass, pwBass, deepBass, withDeepBass,
+  fmBass1, fmBass2,
 
-	-- * Bowed
-	celloSynt,
+  -- * Bowed
+  celloSynt,
 
-	-- * Plucked
-	guitar, harpsichord,
+  -- * Plucked
+  guitar, harpsichord,
 
-	-- * Strikeh
+  -- * Strikeh
 
-	smallDahina, dahina, largeDahina, magicDahina,
-	smallBanyan,banyan, largeBanyan, magicBanyan,
-	smallXylophone, xylophone, largeXylophone, magicXylophone,
-	smallTibetanBowl180, tibetanBowl180, largeTibetanBowl180, magicTibetanBowl180,
-	smallSpinelSphere, spinelSphere, largeSpinelSphere, magicSpinelSphere,
-	smallPotLid, potLid, largePotLid, magicPotLid,
-	smallRedCedarWoodPlate, redCedarWoodPlate, largeRedCedarWoodPlate, magicRedCedarWoodPlate,
-	smallTubularBell, tubularBell, largeTubularBell, magicTubularBell,
-	smallRedwoodPlate, redwoodPlate, largeRedwoodPlate, magicRedwoodPlate, smallDouglasFirWoodPlate,
-	douglasFirWoodPlate, largeDouglasFirWoodPlate, magicDouglasFirWoodPlate, smallUniformWoodenBar,
-	uniformWoodenBar, largeUniformWoodenBar, magicUniformWoodenBar, smallUniformAluminumBar,
-	uniformAluminumBar, largeUniformAluminumBar, magicUniformAluminumBar,
-	smallVibraphone1, vibraphone1, largeVibraphone1, magicVibraphone1,
-	smallVibraphone2, vibraphone2, largeVibraphone2, magicVibraphone2,
-	smallChalandiPlates, chalandiPlates, largeChalandiPlates, magicChalandiPlates,
-	smallTibetanBowl152, tibetanBowl152, largeTibetanBowl152, magicTibetanBowl152,
-	smallTibetanBowl140, tibetanBowl140, largeTibetanBowl140, magicTibetanBowl140,
-	smallWineGlass, wineGlass, largeWineGlass, magicWineGlass,
-	smallHandbell, handbell, largeHandbell, magicHandbell,
-	smallAlbertClockBellBelfast, albertClockBellBelfast, largeAlbertClockBellBelfast, magicAlbertClockBellBelfast,
-	smallWoodBlock, woodBlock, largeWoodBlock, magicWoodBlock,
+  smallDahina, dahina, largeDahina, magicDahina,
+  smallBanyan,banyan, largeBanyan, magicBanyan,
+  smallXylophone, xylophone, largeXylophone, magicXylophone,
+  smallTibetanBowl180, tibetanBowl180, largeTibetanBowl180, magicTibetanBowl180,
+  smallSpinelSphere, spinelSphere, largeSpinelSphere, magicSpinelSphere,
+  smallPotLid, potLid, largePotLid, magicPotLid,
+  smallRedCedarWoodPlate, redCedarWoodPlate, largeRedCedarWoodPlate, magicRedCedarWoodPlate,
+  smallTubularBell, tubularBell, largeTubularBell, magicTubularBell,
+  smallRedwoodPlate, redwoodPlate, largeRedwoodPlate, magicRedwoodPlate, smallDouglasFirWoodPlate,
+  douglasFirWoodPlate, largeDouglasFirWoodPlate, magicDouglasFirWoodPlate, smallUniformWoodenBar,
+  uniformWoodenBar, largeUniformWoodenBar, magicUniformWoodenBar, smallUniformAluminumBar,
+  uniformAluminumBar, largeUniformAluminumBar, magicUniformAluminumBar,
+  smallVibraphone1, vibraphone1, largeVibraphone1, magicVibraphone1,
+  smallVibraphone2, vibraphone2, largeVibraphone2, magicVibraphone2,
+  smallChalandiPlates, chalandiPlates, largeChalandiPlates, magicChalandiPlates,
+  smallTibetanBowl152, tibetanBowl152, largeTibetanBowl152, magicTibetanBowl152,
+  smallTibetanBowl140, tibetanBowl140, largeTibetanBowl140, magicTibetanBowl140,
+  smallWineGlass, wineGlass, largeWineGlass, magicWineGlass,
+  smallHandbell, handbell, largeHandbell, magicHandbell,
+  smallAlbertClockBellBelfast, albertClockBellBelfast, largeAlbertClockBellBelfast, magicAlbertClockBellBelfast,
+  smallWoodBlock, woodBlock, largeWoodBlock, magicWoodBlock,
 
-	-- * Scrape
-	scrapeDahina, scrapeBanyan, scrapeXylophone, scrapeTibetanBowl180, scrapeSpinelSphere, scrapePotLid, scrapeRedCedarWoodPlate,
-	scrapeTubularBell, scrapeRedwoodPlate, scrapeDouglasFirWoodPlate, scrapeUniformWoodenBar, scrapeUniformAluminumBar,
-	scrapeVibraphone1, scrapeVibraphone2, scrapeChalandiPlates, scrapeTibetanBowl152, scrapeTibetanBowl140, scrapeWineGlass,
-	scrapeSmallHandbell, scrapeAlbertClockBellBelfast, scrapeWoodBlock,
+  -- * Scrape
+  scrapeDahina, scrapeBanyan, scrapeXylophone, scrapeTibetanBowl180, scrapeSpinelSphere, scrapePotLid, scrapeRedCedarWoodPlate,
+  scrapeTubularBell, scrapeRedwoodPlate, scrapeDouglasFirWoodPlate, scrapeUniformWoodenBar, scrapeUniformAluminumBar,
+  scrapeVibraphone1, scrapeVibraphone2, scrapeChalandiPlates, scrapeTibetanBowl152, scrapeTibetanBowl140, scrapeWineGlass,
+  scrapeSmallHandbell, scrapeAlbertClockBellBelfast, scrapeWoodBlock,
 
-	scrapeFastDahina, scrapeFastBanyan, scrapeFastXylophone, scrapeFastTibetanBowl180, scrapeFastSpinelSphere, scrapeFastPotLid,
-	scrapeFastRedCedarWoodPlate, scrapeFastTubularBell, scrapeFastRedwoodPlate, scrapeFastDouglasFirWoodPlate, scrapeFastUniformWoodenBar,
-	scrapeFastUniformAluminumBar, scrapeFastVibraphone1, scrapeFastVibraphone2, scrapeFastChalandiPlates, scrapeFastTibetanBowl152,
-	scrapeFastTibetanBowl140, scrapeFastWineGlass, scrapeFastSmallHandbell, scrapeFastAlbertClockBellBelfast, scrapeFastWoodBlock,
+  scrapeFastDahina, scrapeFastBanyan, scrapeFastXylophone, scrapeFastTibetanBowl180, scrapeFastSpinelSphere, scrapeFastPotLid,
+  scrapeFastRedCedarWoodPlate, scrapeFastTubularBell, scrapeFastRedwoodPlate, scrapeFastDouglasFirWoodPlate, scrapeFastUniformWoodenBar,
+  scrapeFastUniformAluminumBar, scrapeFastVibraphone1, scrapeFastVibraphone2, scrapeFastChalandiPlates, scrapeFastTibetanBowl152,
+  scrapeFastTibetanBowl140, scrapeFastWineGlass, scrapeFastSmallHandbell, scrapeFastAlbertClockBellBelfast, scrapeFastWoodBlock,
 
-	scrapePadDahina, scrapePadBanyan, scrapePadXylophone, scrapePadTibetanBowl180, scrapePadSpinelSphere, scrapePadPotLid,
-	scrapePadRedCedarWoodPlate, scrapePadTubularBell, scrapePadRedwoodPlate, scrapePadDouglasFirWoodPlate, scrapePadUniformWoodenBar,
-	scrapePadUniformAluminumBar, scrapePadVibraphone1, scrapePadVibraphone2, scrapePadChalandiPlates, scrapePadTibetanBowl152,
-	scrapePadTibetanBowl140, scrapePadWineGlass, scrapePadSmallHandbell, scrapePadAlbertClockBellBelfast, scrapePadWoodBlock,
+  scrapePadDahina, scrapePadBanyan, scrapePadXylophone, scrapePadTibetanBowl180, scrapePadSpinelSphere, scrapePadPotLid,
+  scrapePadRedCedarWoodPlate, scrapePadTubularBell, scrapePadRedwoodPlate, scrapePadDouglasFirWoodPlate, scrapePadUniformWoodenBar,
+  scrapePadUniformAluminumBar, scrapePadVibraphone1, scrapePadVibraphone2, scrapePadChalandiPlates, scrapePadTibetanBowl152,
+  scrapePadTibetanBowl140, scrapePadWineGlass, scrapePadSmallHandbell, scrapePadAlbertClockBellBelfast, scrapePadWoodBlock,
 
 
-	-- ** Scrape monosynth
-	-- | Unfortunately they don't work with @atMonoMidi@. Though @atNote@ works fine.
-	scrapeDahinam, scrapeBanyanm, scrapeXylophonem, scrapeTibetanBowl180m, scrapeSpinelSpherem, scrapePotLidm, scrapeRedCedarWoodPlatem,
-	scrapeTubularBellm, scrapeRedwoodPlatem, scrapeDouglasFirWoodPlatem, scrapeUniformWoodenBarm, scrapeUniformAluminumBarm,
-	scrapeVibraphone1m, scrapeVibraphone2m, scrapeChalandiPlatesm, scrapeTibetanBowl152m, scrapeTibetanBowl140m, scrapeWineGlassm,
-	scrapeSmallHandbellm, scrapeAlbertClockBellBelfastm, scrapeWoodBlockm,
+  -- ** Scrape monosynth
+  -- | Unfortunately they don't work with @atMonoMidi@. Though @atNote@ works fine.
+  scrapeDahinam, scrapeBanyanm, scrapeXylophonem, scrapeTibetanBowl180m, scrapeSpinelSpherem, scrapePotLidm, scrapeRedCedarWoodPlatem,
+  scrapeTubularBellm, scrapeRedwoodPlatem, scrapeDouglasFirWoodPlatem, scrapeUniformWoodenBarm, scrapeUniformAluminumBarm,
+  scrapeVibraphone1m, scrapeVibraphone2m, scrapeChalandiPlatesm, scrapeTibetanBowl152m, scrapeTibetanBowl140m, scrapeWineGlassm,
+  scrapeSmallHandbellm, scrapeAlbertClockBellBelfastm, scrapeWoodBlockm,
 
-	scrapePadDahinam, scrapePadBanyanm, scrapePadXylophonem, scrapePadTibetanBowl180m, scrapePadSpinelSpherem, scrapePadPotLidm,
-	scrapePadRedCedarWoodPlatem, scrapePadTubularBellm, scrapePadRedwoodPlatem, scrapePadDouglasFirWoodPlatem, scrapePadUniformWoodenBarm,
-	scrapePadUniformAluminumBarm, scrapePadVibraphone1m, scrapePadVibraphone2m, scrapePadChalandiPlatesm, scrapePadTibetanBowl152m,
-	scrapePadTibetanBowl140m, scrapePadWineGlassm, scrapePadSmallHandbellm, scrapePadAlbertClockBellBelfastm, scrapePadWoodBlockm,
+  scrapePadDahinam, scrapePadBanyanm, scrapePadXylophonem, scrapePadTibetanBowl180m, scrapePadSpinelSpherem, scrapePadPotLidm,
+  scrapePadRedCedarWoodPlatem, scrapePadTubularBellm, scrapePadRedwoodPlatem, scrapePadDouglasFirWoodPlatem, scrapePadUniformWoodenBarm,
+  scrapePadUniformAluminumBarm, scrapePadVibraphone1m, scrapePadVibraphone2m, scrapePadChalandiPlatesm, scrapePadTibetanBowl152m,
+  scrapePadTibetanBowl140m, scrapePadWineGlassm, scrapePadSmallHandbellm, scrapePadAlbertClockBellBelfastm, scrapePadWoodBlockm,
 
-	-- * Woodwind
+  -- * Woodwind
 
-	Wind(..), woodWind',
+  Wind(..), woodWind',
 
-	fluteSpec, shortFluteSpec,
-	flute, shortFlute, fluteVibrato, mutedFlute, brightFlute,
+  fluteSpec, shortFluteSpec,
+  flute, shortFlute, fluteVibrato, mutedFlute, brightFlute,
 
-	bassClarinetSpec, shortBassClarinetSpec,
-	bassClarinet, shortBassClarinet, bassClarinetVibrato, mutedBassClarinet, brightBassClarinet,
+  bassClarinetSpec, shortBassClarinetSpec,
+  bassClarinet, shortBassClarinet, bassClarinetVibrato, mutedBassClarinet, brightBassClarinet,
 
-	frenchHornSpec, shortFrenchHornSpec,
-	frenchHorn, shortFrenchHorn, frenchHornVibrato, mutedFrenchHorn, brightFrenchHorn,
+  frenchHornSpec, shortFrenchHornSpec,
+  frenchHorn, shortFrenchHorn, frenchHornVibrato, mutedFrenchHorn, brightFrenchHorn,
 
-	shengSpec, shortShengSpec,
-	sheng, shortSheng, shengVibrato, mutedSheng, brightSheng,
+  shengSpec, shortShengSpec,
+  sheng, shortSheng, shengVibrato, mutedSheng, brightSheng,
 
-	hulusiSpec, shortHulusiSpec,
-	hulusi, shortHulusi, hulusiVibrato, mutedHulusi, brightHulusi,
+  hulusiSpec, shortHulusiSpec,
+  hulusi, shortHulusi, hulusiVibrato, mutedHulusi, brightHulusi,
 
-	diziSpec, shortDiziSpec,
-	dizi, shortDizi, diziVibrato, mutedDizi, brightDizi,
+  diziSpec, shortDiziSpec,
+  dizi, shortDizi, diziVibrato, mutedDizi, brightDizi,
 
-	-- * SHARC instruments
-	SharcInstr,
-	soloSharc, orcSharc, padSharc, purePadSharc,
-	dreamSharc, lightIsTooBrightSharc, whaleSongSharc,
-	sharcOrgan,
+  -- * SHARC instruments
+  SharcInstr,
+  soloSharc, orcSharc, padSharc, purePadSharc,
+  dreamSharc, lightIsTooBrightSharc, whaleSongSharc,
+  sharcOrgan,
 
-	-- ** Padsynth instruments
-	PadSharcSpec(..),
+  -- ** Padsynth instruments
+  PadSharcSpec(..),
 
-	psOrganSharc, psOrganSharc', psLargeOrganSharc, psLargeOrganSharc', psPianoSharc, psPianoSharc',
-	xpsPianoSharc, xpsPianoSharc',
-	psPadSharc, psPadSharc', psSoftPadSharc, psSoftPadSharc',
-	psMagicPadSharc, psMagicPadSharc', psMagicSoftPadSharc, psMagicSoftPadSharc',
-	psLargePianoSharc, psLargePianoSharc',
-	xpsLargePianoSharc,
-	xpsLargePianoSharc',
+  psOrganSharc, psOrganSharc', psLargeOrganSharc, psLargeOrganSharc', psPianoSharc, psPianoSharc',
+  xpsPianoSharc, xpsPianoSharc',
+  psPadSharc, psPadSharc', psSoftPadSharc, psSoftPadSharc',
+  psMagicPadSharc, psMagicPadSharc', psMagicSoftPadSharc, psMagicSoftPadSharc',
+  psLargePianoSharc, psLargePianoSharc',
+  xpsLargePianoSharc,
+  xpsLargePianoSharc',
 
-	-- *** Deep pads
-	psDeepPadSharc, psDeepPadSharc', psDeepSoftPadSharc, psDeepSoftPadSharc',
-	psDeepMagicPadSharc, psDeepMagicPadSharc', psDeepMagicSoftPadSharc, psDeepMagicSoftPadSharc',
+  -- *** Deep pads
+  psDeepPadSharc, psDeepPadSharc', psDeepSoftPadSharc, psDeepSoftPadSharc',
+  psDeepMagicPadSharc, psDeepMagicPadSharc', psDeepMagicSoftPadSharc, psDeepMagicSoftPadSharc',
 
-	--- *** Crossfades
-	psPadSharcCfd, psPadSharcCfd', psPadSharcCfd4, psPadSharcCfd4', psDeepPadSharcCfd, psDeepPadSharcCfd',
-	psDeepPadSharcCfd4, psDeepPadSharcCfd4', psSoftPadSharcCfd, psSoftPadSharcCfd', psSoftPadSharcCfd4, psSoftPadSharcCfd4',
-	psDeepSoftPadSharcCfd, psDeepSoftPadSharcCfd', psDeepSoftPadSharcCfd4, psDeepSoftPadSharcCfd4',
+  --- *** Crossfades
+  psPadSharcCfd, psPadSharcCfd', psPadSharcCfd4, psPadSharcCfd4', psDeepPadSharcCfd, psDeepPadSharcCfd',
+  psDeepPadSharcCfd4, psDeepPadSharcCfd4', psSoftPadSharcCfd, psSoftPadSharcCfd', psSoftPadSharcCfd4, psSoftPadSharcCfd4',
+  psDeepSoftPadSharcCfd, psDeepSoftPadSharcCfd', psDeepSoftPadSharcCfd4, psDeepSoftPadSharcCfd4',
 
-	-- *** High resolution Padsynth instruments
-	psOrganSharcHifi,
-	psLargeOrganSharcHifi,
-	psPianoSharcHifi,
-	xpsPianoSharcHifi,
-	psPadSharcHifi,
-	psSoftPadSharcHifi,
-	psMagicPadSharcHifi,
-	psMagicSoftPadSharcHifi,
-	psLargePianoSharcHifi,
-	xpsLargePianoSharcHifi,
+  -- *** High resolution Padsynth instruments
+  psOrganSharcHifi,
+  psLargeOrganSharcHifi,
+  psPianoSharcHifi,
+  xpsPianoSharcHifi,
+  psPadSharcHifi,
+  psSoftPadSharcHifi,
+  psMagicPadSharcHifi,
+  psMagicSoftPadSharcHifi,
+  psLargePianoSharcHifi,
+  xpsLargePianoSharcHifi,
 
-	-- *** Vedic pads
-	-- | Deep spiritual pads.
-	vedicPad, vedicPadCfd, vedicPadCfd4, vibhu, rishi, agni, prakriti, rajas, avatara, bhumi,
+  -- *** Vedic pads
+  -- | Deep spiritual pads.
+  vedicPad, vedicPadCfd, vedicPadCfd4, vibhu, rishi, agni, prakriti, rajas, avatara, bhumi,
 
-	--- *** High resolution vedic pads
-	-- | Deep spiritual pads.
-	vedicPadHifi, vibhuHifi, rishiHifi, agniHifi, prakritiHifi, rajasHifi, avataraHifi, bhumiHifi,
+  --- *** High resolution vedic pads
+  -- | Deep spiritual pads.
+  vedicPadHifi, vibhuHifi, rishiHifi, agniHifi, prakritiHifi, rajasHifi, avataraHifi, bhumiHifi,
 
-	--- *** Low resolution vedic pads
-	-- | Deep spiritual pads.
-	vedicPadLofi, vibhuLofi, rishiLofi, agniLofi, prakritiLofi, rajasLofi, avataraLofi, bhumiLofi,
+  --- *** Low resolution vedic pads
+  -- | Deep spiritual pads.
+  vedicPadLofi, vibhuLofi, rishiLofi, agniLofi, prakritiLofi, rajasLofi, avataraLofi, bhumiLofi,
 
-	--- *** Crossfade vedic pads
-	-- | Crossfade between deep spiritual pads. All pads take in padsynthBandwidth and crossfade level as parameters.
-	vibhuRishi, vibhuAgni, vibhuPrakriti, vibhuRajas, vibhuAvatara, vibhuBhumi, rishiAgni, rishiPrakriti,
-	rishiRajas, rishiAvatara, rishiBhumi, agniPrakriti, agniRajas, agniAvatara, agniBhumi, prakritiRajas,
-	prakritiAvatara, prakritiBhumi, rajasAvatara, rajasBhumi, avataraBhumi,
+  --- *** Crossfade vedic pads
+  -- | Crossfade between deep spiritual pads. All pads take in padsynthBandwidth and crossfade level as parameters.
+  vibhuRishi, vibhuAgni, vibhuPrakriti, vibhuRajas, vibhuAvatara, vibhuBhumi, rishiAgni, rishiPrakriti,
+  rishiRajas, rishiAvatara, rishiBhumi, agniPrakriti, agniRajas, agniAvatara, agniBhumi, prakritiRajas,
+  prakritiAvatara, prakritiBhumi, rajasAvatara, rajasBhumi, avataraBhumi,
 
-	-- ** concrete instruments
-	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
+  -- ** concrete instruments
+  shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
     shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
     shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
     shCelloMuted, shCelloMarteleBowing, shContrabassPizzicato, shContrabassMuted, shContrabassMarteleBowing, shContrabass,
     shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute,
 
-	-- * X-rays
-	pulseWidth, xanadu, alienIsAngry, noiz, blue, black, simpleMarimba, impulseMarimba1, impulseMarimba2, okComputer, noiseBell,
+  -- * X-rays
+  pulseWidth, xanadu, alienIsAngry, noiz, blue, black, simpleMarimba, impulseMarimba1, impulseMarimba2, okComputer, noiseBell,
 
-	-- * Robotic vowels
-	robotVowels, robotLoopVowels, robotVowel,
+  -- * Robotic vowels
+  robotVowels, robotLoopVowels, robotVowel,
 
-	 -- ** Vowels
+   -- ** Vowels
     maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
     femaleA, femaleE, femaleIY, femaleO, femaleOO,
 
-	-- * Nature
-	windWall, mildWind, wind, snowCrackle,
+  -- * Nature
+  windWall, mildWind, wind, snowCrackle,
 
-	-- * Misc
-	-- limRel,
-	singleFx, singleFx'
+  -- * Misc
+  limRel,
+  singleFx, singleFx'
 ) where
 
-import Control.Monad
+import Prelude hiding (filter)
 
-import Csound.Base
+import Csound.Base hiding (ampCps, br, seed, filt, detune, mute)
+import qualified Csound.Base as C(br, filt)
 
 import qualified Csound.Catalog.Wave as C
 import qualified Csound.Catalog.Reson as C
@@ -236,30 +238,26 @@ import Csound.Catalog.Wave(maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, m
     femaleA, femaleE, femaleIY, femaleO, femaleOO)
 
 import Csound.Catalog.Wave(Accordeon(..),
-	ReleaseTime,
-	SharcInstr,
-	PadSharcSpec(..),
-	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
+  ReleaseTime,
+  SharcInstr,
+  PadSharcSpec(..),
+  shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
     shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
     shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
     shCelloMuted, shCelloMarteleBowing, shContrabassPizzicato, shContrabassMuted, shContrabassMarteleBowing, shContrabass,
     shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute)
 
-import Data.Char
 
 monoArgToNote :: MonoArg -> (Sig, Sig)
 monoArgToNote arg = (monoAmp arg * monoGate arg, monoCps arg)
 
 monoSig1 :: SigSpace a => (Sig -> a) -> (MonoArg -> a)
 monoSig1 f arg = mul env $ f cps
-	where
-		env = amp * monoAdsr arg 0.35 0.5 1 0.5
-		amp = port (monoAmp arg) 0.01
-		cps = portk (monoCps arg) (delay1 gate * 0.01)
-		gate = monoGate arg
-
-onSig1 :: SigSpace a => (Sig -> a) -> Sig2 -> a
-onSig1 f (amp, cps) = mul amp $ f cps
+  where
+    env = amp * monoAdsr arg 0.35 0.5 1 0.5
+    amp = port (monoAmp arg) 0.01
+    cps = portk (monoCps arg) (delay1 gate * 0.01)
+    gate = monoGate arg
 
 fx1 :: Sig -> (a -> a) -> Patch a -> Patch a
 fx1 dw f = FxChain [fxSpec dw (return . f)]
@@ -288,26 +286,26 @@ limRel rel p =  mapPatchInstr (\instr -> fmap (mul (fadeOut rel)) . instr) p
 -- electric pianos
 
 data Epiano1 = Epiano1
-	{ epiano1Rel :: D }
+  { epiano1Rel :: D }
 
 instance Default Epiano1 where
-	def = Epiano1 5
+  def = Epiano1 5
 
 epiano1 = epiano1' def
 
 epiano1' (Epiano1 rel) = withLargeHall $ polySynt $ \a -> mul 0.4 $ C.simpleFading rel a
 
 data MutedPiano = MutedPiano
-	{ mutedPianoMute :: Sig
-	, mutedPianoRel  :: D }
+  { mutedPianoMute :: Sig
+  , mutedPianoRel  :: D }
 
 instance Default MutedPiano where
-	def = MutedPiano 0.5 7
+  def = MutedPiano 0.5 7
 
 mutedPiano = mutedPiano' def
 
 mutedPiano' (MutedPiano mute rel) = fx1 0.25 (largeHall2 . at (mlp3 (250 + 7000 * mute) 0.2)) $
-	polySynt $ \a -> mul 0.7 $ C.simpleSust rel a
+  polySynt $ \a -> mul 0.7 $ C.simpleSust rel a
 
 amPiano = fx1 0.25 id $ polySyntFilter $ \filter -> mul 1.4 . onCps (C.amPianoBy filter)
 
@@ -317,13 +315,13 @@ epianoReleaseTime :: ReleaseTime
 epianoReleaseTime = 0.25
 
 epiano2 = addHammer 0.15 $ fx1 0.25 smallHall2 $
-	polySyntFilter $ \filter -> mul 1.125 . at fromMono . (onCps $ C.epianoBy filter epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1])
+  polySyntFilter $ \filter -> mul 1.125 . at fromMono . (onCps $ C.epianoBy filter epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1])
 
 epianoHeavy = addHammer 0.15 $ fx1 0.2 smallHall2 $
-	polySyntFilter $ \filter -> mul 1.125 . at fromMono . (onCps $ C.epianoBy filter epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1, C.EpianoOsc 8 15 0.5 0.5])
+  polySyntFilter $ \filter -> mul 1.125 . at fromMono . (onCps $ C.epianoBy filter epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1, C.EpianoOsc 8 15 0.5 0.5])
 
 epianoBright = addHammer 0.15 $ fx1 0.2 smallHall2 $
-	polySyntFilter $ \filter -> mul 1.12 . at fromMono . (onCps $ C.epianoBy filter epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
+  polySyntFilter $ \filter -> mul 1.12 . at fromMono . (onCps $ C.epianoBy filter epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
 
 vibraphonePiano1 = vibraphoneToPiano smallVibraphone1
 vibraphonePiano2 = vibraphoneToPiano smallVibraphone2
@@ -341,10 +339,10 @@ cathedralOrgan = withLargeHall $ polySynt $ at fromMono . mul 0.7 . onCps C.cath
 
 -- [0, 30]
 data HammondOrgan = HammondOrgan
-	{ hammondOrganDetune :: Sig }
+  { hammondOrganDetune :: Sig }
 
 instance Default HammondOrgan where
-	def = HammondOrgan 12
+  def = HammondOrgan 12
 
 hammondOrgan = hammondOrgan' def
 
@@ -397,7 +395,7 @@ accordeon' spec = fx1' 0.25 C.accordeonFx $ polySynt $ mul 0.63 . onCps (C.accor
 data Choir = Choir { choirVibr :: Sig }
 
 instance Default Choir where
-	def  = Choir 7
+  def  = Choir 7
 
 tenor'   filt (Choir vib) = withSmallHall $ polySynt $ at fromMono . mul 0.15 . onCps (C.tenorOsc filt vib)
 soprano' filt (Choir vib) = withSmallHall $ polySynt $ at fromMono . mul 0.15 . onCps (C.sopranoOsc filt vib)
@@ -415,12 +413,12 @@ choirE' = choir' singE
 choirU' = choir' singU
 
 data NoisyChoir = NoisyChoir
-	{ noisyChoirFilterNum :: Int
-	, noisyChoirBw        :: Sig
-	}
+  { noisyChoirFilterNum :: Int
+  , noisyChoirBw        :: Sig
+  }
 
 instance Default NoisyChoir where
-	def = NoisyChoir 2 25
+  def = NoisyChoir 2 25
 
 windSings = longNoisyChoir' (NoisyChoir 1 15)
 
@@ -479,7 +477,7 @@ vibrophonePad = addPreFx 1 (return . (at $ mlp 2500 0.1)) $ mapPatchInstr (\inst
 data RazorPad = RazorPad { razorPadSpeed :: Sig }
 
 instance Default RazorPad where
-	def = RazorPad 0.5
+  def = RazorPad 0.5
 
 razorPadSlow = razorPad' (def { razorPadSpeed = 0.1 })
 razorPadFast = razorPad' (def { razorPadSpeed = 1.7 })
@@ -566,7 +564,7 @@ whaleSongPadWithKey brightness wave = dreamPadFx $ polySyntFilter $ genDreamPadN
 ------------------------------------
 -- leads
 
-polySynthFxChain = FxChain [fxSpec 0.25 (return . largeHall2), fxSpec 0.25 (return . (at $ echo 0.25 0.65)), fxSpec 0.25 (at $ chorus 0.07 1.25 1), fxSpecFilter 1 $ \filter -> return . at (filter 5500 0.12 . filt 2 br 18000 0.3)]
+polySynthFxChain = FxChain [fxSpec 0.25 (return . largeHall2), fxSpec 0.25 (return . (at $ echo 0.25 0.65)), fxSpec 0.25 (at $ chorus 0.07 1.25 1), fxSpecFilter 1 $ \filter -> return . at (filter 5500 0.12 . C.filt 2 C.br 18000 0.3)]
 
 polySynth  = polySynthFxChain $ polySynt $ fmap fromMono . onCps C.polySynth
 polySynthm = polySynthFxChain $ monoSynt $ fmap fromMono . monoSig1 C.polySynth
@@ -574,11 +572,11 @@ polySynthm = polySynthFxChain $ monoSynt $ fmap fromMono . monoSig1 C.polySynth
 phasingLead = withSmallHall $ polySynt $ at fromMono . mul (0.7 * fadeOut 0.05) . onCps (uncurry C.phasingSynth)
 
 data RazorLead = RazorLead
-	{ razorLeadBright :: Sig
-	, razorLeadSpeed  :: Sig }
+  { razorLeadBright :: Sig
+  , razorLeadSpeed  :: Sig }
 
 instance Default RazorLead where
-	def = RazorLead 0.5 0.5
+  def = RazorLead 0.5 0.5
 
 razorLeadSlow = razorLead' (def { razorLeadSpeed = 0.1 })
 razorLeadFast = razorLead' (def { razorLeadSpeed = 1.7 })
@@ -606,7 +604,7 @@ deepBass = withSmallHall $ polySynt $ at fromMono . mul 0.4 . onCps C.deepBass
 fmBass1 = adsrMono (\env (amp, cps) -> return $ fromMono $ C.fmBass1 env (amp, cps))
 
 fmBass2 = fxs $ adsrMono (\env (amp, cps) -> return $ fromMono $ C.fmBass2 env (amp, cps))
-	where fxs = FxChain [fxSpec 1 (at (chorus 0.2 0.15 0.17)), fxSpec 1 (return . at (bhp 35 . blp 1200))]
+  where fxs = FxChain [fxSpec 1 (at (chorus 0.2 0.15 0.17)), fxSpec 1 (return . at (bhp 35 . blp 1200))]
 
 -- | The first argument is the amount of deepBass to mix into the original patch.
 withDeepBass :: Sig -> Patch2 -> Patch2
@@ -630,75 +628,75 @@ strikeRelease (amp, cps) spec = (0.85 * strikeRel spec * amp) * amp + (strikeRel
 
 -- dac $ mixAt 0.15 largeHall2 $ mixAt 0.2 (echo 0.25 0.45) $ at fromMono $ midi $ onMsg $ onCps (mul (fadeOut 2) . C.tibetanBowl152 )
 data Strike = Strike
-	{ strikeRel :: D
-	, strikeHasDelay ::	Bool
-	, strikeReverb :: Sig2 -> Sig2
-	}
+  { strikeRel :: D
+  , strikeHasDelay :: Bool
+  , strikeReverb :: Sig2 -> Sig2
+  }
 
 instance Default Strike where
-	def = Strike 1.5 True smallHall2
+  def = Strike 1.5 True smallHall2
 
 strike' :: Strike -> (Sig -> Sig) -> Patch2
 strike' spec instr = fx1' 0.25 (strikeFx spec) $ polySynt $ \x@(amp, cps) -> return $ fromMono $ mul (0.75 * sig amp * fadeOut (rel x)) $ instr (sig cps)
-	where rel a = strikeRelease a spec
+  where rel a = strikeRelease a spec
 
 data Size = Small | Medium | Large | Huge
 
 nextSize x = case x of
-	Small -> Medium
-	Medium -> Large
-	Large -> Huge
-	Huge -> Huge
+  Small -> Medium
+  Medium -> Large
+  Large -> Huge
+  Huge -> Huge
 
 prevSize x = case x of
-	Small -> Small
-	Medium -> Small
-	Large -> Medium
-	Huge -> Large
+  Small -> Small
+  Medium -> Small
+  Large -> Medium
+  Huge -> Large
 
 toStrikeSpec :: Size -> Size -> Strike
 toStrikeSpec revSpec restSpec = Strike
-	{ strikeReverb  = toReverb revSpec
-	, strikeRel = toRel restSpec
-	, strikeHasDelay = toHasDelay restSpec }
+  { strikeReverb  = toReverb revSpec
+  , strikeRel = toRel restSpec
+  , strikeHasDelay = toHasDelay restSpec }
 
 toReverb :: Size -> (Sig2  -> Sig2)
 toReverb x = case x of
-	Small -> smallRoom2
-	Medium -> smallHall2
-	Large -> largeHall2
-	Huge -> magicCave2
+  Small -> smallRoom2
+  Medium -> smallHall2
+  Large -> largeHall2
+  Huge -> magicCave2
 
 toRel :: Size -> D
 toRel x = case x of
-	Small -> 0.4
-	Medium -> 1.5
-	Large -> 2.5
-	Huge -> 4.5
+  Small -> 0.4
+  Medium -> 1.5
+  Large -> 2.5
+  Huge -> 4.5
 
 toGain :: Size -> Sig
 toGain x = case x of
-	Small -> 0.85
-	Medium -> 0.75
-	Large -> 0.6
-	Huge -> 0.45
+  Small -> 0.85
+  Medium -> 0.75
+  Large -> 0.6
+  Huge -> 0.45
 
 toHasDelay :: Size -> Bool
 toHasDelay x = case x of
-	Small -> False
-	_     -> True
+  Small -> False
+  _     -> True
 
-dahinaSize    		= Small
-banyanSize    		= Medium
-xylophoneSize 		= Small
-tibetanBowl152Size  	= Medium
-tibetanBowl140Size  	= Small
-tibetanBowl180Size  	= Medium
-spinelSphereSize    	= Small
-potLidSize          	= Medium
+dahinaSize        = Small
+banyanSize        = Medium
+xylophoneSize     = Small
+tibetanBowl152Size    = Medium
+tibetanBowl140Size    = Small
+tibetanBowl180Size    = Medium
+spinelSphereSize      = Small
+potLidSize            = Medium
 redCedarWoodPlateSize = Small
-tubularBellSize     	= Large
-redwoodPlateSize    	= Small
+tubularBellSize       = Large
+redwoodPlateSize      = Small
 douglasFirWoodPlateSize = Small
 uniformWoodenBarSize = Small
 uniformAluminumBarSize = Small
@@ -724,7 +722,7 @@ magicStrike size = mediumStrike' (nextSize $ nextSize size) size
 
 mediumStrike' :: Size -> Size -> (Sig -> Sig) -> Patch2
 mediumStrike' revSize size f = mapPatchInstr (\instr -> mul (toGain size) . instr) p
-	where p = strike' (toStrikeSpec revSize size) f
+  where p = strike' (toStrikeSpec revSize size) f
 
 
 smallDahina = smallStrike dahinaSize C.dahina
@@ -837,11 +835,6 @@ magicWoodBlock = magicStrike woodBlockSize C.woodBlock
 
 -- scrapePatch
 
-names = ["dahina","banyan","xylophone","tibetanBowl180","spinelSphere","potLid","redCedarWoodPlate","tubularBell","redwoodPlate","douglasFirWoodPlate","uniformWoodenBar","uniformAluminumBar","vibraphone1","vibraphone2","chalandiPlates","tibetanBowl152","tibetanBowl140","wineGlass","smallHandbell","albertClockBellBelfast","woodBlock"]
-toUpperName (x:xs) = toUpper x : xs
-
--- scrapePatch
-
 scrapeRelease :: (D, D) -> D -> D
 scrapeRelease (amp, cps) rel = (0.85 * rel * amp) * amp + rel - (cps / 10000)
 
@@ -851,7 +844,7 @@ scrape k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig 
 
 scrapem k m = fx1 0.15 largeHall2 $ monoSynt $ (\(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 1.97) . at fromMono . C.scrapeModes m) cps) . monoArgToNote
 
-scrapePad k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 2.27	)) . at fromMono . C.scrapeModes m) (sig cps)
+scrapePad k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 2.27  )) . at fromMono . C.scrapeModes m) (sig cps)
 
 scrapePadm k m = fx1 0.15 largeHall2 $ monoSynt $ (\(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 2.27) . at fromMono . C.scrapeModes m) cps) . monoArgToNote
 
@@ -992,264 +985,264 @@ scrapePadWoodBlockm = scrapePadm scaleScrapeWoodBlock C.woodBlockModes
 -- woodwind
 
 data Wind = Wind
-	{ windAtt :: D
-	, windDec :: D
-	, windSus :: D
-	, windVib :: D
-	, windBright :: D }
+  { windAtt :: D
+  , windDec :: D
+  , windSus :: D
+  , windVib :: D
+  , windBright :: D }
 
 woodWind' spec instr = withSmallHall $ polySynt $ \(amp, cps) -> mul 1.3 $ do
-		seed <- rnd 1
-		vibDisp <- rnd (0.1 * amp)
-		let dispVib vib = vib * (0.9 + vibDisp)
-		return $ fromMono $ mul (0.8 * sig amp * fadeOut (windDec spec)) $ instr seed (dispVib $ windVib spec) (windAtt spec) (windSus spec) (windDec spec) (0.4 + 0.75 * windBright spec * amp) cps
+    seed <- rnd 1
+    vibDisp <- rnd (0.1 * amp)
+    let dispVib vib = vib * (0.9 + vibDisp)
+    return $ fromMono $ mul (0.8 * sig amp * fadeOut (windDec spec)) $ instr seed (dispVib $ windVib spec) (windAtt spec) (windSus spec) (windDec spec) (0.4 + 0.75 * windBright spec * amp) cps
 
 -- flute
 
 fluteSpec bright vib = Wind
-	{ windAtt = 0.08
-	, windDec = 0.1
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.08
+  , windDec = 0.1
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 shortFluteSpec bright vib = Wind
-	{ windAtt = 0.03
-	, windDec = 0.05
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.03
+  , windDec = 0.05
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 flute = woodWind' (fluteSpec br vib) C.flute
-	where
-		br = 0.7
-		vib = 0.015
+  where
+    br = 0.7
+    vib = 0.015
 
 shortFlute = woodWind' (shortFluteSpec br vib) C.flute
-	where
-		br = 0.7
-		vib = 0.015
+  where
+    br = 0.7
+    vib = 0.015
 
 fluteVibrato = woodWind' (fluteSpec br vib) C.flute
-	where
-		br = 0.7
-		vib = 0.04
+  where
+    br = 0.7
+    vib = 0.04
 
 mutedFlute = woodWind' (fluteSpec br vib) C.flute
-	where
-		br = 0.25
-		vib = 0.015
+  where
+    br = 0.25
+    vib = 0.015
 
 brightFlute = woodWind' (fluteSpec br vib) C.flute
-	where
-		br = 1.2
-		vib = 0.015
+  where
+    br = 1.2
+    vib = 0.015
 
 -- bass clarinet
 
 bassClarinetSpec bright vib = Wind
-	{ windAtt = 0.06
-	, windDec = 0.15
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.06
+  , windDec = 0.15
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 shortBassClarinetSpec bright vib = Wind
-	{ windAtt = 0.03
-	, windDec = 0.04
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.03
+  , windDec = 0.04
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 bassClarinet = woodWind' (bassClarinetSpec br vib) C.bassClarinet
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 shortBassClarinet = woodWind' (shortBassClarinetSpec br vib) C.bassClarinet
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 bassClarinetVibrato = woodWind' (bassClarinetSpec br vib) C.bassClarinet
-	where
-		br = 0.7
-		vib = 0.035
+  where
+    br = 0.7
+    vib = 0.035
 
 mutedBassClarinet = woodWind' (bassClarinetSpec br vib) C.bassClarinet
-	where
-		br = 0.25
-		vib = 0.01
+  where
+    br = 0.25
+    vib = 0.01
 
 brightBassClarinet = woodWind' (bassClarinetSpec br vib) C.bassClarinet
-	where
-		br = 1.2
-		vib = 0.01
+  where
+    br = 1.2
+    vib = 0.01
 
 -- french horn
 
 frenchHornSpec bright vib = Wind
-	{ windAtt = 0.08
-	, windDec = 0.25
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.08
+  , windDec = 0.25
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 shortFrenchHornSpec bright vib = Wind
-	{ windAtt = 0.03
-	, windDec = 0.04
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.03
+  , windDec = 0.04
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 frenchHorn = woodWind' (frenchHornSpec br vib) C.frenchHorn
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 shortFrenchHorn = woodWind' (shortFrenchHornSpec br vib) C.frenchHorn
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 frenchHornVibrato = woodWind' (frenchHornSpec br vib) C.frenchHorn
-	where
-		br = 0.7
-		vib = 0.035
+  where
+    br = 0.7
+    vib = 0.035
 
 mutedFrenchHorn = woodWind' (frenchHornSpec br vib) C.frenchHorn
-	where
-		br = 0.25
-		vib = 0.01
+  where
+    br = 0.25
+    vib = 0.01
 
 brightFrenchHorn = woodWind' (frenchHornSpec br vib) C.frenchHorn
-	where
-		br = 1.2
-		vib = 0.01
+  where
+    br = 1.2
+    vib = 0.01
 
 -- sheng
 
 shengSpec bright vib = Wind
-	{ windAtt = 0.1
-	, windDec = 0.2
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.1
+  , windDec = 0.2
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 shortShengSpec bright vib = Wind
-	{ windAtt = 0.03
-	, windDec = 0.04
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.03
+  , windDec = 0.04
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 sheng = woodWind' (shengSpec br vib) C.sheng
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 shortSheng = woodWind' (shortShengSpec br vib) C.sheng
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 shengVibrato = woodWind' (shengSpec br vib) C.sheng
-	where
-		br = 0.7
-		vib = 0.025
+  where
+    br = 0.7
+    vib = 0.025
 
 mutedSheng = woodWind' (shengSpec br vib) C.sheng
-	where
-		br = 0.25
-		vib = 0.01
+  where
+    br = 0.25
+    vib = 0.01
 
 brightSheng = woodWind' (shortShengSpec br vib) C.sheng
-	where
-		br = 1.2
-		vib = 0.01
+  where
+    br = 1.2
+    vib = 0.01
 
 -- hulusi
 
 hulusiSpec bright vib = Wind
-	{ windAtt = 0.12
-	, windDec = 0.14
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.12
+  , windDec = 0.14
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 shortHulusiSpec bright vib = Wind
-	{ windAtt = 0.03
-	, windDec = 0.04
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.03
+  , windDec = 0.04
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 hulusi = woodWind' (hulusiSpec br vib) C.hulusi
-	where
-		br = 0.7
-		vib = 0.015
+  where
+    br = 0.7
+    vib = 0.015
 
 shortHulusi = woodWind' (shortHulusiSpec br vib) C.hulusi
-	where
-		br = 0.7
-		vib = 0.015
+  where
+    br = 0.7
+    vib = 0.015
 
 hulusiVibrato = woodWind' (hulusiSpec br vib) C.hulusi
-	where
-		br = 0.7
-		vib = 0.035
+  where
+    br = 0.7
+    vib = 0.035
 
 mutedHulusi = woodWind' (hulusiSpec br vib) C.hulusi
-	where
-		br = 0.25
-		vib = 0.015
+  where
+    br = 0.25
+    vib = 0.015
 
 brightHulusi = woodWind' (shortHulusiSpec br vib) C.hulusi
-	where
-		br = 1.2
-		vib = 0.015
+  where
+    br = 1.2
+    vib = 0.015
 
 
 -- dizi
 
 diziSpec bright vib = Wind
-	{ windAtt = 0.03
-	, windDec = 0.2
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.03
+  , windDec = 0.2
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 shortDiziSpec bright vib = Wind
-	{ windAtt = 0.1
-	, windDec = 0.04
-	, windSus = 20
-	, windVib = vib
-	, windBright = bright }
+  { windAtt = 0.1
+  , windDec = 0.04
+  , windSus = 20
+  , windVib = vib
+  , windBright = bright }
 
 dizi = woodWind' (diziSpec br vib) C.dizi
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 shortDizi = woodWind' (shortDiziSpec br vib) C.dizi
-	where
-		br = 0.7
-		vib = 0.01
+  where
+    br = 0.7
+    vib = 0.01
 
 diziVibrato = woodWind' (diziSpec br vib) C.dizi
-	where
-		br = 0.7
-		vib = 0.035
+  where
+    br = 0.7
+    vib = 0.035
 
 mutedDizi = woodWind' (diziSpec br vib) C.dizi
-	where
-		br = 0.25
-		vib = 0.01
+  where
+    br = 0.25
+    vib = 0.01
 
 brightDizi = woodWind' (shortDiziSpec br vib) C.dizi
-	where
-		br = 1.2
-		vib = 0.01
+  where
+    br = 1.2
+    vib = 0.01
 
 ------------------------------------
 -- x-rays
@@ -1417,7 +1410,7 @@ xpsLargePianoSharc' spec releaseTime sh = fxs $ polySynt $ \ampCps -> mul (0.75 
 
 psPadFilterBy :: Sig -> Sig -> (Sig -> Sig -> Sig -> Sig) -> (D, D) -> Sig -> Sig
 psPadFilterBy rippleLevel q resonFilter ampCps = resonFilter (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + rippleLevel * slope 0.75 0.5 * osc 8) q
-	where rel (amp, cps) = amp - cps / 3500
+  where rel (amp, cps) = amp - cps / 3500
 
 psPadFilter filter = psPadFilterBy 75 15 filter
 psSoftPadFilter filter = psPadFilterBy 350 0.15 filter
@@ -1435,8 +1428,9 @@ psDeepOscCfd koeff (spec1, sh1) (spec2, sh2) = deepOsc (psOscCfd koeff (spec1, s
 psDeepOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4) = deepOsc (psOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4))
 
 genPsPad :: (Sig2 -> Sig2) -> (ResonFilter -> (D, D) -> Sig -> Sig) -> (D -> SE Sig2) -> Patch2
-genPsPad effect mkFilter wave = fxs $ polySyntFilter $ \filter ampCps -> mul (1.2 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mkFilter filter ampCps) . wave) ampCps
-	where
+genPsPad effect mkFilter wave =
+  fxs $ polySyntFilter $ \filter ampCps -> mul (1.2 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mkFilter filter ampCps) . wave) ampCps
+  where
         fxs = FxChain [fxSpec 0.25 (return . effect), fxSpec 0.5 (return . (at $ mul 2.1 . saturator 0.75)), fxSpec 0.3 (return . (at $ echo 0.125 0.65))]
         rel (amp, cps) = amp - cps / 3500
 
@@ -1581,10 +1575,6 @@ psDeepMagicSoftPadSharc = psDeepMagicSoftPadSharc' def
 psDeepMagicSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 psDeepMagicSoftPadSharc' spec sh = genPsPad magicCave2 psSoftPadFilter (psDeepOsc spec sh)
 
-vedicSize = 15
-vedicSizeHifi = 32
-vedicSizeLofi = 4
-
 -- | Deep spiritual drones.
 --
 -- > vedicPad sharcInstrument bandwidth
@@ -1592,8 +1582,8 @@ vedicSizeLofi = 4
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPad :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPad instr bandwidth = mul 0.8 $
-	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
-	psDeepSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 15 })  instr
+  addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
+  psDeepSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 15 })  instr
 
 -- | Deep spiritual drones. Crossfade between two instruments.
 --
@@ -1602,8 +1592,8 @@ vedicPad instr bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadCfd :: Sig -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadCfd k instr1 instr2 bandwidth = mul 0.8 $
-	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
-	psDeepSoftPadSharcCfd' k (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
+  addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
+  psDeepSoftPadSharcCfd' k (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
 
 -- | Deep spiritual drones. Crossfade between four instruments.
 --
@@ -1612,10 +1602,10 @@ vedicPadCfd k instr1 instr2 bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadCfd4 kX kY instr1 instr2 instr3 instr4 bandwidth = mul 0.8 $
-	addPreFx 0.45 (return .  pingPong 0.25 0.65 0.5) $
-	psDeepSoftPadSharcCfd4' kX kY
-		(def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
-		(def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr3) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr4)
+  addPreFx 0.45 (return .  pingPong 0.25 0.65 0.5) $
+  psDeepSoftPadSharcCfd4' kX kY
+    (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
+    (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr3) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr4)
 
 
 -- | Deep spiritual drones. Contains twice as many ftables as for simple @vedicPad@.
@@ -1625,9 +1615,9 @@ vedicPadCfd4 kX kY instr1 instr2 instr3 instr4 bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadHifi :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadHifi instr bandwidth = mul 0.8 $
-	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
-	deepPad $
-	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 32 })  instr
+  addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
+  deepPad $
+  psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 32 })  instr
 
 -- | Deep spiritual drones. Contains only quater of ftables as for simple @vedicPad@.
 --
@@ -1636,9 +1626,9 @@ vedicPadHifi instr bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadLofi :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadLofi instr bandwidth = mul 0.8 $
-	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
-	deepPad $
-	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 4 })  instr
+  addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $
+  deepPad $
+  psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 4 })  instr
 
 -- | Eminent
 vibhu :: PadsynthBandwidth -> Patch2
@@ -1813,16 +1803,16 @@ avataraBhumi = vedicCfd shAvatara shBhumi
 
 noisyRise :: Patch2
 noisyRise = fxs $ polySynt $ onCps $ \cps -> mul 0.24 $ wave cps
-	where
-		fxs = FxChain [fxSpec 0.35 (return . largeHall2), fxSpec 0.5 (return . (at $ echo 0.25 0.85))]
-		wave x  = noisy x + pad x
-		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3]) 14) white
-		pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
+  where
+    fxs = FxChain [fxSpec 0.35 (return . largeHall2), fxSpec 0.5 (return . (at $ echo 0.25 0.85))]
+    wave x  = noisy x + pad x
+    noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3]) 14) white
+    pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
 
-		envelope asig = mul (fades 0.5 0.7) asig
-		filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
+    envelope asig = mul (fades 0.5 0.7) asig
+    filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
 
-		spec = noisySpec
+    spec = noisySpec
 
 noisySpiral :: Patch2
 noisySpiral = noisySpiral' 8
@@ -1832,16 +1822,16 @@ noisySpiral = noisySpiral' 8
 -- > noisySpiral' finalSpeedOfOscillation
 noisySpiral' :: D -> Patch2
 noisySpiral' spiralSpeed = fxs $ polySynt $ onCps $ \cps -> mul 0.24 $ wave cps
-	where
-		fxs = FxChain [fxSpec 0.15 (return . magicCave2), fxSpec 0.43 (return . (at $ echo 0.35 0.85))]
+  where
+    fxs = FxChain [fxSpec 0.15 (return . magicCave2), fxSpec 0.43 (return . (at $ echo 0.35 0.85))]
 
-		wave x  = noisy x + pad x
-		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, spiralSpeed])) 14) white
-		pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
-		envelope asig = mul (fades 0.5 0.7) asig
-		filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
+    wave x  = noisy x + pad x
+    noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, spiralSpeed])) 14) white
+    pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
+    envelope asig = mul (fades 0.5 0.7) asig
+    filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
 
-		spec = noisySpec
+    spec = noisySpec
 
 noisyHarms = [ 1,  1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133, 0.9400014281, 0.3000001907, 0.120003365, 0.1799997687, 0.5200006366]
 noisySpec  = defPadsynthSpec 82.2 noisyHarms

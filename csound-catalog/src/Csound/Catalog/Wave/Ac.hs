@@ -2,31 +2,31 @@ module Csound.Catalog.Wave.Ac(
     pulseWidth,
     xanadu1, xanadu2, stringPad, toneWheel,
     guitar, harpsichord, xing,
-    fmMod, filteredChorus, plainString, fmTubularBell, 
-    delayedString, melody, rhodes, 
+    fmMod, filteredChorus, plainString, fmTubularBell,
+    delayedString, melody, rhodes,
 ) where
 
 import Data.List
 
-import Csound.Base
-            
--- | 
+import Csound.Base hiding (filt)
+
+-- |
 --
 -- > aout = pulseWidth amplitude cps
 pulseWidth :: Sig -> Sig -> Sig
 pulseWidth amp cps = asignal
     where
-        ilforate  = 		2.3					-- LFO SPEED IN Hz
-        isawlvl   = 		0.5	 				-- LEVEL OF SAWTOOTH WAVEFORM
-        ipwmlvl   = 		0.5	 				-- LEVEL OF PULSE WAVEFORM
-        ipwm	  = 		0.2	 				-- DC OFFSET OF PULSE width
-        ipwmlfo   = 		0.1	 				-- DEPTH OF PULSE WIDTH MODULATION
-        ivcffrq   = 		800	 				-- CUTOFF OF GLOBAL LOW PASS FILTER
-        ienvflt   = 		200	 				-- MAX CHANGE IN LPF CUTOFF BY ENVELOPE
-        ikbdflt   = 		0.1	 				-- RELATIVE CHANGE IN LPF CUTOFF TO PITCH
+        ilforate  =     2.3         -- LFO SPEED IN Hz
+        isawlvl   =     0.5         -- LEVEL OF SAWTOOTH WAVEFORM
+        ipwmlvl   =     0.5         -- LEVEL OF PULSE WAVEFORM
+        ipwm    =     0.2         -- DC OFFSET OF PULSE width
+        ipwmlfo   =     0.1         -- DEPTH OF PULSE WIDTH MODULATION
+        ivcffrq   =     800         -- CUTOFF OF GLOBAL LOW PASS FILTER
+        ienvflt   =     200         -- MAX CHANGE IN LPF CUTOFF BY ENVELOPE
+        ikbdflt   =     0.1         -- RELATIVE CHANGE IN LPF CUTOFF TO PITCH
         -- the oscillators
         klfo        = kr $ osc ilforate
-        asaw        = oscBy (elins [-1, 1]) cps 
+        asaw        = oscBy (elins [-1, 1]) cps
         apwm        = table (0.5 + asaw / 2 + (klfo * ipwmlfo + ipwm)) (lins [-1, 50, -1, 0, 1, 50, 1]) `withD` 1
         awaves      = isawlvl * asaw + ipwmlvl * apwm
         -- the envelope
@@ -39,16 +39,16 @@ giwave = sines [1, 0.5, 0.33, 0.25, 0.0, 0.1, 0.1, 0.1]
 xanaduPlucks :: D -> D -> D -> (Sig, Sig, Sig)
 xanaduPlucks cps vibrAmp vibrCps = (phi vib, phi shift, phi (-shift))
     where phi asig = pluck 1 (cpsoct $ oct + asig) cps giwave 1
-          shift = 8/1200  
+          shift = 8/1200
           vib = kr $ poscil (sig vibrAmp) (sig vibrCps) cosine
           oct = sig $ octcps cps
 
--- | 
+-- |
 --
 -- > aout <- xanadu1 cps
 xanadu1 :: D -> SE Sig
 xanadu1 cps = do
-    _ <- delayr 2    
+    _ <- delayr 2
     ~ [tap1, tap2, d1, d2] <- mapM deltap3 [f1, f2, 2, 1.1]
     delayw $ g * damping
     return $ damping * mean [gleft, tap1, d1, gright, tap2, d2]
@@ -57,7 +57,7 @@ xanadu1 cps = do
           f2 = expseg [0.015, 15, 1.055]
           damping = 1
 
--- | 
+-- |
 --
 -- > aout <- xanadu2 cps
 xanadu2 :: D -> SE Sig
@@ -69,7 +69,7 @@ xanadu2 cps = do
     where (g, gleft, gright) = xanaduPlucks cps (1/80) 6.1
           damping = 1
 
--- | 
+-- |
 --
 -- > stringPad amplitude cps
 stringPad :: Sig -> Sig -> Sig
@@ -83,7 +83,7 @@ toneWheel :: D -> Sig
 toneWheel cps = asignal
     where
         ikey = 12 * int' (cps - 6) + 100 * (cps - 6)
-        wheels = 
+        wheels =
             [ ifB (ikey - 12 >* 12) gitonewheel1 gitonewheel2
             , ifB (ikey +  7 >* 12) gitonewheel1 gitonewheel2
             , ifB (ikey      >* 12) gitonewheel1 gitonewheel2
@@ -133,12 +133,12 @@ xing xdur cps = asignal
         f vol freq = poscil vol (sig freq * cps) sine
 
         norm = 32310
-        asignal = (sig $ 1 / norm) * sum 
+        asignal = (sig $ 1 / norm) * sum
             [ f (amps env1 0.05 0.3 6.7  0.8) 1
             , f (amps env2 0.12 0.5 10.5 0  ) 2.7
             , f (amps env3 0.02 0.8 70   0  ) 4.95
             ]
-        
+
         env1 = [ 0,0.001,5200,0.001,800,0.001,3000,0.0025,1100,0.002
             , 2800,0.0015,1500,0.001,2100,0.011,1600,0.03,1400,0.95
             , 700,1,320,1,180,1,90,1,40,1,20,1,12,1,6,1,3,1,0,1,0]
@@ -166,36 +166,36 @@ fmMod xdur cps = asignal
         ishift      = 4 / 12000
         ipch        = cps
         ioct        = octcps cps
-        amodi       = ar $ loopseg [0, iattack, 5, sig xdur, 2, irelease, 0] (sig $ 1 / xdur) 
-        amodr       = ar $ loopseg [ip6, 1, ip7, 1, ip6] (sig $ 0.5 / xdur) 
+        amodi       = ar $ loopseg [0, iattack, 5, sig xdur, 2, irelease, 0] (sig $ 1 / xdur)
+        amodr       = ar $ loopseg [ip6, 1, ip7, 1, ip6] (sig $ 0.5 / xdur)
         a1          = amodi * (amodr - 1 / amodr) / 2
         a2          = amodi * (amodr + 1 / amodr) / 2
         a1ndx       = abs $ a1 / 10
-        a3          = tablei a1ndx (skipNorm $ bessels 20) `withD` 1 
+        a3          = tablei a1ndx (skipNorm $ bessels 20) `withD` 1
         ao1         = poscil a1 ipch cosine
         a4          = exp $ -0.5 * a3 + ao1
         ao2         = poscil (a2 * ipch) cps cosine
         aleft       = poscil a4 (ao2 + cpsoct (ioct + ishift)) sine
         aright      = poscil a4 (ao2 + cpsoct (ioct - ishift)) sine
-        asignal     = 0.5 * (aleft + aright)         
+        asignal     = 0.5 * (aleft + aright)
 
 -- | Filtered chorus, Michael Bergeman
 --
 -- > filteredChorus cycleDuration cps
 filteredChorus :: D -> Sig -> Sig
 filteredChorus xdur cps = asignal
-    where 
+    where
         a ~~ b = loopseg [sig a, 1, sig b, 1, sig a] (sig $ 1 / (xdur * 2))
         filt cf1 bw1 cf2 bw2 x = balance (bp cf2 bw2 $ bp cf1 bw1 x) x
-        harm fqc = poscil ((sig $ idb)) fqc $ sines 
+        harm fqc = poscil ((sig $ idb)) fqc $ sines
                             [ 0.28, 1, 0.74, 0.66, 0.78, 0.48, 0.05, 0.33, 0.12
                             , 0.08, 0.01, 0.54, 0.19, 0.08, 0.05, 0.16, 0.01, 0.11, 0.3, 0.02, 0.2]
         a1s x = mean $ fmap (harm . (* cpsoct (octcps cps + x))) [1, 0.999, 1.001]
-        rvb dt dh x = 0.5 * (x + reverb2 x dt dh) 
+        rvb dt dh x = 0.5 * (x + reverb2 x dt dh)
 
         idb = 1.5
 
-        asignal = mean 
+        asignal = mean
             [ rvb 5 0.3 $ filt (40 ~~ 800) 40 (220 ~~ 440) ((440 ~~ 220) * 0.8) $ a1s (-0.01)
             , rvb 4 0.2 $ filt (800 ~~ 40) 40 (440 ~~ 220) ((220 ~~ 440) * 0.8) $ a1s 0.01
             ]
@@ -205,7 +205,7 @@ filteredChorus xdur cps = asignal
 -- > plainString cps
 plainString :: D -> Sig
 plainString cps = wgpluck2 0.1 1.0 cps 0.25 0.05
-   
+
 -- | Rhodes electric piano model, Perry Cook
 --
 -- > rhodes cps

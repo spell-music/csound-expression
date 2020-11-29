@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module Csound.Catalog.Wave.Sharc(
     -- * Oscillators
     sharcOsc, sigSharcOsc, rndSharcOsc, rndSigSharcOsc,
@@ -25,7 +26,6 @@ module Csound.Catalog.Wave.Sharc(
 import qualified Sharc.Types as Sh
 import qualified Sharc.Data as Sh
 import Csound.Base
-import Sharc.Types
 
 note2sig :: Sh.Note -> Sig
 note2sig n = oscBy (harmonics2tab $ Sh.noteHarmonics n) (sig $ double $ Sh.pitchFund $ Sh.notePitch n)
@@ -58,7 +58,7 @@ sharcOsc instr cpsTab = sigSharcOsc instr cpsTab (sig cpsTab)
 -- The second argument picks upth table by frequency
 -- and the third supplies the frequency.
 sigSharcOsc :: SharcInstr -> D -> Sig -> Sig
-sigSharcOsc = genSharcOsc' oscBy 
+sigSharcOsc = genSharcOsc' oscBy
 
 -- | Sharc oscillator with randomized phase.
 rndSharcOsc :: SharcInstr -> D -> SE Sig
@@ -66,18 +66,18 @@ rndSharcOsc instr cpsTab = rndSigSharcOsc instr cpsTab (sig cpsTab)
 
 -- | Sharc oscillator with continuous pitch and randomized phase.
 rndSigSharcOsc :: SharcInstr -> D -> Sig -> SE Sig
-rndSigSharcOsc = genSharcOsc' rndOscBy 
+rndSigSharcOsc = genSharcOsc' rndOscBy
 
 genSharcOsc' :: (Tab -> Sig -> a) -> SharcInstr -> D -> Sig -> a
 genSharcOsc' wave (SharcInstr instr) cps cpsSig = wave t cpsSig
     where
-        t = fromTabListD tabs (cps2pitch cps - int keyMin)        
+        t = fromTabListD tabs (cps2pitch cps - int keyMin)
 
         tabs = tabList $ fmap note2tab ns
 
         ns = Sh.instrNotes instr
         keys = fmap (Sh.pitchKeyNum . Sh.notePitch) ns
-        keyMin = minimum keys        
+        keyMin = minimum keys
 
 cps2pitch :: Floating a => a -> a
 cps2pitch x =  69 + 12 * logBase 2 (x / 440)
@@ -139,7 +139,7 @@ quadMorphsynthSharcOsc' :: PadSharcSpec -> MorphSpec -> [SharcInstr] -> (Sig, Si
 quadMorphsynthSharcOsc' spec morphSpec instr (x, y) freq = quadMorphsynthOscMultiCps morphSpec (fmap (getSpecIntervals spec) instr) (x, y) freq
 
 getSpecIntervals spec (SharcInstr instr) = zip borderFreqs specs
-    where 
+    where
         groups = splitTo (padSharcSize spec) (Sh.instrNotes instr)
         medians = fmap getMedian groups
         borders = fmap getBorder groups
@@ -149,9 +149,9 @@ getSpecIntervals spec (SharcInstr instr) = zip borderFreqs specs
 
 
 splitTo :: Int -> [a] -> [[a]]
-splitTo n as = go size as
-    where 
-        size = max 1 (length as `div` n)
+splitTo m as = go size as
+    where
+        size = max 1 (length as `div` m)
 
         go :: Int -> [a] -> [[a]]
         go n bs
@@ -172,17 +172,11 @@ getBorder as
 
 note2padsynth :: Double -> Sh.Note -> PadsynthSpec
 note2padsynth bandwidth note = (defPadsynthSpec bandwidth normAmps) { padsynthFundamental = Sh.pitchFund (Sh.notePitch note) }
-    where 
+    where
         normAmps = fmap ( / maxAmp) amps
         amps = fmap Sh.harmonicAmplitude $ Sh.noteHarmonics note
         maxAmp = maximum amps
 
-
-toStereoOsc :: (a -> SE Sig) -> (a -> SE Sig2)
-toStereoOsc f x = do
-    left  <- f x
-    right <- f x
-    return (left, right)
 
 ---------------------------------------------------------------------------
 -- sharc instr

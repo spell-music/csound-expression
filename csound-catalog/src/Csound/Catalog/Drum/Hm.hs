@@ -31,7 +31,10 @@ rndAmp a = do
     k <- birnd 0.09
     return $ a * (1 + sig k)
 
+addDur' :: D -> a -> SE a
 addDur' dt x = xtratim dt >> return x
+
+addDur :: a -> SE a
 addDur = addDur' 0.1
 
 toDrum :: Sig -> SE Sig
@@ -63,7 +66,7 @@ sortaKnockSweep = (toDrum =<<) $
     where
         kfreqenv41  = expseg [ 50, 0.01, 200, 0.08, 50]
         kfreqenv42  = linseg [ 150, 0.01, 1000, 0.08, 250]
-        kampenv4	= linseg [ 0, 0.01, 1, 0.08, 0, 0.01, 0]
+        kampenv4  = linseg [ 0, 0.01, 1, 0.08, 0, 0.01, 0]
 
 metalBoink :: SE Sig
 metalBoink = toDrum $ foscil kampenv61 30 1 6.726 kampenv62 sine
@@ -73,6 +76,7 @@ metalBoink = toDrum $ foscil kampenv61 30 1 6.726 kampenv62 sine
 
 -- fullkit
 
+bassDrum :: SE Sig
 bassDrum = bassDrum' 64
 
 bassDrum' :: D -> SE Sig
@@ -104,6 +108,7 @@ snare = toDrum =<< do
         kenv1 = linseg [0, 0.00176, 1, 0.1232, 0]
         kenv2 = expseg [0.01, 0.0002, 1, 0.0297, 0.01, 0.09, 0.01]
 
+crash :: SE Sig
 crash = crash' $ cpspch 13.05
 
 -- | Recommended values cpspch(13.03) - cpspch(13.10)
@@ -149,6 +154,7 @@ crash' cps = toDrum =<< do
             , (0.0209, 3.979)
             ]
 
+handClap :: SE Sig
 handClap = handClap' 400
 
 handClap' :: D -> SE Sig
@@ -179,7 +185,10 @@ handClap' cps = (toDrum =<< ) $ fmap onNoise $ rand 1
 --------------------------------------------------
 -- sampler
 
+mkSam :: SE Sig -> Sam
 mkSam = limSam 4
+
+bd1, bd2, sn1, sweep, boink, sn2, ohh, chh, bd3, cr, clap :: Sam
 
 bd1 = mkSam dumb
 bd2 = mkSam dumbBass

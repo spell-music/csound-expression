@@ -1,14 +1,14 @@
 module Csound.Catalog.Wave.WoodwindAlg(
     WoodwindSpec(..), RangeSpec(..), HarmSpec(..), AmpSpec(..), WaveSpec,
     fromSpec, byFreq,
-    woodwind                 
+    woodwind
 ) where
 
 import Data.List (transpose, intersperse)
 import Control.Monad
 import Control.Monad.Trans.State
 
-import Csound.Base hiding (fromSpec)
+import Csound.Base hiding (fromSpec, sustain, select)
 
 ----------------------------------------------------------------
 -- Deterministic random numbers
@@ -24,13 +24,13 @@ instance Applicative Rnd where
 
 instance Monad Rnd where
     return = Rnd . return
-    (Rnd a) >>= f = Rnd $ a >>= unRnd . f 
+    (Rnd a) >>= f = Rnd $ a >>= unRnd . f
 
 evalRnd :: Rnd a -> D -> a
-evalRnd = evalState . unRnd 
+evalRnd = evalState . unRnd
 
 rndNext :: Rnd ()
-rndNext = Rnd $ modify $ frac' . (* 105.947) 
+rndNext = Rnd $ modify $ frac' . (* 105.947)
 
 rndGet :: Rnd D
 rndGet = Rnd $ get
@@ -49,7 +49,7 @@ randiPct pct cps asig = do
     iseed <- rndWithin (0, 1)
     return $ asig * (1 + (randi (sig pct) (sig cps) `withSeed` iseed))
 
-minDt :: D -> D -> D 
+minDt :: D -> D -> D
 minDt n x = maxB x (n / getControlRate)
 
 ----------------------------------------------------------------
@@ -62,19 +62,19 @@ data WoodwindSpec = WoodwindSpec
     , woodwindFreqDeviation :: ((D, D), (D, D), (D, D), (D, D)) }
 
 -- | Harmonics per pitch range.
-data RangeSpec = RangeSpec 
+data RangeSpec = RangeSpec
     { rangeFreq     :: D
     , rangeNorm     :: D
     , rangeHarms    :: [HarmSpec] }
 
 -- | The harmonics.
-data HarmSpec = HarmSpec 
+data HarmSpec = HarmSpec
     { harmAmp   :: AmpSpec
     , harmWave  :: WaveSpec }
 
 -- | Envelopes for linseg
-data AmpSpec = AmpSpec     
-    { ampAttack     :: [D]      
+data AmpSpec = AmpSpec
+    { ampAttack     :: [D]
     , ampSustain    :: [D]
     , ampDecay      :: [D] }
 
@@ -86,7 +86,7 @@ type WaveSpec = [Double]
 
 -- | An emulation of the woodwindinstruments. Parameters
 --
--- > woodwind spec seed vibDepth attack sustain decay brightnessLevel cps = 
+-- > woodwind spec seed vibDepth attack sustain decay brightnessLevel cps =
 --
 --
 -- * spec - a specification of the algorithm
@@ -103,16 +103,16 @@ type WaveSpec = [Double]
 --
 -- * brightnessLevel - Controls the frequency of the low-pass filter. It's in (0, 1)
 woodwind :: WoodwindSpec -> D -> D -> D -> D -> D -> D -> D -> Sig
-woodwind spec seedVal vibPercent attack sustain decay brightnessLevel cps = 
+woodwind spec seedVal vibPercent attack sustain decay brightnessLevel cps =
     evalRnd (rndWoodwind spec vibPercent attack sustain decay brightnessLevel cps) seedVal
 
 rndWoodwind :: WoodwindSpec -> D -> D -> D -> D -> D -> D -> Rnd Sig
 rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
-    iphase  <- rndWithin (0, 1) 
-    durs    <- initDurations 
+    iphase  <- rndWithin (0, 1)
+    durs    <- initDurations
     kfreq   <- woodwindVibrato (woodwindVibratoDur spec durs) =<< (freqDeviation (woodwindFreqDeviation spec) durs $ sig cps)
 
-    let (harms1, inorm) = woodwindRange spec durs cps   
+    let (harms1, inorm) = woodwindRange spec durs cps
     harms2 <- mapM (ampVarOnHarm 0.02) harms1
     return $ brightness durs brightnessLevel $ sumHarms harms2 inorm iphase kfreq
     where
@@ -123,12 +123,12 @@ rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
             return (minDt 6 iattack, minDt 5 sustain, minDt 6 idecay)
 
         woodwindVibrato :: D -> Sig -> Rnd Sig
-        woodwindVibrato xdur asig = do   
+        woodwindVibrato xdur asig = do
             let ivibdepth = abs (vibCoeff * cps)
             kvibdepth <- randiPct 0.1 5 $ sig ivibdepth * linseg [0.1, 0.8 * xdur, 1, 0.2 * xdur, 0.7]
             ~ [ivibr1, ivibr2, ivibr3] <- mapM rndWithin $ replicate 3 (0, 1)
-            kvibrate <- randiPct 0.1 5 $ 
-                ifB (sig vibCoeff >* 0) 
+            kvibrate <- randiPct 0.1 5 $
+                ifB (sig vibCoeff >* 0)
                     -- if vibrato is positive it gets faster
                     (linseg [2.5 + ivibr1, xdur, 4.5 + ivibr2])
                     -- if vibrato is negative it gets slower
@@ -147,20 +147,20 @@ rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
         ampVarOnHarm perct (amp, wt) = fmap (\x -> (x, wt)) $ ampVar perct amp
 
         sumHarms :: [(Sig, Tab)] -> D -> D -> Sig -> Sig
-        sumHarms hs norm iphase kfreq = ( / sig norm) $ mean $ 
-            fmap (\(amp, wt) -> oscili amp kfreq wt `withD` iphase) hs 
+        sumHarms hs norm iphase kfreq = ( / sig norm) $ mean $
+            fmap (\(amp, wt) -> oscili amp kfreq wt `withD` iphase) hs
 
         brightness :: (D, D, D) -> D -> Sig -> Sig
-        brightness (iattack, isustain, idecay) level asig = balance (tone asig env) asig 
+        brightness (iattack, isustain, idecay) level asig = balance (tone asig env) asig
             where ifiltcut = tablei (9 * level) (skipNorm $ doubles [40, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 10240])
-                  env = linseg [0, iattack, ifiltcut, isustain, ifiltcut, idecay, 0]  
+                  env = linseg [0, iattack, ifiltcut, isustain, ifiltcut, idecay, 0]
 
 ----------------------------------------------------------------
 -- Converting specification to signals
 
 fromSpec :: [RangeSpec] -> (D, D, D) -> D -> ([(Sig, Tab)], D)
 fromSpec specs durs ifreq = (hs, inorm)
-    where 
+    where
         inorm = byFreq ifreq $ fmap (\x -> (rangeFreq x, rangeNorm x)) specs
         hs    = fmap (byFreq ifreq . zip freqs . fmap (fromHarmSpec durs)) $ transpose $ fmap rangeHarms specs
 
@@ -176,7 +176,7 @@ fromHarmSpec durs spec = (fromAmpSpec durs $ harmAmp spec, fromWaveSpec $ harmWa
 fromAmpSpec :: (D, D, D) -> AmpSpec -> Sig
 fromAmpSpec (attack, sustain, decay) spec = linseg $ att ++ (tail sus) ++ (tail dec)
     where phi dt select = intersperse (dt / fromIntegral (pred $ length $ select spec)) (select spec)
-          att = phi attack  ampAttack  
+          att = phi attack  ampAttack
           sus = phi sustain ampSustain
           dec = phi decay   ampDecay
 

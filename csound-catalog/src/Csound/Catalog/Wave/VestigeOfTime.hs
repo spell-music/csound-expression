@@ -1,13 +1,13 @@
 {-# Language FlexibleInstances #-}
 module Csound.Catalog.Wave.VestigeOfTime (
     filteredSaw, filteredSawRising, filteredSawFalling,
-    filteredNoise, 
-    resonInstr, simpleResonInstr, resonVibrato, 
+    filteredNoise,
+    resonInstr, simpleResonInstr, resonVibrato,
     delaySaw, femaleVowel, amBell
 ) where
 
-import Csound.Base
-    
+import Csound.Base hiding (filt)
+
 import Csound.Catalog.Effect(vibroDelay)
 import Csound.Catalog.Reson(Reson)
 
@@ -27,17 +27,17 @@ filteredSawRising riseDur = filteredSaw (linseg [500, riseDur, 5000])
 filteredSawFalling :: D -> Sig -> Sig
 filteredSawFalling fallDur = filteredSaw (linseg [5000, fallDur, 500])
 
--- | The saw is filtered with band pass filter. Centere frequency of the filter 
+-- | The saw is filtered with band pass filter. Centere frequency of the filter
 -- can vary.
 --
 -- > filteredSaw centerFrequency sawCps
 filteredSaw :: Sig -> Sig -> Sig
 filteredSaw kcf cps = aout
-    where 
+    where
         a1      = chorusPitch 3 0.003 saw cps
         aout    = reson a1 kcf 100 `withD` 2
 
--- | The white noise is filtered with band pass filter. Centere frequency of the filter 
+-- | The white noise is filtered with band pass filter. Centere frequency of the filter
 -- can vary.
 --
 -- > filteredNoise centerFrequency sawCps
@@ -46,7 +46,7 @@ filteredNoise cfq  bw = do
     anoise <- rand 1
     return $ balance (reson anoise cfq bw `withD` 2) anoise
 
--- | 
+-- |
 -- > simpleResonInstr cycleLength cps
 simpleResonInstr :: D -> Sig -> Sig
 simpleResonInstr dt = resonInstr (f f21) (f f22)  (f f23) 1
@@ -61,7 +61,7 @@ simpleResonInstr dt = resonInstr (f f21) (f f22)  (f f23) 1
 
 
 
--- | Signal is passed through three band-pass filters. 
+-- | Signal is passed through three band-pass filters.
 -- We can alter the relative center frequencies of the filters.
 --
 -- > resonInstr filt1 filt2 filt3 amp cps = aout
@@ -72,14 +72,14 @@ resonInstr filt1 filt2 filt3 amp cps = aout
         asig2   = amp * 0.7 * osc cps
 
         phi cf bw filt = reson asig (cf * filt) bw `withD` 2
-        aout = balance (sum 
+        aout = balance (sum
                             [ 0.6 * phi 110 20 filt1
                             ,       phi 220 30 filt2
-                            , 0.6 * phi 440 40 filt3 
-                            , 0.4 * asig 
+                            , 0.6 * phi 440 40 filt3
+                            , 0.4 * asig
                             , 2 * asig2 ])
                         asig2
-            
+
         f19 = sines [1, 0.1, 0.1, 0.278, 0.245, 0.3, 0.352, 0.846, 0.669, 0, 0, 0, 0.1, 0.1, 0.1]
 
 -- | Vibrato and resonant filter with varying center frequency.
@@ -93,13 +93,13 @@ resonVibrato vibDepth vibRate filt amp cps = gain 8 aout
 
         waveTab = sines [1, 0.832, 0.5, 0.215, 0.6, 0.133, 0.785, 0.326, 0.018, 0.028, 0.0647, 0.0143, 0.0213]
 
--- | Singing a reson's vowels (see "Csound.Catalog.Reson"). 
+-- | Singing a reson's vowels (see "Csound.Catalog.Reson").
 femaleVowel :: Reson -> Sig -> Sig
 femaleVowel vowel cps = aout
-    where 
+    where
         afilt1 = chorusPitch 3 0.003 (\x -> buzz 1 x 15 sine) cps
         aout = blp 2000 $ resonsBy (\cf bw x -> reson x cf bw `withD` 2) vowel afilt1
-          
+
 -- | Delayed saw wave.
 delaySaw :: Sig -> Sig
 delaySaw cps = vibroDelay 6 3 2 0.25 $ saw cps

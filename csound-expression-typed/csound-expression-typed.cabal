@@ -11,7 +11,7 @@ Build-Type:    Simple
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
 
-Description:
+Description: typed core for library csound-expression
 
 Data-Files :
     data/hrtf-44100-left.dat

@@ -9,8 +9,8 @@ module Csound.Catalog.Drum(
     -- * Korg MiniPops Drum kit
     mpBd, mpSn1, mpSn2, mpRim, mpCym1, mpCym2, mpBon1, mpBon2, mpBon3, mpCl, mpCow, mpGro, mpMar, mpQj, mpTam,
 
-    -- * Csound percussive models kit    
-    boo, gro, sbells, tam, cab, crun, shake, spaper, 
+    -- * Csound percussive models kit
+    boo, gro, sbells, tam, cab, crun, shake, spaper,
 ) where
 
 import Csound.Base
@@ -20,6 +20,8 @@ import qualified Csound.Catalog.Drum.Hm       as H
 import qualified Csound.Catalog.Drum.Tr808    as T
 import qualified Csound.Catalog.Drum.MiniPops as M
 
+
+hmBd1,hmBd2,hmBd3,hmSn1,hmSn2,hmSweeo,hmBoink,hmOhh,hmChh,hmCr,hmClap :: Sam
 
 hmBd1   = H.bd1
 hmBd2   = H.bd2
@@ -32,6 +34,8 @@ hmOhh   = H.ohh
 hmChh   = H.chh
 hmCr    = H.cr
 hmClap  = H.clap
+
+trBd, trSn, trOhh, trChh, trHtom, trMtom, trLtom, trCym, trCl, trRim, trMar, trHcon, trMcon, trLcon :: Sam
 
 trBd   = T.bd
 trSn   = T.sn
@@ -47,6 +51,8 @@ trMar  = T.mar
 trHcon = T.hcon
 trMcon = T.mcon
 trLcon = T.lcon
+
+mpBd, mpSn1, mpSn2, mpRim, mpCym1, mpCym2,mpBon1, mpBon2, mpBon3, mpCl, mpCow, mpGro, mpMar, mpQj, mpTam :: Sam
 
 mpBd   = M.bd
 mpSn1  = M.sn1
@@ -64,7 +70,11 @@ mpMar  = M.mar
 mpQj   = M.qj
 mpTam  = M.tam
 
-mkSam = limSam 1 
+mkSam :: Sig -> Sam
+mkSam = limSam 1
+
+boo, gro, sbells, tam, cab, crun, spaper :: Sam
+shake :: Sig -> Sam
 
 boo = mkSam $ bamboo 1 0.01
 gro = mkSam $ guiro  1 0.01
