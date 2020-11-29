@@ -1,22 +1,18 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language 
-        TypeFamilies, 
-        MultiParamTypeClasses, 
-        FlexibleInstances, 
+{-# Language
+        TypeFamilies,
+        MultiParamTypeClasses,
+        FlexibleInstances,
         FlexibleContexts #-}
 module Csound.SigSpace(
     SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..), bat, bmixAt,
     cfd, cfd4, cfds, cfdSpec, cfdSpec4, cfdsSpec, wsum,
 
     -- * Stereo sig space
-    SigSpace2(..), BindSig2(..), mul2, mul2'    
+    SigSpace2(..), BindSig2(..), mul2, mul2'
 ) where
 
-import Control.Monad
-import Control.Applicative
-
 import Csound.Typed
-import Csound.Types
 import Csound.Typed.Opcode(pvscross, pvscale, pvsmix, balance)
 
 -- | Spectral crossfade.

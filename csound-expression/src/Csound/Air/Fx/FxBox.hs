@@ -1,4 +1,4 @@
-{-# Language FlexibleContexts #-}
+{-# Language FlexibleContexts, LambdaCase #-}
 
 -- | A friendly family of effects. These functions are kindly provided by Iain McCurdy (designed in Csound).
 module Csound.Air.Fx.FxBox(
@@ -196,20 +196,18 @@ module Csound.Air.Fx.FxBox(
 import Data.Default
 
 import Csound.Typed
-import Csound.Typed.Opcode(ampdb, scale, expcurve, compress)
-import Csound.Typed.Gui
+import Csound.Typed.Opcode(scale, expcurve)
+import Csound.Typed.Gui hiding (width)
 
-import Csound.SigSpace
-
-import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
-    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxMonoTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2)
+import qualified Csound.Typed.Plugins as P(
+    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxLoFi,
+    fxPanTrem, fxMonoTrem, fxPhaser, fxReverse, fxRingModulator, fxChorus2)
 
 import Csound.Air.Patch(Fx, Fx1, Fx2)
 import Csound.Air.Fx(Balance, DelayTime, Feedback, ToneSig, SensitivitySig,
     BaseCps, Resonance, DepthSig, RateSig, TremWaveSig, FoldoverSig, BitsReductionSig,
     DriveSig, TimeSig, WidthSig,
-    rever2, pingPong, pingPong', PingPongSpec(..),
+    rever2, pingPong', PingPongSpec(..),
     EchoGain, RandomSpreadSig,
     tapeEcho)
 
@@ -217,7 +215,6 @@ import Csound.Air.Live(fxBox, fxColor)
 import Csound.Air.Wav(toMono)
 import Csound.Air.Misc(fromMono, ambiEnv, saturator)
 
-import qualified Data.Colour as C
 import qualified Data.Colour.SRGB as C
 
 
@@ -715,6 +712,8 @@ setAll size names = fmap (\s -> (s, size)) names
 
 
 -- colors
+tortColor, fowlerColor, adeleColor, pongColor, flanColor, revsyColor, phasyColor,
+  crusherColor, choryColor, panyColor, tremyColor, ringoColor, reverbColor :: String
 
 tortColor = red
 fowlerColor = maroon
@@ -730,21 +729,24 @@ tremyColor = green
 ringoColor = maroon
 reverbColor = olive
 
+paintTo :: String -> Source a -> Source a
 paintTo = fxColor . C.sRGB24read
+
+red, maroon, blue, aqua, navy, lime,  green, yellow, purple, olive, orange, fuchsia :: String
 
 red = "#FF4136"
 maroon = "#85144b"
 blue = "#0074D9"
 aqua = "#7FDBFF"
-teal = "#39CCCC"
 navy = "#001f3f"
-orange = "#FF851B"
 lime = "#01FF70"
 green = "#2ECC40"
 yellow = "#FFDC00"
 purple = "#B10DC9"
-fuchsia = "#F012BE"
 olive = "#3D9970"
+-- teal = "#39CCCC"
+orange = "#FF851B"
+fuchsia = "#F012BE"
 
 -- Analog Delay
 
@@ -752,6 +754,7 @@ uiAdeleBy :: Sigs a => Double -> Double -> Double -> Double -> Source (Fx a)
 uiAdeleBy initTone initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Delay" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone)]
     where
         fx [balance, delayTime, feedback, tone] = return . adele balance delayTime feedback tone
+        fx _                                    = undefined
 
 uiAdeleBy_ :: Sigs a => Double -> Double -> Double -> Source (Fx a)
 uiAdeleBy_ = uiAdeleBy 0.5
@@ -792,14 +795,17 @@ uiMagnus :: Sigs a => Int -> Double -> Double -> Double -> Double -> Double -> S
 uiMagnus size initDelayTime initFeedback initEchoGain initTone initSpread  = mapSource bindSig $ paintTo adeleColor $ fxBox "Tape echo" fx True [("del time", initDelayTime), ("fbk", initFeedback), ("echo gain", initEchoGain), ("tone", initTone), ("tape qty", initSpread)]
     where
         fx [delayTime, feedback, echoGain, tone, spread] = return . magnus (int size) delayTime feedback echoGain tone spread
+        fx _                                             = undefined
 
 -- Ping-pong delay
 
 uiPongyBy :: Sigs a => Double -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo adeleColor $ fxBox "Ping-pong" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
+uiPongyBy initTone initWidth initFeedback initBalance initDelayTime = mapSource bindSig $ paintTo pongColor $ fxBox "Ping-pong" fx True  [("balance", initBalance), ("del time", initDelayTime), ("fbk", initFeedback), ("tone", initTone), ("width", initWidth)]
     where
         fx [balance, delayTime, feedback, tone, width] = return . pongy balance delayTime feedback tone width
+        fx _                                           = undefined
 
+defWidth :: Double
 defWidth = 0.7
 
 uiPongyBy_ :: Sigs a => Double -> Double -> Double -> Source (Fx a)
@@ -841,6 +847,7 @@ uiTortBy :: Sigs a => Double -> Double -> Source (Fx a)
 uiTortBy initTone initDrive = mapSource bindSig $ paintTo tortColor $ fxBox "Distort" fx True [("drive", initDrive), ("tone", initTone)]
     where
         fx [drive, tone] = return . tort drive tone
+        fx _             = undefined
 
 uiTortBy_ :: Sigs a => Double -> Source (Fx a)
 uiTortBy_ = uiTortBy 0.5
@@ -881,11 +888,13 @@ uiFowler' :: Sigs a => Source (Fx a)
 uiFowler' = mapSource bindSig $ paintTo fowlerColor $ fxBox "Follower" fx True [("size", size1)]
     where
         fx [size] = return . fowler' size
+        fx _      = undefined
 
 uiFowlerBy :: Sigs a => Double -> Source (Fx a)
 uiFowlerBy size = mapSource bindSig $ paintTo fowlerColor $ fxBox "Follower" fx True [("sense", size), ("freq", size), ("reson", size)]
     where
         fx [sense, freq, resonance] = return . fowler sense freq resonance
+        fx _                        = undefined
 
 uiFowler1, uiFowler2, uiFowler3, uiFowler4, uiFowler5 :: Sigs a => Source (Fx a)
 
@@ -901,11 +910,13 @@ uiFlan' :: Sigs a => Source (Fx a)
 uiFlan' = mapSource bindSig $ paintTo flanColor $ fxBox "Flanger" fx True [("size", size1)]
     where
         fx [size] = return . flan' size
+        fx _      = undefined
 
 uiFlanBy :: Sigs a => Double -> Source (Fx a)
 uiFlanBy size = mapSource bindSig $ paintTo flanColor $ fxBox "Flanger" fx True $ setAll size ["rate", "depth", "del time", "fbk"]
     where
         fx [rate, depth, delayTime, fbk] = return . flan rate depth delayTime fbk
+        fx _                             = undefined
 
 uiFlan1, uiFlan2, uiFlan3, uiFlan4, uiFlan5 :: Sigs a => Source (Fx a)
 
@@ -923,11 +934,13 @@ uiPhasy' :: Sigs a => Source (Fx a)
 uiPhasy' = mapSource bindSig $ paintTo phasyColor $ fxBox "Phaser" fx  True $ [("size", size1)]
     where
         fx [x] = return . phasy' x
+        fx _   = undefined
 
 uiPhasyBy :: Sigs a => Double -> Source (Fx a)
 uiPhasyBy size = mapSource bindSig $ paintTo phasyColor $ fxBox "Phaser" fx True $ setAll size ["rate", "depth", "cps", "fbk"]
     where
         fx [rate, depth, cps, fbk] = return . phasy rate depth cps fbk
+        fx _                       = undefined
 
 uiPhasy1, uiPhasy2, uiPhasy3, uiPhasy4, uiPhasy5 :: Sigs a => Source (Fx a)
 
@@ -943,11 +956,13 @@ uiChory' :: Sig2s a => Source (Fx a)
 uiChory' = paintTo choryColor $ fxBox "Chorus" fx True [("size", size1)]
     where
         fx [size] = return . chory' size
+        fx _      = undefined
 
 uiChoryBy :: Sig2s a => Double -> Source (Fx a)
 uiChoryBy size = paintTo choryColor $ fxBox "Chorus" fx True $ setAll size ["rate", "depth", "width"]
     where
         fx [rate, depth, width] = return . mapSig2 (chory rate depth width)
+        fx _                    = undefined
 
 uiChory1, uiChory2, uiChory3, uiChory4, uiChory5 :: Sig2s a => Source (Fx a)
 
@@ -965,6 +980,7 @@ genUiPany' :: (Sig -> Sig2 -> Sig2) -> Source Fx2
 genUiPany' mkPany = paintTo panyColor $ fxBox "Pan" fx True [("size", size1)]
     where
         fx [size] = return . mkPany size
+        fx _      = undefined
 
 uiOscPany', uiTriPany', uiSqrPany' :: Source Fx2
 
@@ -976,6 +992,7 @@ genUiPanyBy :: Sig -> Double -> Source Fx2
 genUiPanyBy wave size = paintTo panyColor $ fxBox "Pan" fx True $ setAll size ["depth", "rate"]
     where
         fx [depth, rate] = return . pany wave depth rate
+        fx _             = undefined
 
 uiOscPanyBy, uiTriPanyBy, uiSqrPanyBy :: Double -> Source Fx2
 
@@ -1011,6 +1028,7 @@ genUiTremy' :: Sigs a => (Sig -> Sig -> Sig) -> Source (Fx a)
 genUiTremy' mkTremy = mapSource bindSig $ paintTo tremyColor $ fxBox "Tremolo" fx True [("size", size1)]
     where
         fx [size] = return . mkTremy size
+        fx _      = undefined
 
 uiOscTremy', uiTriTremy', uiSqrTremy' :: Sigs a => Source (Fx a)
 
@@ -1022,6 +1040,7 @@ genUiTremyBy :: Sigs a => Sig -> Double -> Source (Fx a)
 genUiTremyBy wave size = mapSource bindSig $ paintTo tremyColor $ fxBox "Tremolo" fx True $ setAll size ["depth", "rate"]
     where
         fx [depth, rate] = return . tremy wave depth rate
+        fx _             = undefined
 
 uiOscTremyBy, uiTriTremyBy, uiSqrTremyBy :: Sigs a => Double -> Source (Fx a)
 
@@ -1057,11 +1076,13 @@ uiRingo' :: Sigs a => Source (Fx a)
 uiRingo' = mapSource bindSig $ paintTo ringoColor $ fxBox "Ringo" fx True [("size", size1)]
     where
         fx [size] = return . ringo' size
+        fx _      = undefined
 
 uiRingoBy :: Sigs a => Double -> Source (Fx a)
 uiRingoBy size = mapSource bindSig $ paintTo ringoColor $ fxBox "Ring Mod" fx True $ setAll size ["mix", "rate", "env mod"]
     where
         fx [balance, rate, envMod] = return . ringo balance rate envMod
+        fx _                       = undefined
 
 uiRingo1, uiRingo2, uiRingo3, uiRingo4, uiRingo5 :: Sigs a => Source (Fx a)
 
@@ -1074,9 +1095,10 @@ uiRingo5 = uiRingoBy size5
 -- Crusher
 
 uiCrusher :: Sigs a => Double -> Double -> Source (Fx a)
-uiCrusher initReduction initFoldover = mapSource bindSig $ paintTo revsyColor $ fxBox "LoFi" fx True [("redux", initReduction), ("foldover", initFoldover)]
+uiCrusher initReduction initFoldover = mapSource bindSig $ paintTo crusherColor $ fxBox "LoFi" fx True [("redux", initReduction), ("foldover", initFoldover)]
     where
         fx [redux, foldover] = return . crusher redux foldover
+        fx _                 = undefined
 
 -- Reverse
 
@@ -1084,6 +1106,7 @@ uiRevsy :: Sigs a => Double -> Source (Fx a)
 uiRevsy initTime = mapSource bindSig $ paintTo revsyColor $ fxBox "Reverse" fx True [("time", initTime)]
     where
         fx [time] = return . revsy time
+        fx _      = undefined
 
 ------------------------------------------------------------
 -- Reverbs
@@ -1091,7 +1114,9 @@ uiRevsy initTime = mapSource bindSig $ paintTo revsyColor $ fxBox "Reverse" fx T
 uiRevBy :: Sig2s a => Double -> Double -> Source (Fx a)
 uiRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
     where
-        fx [balance, feedback] = \asig -> return $ mapSig2 (\x -> mul (1 - balance) x + mul balance (rever2 feedback x)) asig
+        fx = \case
+          [balance, feedback] -> \asig -> return $ mapSig2 (\x -> mul (1 - balance) x + mul balance (rever2 feedback x)) asig
+          _                   -> undefined
 
 uiRoom :: Sig2s a => Double -> Source (Fx a)
 uiRoom = uiRevBy 0.6
@@ -1146,7 +1171,9 @@ rever1 fbk = toMono . rever2 fbk . fromMono
 uiMonoRevBy :: Double -> Double -> Source Fx1
 uiMonoRevBy initFeedback initMix = paintTo reverbColor $ fxBox "Reverb" fx True [("mix", initMix), ("fbk", initFeedback)]
     where
-        fx [balance, feedback] = \asig -> return $ mixAt balance (rever1 feedback) asig
+        fx = \case
+          [balance, feedback] -> \asig -> return $ mixAt balance (rever1 feedback) asig
+          _                   -> undefined
 
 uiMonoRoom :: Double -> Source Fx1
 uiMonoRoom = uiMonoRevBy 0.6

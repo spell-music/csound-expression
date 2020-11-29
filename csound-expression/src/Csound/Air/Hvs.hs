@@ -1,19 +1,17 @@
 -- | Hyper vectorial synthesis
-module Csound.Air.Hvs(    
-	HvsSnapshot, HvsMatrix1, HvsMatrix2, HvsMatrix3,
-	hvs1, hvs2, hvs3,
+module Csound.Air.Hvs(
+  HvsSnapshot, HvsMatrix1, HvsMatrix2, HvsMatrix3,
+  hvs1, hvs2, hvs3,
 
-	-- | Csound functions
-	csdHvs1, csdHvs2, csdHvs3
+  -- | Csound functions
+  csdHvs1, csdHvs2, csdHvs3
 ) where
 
-import Control.Applicative hiding ((<*))
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (int)
 import Csound.Typed
 
 import Csound.Typed.Opcode hiding (hvs1, hvs2, hvs3)
-import qualified Csound.Typed.Opcode as C(hvs1, hvs2, hvs3)
 
 import Csound.Tab
 
@@ -31,7 +29,7 @@ type HvsMatrix3 = [HvsMatrix2]
 
 -- Hyper Vectorial Synthesis.
 
--- | 
+-- |
 -- Allows one-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
 --
 -- hvs1 allows one-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
@@ -43,7 +41,7 @@ csdHvs1 ::  Sig -> D -> D -> Tab -> Tab -> Tab -> SE ()
 csdHvs1 b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unTab b4 <*> unTab b5 <*> unTab b6
     where f a1 a2 a3 a4 a5 a6 = opcs "hvs1" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
--- | 
+-- |
 -- Allows two-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
 --
 -- hvs2 allows two-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
@@ -62,7 +60,7 @@ csdHvs2 b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> u
                                                                                       ,a7
                                                                                       ,a8]
 
--- | 
+-- |
 -- Allows three-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
 --
 -- hvs3 allows three-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
@@ -75,12 +73,12 @@ csdHvs3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = SE $ (depT_ =<<) $ lift $ f <$> unSig b
     where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcs "hvs3" [(Xr
                                                           ,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
--- | One dimensional Hyper vectorial synthesis. 
+-- | One dimensional Hyper vectorial synthesis.
 -- We can provide a list of vectors (of lists but the same length for all items is assumed)
 -- and a signal that ranges from 0 to 1. It interpolates between vectors in the list.
 -- As a result we get a n interpolated vector. It's a list but the actual length
 -- equals to the length of input vectors.
--- 
+--
 -- An example. We can set the center frequency and resonance of the filter with the single parameter:
 --
 -- > let f = hvs1 [[100, 0.1], [300, 0.1], [600, 0.5], [800, 0.9]]
@@ -93,18 +91,18 @@ csdHvs3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = SE $ (depT_ =<<) $ lift $ f <$> unSig b
 -- It's determined by the length of the items in the input list.
 hvs1 :: HvsMatrix1 -> Sig -> SE [Sig]
 hvs1 as x = do
-	outTab <- newTab (int numParams)
-	csdHvs1 x (int numParams) (int numPointsX) outTab positionsTab snapTab
-	return $ fmap (kr . flip tab outTab . sig . int) [0 .. numParams - 1]
-	where 
-		numParams  = length $ head as
-		numPointsX = length as
+  outTab <- newTab (int numParams)
+  csdHvs1 x (int numParams) (int numPointsX) outTab positionsTab snapTab
+  return $ fmap (kr . flip tab outTab . sig . int) [0 .. numParams - 1]
+  where
+    numParams  = length $ head as
+    numPointsX = length as
 
-		positionsTab = doubles $ fmap fromIntegral [0 .. numPointsX - 1]
-		snapTab = doubles $ concat as
+    positionsTab = doubles $ fmap fromIntegral [0 .. numPointsX - 1]
+    snapTab = doubles $ concat as
 
--- | Two dimensional Hyper vectorial synthesis. 
--- Now we provide a list of lists of vectors. The length of all vectors should be the same 
+-- | Two dimensional Hyper vectorial synthesis.
+-- Now we provide a list of lists of vectors. The length of all vectors should be the same
 -- but there is no limit for the number! So that's how we can control a lot of parameters
 -- with pair of signals. The input 2D atrix is the grid of samples.
 -- It finds the closest four points in the grid and interpolates between them (it's a weighted sum).
@@ -113,40 +111,40 @@ hvs1 as x = do
 --
 -- The usage is the same as in the case of @hvs1@. An example:
 --
--- > g = hvs2 [[[100, 0.1, 0.3], [800, 0.1, 0.5], [1400, 0.1, 0.8]], 
--- > 		  [[100, 0.5, 0.3], [800, 0.5, 0.5], [1400, 0.5, 0.8]], 
--- > 		  [[100, 0.8, 0.3], [800, 0.8, 0.5], [1400, 0.8, 0.8]]]
--- > 
+-- > g = hvs2 [[[100, 0.1, 0.3], [800, 0.1, 0.5], [1400, 0.1, 0.8]],
+-- >      [[100, 0.5, 0.3], [800, 0.5, 0.5], [1400, 0.5, 0.8]],
+-- >      [[100, 0.8, 0.3], [800, 0.8, 0.5], [1400, 0.8, 0.8]]]
+-- >
 -- > main = dac $ do
--- > 	(g1, kx) <- uknob 0.5
--- > 	(g2, ky) <- uknob 0.5
--- > 	[cfq, q, w] <- g (kx, ky)
--- > 	panel $ hor [g1, g2]
--- > 	at (mlp cfq q) $ fmap (cfd w (saw 110)) (white)
+-- >  (g1, kx) <- uknob 0.5
+-- >  (g2, ky) <- uknob 0.5
+-- >  [cfq, q, w] <- g (kx, ky)
+-- >  panel $ hor [g1, g2]
+-- >  at (mlp cfq q) $ fmap (cfd w (saw 110)) (white)
 hvs2 :: HvsMatrix2 -> Sig2 -> SE [Sig]
 hvs2 as (x, y) = do
-	outTab <- newTab (int numParams)
-	csdHvs2 x y (int numParams) (int numPointsX) (int numPointsY) outTab positionsTab snapTab
-	return $ fmap (kr . flip tab outTab . sig . int) [0 .. numParams - 1]
-	where 
-		numParams  = length $ head $ head as
-		numPointsX = length $ head as
-		numPointsY = length as
+  outTab <- newTab (int numParams)
+  csdHvs2 x y (int numParams) (int numPointsX) (int numPointsY) outTab positionsTab snapTab
+  return $ fmap (kr . flip tab outTab . sig . int) [0 .. numParams - 1]
+  where
+    numParams  = length $ head $ head as
+    numPointsX = length $ head as
+    numPointsY = length as
 
-		positionsTab = doubles $ fmap fromIntegral [0 .. (numPointsX * numPointsY - 1)]
-		snapTab = doubles $ concat $ concat as
+    positionsTab = doubles $ fmap fromIntegral [0 .. (numPointsX * numPointsY - 1)]
+    snapTab = doubles $ concat $ concat as
 
--- | The three dimensional 
+-- | The three dimensional
 hvs3 :: HvsMatrix3 -> Sig3 -> SE [Sig]
 hvs3 as (x, y, z) = do
-	outTab <- newTab (int numParams)
-	csdHvs3 x y z (int numParams) (int numPointsX) (int numPointsY) (int numPointsZ) outTab positionsTab snapTab
-	return $ fmap (kr . flip tab outTab . sig . int) [0 .. numParams - 1]
-	where 
-		numParams  = length $ head $ head $ head as
-		numPointsX = length $ head $ head as
-		numPointsY = length $ head as
-		numPointsZ = length as
+  outTab <- newTab (int numParams)
+  csdHvs3 x y z (int numParams) (int numPointsX) (int numPointsY) (int numPointsZ) outTab positionsTab snapTab
+  return $ fmap (kr . flip tab outTab . sig . int) [0 .. numParams - 1]
+  where
+    numParams  = length $ head $ head $ head as
+    numPointsX = length $ head $ head as
+    numPointsY = length $ head as
+    numPointsZ = length as
 
-		positionsTab = doubles $ fmap fromIntegral [0 .. (numPointsX * numPointsY * numPointsZ) - 1]
-		snapTab = doubles $ concat $ concat $ concat as
+    positionsTab = doubles $ fmap fromIntegral [0 .. (numPointsX * numPointsY * numPointsZ) - 1]
+    snapTab = doubles $ concat $ concat $ concat as

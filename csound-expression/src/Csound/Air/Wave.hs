@@ -3,7 +3,7 @@
 module Csound.Air.Wave (
     Wave,
 
-	 -- * Bipolar
+   -- * Bipolar
     osc, oscBy, saw, isaw, pulse, sqr, pw, tri, ramp, blosc,
 
     -- ** With phase control
@@ -54,8 +54,7 @@ module Csound.Air.Wave (
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
-import Csound.Tab(setSize, elins, sine, cosine, sines4, triTab, pwTab, sawTab, sqrTab)
-import Csound.SigSpace
+import Csound.Tab(sine, cosine, triTab, pwTab, sawTab, sqrTab)
 
 type Wave = Sig -> SE Sig
 
@@ -139,7 +138,7 @@ birspline cpsMin cpsMax = rspline (-1) 1 cpsMin cpsMax
 --
 -- > fosc carrierFreq modulatorFreq modIndex cps
 fosc :: Sig -> Sig -> Sig -> Sig -> Sig
-fosc car mod ndx cps = foscili 1 cps car mod ndx sine
+fosc car modFreq ndx cps = foscili 1 cps car modFreq ndx sine
 
 -- | Pulse width modulation (width range is 0 to 1)
 --
@@ -179,6 +178,10 @@ uramp duty cps = unipolar $ ramp duty cps
 unipolar' :: (D -> Sig -> Sig) -> (D -> Sig -> Sig)
 unipolar' f phs cps = unipolar $ f phs cps
 
+uosc', utri', usqr', usaw', upulse', uisaw' :: D -> Sig -> Sig
+uoscBy', ublosc' :: Tab -> D -> Sig -> Sig
+uramp', upw' :: Sig -> D -> Sig -> Sig
+
 uosc' = unipolar' osc'
 uoscBy' a = unipolar' (oscBy' a)
 usaw' = unipolar' saw'
@@ -197,6 +200,10 @@ ublosc' a = unipolar' (blosc' a)
 rndPhs :: (D -> Sig -> Sig) -> (Sig -> SE Sig)
 rndPhs f cps = fmap (\x -> f x cps) $ rnd 1
 
+rndOsc, rndTri, rndSqr, rndSaw, rndIsaw, rndPulse :: Sig -> SE Sig
+rndOscBy, rndBlosc :: Tab -> Sig -> SE Sig
+rndRamp, rndPw :: Sig -> Sig -> SE Sig
+
 rndOsc = rndPhs osc'
 rndOscBy a = rndPhs (oscBy' a)
 rndSaw = rndPhs saw'
@@ -210,6 +217,10 @@ rndBlosc a = rndPhs (blosc' a)
 
 --------------------------------------------------------------------------
 -- unipolar random phase
+
+urndOsc, urndTri, urndSqr, urndSaw, urndIsaw, urndPulse :: Sig -> SE Sig
+urndOscBy, urndBlosc :: Tab -> Sig -> SE Sig
+urndRamp, urndPw :: Sig -> Sig -> SE Sig
 
 urndOsc = rndPhs uosc'
 urndOscBy a = rndPhs (uoscBy' a)
@@ -281,6 +292,7 @@ detune k f cps = f (k * cps)
 
 --------------------------------------------------------------------------
 
+linRange :: Integral a => a -> Sig -> [Sig]
 linRange n amount = fmap (\x -> amount * sig (2 * double x - 1)) [0, (1 / fromIntegral n) .. 1]
 
 -- | Unision by Hertz. It creates n oscillators that are playing

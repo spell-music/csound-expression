@@ -23,6 +23,7 @@
 module Csound.IO (
     -- * Rendering
     RenderCsd(..),
+    CsdArity(..),
     renderCsd,
     writeCsd, writeCsdBy,
     writeSnd, writeSndBy,

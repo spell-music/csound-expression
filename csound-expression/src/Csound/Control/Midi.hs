@@ -1,11 +1,11 @@
 {-# Language FlexibleContexts #-}
 -- | Midi.
 module Csound.Control.Midi(
-    MidiChn(..), MidiFun, toMidiFun, toMidiFun_, 
+    MidiChn(..), MidiFun, toMidiFun, toMidiFun_,
     Msg, Channel, midi, midin, pgmidi, ampCps,
     midi_, midin_, pgmidi_,
     -- * Mono-midi synth
-    monoMsg, holdMsg, trigNamedMono, genMonoMsg, smoothMonoArg, 
+    monoMsg, holdMsg, trigNamedMono, genMonoMsg, smoothMonoArg,
     genFilteredMonoMsg, genFilteredMonoMsgTemp,
 
     -- ** Custom temperament
@@ -17,15 +17,18 @@ module Csound.Control.Midi(
     ampmidinn,
 
     -- ** Custom temperament
-    ampCps', cpsmidi', cpsmidi'D, cpsmidi'Sig, 
+    ampCps', cpsmidi', cpsmidi'D, cpsmidi'Sig,
 
     -- * Overload
-    tryMidi, tryMidi', MidiInstr(..), MidiInstrTemp(..)
+    tryMidi, tryMidi', MidiInstr(..), MidiInstrTemp(..),
+
+    -- * Other
+    namedAmpCpsSig
 ) where
 
 import Data.Boolean
 
-import Csound.Typed
+import Csound.Typed hiding (arg)
 import Csound.Typed.Opcode hiding (initc7)
 import Csound.Control.Overload
 import Csound.Control.Instr(alwaysOn)
@@ -36,26 +39,26 @@ import Csound.Tuning
 
 -- | Specifies the midi channel or programm.
 data MidiChn = ChnAll | Chn Int | Pgm (Maybe Int) Int
-	deriving (Show, Eq)
+  deriving (Show, Eq)
 
 type MidiFun a = (Msg -> SE a) -> SE a
 
 toMidiFun :: Sigs a => MidiChn -> MidiFun a
 toMidiFun x = case x of
-	ChnAll  -> midi
-	Chn n   -> midin n
-	Pgm a b -> pgmidi a b
+  ChnAll  -> midi
+  Chn n   -> midin n
+  Pgm a b -> pgmidi a b
 
 toMidiFun_ :: MidiChn -> MidiFun ()
 toMidiFun_ x = case x of
-	ChnAll  -> midi_
-	Chn n   -> midin_ n
-	Pgm a b -> pgmidi_ a b
+  ChnAll  -> midi_
+  Chn n   -> midin_ n
+  Pgm a b -> pgmidi_ a b
 
 ampCps :: Msg -> (D, D)
 ampCps msg = (ampmidi msg 1, cpsmidi msg)
 
--- | Converts midi velocity number to amplitude. 
+-- | Converts midi velocity number to amplitude.
 -- The first argument is dynamic range in decibels.
 --
 -- > ampmidinn (volMinDb, volMaxDb) volumeKey = amplitude
@@ -97,7 +100,7 @@ monoMsg = smoothMonoMsg cpsmidi
 -- The signal fades out when nothing is pressed.
 -- It can be used in mono-synths. Arguments are custom temperament, midi channel, portamento time
 -- and release time. A portamento time is time it takes for transition
--- from one note to another. 
+-- from one note to another.
 --
 -- > monoMsgTemp temperament channel portamentoTime releaseTime
 monoMsgTemp :: Temp -> MidiChn -> D -> D -> SE (Sig, Sig)
@@ -105,13 +108,13 @@ monoMsgTemp tm = smoothMonoMsg (cpsmidi' tm)
 
 -- | Produces an argument for monophonic midi-synth.
 -- The signal fades out when nothing is pressed.
--- It can be used in mono-synths. 
+-- It can be used in mono-synths.
 --
 -- > genMonoMsg channel
 genMonoMsg :: MidiChn -> SE MonoArg
 genMonoMsg chn = genAmpCpsSig cpsmidi (toMidiFun chn)
 
--- | Just like mono @genMonoMsg@ but also we can alter the temperament. The temperament spec goes first. 
+-- | Just like mono @genMonoMsg@ but also we can alter the temperament. The temperament spec goes first.
 --
 -- > genMonoMsgTemp temperament channel
 genMonoMsgTemp :: Temp -> MidiChn -> SE MonoArg
@@ -122,20 +125,20 @@ smoothMonoArg time arg = arg { monoAmp = port (monoAmp arg) time, monoCps = port
 
 smoothMonoMsg :: (Msg -> D) -> MidiChn -> D -> D -> SE (Sig, Sig)
 smoothMonoMsg key2cps chn portTime relTime = do
-	(MonoArg amp cps status _) <- genAmpCpsSig key2cps (toMidiFun chn)
-	return (port amp portTime * port status relTime,  port cps portTime)
+  (MonoArg amp cps status _) <- genAmpCpsSig key2cps (toMidiFun chn)
+  return (port amp portTime * port status relTime,  port cps portTime)
 
 
 genFilteredMonoMsg :: MidiChn -> (D -> BoolD) -> SE MonoArg
-genFilteredMonoMsg chn cond = filteredGenAmpCpsSig cpsmidi (toMidiFun chn) cond
+genFilteredMonoMsg chn condition = filteredGenAmpCpsSig cpsmidi (toMidiFun chn) condition
 
--- | Just like mono @genMonoMsg@ but also we can alter the temperament. The temperament spec goes first. 
+-- | Just like mono @genMonoMsg@ but also we can alter the temperament. The temperament spec goes first.
 --
 -- > genMonoMsgTemp temperament channel
 genFilteredMonoMsgTemp :: Temp -> MidiChn -> (D -> BoolD) -> SE MonoArg
-genFilteredMonoMsgTemp tm chn cond = filteredGenAmpCpsSig (cpsmidi' tm) (toMidiFun chn) cond
+genFilteredMonoMsgTemp tm chn condition = filteredGenAmpCpsSig (cpsmidi' tm) (toMidiFun chn) condition
 
--- | Produces midi amplitude and frequency as a signal and holds the 
+-- | Produces midi amplitude and frequency as a signal and holds the
 -- last value till the next one is present.
 -- It can be used in mono-synths. Arguments are portamento time
 -- and release time. A portamento time is time it takes for transition
@@ -145,7 +148,7 @@ genFilteredMonoMsgTemp tm chn cond = filteredGenAmpCpsSig (cpsmidi' tm) (toMidiF
 holdMsg :: MidiChn -> D -> SE (Sig, Sig)
 holdMsg = genHoldMsg cpsmidi
 
--- | Produces midi amplitude and frequency as a signal and holds the 
+-- | Produces midi amplitude and frequency as a signal and holds the
 -- last value till the next one is present.
 -- It can be used in mono-synths. Arguments are portamento time
 -- and release time. A portamento time is time it takes for transition
@@ -157,8 +160,8 @@ holdMsgTemp tm = genHoldMsg (cpsmidi' tm)
 
 genHoldMsg :: (Msg -> D) -> MidiChn -> D -> SE (Sig, Sig)
 genHoldMsg key2cps channel portTime = do
-	(amp, cps) <- genHoldAmpCpsSig key2cps (toMidiFun_ channel)
-	return (port amp portTime,  port cps portTime)
+  (amp, cps) <- genHoldAmpCpsSig key2cps (toMidiFun_ channel)
+  return (port amp portTime,  port cps portTime)
 
 
 
@@ -167,8 +170,8 @@ genAmpCpsSig key2cps midiFun = do
     ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
     status <- midiFun (instr ref)
     (amp, cps) <- readRef ref
-    return $ makeMonoArg (amp, cps) status	
-	where
+    return $ makeMonoArg (amp, cps) status
+  where
         makeMonoArg (amp, cps) status = MonoArg kamp kcps resStatus retrig
             where
                 kamp = downsamp amp
@@ -180,14 +183,14 @@ genAmpCpsSig key2cps midiFun = do
         instr :: Ref (Sig, Sig) -> Msg -> SE Sig
         instr hNote msg = do
             writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
-            return 1		
+            return 1
 
 filteredGenAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> (D -> BoolD) -> SE MonoArg
-filteredGenAmpCpsSig key2cps midiFun cond  = do
+filteredGenAmpCpsSig key2cps midiFun condition  = do
     ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
     status <- midiFun (instr ref)
     (amp, cps) <- readRef ref
-    return $ makeMonoArg (amp, cps) status  
+    return $ makeMonoArg (amp, cps) status
     where
         makeMonoArg (amp, cps) status = MonoArg kamp kcps resStatus retrig
             where
@@ -200,26 +203,26 @@ filteredGenAmpCpsSig key2cps midiFun cond  = do
         instr :: Ref (Sig, Sig) -> Msg -> SE Sig
         instr hNote msg = do
             resRef <- newRef 0
-            whenElseD (cond $ key2cps msg)
+            whenElseD (condition $ key2cps msg)
                 (do
                     writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
                     writeRef resRef 1)
                 (do
                     writeRef resRef 0)
-            readRef resRef            
+            readRef resRef
 
 genHoldAmpCpsSig :: (Msg -> D) -> ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
 genHoldAmpCpsSig key2cps midiFun = do
-	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
-	midiFun (instr ref)	
-	(amp, cps) <- readRef ref
-	return (downsamp amp, downsamp cps)
-	where 
-		instr :: Ref (Sig, Sig) -> Msg -> SE ()
-		instr hNote msg = do
-			writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)			
+  ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+  midiFun (instr ref)
+  (amp, cps) <- readRef ref
+  return (downsamp amp, downsamp cps)
+  where
+    instr :: Ref (Sig, Sig) -> Msg -> SE ()
+    instr hNote msg = do
+      writeRef hNote (sig $ ampmidi msg 1, sig $ key2cps msg)
 
--- | Creates a named instrument that can be triggered with Csound API. 
+-- | Creates a named instrument that can be triggered with Csound API.
 -- This way we can create a csd file that can be used inside another program/language.
 --
 -- It simulates the input for monophonic midi-like instrument. Notes are encoded with messages:
@@ -233,22 +236,22 @@ trigNamedMono name = namedMonoMsg name
 
 namedAmpCpsSig:: String -> SE (Sig, Sig, Sig)
 namedAmpCpsSig name = do
-	ref <- newGlobalRef ((0, 0) :: (Sig, Sig))	
-	statusRef <- newGlobalRef (0 :: Sig)
-	status <- trigByNameMidi name (instr statusRef ref)
-	writeRef statusRef status 
-	let resStatus = ifB (downsamp status ==* 0) 0 1
-	(amp, cps) <- readRef ref
-	return (downsamp amp, downsamp cps, resStatus)
-	where 
-		instr :: Ref Sig -> Ref (Sig, Sig) -> (D, D, Unit) -> SE Sig
-		instr statusRef hNote (pitchKey, volKey, _) = do
-			curId <- readRef statusRef
-			myIdRef <- newRef (ir curId)
-			myId <- readRef myIdRef			
-			when1 (curId ==* (sig $ myId + 1)) $ do
-				writeRef hNote (sig volKey, sig pitchKey)
-			return 1
+  ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+  statusRef <- newGlobalRef (0 :: Sig)
+  status <- trigByNameMidi name (instr statusRef ref)
+  writeRef statusRef status
+  let resStatus = ifB (downsamp status ==* 0) 0 1
+  (amp, cps) <- readRef ref
+  return (downsamp amp, downsamp cps, resStatus)
+  where
+    instr :: Ref Sig -> Ref (Sig, Sig) -> (D, D, Unit) -> SE Sig
+    instr statusRef hNote (pitchKey, volKey, _) = do
+      curId <- readRef statusRef
+      myIdRef <- newRef (ir curId)
+      myId <- readRef myIdRef
+      when1 (curId ==* (sig $ myId + 1)) $ do
+        writeRef hNote (sig volKey, sig pitchKey)
+      return 1
 
 --------------------------------------------------------------
 
@@ -262,56 +265,56 @@ midiKeyOff :: MidiChn -> D -> SE Tick
 midiKeyOff = midiKeyOffBy . toMidiFun
 
 midiKeyOnBy :: MidiFun Sig -> D -> SE (Evt D)
-midiKeyOnBy midiFun key = do	
-	chRef  <- newGlobalRef (0 :: Sig)
-	evtRef <- newGlobalRef (0 :: Sig)
-	writeRef chRef =<< midiFun instr
+midiKeyOnBy midiFun key = do
+  chRef  <- newGlobalRef (0 :: Sig)
+  evtRef <- newGlobalRef (0 :: Sig)
+  writeRef chRef =<< midiFun instr
 
-	alwaysOn $ do
-		a <- readRef chRef
-		writeRef evtRef $ diff a
+  alwaysOn $ do
+    a <- readRef chRef
+    writeRef evtRef $ diff a
 
-	evtSig <- readRef evtRef
-	return $ filterE ( >* 0) $ snaps evtSig
-	where
-		instr msg = do
-			print' [notnum msg] 
-			return $ ifB (boolSig $ notnum msg ==* key) (sig $ ampmidi msg 1) 0
+  evtSig <- readRef evtRef
+  return $ filterE ( >* 0) $ snaps evtSig
+  where
+    instr msg = do
+      print' [notnum msg]
+      return $ ifB (boolSig $ notnum msg ==* key) (sig $ ampmidi msg 1) 0
 
 
 midiKeyOffBy :: MidiFun Sig -> D -> SE Tick
-midiKeyOffBy midiFun key = do	
-	chRef  <- newGlobalRef (0 :: Sig)
-	evtRef <- newGlobalRef (0 :: Sig)
-	writeRef chRef =<< midiFun instr
+midiKeyOffBy midiFun key = do
+  chRef  <- newGlobalRef (0 :: Sig)
+  evtRef <- newGlobalRef (0 :: Sig)
+  writeRef chRef =<< midiFun instr
 
-	alwaysOn $ do
-		a <- readRef chRef
-		writeRef evtRef $ diff a
+  alwaysOn $ do
+    a <- readRef chRef
+    writeRef evtRef $ diff a
 
-	evtSig <- readRef evtRef
-	return $ fmap (const unit) $ filterE ( `lessThan` 0) $ snaps evtSig
-	where
-		instr msg = do
-			print' [notnum msg] 
-			return $ ifB (boolSig $ notnum msg ==* key) (sig $ ampmidi msg 1) 0
+  evtSig <- readRef evtRef
+  return $ fmap (const unit) $ filterE ( `lessThan` 0) $ snaps evtSig
+  where
+    instr msg = do
+      print' [notnum msg]
+      return $ ifB (boolSig $ notnum msg ==* key) (sig $ ampmidi msg 1) 0
 
 --------------------------------------------------------------
 
 -- | Initialization of the midi control-messages.
 initc7 :: D -> D -> D -> SE ()
-initc7 = initMidiCtrl 
+initc7 = initMidiCtrl
 
 -- | Initializes midi control and get the value in the specified range.
 midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
 midiCtrl7 chno ctrlno ival imin imax = do
     initc7 chno ctrlno ival
     return $ ctrl7 chno ctrlno imin imax
-    
+
 -- | Initializes midi control and get the value in the range (-1) to 1.
 midiCtrl :: D -> D -> D -> SE Sig
 midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
-    
+
 -- | Unipolar midiCtrl. Initializes midi control and get the value in the range 0 to 1.
 umidiCtrl :: D -> D -> D -> SE Sig
 umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival 0 1

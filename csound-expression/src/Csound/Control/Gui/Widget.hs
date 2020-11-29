@@ -51,16 +51,16 @@ module Csound.Control.Gui.Widget (
     hradio', vradio', hradioSig', vradioSig'
 ) where
 
+import Prelude hiding (span, reads)
+
 import Control.Monad
 
-import Data.Monoid
 import Data.List(transpose)
 import Data.Boolean
 
-import Csound.Typed.Gui
+import Csound.Typed.Gui hiding (widget, height, width)
 import Csound.Typed.Types
 import Csound.Control.SE
-import Csound.SigSpace(uon)
 import Csound.Control.Evt(listAt, Tick, snaps2, dropE, devt, loadbang, evtToSig)
 import Csound.Typed.Opcode(changed)
 
@@ -185,12 +185,13 @@ vnumbers :: [Double] -> Source Sig
 vnumbers = genNumbers ver
 
 genNumbers :: ([Gui] -> Gui) -> [Double] -> Source Sig
-genNumbers gx as@(d:ds) = source $ do
+genNumbers gx as@(d:_) = source $ do
     ref <- newGlobalCtrlRef (sig $ double d)
     (gs, evts) <- fmap unzip $ mapM (button . show) as
     zipWithM_ (\x e -> runEvt e $ \_ -> writeRef ref (sig $ double x)) as evts
     res <- readRef ref
     return (gx gs, res)
+genNumbers _ [] = error "Not implemented for empty list"
 
 
 -------------------------------------------------------------------
@@ -252,8 +253,8 @@ genPad mk initVal width height names as = source $ do
         reGroupCol = reGroup ver
         reGroupRow = reGroup hor
 
-        reGroup f as = (f xs, ys)
-            where (xs, ys) = unzip as
+        reGroup f bs = (f xs, ys)
+            where (xs, ys) = unzip bs
 
 
 -- | Horizontal radio group.

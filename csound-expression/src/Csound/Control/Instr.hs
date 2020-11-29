@@ -108,28 +108,26 @@ module Csound.Control.Instr(
     newOutInstr, noteOn, noteOff
 ) where
 
-import Control.Applicative
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (str, Sco(..), when1, alwaysOn)
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (initc7, turnoff2)
+import Csound.Typed.Opcode hiding (initc7, metro)
 import Csound.Control.Overload
-import Temporal.Media(Event(..), mapEvents)
+import Temporal.Media(Event(..), mapEvents, temp, str, dur)
 
-import Csound.Control.Evt(metroE, repeatE, splitToggle, loadbang)
-import Temporal.Media hiding (delay, line, chord, stretch)
+import Csound.Control.Evt(metro, repeatE, splitToggle, loadbang)
 
 -- | Mixes the scores and plays them in the loop.
 mixLoop :: (Sigs a) => Sco (Mix a) -> a
-mixLoop a = sched instr $ withDur dt $ repeatE unit $ metroE $ 1 / dt
+mixLoop a = sched instr $ withDur dt $ repeatE unit $ metro $ 1 / dt
     where
         dt = dur a
         instr _ = return $ mix a
 
 -- | Mixes the procedures and plays them in the loop.
 mixLoop_ :: Sco (Mix Unit) -> SE ()
-mixLoop_ a = sched_ instr $ withDur dt $ repeatE unit $ metroE $ 1 / dt
+mixLoop_ a = sched_ instr $ withDur dt $ repeatE unit $ metro $ 1 / dt
     where
         dt = dur a
         instr _ = mix_ a
@@ -147,10 +145,10 @@ schedUntil instr onEvt offEvt = sched instr' $ withDur infiniteDur onEvt
 
 -- | Invokes an instrument with toggle event stream (1 stands for on and 0 stands for off).
 schedToggle :: (Sigs b) => SE b -> Evt D -> b
-schedToggle res evt = schedUntil instr on off
+schedToggle res evt = schedUntil instr ons offs
     where
         instr = const res
-        (on, off) = splitToggle evt
+        (ons, offs) = splitToggle evt
 
 -- | Invokes an instrument with first event stream and
 -- holds the note until the second event stream is active.

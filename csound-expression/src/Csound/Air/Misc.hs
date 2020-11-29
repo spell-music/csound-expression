@@ -44,11 +44,8 @@ module Csound.Air.Misc(
     ambiEnv
 ) where
 
-import Control.Monad
 import Data.Boolean
 import Data.Default
-
-import Csound.Dynamic hiding (int, when1)
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (metro)
@@ -60,7 +57,6 @@ import Csound.Air.Wave
 import Csound.Air.Patch
 import Csound.Air.Envelope
 import Csound.Air.Filter
-import Csound.SigSpace
 import Csound.IO(writeSndBy)
 import Csound.Options(setRates)
 import Csound.Typed.Plugins(delay1k)
@@ -101,7 +97,7 @@ vibrate vibDepth vibRate f cps = f (cps * (1 + kvib))
 
 -- | Adds a random vibrato to the sound unit. Sound units is a function that takes in a frequency.
 randomPitch :: Sig -> Sig -> (Sig -> a) -> (Sig -> SE a)
-randomPitch rndAmp rndCps f cps = fmap go $ randh (cps * rndAmp) rndCps
+randomPitch randAmp randCps f cps = fmap go $ randh (cps * randAmp) randCps
     where go krand = f (cps + krand)
 
 -- | Chorus takes a number of copies, chorus width and wave shape.
@@ -128,7 +124,7 @@ resons = resonsBy bp
 -- The signal comes last (this order is not standard in the Csound but it's more
 -- convinient to use with Haskell).
 resonsBy :: (cps -> bw -> Sig -> Sig) -> [(cps, bw)] -> Sig -> Sig
-resonsBy filt ps asig = mean $ fmap (( $ asig) . uncurry filt) ps
+resonsBy flt ps asig = mean $ fmap (( $ asig) . uncurry flt) ps
 
 -- | Mixes dry and wet signals.
 --
@@ -281,17 +277,19 @@ rndVal total amount x = do
     k <- birnd amount
     return $ x  + k * total
 
+rndDur, rndCps, rndTune :: D -> D -> SE D
+
 rndDur amt x = rndVal x amt x
 rndCps amt x = rndVal x (amt / 10) x
 rndTune amt x = rndVal 0.7 amt x
 
 rndSpec ::TrSpec -> SE TrSpec
 rndSpec spec = do
-    dur  <- rndDur'
+    dur'  <- rndDur'
     tune <- rndTune'
     cps  <- rndCps'
     return $ spec
-        { trDur  = dur
+        { trDur  = dur'
         , trTune = tune
         , trCps  = cps }
     where
@@ -300,7 +298,10 @@ rndSpec spec = do
         rndCps'  = (maybe return rndCps $ (trRnd spec)) $ trCps spec
 
 
+addDur' :: D -> Sig -> SE Sig
 addDur' dt x = xtratim dt >> return x
+
+addDur :: Sig -> SE Sig
 addDur = addDur' 0.1
 
 getAccent :: Int -> [D]
@@ -350,17 +351,18 @@ genTicks drum f x = mul 3 $ mlp 4000 0.1 $
     sched (\amp -> mul (sig amp) $ drum (TrSpec (amp + 1) 0 (1200 * (amp + 0.5)) (Just 0.05))) $
     withDur 0.5 $ f $ metro (x / 60)
 
+rimShot' :: TrSpec -> SE Sig
 rimShot' spec = pureRimShot' =<< rndSpec spec
 
 -- cps = 1700
 pureRimShot' :: TrSpec -> SE Sig
 pureRimShot' spec = rndAmp =<< addDur =<< (mul 0.8 $ aring + anoise)
     where
-        dur     = trDur  spec
+        dur'     = trDur  spec
         tune    = trTune spec
         cps     = trCps  spec
 
-        fullDur = 0.027 * dur
+        fullDur = 0.027 * dur'
 
         -- ring
         aenv1 = expsega [1,fullDur,0.001]
@@ -377,12 +379,12 @@ pureRimShot' spec = rndAmp =<< addDur =<< (mul 0.8 $ aring + anoise)
 claves' :: TrSpec -> SE Sig
 claves' spec = rndAmp =<< addDur =<< asig
     where
-        dur     = trDur  spec
+        dur'     = trDur  spec
         tune    = trTune spec
         cps     = trCps  spec
 
         ifrq = cps * octave tune
-        dt   = 0.045 * dur
+        dt   = 0.045 * dur'
         aenv = expsega  [1, dt, 0.001]
         afmod = expsega [3,0.00005,1]
         asig = mul (- 0.4 * (aenv-0.001)) $ rndOsc (sig ifrq * afmod)
@@ -393,12 +395,12 @@ highConga' = genConga 0.22
 genConga :: D -> TrSpec -> SE Sig
 genConga dt spec = rndAmp =<< addDur =<< asig
     where
-        dur     = trDur  spec
+        dur'     = trDur  spec
         tune    = trTune spec
         cps     = trCps  spec
 
         ifrq = cps * octave tune
-        fullDur = dt * dur
+        fullDur = dt * dur'
         aenv = transeg [0.7,1/ifrq,1,1,fullDur,-6,0.001]
         afmod = expsega [3,0.25/ifrq,1]
         asig = mul (-0.25 * aenv) $ rndOsc (sig ifrq * afmod)
@@ -406,42 +408,46 @@ genConga dt spec = rndAmp =<< addDur =<< asig
 maraca' ::  TrSpec -> SE Sig
 maraca' spec = rndAmp =<< addDur =<< anoise
     where
-        dur     = trDur  spec
+        dur'    = trDur  spec
         tune    = trTune spec
-        cps     = trCps  spec
 
-        fullDur = 0.07* dur
         otune   = sig $ octave tune
         iHPF    = limit (6000 * otune) 20 (sig getSampleRate / 2)
         iLPF    = limit (12000 * otune) 20 (sig getSampleRate / 3)
-        aenv    = expsega [0.4,0.014* dur,1,0.01 * dur, 0.05, 0.05 * dur, 0.001]
+        aenv    = expsega [0.4,0.014* dur',1,0.01 * dur', 0.05, 0.05 * dur', 0.001]
         anoise  = mul aenv $ fmap (blp iLPF . bhp iHPF) $ noise 0.75 0
 
 -------------------------------------------
 -- drones (copied from csound-catalog)
 
+testDrone, testDrone2, testDrone3, testDrone4 :: D -> SE Sig2
+
 testDrone  cps = atNote (deepPad razorPad) (0.8, cps)
+  where
+    razorPad = razorPad' def
+    razorPad' (RazorPad speed) = withLargeHall' 0.35 $ polySynt $ at fromMono . mul 0.6 . onCps (uncurry $ impRazorPad speed)
+
 testDrone2 cps = atNote (deepPad nightPad) (0.8, cps)
+  where
+    nightPad   = withLargeHall $ polySynt $ mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . impNightPad 0.5)
+
 testDrone3 cps = atNote (deepPad caveOvertonePad) (0.8, cps)
+  where
+    caveOvertonePad =  FxChain (fx1 0.2 (magicCave2 . mul 0.8)) $ polySynt overtoneInstr
+
 testDrone4 cps = atNote (deepPad pwEnsemble) (0.8, cps)
+  where
+    pwEnsemble = withSmallHall $ polySynt $ at fromMono . mul 0.55 . onCps impPwEnsemble
 
-pwEnsemble = withSmallHall $ polySynt $ at fromMono . mul 0.55 . onCps impPwEnsemble
-nightPad   = withLargeHall $ polySynt $ mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . impNightPad 0.5)
 
-data RazorPad = RazorPad { razorPadSpeed :: Sig }
+data RazorPad = RazorPad Sig
 
 instance Default RazorPad where
     def = RazorPad 0.5
 
-razorPad = razorPad' def
-razorPad' (RazorPad speed) = withLargeHall' 0.35 $ polySynt $ at fromMono . mul 0.6 . onCps (uncurry $ impRazorPad speed)
-
-overtonePad = withLargeHall' 0.35 $ polySynt overtoneInstr
-
 overtoneInstr :: CsdNote D -> SE Sig2
 overtoneInstr = mul 0.65 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (tibetan 11 0.012 cps) + mul (fades 0.25 1) (tibetan 13 0.015 (cps * 0.5)))
 
-caveOvertonePad =  FxChain (fx1 0.2 (magicCave2 . mul 0.8)) $ polySynt overtoneInstr
 
 -- implem
 
@@ -466,18 +472,20 @@ tibetan n off cps = chorusPitch n (2 * off * fromIntegral n) (oscBy wave) (sig c
     where wave = ifB (cps `lessThan` 230) (waveBy 5) (ifB (cps `lessThan` 350) (waveBy 3) (waveBy 1))
           waveBy x = sines $ [0.3, 0, 0, 0] ++ replicate x 0.1
 
-impRazorPad speed amp cps = f cps + 0.75 * f (cps * 0.5)
-    where f cps = mul (leg 0.5 0 1 1) $ genRazor (filt 1 mlp) speed amp cps
+impRazorPad :: Sig -> Sig -> Sig -> SE Sig
+impRazorPad speed' amp' cps' = g cps' + 0.75 * g (cps' * 0.5)
+    where
+      g cps = mul (leg 0.5 0 1 1) $ genRazor (filt 1 mlp) speed' amp' cps
 
-genRazor filter speed amp cps = mul amp $ do
-    a1 <- ampSpline 0.01
-    a2 <- ampSpline 0.02
+      genRazor f speed amp cps = mul amp $ do
+          a1 <- ampSpline 0.01
+          a2 <- ampSpline 0.02
 
-    return $ filter (1000 + 2 * cps + 500 * amp) 0.1 $ mean [
-          fosc 1 3 (a1 * uosc (speed)) cps
-        , fosc 3 1 (a2 * uosc (speed + 0.2)) cps
-        , fosc 1 7 (a1 * uosc (speed - 0.15)) cps ]
-    where ampSpline c = rspline ( amp) (3.5 + amp) ((speed / 4) * (c - 0.1)) ((speed / 4) * (c  + 0.1))
+          return $ f (1000 + 2 * cps + 500 * amp) 0.1 $ mean [
+                fosc 1 3 (a1 * uosc (speed)) cps
+              , fosc 3 1 (a2 * uosc (speed + 0.2)) cps
+              , fosc 1 7 (a1 * uosc (speed - 0.15)) cps ]
+          where ampSpline c = rspline ( amp) (3.5 + amp) ((speed / 4) * (c - 0.1)) ((speed / 4) * (c  + 0.1))
 
 
 -- |
@@ -501,14 +509,6 @@ fx1 dw f = [return $ FxSpec dw (return . f)]
 -- | The magic cave reverb (stereo).
 magicCave2 :: Sig2 -> Sig2
 magicCave2 = rever2 0.99
-
--- | Stereo reverb for small hall.
-smallHall2 :: Sig2 -> Sig2
-smallHall2 = rever2 0.8
-
--- | Stereo reverb for large hall.
-largeHall2 :: Sig2 -> Sig2
-largeHall2 = rever2 0.9
 
 -- | Mono reverb (based on reverbsc)
 --
@@ -583,7 +583,7 @@ attackTrig thresh ain = fmap sigToEvt $ attackTrigSig thresh ain
 -- | Detects attacks in the signal. Outputs trigger-signal
 -- where 1 is when attack happens and 0 otherwise.
 attackTrigSig :: Sig -> Sig -> SE Sig
-attackTrigSig thresh x = do
+attackTrigSig thresh a = do
   kTime <- newCtrlRef (iWait + 1)
   kTrig <- newCtrlRef 0
 
@@ -599,7 +599,7 @@ attackTrigSig thresh x = do
 
   readRef kTrig
   where
-    da = diffSig 0.01 $ rms x
+    da = diffSig 0.01 $ rms a
     iWait :: Sig
     iWait = 100
 

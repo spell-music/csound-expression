@@ -7,37 +7,39 @@ module Csound.Air.ModArg(
     delModArg1, delModArg2, delModArg3, delModArg4,
 
     -- * Oscillators
-    oscArg1, oscArg2, oscArg3, oscArg4,    
+    oscArg1, oscArg2, oscArg3, oscArg4,
     triArg1, triArg2, triArg3, triArg4,
     sqrArg1, sqrArg2, sqrArg3, sqrArg4,
     sawArg1, sawArg2, sawArg3, sawArg4,
 
     -- ** Random phase
-    rndOscArg1, rndOscArg2, rndOscArg3, rndOscArg4,    
+    rndOscArg1, rndOscArg2, rndOscArg3, rndOscArg4,
     rndTriArg1, rndTriArg2, rndTriArg3, rndTriArg4,
     rndSqrArg1, rndSqrArg2, rndSqrArg3, rndSqrArg4,
     rndSawArg1, rndSawArg2, rndSawArg3, rndSawArg4,
 
     -- ** Delayed
-    delOscArg1, delOscArg2, delOscArg3, delOscArg4,    
+    delOscArg1, delOscArg2, delOscArg3, delOscArg4,
     delTriArg1, delTriArg2, delTriArg3, delTriArg4,
     delSqrArg1, delSqrArg2, delSqrArg3, delSqrArg4,
     delSawArg1, delSawArg2, delSawArg3, delSawArg4,
 
     -- ** Delayed with Random phase
-    delRndOscArg1, delRndOscArg2, delRndOscArg3, delRndOscArg4,    
+    delRndOscArg1, delRndOscArg2, delRndOscArg3, delRndOscArg4,
     delRndTriArg1, delRndTriArg2, delRndTriArg3, delRndTriArg4,
     delRndSqrArg1, delRndSqrArg2, delRndSqrArg3, delRndSqrArg4,
     delRndSawArg1, delRndSawArg2, delRndSawArg3, delRndSawArg4,
 
     -- * Noise
     noiseArg1, noiseArg2, noiseArg3, noiseArg4,
+    pinkArg1, pinkArg2, pinkArg3, pinkArg4,
     jitArg1, jitArg2, jitArg3, jitArg4,
     gaussArg1, gaussArg2, gaussArg3, gaussArg4,
     gaussiArg1, gaussiArg2, gaussiArg3, gaussiArg4,
 
     -- ** Delayed
     delNoiseArg1, delNoiseArg2, delNoiseArg3, delNoiseArg4,
+    delPinkArg1, delPinkArg2, delPinkArg3, delPinkArg4,
     delJitArg1, delJitArg2, delJitArg3, delJitArg4,
     delGaussArg1, delGaussArg2, delGaussArg3, delGaussArg4,
     delGaussiArg1, delGaussiArg2, delGaussiArg3, delGaussiArg4,
@@ -56,7 +58,6 @@ import Csound.Typed
 import Csound.Typed.Opcode(gauss, gaussi, jitter, linseg, linsegr, expsegr)
 import Csound.Air.Wave
 import Csound.Air.Envelope
-import Csound.SigSpace
 
 -- trumpet:
 -- dac $ mul 1.3 $ mixAt 0.15 largeHall2 $ midi $ onMsg (\cps -> (mul (linsegr [0,0.01, 1, 3, 0.2] 0.2 0) . at (jitterArg1 (0.15 + 0.05 * uosc 0.2) 3 20  alp1 (mul (fades 0.2 0.2) $ 2700 + 0.6 * cps) 0.2) . gaussArg1 0.03 (\x -> return (saw x) + mul (0.12 * expseg [1, 2, 0.1]) (bat (alp1 cps 0.4) white))) cps)
@@ -421,30 +422,30 @@ delPinkArg4 delTime riseTime depth f = delModArg4 delTime riseTime depth pink f
 
 -- jitter noise
 
-jitArg1 :: (ModArg1 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut1 (SE Sig) b 
+jitArg1 :: (ModArg1 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut1 (SE Sig) b
 jitArg1 depth cpsMin cpsMax f = modArg1 depth (jitter 1 cpsMin cpsMax) f
 
-jitArg2 :: (ModArg2 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut2 (SE Sig) b 
+jitArg2 :: (ModArg2 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut2 (SE Sig) b
 jitArg2 depth cpsMin cpsMax f = modArg2 depth (jitter 1 cpsMin cpsMax) f
 
-jitArg3 :: (ModArg3 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut3 (SE Sig) b 
+jitArg3 :: (ModArg3 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut3 (SE Sig) b
 jitArg3 depth cpsMin cpsMax f = modArg3 depth (jitter 1 cpsMin cpsMax) f
 
-jitArg4 :: (ModArg4 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut4 (SE Sig) b 
+jitArg4 :: (ModArg4 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut4 (SE Sig) b
 jitArg4 depth cpsMin cpsMax f = modArg4 depth (jitter 1 cpsMin cpsMax) f
 
 -- jitter noise
 
-delJitArg1 :: (ModArg1 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut1 (SE Sig) b 
+delJitArg1 :: (ModArg1 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut1 (SE Sig) b
 delJitArg1 delTime riseTime depth cpsMin cpsMax f = delModArg1 delTime riseTime depth (jitter 1 cpsMin cpsMax) f
 
-delJitArg2 :: (ModArg2 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut2 (SE Sig) b 
+delJitArg2 :: (ModArg2 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut2 (SE Sig) b
 delJitArg2 delTime riseTime depth cpsMin cpsMax f = delModArg2 delTime riseTime depth (jitter 1 cpsMin cpsMax) f
 
-delJitArg3 :: (ModArg3 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut3 (SE Sig) b 
+delJitArg3 :: (ModArg3 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut3 (SE Sig) b
 delJitArg3 delTime riseTime depth cpsMin cpsMax f = delModArg3 delTime riseTime depth (jitter 1 cpsMin cpsMax) f
 
-delJitArg4 :: (ModArg4 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut4 (SE Sig) b 
+delJitArg4 :: (ModArg4 (SE Sig) b) => D -> D -> Sig -> Sig -> Sig -> b -> ModArgOut4 (SE Sig) b
 delJitArg4 delTime riseTime depth cpsMin cpsMax f = delModArg4 delTime riseTime depth (jitter 1 cpsMin cpsMax) f
 
 -- gauss noise
@@ -759,7 +760,7 @@ instance ModArg2 (SE Sig) (a -> Sig -> b -> Sig2) where
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> Sig2) where
     type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> Sig2) = a -> Sig -> b -> c -> SE Sig2
-    modArg2 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3 x4) ma    
+    modArg2 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3 x4) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out
@@ -789,7 +790,7 @@ instance ModArg2 (SE Sig) (a -> Sig -> b -> SE Sig2) where
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> SE Sig2) where
     type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> SE Sig2) = a -> Sig -> b -> c -> SE Sig2
-    modArg2 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3 x4)    
+    modArg2 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3 x4)
 
 --------------------------------------------
 --------------------------------------------
@@ -830,7 +831,7 @@ instance ModArg3 Sig (a -> b -> Sig -> SE Sig) where
 
 instance ModArg3 Sig (a -> b -> Sig -> c -> SE Sig) where
     type ModArgOut3 Sig (a -> b -> Sig -> c -> SE Sig) = a -> b -> Sig -> c -> SE Sig
-    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4    
+    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
 
 --------------------------------------------
 -- pure in, dirty stereo out
@@ -841,7 +842,7 @@ instance ModArg3 Sig (a -> b -> Sig -> SE Sig2) where
 
 instance ModArg3 Sig (a -> b -> Sig -> c -> SE Sig2) where
     type ModArgOut3 Sig (a -> b -> Sig -> c -> SE Sig2) = a -> b -> Sig -> c -> SE Sig2
-    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4    
+    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
 
 --------------------------------------------
 -- dirty in, pure mono out
@@ -863,7 +864,7 @@ instance ModArg3 (SE Sig) (a -> b -> Sig -> Sig2) where
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> Sig2) where
     type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> Sig2) = a -> b -> Sig -> c -> SE Sig2
-    modArg3 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a)) x4) ma    
+    modArg3 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a)) x4) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out
@@ -893,7 +894,7 @@ instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> SE Sig2) where
 
 class ModArg4 a b where
     type ModArgOut4 a b :: *
-    modArg4 :: Sig -> a -> b -> ModArgOut4 a b  
+    modArg4 :: Sig -> a -> b -> ModArgOut4 a b
 
 --------------------------------------------
 -- pure in, pure mono out
@@ -907,7 +908,7 @@ instance ModArg4 Sig (a -> b -> c -> Sig -> Sig) where
 
 instance ModArg4 Sig (a -> b -> c -> Sig -> Sig2) where
     type ModArgOut4 Sig (a -> b -> c -> Sig -> Sig2) = a -> b -> c -> Sig -> Sig2
-    modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))    
+    modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
 
 --------------------------------------------
 -- pure in, dirty mono out
@@ -935,7 +936,7 @@ instance ModArg4 (SE Sig) (a -> b -> c -> Sig -> Sig) where
 
 instance ModArg4 (SE Sig) (a -> b -> c -> Sig -> Sig2) where
     type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> Sig2) = a -> b -> c -> Sig -> SE Sig2
-    modArg4 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 x3 (x4 * (1 + depth * a))) ma    
+    modArg4 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 x3 (x4 * (1 + depth * a))) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out

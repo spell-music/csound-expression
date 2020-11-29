@@ -8,14 +8,14 @@
 --
 -- An example:
 --
--- > harms = [ 
--- >     1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 
--- >     0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133, 
+-- > harms = [
+-- >     1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302,
+-- >     0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133,
 -- >     0.9400014281, 0.3000001907, 0.120003365, 0.1799997687, 0.5200006366]
--- > 
+-- >
 -- > spec = defPadsynthSpec 42.2 harms
--- > 
--- > main = dac $ mul 0.4 $ mixAt 0.35 largeHall2 $ mixAt 0.45 (echo 0.25 0.75) $ 
+-- >
+-- > main = dac $ mul 0.4 $ mixAt 0.35 largeHall2 $ mixAt 0.45 (echo 0.25 0.75) $
 -- >             midi $ onMsg $ mul (fades 0.5 0.7) . padsynthOsc2 spec
 
 module Csound.Air.Padsynth (
@@ -30,11 +30,11 @@ module Csound.Air.Padsynth (
     padsynthOscMultiVolCps, padsynthOscMultiVolCps2,
 
     -- * Granular oscillators
-    morphsynthOscMultiCps, quadMorphsynthOscMultiCps   
+    morphsynthOscMultiCps, quadMorphsynthOscMultiCps
 ) where
 
 import Data.List
-import Control.Arrow
+import Control.Arrow (first, second)
 
 import Csound.Typed
 import Csound.Tab
@@ -44,11 +44,11 @@ import Csound.Types(compareWhenD)
 
 import Csound.Air.Granular.Morpheus
 
--- | Padsynth oscillator. 
+-- | Padsynth oscillator.
 --
 -- padsynthOsc spec frequency
 --
--- It makes it easy to create padsynth sound waves (see Tab.padsynth). 
+-- It makes it easy to create padsynth sound waves (see Tab.padsynth).
 -- It creates a padsynth table and reads it with poscil at the right speed.
 padsynthOsc :: PadsynthSpec -> Sig -> SE Sig
 padsynthOsc spec freq = padsynthOscByTab (double $ padsynthFundamental spec) (padsynth spec) freq
@@ -57,7 +57,7 @@ padsynthOscByTab :: D -> Tab -> Sig -> SE Sig
 padsynthOscByTab baseFreq tab freq = ares
     where
         len = ftlen tab
-        wave = rndPhs (\phs freq -> poscil 1 freq tab `withD` phs)
+        wave = rndPhs (\phs frq -> poscil 1 frq tab `withD` phs)
         ares = wave (freq * (sig $ (getSampleRate / len) / baseFreq))
 
 toStereoOsc :: (a -> SE Sig) -> (a -> SE Sig2)
@@ -81,16 +81,13 @@ layeredPadsynthSpec val specs = do
     baseFreq <- readRef refBaseFreq
 
     return (baseFreq, tab)
-    where      
+    where
         toCase refTab refBaseFreq spec = do
             writeRef refTab (padsynth spec)
             writeRef refBaseFreq (double $ padsynthFundamental spec)
 
         lastTab      = padsynth $ snd $ last specs
         lastBaseFreq = double $ padsynthFundamental $ snd $ last specs
-   
-toThreshholdCond :: D -> (Double, PadsynthSpec) -> (BoolD, PadsynthSpec)
-toThreshholdCond val (thresh, spec) = (val `lessThanEquals` double thresh, spec)
 
 -- | It uses several padsynth tables. Each table is responsible for specific interval of frequencies.
 -- The list of pairs specifies the threshhold value and padsynth specification.
@@ -131,7 +128,7 @@ padsynthOscMultiVol2 specs (amp, freq) = do
 --
 -- > padsynthOscMultiVolCps thresholdSpecPairs (amplitude, frequency) = ...
 padsynthOscMultiVolCps :: [((Double, Double), PadsynthSpec)] -> (D, D) -> SE Sig
-padsynthOscMultiVolCps specs (amp, freq) = undefined
+padsynthOscMultiVolCps _ = undefined
 
 -- | TODO (undefined function)
 --
@@ -162,7 +159,10 @@ bwOddOscBy harmonics bandwidth = padsynthOsc ((defPadsynthSpec bandwidth harmoni
 bwOddOscBy2 :: [Double] -> Double -> Sig -> SE Sig2
 bwOddOscBy2 harmonics bandwidth = toStereoOsc (bwOddOscBy harmonics bandwidth)
 
+limit :: Int
 limit = 15
+
+triCoeff, sqrCoeff, sawCoeff :: [Double]
 
 triCoeff = intersperse 0 $ zipWith (*) (iterate (* (-1)) (1)) $ fmap (\x -> 1 / (x * x)) $ [1, 3 ..]
 sqrCoeff = intersperse 0 $ zipWith (*) (iterate (* (-1)) (1)) $ fmap (\x -> 1 / (x))     $ [1, 3 ..]
@@ -238,9 +238,10 @@ morphsynthOscMultiCps morphSpec specs freq = do
 -- It uses up to four tables for granular synthesis.
 quadMorphsynthOscMultiCps :: MorphSpec -> [[(Double, PadsynthSpec)]] -> (Sig, Sig) -> D -> SE Sig2
 quadMorphsynthOscMultiCps morphSpec specs (x, y) freq = do
-    freqTabs <- mapM getFreqTab specs    
-    let mainFreq = fst $ head freqTabs 
+    freqTabs <- mapM getFreqTab specs
+    let mainFreq = fst $ head freqTabs
     morpheusOsc2 morphSpec mainFreq (fmap (toTab mainFreq) freqTabs) (x, y) (sig freq)
     where
-        getFreqTab specs = layeredPadsynthSpec freq (fmap (first double) specs)
-        toTab mainFreq (freq, t) = (sig $ freq / mainFreq, t)
+        getFreqTab spec = layeredPadsynthSpec freq (fmap (first double) spec)
+        toTab mainFreq (frq, t) = (sig $ frq / mainFreq, t)
+

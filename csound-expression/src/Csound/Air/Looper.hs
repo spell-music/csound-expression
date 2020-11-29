@@ -1,15 +1,15 @@
 {-# Language FlexibleContexts, ScopedTypeVariables #-}
 -- | A multitap looper.
 module Csound.Air.Looper (
-	LoopSpec(..), LoopControl(..),
-	sigLoop, midiLoop, sfLoop --, patchLoop
+  LoopSpec(..), LoopControl(..),
+  sigLoop, midiLoop, sfLoop --, patchLoop
 ) where
 
 import Control.Monad
 import Data.List
 
 import Data.Default
-import Data.Boolean
+import Data.Boolean hiding (cond)
 import Csound.Typed
 import Csound.Typed.Gui hiding (button)
 import Csound.Control.Evt
@@ -17,14 +17,9 @@ import Csound.Control.Instr
 import Csound.Control.Gui
 import Csound.Control.Sf
 
-import Csound.Typed.Opcode hiding (space, button)
-import Csound.SigSpace
-import Csound.Air.Live
-import Csound.Air.Wave
 import Csound.Air.Fx
 import Csound.Air.Filter
 import Csound.Air.Patch
-import Csound.Air.Misc
 
 
 -- | The type for fine tuning of the looper. Let's review the values:
@@ -49,35 +44,35 @@ import Csound.Air.Misc
 -- * @loopReeatFades@ -- a repeat fade weight is a value that represents
 --    an amount of repetition. A looping tap is implemented as a delay tap with
 --   big feedback. The repeat fades equals to the feedback amount. It have to be not bigger
--- 	 than 1. If the value equals to 1 than the loop is repeated forever. If it's lower
+--   than 1. If the value equals to 1 than the loop is repeated forever. If it's lower
 --   than 1 the loop is gradually going to fade.
 --
 -- * @loopControl@ -- specifies an external controllers for the looper.
 --   See the docs for the type @LoopSpec@.
 data LoopSpec = LoopSpec
-	{ loopMixVal  :: [Sig]
-	, loopPrefx  :: [Fx2]
-	, loopPostfx :: [Fx2]
-	, loopPrefxVal :: [Sig]
-	, loopPostfxVal :: [Sig]
-	, loopInitInstr :: Int
-	, loopFades :: [[Int]]
-	, loopRepeatFades :: [Sig]
-	, loopControl :: LoopControl
-	}
+  { loopMixVal  :: [Sig]
+  , loopPrefx  :: [Fx2]
+  , loopPostfx :: [Fx2]
+  , loopPrefxVal :: [Sig]
+  , loopPostfxVal :: [Sig]
+  , loopInitInstr :: Int
+  , loopFades :: [[Int]]
+  , loopRepeatFades :: [Sig]
+  , loopControl :: LoopControl
+  }
 
 instance Default LoopSpec where
-	def = LoopSpec {
-		  loopPrefx  		= []
-		, loopPostfx 		= []
-		, loopPrefxVal 		= []
-		, loopPostfxVal 	= []
-		, loopMixVal      	= []
-		, loopInitInstr 	= 0
-		, loopFades 		= []
-		, loopRepeatFades   = []
-		, loopControl       = def
-		}
+  def = LoopSpec {
+      loopPrefx     = []
+    , loopPostfx    = []
+    , loopPrefxVal    = []
+    , loopPostfxVal   = []
+    , loopMixVal        = []
+    , loopInitInstr   = 0
+    , loopFades     = []
+    , loopRepeatFades   = []
+    , loopControl       = def
+    }
 
 -- | External controllers. We can control the looper with
 -- UI-widgets but sometimes it's convenient to control the
@@ -103,18 +98,18 @@ instance Default LoopSpec where
 --
 -- > def { loopTap = Just someEvt }
 data LoopControl = LoopControl
-	{ loopTap  :: Maybe (Evt D)
-	, loopFade :: Maybe ([Evt D])
-	, loopDel  :: Maybe Tick
-	, loopThrough :: Maybe (Evt D)
-	}
+  { loopTap  :: Maybe (Evt D)
+  , loopFade :: Maybe ([Evt D])
+  , loopDel  :: Maybe Tick
+  , loopThrough :: Maybe (Evt D)
+  }
 
 instance Default LoopControl where
-	def = LoopControl {
-		  loopTap  = Nothing
-		, loopFade = Nothing
-		, loopDel  = Nothing
-		, loopThrough = Nothing }
+  def = LoopControl {
+      loopTap  = Nothing
+    , loopFade = Nothing
+    , loopDel  = Nothing
+    , loopThrough = Nothing }
 
 type TapControl     = [String] -> Int -> Source Sig
 type FadeControl    = [String -> Source (Evt D)]
@@ -160,94 +155,93 @@ sigLoop = genLoop $ \cond asig -> return $ mul (ifB cond 1 0) asig
 
 getControls :: LoopControl -> (TapControl, FadeControl, DelControl, ThroughControl)
 getControls a =
-	( maybe hradioSig (hradioSig' . evtToSig (-1)) (loopTap a)
-	, fmap (\f x -> f x True) $ maybe (repeat toggle) (\xs -> fmap toggle' xs ++ repeat toggle) (loopFade a)
-	, ( $ "del") $ maybe button button' (loopDel a)
-	, (\f -> f "through" False) $ maybe toggleSig (toggleSig' . evtToSig (-1))  (loopThrough a))
+  ( maybe hradioSig (hradioSig' . evtToSig (-1)) (loopTap a)
+  , fmap (\f x -> f x True) $ maybe (repeat toggle) (\xs -> fmap toggle' xs ++ repeat toggle) (loopFade a)
+  , ( $ "del") $ maybe button button' (loopDel a)
+  , (\f -> f "through" False) $ maybe toggleSig (toggleSig' . evtToSig (-1))  (loopThrough a))
 
 genLoop :: forall a. (BoolSig -> a -> SE Sig2) -> LoopSpec -> D -> [D] -> [a] -> Source Sig2
 genLoop playInstr spec dtBpm times' instrs = do
-	(preFxKnobGui, preFxKnobWrite, preFxKnobRead) <- setKnob "pre" (linSpan 0 1) 0.5
-	(postFxKnobGui, postFxKnobWrite, postFxKnobRead) <- setKnob "post" (linSpan 0 1) 0.5
-	(mixKnobGui, mixKnobWrite, mixKnobRead) <- setKnob "mix" (linSpan 0 1) 0.5
+  (preFxKnobGui, preFxKnobWrite, preFxKnobRead) <- setKnob "pre" (linSpan 0 1) 0.5
+  (postFxKnobGui, postFxKnobWrite, postFxKnobRead) <- setKnob "post" (linSpan 0 1) 0.5
+  (mixKnobGui, mixKnobWrite, mixKnobRead) <- setKnob "mix" (linSpan 0 1) 0.5
 
-	let knobGuis = ver [mixKnobGui, preFxKnobGui, postFxKnobGui]
+  let knobGuis = ver [mixKnobGui, preFxKnobGui, postFxKnobGui]
 
-	mapGuiSource (\gs -> hor [knobGuis, sca 12 gs]) $ joinSource $ vlift3 (\(thr, delEvt) x sils -> do
-		-- knobs
-		mixCoeffs <- tabSigs mixKnobWrite mixKnobRead x initMixVals
-		preCoeffs <- tabSigs preFxKnobWrite preFxKnobRead x initPreVals
-		postCoeffs <- tabSigs postFxKnobWrite postFxKnobRead x initPostVals
+  mapGuiSource (\gs -> hor [knobGuis, sca 12 gs]) $ joinSource $ vlift3 (\(thr, delEvt) x sils -> do
+    -- knobs
+    mixCoeffs <- tabSigs mixKnobWrite mixKnobRead x initMixVals
+    preCoeffs <- tabSigs preFxKnobWrite preFxKnobRead x initPreVals
+    postCoeffs <- tabSigs postFxKnobWrite postFxKnobRead x initPostVals
 
-		refs <- mapM (const $ newRef (1 :: Sig)) ids
-		delRefs <- mapM (const $ newRef (0 :: Sig)) ids
-		zipWithM_ (setSilencer refs) silencer sils
-		at smallRoom2 $ sum $ zipWith3 (f delEvt thr x) (zip3 times ids repeatFades) (zip5 mixCoeffs preFx preCoeffs postFx postCoeffs) $ zip3 delRefs refs instrs) throughDel sw sil
-	where
-		(tapControl, fadeControl, delControl, throughControl) = getControls (loopControl spec)
+    refs <- mapM (const $ newRef (1 :: Sig)) ids
+    delRefs <- mapM (const $ newRef (0 :: Sig)) ids
+    zipWithM_ (setSilencer refs) silencer sils
+    at smallRoom2 $ sum $ zipWith3 (f delEvt thr x) (zip3 times ids repeatFades) (zip5 mixCoeffs preFxProc preCoeffs postFxProc postCoeffs) $ zip3 delRefs refs instrs) throughDel sw sil
+  where
+    (tapControl, fadeControl, delControl, throughControl) = getControls (loopControl spec)
 
-		dt = 60 / dtBpm
+    dt = 60 / dtBpm
 
-		times = take len $ times' ++ repeat 1
+    times = take len $ times' ++ repeat 1
 
-		postFx = take len $ loopPostfx spec ++ repeat return
-		preFx = take len $ loopPrefx spec ++ repeat return
-		repeatFades = loopRepeatFades spec ++ repeat 1
+    postFxProc = take len $ loopPostfx spec ++ repeat return
+    preFxProc = take len $ loopPrefx spec ++ repeat return
+    repeatFades = loopRepeatFades spec ++ repeat 1
 
-		len = length ids
-		initMixVals = take len $ loopMixVal spec ++ repeat 0.5
-		initPreVals = take len $ loopPrefxVal spec ++ repeat 0.5
-		initPostVals = take len $ loopPostfxVal spec ++ repeat 0.5
+    len = length ids
+    initMixVals = take len $ loopMixVal spec ++ repeat 0.5
+    initPreVals = take len $ loopPrefxVal spec ++ repeat 0.5
+    initPostVals = take len $ loopPostfxVal spec ++ repeat 0.5
 
-		silencer
-			| null (loopFades spec) = fmap return ids
-			| otherwise               = loopFades spec
+    silencer
+      | null (loopFades spec) = fmap return ids
+      | otherwise               = loopFades spec
 
-		initInstr = loopInitInstr spec
+    initInstr = loopInitInstr spec
 
-		ids = [0 .. length instrs - 1]
-		through = throughControl
-		delete = delControl
+    ids = [0 .. length instrs - 1]
+    through = throughControl
 
-		throughDel = hlift2' 6 1 (\a b -> (a, b)) through delete
-		sw = tapControl (fmap show ids) initInstr
-		sil = hlifts id $ zipWith (\f n -> f (show n)) fadeControl [0 .. length silencer - 1]
+    throughDel = hlift2' 6 1 (\a b -> (a, b)) through delControl
+    sw = tapControl (fmap show ids) initInstr
+    sil = hlifts id $ zipWith (\g n -> g (show n)) fadeControl [0 .. length silencer - 1]
 
-		maxDel = 3
+    maxDel = 3
 
-		f :: Tick -> Sig -> Sig -> (D, Int, Sig) -> (Sig, Fx2, Sig, Fx2, Sig) -> (Ref Sig, Ref Sig, a) -> SE Sig2
-		f delEvt thr x (t, n, repeatFadeWeight) (mixCoeff, preFx, preCoeff, postFx, postCoeff) (delRef, silRef, instr) = do
-			silVal <- readRef silRef
-			runEvt delEvt $ \_ -> do
-				a <- readRef delRef
-				when1 isCurrent $ writeRef delRef (ifB (a + 1 `lessThan` maxDel) (a + 1) 0)
-			delVal <- readRef delRef
-			echoSig <- playSf 0
+    f :: Tick -> Sig -> Sig -> (D, Int, Sig) -> (Sig, Fx2, Sig, Fx2, Sig) -> (Ref Sig, Ref Sig, a) -> SE Sig2
+    f delEvt thr x (t, n, repeatFadeWeight) (mixCoeff, preFx, preCoeff, postFx, postCoeff) (delRef, silRef, instr) = do
+      silVal <- readRef silRef
+      runEvt delEvt $ \_ -> do
+        a <- readRef delRef
+        when1 isCurrent $ writeRef delRef (ifB (a + 1 `lessThan` maxDel) (a + 1) 0)
+      delVal <- readRef delRef
+      echoSig <- playSf 0
 
-			let d0 = delVal ==* 0
-			    d1 = delVal ==* 1
-			    d2 = delVal ==* 2
+      let d0 = delVal ==* 0
+          d1 = delVal ==* 1
+          d2 = delVal ==* 2
 
-			let playEcho dId = mul (smooth 0.05 $ ifB dId 1 0) $ mul (smooth 0.1 silVal) $ at (echo (dt * t) (ifB dId repeatFadeWeight 0)) $ ifB dId echoSig 0
+      let playEcho dId = mul (smooth 0.05 $ ifB dId 1 0) $ mul (smooth 0.1 silVal) $ at (echo (dt * t) (ifB dId repeatFadeWeight 0)) $ ifB dId echoSig 0
 
-			mul mixCoeff $ mixAt postCoeff postFx $ sum [ return $ sum $ fmap playEcho [d0, d1, d2]
-				, playSf 1]
-			where
-				playSf thrVal = mixAt preCoeff preFx $ playInstr (isCurrent &&* thr ==* thrVal) instr
-				isCurrent = x ==* (sig $ int n)
+      mul mixCoeff $ mixAt postCoeff postFx $ sum [ return $ sum $ fmap playEcho [d0, d1, d2]
+        , playSf 1]
+      where
+        playSf thrVal = mixAt preCoeff preFx $ playInstr (isCurrent &&* thr ==* thrVal) instr
+        isCurrent = x ==* (sig $ int n)
 
-		setSilencer refs silIds evt = runEvt evt $ \v ->
-			mapM_ (\ref -> writeRef ref $ sig v) $ fmap (refs !! ) silIds
+    setSilencer refs silIds evt = runEvt evt $ \v ->
+      mapM_ (\ref -> writeRef ref $ sig v) $ fmap (refs !! ) silIds
 
 tabSigs :: Output Sig -> Input Sig -> Sig -> [Sig] -> SE [Sig]
 tabSigs writeWidget readWidget switch initVals = do
-	refs <- mapM newGlobalRef initVals
+  refs <- mapM newGlobalRef initVals
 
-	vs <- mapM readRef refs
-	runEvt (changedE [switch]) $ \_ -> do
-		mapM_  (\(v, x) -> when1 (x ==* switch) $ writeWidget v) $ zip vs $ fmap (sig . int) [0 .. length initVals - 1]
+  vs <- mapM readRef refs
+  runEvt (changedE [switch]) $ \_ -> do
+    mapM_  (\(v, x) -> when1 (x ==* switch) $ writeWidget v) $ zip vs $ fmap (sig . int) [0 .. length initVals - 1]
 
-	forM_ (zip [0..] refs) $ \(n, ref) -> do
-		when1 ((sig $ int n) ==* switch) $ writeRef ref readWidget
+  forM_ (zip [0..] refs) $ \(n, ref) -> do
+    when1 ((sig $ int n) ==* switch) $ writeRef ref readWidget
 
-	return vs
+  return vs

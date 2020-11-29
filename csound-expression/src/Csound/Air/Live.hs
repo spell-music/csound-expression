@@ -36,20 +36,16 @@ module Csound.Air.Live (
 import Control.Monad
 
 import Data.Bool
-import Data.Colour
 import Data.Boolean
 import Data.Default
 import qualified Data.Colour.Names as C
 import qualified Data.Colour.SRGB as C
 
-import Csound.Typed
-import Csound.Typed.Gui
-import Csound.Control.Midi
-import Csound.Control.Evt
-import Csound.Control.Instr
-import Csound.Control.Gui
-import Csound.Typed.Opcode hiding (space)
-import Csound.SigSpace
+import Csound.Typed hiding (arg, mix)
+import Csound.Typed.Gui hiding (widget, width)
+import Csound.Control.Instr hiding (mix)
+import Csound.Control.Gui hiding (widget, width)
+import Csound.Typed.Opcode hiding (space, integ, gain, tone, delay, mute)
 import Csound.Air.Wave
 import Csound.Air.Fx
 import Csound.Air.Patch
@@ -131,7 +127,7 @@ fxBox name fx onOff args = source $ do
     offRef <- newGlobalRef (0 :: Sig)
     writeRef offRef off
     let (names, initVals) = unzip args
-    (gs, as)  <- fmap unzip $ mapM (\(name, initVal) -> slider name (linSpan 0 1) initVal) $ zip names initVals
+    (gs, as)  <- fmap unzip $ mapM (\(nm, initVal) -> slider nm (linSpan 0 1) initVal) $ zip names initVals
     let f x = do
           ref <- newRef (0 :: a)
           goff <- readRef offRef
@@ -153,12 +149,16 @@ fxBox name fx onOff args = source $ do
 -- | Creates an FX-box from the given visual representation.
 -- It inserts a big On/Off button atop of the GUI.
 uiBox :: (Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
-uiBox name fx onOff = mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go off fx
+uiBox name fx' onOff =
+  mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go offs fx'
     where
-        off =  mapGuiSource (setFontSize 25) $ toggleSig name onOff
+        offs = mapGuiSource (setFontSize 25) $ toggleSig name onOff
         go off fx arg = fmap (mul off) $ fx arg
 
+uiOnOffSize :: Double
 uiOnOffSize = 1.7
+
+uiBoxSize :: Double
 uiBoxSize   = 8
 
 uiGroupGui :: Gui -> Gui -> Gui
@@ -248,13 +248,14 @@ fxMap f = mapSource (>=> f)
 
 -- | Applies FX to the Patch.
 atFx :: Source (Fx a) -> Patch a -> Source (Patch a)
-atFx uiFx patch = lift1 (\fx -> addPostFx 1 fx patch) uiFx
+atFx f patch = lift1 (\fx -> addPostFx 1 fx patch) f
 
 -- | The distortion widget. The arguments are
 --
 -- > uiDistort isOn levelOfDistortion drive tone
 uiDistort :: Sigs a => Bool -> Double -> Double -> Double -> Source (Fx a)
-uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $ fxBox "Distortion" (\[level, drive, tone] -> return . fxDistort level drive tone) isOn
+uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $
+  fxBox "Distortion" (\[level', drive', tone'] -> return . fxDistort level' drive' tone') isOn
     [("level", level), ("drive", drive), ("tone", tone)]
 
 
@@ -262,7 +263,8 @@ uiDistort isOn level drive tone = mapSource bindSig $ sourceColor2 C.red $ fxBox
 --
 -- > uiChorus isOn mix rate depth width
 uiChorus :: Bool -> Double -> Double -> Double -> Double -> Source Fx2
-uiChorus isOn mix rate depth width = sourceColor2 C.coral $ fxBox "Chorus" (\[mix, rate, depth, width] -> return . stChorus2 mix rate depth width) isOn
+uiChorus isOn mix rate depth width = sourceColor2 C.coral $
+  fxBox "Chorus" (\[mix', rate', depth', width'] -> return . stChorus2 mix' rate' depth' width') isOn
     [("mix",mix), ("rate",rate), ("depth",depth), ("width",width)]
 
 uiDry :: (Sigs a) => Source (Fx a)
@@ -272,7 +274,8 @@ uiDry = fxBox "Thru" (\[] -> return) True []
 --
 -- > uiFlanger isOn  rate depth delay feedback
 uiFlanger :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indigo $ fxBox "Flanger" (\[fback, rate, depth, delay] -> return . fxFlanger fback rate depth delay) isOn
+uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indigo $
+  fxBox "Flanger" (\[fback', rate', depth', delay'] -> return . fxFlanger fback' rate' depth' delay') isOn
     [("rate",rate), ("depth",depth), ("delay",delay), ("fback", fback)]
 
 
@@ -280,14 +283,16 @@ uiFlanger isOn rate depth delay fback = mapSource bindSig $ sourceColor2 C.indig
 --
 -- > uiPhaser isOn mix feedback rate depth frequency
 uiPhaser :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiPhaser isOn rate depth freq fback = mapSource bindSig $ sourceColor2 C.orange $ fxBox "Phaser" (\[rate, depth, frequency, feedback] -> return . fxPhaser rate depth frequency feedback) isOn
+uiPhaser isOn rate depth freq fback = mapSource bindSig $ sourceColor2 C.orange $
+  fxBox "Phaser" (\[rate', depth', frequency', feedback'] -> return . fxPhaser rate' depth' frequency' feedback') isOn
     [("rate",rate), ("depth",depth), ("freq", freq), ("fback", fback)]
 
 -- | The delay widget. The arguments are
 --
 -- > uiDelay isOn mix feedback delayTime tone
 uiDelay :: Sigs a => Bool -> Double -> Double -> Double -> Double -> Source (Fx a)
-uiDelay isOn mix fback time tone = mapSource bindSig $ sourceColor2 C.dodgerblue $ fxBox "Delay" (\[mix, fback, time, tone] -> return . analogDelay mix fback time tone) isOn
+uiDelay isOn mix fback time tone = mapSource bindSig $ sourceColor2 C.dodgerblue $
+  fxBox "Delay" (\[mix', fback', time', tone'] -> return . analogDelay mix' fback' time' tone') isOn
     [("mix",mix), ("fback",fback), ("time",time), ("tone",tone)]
 
 
@@ -295,7 +300,8 @@ uiDelay isOn mix fback time tone = mapSource bindSig $ sourceColor2 C.dodgerblue
 --
 -- > uiEcho isOn maxDelayTime delayTime feedback
 uiEcho :: Sigs a => Bool -> D -> Double -> Double -> Source (Fx a)
-uiEcho isOn maxDelTime time fback = mapSource bindSig $ sourceColor2 C.deepskyblue $ fxBox "Echo" (\[time, fback] -> return . fxEcho maxDelTime time fback) isOn
+uiEcho isOn maxDelTime time fback = mapSource bindSig $ sourceColor2 C.deepskyblue $
+  fxBox "Echo" (\[time', fback'] -> return . fxEcho maxDelTime time' fback') isOn
     [("time", time), ("fback", fback)]
 
 
@@ -303,7 +309,8 @@ uiEcho isOn maxDelTime time fback = mapSource bindSig $ sourceColor2 C.deepskybl
 --
 -- > uiFilter isOn lowPassfrequency highPassFrequency gain
 uiFilter :: Sigs a => Bool -> Double -> Double -> Double -> Source (Fx a)
-uiFilter isOn lpf hpf gain = mapSource bindSig $ fxBox "Filter" (\[lpf, hpf, gain] -> return . fxFilter lpf hpf gain) isOn
+uiFilter isOn lpf hpf gain = mapSource bindSig $
+  fxBox "Filter" (\[lpf', hpf', gain'] -> return . fxFilter lpf' hpf' gain') isOn
     [("lpf",lpf), ("hpf",hpf), ("gain",gain)]
 
 
@@ -311,27 +318,31 @@ uiFilter isOn lpf hpf gain = mapSource bindSig $ fxBox "Filter" (\[lpf, hpf, gai
 --
 -- > uiReverb mix depth
 uiReverb :: Bool -> Double -> Double -> Source Fx2
-uiReverb isOn mix depth = sourceColor2 C.forestgreen $ fxBox "Reverb" (\[mix, depth] asig -> return $ cfd mix asig (rever2 depth asig)) isOn
-    [("mix", mix), ("depth", depth)]
+uiReverb isOn mix depth = sourceColor2 C.forestgreen $
+  fxBox "Reverb" (\[mix', depth'] asig -> return $ cfd mix' asig (rever2 depth' asig)) isOn
+      [("mix", mix), ("depth", depth)]
 
 -- | The gain widget, it's set to on by default. The arguments are
 --
 -- > uiGain amountOfGain
 uiGain :: Sigs a => Double -> Source (Fx a)
-uiGain gain = mapSource bindSig $ sourceColor2 C.black $ fxBox "Gain" (\[vol] -> return . fxGain vol) True [("gain", gain)]
+uiGain gain = mapSource bindSig $ sourceColor2 C.black $
+  fxBox "Gain" (\[vol] -> return . fxGain vol) True [("gain", gain)]
 
 -- | The filtered white noize widget. The arguments are
 --
 -- > uiWhite isOn centerFreqOfFilter amountOfNoize
 uiWhite :: Sigs a => Bool -> Double -> Double -> Source (Fx a)
-uiWhite isOn freq depth = mapSource bindSig $ sourceColor2 C.dimgray $ fxBox "White" (\[freq, depth] -> fxWhite freq depth) isOn
+uiWhite isOn freq depth = mapSource bindSig $ sourceColor2 C.dimgray $
+  fxBox "White" (\[freq', depth'] -> fxWhite freq' depth') isOn
     [("freq", freq), ("depth", depth)]
 
 -- | The filtered pink noize widget. The arguments are
 --
 -- > uiPink isOn centerFreqOfFilter amountOfNoize
 uiPink :: Sigs a => Bool -> Double -> Double -> Source (Fx a)
-uiPink isOn freq depth = mapSource bindSig $ sourceColor2 C.deeppink $ fxBox "Pink" (\[freq, depth] -> fxPink freq depth) isOn
+uiPink isOn freq depth = mapSource bindSig $ sourceColor2 C.deeppink $
+  fxBox "Pink" (\[freq', depth'] -> fxPink freq' depth') isOn
     [("freq", freq), ("depth", depth)]
 
 -- | The constructor for signal processing functions with no arguments (controlls).
@@ -420,6 +431,7 @@ masterVolumeKnob = knob "master" uspan 0.5
 ----------------------------------------------------
 -- instrument choosers
 
+genMidiChooser :: Sigs a => (t1 -> t2 -> Source (Msg -> SE a)) -> t1 -> t2 -> Source a
 genMidiChooser chooser xs initVal = joinSource $ lift1 midi $ chooser xs initVal
 
 -- | Chooses a midi instrument among several alternatives. It uses the @hradio@ for GUI groupping.
@@ -479,6 +491,7 @@ uiCompress initThresh initLoknee initHiknee initRatio initAtt initRel initGain =
     [("thresh", initThresh), ("loknee", initLoknee), ("hiknee", initHiknee), ("ratio", initRatio), ("att", initAtt), ("rel", initRel),  ("gain", initGain)]
     where
         fx [thresh, loknee, hiknee, ratio, att, rel, gain] = return . fxCompress thresh (loknee, hiknee) ratio (att, rel) gain
+        fx _ = undefined
 
         paintTo = fxColor . C.sRGB24read
         orange = "#FF851B"
@@ -567,8 +580,8 @@ fillTabToPowerOfTwo xs = xs ++ replicate (nextPow - n) 0
     where
         n = length xs
         nextPow
-            | frac == 0 = n
-            | otherwise = 2 ^ (integ + 1)
+            | frac == (0 :: Double) = n
+            | otherwise = 2 ^ (integ + 1 :: Int)
             where
                 (integ, frac) = properFraction $ logBase 2 (fromIntegral n)
 

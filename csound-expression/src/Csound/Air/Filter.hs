@@ -54,8 +54,15 @@ module Csound.Air.Filter(
     -- ** low pass
     lpCheb1, lpCheb1', lpCheb2, lpCheb2', clp, clp',
 
+    -- ** band pass
+    bpCheb1, bpCheb1', bpCheb2, bpCheb2', cbp, cbp',
+
     -- ** high pass
     hpCheb1, hpCheb1', hpCheb2, hpCheb2', chp, chp',
+
+    -- resonant filters
+    cheb1, cheb2, vcf,
+    cheb1', cheb2', vcf',
 
     -- * Named resonant low pass filters
     plastic, wobble, trumpy, harsh,
@@ -74,21 +81,10 @@ module Csound.Air.Filter(
     multiStatevar, multiSvfilter
 ) where
 
-import Control.Applicative
-
 import Csound.Typed
-import Csound.Typed.Plugins hiding (
-        zdf1, zlp1, zhp1, zap1,
-        zdf2, zlp, zbp, zhp, zdf2_notch, zbr,
-        zladder,
-        diode, linDiode, noNormDiode,
-        linKorg_lp, linKorg_hp, korg_lp, korg_hp)
 
 import Csound.SigSpace(bat)
 import Csound.Typed.Opcode
-
-import Control.Monad.Trans.Class
-import Csound.Dynamic
 
 -- | Low-pass filter.
 --
@@ -179,7 +175,7 @@ type FlatFilter  = Sig -> Sig -> Sig
 
 -- | Makes fake resonant filter from flat filter. The resulting filter just ignores the resonance.
 toReson :: FlatFilter -> ResonFilter
-toReson filter = \cfq res -> filter cfq
+toReson f = \cfq _res -> f cfq
 
 -- | Applies a filter n-times. The n is given in the first rgument.
 filt :: Int -> ResonFilter -> ResonFilter
@@ -268,6 +264,8 @@ singU = bat (formant bp2 anIY)
 singO2 :: Sig -> Sig
 singO2 = bat (formant bp2 anO2)
 
+anO, anA, anE, anIY, anO2 :: [(Sig, Sig)]
+
 anO  = [(280, 20), (650, 25), (2200, 30), (3450, 40), (4500, 50)]
 anA  = [(650, 50), (1100, 50), (2860, 50), (3300, 50), (4500, 50)]
 anE  = [(500, 50), (1750, 50), (2450, 50), (3350, 50), (5000, 50)]
@@ -281,19 +279,19 @@ anO2 = [(400, 50), (840, 50), (2800, 50), (3250, 50), (4500, 50)]
 --
 -- > alpf1 centerFrequency resonance asig
 alp1 :: Sig -> Sig -> Sig -> Sig
-alp1 freq reson asig = mvclpf1 asig freq reson
+alp1 freq resonance asig = mvclpf1 asig freq resonance
 
 -- | Analog-like low-pass filter
 --
 -- > alpf2 centerFrequency resonance asig
 alp2 :: Sig -> Sig -> Sig -> Sig
-alp2 freq reson asig = mvclpf2 asig freq reson
+alp2 freq resonance asig = mvclpf2 asig freq resonance
 
 -- | Analog-like low-pass filter
 --
--- > alpf3 centerFrequency resonance asig
+-- > alpf3 centerFrequency resonanceance asig
 alp3 :: Sig -> Sig -> Sig -> Sig
-alp3 freq reson asig = mvclpf3 asig freq reson
+alp3 freq resonance asig = mvclpf3 asig freq resonance
 
 -- | Analog-like low-pass filter
 --
@@ -309,7 +307,7 @@ alp3 freq reson asig = mvclpf3 asig freq reson
 --
 -- * asig4 -- 24dB/oct low-pass response output.
 alp4 :: Sig -> Sig -> Sig -> (Sig, Sig, Sig, Sig)
-alp4 freq reson asig = mvclpf4 asig freq reson
+alp4 freq resonance asig = mvclpf4 asig freq resonance
 
 -- | Analog-like high-pass filter
 --

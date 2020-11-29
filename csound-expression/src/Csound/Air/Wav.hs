@@ -46,20 +46,17 @@
 import Data.List(isSuffixOf)
 import Data.Default
 import Data.Boolean
-import Control.Applicative hiding((<*))
 
 import Temporal.Media
 
-import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (int, Sco)
 
 import Csound.Typed
-import Csound.Typed.Opcode
+import Csound.Typed.Opcode hiding (tempo, pitch, metro, tab)
 import Csound.Tab(mp3s, mp3Left, wavs, wavLeft, WavChn(..), Mp3Chn(..))
-import Csound.Control.Instr(withDur, sched)
+import Csound.Control.Instr(withDur)
 
-import Csound.SigSpace(mapSig)
-import Csound.Control.Evt(metroE, loadbang)
+import Csound.Control.Evt(metro, loadbang)
 
 import Csound.Air.Spec
 
@@ -77,7 +74,7 @@ delaySnd dt = segmentSnd dt infiniteDur
 -- | Delays a signal by the first argument and takes only second argument amount
 -- of signal (everything is measured in seconds).
 segmentSnd ::Sigs a => Sig -> Sig -> a -> a
-segmentSnd dt dur asig = sched (const $ return asig) $ fmap (del dt) $ withDur dur $ loadbang
+segmentSnd dt durS asig = sched (const $ return asig) $ fmap (del dt) $ withDur durS $ loadbang
 
 -- | Repeats the signal with the given period.
 repeatSnd :: Sigs a => Sig -> a -> a
@@ -119,7 +116,7 @@ lengthSnd fileName
 
 -- | Produces repeating segments with the given time in seconds.
 segments :: Sig -> Evt (Sco Unit)
-segments dt = withDur dt $ metroE (recip dt)
+segments dt = withDur dt $ metro (recip dt)
 
 -- Stereo
 
@@ -307,7 +304,7 @@ ramTab winSizePowerOfTwo tab aptr pitch = mincer aptr 1 pitch tab 1 `withD` (2 *
 --
 -- * playback speed
 lphase :: D -> Sig -> Sig -> Sig -> Sig
-lphase irefdur kloopstart kloopend kspeed  = atimpt
+lphase irefdur kloopstart kloopend kspeed  = atimpt * sig irefdur
     where
         kfqrel = kspeed / (kloopend - kloopstart)
         andxrel = phasor kfqrel
@@ -522,4 +519,5 @@ scaleWav :: Fidelity -> TempoSig -> PitchSig -> String -> Sig2
 scaleWav winSizePowerOfTwo tempo pitch filename = (go $ mkTab False 0 filename, go $ mkTab False 1 filename)
     where go = simpleTempoScale winSizePowerOfTwo tempo pitch
 
+simpleTempoScale :: D -> Sig -> Sig -> Tab -> Sig
 simpleTempoScale winSizePowerOfTwo tempo pitch t = temposcal tempo 1 pitch t 1 `withD` (2 ** (winSizePowerOfTwo + 11))

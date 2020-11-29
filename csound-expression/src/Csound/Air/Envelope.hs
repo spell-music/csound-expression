@@ -4,7 +4,7 @@ module Csound.Air.Envelope (
     leg, xeg,
 
     -- ADSR with retrigger for mono-synths
-    adsr140, trigTab,
+    adsr140, trigTab, trigTabEvt,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,
@@ -42,16 +42,13 @@ import Control.Monad
 import Control.Applicative
 import Data.List(intersperse)
 
-import Temporal.Media
+import Temporal.Media hiding (rest)
+import qualified Temporal.Media as T(Rest(..))
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (lpshold, loopseg, loopxseg)
+import Csound.Typed.Opcode hiding (lpshold, loopseg, loopxseg, release)
 import qualified Csound.Typed.Opcode as C(lpshold, loopseg, loopxseg)
-import Csound.Air.Wave
-import Csound.Tab(lins, exps, gp)
-import Csound.Air.Wave(oscBy)
-import Csound.Air.Filter(slide)
-import Csound.Typed.Plugins(adsr140, delay1k)
+import Csound.Typed.Plugins(adsr140)
 import Csound.Control.Evt(evtToTrig)
 
 -- | Linear adsr envelope generator with release
@@ -84,8 +81,8 @@ onIdur = onDur idur
 --
 -- > [a, t1 * dt, b, t2 * dt, c]
 onDur :: D -> [D] -> [D]
-onDur dur xs = case xs of
-    a:b:as -> a : b * dur : onDur dur as
+onDur dt xs = case xs of
+    a:b:as -> a : b * dt : onDur dt as
     _ -> xs
 
 -- | The opcode 'Csound.Opcode.linseg' with time intervals
@@ -183,7 +180,7 @@ sah as = stepSeq as (1 / period)
         period = sumDts as
 
         sumDts xs = case xs of
-            a : dt : rest -> dt + sumDts rest
+            _ : dt : rest -> dt + sumDts rest
             _ -> 0
 
 -- | It's just like @linseg@ but it loops over the envelope.
@@ -206,8 +203,8 @@ genLoop f as = f (tfmList as) (1 / len)
             where
                 go xs = case xs of
                     []  -> 0
-                    [a] -> 0
-                    a:b:rest -> b + go rest
+                    [_] -> 0
+                    _:b:rest -> b + go rest
 
 -- | Sample and hold sequence. It outputs the looping sequence of constan elements.
 constSeq :: [Sig] -> Sig -> Sig
@@ -276,28 +273,34 @@ ixrampSeq :: Sig -> [Sig] -> Sig -> Sig
 ixrampSeq duty xs = genSeq loopxseg (irampList (head xs) duty) xs
 
 
+sawList :: [Sig] -> [Sig]
 sawList xs = case xs of
     []  -> []
     [a] -> a : 1 : 0 : []
     a:rest -> a : 1 : 0 : 0 : sawList rest
 
+isawList :: [Sig] -> [Sig]
 isawList xs = case xs of
     []  -> []
     [a] -> 0 : 1 : a : []
     a:rest -> 0 : 1 : a : 0 : isawList rest
 
+triList :: [Sig] -> [Sig]
 triList xs = case xs of
     [] -> [0, 0]
     a:rest -> 0 : 1 : a : 1 : triList rest
 
+pwList :: Sig -> [Sig] -> [Sig]
 pwList k xs = case xs of
     []   -> []
     a:as -> a : k : 0 : (1 - k) : pwList k as
 
+ipwList :: Sig -> [Sig] -> [Sig]
 ipwList k xs = case xs of
     []   -> []
     a:as -> 0 : k : a : (1 - k) : ipwList k as
 
+rampList :: Sig -> Sig -> [Sig] -> [Sig]
 rampList a1 duty xs = case xs of
     [] -> []
     [a] -> 0.5 * a : d1 : a : d1 : 0.5 * a : d2 : 0 : d2 : 0.5 * a1 : []
@@ -306,6 +309,7 @@ rampList a1 duty xs = case xs of
         d1 = duty / 2
         d2 = (1 - duty) / 2
 
+irampList :: Sig -> Sig -> [Sig] -> [Sig]
 irampList a1 duty xs = case xs of
     [] -> []
     [a] -> 0.5 * a : d1 : 0 : d1 : 0.5 * a : d2 : a : d2 : 0.5 * a1 : []
@@ -523,7 +527,7 @@ data Seq1 = Rest {
         seq1Dur :: Sig }
     | Seq1 {
           seq1Dur :: Sig
-        , seq1Val :: Sig
+        , _seq1Val :: Sig
     }
 
 type instance DurOf Seq = Sig
@@ -531,11 +535,11 @@ type instance DurOf Seq = Sig
 instance Duration Seq where
     dur (Seq as) = sum $ fmap seq1Dur as
 
-instance Rest Seq where
+instance T.Rest Seq where
     rest t = Seq [Rest t]
 
 instance Delay Seq where
-    del t a = mel [rest t, a]
+    del t a = mel [T.rest t, a]
 
 instance Melody Seq where
     mel as = Seq $ as >>= unSeq
@@ -576,10 +580,13 @@ seqGen0 loopFun segFun as = loopFun (renderSeq0 segFun $ mel as)
 seqGen1 :: ([Sig] -> Sig -> Sig) -> (Sig -> Sig -> [Sig]) -> [Seq] -> Sig -> Sig
 seqGen1 loopFun segFun as = loopFun (renderSeq1 segFun $ mel as)
 
+simpleSeq0, simpleSeq1 :: ([Sig] -> Sig -> Sig) -> [Seq] -> Sig -> Sig
+
 simpleSeq0 loopFun = seqGen0 loopFun $ \dt val -> [val, dt]
 simpleSeq1 loopFun = seqGen0 loopFun $ \dt val -> [val, dt]
 
-seq0 = seqGen0 lpshold
+seq1, seqx :: (Sig -> Sig -> [Sig]) -> [Seq] -> Sig -> Sig
+
 seq1 = seqGen1 loopseg
 seqx = seqGen1 loopxseg
 
@@ -601,11 +608,11 @@ seqExp = simpleSeq1 loopxseg
 -- | The sequence of pulse width waves.
 -- The first argument is a duty cycle (ranges from 0 to 1).
 seqPw :: Sig -> [Seq] -> Sig -> Sig
-seqPw k = seq0 $ \dt val -> [val, dt * k, 0, dt * (1 - k)]
+seqPw k = seqGen0 lpshold $ \dt val -> [val, dt * k, 0, dt * (1 - k)]
 
 -- | The sequence of inversed pulse width waves.
 iseqPw :: Sig -> [Seq] -> Sig -> Sig
-iseqPw k = seq0 $ \dt val -> [0, dt * k, val, dt * (1 - k)]
+iseqPw k = seqGen0 lpshold $ \dt val -> [0, dt * k, val, dt * (1 - k)]
 
 -- | The sequence of square waves.
 seqSqr :: [Seq] -> Sig -> Sig
@@ -617,7 +624,10 @@ iseqSqr = iseqPw 0.5
 
 -- saw
 
+saw1 :: Num a => a -> a -> [a]
 saw1  dt val = [val, dt, 0, 0]
+
+isaw1 :: Num a => a -> a -> [a]
 isaw1 dt val = [0, dt, val, 0]
 
 -- | The sequence of sawtooth waves.
@@ -656,8 +666,11 @@ seqTriRamp k = seq1 $ \dt val -> [0, dt * k, val, dt * (1 - k)]
 
 -- adsr
 
+adsr1 :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> [Sig]
 adsr1 a d s r dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r), s * val, r * dt ]
-adsr1_ a d s r rest dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r - rest), s * val, r * dt, 0, rest ]
+
+adsr1_ :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> [Sig]
+adsr1_ a d s r restSig dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r - restSig), s * val, r * dt, 0, restSig ]
 
 -- | The sequence of ADSR-envelopes.
 --
@@ -682,11 +695,11 @@ xseqAdsr a d s r = seqx (adsr1 a d s r)
 -- > att + dec + sus_time + rel + rest == 1
 
 seqAdsr_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
-seqAdsr_ a d s r rest = seq1 (adsr1_ a d s r rest)
+seqAdsr_ a d s r restSig = seq1 (adsr1_ a d s r restSig)
 
 -- | The sequence of exponential ADSR-envelopes with rest at the end.
 xseqAdsr_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
-xseqAdsr_ a d s r rest = seqx (adsr1_ a d s r rest)
+xseqAdsr_ a d s r restSig = seqx (adsr1_ a d s r restSig)
 
 -------------------------------------------------
 
@@ -725,8 +738,9 @@ seqPat ns = mel (ns >>= f)
     where f n
             | n <= 0 = []
             | n == 1 = [1]
-            | otherwise = [1, rest $ sig $ int $ n - 1]
+            | otherwise = [1, T.rest $ sig $ int $ n - 1]
 
+rowDesc :: Int -> [Double]
 rowDesc n = [1, 1 - recipN .. recipN ]
     where recipN = 1/ fromIntegral n
 
@@ -805,15 +819,15 @@ instance HumanizeValue ([D] -> Sig) where
     type HumanizeValueOut ([D] -> Sig) = [D] -> SE Sig
     humanVal dr f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
         where human1 (n, a)
-                    | mod n 2 == 1 = rndValD dr a
-                    | otherwise    = return a
+                    | mod n 2 == (1 :: Int) = rndValD dr a
+                    | otherwise             = return a
 
 instance HumanizeValue ([D] -> D -> Sig) where
     type HumanizeValueOut ([D] -> D -> Sig) = [D] -> D -> SE Sig
     humanVal dr f = \xs release -> fmap (flip f release) $ mapM human1 $ zip [0 ..] xs
         where human1 (n, a)
-                    | mod n 2 == 1 = rndValD dr a
-                    | otherwise    = return a
+                    | mod n 2 == (1 :: Int) = rndValD dr a
+                    | otherwise             = return a
 
 -- time
 
@@ -844,15 +858,15 @@ instance HumanizeTime ([D] -> Sig) where
     type HumanizeTimeOut ([D] -> Sig) = [D] -> SE Sig
     humanTime dr f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
         where human1 (n, a)
-                    | mod n 2 == 0 = rndValD dr a
-                    | otherwise    = return a
+                    | mod n 2 == (0 :: Int) = rndValD dr a
+                    | otherwise             = return a
 
 instance HumanizeTime ([D] -> D -> Sig) where
     type HumanizeTimeOut ([D] -> D -> Sig) = [D] -> D -> SE Sig
     humanTime dr f = \xs release -> liftA2 f (mapM human1 $ zip [0 ..] xs) (rndValD dr release)
         where human1 (n, a)
-                    | mod n 2 == 0 = rndValD dr a
-                    | otherwise    = return a
+                    | mod n 2 == (0 :: Int) = rndValD dr a
+                    | otherwise             = return a
 
 -- value & time
 
@@ -883,15 +897,15 @@ instance HumanizeValueTime ([D] -> Sig) where
     type HumanizeValueTimeOut ([D] -> Sig) = [D] -> SE Sig
     humanValTime drVal drTime f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
         where human1 (n, a)
-                    | mod n 2 == 1 = rndValD drVal  a
-                    | otherwise    = rndValD drTime a
+                    | mod n 2 == (1 :: Int) = rndValD drVal  a
+                    | otherwise             = rndValD drTime a
 
 instance HumanizeValueTime ([D] -> D -> Sig) where
     type HumanizeValueTimeOut ([D] -> D -> Sig) = [D] -> D -> SE Sig
     humanValTime drVal drTime f = \xs release -> liftA2 f (mapM human1 $ zip [0 ..] xs) (rndValD drTime release)
         where human1 (n, a)
-                    | mod n 2 == 1 = rndValD drVal  a
-                    | otherwise    = rndValD drTime a
+                    | mod n 2 == (1 :: Int) = rndValD drVal  a
+                    | otherwise             = rndValD drTime a
 
 
 -----------------------------------------------------

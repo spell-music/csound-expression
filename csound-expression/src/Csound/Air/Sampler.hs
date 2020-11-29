@@ -1,43 +1,42 @@
 module Csound.Air.Sampler (
 
-	-- * Event sampler
+  -- * Event sampler
 
-	-- | Note: The release phase of the instrument is skipped
-	-- with event sampler functions.
-	evtTrig, evtTap, evtGroup, evtCycle,
+  -- | Note: The release phase of the instrument is skipped
+  -- with event sampler functions.
+  evtTrig, evtTap, evtGroup, evtCycle,
 
-	syncEvtTrig, syncEvtTap, syncEvtGroup, syncEvtCycle,
+  syncEvtTrig, syncEvtTap, syncEvtGroup, syncEvtCycle,
 
-	-- * Keyboard sampler
-	charTrig, charTap, charPush, charToggle, charGroup, charCycle,
+  -- * Keyboard sampler
+  charTrig, charTap, charPush, charToggle, charGroup, charCycle,
 
-	syncCharTrig, syncCharTap, syncCharPush,syncCharToggle, syncCharGroup, syncCharCycle,
+  syncCharTrig, syncCharTap, syncCharPush,syncCharToggle, syncCharGroup, syncCharCycle,
+  syncEvtToggle,
 
-    -- * Midi sampler
-    midiTrig, midiTap, midiPush, midiToggle, midiGroup,
+  -- * Midi sampler
+  midiTrig, midiTap, midiPush, midiToggle, midiGroup,
 
-    -- * Generic functions
-    midiTrigBy, midiTapBy, midiPushBy, midiToggleBy, midiGroupBy,
+  -- * Generic functions
+  midiTrigBy, midiTapBy, midiPushBy, midiToggleBy, midiGroupBy,
 
-    -- ** Midi instruments
-    MidiTrigFun, midiAmpInstr, midiLpInstr, midiAudioLpInstr, midiConstInstr,
+  -- ** Midi instruments
+  MidiTrigFun, midiAmpInstr, midiLpInstr, midiAudioLpInstr, midiConstInstr,
 
-    -- * Misc
+  -- * Misc
 
-    -- | Keyboard char columns
-    keyColumn1, keyColumn2, keyColumn3, keyColumn4, keyColumn5,
-    keyColumn6, keyColumn7, keyColumn8, keyColumn9, keyColumn0,
-    keyColumns
+  -- | Keyboard char columns
+  keyColumn1, keyColumn2, keyColumn3, keyColumn4, keyColumn5,
+  keyColumn6, keyColumn7, keyColumn8, keyColumn9, keyColumn0,
+  keyColumns
 
 ) where
 
-import Data.Monoid
 import Data.Boolean
 import Temporal.Class
 
 import Csound.Typed
 import Csound.Control
-import Csound.SigSpace
 
 import Csound.Air.Filter(mlp)
 import Csound.Air.Wav(takeSnd)
@@ -49,14 +48,14 @@ import Csound.Air.Seg
 -- | Triggers the signal with the first stream and turns it off with the second stream.
 evtTrig :: (Sigs a) => Maybe a -> Tick -> Tick -> a -> a
 evtTrig minitVal x st a = case minitVal of
-	Nothing -> ons
-	Just v0 -> ons + offs v0 + first v0
-	where
-		ons     = evtTrigNoInit x st a
-		offs  v = evtTrigNoInit st x v
-		first v = evtTrigger loadbang x v
+  Nothing -> ons
+  Just v0 -> ons + offs v0 + first v0
+  where
+    ons     = evtTrigNoInit x st a
+    offs  v = evtTrigNoInit st x v
+    first v = evtTrigger loadbang x v
 
-		evtTrigNoInit x st a = runSeg $ loop $ lim st $ del x $ loop (lim x $ toSeg a)
+    evtTrigNoInit xEvt stEvt aSig = runSeg $ loop $ lim stEvt $ del xEvt $ loop (lim xEvt $ toSeg aSig)
 
 syncEvtTrig :: (Sigs a) => Sig -> Maybe a -> Tick -> Tick -> a -> a
 syncEvtTrig bpm minitVal x st a = evtTrig minitVal (syncBpm bpm x) (syncBpm bpm st) a
@@ -64,7 +63,7 @@ syncEvtTrig bpm minitVal x st a = evtTrig minitVal (syncBpm bpm x) (syncBpm bpm 
 -- | Toggles the signal with event stream.
 evtToggle :: (Sigs a) => Maybe a -> Tick -> a -> a
 evtToggle initVal evt = evtTrig initVal (fmap (const unit) ons) (fmap (const unit) offs)
-	where (offs, ons) = splitToggle $ toTog evt
+  where (offs, ons) = splitToggle $ toTog evt
 
 syncEvtToggle :: (Sigs a) => Sig -> Maybe a -> Tick -> a -> a
 syncEvtToggle bpm initVal evt = evtToggle initVal (syncBpm bpm evt)
@@ -84,10 +83,10 @@ syncEvtTap bpm dt x = evtTap dt (syncBpm bpm x)
 -- costum monosynthes with this function. The last event stream stops all signals.
 evtGroup :: (Sigs a) => Maybe a -> [(Tick, a)] -> Tick -> a
 evtGroup initVal as stop = sum $ fmap (\(a, b, c) -> evtTrig initVal a (mappend b stop) c)
-	$ zipWith (\n (a, sam) -> (a, mconcat $ fmap snd $ filter ((/= n) . fst) allEvts, sam)) [(0 :: Int)..] as
-	where
-		allEvts :: [(Int, Tick)]
-		allEvts = zip [0 ..] (fmap fst as)
+  $ zipWith (\n (a, sam) -> (a, mconcat $ fmap snd $ filter ((/= n) . fst) allEvts, sam)) [(0 :: Int)..] as
+  where
+    allEvts :: [(Int, Tick)]
+    allEvts = zip [0 ..] (fmap fst as)
 
 syncEvtGroup :: (Sigs a) => Sig -> Maybe a -> [(Tick, a)] -> Tick -> a
 syncEvtGroup bpm initVal as stop = evtGroup initVal (fmap (\(e, a) -> (syncBpm bpm e, a)) as) (syncBpm bpm stop)
@@ -95,13 +94,13 @@ syncEvtGroup bpm initVal as stop = evtGroup initVal (fmap (\(e, a) -> (syncBpm b
 -- | Triggers one signal after another with an event stream.
 evtCycle :: (Sigs a) => Maybe a -> Tick -> Tick -> [a] -> a
 evtCycle minitVal start stop sigs = case minitVal of
-	Nothing -> ons
-	Just _  -> ons + offs
-	where
-		ons  = evtCycleNoInit start stop sigs
-		offs = evtGroup minitVal [(start, 0)] stop
+  Nothing -> ons
+  Just _  -> ons + offs
+  where
+    ons  = evtCycleNoInit start stop sigs
+    offs = evtGroup minitVal [(start, 0)] stop
 
-		evtCycleNoInit start stop sigs = runSeg $ loop $ lim stop $ del start $ loop $ mel $ fmap (lim start . toSeg) sigs
+    evtCycleNoInit startMsg stopMsg asigs = runSeg $ loop $ lim stopMsg $ del startMsg $ loop $ mel $ fmap (lim startMsg . toSeg) asigs
 
 -- | Triggers one signal after another with an event stream.
 syncEvtCycle :: (Sigs a) => Sig -> Maybe a -> Tick -> Tick -> [a] -> a
@@ -114,28 +113,28 @@ syncEvtCycle bpm minitVal start stop sigs = evtCycle minitVal (syncBpm bpm start
 -- Stops signal from playing when one of the chars from the second string is pressed.
 charTrig :: (Sigs a) => Maybe a -> String -> String -> a -> a
 charTrig minitVal starts stops asig = case minitVal of
-	Nothing      -> ons
-	Just initVal -> ons + offs initVal + first initVal
-	where
-		ons   = charTrigNoInit starts stops  asig
-		offs  initVal = charTrigNoInit stops  starts initVal
-		first initVal = evtTrigger loadbang (strOn starts) initVal
+  Nothing      -> ons
+  Just initVal -> ons + offs initVal + first initVal
+  where
+    ons   = charTrigNoInit starts stops  asig
+    offs  initVal = charTrigNoInit stops  starts initVal
+    first initVal = evtTrigger loadbang (strOn starts) initVal
 
-		charTrigNoInit starts stops asig = runSeg $ loop $ lim (strOn stops) $ toSeg $ retrig (const $ return asig) (strOn starts)
+    charTrigNoInit startMsg stopMsg bsig = runSeg $ loop $ lim (strOn stopMsg) $ toSeg $ retrig (const $ return bsig) (strOn startMsg)
 
 -- | Triggers a signal when one of the chars from the first string is pressed.
 -- Stops signal from playing when one of the chars from the second string is pressed.
 -- Synchronizes the signal with bpm (first argument).
 syncCharTrig :: (Sigs a) => Sig -> Maybe a -> String -> String -> a -> a
 syncCharTrig bpm minitVal starts stops asig = case minitVal of
-	Nothing      -> ons
-	Just initVal -> ons + offs initVal + first initVal
-	where
-		ons           = charTrigNoInit starts stops  asig
-		offs  initVal = charTrigNoInit stops  starts initVal
-		first initVal = syncEvtTrigger bpm loadbang (strOn starts) initVal
+  Nothing      -> ons
+  Just initVal -> ons + offs initVal + first initVal
+  where
+    ons           = charTrigNoInit starts stops  asig
+    offs  initVal = charTrigNoInit stops  starts initVal
+    first initVal = syncEvtTrigger bpm loadbang (strOn starts) initVal
 
-		charTrigNoInit starts stops asig = runSeg $ loop $ lim (syncBpm bpm $ strOn stops) $ toSeg $ retrig (const $ return asig) (syncBpm bpm $ strOn starts)
+    charTrigNoInit startMsg stopMsg bsig = runSeg $ loop $ lim (syncBpm bpm $ strOn stopMsg) $ toSeg $ retrig (const $ return bsig) (syncBpm bpm $ strOn startMsg)
 
 -- syncCharTrig :: (Sigs a) => Sig -> String -> String -> a -> a
 -- syncCharTrig bpm starts stops asig = runSeg $ loop $ lim (syncBpm bpm $ strOn stops) $ toSeg $ retrig (const $ return asig) (syncBpm bpm $ strOn starts)
@@ -150,12 +149,12 @@ syncCharPush bpm = genCharPush (syncEvtTrigger bpm)
 
 genCharPush :: Sigs a => (Tick -> Tick -> a -> a) -> Maybe a -> Char -> a -> a
 genCharPush trig minitVal ch asig = case minitVal of
-	Nothing -> ons
-	Just v0 -> ons + offs v0 + first v0
-	where
-		ons     = trig (charOn ch)  (charOff ch) asig
-		offs  v = trig (charOff ch) (charOn  ch) v
-		first v = trig loadbang (charOn ch) v
+  Nothing -> ons
+  Just v0 -> ons + offs v0 + first v0
+  where
+    ons     = trig (charOn ch)  (charOff ch) asig
+    offs  v = trig (charOff ch) (charOn  ch) v
+    first v = trig loadbang (charOn ch) v
 
 -- | Toggles the signal when key is pressed.
 charToggle :: (Sigs a) => Maybe a -> Char -> a -> a
@@ -168,18 +167,18 @@ syncCharToggle bpm = genCharToggle (syncBpm bpm)
 
 -- | Toggles the signal when key is pressed.
 genCharToggle :: (Sigs a) => (Tick -> Tick) -> Maybe a -> Char -> a -> a
-genCharToggle needSync minitVal key asig = retrig (togInstr minitVal asig)
-	$ accumE (1 :: D) (\_ s -> (s, mod' (s + 1) 2))
-	$ needSync $ charOn key
-	where
-		togInstr mv0 asig isPlay = do
-			ref <- newRef 0
-			case mv0 of
-				Nothing -> return ()
-				Just v0 -> writeRef ref v0
-			when1 (sig isPlay ==* 1) $ do
-				writeRef ref asig
-			readRef ref
+genCharToggle needSync minitVal key asig = retrig (togInstr minitVal)
+  $ accumE (1 :: D) (\_ s -> (s, mod' (s + 1) 2))
+  $ needSync $ charOn key
+  where
+    togInstr mv0 isPlay = do
+      ref <- newRef 0
+      case mv0 of
+        Nothing -> return ()
+        Just v0 -> writeRef ref v0
+      when1 (sig isPlay ==* 1) $ do
+        writeRef ref asig
+      readRef ref
 
 -- Consider note limiting? or performance degrades
 -- every note is held to infinity and it continues to produce zeroes.
@@ -205,22 +204,23 @@ syncCharGroup bpm = genCharGroup (syncEvtTrigger bpm)
 
 genCharGroup :: (Sigs a) => (Tick -> Tick -> a -> a) -> Maybe a -> [(Char, a)] -> String -> a
 genCharGroup trig minitVal as stop = case minitVal of
-	Nothing      -> charGroupNoInit as stop
-	Just initVal -> ons + offs initVal + first initVal
-	where
-		ons           = charGroupNoInit as stop
-		offs  initVal = charGroupNoInit (fmap (\ch -> (ch, initVal)) stop) onKeys
-		first initVal = trig loadbang (mconcat $ fmap charOn onKeys) initVal
+  Nothing      -> charGroupNoInit trig as stop
+  Just initVal -> ons + offs initVal + first initVal
+  where
+    ons           = charGroupNoInit trig as stop
+    offs  initVal = charGroupNoInit trig (fmap (\ch -> (ch, initVal)) stop) onKeys
+    first initVal = trig loadbang (mconcat $ fmap charOn onKeys) initVal
 
-		onKeys = fmap fst as
+    onKeys = fmap fst as
 
-		charGroupNoInit as stop = sum $ fmap f as
-			where
-				allKeys = fmap fst as ++ stop
-				f (key, asig) = trig ons offs asig
-					where
-						ons  = charOn key
-						offs = strOn allKeys
+charGroupNoInit :: Sigs a => (Tick -> Tick -> a -> a) -> [(Char, a)] -> String -> a
+charGroupNoInit trig as stop = sum $ fmap f as
+  where
+    allKeys = fmap fst as ++ stop
+    f (key, asig) = trig ons offs asig
+      where
+        ons  = charOn key
+        offs = strOn allKeys
 
 -- | Plays signals one after another when key is pressed.
 -- Stops the group from playing when the char from the last
@@ -263,7 +263,7 @@ midiAudioLpInstr = midiLpInstr (50, 10000)
 
 -- | Ignores the amplitude and justplays back the original signal.
 midiConstInstr :: (SigSpace a, Sigs a) => a -> D -> SE a
-midiConstInstr asig amp = return asig
+midiConstInstr asig _amp = return asig
 
 -- | Plays a signal when the key is pressed. Retriggers the signal when the key is pressed again.
 -- The key is an integer midi code. The C1 is 60 and the A1 is 69.
@@ -311,37 +311,37 @@ midiTapBy midiInstr midiChn dt key asig = midiTrigBy midiInstr midiChn key (take
 -- It produces some output. The default is scaling the signal with the amplitude.
 midiPushBy :: (SigSpace a, Sigs a) => MidiTrigFun a -> MidiChn -> Int -> a -> SE a
 midiPushBy midiInstr midiChn key asig = do
-	ons  <- midiKeyOn midiChn (int key)
-	offs <- midiKeyOff midiChn (int key)
-	return $ midiEvtTriggerBy midiInstr ons offs asig
+  ons  <- midiKeyOn midiChn (int key)
+  offs <- midiKeyOff midiChn (int key)
+  return $ midiEvtTriggerBy midiInstr ons offs asig
 
 -- | The generic midiToggle. We can specify the midi function.
 -- The midi function takes in a signal and a volume of the pressed key (it ranges from 0 to 1).
 -- It produces some output. The default is scaling the signal with the amplitude.
 midiToggleBy :: (SigSpace a, Sigs a) => MidiTrigFun a -> MidiChn -> Int -> a -> SE a
-midiToggleBy midiInstr midiChn key asig = fmap (\evt -> retrig (togMidiInstr asig) evt)
-	(fmap (accumE (1 :: D) (\a s -> ((a, s), mod' (s + 1) 2))) $ midiKeyOn midiChn $ int key)
-	where
-		togMidiInstr asig (amp, isPlay) = do
-			ref <- newRef 0
-			when1 (sig isPlay ==* 1) $ do
-				writeRef ref =<< midiInstr asig amp
-			readRef ref
+midiToggleBy midiInstr midiChn key asig = fmap (\evt -> retrig togMidiInstr evt)
+  (fmap (accumE (1 :: D) (\a s -> ((a, s), mod' (s + 1) 2))) $ midiKeyOn midiChn $ int key)
+  where
+    togMidiInstr (amp, isPlay) = do
+      ref <- newRef 0
+      when1 (sig isPlay ==* 1) $ do
+        writeRef ref =<< midiInstr asig amp
+      readRef ref
 
 -- | The generic midiGroup. We can specify the midi function.
 -- The midi function takes in a signal and a volume of the pressed key (it ranges from 0 to 1).
 -- It produces some output. The default is scaling the signal with the amplitude.
 midiGroupBy :: (SigSpace a, Sigs a) => MidiTrigFun a -> MidiChn -> [(Int, a)] -> SE a
 midiGroupBy midiInstr midiChn as = fmap sum $ mapM f as
-	where
-		allKeys = fmap fst as
-		f (key, asig) = do
-			ons  <- midiKeyOn midiChn (int key)
-			offs <- fmap (fmap (const unit) . mconcat) $ mapM (midiKeyOn midiChn . int) allKeys
-			return $ midiEvtTriggerBy midiInstr ons offs asig
+  where
+    allKeys = fmap fst as
+    f (key, asig) = do
+      ons  <- midiKeyOn midiChn (int key)
+      offs <- fmap (fmap (const unit) . mconcat) $ mapM (midiKeyOn midiChn . int) allKeys
+      return $ midiEvtTriggerBy midiInstr ons offs asig
 
 midiEvtTriggerBy :: (SigSpace a, Sigs a) => (a -> D -> SE a) -> Evt D -> Tick -> a -> a
-midiEvtTriggerBy midiInstr ons offs asig = schedUntil (midiAmpInstr asig) ons offs
+midiEvtTriggerBy midiInstr ons offs asig = schedUntil (midiInstr asig) ons offs
 
 -----------------------------------------------------------
 -- misc

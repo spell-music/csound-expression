@@ -23,7 +23,6 @@ module Csound.Control.Evt(
     every, masked
 ) where
 
-import Data.Monoid
 import Data.Default
 import Data.Boolean
 import Data.Tuple
@@ -73,16 +72,16 @@ metroSig = O.metro
 -- > gaussTrig freq deviation
 gaussTrig :: Sig -> Sig -> Tick
 gaussTrig afreq adev = Evt $ \bam -> do
-    on <- gausstrig 1 (afreq * sig getBlockSize) adev
-    when1 (on >* 0.5) $ bam unit
+    thresh <- gausstrig 1 (afreq * sig getBlockSize) adev
+    when1 (thresh >* 0.5) $ bam unit
 
 -- | Creates a stream of random events. The argument is a number of events per second.
 --
 -- > dust eventsPerSecond
 dust :: Sig -> Tick
 dust freq = Evt $ \bam -> do
-    on <- O.dust 1 (freq * sig getBlockSize)
-    when1 (on >* 0.5) $ bam unit
+    thresh <- O.dust 1 (freq * sig getBlockSize)
+    when1 (thresh >* 0.5) $ bam unit
 
 -- | Creates a signal that contains a random ones that happen with given frequency.
 dustSig :: Sig -> SE Sig
@@ -108,8 +107,8 @@ impulseE = sigToEvt . impulse
 
 -- | Makes an event stream from list of events.
 eventList :: [(Sig, Sig, a)] -> Evt (Sco a)
-eventList es = fmap (const $ har $ fmap singleEvent es) loadbang
-    where singleEvent (start, duration, content) = del start $ str duration $ temp content
+eventList es = fmap (const $ har $ fmap single es) loadbang
+    where single (start, duration, content) = del start $ str duration $ temp content
 
 -- | Behaves like 'Csound.Opcode.Basic.changed', but returns an event stream.
 changedE :: [Sig] ->  Evt Unit
@@ -137,8 +136,8 @@ splitToggle = swap . partitionE (==* 0)
 -- | Constructs an event stream that contains pairs from the
 -- given pair of signals. Events happens when any signal changes.
 snaps2 :: Sig2 -> Evt (D, D)
-snaps2 (x, y) = snapshot const (x, y) trigger
-    where trigger = sigToEvt $ changed [x, y]
+snaps2 (x, y) = snapshot const (x, y) triggerSig
+    where triggerSig = sigToEvt $ changed [x, y]
 
 ----------------------------------------------------------------------
 -- higher level evt-funs
@@ -155,9 +154,9 @@ cycleE vals evts = listAt vals $ range (0, int $ length vals) evts
 listAt :: (Tuple a, Arg a) => [a] -> Evt D -> Evt a
 listAt vals evt
     | null vals = mempty
-    | otherwise = fmap (atArg vals) $ filterE within evt
+    | otherwise = fmap (atArg vals) $ filterE withinBounds evt
     where
-        within x = (x >=* 0) &&* (x `lessThan` len)
+        withinBounds x = (x >=* 0) &&* (x `lessThan` len)
         len = int $ length vals
 
 -- |
@@ -247,8 +246,8 @@ freqOf rnds evt = fmap (takeByWeight accs vals) $ randDs evt
         vals = fmap snd rnds
 
 takeByWeight :: (Tuple a, Arg a) => [Sig] -> [a] -> D -> a
-takeByWeight accumWeights vals at =
-    guardedArg (zipWith (\w val -> (at `lessThan` ir w, val)) accumWeights vals) (last vals)
+takeByWeight accumWeights vals atD =
+    guardedArg (zipWith (\w val -> (atD `lessThan` ir w, val)) accumWeights vals) (last vals)
 
 accumWeightList :: Num a => [a] -> [a]
 accumWeightList = go 0
@@ -261,7 +260,7 @@ accumWeightList = go 0
 -- with stateful function that produce not just values but the list of values
 -- with frequencies of occurrence. We apply this function to the current state
 -- and the value and then at random pick one of the values.
-freqAccum :: (Tuple s, Tuple (b, s), Arg (b, s))
+freqAccum :: (Arg b, Arg s)
     => s -> (a -> s -> Rnds (b, s)) -> Evt a -> Evt b
 freqAccum s0 f = accumSE s0 $ \a s ->
     let rnds = f a s

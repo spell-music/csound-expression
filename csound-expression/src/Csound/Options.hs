@@ -10,6 +10,7 @@ module Csound.Options(
     setSilent, setMidiDevice, setMa,
     setMessageLevel, noTrace,
     setCabbage,
+    setJacko,
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for
@@ -37,7 +38,6 @@ module Csound.Options(
     Config(..)
 ) where
 
-import Data.Monoid
 import Data.Default
 import Csound.Typed
 

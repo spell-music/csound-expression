@@ -1,9 +1,10 @@
+{-# Language LambdaCase #-}
 -- | Creating Function Tables (Buffers)
 module Csound.Tab (
     -- | If you are not familliar with Csound's conventions
     -- you are pobably not aware of the fact that for efficiency reasons Csound requires that table size is equal
-    -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the 
-    -- table once but you don't need the guard point if you read the table in many cycles, then the guard point is the the first point of your table).  
+    -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the
+    -- table once but you don't need the guard point if you read the table in many cycles, then the guard point is the the first point of your table).
     Tab, noTab,
 
     -- * Table querries
@@ -11,11 +12,11 @@ module Csound.Tab (
     nsamp, ftlen, ftsr, ftchnls, ftcps,
 
     -- * Table granularity
-    TabFi, fineFi, coarseFi,        
+    TabFi, fineFi, coarseFi,
 
     -- * Fill table with numbers
     doubles,
-   
+
     -- * Create new tables to write/update data
 
     newTab, newGlobalTab, tabSizeSeconds, tabSizePower2, tabSizeSecondsPower2,
@@ -40,7 +41,7 @@ module Csound.Tab (
     tanhTab, rescaleTanhTab, expTab, rescaleExpTab, soneTab, rescaleSoneTab,
     fareyTab,
 
-    -- * Interpolants    
+    -- * Interpolants
     -- | All funtions have the same shape of arguments:
     --
     -- > fun [a, n1, b, n2, c, ...]
@@ -49,14 +50,14 @@ module Csound.Tab (
     --
     -- * a, b, c .. - are ordinate values
     --
-    -- * n1, n2 .. - are lengths of the segments relative to the total number of the points in the table   
-    --    
+    -- * n1, n2 .. - are lengths of the segments relative to the total number of the points in the table
+    --
     -- Csounders, Heads up! all segment lengths are relative to the total sum of the segments.
-    -- You don't need to make the sum equal to the number of points in the table. Segment's lengths will be resized 
+    -- You don't need to make the sum equal to the number of points in the table. Segment's lengths will be resized
     -- automatically. For example if we want to define a curve that rises to 1 over 25\% of the table and then falls down to zero
     -- we can define it like this:
     --
-    -- > lins [0, 0.25, 1, 0.75, 0] 
+    -- > lins [0, 0.25, 1, 0.75, 0]
     --
     -- or
     --
@@ -66,15 +67,15 @@ module Csound.Tab (
     --
     -- > lins [0, 1, 1, 3, 0]
     --
-    -- all these expressions are equivalent. 
+    -- all these expressions are equivalent.
     consts, lins, cubes, exps, splines, startEnds, tabseg, bpLins, bpExps,
     -- ** Equally spaced interpolants
     econsts, elins, ecubes, eexps, esplines, estartEnds, etabseg,
 
-    -- * Polynomials    
+    -- * Polynomials
     polys, chebs1, chebs2, bessels,
 
-    -- * Random values 
+    -- * Random values
 
     -- ** Distributions
     uniDist, linDist, triDist, expDist, biexpDist, gaussDist,
@@ -83,12 +84,12 @@ module Csound.Tab (
     -- *** Distributions with levels
     uniDist', linDist', triDist', expDist', biexpDist', gaussDist',
     cauchyDist', pcauchyDist', betaDist', weibullDist', poissonDist',
-    
+
     -- ** Rand values and ranges
     randDist, rangeDist,
 
 
-    -- * Windows  
+    -- * Windows
     winHamming, winHanning,  winBartlett, winBlackman,
     winHarris, winGauss, winKaiser, winRectangle, winSync,
 
@@ -103,19 +104,19 @@ module Csound.Tab (
 
     -- * Low level Csound definition.
     gen,
-    
+
     -- * Modify tables
     skipNorm, forceNorm, setSize, setDegree, guardPoint, gp,
-    
-    -- ** Handy shortcuts        
+
+    -- ** Handy shortcuts
     -- | handy shortcuts for the function 'setDegree'.
     lllofi, llofi, lofi, midfi, hifi, hhifi, hhhifi,
-    
+
     -- * Identifiers for GEN-routines
-    
+
     -- | Low level Csound integer identifiers for tables. These names can be used in the function 'Csound.Base.fineFi'
-    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2, 
-    idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes, 
+    idWavs, idMp3s, idDoubles, idSines, idSines3, idSines2,
+    idPartials, idSines4, idBuzzes, idConsts, idLins, idCubes,
     idExps, idSplines, idStartEnds,  idPolys, idChebs1, idChebs2, idBessels, idWins,
     idPadsynth, idTanh, idExp, idSone, idFarey, idWave,
 
@@ -181,18 +182,16 @@ module Csound.Tab (
     -- * GENquadbezier — (not implemented yet) Generate a table with values from a quadratic Bézier function.
     -- * GENfarey — fareyTab -- Fills a table with the Farey Sequence Fn of the integer n.
     -- * GENwave — waveletTab -- Generates a compactly supported wavelet function.
-    -- * GENpadsynth — pdsynth, bwSines Generate a sample table using the padsynth algorithm.     
+    -- * GENpadsynth — pdsynth, bwSines Generate a sample table using the padsynth algorithm.
 ) where
 
-import Control.Applicative hiding ((<*))
 import Control.Arrow(second)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
-import Csound.Dynamic hiding (int, when1, whens)
+import Csound.Dynamic hiding (int, when1, whens, genId, pn)
 
 import Data.Default
 import Csound.Typed
-import Csound.Typed.Opcode(ftgentmp, ftgenonce)
 import Data.Maybe
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
@@ -207,14 +206,14 @@ noTab = fromE (-1)
 newTab :: D -> SE Tab
 newTab size = ftgentmp 0 0 size 7 0 [size, 0]
 
--- | Creates a new global table. 
+-- | Creates a new global table.
 -- It's generated only once. It's persisted between instrument calls.
 --
 -- > newGlobalTab identifier size
 newGlobalTab :: D -> SE Tab
-newGlobalTab size = do  
+newGlobalTab size = do
     identifier <- getNextGlobalGenId
-    ref <- newGlobalRef (0 :: D)        
+    ref <- newGlobalRef (0 :: D)
     tabId <- ftgenonce 0 (int identifier) size 7 0 [size, 0]
     writeRef ref (fromGE $ toGE tabId)
     fmap (fromGE . toGE) $ readRef ref
@@ -254,7 +253,7 @@ fromWavChn x = case x of
 --
 -- with channel argument we can read left, right or both channels.
 wavs :: String -> Double -> WavChn -> Tab
-wavs filename skiptime channel = preTab (SizePlain 0) idWavs 
+wavs filename skiptime channel = preTab (SizePlain 0) idWavs
     (FileAccess filename [skiptime, format, fromIntegral $ fromWavChn channel])
     where format = 0
 
@@ -285,11 +284,11 @@ wavRight file = wavs file 0 WavRight
 -- > mp3s fileName skipTime format
 --
 -- skipTime specifies from what second it should read the file.
--- 
+--
 -- format is: 1 - for mono files, 2 - for stereo files, 3 - for left channel of stereo file,
 -- 4 for right channel of stereo file
 mp3s :: String -> Double -> Mp3Chn -> Tab
-mp3s filename skiptime channel = preTab (SizePlain 0) idMp3s 
+mp3s filename skiptime channel = preTab (SizePlain 0) idMp3s
     (FileAccess filename [skiptime, format])
     where format = fromIntegral $ fromMp3Chn channel
 
@@ -322,16 +321,16 @@ findTableSize n
     | isPowerOfTwo n        = n
     | isPowerOfTwo (n - 1)  = n
     | otherwise             = -n
-    
+
 isPowerOfTwo :: Int -> Bool
-isPowerOfTwo a 
+isPowerOfTwo a
     | null zeroes   = False
     | otherwise     = all ( == 0) zeroes
     where zeroes = fmap (flip mod 2) $ takeWhile (> 1) $ iterate (\x -> div x 2) a
 
 -- loadFile :: Int -> String -> Double -> Tab
 
--- | Table contains all provided values 
+-- | Table contains all provided values
 -- (table is extended to contain all values and to be of the power of 2 or the power of two plus one).
 -- (by default it skips normalization).
 doubles :: [Double] -> Tab
@@ -342,8 +341,8 @@ doubles as = skipNorm $ setSize (findTableSize n) $ plains idDoubles as
 --
 -- > exps [a, n1, b, n2, c, ...]
 --
--- where 
--- 
+-- where
+--
 -- * @a, b, c, ...@ are ordinate values
 --
 -- * @n1, n2, ...@  are lengths of the segments relative to the total number of the points in the table
@@ -352,7 +351,7 @@ exps = interp idExps
 
 -- | Equally spaced segments of exponential curves.
 --
--- > eexps [a, b, c, ...] 
+-- > eexps [a, b, c, ...]
 --
 -- is the same as
 --
@@ -360,7 +359,7 @@ exps = interp idExps
 eexps :: [Double] -> Tab
 eexps = exps . insertOnes
 
--- | Segments of cubic polynomials. 
+-- | Segments of cubic polynomials.
 --
 -- > cubes [a, n1, b, n2, c, ...]
 --
@@ -374,7 +373,7 @@ cubes = interp idCubes
 
 -- | Equally spaced segments of cubic polynomials.
 --
--- > ecubes [a, b, c, ...] 
+-- > ecubes [a, b, c, ...]
 --
 -- is the same as
 --
@@ -382,7 +381,7 @@ cubes = interp idCubes
 ecubes :: [Double] -> Tab
 ecubes = cubes . insertOnes
 
--- | Segments of straight lines. 
+-- | Segments of straight lines.
 --
 -- > lins [a, n1, b, n2, c, ...]
 --
@@ -396,7 +395,7 @@ lins = interp idLins
 
 -- | Equally spaced segments of straight lines.
 --
--- > elins [a, b, c, ...] 
+-- > elins [a, b, c, ...]
 --
 -- is the same as
 --
@@ -418,7 +417,7 @@ splines = interp idSplines
 
 -- | Equally spaced spline curve.
 --
--- > esplines [a, b, c, ...] 
+-- > esplines [a, b, c, ...]
 --
 -- is the same as
 --
@@ -440,14 +439,14 @@ consts = interp idConsts
 
 -- | Equally spaced constant segments.
 --
--- > econsts [a, b, c, ...] 
+-- > econsts [a, b, c, ...]
 --
 -- is the same as
 --
 -- > consts [a, 1, b, 1, c, ...]
 econsts :: [Double] -> Tab
 econsts = consts . insertOnes
-   
+
 -- | Creates a table from a starting value to an ending value.
 --
 -- > startEnds [val1, dur1, type1, val2, dur2, type2, val3, ... typeX, valN]
@@ -459,7 +458,7 @@ econsts = consts . insertOnes
 -- * type1, type2 ... -- if 0, a straight line is produced. If non-zero, then it creates the following curve, for dur steps:
 --
 -- > beg + (end - beg) * (1 - exp( i*type)) / (1 - exp(type * dur))
--- 
+--
 -- * beg, end - end points of the segment
 --
 -- * dur - duration of the segment
@@ -475,7 +474,7 @@ startEnds as = preTab def idStartEnds (relativeArgsGen16 as)
 -- > estartEnds [val1, 1, type1, val2, 1, type2, ...]
 estartEnds :: [Double] -> Tab
 estartEnds = startEnds . insertOnes16
-    where 
+    where
         insertOnes16 xs = case xs of
             a:b:as  -> a : 1 : b : insertOnes16 as
             _       -> xs
@@ -486,7 +485,7 @@ estartEnds = startEnds . insertOnes16
 -- > bpLins [x1, y1, x2, y2, ..., xN, yN]
 --
 -- csound docs: <http://www.csounds.com/manual/html/GEN27.html>
--- 
+--
 -- All x1, x2, .. should belong to the interval [0, 1]. The actual values are rescaled to fit the table size.
 bpLins :: [Double] -> Tab
 bpLins xs = preTab def idLinsBreakPoints $ bpRelativeArgs xs
@@ -571,9 +570,9 @@ sigmoidFall = guardPoint $ sines4 [(0.5, 1, 90, 1)]
 
 -- | Creates tanh sigmoid. The argument is the radius of teh sigmoid.
 tanhSigmoid :: Double -> Tab
-tanhSigmoid x = esplines (fmap tanh [-x, (-x +0.5) .. x]) 
+tanhSigmoid x = esplines (fmap tanh [-x, (-x +0.5) .. x])
 
--- | Generates values similar to the opcode 'Csound.Opcode.Basic.buzz'. 
+-- | Generates values similar to the opcode 'Csound.Opcode.Basic.buzz'.
 --
 -- > buzzes numberOfHarmonics [lowestHarmonic, coefficientOfAttenuation]
 --
@@ -582,7 +581,7 @@ tanhSigmoid x = esplines (fmap tanh [-x, (-x +0.5) .. x])
 buzzes :: Double -> [Double] -> Tab
 buzzes nh opts = plains idBuzzes (nh : take 2 opts)
 
--- | Modified Bessel function of the second kind, order 0 (for amplitude modulated FM). 
+-- | Modified Bessel function of the second kind, order 0 (for amplitude modulated FM).
 --
 -- > bessels xint
 --
@@ -657,23 +656,23 @@ winRectangle    = wins Rectangle [1]
 winSync :: Tab
 winSync         = wins Sync [1]
 
--- | This creates a function that contains a Gaussian window with a maximum value of 1. 
--- The extra argument specifies how broad the window is, as the standard deviation of the curve; 
--- in this example the s.d. is 2. The default value is 1. 
+-- | This creates a function that contains a Gaussian window with a maximum value of 1.
+-- The extra argument specifies how broad the window is, as the standard deviation of the curve;
+-- in this example the s.d. is 2. The default value is 1.
 --
 -- > winGauss 2
 winGauss :: Double -> Tab
 winGauss a = wins Gaussian [1, a]
 
--- | This creates a function that contains a Kaiser window with a maximum value of 1. 
--- The extra argument specifies how "open" the window is, for example a value of 0 results 
--- in a rectangular window and a value of 10 in a Hamming like window. 
+-- | This creates a function that contains a Kaiser window with a maximum value of 1.
+-- The extra argument specifies how "open" the window is, for example a value of 0 results
+-- in a rectangular window and a value of 10 in a Hamming like window.
 --
 -- > winKaiser openness
 winKaiser :: Double -> Tab
 winKaiser openness = wins Kaiser [1, openness]
 
-data WinType 
+data WinType
     = Hamming | Hanning | Bartlett | Blackman
     | Harris | Gaussian | Kaiser | Rectangle | Sync
 
@@ -695,9 +694,9 @@ wins ty params = gen idWins (winTypeId ty : params)
 -- | Padsynth parameters.
 --
 -- see for details: <http://csound.github.io/docs/manual/GENpadsynth.html>
-data PadsynthSpec = PadsynthSpec 
+data PadsynthSpec = PadsynthSpec
     { padsynthFundamental     :: Double
-    , padsynthBandwidth       :: Double    
+    , padsynthBandwidth       :: Double
     , padsynthPartialScale    :: Double
     , padsynthHarmonicStretch :: Double
     , padsynthShape           :: PadsynthShape
@@ -723,10 +722,10 @@ defPadsynthSpec partialBW harmonics = PadsynthSpec 261.625565 partialBW 1 1 Gaus
 
 -- | Creates tables for the padsynth algorithm (described at <http://www.paulnasca.com/algorithms-created-by-me>).
 -- The table size should be very big the default is 18 power of 2.
--- 
+--
 -- csound docs: <http://csound.github.io/docs/manual/GENpadsynth.html>
 padsynth :: PadsynthSpec -> Tab
-padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch shape shapeParameter harmonics) = 
+padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch shape shapeParameter harmonics) =
     plainStringTab idPadsynth ([fundamentalFreq, partialBW, partialScale, harmonicStretch, padsynthShapeId shape, shapeParameter] ++ harmonics)
 
                                     -- 261.625565     25.0         1.0             1.0             2.0                 1.0             1.0 0.5 0.0 0.2
@@ -745,12 +744,12 @@ plainStringTab genId as = preStringTab def genId (ArgsPlain $ return as)
 gen :: Int -> [Double] -> Tab
 gen genId args = preTab def genId (ArgsPlain $ return args)
 
--- | Adds guard point to the table size (details of the interpolation schemes: you do need guard point if your intention is to read the 
--- table once but you don't need the guard point if you read table in many cycles, the guard point is the the first point of your table).  
+-- | Adds guard point to the table size (details of the interpolation schemes: you do need guard point if your intention is to read the
+-- table once but you don't need the guard point if you read table in many cycles, the guard point is the the first point of your table).
 guardPoint :: Tab -> Tab
 guardPoint = updateTabSize $ \x -> case x of
     SizePlain n -> SizePlain $ plainGuardPoint n
-    a -> a{ hasGuardPoint = True }    
+    a -> a{ hasGuardPoint = True }
     where plainGuardPoint n
             | even n    = n + 1
             | otherwise = n
@@ -763,17 +762,17 @@ gp = guardPoint
 setSize :: Int -> Tab -> Tab
 setSize n = updateTabSize $ const (SizePlain n)
 
--- | Sets the relative size value. You can set the base value in the options 
+-- | Sets the relative size value. You can set the base value in the options
 -- (see 'Csound.Base.tabResolution' at 'Csound.Base.CsdOptions', with tabResolution you can easily change table sizes for all your tables).
 -- Here zero means the base value. 1 is the base value multiplied by 2, 2 is the base value multiplied by 4
--- and so on. Negative values mean division by the specified degree. 
+-- and so on. Negative values mean division by the specified degree.
 setDegree :: Int -> Tab -> Tab
 setDegree degree = updateTabSize $ \x -> case x of
     SizePlain n -> SizePlain n
     a -> a{ sizeDegree = degree }
 
 -- | Sets degrees from -3 to 3.
-lllofi, llofi, lofi, midfi, hifi, hhifi, hhhifi :: Tab -> Tab 
+lllofi, llofi, lofi, midfi, hifi, hhifi, hhhifi :: Tab -> Tab
 
 lllofi  = setDegree (-3)
 llofi   = setDegree (-2)
@@ -781,12 +780,12 @@ lofi    = setDegree (-1)
 midfi   = setDegree 0
 hifi    = setDegree 1
 hhifi   = setDegree 2
-hhhifi  = setDegree 3 
+hhhifi  = setDegree 3
 
 -- | Writes tables in sequential locations.
 --
--- This opcode writes to a table in sequential locations to and from an a-rate 
--- variable. Some thought is required before using it. It has at least two major, 
+-- This opcode writes to a table in sequential locations to and from an a-rate
+-- variable. Some thought is required before using it. It has at least two major,
 -- and quite different, applications which are discussed below.
 --
 -- > kstart tablewa kfn, asig, koff
@@ -813,7 +812,7 @@ sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
 --
 -- * maxh -- maxh -- highest harmonic number
 --
--- * ref_sr (optional) -- maxh is scaled by (sr / ref_sr). The default value of ref_sr is sr. If ref_sr is zero or negative, it is now ignored. 
+-- * ref_sr (optional) -- maxh is scaled by (sr / ref_sr). The default value of ref_sr is sr. If ref_sr is zero or negative, it is now ignored.
 --
 -- * interp (optional) -- if non-zero, allows changing the amplitude of the lowest and highest harmonic partial depending on the fractional part of minh and maxh. For example, if maxh is 11.3 then the 12th harmonic partial is added with 0.3 amplitude. This parameter is zero by default.
 --
@@ -828,7 +827,7 @@ tabHarmonics tab minh maxh mrefSr mInterp = hideGE $ do
 -- mixing tabs GEN31 GEN32
 
 -- | It's just like sines3 but inplace of pure sinewave it uses supplied in the first argument shape.
--- 
+--
 -- mixOnTab srcTable [(partialNumber, partialStrength, partialPahse)]
 --
 -- phahse is in range [0, 1]
@@ -868,7 +867,7 @@ scaleTab (minVal, maxVal) tab = hideGE $ do
 
 ----------------------------------------------------
 
--- | tabseg  -- Writes composite waveforms made up of pre-existing waveforms. 
+-- | tabseg  -- Writes composite waveforms made up of pre-existing waveforms.
 --
 -- tabseg [(tab, amplitude, duration)]
 --
@@ -878,12 +877,12 @@ scaleTab (minVal, maxVal) tab = hideGE $ do
 -- here we only specify the relative length of segments. Segments are arranged so
 -- that the start f next segment comes right after the end of the prev segment.
 tabseg :: [(Tab, PartialStrength, Double)] -> Tab
-tabseg xs = hideGE $ do 
+tabseg xs = hideGE $ do
     tabIds <- mapM renderTab tabs
     return $ preTab def idLinTab $ mkArgs tabIds
     where
-        (tabs, amps, durs) = unzip3 xs        
-        segments n = fmap (second $ \x -> x - 1) $ tail $ scanl (\(a, b) x -> (b, b + x)) (0, 0) $ mkRelative n durs
+        (tabs, amps, durs) = unzip3 xs
+        segments n = fmap (second $ \x -> x - 1) $ tail $ scanl (\(_, b) x -> (b, b + x)) (0, 0) $ mkRelative n durs
         mkArgs ids = ArgsPlain $ reader $ \size -> concat $ zipWith3 (\tabId amp (start, finish) -> [fromIntegral tabId, amp, start, finish]) ids amps (segments size)
 
 etabseg :: [(Tab, PartialStrength)] -> Tab
@@ -959,8 +958,8 @@ pcauchyDist = dist 8
 -- | Beta (positive numbers only)
 --
 -- > betaDist alpha beta
--- 
--- * @alpha@ -- alpha value. If kalpha is smaller than one, smaller values favor values near 0. 
+--
+-- * @alpha@ -- alpha value. If kalpha is smaller than one, smaller values favor values near 0.
 --
 -- * @beta@ -- beta value. If kbeta is smaller than one, smaller values favor values near krange.
 betaDist :: Double -> Double -> Tab
@@ -1028,8 +1027,8 @@ tabDist src = hideGE $ do
 --
 -- > randDist  [value1, prob1, value2, prob2, value3, prob3 ... valueN, probN]
 --
--- The first number of each pair is a value, and the second is the probability of that value to 
--- be chosen by a random algorithm. Even if any number can be assigned to the probability element of each pair, 
+-- The first number of each pair is a value, and the second is the probability of that value to
+-- be chosen by a random algorithm. Even if any number can be assigned to the probability element of each pair,
 -- it is suggested to give it a percent value, in order to make it clearer for the user.
 --
 -- This subroutine is designed to be used together with duserrnd and urd opcodes (see duserrnd for more information).
@@ -1039,13 +1038,13 @@ randDist xs = skipNorm $ gen idRandPairs xs
 
 -- | rangeDist — Generates a random distribution of discrete ranges of values (GEN42).
 --
--- The first number of each group is a the minimum value of the 
--- range, the second is the maximum value and the third is the probability 
--- of that an element belonging to that range of values can be chosen by 
--- a random algorithm. Probabilities for a range should be a fraction of 1, 
+-- The first number of each group is a the minimum value of the
+-- range, the second is the maximum value and the third is the probability
+-- of that an element belonging to that range of values can be chosen by
+-- a random algorithm. Probabilities for a range should be a fraction of 1,
 -- and the sum of the probabilities for all the ranges should total 1.0.
 --
--- This subroutine is designed to be used together with duserrnd and urd opcodes (see duserrnd for more information). 
+-- This subroutine is designed to be used together with duserrnd and urd opcodes (see duserrnd for more information).
 -- Since both duserrnd and urd do not use any interpolation, it is suggested to give a size reasonably big.
 rangeDist :: [Double] -> Tab
 rangeDist xs = skipNorm $ gen idRandRanges xs
@@ -1071,7 +1070,7 @@ readPvocex :: String -> Int -> Tab
 readPvocex filename channel = preTab def idPvocex $ FileAccess filename [fromIntegral channel]
 
 -- | readMultichannel — Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode (GEN52).
--- 
+--
 -- > f # time size 52 nchannels fsrc1 offset1 srcchnls1 [fsrc2 offset2 srcchnls2 ... fsrcN offsetN srcchnlsN]
 --
 -- csound doc: <http://www.csounds.com/manual/html/GEN52.html>
@@ -1084,7 +1083,7 @@ readMultichannel n args = hideGE $ do
 
 ------------------------------------------------------
 
--- | Csound's GEN33 — Generate composite waveforms by mixing simple sinusoids.  
+-- | Csound's GEN33 — Generate composite waveforms by mixing simple sinusoids.
 --
 -- > tabSines1 srcTab nh scl [fmode]
 --
@@ -1092,7 +1091,7 @@ readMultichannel n args = hideGE $ do
 tabSines1 :: Tab -> Double -> Double -> Maybe Double -> Tab
 tabSines1 = tabSinesBy idMixSines2
 
--- | Csound's GEN34 — Generate composite waveforms by mixing simple sinusoids. 
+-- | Csound's GEN34 — Generate composite waveforms by mixing simple sinusoids.
 --
 -- > tabSines2 srcTab nh scl [fmode]
 --
@@ -1125,9 +1124,9 @@ rescaleWaveletTab :: Tab -> Int -> Tab
 rescaleWaveletTab = waveletTabBy 1
 
 waveletTabBy :: Int -> Tab -> Int -> Tab
-waveletTabBy rescaleFlag srcTab seq = hideGE $ do
+waveletTabBy rescaleFlag srcTab sq = hideGE $ do
     tabId <- renderTab srcTab
-    return $ plainStringTab idWave $ fmap fromIntegral [tabId, seq, 0]
+    return $ plainStringTab idWave $ fmap fromIntegral [tabId, sq, rescaleFlag]
 
 -------------------
 -- specific tabs
@@ -1202,7 +1201,7 @@ rescaleSoneTab (start, end) equalpoint = plainStringTab idSone [start, end, equa
 -- > fareyTab mode num
 --
 -- num -- the integer n for generating Farey Sequence Fn
--- 
+--
 -- mode -- integer to trigger a specific output to be written into the table:
 --
 -- * 0 -- outputs floating point numbers representing the elements of Fn.
@@ -1219,15 +1218,15 @@ fareyTab mode num = plainStringTab idFarey $ fmap fromIntegral [num, mode]
 
 ---------------------------------------------------
 
--- | 
--- tablew — Change the contents of existing function tables. 
+-- |
+-- tablew — Change the contents of existing function tables.
 --
--- This opcode operates on existing function tables, changing their contents. 
--- tablew is for writing at k- or at a-rates, with the table number being 
--- specified at init time. Using tablew with i-rate signal and index values 
--- is allowed, but the specified data will always be written to the function 
--- table at k-rate, not during the initialization pass. The valid combinations 
--- of variable types are shown by the first letter of the variable names. 
+-- This opcode operates on existing function tables, changing their contents.
+-- tablew is for writing at k- or at a-rates, with the table number being
+-- specified at init time. Using tablew with i-rate signal and index values
+-- is allowed, but the specified data will always be written to the function
+-- table at k-rate, not during the initialization pass. The valid combinations
+-- of variable types are shown by the first letter of the variable names.
 --
 -- > tablew asig, andx, ifn [, ixmode] [, ixoff] [, iwgmode]
 -- > tablew isig, indx, ifn [, ixmode] [, ixoff] [, iwgmode]
@@ -1239,7 +1238,7 @@ tablew b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTa
     where f a1 a2 a3 = opcs "tablew" [(Xr,[Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 
--- | 
+-- |
 -- Notice that this function is the same as @tab@, but it wraps the output in the SE-monad.
 -- So you can use the @tab@ if your table is read-only and you can use @readTab@ if
 -- you want to update the table and the order of read/write operation is important.
@@ -1264,7 +1263,7 @@ readTab b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <
 
 
 
--- | 
+-- |
 -- Notice that this function is the same as @table@, but it wraps the output in the SE-monad.
 -- So you can use the @table@ if your table is read-only and you can use @readTable@ if
 -- you want to update the table and the order of read/write operation is important.
@@ -1282,7 +1281,7 @@ readTable b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b
                                  ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                  ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
--- | 
+-- |
 -- Notice that this function is the same as @tablei@, but it wraps the output in the SE-monad.
 -- So you can use the @tablei@ if your table is read-only and you can use @readTablei@ if
 -- you want to update the table and the order of read/write operation is important.
@@ -1300,7 +1299,7 @@ readTable3 b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE 
                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
--- | 
+-- |
 -- Notice that this function is the same as @table3@, but it wraps the output in the SE-monad.
 -- So you can use the @table3@ if your table is read-only and you can use @readTable3@ if
 -- you want to update the table and the order of read/write operation is important.
@@ -1318,11 +1317,11 @@ readTablei b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE 
                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
--- | 
--- tableikt — Provides k-rate control over table numbers. 
+-- |
+-- tableikt — Provides k-rate control over table numbers.
 --
--- k-rate control over table numbers. Function tables are read with linear interpolation. 
--- The standard Csound opcode tablei, when producing a k- or a-rate result, can only use an init-time variable to select the table number. tableikt accepts k-rate control as well as i-time. In all other respects they are similar to the original opcodes. 
+-- k-rate control over table numbers. Function tables are read with linear interpolation.
+-- The standard Csound opcode tablei, when producing a k- or a-rate result, can only use an init-time variable to select the table number. tableikt accepts k-rate control as well as i-time. In all other respects they are similar to the original opcodes.
 --
 -- > ares tableikt xndx, kfn [, ixmode] [, ixoff] [, iwrap]
 -- > kres tableikt kndx, kfn [, ixmode] [, ixoff] [, iwrap]
@@ -1332,11 +1331,11 @@ tableikt ::  Sig -> Tab -> Sig
 tableikt b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
     where f a1 a2 = opcs "tableikt" [(Ar,[Xr,Kr,Ir,Ir,Ir]),(Kr,[Xr,Kr,Ir,Ir,Ir])] [a1,a2]
 
--- | 
--- tablekt — Provides k-rate control over table numbers. 
+-- |
+-- tablekt — Provides k-rate control over table numbers.
 --
--- k-rate control over table numbers. Function tables are read with linear interpolation. 
--- The standard Csound opcode table when producing a k- or a-rate result, can only use an init-time variable to select the table number. tablekt accepts k-rate control as well as i-time. In all other respects they are similar to the original opcodes. 
+-- k-rate control over table numbers. Function tables are read with linear interpolation.
+-- The standard Csound opcode table when producing a k- or a-rate result, can only use an init-time variable to select the table number. tablekt accepts k-rate control as well as i-time. In all other respects they are similar to the original opcodes.
 --
 -- > ares tablekt xndx, kfn [, ixmode] [, ixoff] [, iwrap]
 -- > kres tablekt kndx, kfn [, ixmode] [, ixoff] [, iwrap]
@@ -1347,8 +1346,8 @@ tablekt b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
     where f a1 a2 = opcs "tablekt" [(Ar,[Xr,Kr,Ir,Ir,Ir]),(Kr,[Xr,Kr,Ir,Ir,Ir])] [a1,a2]
 
 
--- | 
--- tablexkt — Reads function tables with linear, cubic, or sinc interpolation. 
+-- |
+-- tablexkt — Reads function tables with linear, cubic, or sinc interpolation.
 --
 -- > ares tablexkt xndx, kfn, kwarp, iwsize [, ixmode] [, ixoff] [, iwrap]
 --
@@ -1375,7 +1374,7 @@ cuserrnd :: SigOrD a => a -> a -> Tab -> SE a
 cuserrnd b1 b2 b3 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> unTab b3
     where f a1 a2 a3 = opcs "cuserrnd" [(Ar,[Kr,Kr,Kr])
                                   ,(Ir,[Ir,Ir,Ir])
-                                  ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3] 
+                                  ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | duserrnd — Discrete USER-defined-distribution RaNDom generator.
 --
@@ -1392,57 +1391,55 @@ duserrnd :: SigOrD a => Tab -> SE a
 duserrnd b1 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b1
     where f a1 = opcs "duserrnd" [(Ar,[Kr])
                                   ,(Ir,[Ir])
-                                  ,(Kr,[Kr])] [a1] 
+                                  ,(Kr,[Kr])] [a1]
 
 ----------------------------------------------------------------
 -- tab args
 
 bpRelativeArgs :: [Double] -> TabArgs
-bpRelativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
+bpRelativeArgs ys = ArgsPlain $ reader $ \size -> fromRelative size ys
     where
         fromRelative n as = substOdds (makeRelative n $ getOdds as) as
 
         getOdds xs = fmap snd $ filter fst $ zip (cycle [True,False]) xs
 
         substOdds odds xs = zipWith3 go (cycle [True,False]) ((\a -> [a,a]) =<< odds) xs
-            where go flag odd x = if flag then odd else x
+            where go flag odd' x = if flag then odd' else x
 
         makeRelative size as = fmap ((fromIntegral :: (Int -> Double)) . round . (fromIntegral size * )) as
 
 relativeArgs :: [Double] -> TabArgs
 relativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
     where
-        fromRelative n as = substEvens (mkRelative n $ getEvens as) as          
+        fromRelative n as = substEvens (mkRelative n $ getEvens as) as
 
-        getEvens xs = case xs of
+        getEvens = \case
             [] -> []
             _:[] -> []
             _:b:as -> b : getEvens as
-            
-        substEvens evens xs = case (evens, xs) of
+
+        substEvens evens ys = case (evens, ys) of
             ([], as) -> as
             (_, []) -> []
             (e:es, a:_:as) -> a : e : substEvens es as
             _ -> error "table argument list should contain even number of elements"
-            
+
 relativeArgsGen16 :: [Double] -> TabArgs
 relativeArgsGen16 xs = ArgsPlain $ reader $ \size -> formRelativeGen16 size xs
-    where            
-        formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
-         
-          -- special case. subst relatives for Gen16
+    where
         formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
 
-        getGen16 xs = case xs of
+        getGen16 = \case
             _:durN:_:rest    -> durN : getGen16 rest
             _                -> []
 
-        substGen16 durs xs = case (durs, xs) of 
+        substGen16 durs ys = case (durs, ys) of
             ([], as) -> as
             (_, [])  -> []
             (d:ds, valN:_:typeN:rest)   -> valN : d : typeN : substGen16 ds rest
-            (_, _)   -> xs
+            (_, _)   -> ys
 
+mkRelative :: (Functor t, Foldable t, RealFrac b, Integral a) => a -> t b -> t Double
 mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as
     where s = fromIntegral n / sum as
 

@@ -115,7 +115,6 @@ module Csound.Types(
 import Data.Boolean
 import Csound.Typed.Types
 import Csound.Typed.Control
-import Csound.Control.SE
 
 -- | Gets an init-rate value from the list by index.
 atArg :: (Tuple a, Arg a) => [a] -> D -> a
@@ -127,21 +126,21 @@ atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as
 
 
 whenElseD :: BoolD -> SE () -> SE () -> SE ()
-whenElseD cond ifDo elseDo = whenDs [(cond, ifDo)] elseDo
+whenElseD condition ifDo elseDo = whenDs [(condition, ifDo)] elseDo
 
 whenElse :: BoolSig -> SE () -> SE () -> SE ()
-whenElse cond ifDo elseDo = whens [(cond, ifDo)] elseDo
+whenElse condition ifDo elseDo = whens [(condition, ifDo)] elseDo
 
 -- | Performs tree search f the first argument lies within the interval it performs the corresponding procedure.
 compareWhenD :: D -> [(D, SE ())] -> SE ()
-compareWhenD val conds = case conds of
+compareWhenD val conditions = case conditions of
     [] -> return ()
-    [(cond, ifDo)] -> ifDo
-    (cond1, do1):(cond2, do2): [] -> whenElseD (val `lessThan` cond1) do1 do2
-    _ -> whenElseD (val `lessThan` rootCond) (compareWhenD val less) (compareWhenD val more)
+    [(_condition, ifDo)] -> ifDo
+    (condition1, do1):(_condition2, do2): [] -> whenElseD (val `lessThan` condition1) do1 do2
+    _ -> whenElseD (val `lessThan` rootcondition) (compareWhenD val less) (compareWhenD val more)
     where
-        (less, more) = splitAt (length conds `div` 2) conds
-        rootCond = fst $ last less
+        (less, more) = splitAt (length conditions `div` 2) conditions
+        rootcondition = fst $ last less
 
 -- | It's used to synchronize changes with BPM.
 -- Useful with LFO's or delay times.
@@ -149,7 +148,7 @@ syn :: Sig -> Sig
 syn x = (bpm / 60) * x
     where bpm = getBpm
 
--- | Calculates seconds in ratio to global BPM.
+-- | Calculates seconditions in ratio to global BPM.
 -- It measures time according to changes in the BPM.
 -- It's reciprocal to @syn@.
 takt :: Sig -> Sig

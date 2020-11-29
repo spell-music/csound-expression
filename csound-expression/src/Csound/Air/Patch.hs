@@ -1,29 +1,29 @@
-{-# Language ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances #-}
+{-# Language ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances, LambdaCase #-}
 -- | Patches.
 module Csound.Air.Patch(
-  
-	CsdNote, Instr, MonoInstr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
-	Patch1, Patch2, Patch(..), PolySyntSpec(..), MonoSyntSpec(..),
+
+  CsdNote, Instr, MonoInstr, Fx, Fx1, Fx2, FxSpec(..), DryWetRatio,
+  Patch1, Patch2, Patch(..), PolySyntSpec(..), MonoSyntSpec(..),
     SyntSkin, GenInstr, GenMonoInstr, GenFxSpec,
     polySynt, monoSynt, adsrMono, adsrMonoFilter, fxSpec, polySyntFilter, monoSyntFilter, fxSpecFilter,
 
-    mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,	
+    mapPatchInstr, mapMonoPolyInstr, transPatch, dryPatch, getPatchFx,
     setFxMix, setFxMixes,
     setMidiChn,
 
-	-- * Midi
-	atMidi, 
+  -- * Midi
+  atMidi,
 
-	-- * Events
-	atSched, atSchedUntil, atSchedHarp,
+  -- * Events
+  atSched, atSchedUntil, atSchedHarp,
 
-	-- * Sco
-	atSco,
+  -- * Sco
+  atSco,
 
-	-- * Single note
-	atNote,
+  -- * Single note
+  atNote,
 
-	-- * Fx
+  -- * Fx
     addInstrFx, addPreFx, addPostFx,
 
     -- ** Specific fx
@@ -31,56 +31,55 @@ module Csound.Air.Patch(
     mapFx, mapFx', bindFx, bindFx',
     mapPreFx, mapPreFx', bindPreFx, bindPreFx',
 
-	-- * Pads
-	harmonPatch, deepPad,
+  -- * Pads
+  harmonPatch, deepPad,
 
-	-- * Misc
-	patchWhen, 
+  -- * Misc
+  patchWhen,
 
     mixInstr,
 
-	-- * Rever
-	withSmallRoom, withSmallRoom', 
-	withSmallHall, withSmallHall',
-	withLargeHall, withLargeHall',
-	withMagicCave, withMagicCave',
+  -- * Rever
+  withSmallRoom, withSmallRoom',
+  withSmallHall, withSmallHall',
+  withLargeHall, withLargeHall',
+  withMagicCave, withMagicCave',
 
-	-- * Sound font patches
-	sfPatch, sfPatchHall,
+  -- * Sound font patches
+  sfPatch, sfPatchHall,
 
     -- * Monosynt params
     onMonoSyntSpec, setMonoSlide, setMonoSharp,
-	
+
     -- * Csound API
     patchByNameMidi,
 
-	-- * Custom temperament
-	-- ** Midi
-	atMidiTemp,
-	-- ** Csound API
-    patchByNameMidiTemp	    
+  -- * Custom temperament
+  -- ** Midi
+  atMidiTemp,
+  -- ** Csound API
+    patchByNameMidiTemp
 ) where
 
-import Data.Boolean
-import Data.Default    
+import Data.Boolean hiding (cond)
+import Data.Default
 import Control.Monad
 import Control.Applicative
 import Control.Arrow(second)
 
 import Control.Monad.Trans.Reader
-import Csound.Typed
-import Csound.SigSpace
+import Csound.Typed hiding (arg)
 import Csound.Control.Midi
 import Csound.Control.Instr
 import Csound.Control.Evt(impulse)
 import Csound.Control.Sf
 import Csound.Air.Fx
 import Csound.Air.Filter(ResonFilter, mlp)
-import Csound.Typed.Opcode(cpsmidinn, ampdb)
+import Csound.Typed.Opcode(cpsmidinn)
 import Csound.Tuning
 import Csound.Types
 
-import Csound.SigSpace
+import Temporal.Media hiding (rest)
 import Csound.IO
 
 -- | Common parameters for patches. We use this type to parametrize the patch with some tpyes of arguments
@@ -88,7 +87,7 @@ import Csound.IO
 -- change the character of the patch. So by making patches depend on filter type we can let the user to change
 -- the filter type and  leave the algorithm the same. It's like changing between trademarks. Moog sound vs Korg sound.
 --
--- The instruments in the patches depend on the @SyntSkin@ through the @Reader@ data type. 
+-- The instruments in the patches depend on the @SyntSkin@ through the @Reader@ data type.
 --
 -- If user doesn't supply any syntSkin value the default is used (`mlp` -- moog low pass filter). Right now
 -- the data type is just a synonym for filter but it can become a data type with more parameters in the future releases.
@@ -125,9 +124,9 @@ type Fx2 = Fx Sig2
 
 -- | Fx specification. It;s a pair of dryWet ratio and a transformation function.
 data FxSpec a = FxSpec
-	{ fxMix :: DryWetRatio
-	, fxFun :: Fx a	
-	}
+  { fxMix :: DryWetRatio
+  , fxFun :: Fx a
+  }
 
 -- | Mono-output patch.
 type Patch1 = Patch Sig
@@ -136,17 +135,17 @@ type Patch1 = Patch Sig
 type Patch2 = Patch Sig2
 
 -- | Specification for monophonic synthesizer.
--- 
+--
 -- * Chn -- midi channel to listen on
 --
 -- * SlideTime -- time of transition between notes
 data MonoSyntSpec = MonoSyntSpec
-    { monoSyntChn       :: MidiChn      
+    { monoSyntChn       :: MidiChn
     , monoSyntSlideTime :: Maybe D }
 
 instance Default MonoSyntSpec where
-    def = MonoSyntSpec 
-        { monoSyntChn = ChnAll        
+    def = MonoSyntSpec
+        { monoSyntChn = ChnAll
         , monoSyntSlideTime = Just 0.008 }
 
 data PolySyntSpec = PolySyntSpec
@@ -163,13 +162,13 @@ instance Default PolySyntSpec where
 --
 -- * set of common parameters (@SyntSkin@)
 --
--- * patch with chain of effects, 
+-- * patch with chain of effects,
 --
 -- * split on keyboard with certain frequency
 --
 -- * layer of patches. That is a several patches that sound at the same time.
 --  the layer is a patch and the weight of volume for a given patch.
-data Patch a 
+data Patch a
     = MonoSynt MonoSyntSpec (GenMonoInstr a) -- (GenInstr Sig a)
     | PolySynt PolySyntSpec (GenInstr D   a)
     | SetSkin SyntSkin (Patch a)
@@ -177,14 +176,14 @@ data Patch a
     | SplitPatch (Patch a) D (Patch a)
     | LayerPatch [(Sig, Patch a)]
 
-
+smoothMonoSpec :: MonoSyntSpec -> MonoArg -> MonoArg
 smoothMonoSpec spec = maybe id smoothMonoArg (monoSyntSlideTime spec)
 
 -- | Constructor for polyphonic synthesizer. It expects a function from notes to signals.
 polySynt :: (Instr D a) -> Patch a
 polySynt = PolySynt def . return
 
--- | Constructor for polyphonic synthesizer with flexible choice of the low-pass filter. 
+-- | Constructor for polyphonic synthesizer with flexible choice of the low-pass filter.
 -- If we use the filter from the first argument user lately can change it to some another filter. It defaults to mlp.
 polySyntFilter :: (ResonFilter -> Instr D a) -> Patch a
 polySyntFilter instr = PolySynt def $ reader instr
@@ -197,9 +196,9 @@ adsrMono f = monoSynt (adsrMonoSynt f)
 -- | Constructor for monophonic synth with envelope generator and flexible choice of filter. It's just like @adsrMono@
 -- but the user lately can change filter provided in the first argument to some another filter.
 adsrMonoFilter :: (ResonFilter -> MonoAdsr -> Instr Sig a) -> Patch a
-adsrMonoFilter f = monoSyntFilter (\filter -> adsrMonoSynt (f filter))
+adsrMonoFilter f = monoSyntFilter (\fltr -> adsrMonoSynt (f fltr))
 
--- | Constructor for monophonic synthesizer. The instrument is defned on the raw monophonic aruments (see @MonoArg@). 
+-- | Constructor for monophonic synthesizer. The instrument is defned on the raw monophonic aruments (see @MonoArg@).
 monoSynt :: (MonoInstr a) -> Patch a
 monoSynt = MonoSynt def . return
 
@@ -207,13 +206,13 @@ monoSynt = MonoSynt def . return
 monoSyntFilter :: (ResonFilter -> MonoInstr a) -> Patch a
 monoSyntFilter instr = MonoSynt def $ reader instr
 
--- | Constructor for FX-specification. 
+-- | Constructor for FX-specification.
 --
 -- > fxSpec dryWetRatio fxFun
 fxSpec :: Sig -> Fx a -> GenFxSpec a
 fxSpec ratio fx = return $ FxSpec ratio fx
 
--- | Constructor for FX-specification with flexible filter choice. 
+-- | Constructor for FX-specification with flexible filter choice.
 --
 -- > fxSpec dryWetRatio fxFun
 fxSpecFilter :: Sig -> (ResonFilter -> Fx a) -> GenFxSpec a
@@ -245,9 +244,9 @@ mapPatchInstr f x = case x of
 
 -- | Removes all effects from the patch.
 dryPatch :: Patch a -> Patch a
-dryPatch x = case x of
-    MonoSynt spec instr -> x
-    PolySynt spec instr -> x
+dryPatch patch = case patch of
+    MonoSynt _ _ -> patch
+    PolySynt _ _ -> patch
     SetSkin skin p -> SetSkin skin (dryPatch p)
     FxChain _ p         -> dryPatch p
     SplitPatch a dt b   -> SplitPatch (dryPatch a) dt (dryPatch b)
@@ -259,9 +258,9 @@ setFxMix a = setFxMixes [a]
 
 -- | Sets the dryWet ratios for the chain of the effects wwithin the patch.
 setFxMixes :: [Sig] -> Patch a -> Patch a
-setFxMixes ks p = case p of
-    FxChain fxs x -> FxChain (zipFirst (\k x -> fmap (\t -> t { fxMix = k }) x) ks fxs) x
-    _ -> p
+setFxMixes ks = \case
+    FxChain fxs x -> FxChain (zipFirst (\k q -> fmap (\t -> t { fxMix = k }) q) ks fxs) x
+    other -> other
     where
         zipFirst f xs ys = case (xs, ys) of
             (_,    [])   -> []
@@ -271,7 +270,7 @@ setFxMixes ks p = case p of
 --------------------------------------------------------------
 
 instance SigSpace a => SigSpace (Patch a) where
-	mapSig f x = 
+  mapSig f x =
             case x of
                 MonoSynt spec instr -> MonoSynt spec $ fmap (fmap (mapSig f) . ) $ instr
                 PolySynt spec instr -> PolySynt spec $ fmap (fmap (mapSig f) . ) $ instr
@@ -281,7 +280,7 @@ instance SigSpace a => SigSpace (Patch a) where
                 LayerPatch xs  -> FxChain [return $ FxSpec 1 (return . mapSig f)] $ LayerPatch xs
 
 mapSnd :: (a -> b) -> [(c, a)] -> [(c, b)]
-mapSnd f = fmap (second f) 
+mapSnd f = fmap (second f)
 
 wet :: (SigSpace a, Sigs a) => FxSpec a -> Fx a
 wet (FxSpec k fx) asig = fmap ((mul (1 - k) asig + ) . mul k) $ fx asig
@@ -292,16 +291,16 @@ getPatchFx maybeSkin xs = foldr (<=<) return $ fmap (wet . flip runSkin maybeSki
 
 -- | Plays a patch with a single infinite note.
 atNote :: (SigSpace a, Sigs a) => Patch a -> CsdNote D -> SE a
-atNote p note = go Nothing p note
-    where              
-        go maybeSkin p note@(amp, cps) = case p of
-            MonoSynt spec instr -> (runSkin instr maybeSkin) (MonoArg (sig amp) (sig cps) 1 (impulse 0))
-            PolySynt spec instr -> (runSkin instr maybeSkin) note
+atNote = go Nothing
+    where
+        go maybeSkin q note@(amp, cps) = case q of
+            MonoSynt _spec instr -> (runSkin instr maybeSkin) (MonoArg (sig amp) (sig cps) 1 (impulse 0))
+            PolySynt _spec instr -> (runSkin instr maybeSkin) note
             SetSkin  skin p -> newSkin skin p
             FxChain fxs p -> getPatchFx maybeSkin fxs =<< rec p
             LayerPatch xs -> onLayered xs rec
             SplitPatch a t b -> getSplit (cps `lessThan` t) (rec a) (rec b)
-            where                
+            where
                 rec x = go maybeSkin x note
                 newSkin skin x = go (Just skin) x note
 
@@ -311,7 +310,7 @@ runSkin instr maybeSkin = runReader instr $ maybe mlp id maybeSkin
 getSplit :: (Num a, Tuple a) => BoolD -> SE a -> SE a -> SE a
 getSplit cond a b = do
     ref <- newRef 0
-    whenElseD cond 
+    whenElseD cond
         (mixRef ref =<< a)
         (mixRef ref =<< b)
     readRef ref
@@ -320,17 +319,17 @@ getSplit cond a b = do
 -- midi
 
 midiChn :: Sigs a => MidiChn -> (Msg -> SE a) -> SE a
-midiChn chn = case chn of
+midiChn = \case
     ChnAll -> midi
     Chn n  -> midin n
     Pgm pgm chn -> pgmidi pgm chn
 
--- | Plays a patch with midi. 
+-- | Plays a patch with midi.
 atMidi :: (SigSpace a, Sigs a) => Patch a -> SE a
-atMidi x = go Nothing x
-    where 
-        go maybeSkin x = case x of
-            MonoSynt spec instr -> monoSynt spec (runSkin instr maybeSkin)
+atMidi = go Nothing
+    where
+        go maybeSkin = \case
+            MonoSynt spec instr -> monoSyntProc spec (runSkin instr maybeSkin)
             PolySynt spec instr -> midiChn (polySyntChn spec) ((runSkin instr maybeSkin) . ampCps)
             SetSkin skin p -> newSkin skin p
             FxChain fxs p -> getPatchFx maybeSkin fxs =<< rec p
@@ -340,17 +339,17 @@ atMidi x = go Nothing x
                 newSkin skin p = go (Just skin) p
                 rec = go maybeSkin
 
-                monoSynt spec instr = instr =<< getArg
+                monoSyntProc spec instr = instr =<< getArg
                     where
-                        getArg = fmap (smoothMonoSpec spec) $ genMonoMsg chn                         
+                        getArg = fmap (smoothMonoSpec spec) $ genMonoMsg chn
                         chn  = monoSyntChn spec
 
 -- | Plays a patch with midi with given temperament (see @Csound.Tuning@).
 atMidiTemp :: (SigSpace a, Sigs a) => Temp -> Patch a -> SE a
-atMidiTemp tm x = go Nothing x
-    where 
-        go maybeSkin x = case x of
-            MonoSynt spec instr -> monoSynt spec (runSkin instr maybeSkin)
+atMidiTemp tm = go Nothing
+    where
+        go maybeSkin = \case
+            MonoSynt spec instr -> monoSyntProc spec (runSkin instr maybeSkin)
             PolySynt spec instr -> midiChn (polySyntChn spec) ((runSkin instr maybeSkin) . ampCps' tm)
             SetSkin skin p -> newSkin skin p
             FxChain fxs p -> getPatchFx maybeSkin fxs =<< rec p
@@ -360,38 +359,38 @@ atMidiTemp tm x = go Nothing x
                 newSkin skin p = go (Just skin) p
                 rec = go maybeSkin
 
-                monoSynt spec instr = instr =<< getArg
+                monoSyntProc spec instr = instr =<< getArg
                     where
-                        getArg = fmap (smoothMonoSpec spec) $ genMonoMsgTemp tm chn                         
+                        getArg = fmap (smoothMonoSpec spec) $ genMonoMsgTemp tm chn
                         chn  = monoSyntChn spec
 
 
 genMidiSplitPatch :: (SigSpace a, Sigs a) => Maybe SyntSkin -> (Msg -> (D, D)) -> Patch a -> D -> Patch a -> SE a
-genMidiSplitPatch maybeSkin midiArg = genSplitPatch maybeSkin playMonoInstr playInstr 
+genMidiSplitPatch maybeSkin midiArg = genSplitPatch maybeSkin playMonoInstr playInstr
     where
         playMonoInstr chn cond instr = instr =<< genFilteredMonoMsg chn cond
         playInstr chn instr = midiChn chn (instr . midiArg)
 
 genSplitPatch :: (SigSpace a, Sigs a) => Maybe SyntSkin -> (MidiChn -> (D -> BoolD) -> MonoInstr a -> SE a)  -> (MidiChn -> (CsdNote D -> SE a) -> SE a) -> Patch a -> D -> Patch a -> SE a
-genSplitPatch maybeSkin playMonoInstr playInstr a dt b = liftA2 (+) (leftSplit maybeSkin dt a) (rightSplit maybeSkin dt b)
+genSplitPatch maybeSkin' playMonoInstr playInstr a' dt' b' = liftA2 (+) (leftSplit maybeSkin' dt' a') (rightSplit maybeSkin' dt' b')
     where
         leftSplit  maybeSkin dt a = onCondPlay maybeSkin ( `lessThan` dt)          ( `lessThan` (sig dt))           a
         rightSplit maybeSkin dt a = onCondPlay maybeSkin ( `greaterThanEquals` dt) ( `greaterThanEquals` (sig dt))  a
 
-        onCondPlay maybeSkin cond condSig x = case x of
-            MonoSynt spec instr -> playMonoInstr  (monoSyntChn spec) cond  (runSkin instr maybeSkin)
+        onCondPlay maybeSkin cond condSig = \case
+            MonoSynt spec instr -> playMonoInstr  (monoSyntChn spec) cond  (restrictMonoInstr condSig $ runSkin instr maybeSkin)
             PolySynt spec instr -> playInstr (polySyntChn spec) (restrictPolyInstr cond (runSkin instr maybeSkin))
             SetSkin  skin p -> onCondPlay (Just skin) cond condSig p
             FxChain fxs p -> getPatchFx maybeSkin fxs =<< onCondPlay maybeSkin cond condSig p
             LayerPatch xs -> onLayered xs (onCondPlay maybeSkin cond condSig)
-            SplitPatch a dt b -> liftA2 (+) 
-                        (onCondPlay maybeSkin (\x -> cond x &&* (x `lessThan` dt))           (\x -> condSig x &&* (x `lessThan` (sig dt))) a) 
+            SplitPatch a dt b -> liftA2 (+)
+                        (onCondPlay maybeSkin (\x -> cond x &&* (x `lessThan` dt))           (\x -> condSig x &&* (x `lessThan` (sig dt))) a)
                         (onCondPlay maybeSkin (\x -> cond x &&* (x `greaterThanEquals` dt))  (\x -> condSig x &&* (x `greaterThanEquals` (sig dt) ))  b)
 
 restrictPolyInstr :: (Sigs a) => (D -> BoolD) -> (CsdNote D -> SE a) -> CsdNote D -> SE a
-restrictPolyInstr cond instr note@(amp, cps) = do
+restrictPolyInstr cond instr note@(_amp, cps) = do
     ref <- newRef 0
-    whenElseD (cond cps) 
+    whenElseD (cond cps)
         (writeRef ref =<< instr note)
         (writeRef ref 0)
     readRef ref
@@ -399,15 +398,15 @@ restrictPolyInstr cond instr note@(amp, cps) = do
 restrictMonoInstr :: (Sigs a) => (Sig -> BoolSig) -> MonoInstr a -> MonoInstr a
 restrictMonoInstr cond instr arg = instr $ arg { monoGate = monoGate arg * gate2 }
     where
-        cps = monoCps arg 
+        cps = monoCps arg
         gate2 = ifB (cond cps) 1 0
 
 --------------------------------------------------------------
 -- sched
 
--- | Plays a patch with event stream. 
+-- | Plays a patch with event stream.
 atSched :: (SigSpace a, Sigs a) => Patch a -> Evt (Sco (CsdNote D)) -> SE a
-atSched x evt = go Nothing x evt
+atSched = go Nothing
     where
         go maybeSkin x evt = case x of
             MonoSynt spec instr -> (runSkin instr maybeSkin) =<< (fmap (smoothMonoSpec spec) $ monoSched evt)
@@ -416,28 +415,28 @@ atSched x evt = go Nothing x evt
             FxChain fxs p  -> getPatchFx maybeSkin fxs =<< rec p
             LayerPatch xs -> onLayered xs rec
             SplitPatch a t b -> genSplitPatch maybeSkin (const $ const playMonoInstr) (const playInstr) a t b
-            where 
-                rec x = go maybeSkin x evt
-                newSkin skin x = go (Just skin) x evt
+            where
+                rec a = go maybeSkin a evt
+                newSkin skin a = go (Just skin) a evt
                 playInstr instr = return $ sched instr evt
                 playMonoInstr instr = instr =<< monoSched evt
 
--- | Plays a patch with event stream with stop-note event stream. 
+-- | Plays a patch with event stream with stop-note event stream.
 atSchedUntil :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> Evt b -> SE a
-atSchedUntil x evt stop = go Nothing x evt stop
-    where 
-        go maybeSkin x evt stop = case x of     
+atSchedUntil = go Nothing
+    where
+        go maybeSkin x evt stop = case x of
             MonoSynt _ instr -> playMonoInstr (runSkin instr maybeSkin)
             PolySynt _ instr -> playInstr (runSkin instr maybeSkin)
             SetSkin skin p -> newSkin skin p
             FxChain fxs p  -> getPatchFx maybeSkin fxs =<< rec p
             LayerPatch xs -> onLayered xs rec
             SplitPatch a cps b -> genSplitPatch maybeSkin (const $ const playMonoInstr) (const playInstr) a cps b
-            where 
-                rec x = go maybeSkin x evt stop
-                newSkin skin x = go (Just skin) x evt stop
+            where
+                rec a = go maybeSkin a evt stop
+                newSkin skin a = go (Just skin) a evt stop
                 playInstr instr = return $ schedUntil instr evt stop
-                playMonoInstr instr = instr =<< monoSchedUntil evt stop                
+                playMonoInstr instr = instr =<< monoSchedUntil evt stop
 
 -- | Plays notes indefinetely (it's more useful for monophonic synthesizers).
 atSchedHarp :: (SigSpace a, Sigs a) => Patch a -> Evt (CsdNote D) -> SE a
@@ -445,50 +444,50 @@ atSchedHarp x evt = atSchedUntil  x evt mempty
 
 --------------------------------------------------------------
 -- sco
- 
--- | Plays a patch with scores. 
+
+-- | Plays a patch with scores.
 atSco :: forall a . (SigSpace a, Sigs a) => Patch a -> Sco (CsdNote D) -> Sco (Mix a)
-atSco x sc = go Nothing x sc
-    where         
-        go maybeSkin x sc = case x of
-            MonoSynt _ instr -> monoSco (runSkin instr maybeSkin) sc
-            PolySynt _ instr -> sco (runSkin instr maybeSkin) sc 
-            SetSkin skin p -> newSkin skin p
-            FxChain fxs p  -> eff (getPatchFx maybeSkin fxs) $ rec p
+atSco = go Nothing
+    where
+        go skin x sc = case x of
+            MonoSynt _ instr -> monoSco (runSkin instr skin) sc
+            PolySynt _ instr -> sco (runSkin instr skin) sc
+            SetSkin sk p -> newSkin sk p
+            FxChain fxs p  -> eff (getPatchFx skin fxs) $ rec p
             LayerPatch xs -> har $ fmap (\(vol, p) -> rec (mul vol p)) xs
-            SplitPatch a cps b -> scoSplitPatch maybeSkin a cps b sc
+            SplitPatch a cps b -> scoSplitPatch skin a cps b
             where
-                rec x = go maybeSkin x sc
-                newSkin skin x = go (Just skin) x sc
+                rec a = go skin a sc
+                newSkin sk a = go (Just sk) a sc
 
-                scoSplitPatch :: Maybe SyntSkin -> Patch a -> D -> Patch a -> Sco (CsdNote D) -> Sco (Mix a)
-                scoSplitPatch maybeSkin a dt b sc = har [leftSplit maybeSkin dt a, rightSplit maybeSkin dt b]
+                scoSplitPatch :: Maybe SyntSkin -> Patch a -> D -> Patch a -> Sco (Mix a)
+                scoSplitPatch maybeSkin a dt b = har [leftSplit maybeSkin dt a, rightSplit maybeSkin dt b]
                     where
-                        leftSplit  maybeSkin dt a = onCondPlay maybeSkin ( `lessThan` dt) a
-                        rightSplit maybeSkin dt a = onCondPlay maybeSkin ( `greaterThanEquals` dt) a
+                        leftSplit  mSkin t = onCondPlay mSkin ( `lessThan` t)
+                        rightSplit mSkin t = onCondPlay mSkin ( `greaterThanEquals` t)
 
-                        onCondPlay maybeSkin cond x = case x of
-                            MonoSynt spec instr -> error "Split doesn't work for monophonic synths with Scores. Please use only polyphonic synths in this case."
-                            PolySynt spec instr -> sco (restrictPolyInstr cond (runSkin instr maybeSkin)) sc
-                            SetSkin skin p -> onCondPlay (Just skin) cond p
-                            FxChain fxs p -> eff (getPatchFx maybeSkin fxs) $ go maybeSkin p sc
-                            LayerPatch xs -> har $ fmap (\(vol, p) -> go maybeSkin (mul vol p) sc) xs
-                            SplitPatch a dt b -> har 
-                                        [ onCondPlay maybeSkin (\x -> cond x &&* (x `lessThan` dt)) a
-                                        , onCondPlay maybeSkin (\x -> cond x &&* (x `greaterThanEquals` dt)) b ]
+                        onCondPlay mSkin cond = \case
+                            MonoSynt _spec _instr -> error "Split doesn't work for monophonic synths with Scores. Please use only polyphonic synths in this case."
+                            PolySynt _spec instr -> sco (restrictPolyInstr cond (runSkin instr mSkin)) sc
+                            SetSkin sk p -> onCondPlay (Just sk) cond p
+                            FxChain fxs p -> eff (getPatchFx mSkin fxs) $ go mSkin p sc
+                            LayerPatch xs -> har $ fmap (\(vol, p) -> go mSkin (mul vol p) sc) xs
+                            SplitPatch m t n -> har
+                                        [ onCondPlay mSkin (\q -> cond q &&* (q `lessThan` t)) m
+                                        , onCondPlay mSkin (\q -> cond q &&* (q `greaterThanEquals` t)) n ]
 
 onLayered :: (SigSpace a, Sigs a) => [(Sig, Patch a)] -> (Patch a -> SE a) -> SE a
 onLayered xs f = fmap sum $ mapM (\(vol, p) -> fmap (mul vol) $ f p) xs
 
---    getPatchFx a =<< midi (patchInstr a . ampCps)    
+--    getPatchFx a =<< midi (patchInstr a . ampCps)
 
 -- | Transform  the spec for monophonic patch.
 onMonoSyntSpec :: (MonoSyntSpec -> MonoSyntSpec) -> Patch a -> Patch a
 onMonoSyntSpec f x = case x of
     MonoSynt spec instr -> MonoSynt (f spec) instr
     PolySynt spec instr -> PolySynt spec instr
-    SetSkin skin p -> SetSkin skin  $ onMonoSyntSpec f p 
-    FxChain fxs p -> FxChain fxs $ onMonoSyntSpec f p 
+    SetSkin skin p -> SetSkin skin  $ onMonoSyntSpec f p
+    FxChain fxs p -> FxChain fxs $ onMonoSyntSpec f p
     LayerPatch xs -> LayerPatch $ mapSnd (onMonoSyntSpec f) xs
     SplitPatch a cps b -> SplitPatch (onMonoSyntSpec f a) cps (onMonoSyntSpec f b)
 
@@ -497,8 +496,8 @@ setMidiChn :: MidiChn -> Patch a -> Patch a
 setMidiChn chn x = case x of
     MonoSynt spec instr -> MonoSynt (spec { monoSyntChn = chn }) instr
     PolySynt spec instr -> PolySynt (spec { polySyntChn = chn }) instr
-    SetSkin skin p -> SetSkin skin $ go p 
-    FxChain fxs p -> FxChain fxs $ go p 
+    SetSkin skin p -> SetSkin skin $ go p
+    FxChain fxs p -> FxChain fxs $ go p
     LayerPatch xs -> LayerPatch $ mapSnd go xs
     SplitPatch a cps b -> SplitPatch (go a) cps (go b)
     where go = setMidiChn chn
@@ -531,21 +530,22 @@ addPreFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
 addPreFx dw f p = case p of
     FxChain fxs (PolySynt spec instr) -> FxChain (addFx fxs) (PolySynt spec instr)
     FxChain fxs (MonoSynt spec instr) -> FxChain (addFx fxs) (MonoSynt spec instr)
-    SetSkin skin p -> SetSkin skin $ addPreFx dw f p
-    PolySynt spec instr -> FxChain fxSpec $ PolySynt spec instr
-    MonoSynt spec instr -> FxChain fxSpec $ MonoSynt spec instr
+    SetSkin skin q -> SetSkin skin $ addPreFx dw f q
+    PolySynt spec instr -> FxChain fxSpec' $ PolySynt spec instr
+    MonoSynt spec instr -> FxChain fxSpec' $ MonoSynt spec instr
     LayerPatch xs -> LayerPatch $ mapSnd (addPreFx dw f) xs
     SplitPatch a cps b -> SplitPatch (addPreFx dw f a) cps (addPreFx dw f b)
-    where 
-        addFx xs = xs ++ fxSpec
-        fxSpec = [return $ FxSpec dw f]
+    _ -> undefined
+    where
+        addFx xs = xs ++ fxSpec'
+        fxSpec' = [return $ FxSpec dw f]
 
 -- | Appends an effect after patch's effect.
 addPostFx :: DryWetRatio -> Fx a -> Patch a -> Patch a
 addPostFx dw f p = case p of
-    FxChain fxs rest -> FxChain (return fxSpec : fxs) rest
-    _                -> FxChain [return fxSpec] p
-    where fxSpec = FxSpec dw f
+    FxChain fxs rest -> FxChain (return fxSpec' : fxs) rest
+    _                -> FxChain [return fxSpec'] p
+    where fxSpec' = FxSpec dw f
 
 --------------------------------------------------------------
 
@@ -557,10 +557,10 @@ patchWhen cond x = case x of
     SetSkin skin p -> SetSkin skin $ rec p
     FxChain  fxs p      -> FxChain (fmap (fmap $ mapFun (playWhen cond)) fxs) (rec p)
     LayerPatch xs       -> LayerPatch $ mapSnd rec xs
-    SplitPatch a cps b  -> SplitPatch (rec a) cps (rec b)        
-    where 
+    SplitPatch a cps b  -> SplitPatch (rec a) cps (rec b)
+    where
         rec = patchWhen cond
-        mapFun f x = x { fxFun = f $ fxFun x }
+        mapFun f a = a { fxFun = f $ fxFun a }
 
 -- | Mix two patches together.
 mixInstr :: (SigSpace b, Num b) => Sig -> Patch b -> Patch b -> Patch b
@@ -574,7 +574,7 @@ harmonPatch :: (SigSpace b, Sigs b) => [Sig] -> [D] -> Patch b -> Patch b
 harmonPatch amps freqs = tfmInstr monoTfm polyTfm
     where
         monoTfm instr = \arg -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ transMonoInstr f instr arg) amps freqs
-        polyTfm instr = \arg -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ transPolyInstr f instr arg) amps freqs 
+        polyTfm instr = \arg -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ transPolyInstr f instr arg) amps freqs
 
 -- | Adds an octave below note for a given patch to make the sound deeper.
 deepPad :: (SigSpace b, Sigs b) => Patch b -> Patch b
@@ -588,10 +588,9 @@ tfmInstr monoTfm polyTfm x = case x of
     SetSkin  skin p -> SetSkin skin $ rec p
     FxChain fxs p -> FxChain fxs $ rec p
     SplitPatch a cps b -> SplitPatch (rec a) cps (rec b)
-    LayerPatch xs -> LayerPatch $ mapSnd rec xs
+    LayerPatch xs -> LayerPatch $ fmap (second rec) xs
     where
         rec = tfmInstr monoTfm polyTfm
-        mapSnd f = fmap (second f) 
 
 ------------------------------------------------
 -- revers
@@ -655,11 +654,11 @@ patchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch a -> SE a
 patchByNameMidiTemp tm = genPatchByNameMidi (cpsmidi'Sig tm) (cpsmidi'D tm)
 
 genPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => (Sig -> Sig) -> (D -> D) -> String -> Patch a -> SE a
-genPatchByNameMidi monoKey2cps polyKey2cps name x = go Nothing x    
-    where 
-        go maybeSkin x = case x of 
-            MonoSynt spec instr -> monoSynt spec (runSkin instr maybeSkin)
-            PolySynt spec instr -> polySynt spec (runSkin instr maybeSkin)
+genPatchByNameMidi monoKey2cps polyKey2cps name x = go Nothing x
+    where
+        go maybeSkin = \case
+            MonoSynt spec instr -> monoSyntProc spec (runSkin instr maybeSkin)
+            PolySynt spec instr -> polySyntProc spec (runSkin instr maybeSkin)
             SetSkin skin p      -> newSkin skin p
             FxChain fxs p       -> getPatchFx maybeSkin fxs =<< rec p
             LayerPatch xs       -> onLayered xs rec
@@ -668,19 +667,19 @@ genPatchByNameMidi monoKey2cps polyKey2cps name x = go Nothing x
                 rec = go maybeSkin
                 newSkin skin = go (Just skin)
 
-                monoSynt spec instr = instr =<< (fmap (smoothMonoSpec spec . convert) $ trigNamedMono name)
+                monoSyntProc spec instr = instr =<< (fmap (smoothMonoSpec spec . convert) $ trigNamedMono name)
                     where
-                        convert arg = arg { monoAmp = vel2ampSig (monoAmp arg), monoCps = monoKey2cps (monoCps arg) }                        
+                        convert a = a { monoAmp = vel2ampSig (monoAmp a), monoCps = monoKey2cps (monoCps a) }
 
-                polySynt spec instr = trigByNameMidi name go
+                polySyntProc _spec instr = trigByNameMidi name proc
                     where
-                        go :: (D, D, Unit) -> SE a
-                        go (pitch, vol, _) = instr (vel2amp vol, polyKey2cps pitch)
+                        proc :: (D, D, Unit) -> SE a
+                        proc (pitch, vol, _) = instr (vel2amp vol, polyKey2cps pitch)
 
                 splitPatch a cps b = genSplitPatch maybeSkin playMonoInstr playInstr a cps b
 
-                playMonoInstr chn cond instr = monoSynt (def { monoSyntChn = chn }) instr
-                playInstr chn instr = polySynt (def { polySyntChn = chn }) instr
+                playMonoInstr chn _cond instr = monoSyntProc (def { monoSyntChn = chn }) instr
+                playInstr chn instr = polySyntProc (def { polySyntChn = chn }) instr
 
 vel2amp :: D -> D
 vel2amp vol = ((vol / 64) ** 2) / 2
@@ -709,9 +708,9 @@ patchByNameMidiTemp tm = genPatchByNameMidi (cpsmidi'D tm)
 -- | Wrapper for function @trigByNameMidi@.
 genPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => (D -> D) -> String -> Patch D a -> SE a
 genPatchByNameMidi key2cps name p = getPatchFx p =<< trigByNameMidi name go
-	where
-		go :: (D, D, Unit) -> SE a
-		go (pitch, vol, _) = patchInstr p (vel2amp vol, key2cps pitch)
+  where
+    go :: (D, D, Unit) -> SE a
+    go (pitch, vol, _) = patchInstr p (vel2amp vol, key2cps pitch)
 
 
 -- | Triggers patch with Csound API.
@@ -755,8 +754,8 @@ monoPatchByNameMidiTemp' tm = genMonoPatchByNameMidi' (cpsmidi'Sig tm)
 -- | Wrapper for function @trigByNameMidi@ for mono synth.
 genMonoPatchByNameMidi' :: forall a . (SigSpace a, Sigs a) => (Sig -> Sig) -> D -> D -> String -> Patch Sig a -> SE a
 genMonoPatchByNameMidi' key2cps portTime relTime name p = getPatchFx p =<< patchInstr p =<< fmap convert (trigNamedMono portTime relTime name)
-	where
-		convert (vol, pch) = (vel2ampSig vol, key2cps pch)
+  where
+    convert (vol, pch) = (vel2ampSig vol, key2cps pch)
 
 vel2amp :: D -> D
 vel2amp vol = ((vol / 64) ** 2) / 2
@@ -822,6 +821,8 @@ bindPreFx' rate f = addPreFx rate (bindSig f)
 
 instance RenderCsd Patch1 where
     renderCsdBy opt p = renderCsdBy opt (atMidi p)
+    csdArity _ = CsdArity 0 1
 
 instance RenderCsd Patch2 where
     renderCsdBy opt p = renderCsdBy opt (atMidi p)
+    csdArity _ = CsdArity 0 2

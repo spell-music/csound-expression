@@ -51,8 +51,7 @@ module Csound.Air.Fx(
     fxWhite, fxPink, equalizer, eq4, eq7,
     fxGain,
 
-    fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter, {- ,
-    fxRingModulator, , -}
+    fxAnalogDelay, fxDistortion, fxFollower, fxReverse, fxLoFi, fxChorus2, fxAutoPan, fxTrem, fxPitchShifter, fxFreqShifter,
     fxCompress,
 
     -- * Eq
@@ -62,24 +61,24 @@ module Csound.Air.Fx(
     trackerSplice, pitchShifterDelay
 ) where
 
+import Prelude hiding (min, max, mod)
+
 import Data.Boolean
 import Data.Default
 
 import Csound.Typed
-import Csound.Tab(sines4, startEnds, setSize, elins, newTab, tabSizeSecondsPower2, tablewa, sec2rel)
-import Csound.Typed.Opcode
-import Csound.SigSpace
+import Csound.Typed.Opcode hiding (gain)
 import Csound.Tab
 
-import Csound.Air.Wave(Lfo, unipolar, oscBy, utri, white, pink)
+import Csound.Air.Wave(Lfo, unipolar, oscBy, white, pink)
 import Csound.Air.Filter
 import Csound.Typed.Plugins hiding(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, tapeEcho)
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxChorus2, tapeEcho)
 
 import qualified Csound.Typed.Plugins as P(pitchShifterDelay,
     fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong, tapeRead, tapeWrite, tapeEcho)
+    fxPanTrem, fxPhaser, fxPitchShifter, fxReverse, fxChorus2, fxPingPong, tapeEcho)
 
 -- | Mono version of the cool reverberation opcode reverbsc.
 --
@@ -274,12 +273,12 @@ tabDelay go maxLength delTim  kfeed kbalance asig = do
     buf <- newTab tabLen
     ptrRef <- newRef (0 :: Sig)
     aresRef <- newRef (0 :: Sig)
-    ptr <- readRef ptrRef
-    when1 (ptr >=* sig tabLen) $ do
+    ptr1 <- readRef ptrRef
+    when1 (ptr1 >=* sig tabLen) $ do
         writeRef ptrRef 0
-    ptr <- readRef ptrRef
+    ptr2 <- readRef ptrRef
 
-    let kphs = (ptr / sig tabLen) - (delTim/(sig $ tabLen / getSampleRate))
+    let kphs = (ptr2 / sig tabLen) - (delTim/(sig $ tabLen / getSampleRate))
     awet <-go buf (wrap kphs 0 1)
     writeRef aresRef $ asig + kfeed * awet
     ares <- readRef aresRef
@@ -420,8 +419,8 @@ dryWetMix kmix = (kDry, kWet)
         kDry = kr $ table kmix iDry `withD` 1
 
 fxWet :: (Num a, SigSpace a) => Sig -> a -> a -> a
-fxWet mix ain aout = mul dry ain + mul wet aout
-    where (dry, wet) = dryWetMix mix
+fxWet mixSig ain aout = mul dry ain + mul wet aout
+    where (dry, wet) = dryWetMix mixSig
 
 -- Distortion
 
@@ -447,7 +446,7 @@ fxDistort klevel kdrive ktone ain = aout * (scale klevel 0.8 0) * kGainComp1
 --
 -- > stChorus2 mix rate depth width sigIn
 stChorus2 :: Balance -> RateSig -> DepthSig -> WidthSig -> Sig2 -> Sig2
-stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR)
+stChorus2 kmix krate' kdepth kwidth (aleft, aright) = fxWet kmix (aleft, aright) (aoutL, aoutR)
     where
         krate = expScale 20 (0.001, 7) krate'
         ilfoshape = setSize 131072 $ sines4 [(1, 0.5, 0, 0.5)]
@@ -456,10 +455,10 @@ stChorus2 kmix krate' kdepth kwidth (al, ar) = fxWet kmix (al, ar) (aoutL, aoutR
         amodL = osciliktp   krate ilfoshape 0
         amodR = osciliktp   krate ilfoshape (kwidth*0.5)
         vdel mod x = vdelay x (mod * kChoDepth * 1000) (1.2 * 1000)
-        aChoL = vdel amodL al
-        aChoR = vdel amodR ar
-        aoutL = 0.6 * (aChoL + al)
-        aoutR = 0.6 * (aChoR + ar)
+        aChoL = vdel amodL aleft
+        aChoR = vdel amodR aright
+        aoutL = 0.6 * (aChoL + aleft)
+        aoutR = 0.6 * (aChoR + aright)
 
 -- Analog delay
 
@@ -489,7 +488,7 @@ fxFilter kLPF' kHPF' kgain' ain = mul kgain $ app (blp kLPF) $ app (bhp kHPF) $ 
 --
 -- > equalizer gainsAndFrequencies gain sigIn
 equalizer :: [(Sig, Sig)] -> Sig -> Sig -> Sig
-equalizer fs gain ain0 = case fs of
+equalizer fs gainSig ain0 = case fs of
     []   -> ain
     x:[] -> g 0 x ain
     x:y:[] -> mean [g 1 x ain, g 2 y ain]
@@ -499,7 +498,7 @@ equalizer fs gain ain0 = case fs of
         iEQcurve = skipNorm $ setSize 4096 $ startEnds [1/64,4096,7.9,64]
         iGainCurve = skipNorm $ setSize 4096 $ startEnds [0.5,4096,3,4]
         g ty (gain, freq) asig = pareq  asig freq (table gain iEQcurve `withD` 1) iQ `withD` ty
-        kgain = table gain iGainCurve `withD` 1
+        kgain = table gainSig iGainCurve `withD` 1
         ain = kgain * ain0
 
 -- | Equalizer with frequencies: 100, 200, 400, 800, 1600, 3200, 6400
@@ -523,8 +522,8 @@ fxGain = mul
 -- > fxWhite lfoFreq depth sigIn
 fxWhite :: Sig -> Sig -> Sig -> SE Sig
 fxWhite freq depth ain = do
-    noise <- white
-    return $ ain + 0.5 * depth * blp cps noise
+    noiseSig <- white
+    return $ ain + 0.5 * depth * blp cps noiseSig
     where cps = expScale 4 (20, 20000) freq
 
 -- | Adds filtered pink noize to the signal
@@ -532,8 +531,8 @@ fxWhite freq depth ain = do
 -- > fxWhite lfoFreq depth sigIn
 fxPink :: Sig -> Sig -> Sig -> SE Sig
 fxPink freq depth ain = do
-    noise <- pink
-    return $ ain + 0.5 * depth * blp cps noise
+    noiseSig <- pink
+    return $ ain + 0.5 * depth * blp cps noiseSig
     where cps = expScale 4 (20, 20000) freq
 
 -- Echo
@@ -590,21 +589,21 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
 
     whens [
         (kmode >=* 1 &&* kmode `lessThan` 2, do
-                kindx <- readRef kindxRef
-                writeRef kindxRef $ ifB (kindx >* segLength) 0 (kindx + 1)
-                kindx <- readRef kindxRef
-                when1 (kindx + apos >* sig (ftlen buf)) $ do
+                kindx1 <- readRef kindxRef
+                writeRef kindxRef $ ifB (kindx1 >* segLength) 0 (kindx1 + 1)
+                kindx2 <- readRef kindxRef
+                when1 (kindx2 + apos >* sig (ftlen buf)) $ do
                     writeRef kindxRef $ (-segLength)
 
-                kindx <- readRef kindxRef
+                kindx3 <- readRef kindxRef
 
-                writeRef aoutRef $ table (apos + kindx) buf `withDs` [0, 1]
+                writeRef aoutRef $ table (apos + kindx3) buf `withDs` [0, 1]
                 writeRef ksampRef 0
         ), (kmode >=* 2 &&* kmode `lessThan` 3, do
-                kindx <- readRef kindxRef
-                writeRef kindxRef $ ifB ((kindx+apos) <=* 0) (sig (ftlen buf) - apos) (kindx-1)
-                kindx <- readRef kindxRef
-                writeRef aoutRef $ table (apos+kindx) buf `withDs` [0, 1]
+                kindx1 <- readRef kindxRef
+                writeRef kindxRef $ ifB ((kindx1+apos) <=* 0) (sig (ftlen buf) - apos) (kindx1-1)
+                kindx2 <- readRef kindxRef
+                writeRef aoutRef $ table (apos+kindx2) buf `withDs` [0, 1]
                 writeRef ksampRef 0
         )] (do
                 writeRef ksampRef 1

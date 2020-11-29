@@ -1,6 +1,6 @@
 -- | Oscillators with hard and soft sync
 module Csound.Air.Wave.Sync(
-	-- * Hard sync
+  -- * Hard sync
     SyncSmooth(..),
 
     sawSync, isawSync, pulseSync, sqrSync, triSync, bloscSync,
@@ -27,7 +27,7 @@ module Csound.Air.Wave.Sync(
     rawTriSyncBy, rawSqrSyncBy, rawSawSyncBy, rawPwSyncBy,
 
     -- *** With absolute slave frequency
-	rawTriSyncAbs, 	rawSqrSyncAbs, rawSawSyncAbs, rawPwSyncAbs,
+  rawTriSyncAbs,  rawSqrSyncAbs, rawSawSyncAbs, rawPwSyncAbs,
     rawTriSyncAbsBy, rawSqrSyncAbsBy, rawSawSyncAbsBy, rawPwSyncAbsBy,
 
    -- * Soft sync
@@ -42,9 +42,8 @@ module Csound.Air.Wave.Sync(
 import Data.Default
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (lfo)
+import Csound.Typed.Opcode hiding (lfo, tab)
 import Csound.Tab
-import Csound.SigSpace
 
 import Csound.Air.Wave
 
@@ -161,22 +160,25 @@ oscSyncBy tab smoothType cpsRatio cps = oscSyncAbsBy tab smoothType (cpsRatio * 
 -- | Hard-sync with non-bandlimited waves.
 oscSyncAbsBy :: Tab -> SyncSmooth -> Sig -> Sig -> Sig
 oscSyncAbsBy tab smoothType slaveCps cps = (\smoothFun -> syncOsc smoothFun tab (ar slaveCps) (ar cps)) $ case smoothType of
-    RawSync      -> (\_ _ -> 1)
-    SawSync      -> (\amaster _ -> (1 - amaster))
-    TriSync      -> (const $ readSync uniTriTab)
-    TrapSync     -> (const $ readSync uniTrapTab)
-    UserSync gen -> (const $ readSync gen)
+    RawSync         -> (\_ _ -> 1)
+    SawSync         -> (\amaster _ -> (1 - amaster))
+    TriSync         -> (const $ readSync uniTriTab)
+    TrapSync        -> (const $ readSync uniTrapTab)
+    UserSync genTab -> (const $ readSync genTab)
     where
         readSync ft async = table3 async ft `withD` 1
+
+uniSawTab, uniTriTab, uniTrapTab :: Tab
 
 uniSawTab  = setSize 4097 $ elins [1, 0]
 uniTriTab  = setSize 4097 $ elins [0, 1, 0]
 uniTrapTab = setSize 4097 $ elins [1, 1, 0]
 
+syncOsc :: (Sig -> Sig -> Sig) -> Tab -> Sig -> Sig -> Sig
 syncOsc smoothFun ftab slaveCps cps = dcblock $ aout
     where
         (amaster, asyncMaster) = syncphasor cps 0
-        (aslave,  asyncSlave)  = syncphasor slaveCps asyncMaster
+        (aslave,  _asyncSlave)  = syncphasor slaveCps asyncMaster
         aosc = table3 aslave ftab `withD` 1
         aout = aosc * smoothFun amaster asyncMaster
 
