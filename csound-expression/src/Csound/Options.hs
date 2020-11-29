@@ -159,5 +159,7 @@ setCabbage = setRates 48000 64 <> setNoRtMidi <> setMidiDevice "0"
     where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }}
 
 -- | Defines what ports we should connect after application is launched
+--
+-- It invokes @jack_connect@ for every pair of port-names in the list.
 setJackConnect :: [(String, String)] -> Options
 setJackConnect connections = def { csdJackConnect = Just connections }

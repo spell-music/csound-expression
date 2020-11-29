@@ -1,6 +1,6 @@
 Name:          csound-catalog
 Version:       0.7.4
-Cabal-Version: >= 1.6
+Cabal-Version: >= 1.22
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
@@ -33,6 +33,7 @@ Library
         csound-sampler >=0.0.10.0,
         sharc-timbre
   Hs-Source-Dirs:      src/
+  Default-language: Haskell2010
   Exposed-Modules:
         Csound.Catalog
         Csound.Catalog.Drum

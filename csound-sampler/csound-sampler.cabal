@@ -8,7 +8,7 @@ Tested-With:         GHC==7.10
 stability:           Experimental
 category:            Music
 build-type:          Simple
-cabal-version:       >=1.8
+cabal-version:       >=1.22
 synopsis:            A musical sampler based on Csound
 description:         A simple sampler based on the library csound-expression. We can define loops
                      and patterns of samples. An intricate pattern of sound is just few strokes away.
@@ -26,6 +26,7 @@ library
   Ghc-Options:    -Wall
   Hs-Source-Dirs:      src/
   build-depends:       base >= 4, base < 5, transformers >= 0.3, csound-expression >= 5.3.4
+  Default-language: Haskell2010
   exposed-modules:
     Csound.Sam
     Csound.Sam.Core
