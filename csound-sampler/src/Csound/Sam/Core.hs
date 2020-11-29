@@ -1,8 +1,8 @@
 -- | The core types/ They are not imported by default.
 {-# Language DeriveFunctor, TypeSynonymInstances, FlexibleInstances #-}
 module Csound.Sam.Core (
-	Sam, runSam, Sample(..), S(..), Dur(..), Bpm,
-	liftSam, mapBpm, mapBpm2, bindSam, bindBpm, bindBpm2, withBpm
+  Sam, runSam, Sample(..), S(..), Dur(..), Bpm,
+  liftSam, mapBpm, mapBpm2, bindSam, bindBpm, bindBpm2, withBpm
 ) where
 
 import Control.Applicative
@@ -16,17 +16,21 @@ type Sam = Sample Sig2
 
 instance RenderCsd Sam where
     renderCsdBy opt sample = renderCsdBy opt (runSam (getBpm * 4) sample)
+    csdArity _ = CsdArity 0 2
 
 instance RenderCsd (Source Sam) where
-	renderCsdBy opt sample = renderCsdBy opt (lift1 (runSam (getBpm * 4)) sample)
+  renderCsdBy opt sample = renderCsdBy opt (lift1 (runSam (getBpm * 4)) sample)
+  csdArity _ = CsdArity 0 2
 
 instance RenderCsd (SE Sam) where
     renderCsdBy opt sample = renderCsdBy opt (runSam (getBpm * 4) =<< sample)
+    csdArity _ = CsdArity 0 2
 
 instance RenderCsd (SE (Source Sam)) where
     renderCsdBy opt sample = renderCsdBy opt $ do
-    	sample' <- sample
-    	lift1 (runSam (getBpm * 4)) sample'
+      sample' <- sample
+      lift1 (runSam (getBpm * 4)) sample'
+    csdArity _ = CsdArity 0 2
 
 runSam :: Bpm -> Sam -> SE Sig2
 runSam bpm x = fmap samSig $ runReaderT (unSam x) bpm
@@ -38,64 +42,64 @@ type Bpm = Sig
 
 -- | The generic type for samples.
 newtype Sample a = Sam { unSam :: ReaderT Bpm SE (S a)
-	} deriving (Functor)
+  } deriving (Functor)
 
 instance Applicative Sample where
-	pure = Sam . pure . pure
-	(Sam rf) <*> (Sam ra) = Sam $ liftA2 (<*>) rf ra
+  pure = Sam . pure . pure
+  (Sam rf) <*> (Sam ra) = Sam $ liftA2 (<*>) rf ra
 
 data S a = S
-	{ samSig :: a
-	, samDur :: Dur
-	} deriving (Functor)
+  { samSig :: a
+  , samDur :: Dur
+  } deriving (Functor)
 
 instance Applicative S where
-	pure a = S a InfDur
-	(S f df) <*> (S a da) = S (f a) $ case (df, da) of
-		(Dur durF, Dur durA) -> Dur $ maxB durF durA
-		_			     -> InfDur
+  pure a = S a InfDur
+  (S f df) <*> (S a da) = S (f a) $ case (df, da) of
+    (Dur durF, Dur durA) -> Dur $ maxB durF durA
+    _          -> InfDur
 
 instance Num a => Num (Sample a) where
-	(+) = liftA2 (+)
-	(*) = liftA2 (*)
-	(-) = liftA2 (-)
-	negate = fmap negate
-	abs = fmap abs
-	signum = fmap signum
-	fromInteger = pure . fromInteger
+  (+) = liftA2 (+)
+  (*) = liftA2 (*)
+  (-) = liftA2 (-)
+  negate = fmap negate
+  abs = fmap abs
+  signum = fmap signum
+  fromInteger = pure . fromInteger
 
 instance Fractional a => Fractional (Sample a) where
-	recip = fmap recip
-	fromRational = pure . fromRational
+  recip = fmap recip
+  fromRational = pure . fromRational
 
 instance SigSpace a => SigSpace (Sample a) where
-	mapSig f = fmap (mapSig f)
+  mapSig f = fmap (mapSig f)
 
 instance SigSpace2 a => SigSpace2 (Sample a) where
-	mapSig2 f = fmap (mapSig2 f)
+  mapSig2 f = fmap (mapSig2 f)
 
 instance BindSig2 a => BindSig2 (Sample a) where
-	bindSig2 f = return . bindSam (bindSig2 f)
+  bindSig2 f = return . bindSam (bindSig2 f)
 
 -- Lifters
 
 -- | Hides the effects inside sample.
 liftSam :: Sample (SE a) -> Sample a
 liftSam (Sam ra) = Sam $ do
-	a <- ra
-	lift $ fmap (\x -> a{ samSig = x}) $ samSig a
+  a <- ra
+  lift $ fmap (\x -> a{ samSig = x}) $ samSig a
 
 -- | Transforms the sample with BPM.
 mapBpm :: (Bpm -> a -> b) -> Sample a -> Sample b
 mapBpm f a = Sam $ do
-	bpm <- ask
-	unSam $ fmap (f bpm) a
+  bpm <- ask
+  unSam $ fmap (f bpm) a
 
 -- | Transforms the sample with BPM.
 mapBpm2 :: (Bpm -> a -> b -> c) -> Sample a -> Sample b -> Sample c
 mapBpm2 f a b = Sam $ do
-	bpm <- ask
-	unSam $ liftA2 (f bpm) a b
+  bpm <- ask
+  unSam $ liftA2 (f bpm) a b
 
 -- | Lifts bind on stereo signals to samples.
 bindSam :: (a -> SE b) -> Sample a -> Sample b
@@ -112,5 +116,5 @@ bindBpm2 f a b = liftSam $ mapBpm2 f a b
 
 withBpm :: (Bpm -> Sample a) -> Sample a
 withBpm x = Sam $ do
-	bpm <- ask
-	unSam $ x bpm
+  bpm <- ask
+  unSam $ x bpm

@@ -1,20 +1,16 @@
 module Csound.Sam.Trig (
-	-- * Char sampler
-	samCharTrig, samCharTap, samCharPush, samCharToggle, samCharGroup, samCharCycle,
+  -- * Char sampler
+  samCharTrig, samCharTap, samCharPush, samCharToggle, samCharGroup, samCharCycle,
 
-	-- ** Synchronized with number of beats
-	samSyncCharTrig, samSyncCharPush, samSyncCharToggle, samSyncCharTap, samSyncCharGroup, samSyncCharCycle,
+  -- ** Synchronized with number of beats
+  samSyncCharTrig, samSyncCharPush, samSyncCharToggle, samSyncCharTap, samSyncCharGroup, samSyncCharCycle,
 
-	-- * Midi sampler
-	samMidiTrig, samMidiTap, samMidiPush, samMidiToggle, samMidiGroup,
+  -- * Midi sampler
+  samMidiTrig, samMidiTap, samMidiPush, samMidiToggle, samMidiGroup,
 
-	-- ** Generic functions
-	samMidiTrigBy, samMidiTapBy, samMidiPushBy, samMidiToggleBy, samMidiGroupBy,
+  -- ** Generic functions
+  samMidiTrigBy, samMidiTapBy, samMidiPushBy, samMidiToggleBy, samMidiGroupBy,
 ) where
-
-import Data.Foldable(Foldable(foldMap))
-import Data.Traversable hiding (mapM)
-import Control.Arrow(first, second)
 
 import Csound.Base
 import qualified Csound.Sam.Core as S
@@ -26,20 +22,20 @@ import Csound.Sam.Core(Sam, bindSam, mapBpm, mapBpm2)
 -- and stops the sample with any char from the second string.
 samCharTrig :: Maybe Sam -> String -> String -> Sam -> Sam
 samCharTrig initVal starts stops x = case initVal of
-	Nothing -> fmap (charTrig Nothing starts stops) x
-	Just v0 -> liftA2 (\v sigs -> charTrig (Just v) starts stops sigs) v0 x
+  Nothing -> fmap (charTrig Nothing starts stops) x
+  Just v0 -> liftA2 (\v sigs -> charTrig (Just v) starts stops sigs) v0 x
 
 -- | Plays a sample while the key is pressed.
 samCharPush :: Maybe Sam -> Char -> Sam -> Sam
 samCharPush initVal ch x = case initVal of
-	Nothing -> fmap (charPush Nothing ch) x
-	Just v0 -> liftA2 (\v sigs -> charPush (Just v) ch sigs) v0 x
+  Nothing -> fmap (charPush Nothing ch) x
+  Just v0 -> liftA2 (\v sigs -> charPush (Just v) ch sigs) v0 x
 
 -- | Toggles the sample when the key is pressed.
 samCharToggle :: Maybe Sam -> Char -> Sam -> Sam
 samCharToggle initVal ch x = case initVal of
-	Nothing -> fmap (charToggle Nothing ch) x
-	Just v0 -> liftA2 (\v sigs -> charToggle (Just v) ch sigs) v0 x
+  Nothing -> fmap (charToggle Nothing ch) x
+  Just v0 -> liftA2 (\v sigs -> charToggle (Just v) ch sigs) v0 x
 
 -- | Char trigger with fixed note limiting by length in second.
 -- It's useful optimization. It's good to use for drum notes and short sounds.
@@ -50,16 +46,16 @@ samCharTap stop starts = fmap (charTap stop starts)
 -- The last string is for stopping the samples.
 samCharGroup :: Maybe Sam -> [(Char, Sam)] -> String -> Sam
 samCharGroup initVal as stop = case initVal of
-	Nothing -> fmap (\xs -> charGroup Nothing (zip starts xs) stop) (sequenceA sams)
-	Just v0 -> liftA2 (\v xs -> charGroup (Just v) (zip starts xs) stop) v0 (sequenceA sams)
-	where (starts, sams) = unzip as
+  Nothing -> fmap (\xs -> charGroup Nothing (zip starts xs) stop) (sequenceA sams)
+  Just v0 -> liftA2 (\v xs -> charGroup (Just v) (zip starts xs) stop) v0 (sequenceA sams)
+  where (starts, sams) = unzip as
 
 -- | Plays samples in sequence when key is pressed. The last string is
 -- for stopping the sequence.
 samCharCycle :: Maybe Sam -> Char -> String -> [Sam] -> Sam
 samCharCycle initVal start stop as = case initVal of
-	Nothing -> fmap (charCycle Nothing start stop) (sequenceA as)
-	Just v0 -> liftA2 (\v xs -> charCycle (Just v) start stop xs) v0 (sequenceA as)
+  Nothing -> fmap (charCycle Nothing start stop) (sequenceA as)
+  Just v0 -> liftA2 (\v xs -> charCycle (Just v) start stop xs) v0 (sequenceA as)
 
 
 ------------------------------------------------------
@@ -73,22 +69,22 @@ syncBeats bpm beats = bpm / beats
 -- The first argument is the number of beats for syncronization.
 samSyncCharTrig :: Sig -> Maybe Sam -> String -> String -> Sam -> Sam
 samSyncCharTrig beats initVal starts stops x = case initVal of
-	Nothing -> mapBpm (\bpm a -> syncCharTrig (syncBeats bpm beats) Nothing starts stops a) x
-	Just v0 -> mapBpm2 (\bpm v sigs -> syncCharTrig (syncBeats bpm beats) (Just v) starts stops sigs) v0 x
+  Nothing -> mapBpm (\bpm a -> syncCharTrig (syncBeats bpm beats) Nothing starts stops a) x
+  Just v0 -> mapBpm2 (\bpm v sigs -> syncCharTrig (syncBeats bpm beats) (Just v) starts stops sigs) v0 x
 
 -- | Plays a sample while the key is pressed.
 -- The first argument is the number of beats for syncronization.
 samSyncCharPush :: Sig -> Maybe Sam -> Char -> Sam -> Sam
 samSyncCharPush beats initVal ch x = case initVal of
-	Nothing -> mapBpm (\bpm a -> syncCharPush (syncBeats bpm beats) Nothing ch a) x
-	Just v0 -> mapBpm2 (\bpm v sigs -> syncCharPush (syncBeats bpm beats) (Just v) ch sigs) v0 x
+  Nothing -> mapBpm (\bpm a -> syncCharPush (syncBeats bpm beats) Nothing ch a) x
+  Just v0 -> mapBpm2 (\bpm v sigs -> syncCharPush (syncBeats bpm beats) (Just v) ch sigs) v0 x
 
 -- | Toggles the sample when the key is pressed.
 -- The first argument is the number of beats for syncronization.
 samSyncCharToggle :: Sig -> Maybe Sam -> Char -> Sam -> Sam
 samSyncCharToggle beats initVal ch x = case initVal of
-	Nothing -> mapBpm (\bpm a -> syncCharToggle (syncBeats bpm beats) Nothing ch a) x
-	Just v0 -> mapBpm2 (\bpm v sigs -> syncCharToggle (syncBeats bpm beats) (Just v) ch sigs) v0 x
+  Nothing -> mapBpm (\bpm a -> syncCharToggle (syncBeats bpm beats) Nothing ch a) x
+  Just v0 -> mapBpm2 (\bpm v sigs -> syncCharToggle (syncBeats bpm beats) (Just v) ch sigs) v0 x
 
 -- | Char trigger with fixed note limiting by length in second.
 -- It's useful optimization. It's good to use for drum notes and short sounds.
@@ -100,17 +96,17 @@ samSyncCharTap beats stop starts = mapBpm (\bpm x -> syncCharTap (syncBeats bpm 
 -- The last string is for stopping the samples.
 samSyncCharGroup :: Sig -> Maybe Sam -> [(Char, Sam)] -> String -> Sam
 samSyncCharGroup beats initVal as stop = case initVal of
-	Nothing -> mapBpm (\bpm xs -> syncCharGroup (syncBeats bpm beats) Nothing (zip starts xs) stop) (sequenceA sams)
-	Just v0 -> mapBpm2 (\bpm v xs -> syncCharGroup (syncBeats bpm beats) (Just v) (zip starts xs) stop) v0 (sequenceA sams)
-	where (starts, sams) = unzip as
+  Nothing -> mapBpm (\bpm xs -> syncCharGroup (syncBeats bpm beats) Nothing (zip starts xs) stop) (sequenceA sams)
+  Just v0 -> mapBpm2 (\bpm v xs -> syncCharGroup (syncBeats bpm beats) (Just v) (zip starts xs) stop) v0 (sequenceA sams)
+  where (starts, sams) = unzip as
 
 -- | Plays samples in sequence when key is pressed. The last string is
 -- for stopping the sequence.
 -- The first argument is the number of beats for syncronization.
 samSyncCharCycle :: Sig -> Maybe Sam -> Char -> String -> [Sam] -> Sam
 samSyncCharCycle beats initVal start stop as = case initVal of
-	Nothing -> mapBpm (\bpm -> syncCharCycle (syncBeats bpm beats) Nothing start stop) (sequenceA as)
-	Just v0 -> mapBpm2 (\bpm v xs -> syncCharCycle (syncBeats bpm beats) (Just v) start stop xs) v0 (sequenceA as)
+  Nothing -> mapBpm (\bpm -> syncCharCycle (syncBeats bpm beats) Nothing start stop) (sequenceA as)
+  Just v0 -> mapBpm2 (\bpm v xs -> syncCharCycle (syncBeats bpm beats) (Just v) start stop xs) v0 (sequenceA as)
 
 ------------------------------------------------------
 
@@ -137,7 +133,7 @@ samMidiToggle = samMidiToggleBy midiAmpInstr
 -- The key is an integer midi code. The C1 is 60 and the A1 is 69.
 samMidiGroup :: MidiChn -> [(Int, Sam)] -> Sam
 samMidiGroup midiChn as = S.liftSam $ fmap (\xs -> midiGroup midiChn $ zip keys xs) $ sequenceA sams
-	where (keys, sams) = unzip as
+  where (keys, sams) = unzip as
 
 -- | Generic samMidiTrig. We can specify the midi triggering function.
 -- The midi function takes in a signal and a volume of the pressed key (it ranges from 0 to 1).
@@ -168,4 +164,4 @@ samMidiToggleBy midiFun midiChn key = bindSam (midiToggleBy midiFun midiChn key)
 -- It produces some output. The default is scaling the signal with the amplitude.
 samMidiGroupBy :: MidiTrigFun Sig2 -> MidiChn -> [(Int, Sam)] -> Sam
 samMidiGroupBy  midiFun midiChn as = S.liftSam $ fmap (\xs -> midiGroupBy midiFun midiChn $ zip keys xs) $ sequenceA sams
-	where (keys, sams) = unzip as
+  where (keys, sams) = unzip as
