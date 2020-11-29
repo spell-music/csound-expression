@@ -68,6 +68,9 @@ module Csound.IO (
     readMacrosString, readMacrosDouble, readMacrosInt
 ) where
 
+--import Control.Concurrent
+import Control.Monad
+
 import System.Process
 import qualified Control.Exception as E
 
@@ -75,7 +78,9 @@ import Data.Default
 import Csound.Typed
 import Csound.Control.Gui
 
-import Csound.Options(setSilent, setDac, setAdc, setCabbage)
+import Csound.Options(setSilent, setDac, setAdc, setDacBy, setAdcBy, setCabbage)
+
+import qualified Data.List as L
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy
@@ -187,7 +192,7 @@ writeSnd = writeSndBy def
 writeSndBy :: RenderCsd a => Options -> String -> a -> IO ()
 writeSndBy opt file a = do
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt $ unwords ["csound -o", file, fileCsd, logTrace opt]
+    runWithUserInterrupt (postSetup opt) $ unwords ["csound -o", file, fileCsd, logTrace opt]
     where fileCsd = "tmp.csd"
 
 logTrace :: Options -> String
@@ -209,7 +214,7 @@ playCsd = playCsdBy def
 playCsdBy :: (RenderCsd a) => Options -> (String -> IO ()) -> String -> a -> IO ()
 playCsdBy opt player file a = do
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt $ unwords ["csound -o", fileWav, fileCsd, logTrace opt]
+    runWithUserInterrupt (postSetup opt) $ unwords ["csound -o", fileWav, fileCsd, logTrace opt]
     player fileWav
     return ()
     where fileCsd = file ++ ".csd"
@@ -218,7 +223,7 @@ playCsdBy opt player file a = do
 simplePlayCsdBy :: (RenderCsd a) => Options -> String -> String -> a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
     where phi file = do
-            runWithUserInterrupt $ unwords [player, file]
+            runWithUserInterrupt (pure ()) $ unwords [player, file]
 
 -- | Renders csound code to file @tmp.csd@ with flags set to @-odac@, @-iadc@ and @-Ma@
 -- (sound output goes to soundcard in real time).
@@ -229,17 +234,19 @@ dac = dacBy def
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ unwords ["csound tmp.csd", logTrace opt']
+    runWithUserInterrupt (postSetup opt') $ unwords ["csound tmp.csd", logTrace opt']
     where
       opt = opt' <> withDac <> withAdc
 
       withDac
-        | hasOutputs a = setDac
-        | otherwise    = mempty
+        | hasJackConnections opt' = setDacBy "null"
+        | hasOutputs a            = setDac
+        | otherwise               = mempty
 
       withAdc
-        | hasInputs a = setAdc
-        | otherwise   = mempty
+        | hasJackConnections opt' = setAdcBy "null"
+        | hasInputs a             = setAdc
+        | otherwise               = mempty
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()
@@ -261,7 +268,27 @@ csd = csdBy setSilent
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
     writeCsdBy (setSilent <> options) "tmp.csd" a
-    runWithUserInterrupt $ unwords ["csound tmp.csd", logTrace options]
+    runWithUserInterrupt (postSetup options) $ unwords ["csound tmp.csd", logTrace options]
+
+postSetup :: Options -> IO ()
+postSetup opt = jackConnect opt
+
+jackConnect :: Options -> IO ()
+jackConnect opt
+  | Just conns <- csdJackConnect opt = case conns of
+                                         [] -> pure ()
+                                         _  -> void $ runCommand $ jackCmd conns
+  | otherwise                        = pure ()
+  where
+    addSleep = ("sleep 0.1; " <> )
+
+    jackCmd = addSleep . L.intercalate ";" . fmap jackConn
+    jackConn (port1, port2) = unwords ["jack_connect", port1, port2]
+
+hasJackConnections :: Options -> Bool
+hasJackConnections opt
+  | Just conns <- csdJackConnect opt = not $ null conns
+  | otherwise                        = False
 
 ----------------------------------------------------------
 -- players
@@ -285,9 +312,10 @@ totemBy opt = simplePlayCsdBy opt "totem" "tmp"
 ----------------------------------------------------------
 -- handle user interrupts
 
-runWithUserInterrupt :: String -> IO ()
-runWithUserInterrupt cmd = do
+runWithUserInterrupt :: IO () -> String -> IO ()
+runWithUserInterrupt setup cmd = do
     pid <- runCommand cmd
+    setup
     E.catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
     where
         onUserInterrupt :: ProcessHandle -> E.AsyncException -> IO ()
@@ -307,7 +335,7 @@ runCabbage = runCabbageBy def
 runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
     writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt $ "Cabbage tmp.csd"
+    runWithUserInterrupt (pure ()) $ "Cabbage tmp.csd"
     where opt = opt' <> setCabbage
 
 ------------------------------

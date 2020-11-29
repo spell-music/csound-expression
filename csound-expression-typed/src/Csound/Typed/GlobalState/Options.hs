@@ -48,11 +48,12 @@ data Options = Options
     , csdTabFi          :: Maybe TabFi              -- ^ Default fidelity of the arrays
     , csdScaleUI        :: Maybe (Double, Double)   -- ^ Scale factors for UI-window
     , csdJacko          :: Maybe Jacko
-    , csdTrace          :: Maybe Bool
+    , csdJackConnect    :: Maybe [(String, String)] -- ^ list of jack connections to make after csound app is launched (Linux only)
+    , csdTrace          :: Maybe Bool               -- ^ Do we need debug-trace, default is False
     } deriving (Eq, Show, Read)
 
 instance Default Options where
-    def = Options def def def def def def def def
+    def = Options def def def def def def def def def
 
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Options where
@@ -78,6 +79,7 @@ mappendOptions a b = Options
     , csdTabFi          = csdTabFi a <|> csdTabFi b
     , csdScaleUI        = csdScaleUI a <|> csdScaleUI b
     , csdJacko          = csdJacko a <|> csdJacko b
+    , csdJackConnect    = csdJackConnect a <> csdJackConnect b
     , csdTrace          = csdTrace a <|> csdTrace b }
 
 defScaleUI :: Options -> (Double, Double)

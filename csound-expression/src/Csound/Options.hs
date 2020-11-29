@@ -4,7 +4,7 @@ module Csound.Options(
     -- * Shortcuts
     setDur,
     setRates, setBufs, setGain,
-    setJack, setAlsa, setCoreAudio, setMme,
+    setJack, setJackConnect, setAlsa, setCoreAudio, setMme,
     setOutput, setInput,
     setDac, setAdc, setDacBy, setAdcBy, setThru,
     setSilent, setMidiDevice, setMa,
@@ -157,3 +157,7 @@ setTrace = def { csdTrace = Just True }
 setCabbage :: Options
 setCabbage = setRates 48000 64 <> setNoRtMidi <> setMidiDevice "0"
     where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }}
+
+-- | Defines what ports we should connect after application is launched
+setJackConnect :: [(String, String)] -> Options
+setJackConnect connections = def { csdJackConnect = Just connections }
