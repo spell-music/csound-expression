@@ -247,7 +247,7 @@ freqOf rnds evt = fmap (takeByWeight accs vals) $ randDs evt
 
 takeByWeight :: (Tuple a, Arg a) => [Sig] -> [a] -> D -> a
 takeByWeight accumWeights vals atD =
-    guardedArg (zipWith (\w val -> (atD `lessThan` ir w, val)) accumWeights vals) (last vals)
+    guardedTuple (zipWith (\w val -> (sig atD `lessThan` w, val)) accumWeights vals) (last vals)
 
 accumWeightList :: Num a => [a] -> [a]
 accumWeightList = go 0
