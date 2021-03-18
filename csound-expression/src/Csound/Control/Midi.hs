@@ -14,6 +14,7 @@ module Csound.Control.Midi(
     midiKeyOn, midiKeyOff,
     -- * Reading midi note parameters
     cpsmidi, ampmidi, initc7, ctrl7, midiCtrl7, midiCtrl, umidiCtrl,
+    midiCtrl7A, midiCtrlA, umidiCtrlA,
     ampmidinn,
 
     -- ** Custom temperament
@@ -167,7 +168,7 @@ genHoldMsg key2cps channel portTime = do
 
 genAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> SE MonoArg
 genAmpCpsSig key2cps midiFun = do
-    ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+    ref <- newGlobalCtrlRef ((0, 0) :: (Sig, Sig))
     status <- midiFun (instr ref)
     (amp, cps) <- readRef ref
     return $ makeMonoArg (amp, cps) status
@@ -187,7 +188,7 @@ genAmpCpsSig key2cps midiFun = do
 
 filteredGenAmpCpsSig :: (Msg -> D) -> ((Msg -> SE Sig) -> SE Sig) -> (D -> BoolD) -> SE MonoArg
 filteredGenAmpCpsSig key2cps midiFun condition  = do
-    ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+    ref <- newGlobalCtrlRef ((0, 0) :: (Sig, Sig))
     status <- midiFun (instr ref)
     (amp, cps) <- readRef ref
     return $ makeMonoArg (amp, cps) status
@@ -213,7 +214,7 @@ filteredGenAmpCpsSig key2cps midiFun condition  = do
 
 genHoldAmpCpsSig :: (Msg -> D) -> ((Msg -> SE ()) -> SE ()) -> SE (Sig, Sig)
 genHoldAmpCpsSig key2cps midiFun = do
-  ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
+  ref <- newGlobalCtrlRef ((0, 0) :: (Sig, Sig))
   midiFun (instr ref)
   (amp, cps) <- readRef ref
   return (downsamp amp, downsamp cps)
@@ -236,8 +237,8 @@ trigNamedMono name = namedMonoMsg name
 
 namedAmpCpsSig:: String -> SE (Sig, Sig, Sig)
 namedAmpCpsSig name = do
-  ref <- newGlobalRef ((0, 0) :: (Sig, Sig))
-  statusRef <- newGlobalRef (0 :: Sig)
+  ref <- newGlobalCtrlRef ((0, 0) :: (Sig, Sig))
+  statusRef <- newGlobalCtrlRef (0 :: Sig)
   status <- trigByNameMidi name (instr statusRef ref)
   writeRef statusRef status
   let resStatus = ifB (downsamp status ==* 0) 0 1
@@ -266,8 +267,8 @@ midiKeyOff = midiKeyOffBy . toMidiFun
 
 midiKeyOnBy :: MidiFun Sig -> D -> SE (Evt D)
 midiKeyOnBy midiFun key = do
-  chRef  <- newGlobalRef (0 :: Sig)
-  evtRef <- newGlobalRef (0 :: Sig)
+  chRef  <- newGlobalCtrlRef (0 :: Sig)
+  evtRef <- newGlobalCtrlRef (0 :: Sig)
   writeRef chRef =<< midiFun instr
 
   alwaysOn $ do
@@ -284,8 +285,8 @@ midiKeyOnBy midiFun key = do
 
 midiKeyOffBy :: MidiFun Sig -> D -> SE Tick
 midiKeyOffBy midiFun key = do
-  chRef  <- newGlobalRef (0 :: Sig)
-  evtRef <- newGlobalRef (0 :: Sig)
+  chRef  <- newGlobalCtrlRef (0 :: Sig)
+  evtRef <- newGlobalCtrlRef (0 :: Sig)
   writeRef chRef =<< midiFun instr
 
   alwaysOn $ do
@@ -305,19 +306,33 @@ midiKeyOffBy midiFun key = do
 initc7 :: D -> D -> D -> SE ()
 initc7 = initMidiCtrl
 
--- | Initializes midi control and get the value in the specified range.
+-- | Initializes control rate midi control and get the value in the specified range.
 midiCtrl7 :: D -> D -> D -> D -> D -> SE Sig
 midiCtrl7 chno ctrlno ival imin imax = do
     initc7 chno ctrlno ival
-    return $ ctrl7 chno ctrlno imin imax
+    return $ kr $ ctrl7 chno ctrlno imin imax
 
--- | Initializes midi control and get the value in the range (-1) to 1.
+-- | Initializes control rate midi control and get the value in the range (-1) to 1.
 midiCtrl :: D -> D -> D -> SE Sig
 midiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival (-1) 1
 
--- | Unipolar midiCtrl. Initializes midi control and get the value in the range 0 to 1.
+-- | Unipolar control rate midiCtrl. Initializes midi control and get the value in the range 0 to 1.
 umidiCtrl :: D -> D -> D -> SE Sig
 umidiCtrl chno ctrlno ival = midiCtrl7 chno ctrlno ival 0 1
+
+-- | Initializes audio-rate midi control and get the value in the specified range.
+midiCtrl7A :: D -> D -> D -> D -> D -> SE Sig
+midiCtrl7A chno ctrlno ival imin imax = do
+    initc7 chno ctrlno ival
+    return $ ar $ ctrl7 chno ctrlno imin imax
+
+-- | Initializes audio-rate midi control and get the value in the range (-1) to 1.
+midiCtrlA :: D -> D -> D -> SE Sig
+midiCtrlA chno ctrlno ival = midiCtrl7A chno ctrlno ival (-1) 1
+
+-- | Unipolar audio-rate midiCtrl. Initializes midi control and get the value in the range 0 to 1.
+umidiCtrlA :: D -> D -> D -> SE Sig
+umidiCtrlA chno ctrlno ival = midiCtrl7A chno ctrlno ival 0 1
 
 --------------------------------------------------------------
 
