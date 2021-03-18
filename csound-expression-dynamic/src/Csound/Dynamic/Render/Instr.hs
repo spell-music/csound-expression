@@ -170,6 +170,7 @@ rateExp curRate expr = case expr of
     Tfm i xs -> Tfm i $ mergeWithPrimOr (ratesFromSignature curRate (infoSignature i)) xs
     Select rate pid a -> Select rate pid (fmap (ratedVar Xr) a)
     If p t e -> If (rec2 condRate p) (rec1 curRate t) (rec1 curRate e)
+    ExpNum _ | curRate == Ar || curRate == Xr -> rec2 Xr expr
     ExpNum _ -> rec2 curRate expr
 
     ReadVar v -> ReadVar v

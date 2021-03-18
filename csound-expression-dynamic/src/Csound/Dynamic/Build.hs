@@ -11,7 +11,7 @@ module Csound.Dynamic.Build (
     -- * Constructors
     -- | Basic constructors
     prim, opcPrefix, oprPrefix, oprInfix,
-    numExp1, numExp2,
+    numExp1,
     tfm, tfmNoInlineArgs, pn, withInits,
     double, int, str, verbatim, instrIdE,
     inlineVar, gInit, gInitDouble,
@@ -132,9 +132,6 @@ infOpr name a b = tfm (oprInfix name $ spec1 [(Ar, [Ar, Ar]), (Kr, [Kr, Kr]), (I
 
 numExp1 :: NumOp -> E -> E
 numExp1 op x = noRate $ ExpNum $ fmap toPrimOr $ PreInline op [x]
-
-numExp2 :: NumOp -> E -> E -> E
-numExp2 op a b = noRate $ ExpNum $ fmap toPrimOr $ PreInline op [a, b]
 
 opcsArr :: Monad m => IsArrInit -> Var -> Name -> Spec1 -> [E] -> DepT m ()
 opcsArr isArrInit out name signature = tfmArr isArrInit out (opcPrefix name $ spec1 signature)

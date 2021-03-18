@@ -39,6 +39,7 @@ import qualified Data.IntMap.Internal as IM
 import Data.Fix
 import Data.Eq.Deriving
 import Data.Ord.Deriving
+import Text.Show.Deriving
 import Data.Hashable.Lifted
 
 import qualified Csound.Dynamic.Tfm.DeduceTypes as R(Var(..))
@@ -410,6 +411,12 @@ $(deriveOrd1 ''PreInline)
 $(deriveOrd1 ''Inline)
 $(deriveOrd1 ''MainExp)
 $(deriveOrd1 ''RatedExp)
+
+$(deriveShow1 ''PrimOr)
+$(deriveShow1 ''PreInline)
+$(deriveShow1 ''Inline)
+$(deriveShow1 ''MainExp)
+$(deriveShow1 ''RatedExp)
 
 --------------------------------------------------------------
 -- comments
