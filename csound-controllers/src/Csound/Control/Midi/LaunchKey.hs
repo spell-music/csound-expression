@@ -13,6 +13,27 @@ module Csound.Control.Midi.LaunchKey(
   , tapBtnRowSig
   , toggleBtn
   , toggleBtns
+  -- * arrow buttons
+  -- | Note that we need to set +-raw_controller_mode=1
+  -- to use these buttons in Csound options/flags.
+
+  -- ** Signal producers (1 / 0)
+  , arrowUpSig
+  , arrowDownSig
+  , arrowLeftSig
+  , arrowRightSig
+
+  -- ** Sense taps (only ON press)
+  , arrowUpTap
+  , arrowDownTap
+  , arrowLeftTap
+  , arrowRightTap
+
+  -- ** Sense on/off taps (1 for ON and 0 for OFF)
+  , arrowUpToggle
+  , arrowDownToggle
+  , arrowLeftToggle
+  , arrowRightToggle
 ) where
 
 import Control.Monad
@@ -86,3 +107,65 @@ toggleBtns chn = mapM (toggleBtn chn) [1..8]
 
 -- pressBtnSig :: Chn -> Int -> SE Sig
 -- toggleBtnSig :: Chn -> Int -> SE Sig
+--
+
+----------------------------------------------
+
+upNum, downNum, leftNum, rightNum :: D
+
+upNum    = 114
+downNum  = 115
+leftNum  = 116
+rightNum = 117
+
+arrowUpSig :: LkChn -> SE Sig
+arrowUpSig = arrowSig upNum
+
+arrowDownSig :: LkChn -> SE Sig
+arrowDownSig = arrowSig downNum
+
+arrowLeftSig :: LkChn -> SE Sig
+arrowLeftSig = arrowSig leftNum
+
+arrowRightSig :: LkChn -> SE Sig
+arrowRightSig = arrowSig rightNum
+
+arrowSig :: D -> LkChn -> SE Sig
+arrowSig idx (LkChn chn) =
+  umidiCtrl (int chn) idx 0
+
+------------------------------------------------
+
+arrowUpTap :: LkChn -> SE Tick
+arrowUpTap = toArrowTap upNum
+
+arrowDownTap :: LkChn -> SE Tick
+arrowDownTap = toArrowTap downNum
+
+arrowLeftTap :: LkChn -> SE Tick
+arrowLeftTap = toArrowTap leftNum
+
+arrowRightTap :: LkChn -> SE Tick
+arrowRightTap = toArrowTap rightNum
+
+toArrowTap :: D -> LkChn -> SE Tick
+toArrowTap idx chn =
+  fmap (fmap (const unit) . filterE (==* 1) . snaps) $ arrowSig idx chn
+
+------------------------------------------------
+
+arrowUpToggle :: LkChn -> SE (Evt D)
+arrowUpToggle = toArrowToggle upNum
+
+arrowDownToggle :: LkChn -> SE (Evt D)
+arrowDownToggle = toArrowToggle downNum
+
+arrowLeftToggle :: LkChn -> SE (Evt D)
+arrowLeftToggle = toArrowToggle leftNum
+
+arrowRightToggle :: LkChn -> SE (Evt D)
+arrowRightToggle = toArrowToggle rightNum
+
+toArrowToggle :: D -> LkChn -> SE (Evt D)
+toArrowToggle idx chn = fmap snaps $ arrowSig idx chn
+
