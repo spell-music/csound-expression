@@ -430,7 +430,7 @@ instance Val BoolD   where
         PrimBoolD b -> return $ if b then true else false
 
 
-class (IsPrim a, RealFrac (PrimOf a), Val a) => SigOrD a where
+class (IsPrim a, RealFrac (PrimOf a), Val a, Floating a) => SigOrD a where
 
 instance SigOrD Sig where
 instance SigOrD D   where

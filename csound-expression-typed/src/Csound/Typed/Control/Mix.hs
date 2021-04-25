@@ -1,4 +1,11 @@
-{-# Language FlexibleContexts, ScopedTypeVariables, CPP #-}
+{-# Language
+      FlexibleContexts,
+      FlexibleInstances,
+      ScopedTypeVariables,
+      TypeSynonymInstances,
+      CPP,
+      MultiParamTypeClasses,
+      TypeFamilies #-}
 module Csound.Typed.Control.Mix(
     Mix,
     sco, eff, mix, mixBy, monoSco,
@@ -25,6 +32,20 @@ import Csound.Typed.InnerOpcodes
 import Data.Traversable
 #endif
 
+
+{-
+instance MixAt Sig (SE Sig) (Sco (Mix Sig2)) where
+    type MixAtOut Sig (SE Sig) (Sco (Mix Sig2)) = Sco (Mix Sig2)
+    at f = eff (at f)
+
+instance MixAt Sig (SE Sig) (Sco (Mix Sig3)) where
+    type MixAtOut Sig (SE Sig) (Sco (Mix Sig3)) = Sco (Mix Sig3)
+    at f = eff (at f)
+
+instance MixAt Sig (SE Sig) (Sco (Mix Sig4)) where
+    type MixAtOut Sig (SE Sig) (Sco (Mix Sig4)) = Sco (Mix Sig4)
+    at f = eff (at f)
+-}
 toCsdEventList :: Sco a -> CsdEventList a
 toCsdEventList = id
 
@@ -148,3 +169,95 @@ mixArityFun = tupleArity . proxy
     where
         proxy :: (a -> f (Mix b)) -> b
         proxy = const undefined
+
+-----------------------------------------------------------
+-- instances
+
+instance (Sigs a, SigSpace a) => SigSpace (Sco (Mix a)) where
+  mapSig f = eff (pure . mapSig f)
+
+instance (Sigs a, SigSpace2 a) => SigSpace2 (Sco (Mix a)) where
+  mapSig2 f = eff (pure . mapSig2 f)
+
+instance At Sig (SE Sig) (Sco (Mix Sig)) where
+    type AtOut Sig (SE Sig) (Sco (Mix Sig)) = Sco (Mix Sig)
+    at f = eff f
+
+instance At Sig (SE Sig) (Sco (Mix Sig2)) where
+    type AtOut Sig (SE Sig) (Sco (Mix Sig2)) = Sco (Mix Sig2)
+    at f = eff (at f)
+
+instance At Sig (SE Sig) (Sco (Mix Sig3)) where
+    type AtOut Sig (SE Sig) (Sco (Mix Sig3)) = Sco (Mix Sig3)
+    at f = eff (at f)
+
+instance At Sig (SE Sig) (Sco (Mix Sig4)) where
+    type AtOut Sig (SE Sig) (Sco (Mix Sig4)) = Sco (Mix Sig4)
+    at f = eff (at f)
+
+--
+
+instance At Sig Sig2 (Sco (Mix Sig)) where
+    type AtOut Sig Sig2 (Sco (Mix Sig)) = Sco (Mix Sig2)
+    at f = eff (pure . f)
+
+instance At Sig2 Sig2 (Sco (Mix Sig)) where
+    type AtOut Sig2 Sig2 (Sco (Mix Sig)) = Sco (Mix Sig2)
+    at f = eff (pure . at f)
+
+instance At Sig (SE Sig2) (Sco (Mix Sig)) where
+    type AtOut Sig (SE Sig2) (Sco (Mix Sig)) = Sco (Mix Sig2)
+    at f = eff f
+
+instance At Sig2 (SE Sig2) (Sco (Mix Sig)) where
+    type AtOut Sig2 (SE Sig2)  (Sco (Mix Sig)) = Sco (Mix Sig2)
+    at f = eff (at f)
+
+instance At Sig2 Sig2 (Sco (Mix Sig2)) where
+    type AtOut Sig2 Sig2 (Sco (Mix Sig2)) = Sco (Mix Sig2)
+    at f = eff (pure . f)
+
+instance At Sig2 (SE Sig2) (Sco (Mix Sig2)) where
+    type AtOut Sig2 (SE Sig2) (Sco (Mix Sig2)) = Sco (Mix Sig2)
+    at f = eff f
+
+--
+
+instance MixAt Sig (SE Sig) (Sco (Mix Sig)) where
+    mixAt k f = eff (mixAt k f)
+
+instance MixAt Sig (SE Sig) (Sco (Mix Sig2)) where
+    mixAt k f = eff (mixAt k f)
+
+instance MixAt Sig (SE Sig) (Sco (Mix Sig3)) where
+    mixAt k f = eff (mixAt k f)
+
+instance MixAt Sig (SE Sig) (Sco (Mix Sig4)) where
+    mixAt k f = eff (mixAt k f)
+
+--
+
+instance MixAt Sig Sig2 (Sco (Mix Sig)) where
+    mixAt k f = eff (pure . mixAt k f)
+
+instance MixAt Sig2 Sig2 (Sco (Mix Sig)) where
+    mixAt k f = eff (pure . mixAt k f)
+
+instance MixAt Sig (SE Sig2) (Sco (Mix Sig)) where
+    mixAt k f = eff (\x -> fmap (cfd k (x, x)) (f x))
+
+instance MixAt Sig2 (SE Sig2) (Sco (Mix Sig)) where
+    mixAt k f = eff (\x -> fmap (cfd k (x, x)) (f (x, x)))
+
+instance MixAt Sig2 Sig2 (Sco (Mix Sig2)) where
+    mixAt k f = eff (pure . mixAt k f)
+
+instance MixAt Sig2 (SE Sig2) (Sco (Mix Sig2)) where
+    mixAt k f = eff (\x -> fmap (cfd k x) (f x))
+
+
+
+
+
+
+
