@@ -12,7 +12,7 @@ import Data.Default
 import Data.Boolean hiding (cond)
 import Csound.Typed
 import Csound.Typed.Gui hiding (button)
-import Csound.Control.Evt
+import Csound.Control.Evt hiding (delEvt)
 import Csound.Control.Instr
 import Csound.Control.Gui
 import Csound.Control.Sf

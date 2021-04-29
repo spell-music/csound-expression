@@ -1,18 +1,18 @@
 -- | The vital tools.
-module Csound.Air (      
+module Csound.Air (
     -- | The basic sound waves: pure sine, sawtooth, square, triangle, LFOs.
     module Csound.Air.Wave,
     -- | Hard and soft sync
     module Csound.Air.Wave.Sync,
 
     -- | Envelope generators.
-    module Csound.Air.Envelope,  
+    module Csound.Air.Envelope,
 
     -- | Filters
-    module Csound.Air.Filter, 
+    module Csound.Air.Filter,
 
     -- | Argument modifiers
-    module Csound.Air.ModArg,     
+    module Csound.Air.ModArg,
 
     -- | Sound file playback
     module Csound.Air.Wav,
@@ -22,20 +22,23 @@ module Csound.Air (
     module Csound.Air.Granular.Morpheus,
 
     -- | Spectral Processing
-    module Csound.Air.Spec, 
+    module Csound.Air.Spec,
 
     -- | Effects: reverbs, choruses, delays etc.
-    module Csound.Air.Fx,  
-    module Csound.Air.Fx.FxBox,  
+    module Csound.Air.Fx,
+    module Csound.Air.Fx.FxBox,
 
     -- | Widgets to make live performances.
-    module Csound.Air.Live, 
+    module Csound.Air.Live,
 
     -- | A multitap looper.
-    module Csound.Air.Looper, 
+    module Csound.Air.Looper,
 
     -- | Patches.
-    module Csound.Air.Patch,   
+    module Csound.Air.Patch,
+
+    -- | Shortcuts for Scores.
+    module Csound.Air.Sco,
 
     -- | Scheduling signals with event streams
     module Csound.Air.Seg,
@@ -70,6 +73,7 @@ import Csound.Air.Fx.FxBox
 import Csound.Air.Live
 import Csound.Air.Looper
 import Csound.Air.Patch
+import Csound.Air.Sco
 import Csound.Air.Seg
 import Csound.Air.Sampler
 import Csound.Air.Pan

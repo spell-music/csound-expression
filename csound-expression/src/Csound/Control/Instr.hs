@@ -84,6 +84,7 @@ module Csound.Control.Instr(
     sched, retrig, schedHarp, schedUntil, schedToggle,
     sched_, schedUntil_,
     schedBy, schedHarpBy,
+    schedStream,
     withDur, monoSched,
 
     -- * Api
@@ -169,6 +170,20 @@ playWhen onSig instr msg = do
     writeRef ref 0
     when1 onSig $ writeRef ref =<< instr msg
     readRef ref
+
+
+-- | Plays infinite notes for a given instrument with event stream.
+-- It allows for note overlap on release. We can specify release time on seconds
+-- in the first argument.
+--
+-- > schedStream releaseTime instr evt
+schedStream :: (Arg a, Sigs b) => D -> D -> (a -> SE b) -> Evt a -> SE b
+schedStream start rel ins evt = do
+  (insId, res) <- newOutInstr ins
+  runEvt evt $ \x -> do
+    scheduleEvent (negateInstrRef insId) 0 rel x
+    scheduleEvent insId start (-1) x
+  return res
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------

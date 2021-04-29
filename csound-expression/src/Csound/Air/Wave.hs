@@ -49,12 +49,18 @@ module Csound.Air.Wave (
     urspline, birspline,
 
     -- * Buzzes
-    buz, gbuz, buz', gbuz'
+    buz, gbuz, buz', gbuz',
+
+    -- * Loop over files in ram
+    losc, losc3, rosc, monoLosc, loscCfd, loscCfd',
+
+    -- * Loop over files from disk
+    ldisk, rdisk, ldisk1, rdisk1
 ) where
 
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
-import Csound.Tab(sine, cosine, triTab, pwTab, sawTab, sqrTab)
+import Csound.Tab(sine, cosine, triTab, pwTab, sawTab, sqrTab, tabDur)
 
 type Wave = Sig -> SE Sig
 
@@ -448,4 +454,58 @@ urndRawSqr = urndOscBy sqrTab
 
 urndRawPw :: Double -> Sig -> SE Sig
 urndRawPw duty = urndOscBy (pwTab duty)
+
+-----------------------------
+
+-- | Loops with cross-fades at the ends.
+-- We can specify loop segment (in seconds).
+loscCfd' :: (D, D) -> D -> Tab -> Sig2
+loscCfd' (start, end) rel tb = ar2 $ flooper 1 1 start end rel tb
+
+-- | Loops with cross-fades at the ends. Uses entire file length
+loscCfd :: D -> Tab -> Sig2
+loscCfd rel tb = ar2 $ flooper 1 1 0 (tabDur tb - rel - 0.1) rel tb
+
+-- | Reversed loop over table stereo files. Uses flooper under the hood.
+rosc :: Tab -> Sig2
+rosc tb = ar2 $ flooper 1 (-1) 0 (tabDur tb) 0 tb
+
+-- | Loop over table stereo files. Uses loscil3 under the hood.
+-- Watch out for sample rates! If file sample rate is different
+-- from global project sample rate then playback will be distorted.
+losc :: Tab -> Sig2
+losc tb = loscil 1 1 tb `withDs` [1, 1]
+
+-- | Loop over table stereo files with cubic interpolation. Uses loscil3 under the hood.
+-- Watch out for sample rates! If file sample rate is different
+-- from global project sample rate then playback will be distorted.
+losc3 :: Tab -> Sig2
+losc3 tb = loscil3 1 1 tb `withDs` [1, 1]
+
+-- | Loop over table mono files. Uses loscil3 under the hood.
+-- Watch out for sample rates! If file sample rate is different
+-- from global project sample rate then playback will be distorted.
+monoLosc :: Tab -> Sig
+monoLosc tb = loscil3 1 1 tb `withDs` [1, 1]
+
+-- | Loop from disk (stereo files)
+ldisk :: Str -> Sig2
+ldisk name = diskin2 name `withDs` [1, 0, 1]
+
+-- | Reversed loop from disk (stereo files)
+rdisk :: Str -> Sig2
+rdisk name = diskin2 name `withDs` [-1, 0, 1]
+
+-- | Loop from disk (mono files)
+ldisk1 :: Str -> Sig
+ldisk1 name = diskin2 name `withDs` [1, 0, 1]
+
+-- | Reversed loop from disk (mono files)
+rdisk1 :: Str -> Sig
+rdisk1 name = diskin2 name `withDs` [-1, 0, 1]
+
+
+
+
+
 

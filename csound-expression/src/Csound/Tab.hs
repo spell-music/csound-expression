@@ -9,7 +9,7 @@ module Csound.Tab (
 
     -- * Table querries
 
-    nsamp, ftlen, ftsr, ftchnls, ftcps,
+    nsamp, ftlen, ftsr, ftchnls, ftcps, tabDur,
 
     -- * Table granularity
     TabFi, fineFi, coarseFi,
@@ -23,7 +23,7 @@ module Csound.Tab (
 
     -- * Read from files
     WavChn(..), Mp3Chn(..),
-    wavs, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
+    wavs, wavAll, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
     readNumFile, readTrajectoryFile, readPvocex, readMultichannel,
 
     -- * (In)Harmonic series
@@ -270,6 +270,10 @@ fromMp3Chn x = case x of
 
 instance Default Mp3Chn where
     def = Mp3All
+
+-- | Load lossless stereo file to table.
+wavAll :: String -> Tab
+wavAll name = wavs name 0 WavAll
 
 -- | Reads left channel of audio-file
 wavLeft :: String -> Tab
@@ -799,6 +803,11 @@ tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unTab b1
 -- | Transforms phasor that is defined in seconds to relative phasor that ranges in 0 to 1.
 sec2rel :: Tab -> Sig -> Sig
 sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
+
+-- | Table length in seconds for files that are read with GEN01
+-- (which a re read with functions like wavs, wavTab, wavLeft, wavRight).
+tabDur :: Tab -> D
+tabDur t = ftlen t / (ftsr t * ftchnls t)
 
 ---------------------------------------------------
 

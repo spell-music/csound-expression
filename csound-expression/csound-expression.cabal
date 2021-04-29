@@ -116,6 +116,7 @@ Library
         Csound.Air.Fm
         Csound.Air.Pan
         Csound.Air.Padsynth
+        Csound.Air.Sco
 
         Csound.Types
         Csound.Tab

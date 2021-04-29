@@ -38,7 +38,7 @@ hmClap  = H.clap
 trBd, trSn, trOhh, trChh, trHtom, trMtom, trLtom, trCym, trCl, trRim, trMar, trHcon, trMcon, trLcon :: Sam
 
 trBd   = T.bd
-trSn   = T.sn
+trSn   = T.sn1
 trOhh  = T.ohh
 trChh  = T.chh
 trHtom = T.htom

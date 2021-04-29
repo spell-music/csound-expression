@@ -79,6 +79,7 @@ import Csound.Typed
 import Csound.Control.Gui
 
 import Csound.Options(setSilent, setDac, setAdc, setDacBy, setAdcBy, setCabbage)
+import Temporal.Class(Harmony(..))
 
 import qualified Data.List as L
 
@@ -109,21 +110,35 @@ instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
 
 #if __GLASGOW_HASKELL__ >= 710
 instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd a where
-    renderCsdBy opt a = render opt (return a)
-    csdArity a = CsdArity 0 (tupleArity a)
+  renderCsdBy opt a = render opt (return a)
+  csdArity a = CsdArity 0 (tupleArity a)
 
 instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (SE a) where
-    renderCsdBy opt a = render opt a
-    csdArity a = CsdArity 0 (outArity a)
+  renderCsdBy opt a = render opt a
+  csdArity a = CsdArity 0 (outArity a)
 
 instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source a) where
-    renderCsdBy opt a = renderCsdBy opt (fromSource a)
-    csdArity a = CsdArity 0 (tupleArity $ proxySource a)
+  renderCsdBy opt a = renderCsdBy opt (fromSource a)
+  csdArity a = CsdArity 0 (tupleArity $ proxySource a)
       where
 
 instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source (SE a)) where
-    renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
-    csdArity a = CsdArity 0 (tupleArity $ proxySE $ proxySource a)
+  renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
+  csdArity a = CsdArity 0 (tupleArity $ proxySE $ proxySource a)
+
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Sco (Mix a)) where
+  renderCsdBy opt a = renderCsdBy opt (mix a)
+  csdArity a = CsdArity 0 (tupleArity $ proxy a)
+    where
+      proxy :: Sco (Mix a) -> a
+      proxy = const undefined
+
+instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd [Sco (Mix a)] where
+  renderCsdBy opt a = renderCsdBy opt (mix $ har a)
+  csdArity a = CsdArity 0 (tupleArity $ proxy a)
+    where
+      proxy :: [Sco (Mix a)] -> a
+      proxy = const undefined
 
 #endif
 
@@ -364,59 +379,74 @@ onCard8= id
 #if __GLASGOW_HASKELL__ < 710
 
 -- Sig
+setArity n a = CsdArity 0 n
 
-instance RenderCsd Sig                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig                  where { renderCsdBy opt a = render opt (return a)             , csdArity = setArity 1 }
+instance RenderCsd (SE Sig)             where { renderCsdBy opt a = render opt a }                    , csdArity = setArity 1 }
+instance RenderCsd (Source Sig)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)    , csdArity = setArity 1 }
+instance RenderCsd (Source (SE Sig))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)  , csdArity = setArity 1 }
 
 -- Sig2
 
-instance RenderCsd Sig2                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig2)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig2)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig2))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig2                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 2 }
+instance RenderCsd (SE Sig2)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 2 }
+instance RenderCsd (Source Sig2)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 2 }
+instance RenderCsd (Source (SE Sig2))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 2 }
 
 -- Sig3
 
-instance RenderCsd Sig3                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig3)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig3)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig3))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig3                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 3 }
+instance RenderCsd (SE Sig3)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 3 }
+instance RenderCsd (Source Sig3)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 3 }
+instance RenderCsd (Source (SE Sig3))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 3 }
 
 -- Sig4
 
-instance RenderCsd Sig4                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig4)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig4)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig4))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig4                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 4 }
+instance RenderCsd (SE Sig4)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 4 }
+instance RenderCsd (Source Sig4)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 4 }
+instance RenderCsd (Source (SE Sig4))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 4 }
 
 -- Sig5
 
-instance RenderCsd Sig5                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig5)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig5)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig5))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig5                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 5 }
+instance RenderCsd (SE Sig5)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 5 }
+instance RenderCsd (Source Sig5)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 5 }
+instance RenderCsd (Source (SE Sig5))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 5 }
 
 -- Sig6
 
-instance RenderCsd Sig6                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig6)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig6)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig6))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig6                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 6 }
+instance RenderCsd (SE Sig6)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 6 }
+instance RenderCsd (Source Sig6)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 6 }
+instance RenderCsd (Source (SE Sig6))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 6 }
 
 -- Sig7
 
-instance RenderCsd Sig7                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig7)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig7)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig7))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig7                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 7 }
+instance RenderCsd (SE Sig7)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 7 }
+instance RenderCsd (Source Sig7)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 7 }
+instance RenderCsd (Source (SE Sig7))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 7 }
+
 
 -- Sig8
 
-instance RenderCsd Sig8                  where { renderCsdBy opt a = render opt (return a) }
-instance RenderCsd (SE Sig8)             where { renderCsdBy opt a = render opt a }
-instance RenderCsd (Source Sig8)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a) }
-instance RenderCsd (Source (SE Sig8))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) }
+instance RenderCsd Sig8                  where { renderCsdBy opt a = render opt (return a)            , csdArity = setArity 8 }
+instance RenderCsd (SE Sig8)             where { renderCsdBy opt a = render opt a                     , csdArity = setArity 8 }
+instance RenderCsd (Source Sig8)         where { renderCsdBy opt a = renderCsdBy opt (fromSource a)   , csdArity = setArity 8 }
+instance RenderCsd (Source (SE Sig8))    where { renderCsdBy opt a = renderCsdBy opt (fromSourceSE a) , csdArity = setArity 8 }
+
+
+instance RenderCsd (Sco (Mix Sig))       where { renderCsdBy opt a = renderCsdBy opt $ mix a , csdArity = setArity 1 }
+instance RenderCsd (Sco (Mix Sig2))      where { renderCsdBy opt a = renderCsdBy opt $ mix a , csdArity = setArity 2 }
+instance RenderCsd (Sco (Mix Sig3))      where { renderCsdBy opt a = renderCsdBy opt $ mix a , csdArity = setArity 3 }
+instance RenderCsd (Sco (Mix Sig4))      where { renderCsdBy opt a = renderCsdBy opt $ mix a , csdArity = setArity 4 }
+instance RenderCsd (Sco (Mix Sig5))      where { renderCsdBy opt a = renderCsdBy opt $ mix a , csdArity = setArity 5 }
+
+instance RenderCsd [Sco (Mix Sig)]       where { renderCsdBy opt a = renderCsdBy opt $ mix $ har a , csdArity = setArity 1 }
+instance RenderCsd [Sco (Mix Sig2)]      where { renderCsdBy opt a = renderCsdBy opt $ mix $ har a , csdArity = setArity 2 }
+instance RenderCsd [Sco (Mix Sig3)]      where { renderCsdBy opt a = renderCsdBy opt $ mix $ har a , csdArity = setArity 3 }
+instance RenderCsd [Sco (Mix Sig4)]      where { renderCsdBy opt a = renderCsdBy opt $ mix $ har a , csdArity = setArity 4 }
+instance RenderCsd [Sco (Mix Sig5)]      where { renderCsdBy opt a = renderCsdBy opt $ mix $ har a , csdArity = setArity 5 }
 
 #endif

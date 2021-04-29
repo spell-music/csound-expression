@@ -9,7 +9,7 @@ module Csound.Control.Evt(
     Snap, snapshot, readSnap, snaps, snaps2, sync, syncBpm,
 
     -- * Opcodes
-    metro, gaussTrig, dust, metroSig, dustSig, dustSig2, impulseE, changedE, triggerE, loadbang, impulse, metroE,
+    metro, gaussTrig, dust, metroSig, dustSig, dustSig2, impulseE, changedE, triggerE, loadbang, impulse, metroE, delEvt,
 
     -- * Higher-level event functions
     devt, eventList,
@@ -340,4 +340,11 @@ takeWhileE p = fmap fst . filterE snd . accumE (1 :: D) (\a s -> let s1 = s ==* 
 -- | Drops events while the predicate is true.
 dropWhileE :: (a -> BoolD) -> Evt a -> Evt a
 dropWhileE p = fmap fst . filterE (notB . snd) . accumE (1 :: D) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0))
+
+-- | Delays event stream by given amount of seconds
+delEvt :: Arg a => D -> Evt a -> Evt a
+delEvt dt ev = Evt $ \bam -> do
+  insId <- newInstr bam
+  runEvt ev $ \a -> scheduleEvent insId dt 0 a
+
 

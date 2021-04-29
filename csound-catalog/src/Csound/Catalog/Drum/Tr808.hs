@@ -12,10 +12,10 @@ module Csound.Catalog.Drum.Tr808(
   maraca', marSpec, highConga', hcSpec, midConga', mcSpec, lowConga', lcSpec, cowSpec, cowbell',
 
   -- * Sampler
-  bd, bd2, sn, ohh, chh, htom, mtom, ltom, cym, cl, rim, mar, hcon, mcon, lcon, cbell,
+  bd, bd2, sn1, ohh, chh, htom, mtom, ltom, cym, cl, rim, mar, hcon, mcon, lcon, cbell,
 
   -- ** Generic
-  bd', bd2', sn', ohh', chh', htom', mtom', ltom', cym', cl', rim', mar', hcon', mcon', lcon', cbell'
+  bd', bd2', sn1', ohh', chh', htom', mtom', ltom', cym', cl', rim', mar', hcon', mcon', lcon', cbell'
 
 ) where
 
@@ -474,8 +474,8 @@ bd2 :: Sam
 bd2 = mkSam bass2
 
 -- | Snare
-sn :: Sam
-sn = mkSam snare
+sn1 :: Sam
+sn1 = mkSam snare
 
 -- | Open hi-hat
 ohh :: Sam
@@ -541,8 +541,8 @@ bd2' :: TrSpec -> Sam
 bd2' = mkSam' bass2'
 
 -- | Snare
-sn' :: TrSpec -> Sam
-sn' = mkSam' snare'
+sn1' :: TrSpec -> Sam
+sn1' = mkSam' snare'
 
 -- | Open hi-hat
 ohh' :: TrSpec -> Sam
