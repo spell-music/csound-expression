@@ -22,12 +22,10 @@ module Csound.Air.Sco(
     --
     -- @d[x]@ means dotted [x] @(str 1.5 $ x)@
     bn, wn, hn, qn, en, sn, tn,
-    dbn, dwn, dhn, dqn, den, dsn, dtn,
 
     -- ** Pauses
     -- | Naming conventions are the same as for 'time string'.
-    bnr, wnr, hnr, qnr, enr, snr, tnr,
-    dbnr, dwnr, dhnr, dqnr, denr, dsnr, dtnr,
+    bnr, wnr, hnr, qnr, enr, snr, tnr
 ) where
 
 import Csound.Typed.Types
@@ -74,8 +72,6 @@ en = str $ 1/8
 sn = str $ 1/16
 tn = str $ 1/32
 
-dbn, dwn, dhn, dqn, den, dsn, dtn :: Sco a -> Sco a
-
 -- | Synonym to @'str' (3/2)@
 dot :: Sco a -> Sco a
 dot = str $ 3/2
@@ -83,14 +79,6 @@ dot = str $ 3/2
 -- | double 'dot', str with 1.75
 ddot :: Sco a -> Sco a
 ddot = str 1.75
-
-dbn = dot . bn
-dwn = dot . wn
-dhn = dot . hn
-dqn = dot . qn
-den = dot . en
-dsn = dot . sn
-dtn = dot . tn
 
 bnr, wnr, hnr, qnr, enr, snr, tnr :: Sco a
 
@@ -103,12 +91,4 @@ enr = en wnr
 snr = sn wnr
 tnr = tn wnr
 
-dbnr, dwnr, dhnr, dqnr, denr, dsnr, dtnr :: Sco a
 
-dbnr = dbn wnr
-dwnr = dwn wnr
-dhnr = dhn wnr
-dqnr = dqn wnr
-denr = den wnr
-dsnr = dsn wnr
-dtnr = dtn wnr
