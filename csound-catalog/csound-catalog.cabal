@@ -1,5 +1,5 @@
 Name:          csound-catalog
-Version:       0.7.4
+Version:       0.7.5
 Cabal-Version: >= 1.22
 License:       BSD3
 License-file:  LICENSE
@@ -29,7 +29,7 @@ Library
   Build-Depends:
         base >= 4, base < 5,
         transformers >= 0.3,
-        csound-expression >= 5.3.4,
+        csound-expression >= 5.4.0,
         csound-sampler >=0.0.10.0,
         sharc-timbre
   Hs-Source-Dirs:      src/

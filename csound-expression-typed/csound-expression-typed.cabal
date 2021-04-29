@@ -1,5 +1,5 @@
 Name:          csound-expression-typed
-Version:       0.2.4
+Version:       0.2.5
 Cabal-Version: >= 1.22
 License:       BSD3
 License-file:  LICENSE
@@ -80,7 +80,7 @@ Library
         filepath,
         directory,
         wl-pprint >= 1.2.1,
-        csound-expression-dynamic >= 0.3.6,
+        csound-expression-dynamic >= 0.3.7,
         temporal-media >= 0.6.3,
         hashable
   Hs-Source-Dirs:      src/
