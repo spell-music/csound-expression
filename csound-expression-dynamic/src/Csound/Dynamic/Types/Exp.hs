@@ -372,6 +372,7 @@ type MultiOut a = Int -> a
 ------------------------------------------------------
 -- hashable instances
 
+
 instance (Hashable a, Hashable b) => Hashable (PreInline a b)
 instance (Hashable a) => Hashable (InlineExp a)
 instance Hashable CondOp
@@ -392,8 +393,12 @@ instance Hashable a => Hashable (PrimOr a)
 instance Hashable a => Hashable (RatedExp a)
 instance Hashable InstrId
 
-deriving instance Generic1 IM.IntMap
+
+#if MIN_VERSION_hashable(1,3,4)
+#else
 instance Hashable1 IM.IntMap
+#endif
+deriving instance Generic1 IM.IntMap
 instance Hashable a => Hashable1 (PreInline a)
 instance Hashable a => Hashable1 (Inline a)
 instance Hashable1 RatedExp
