@@ -59,7 +59,7 @@ renderOut_ = renderOutBy_ def
 
 renderOutBy_ :: Options -> SE () -> IO String
 renderOutBy_ options sigs = do
-    finalOptions <- fmap (maybe options (options <> )) getUserOptions
+    finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
     evalGE finalOptions $ fmap renderCsd $ toCsd Nothing finalOptions (fmap (const unit) sigs)
 
 renderOut :: Sigs a => SE a -> IO String
@@ -67,7 +67,7 @@ renderOut = renderOutBy def
 
 renderOutBy :: Sigs a => Options -> SE a -> IO String
 renderOutBy options sigs = do
-    finalOptions <- fmap (maybe options (options <> )) getUserOptions
+    finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
     evalGE finalOptions $ fmap renderCsd $ toCsd Nothing finalOptions sigs
 
 renderEff :: (Sigs a, Sigs b) => (a -> SE b) -> IO String
@@ -75,7 +75,7 @@ renderEff = renderEffBy def
 
 renderEffBy :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO String
 renderEffBy options eff = do
-    finalOptions <- fmap (maybe options (options <> )) getUserOptions
+    finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
     evalGE finalOptions $ fmap renderCsd $ toCsd (Just (arityIns $ funArity eff)) finalOptions (eff =<< getIns)
 
 renderHistory :: Maybe Int -> Int -> Options -> GE Csd

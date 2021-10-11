@@ -251,7 +251,7 @@ dacBy opt' a = do
     writeCsdBy opt "tmp.csd" a
     runWithUserInterrupt (postSetup opt') $ unwords ["csound tmp.csd", logTrace opt']
     where
-      opt = opt' <> withDac <> withAdc
+      opt = mconcat [opt', withDac, withAdc]
 
       withDac
         | hasJackConnections opt' = setDacBy "null"
@@ -282,7 +282,7 @@ csd = csdBy setSilent
 -- | Renders to file @tmp.csd@ and invokes the csound on it.
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
-    writeCsdBy (setSilent <> options) "tmp.csd" a
+    writeCsdBy (setSilent `mappend` options) "tmp.csd" a
     runWithUserInterrupt (postSetup options) $ unwords ["csound tmp.csd", logTrace options]
 
 postSetup :: Options -> IO ()
@@ -295,7 +295,7 @@ jackConnect opt
                                          _  -> void $ runCommand $ jackCmd conns
   | otherwise                        = pure ()
   where
-    addSleep = ("sleep 0.1; " <> )
+    addSleep = ("sleep 0.1; " `mappend` )
 
     jackCmd = addSleep . L.intercalate ";" . fmap jackConn
     jackConn (port1, port2) = unwords ["jack_connect", port1, port2]
@@ -351,7 +351,7 @@ runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
     writeCsdBy opt "tmp.csd" a
     runWithUserInterrupt (pure ()) $ "Cabbage tmp.csd"
-    where opt = opt' <> setCabbage
+    where opt = opt' `mappend` setCabbage
 
 ------------------------------
 

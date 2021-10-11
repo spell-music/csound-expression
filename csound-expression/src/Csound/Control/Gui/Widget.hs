@@ -342,7 +342,7 @@ rangeEvt1 :: (Double -> Source Sig) -> Bool -> Range Int -> Int -> Source (Evt D
 rangeEvt1 widget isInit range initVal = mapSource (addInit . snaps) $ rangeSig1 widget range initVal
     where
         addInit
-            | isInit    = ((devt (int initVal) loadbang) <> )
+            | isInit    = ((devt (int initVal) loadbang) `mappend` )
             | otherwise = id
 
 -- | 2d range range slider. Outputs a pair of event streams.

@@ -79,7 +79,7 @@ mappendOptions a b = Options
     , csdTabFi          = csdTabFi a <|> csdTabFi b
     , csdScaleUI        = csdScaleUI a <|> csdScaleUI b
     , csdJacko          = csdJacko a <|> csdJacko b
-    , csdJackConnect    = csdJackConnect a <> csdJackConnect b
+    , csdJackConnect    = mappend (csdJackConnect a) (csdJackConnect b)
     , csdTrace          = csdTrace a <|> csdTrace b }
 
 defScaleUI :: Options -> (Double, Double)

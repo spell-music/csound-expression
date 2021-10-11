@@ -277,7 +277,7 @@ monoSchedUntil :: Evt (D, D) -> Evt a -> SE MonoArg
 monoSchedUntil evts stop = do
     ref <- newRef (MonoArg 0 0 0 0)
     clearTrig ref
-    runEvt (fmap Left evts <> fmap Right stop) (go ref)
+    runEvt (mappend (fmap Left evts) (fmap Right stop)) (go ref)
     readRef ref
     where
         go ref = either (ons ref) (const $ offs ref)

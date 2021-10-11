@@ -155,7 +155,7 @@ setTrace = def { csdTrace = Just True }
 
 -- | Provides options for Cabbage VST-engine.
 setCabbage :: Options
-setCabbage = setRates 48000 64 <> setNoRtMidi <> setMidiDevice "0"
+setCabbage = mconcat [setRates 48000 64, setNoRtMidi, setMidiDevice "0"]
     where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }}
 
 -- | Defines what ports we should connect after application is launched
