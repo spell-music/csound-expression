@@ -178,8 +178,8 @@ playWhen onSig instr msg = do
 --
 -- > schedStream releaseTime instr evt
 schedStream :: (Arg a, Sigs b) => D -> D -> (a -> SE b) -> Evt a -> SE b
-schedStream start rel ins evt = do
-  (insId, res) <- newOutInstr ins
+schedStream start rel instr evt = do
+  (insId, res) <- newOutInstr instr
   runEvt evt $ \x -> do
     scheduleEvent (negateInstrRef insId) 0 rel x
     scheduleEvent insId start (-1) x
