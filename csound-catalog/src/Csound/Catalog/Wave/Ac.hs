@@ -49,7 +49,7 @@ xanaduPlucks cps vibrAmp vibrCps = (phi vib, phi shift, phi (-shift))
 xanadu1 :: D -> SE Sig
 xanadu1 cps = do
     _ <- delayr 2
-    ~ [tap1, tap2, d1, d2] <- mapM deltap3 [f1, f2, 2, 1.1]
+    ~[tap1, tap2, d1, d2] <- mapM deltap3 [f1, f2, 2, 1.1]
     delayw $ g * damping
     return $ damping * mean [gleft, tap1, d1, gright, tap2, d2]
     where (g, gleft, gright) = xanaduPlucks cps (1/120) (cps/50)
@@ -63,7 +63,7 @@ xanadu1 cps = do
 xanadu2 :: D -> SE Sig
 xanadu2 cps = do
     _ <- delayr 0.4
-    ~ [d1, d2] <- mapM deltap3 [0.07, 0.105]
+    ~[d1, d2] <- mapM deltap3 [0.07, 0.105]
     delayw $ g * damping
     return $ damping * mean [d1, gleft, d2, gright]
     where (g, gleft, gright) = xanaduPlucks cps (1/80) 6.1

@@ -126,7 +126,7 @@ rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
         woodwindVibrato xdur asig = do
             let ivibdepth = abs (vibCoeff * cps)
             kvibdepth <- randiPct 0.1 5 $ sig ivibdepth * linseg [0.1, 0.8 * xdur, 1, 0.2 * xdur, 0.7]
-            ~ [ivibr1, ivibr2, ivibr3] <- mapM rndWithin $ replicate 3 (0, 1)
+            ~[ivibr1, ivibr2, ivibr3] <- mapM rndWithin $ replicate 3 (0, 1)
             kvibrate <- randiPct 0.1 5 $
                 ifB (sig vibCoeff >* 0)
                     -- if vibrato is positive it gets faster
@@ -137,7 +137,7 @@ rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
 
         freqDeviation :: ((D, D), (D, D), (D, D), (D, D)) -> (D, D, D) -> Sig -> Rnd Sig
         freqDeviation (f1, f2, f3, f4) (iattack, isustain, idecay) asig = do
-            ~ [fdev1, fdev2, fdev3, fdev4] <- mapM rndWithin [f1, f2, f3, f4]
+            ~[fdev1, fdev2, fdev3, fdev4] <- mapM rndWithin [f1, f2, f3, f4]
             return $ asig * (1 + linseg [fdev1, iattack, fdev2, isustain, fdev3, idecay, fdev4])
 
         ampVar :: D -> Sig -> Rnd Sig
