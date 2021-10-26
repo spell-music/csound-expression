@@ -390,8 +390,7 @@ instance Hashable a => Hashable (RatedExp a)
 instance Hashable InstrId
 
 
-#if MIN_VERSION_hashable(1,3,4)
-#else
+#if !MIN_VERSION_hashable(1,3,4)
 instance Hashable1 IM.IntMap
 #endif
 deriving instance Generic1 IM.IntMap
@@ -420,8 +419,7 @@ $(deriveShow1 ''MainExp)
 $(deriveShow1 ''RatedExp)
 
 isEmptyExp :: E -> Bool
-isEmptyExp e = isNothing (ratedExpDepends re) && (ratedExpExp re == EmptyExp)
-    where re = unFix e
+isEmptyExp (Fix re) = isNothing (ratedExpDepends re) && (ratedExpExp re == EmptyExp)
 
 --------------------------------------------------------------
 -- comments
