@@ -93,11 +93,10 @@ instance Functor GE where
     fmap f = GE . fmap f . unGE
 
 instance Applicative GE where
-    pure = return
+    pure = GE . return
     (<*>) = ap
 
 instance Monad GE where
-    return = GE . return
     ma >>= mf = GE $ unGE ma >>= unGE . mf
 
 instance MonadIO GE where

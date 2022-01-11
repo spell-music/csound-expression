@@ -4,6 +4,7 @@ module Csound.Control.Overload.SpecInstr(
 ) where
 
 import Control.Arrow(first, second)
+import Data.Kind(Type)
 
 import Csound.Typed
 
@@ -11,7 +12,7 @@ import Csound.Typed
 -- Drum like instrument has a single argument that 
 -- signifies an amplitude.
 class AmpInstr a where
-    type AmpInstrOut a :: *
+    type AmpInstrOut a :: Type
     onAmp :: a -> D -> SE (AmpInstrOut a)
 
 instance AmpInstr (D -> SE Sig) where
@@ -67,7 +68,7 @@ instance AmpInstr (Sig, Sig) where
 -- | Constructs a simple instrument that takes in a tuple of two arguments.
 -- They are amplitude and the frequency (in Hz or cycles per second).
 class CpsInstr a where
-    type CpsInstrOut a :: *
+    type CpsInstrOut a :: Type
     onCps :: a -> (D, D) -> SE (CpsInstrOut a)
 
 instance CpsInstr ((D, D) -> SE Sig) where
