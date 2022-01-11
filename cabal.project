@@ -1,0 +1,9 @@
+packages:
+  csound-catalog
+  csound-controllers
+  csound-expression
+  csound-expression-dynamic
+  csound-expression-opcodes
+  csound-expression-typed
+  csound-sampler
+  gen-csound-opcodes
