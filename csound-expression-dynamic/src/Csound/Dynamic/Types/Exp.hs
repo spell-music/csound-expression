@@ -389,17 +389,6 @@ instance Hashable a => Hashable (PrimOr a)
 instance Hashable a => Hashable (RatedExp a)
 instance Hashable InstrId
 
-
-#if !MIN_VERSION_hashable(1,3,4)
-instance Hashable1 IM.IntMap
-#endif
-deriving instance Generic1 IM.IntMap
-instance Hashable a => Hashable1 (PreInline a)
-instance Hashable a => Hashable1 (Inline a)
-instance Hashable1 RatedExp
-instance Hashable1 MainExp
-instance Hashable1 PrimOr
-
 $(deriveEq1 ''PrimOr)
 $(deriveEq1 ''PreInline)
 $(deriveEq1 ''Inline)
@@ -417,6 +406,16 @@ $(deriveShow1 ''PreInline)
 $(deriveShow1 ''Inline)
 $(deriveShow1 ''MainExp)
 $(deriveShow1 ''RatedExp)
+
+#if !MIN_VERSION_hashable(1,3,4)
+instance Hashable1 IM.IntMap
+#endif
+deriving instance Generic1 IM.IntMap
+instance Hashable a => Hashable1 (PreInline a)
+instance Hashable a => Hashable1 (Inline a)
+instance Hashable1 RatedExp
+instance Hashable1 MainExp
+instance Hashable1 PrimOr
 
 isEmptyExp :: E -> Bool
 isEmptyExp (Fix re) = isNothing (ratedExpDepends re) && (ratedExpExp re == EmptyExp)
