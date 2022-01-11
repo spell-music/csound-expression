@@ -3,6 +3,8 @@ module Csound.Control.Overload.MidiInstr(
     MidiInstr(..), MidiInstrTemp(..)
 ) where
 
+import Data.Kind(Type)
+
 import Csound.Typed
 import Csound.Typed.Opcode
 
@@ -22,7 +24,7 @@ ampCps' temp msg = (ampmidi msg 1, cpsmidi' temp msg)
 
 -- | Converts a value to the midi-instrument. It's used with the functions 'Csound.Base.midi', 'Csound.Base.midin'.
 class MidiInstr a where
-    type MidiInstrOut a :: *
+    type MidiInstrOut a :: Type
 
     onMsg :: a -> Msg -> SE (MidiInstrOut a)
 

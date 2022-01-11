@@ -19,11 +19,10 @@ instance Functor Rnd where
     fmap f (Rnd a) = Rnd $ fmap f a
 
 instance Applicative Rnd where
-    pure = return
+    pure = Rnd . pure
     (<*>) = ap
 
 instance Monad Rnd where
-    return = Rnd . return
     (Rnd a) >>= f = Rnd $ a >>= unRnd . f
 
 evalRnd :: Rnd a -> D -> a

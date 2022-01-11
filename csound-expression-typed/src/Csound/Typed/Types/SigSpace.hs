@@ -17,6 +17,7 @@ import Control.Monad
 import Control.Applicative
 import Csound.Typed.Types.Prim
 import Csound.Typed.GlobalState.SE
+import Data.Kind (Type)
 import Data.NumInstances.Tuple()
 
 -- | A class for easy way to process the outputs of the instruments.
@@ -476,7 +477,7 @@ instance Fractional (a -> (Sig, Sig, Sig, Sig)) where
 -----------------------------------------------------------------------
 
 class SigSpace b => At a b c where
-    type AtOut a b c :: *
+    type AtOut a b c :: Type
     at :: (a -> b) -> c -> AtOut a b c
 
 instance SigSpace a => At Sig Sig a where

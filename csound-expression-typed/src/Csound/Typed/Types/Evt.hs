@@ -8,6 +8,7 @@ module Csound.Typed.Types.Evt(
 
 import Data.Default
 import Data.Boolean
+import Data.Kind (Type)
 
 import Csound.Typed.Types.Prim
 import Csound.Typed.Types.Tuple
@@ -131,7 +132,7 @@ snaps asig = snapshot const asig trigger
 -- > type instance Snap (a, b, c, d) = (Snap a, Snap b, Snap c, Snap d)
 -- > type instance Snap (a, b, c, d, e) = (Snap a, Snap b, Snap c, Snap d, Snap e)
 -- > type instance Snap (a, b, c, d, e, f) = (Snap a, Snap b, Snap c, Snap d, Snap e, Snap f)
-type family Snap a :: *
+type family Snap a :: Type
 
 type instance Snap D   = D
 type instance Snap Str = Str

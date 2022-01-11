@@ -23,11 +23,10 @@ instance Functor SE where
     fmap f = SE . fmap f . unSE
 
 instance Applicative SE where
-    pure = return
+    pure = SE . return
     (<*>) = ap
 
 instance Monad SE where
-    return = SE . return
     ma >>= mf = SE $ unSE ma >>= unSE . mf
 
 runSE :: SE a -> GE a
