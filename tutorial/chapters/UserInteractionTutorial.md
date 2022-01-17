@@ -244,7 +244,7 @@ For me the path prefix is `/usr/local/lib`
     ```
     cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSE_LIB64=0 ../
     ```
-* After `sudo make install` we can check that it was installed allright by command:
+* After `sudo make install` we can check that it was installed alright by command:
 
    ```
    > csound -z1 2>&1 | grep FLpanel
