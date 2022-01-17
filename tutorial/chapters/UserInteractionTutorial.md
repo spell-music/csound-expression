@@ -219,6 +219,45 @@ If we don't have real sliders and knobs we can use the virtual ones.
 It can be done easily with GUI-elements. Csound has support for GUI-widgets.
 GUI-widgets live in the module `Csound.Control.Gui`.
 
+
+### Note on installation of GUI
+
+However GUI support is now discontinued in Csound. We can still install it and use it 
+but it's not packaged with Csound right away. So it means we need to apply some effort to install
+it but bear with I'll guide you through the process:
+
+* install `fltk` package
+
+* Find out your csound installation path:
+
+```
+> whereis csound
+csound: /usr/local/bin/csound /usr/local/lib/csound /usr/include/csound
+```
+For me the path prefix is `/usr/local/lib`
+
+* clone [csound plugins](https://github.com/csound/plugins) repo. Make sure that you are on latest **`develop`** branch
+
+* Follow instructions on their installation guide but also make sure to setup the flags `CMAKE_INSTALL_PREFIX` and `USE_LIB64`
+    on cmake. For me it looks:
+    
+    ```
+    cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSE_LIB64=0 ../
+    ```
+* After `sudo make install` we can check that it was installed allright by command:
+
+   ```
+   > csound -z1 2>&1 | grep FLpanel
+   ```
+    
+   It should produce output.
+ 
+Somewhile ago I've struggled with installation. For me problem was that I used it on master branch 
+and master branch has a bug in installation copy path. Hopefully you will avoid that and 
+you can have great synths with UIs. It's worth it!
+
+### Continue
+
 Let's study how can we use them. First of all let's define the notion of
 widget. A widget is something that contains graphical representation
 (it's what we see on the screen) and behaviour (what we can do with it).
