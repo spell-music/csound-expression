@@ -72,6 +72,8 @@ module Csound.IO (
 import Control.Monad
 
 import System.Process
+import System.Directory
+import System.FilePath
 import qualified Control.Exception as E
 
 import Data.Default
@@ -191,24 +193,27 @@ instance {-# OVERLAPPING #-} RenderCsd (Source (SE ())) where
 renderCsd :: RenderCsd a => a -> IO String
 renderCsd = renderCsdBy def
 
+getTmpFile :: IO FilePath
+getTmpFile = (</> "tmp.csd") <$> getTemporaryDirectory
+
 -- | Render Csound file and save it to the give file.
-writeCsd :: RenderCsd a => String -> a -> IO ()
+writeCsd :: RenderCsd a => FilePath -> a -> IO ()
 writeCsd file a = writeFile file =<< renderCsd a
 
 -- | Render Csound file with options and save it to the give file.
-writeCsdBy :: RenderCsd a => Options -> String -> a -> IO ()
+writeCsdBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
 writeCsdBy opt file a = writeFile file =<< renderCsdBy opt a
 
 -- | Render Csound file and save result sound to the wav-file.
-writeSnd :: RenderCsd a => String -> a -> IO ()
+writeSnd :: RenderCsd a => FilePath -> a -> IO ()
 writeSnd = writeSndBy def
 
 -- | Render Csound file with options and save result sound to the wav-file.
-writeSndBy :: RenderCsd a => Options -> String -> a -> IO ()
+writeSndBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
 writeSndBy opt file a = do
+    fileCsd <- getTmpFile
     writeCsdBy opt fileCsd a
     runWithUserInterrupt (postSetup opt) $ unwords ["csound -o", file, fileCsd, logTrace opt]
-    where fileCsd = "tmp.csd"
 
 logTrace :: Options -> String
 logTrace opt
@@ -248,8 +253,9 @@ dac = dacBy def
 -- | 'Csound.Base.dac' with options.
 dacBy :: (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
-    writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt (postSetup opt') $ unwords ["csound tmp.csd", logTrace opt']
+    fileCsd <- getTmpFile
+    writeCsdBy opt fileCsd a
+    runWithUserInterrupt (postSetup opt') $ unwords ["csound", fileCsd, logTrace opt']
     where
       opt = mconcat [opt', withDac, withAdc]
 
@@ -275,15 +281,16 @@ setVirtual :: Options -> Options
 setVirtual a = a { csdFlags = (csdFlags a) { rtmidi = Just VirtualMidi, midiRT = m { midiDevice = Just "0" } } }
     where m = midiRT $ csdFlags a
 
--- | Renders to file @tmp.csd@ and invokes the csound on it.
+-- | Renders to file @tmp.csd@ in temporary directory and invokes the csound on it.
 csd :: (RenderCsd a) => a -> IO ()
 csd = csdBy setSilent
 
--- | Renders to file @tmp.csd@ and invokes the csound on it.
+-- | Renders to file @tmp.csd@ in temporary directory and invokes the csound on it.
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
-    writeCsdBy (setSilent `mappend` options) "tmp.csd" a
-    runWithUserInterrupt (postSetup options) $ unwords ["csound tmp.csd", logTrace options]
+    fileCsd <- getTmpFile
+    writeCsdBy (setSilent `mappend` options) fileCsd a
+    runWithUserInterrupt (postSetup options) $ unwords ["csound", fileCsd, logTrace options]
 
 postSetup :: Options -> IO ()
 postSetup opt = jackConnect opt
@@ -349,8 +356,9 @@ runCabbage = runCabbageBy def
 -- It invokes the Cabbage command line utility and setts all default cabbage flags.
 runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
-    writeCsdBy opt "tmp.csd" a
-    runWithUserInterrupt (pure ()) $ "Cabbage tmp.csd"
+    fileCsd <- getTmpFile
+    writeCsdBy opt fileCsd a
+    runWithUserInterrupt (pure ()) $ unwords ["Cabbage", fileCsd]
     where opt = opt' `mappend` setCabbage
 
 ------------------------------
