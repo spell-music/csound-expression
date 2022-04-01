@@ -7,22 +7,3 @@ packages:
   csound-expression-typed
   csound-sampler
   gen-csound-opcodes
-
--- https://github.com/haskell-crypto/cryptonite/pull/354
-source-repository-package
-  type: git
-  location: https://github.com/josephcsible/cryptonite
-  tag: 3b081e3ad027b0550fc87f171dffecbb20dedafe
-
--- https://github.com/haskell-foundation/foundation/pull/555
-source-repository-package
-  type: git
-  location: https://github.com/TomMD/foundation
-  subdir: basement
-  tag: 0bb195e1fea06d144dafc5af9a0ff79af0a5f4a0
-
--- https://github.com/vincenthz/hs-memory/pull/87
-source-repository-package
-  type: git
-  location: https://github.com/tfausak/hs-memory
-  tag: 3cf661a8a9a8ac028df77daa88e8d65c55a3347a
