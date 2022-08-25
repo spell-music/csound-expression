@@ -1249,7 +1249,7 @@ brightDizi = woodWind' (shortDiziSpec br vib) C.dizi
 
 pulseWidth = fx1 0.15 smallHall2 $ polySynt $ mul (0.75 * 0.6) . at fromMono . mul (fades 0.07 0.1). onCps (uncurry C.pulseWidth)
 
-xanadu = fx1 0.27 largeHall2 $polySynt $ mul (1.2 * 0.6) . at fromMono . mul (fades 0.01 2.2). onCps C.xanadu1
+xanadu = fx1 0.27 largeHall2 $ polySynt $ mul (1.2 * 0.6) . at fromMono . mul (fades 0.01 2.2). onCps C.xanadu1
 
 alienIsAngry = fx1 0.15 smallRoom2 $ polySynt $ at fromMono . mul (0.5 * fades 0.01 2.3). onCps (C.fmMod 5)
 

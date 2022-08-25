@@ -48,6 +48,7 @@ import Control.Monad.Trans.Reader
 
 import Data.Default
 import Data.Boolean
+import Data.Kind (Type)
 import Data.String
 
 import Csound.Dynamic hiding (genId, double, int, str, when1, whens, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, untilDo, whileBegin, whileEnd, whileDo)
@@ -548,7 +549,7 @@ instance Floating D where
     ; asin = dOn1 asin asin; atan = dOn1 atan atan;  acos = dOn1 acos acos ; asinh = dOn1 asinh asinh; acosh = dOn1 acosh acosh; atanh = dOn1 atanh atanh }
 
 class IsPrim a where
-    type PrimOf a :: *
+    type PrimOf a :: Type
     getPrim :: a -> Maybe (PrimOf a)
     fromPrim :: PrimOf a -> a
 

@@ -54,6 +54,8 @@ module Csound.Air.ModArg(
 
 ) where
 
+import Data.Kind (Type)
+
 import Csound.Typed
 import Csound.Typed.Opcode(gauss, gaussi, jitter, linseg, linsegr, expsegr)
 import Csound.Air.Wave
@@ -509,7 +511,7 @@ delGaussiArg4 delTime riseTime depth rate f = delModArg4 delTime riseTime depth 
 -- modArg1
 
 class ModArg1 a b where
-    type ModArgOut1 a b :: *
+    type ModArgOut1 a b :: Type
     modArg1 :: Sig -> a -> b -> ModArgOut1 a b
 
 --------------------------------------------
@@ -669,7 +671,7 @@ instance ModArg1 (SE Sig) (Sig -> a -> b -> c -> SE Sig2) where
 -- modArg2
 
 class ModArg2 a b where
-    type ModArgOut2 a b :: *
+    type ModArgOut2 a b :: Type
     modArg2 :: Sig -> a -> b -> ModArgOut2 a b
 
 --------------------------------------------
@@ -797,7 +799,7 @@ instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> SE Sig2) where
 -- modArg3
 
 class ModArg3 a b where
-    type ModArgOut3 a b :: *
+    type ModArgOut3 a b :: Type
     modArg3 :: Sig -> a -> b -> ModArgOut3 a b
 
 --------------------------------------------
@@ -893,7 +895,7 @@ instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> SE Sig2) where
 -- modArg4
 
 class ModArg4 a b where
-    type ModArgOut4 a b :: *
+    type ModArgOut4 a b :: Type
     modArg4 :: Sig -> a -> b -> ModArgOut4 a b
 
 --------------------------------------------

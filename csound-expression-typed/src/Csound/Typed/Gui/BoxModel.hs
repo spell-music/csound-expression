@@ -71,11 +71,10 @@ data Scene ctx a
     deriving (Show, Functor)
 
 instance Applicative (Scene ctx) where
-    pure = return
+    pure = Prim
     (<*>) = ap
 
 instance Monad (Scene ctx) where
-    return = Prim
     ma >>= mf = joinScene $ fmap mf ma
         where
             joinScene :: Scene ctx (Scene ctx a) -> Scene ctx a

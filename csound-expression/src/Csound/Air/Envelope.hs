@@ -40,6 +40,7 @@ module Csound.Air.Envelope (
 
 import Control.Monad
 import Control.Applicative
+import Data.Kind(Type)
 import Data.List(intersperse)
 
 import Temporal.Media hiding (rest)
@@ -793,7 +794,7 @@ hvalTime = humanValTime
 --
 -- As you can see it transforms the whole function. So we don't need for extra parenthesis.
 class HumanizeValue a where
-    type HumanizeValueOut a :: *
+    type HumanizeValueOut a :: Type
     humanVal :: Sig -> a -> HumanizeValueOut a
 
 rndVal :: Sig -> Sig -> Sig -> SE Sig
@@ -843,7 +844,7 @@ instance HumanizeValue ([D] -> D -> Sig) where
 --
 -- As you can see it transforms the whole function. So we don't need for extra parenthesis.
 class HumanizeTime a where
-    type HumanizeTimeOut a :: *
+    type HumanizeTimeOut a :: Type
     humanTime :: Sig -> a -> HumanizeTimeOut a
 
 instance HumanizeTime ([Seq] -> Sig -> Sig) where
@@ -882,7 +883,7 @@ instance HumanizeTime ([D] -> D -> Sig) where
 --
 -- As you can see it transforms the whole function. So we don't need for extra parenthesis.
 class HumanizeValueTime a where
-    type HumanizeValueTimeOut a :: *
+    type HumanizeValueTimeOut a :: Type
     humanValTime :: Sig -> Sig -> a -> HumanizeValueTimeOut a
 
 instance HumanizeValueTime ([Seq] -> Sig -> Sig) where

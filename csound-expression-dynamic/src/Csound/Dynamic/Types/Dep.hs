@@ -50,11 +50,10 @@ instance Monad m => Functor (DepT m) where
     fmap = liftM
 
 instance Monad m => Applicative (DepT m) where
-    pure = return
+    pure = DepT . return
     (<*>) = ap
 
 instance Monad m => Monad (DepT m) where
-    return = DepT . return
     ma >>= mf = DepT $ unDepT ma >>= unDepT . mf
 
 instance MonadTrans DepT where
