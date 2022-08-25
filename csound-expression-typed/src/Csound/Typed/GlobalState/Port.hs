@@ -5,12 +5,13 @@
 -- cn write a signal to the port or can read the singals.
 module Csound.Typed.GlobalState.Port(
     IsPort(..), mixPort, modifyPort,
-    Port(..), freePort, 
+    Port(..), freePort,
     PortCtrl(..), freePortCtrl
 ) where
 
 import Control.Monad
 import Control.Monad.Trans.Class
+import Data.Proxy
 
 import Csound.Dynamic
 
@@ -19,11 +20,11 @@ import Csound.Typed.GlobalState.SE
 import Csound.Typed.Types.Tuple
 import Csound.Typed.Types.Prim
 
-import Csound.Typed.GlobalState.Opcodes(freeChn, chnName, chnget, chnset, chngetK, chnsetK)    
+import Csound.Typed.GlobalState.Opcodes(freeChn, chnName, chnget, chnset, chngetK, chnsetK)
 
 -- port class
 
-class IsPort p where 
+class IsPort p where
     readPort  :: Sigs a => p a -> SE a
     writePort :: Sigs a => p a -> a -> SE ()
 
@@ -32,7 +33,7 @@ mixPort p value = modifyPort p (value + )
 
 modifyPort :: (Sigs a, IsPort port) => port a -> (a -> a) -> SE ()
 modifyPort p f = do
-    value <- readPort p 
+    value <- readPort p
     writePort p $ f value
 
 -- port for audio signals
@@ -46,7 +47,7 @@ instance Sigs a => Tuple (Port a) where
     tupleMethods = makeTupleMethods to from
         where
             to :: D -> Port a
-            to =  Port . toGE 
+            to =  Port . toGE
 
             from :: Port a -> D
             from (Port e) = fromGE e
@@ -61,10 +62,10 @@ instance IsPort Port where
     writePort port a = SE $ do
         (names, values) <- lift getNamesAndValues
         zipWithM_ chnset names values
-        where 
+        where
             getNamesAndValues = do
                 names  <- getNames port
-                values <- fromTuple a            
+                values <- fromTuple a
                 return (names, values)
 
 -------------------------------------------------------------
@@ -79,7 +80,7 @@ instance Sigs a => Tuple (PortCtrl a) where
     tupleMethods = makeTupleMethods to from
         where
             to :: D -> PortCtrl a
-            to =  PortCtrl . toGE 
+            to =  PortCtrl . toGE
 
             from :: PortCtrl a -> D
             from (PortCtrl e) = fromGE e
@@ -94,10 +95,10 @@ instance IsPort PortCtrl where
     writePort port a = SE $ do
         (names, values) <- lift getNamesAndValues
         zipWithM_ chnsetK names values
-        where 
+        where
             getNamesAndValues = do
                 names  <- getNamesCtrl port
-                values <- fromTuple a            
+                values <- fromTuple a
                 return (names, values)
 
 -------------------------------------------------------
@@ -105,9 +106,9 @@ instance IsPort PortCtrl where
 getNames :: forall a . Sigs a => Port a -> GE [E]
 getNames (Port ref) = do
     idx <- ref
-    return $ fmap (flip chnName idx) [1 .. (tupleArity ((error "No def here") :: a))]
+    return $ fmap (flip chnName idx) [1 .. (tupleArity (Proxy :: Proxy a))]
 
 getNamesCtrl :: forall a . Sigs a => PortCtrl a -> GE [E]
 getNamesCtrl (PortCtrl ref) = do
     idx <- ref
-    return $ fmap (flip chnName idx) [1 .. (tupleArity ((error "No def here") :: a))]
+    return $ fmap (flip chnName idx) [1 .. (tupleArity (Proxy :: Proxy a))]

@@ -1,3 +1,4 @@
+{-# Language ScopedTypeVariables #-}
 module Csound.Typed.Control (
     -- * SE
     module Csound.Typed.GlobalState.SE,
@@ -25,12 +26,13 @@ module Csound.Typed.Control (
     module Csound.Typed.Control.Vco,
     -- * Imperative instruments
     module Csound.Typed.Control.InstrRef,
-    -- * Array folding and traversals    
+    -- * Array folding and traversals
     module Csound.Typed.Control.ArrayTraverse,
     -- * Reads global config arguments from command line
     module Csound.Typed.Control.MacrosArgs
 ) where
 
+import Data.Proxy
 import Csound.Typed.GlobalState.SE
 import Csound.Typed.Control.Ref
 
@@ -49,23 +51,14 @@ import Csound.Typed.Control.MacrosArgs
 import Csound.Typed.Types
 import Csound.Typed.GlobalState
 
-instr0 :: Tuple a => SE a -> SE a
-instr0 a = return $ toTuple $ saveIns0 ins0Arity (tupleRates $ proxy a) ins0Exp
+instr0 :: forall a. Tuple a => SE a -> SE a
+instr0 a = return $ toTuple $ saveIns0 ins0Arity (tupleRates (Proxy :: Proxy a)) ins0Exp
     where
         ins0Exp = execGEinSE $ fmap fromTuple a
+        ins0Arity = tupleArity (Proxy :: Proxy a)
 
-        ins0Arity = tupleArity $ proxy a
-
-        proxy :: Tuple a => SE a -> a
-        proxy = const (toTuple $ return $ repeat undefined)
-
-getIns :: Sigs a => SE a
-getIns = res
-    where 
-        res = fmap toTuple $ fromDep $ getIn (tupleArity $ proxy res) 
-
-        proxy :: SE a -> a
-        proxy = const undefined
+getIns :: forall a. Sigs a => SE a
+getIns = fmap toTuple $ fromDep $ getIn (tupleArity (Proxy :: Proxy a))
 
 -- | Sets the global duration of the file or output signal to the given value.
 -- It should be used only once! The proper place is in the top-most
@@ -79,4 +72,4 @@ setDur mdt as = toTuple $ do
 
 -- | Gets new id.
 freshId :: SE D
-freshId = SE $ fmap fromE freeChn 
+freshId = SE $ fmap fromE freeChn

@@ -13,6 +13,7 @@ module Csound.Typed.Control.Mix(
     Sco, CsdEventList, CsdEvent
 ) where
 
+import Data.Proxy
 import Data.Boolean
 
 import Control.Monad.IO.Class
@@ -158,17 +159,11 @@ mixKey = liftIO . fmap (MixKey . hashStableName) . makeStableName
 toEventList :: Sco (Mix a) -> GE (CsdEventList M)
 toEventList evts = fmap delayAndRescaleCsdEventListM $ traverse unMix $ evts
 
-mixArity :: Sigs b => f (Mix b) -> Int
-mixArity = tupleArity . proxy
-    where
-        proxy :: f (Mix b) -> b
-        proxy = const undefined
+mixArity :: forall a b f. Sigs b => f (Mix b) -> Int
+mixArity _ = tupleArity (Proxy :: Proxy b)
 
-mixArityFun :: Sigs b => (a -> f (Mix b)) -> Int
-mixArityFun = tupleArity . proxy
-    where
-        proxy :: (a -> f (Mix b)) -> b
-        proxy = const undefined
+mixArityFun :: forall a b f. Sigs b => (a -> f (Mix b)) -> Int
+mixArityFun _ = tupleArity (Proxy :: Proxy b)
 
 -----------------------------------------------------------
 -- instances

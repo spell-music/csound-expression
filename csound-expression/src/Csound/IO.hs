@@ -1,4 +1,4 @@
-{-# Language FlexibleInstances, UndecidableInstances, CPP #-}
+{-# Language ScopedTypeVariables, InstanceSigs, FlexibleInstances, UndecidableInstances, CPP #-}
 -- | Rendering of Csound files and playing the music in real time.
 --
 -- How are we going to get the sound out of Haskell code?
@@ -76,6 +76,7 @@ import System.Directory
 import System.FilePath
 import qualified Control.Exception as E
 
+import Data.Proxy
 import Data.Default
 import Csound.Typed
 import Csound.Control.Gui
@@ -98,12 +99,12 @@ data CsdArity = CsdArity
 
 class RenderCsd a where
     renderCsdBy :: Options -> a -> IO String
-    csdArity :: a -> CsdArity
+    csdArity :: Proxy a -> CsdArity
 
-hasInputs :: RenderCsd a => a -> Bool
+hasInputs :: RenderCsd a => Proxy a -> Bool
 hasInputs = ( > 0) . csdArity'inputs . csdArity
 
-hasOutputs :: RenderCsd a => a -> Bool
+hasOutputs :: RenderCsd a => Proxy a -> Bool
 hasOutputs = ( > 0) . csdArity'outputs . csdArity
 
 instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
@@ -111,73 +112,50 @@ instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
     csdArity _ = CsdArity 0 0
 
 #if __GLASGOW_HASKELL__ >= 710
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd a where
+instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd a where
   renderCsdBy opt a = render opt (return a)
-  csdArity a = CsdArity 0 (tupleArity a)
+  csdArity _ = CsdArity 0 (tupleArity (Proxy :: Proxy a))
 
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (SE a) where
+instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd (SE a) where
   renderCsdBy opt a = render opt a
-  csdArity a = CsdArity 0 (outArity a)
+  csdArity _ = CsdArity 0 (tupleArity (Proxy :: Proxy a))
 
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source a) where
+instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd (Source a) where
   renderCsdBy opt a = renderCsdBy opt (fromSource a)
-  csdArity a = CsdArity 0 (tupleArity $ proxySource a)
-      where
+  csdArity _ = CsdArity 0 (tupleArity (Proxy :: Proxy a))
 
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Source (SE a)) where
+instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd (Source (SE a)) where
   renderCsdBy opt a = renderCsdBy opt (fromSourceSE a)
-  csdArity a = CsdArity 0 (tupleArity $ proxySE $ proxySource a)
+  csdArity _ = CsdArity 0 (tupleArity (Proxy :: Proxy a))
 
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd (Sco (Mix a)) where
+instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd (Sco (Mix a)) where
   renderCsdBy opt a = renderCsdBy opt (mix a)
-  csdArity a = CsdArity 0 (tupleArity $ proxy a)
-    where
-      proxy :: Sco (Mix a) -> a
-      proxy = const undefined
+  csdArity _ = CsdArity 0 (tupleArity (Proxy :: Proxy a))
 
-instance {-# OVERLAPPABLE #-} Sigs a => RenderCsd [Sco (Mix a)] where
+instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd [Sco (Mix a)] where
   renderCsdBy opt a = renderCsdBy opt (mix $ har a)
-  csdArity a = CsdArity 0 (tupleArity $ proxy a)
-    where
-      proxy :: [Sco (Mix a)] -> a
-      proxy = const undefined
+  csdArity _ = CsdArity 0 (tupleArity $ (Proxy :: Proxy a))
 
 #endif
 
-proxySource :: Source a -> a
-proxySource = const undefined
-
-proxySE :: SE a -> a
-proxySE = const undefined
-
-proxyFun :: (a -> b) -> (a, b)
-proxyFun = const undefined
-
-proxyIn :: (a -> b) -> a
-proxyIn = fst . proxyFun
-
-proxyOut :: (a -> b) -> b
-proxyOut = snd . proxyFun
-
-instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> b) where
+instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> b) where
     renderCsdBy opt f = renderEffBy opt (return . f)
-    csdArity a = CsdArity (tupleArity $ proxyIn a) (tupleArity $ proxyOut a)
+    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
-instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
+instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
     renderCsdBy opt f = renderEffBy opt f
-    csdArity a = CsdArity (tupleArity $ proxyIn a) (tupleArity $ proxySE $ proxyOut a)
+    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
-instance {-# OVERLAPPABLE #-} (Sigs a, Sigs b) => RenderCsd (a -> Source b) where
+instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> Source b) where
     renderCsdBy opt f = renderEffBy opt (fromSource . f)
-    csdArity a = CsdArity (tupleArity $ proxyIn a) (tupleArity $ proxySource $ proxyOut a)
-
-instance (Sigs a, Sigs b) => RenderCsd (a -> Source (SE b)) where
+    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
+instance forall a b. (Sigs a, Sigs b) => RenderCsd (a -> Source (SE b)) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-    csdArity a = CsdArity (tupleArity $ proxyIn a) (tupleArity $ proxySE $ proxySource $ proxyOut a)
+    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
-instance {-# OVERLAPPING #-} (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
+instance {-# OVERLAPPING #-} forall a. (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
     renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-    csdArity a = CsdArity (tupleArity $ proxyIn a) (tupleArity $ proxySE $ proxySource $ proxyOut a)
+    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy Sig2))
 
 instance {-# OVERLAPPING #-} RenderCsd (Source ()) where
     renderCsdBy opt src = renderCsdBy opt $ do
@@ -251,7 +229,7 @@ dac :: (RenderCsd a) => a -> IO ()
 dac = dacBy def
 
 -- | 'Csound.Base.dac' with options.
-dacBy :: (RenderCsd a) => Options -> a -> IO ()
+dacBy :: forall a. (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     fileCsd <- getTmpFile
     writeCsdBy opt fileCsd a
@@ -260,14 +238,14 @@ dacBy opt' a = do
       opt = mconcat [opt', withDac, withAdc]
 
       withDac
-        | hasJackConnections opt' = setDacBy "null"
-        | hasOutputs a            = setDac
-        | otherwise               = mempty
+        | hasJackConnections opt'       = setDacBy "null"
+        | hasOutputs (Proxy :: Proxy a) = setDac
+        | otherwise                     = mempty
 
       withAdc
-        | hasJackConnections opt' = setAdcBy "null"
-        | hasInputs a             = setAdc
-        | otherwise               = mempty
+        | hasJackConnections opt'      = setAdcBy "null"
+        | hasInputs (Proxy :: Proxy a) = setAdc
+        | otherwise                    = mempty
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()

@@ -1,4 +1,4 @@
-{-# Language FlexibleInstances #-}
+{-# Language FlexibleInstances, ScopedTypeVariables #-}
 module Csound.Typed.Types.Lift(
     GE, E,
     -- * Lifters
@@ -19,6 +19,7 @@ module Csound.Typed.Types.Lift(
 
 ) where
 
+import Data.Proxy
 import Csound.Dynamic
 import Csound.Typed.Types.Prim
 import Csound.Typed.Types.Tuple
@@ -60,17 +61,13 @@ class DirtyMulti a where
 
 -- multi out helpers
 
-fromPm :: Tuple a => Pm -> a
-fromPm (Pm a) = res
-    where res = toTuple $ fmap ( $ tupleArity res) a
+fromPm :: forall a. Tuple a => Pm -> a
+fromPm (Pm a) =
+  toTuple $ fmap ( $ tupleArity (Proxy :: Proxy a)) a
 
-fromDm :: Tuple a => Dm -> SE a
-fromDm (Dm a) = res
-    where
-        res = fmap toTuple $ fromDep $ hideGEinDep $ fmap ( $ (tupleArity $ proxy res)) a
-
-        proxy :: SE a -> a
-        proxy = const undefined
+fromDm :: forall a. Tuple a => Dm -> SE a
+fromDm (Dm a) =
+  fmap toTuple $ fromDep $ hideGEinDep $ fmap ( $ (tupleArity (Proxy :: Proxy a))) a
 
 -- pure single
 

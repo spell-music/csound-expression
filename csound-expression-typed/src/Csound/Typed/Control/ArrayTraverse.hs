@@ -5,6 +5,7 @@ module Csound.Typed.Control.ArrayTraverse(
     foldArr, foldRowArr, foldColumnArr, foldRowsArrD, foldColumnsArrD
 ) where
 
+import Data.Proxy
 import Csound.Typed.Types
 import Csound.Typed.Control.Ref
 import Csound.Typed.GlobalState
@@ -56,10 +57,7 @@ foreachArrBy getArrayLength array body = do
 
                 fromDep_ D.whileEnd
 
-        arity = tupleArity $ proxy array
-
-        proxy :: Arr ix a -> ix
-        proxy = const undefined
+        arity = tupleArity (Proxy :: Proxy ix)
 
         concatRefs :: [Ref b] -> Ref ix
         concatRefs vs = Ref $ vs >>= \(Ref xs) -> xs

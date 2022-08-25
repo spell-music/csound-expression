@@ -1,3 +1,4 @@
+{-# Language ScopedTypeVariables #-}
 -- | Converts to low-level instruments
 module Csound.Typed.Control.Instr(
     Arity(..), InsExp, EffExp,
@@ -6,19 +7,15 @@ module Csound.Typed.Control.Instr(
     apInstr, apInstr0
 ) where
 
+import Data.Proxy
 import Csound.Dynamic(InstrId(..))
 import qualified Csound.Typed.GlobalState.Elements as C
 
 import Csound.Typed.Types
 import Csound.Typed.GlobalState
 
-funProxy :: (a -> f b) -> (a, b)
-funProxy = const (msg, msg)
-    where msg = error "I'm a Csound.Typed.Control.Instr.funProxy"
-
-funArity :: (Tuple a, Tuple b) => (a -> SE b) -> Arity
-funArity instr = Arity (tupleArity a) (tupleArity b)
-    where (a, b) = funProxy instr
+funArity :: forall a b. (Tuple a, Tuple b) => (a -> SE b) -> Arity
+funArity instr = Arity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
 constArity :: (Tuple a) => SE a -> Arity
 constArity a = Arity 0 (outArity a)
@@ -38,13 +35,12 @@ midiExp instr = execGEinSE $ fmap fromTuple $ instr Msg
 unitExp :: SE Unit -> UnitExp
 unitExp = execGEinSE . fmap unUnit
 
-apInstr :: (Arg a, Sigs b) => GE InstrId -> a -> b
-apInstr instrIdGE args = res
-    where
-        res = toTuple $ do
-            instrId <- instrIdGE
-            argList <- fromTuple args
-            return $ C.subinstr (tupleArity res) instrId argList
+apInstr :: forall a b. (Arg a, Sigs b) => GE InstrId -> a -> b
+apInstr instrIdGE args =
+  toTuple $ do
+    instrId <- instrIdGE
+    argList <- fromTuple args
+    return $ C.subinstr (tupleArity (Proxy :: Proxy b)) instrId argList
 
 apInstr0 :: (Sigs b) => GE InstrId -> b
 apInstr0 instrId = apInstr instrId unit

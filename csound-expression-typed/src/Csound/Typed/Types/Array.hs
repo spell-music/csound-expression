@@ -31,6 +31,7 @@ module Csound.Typed.Types.Array(
 
 
 import Control.Monad
+import Data.Proxy
 
 import Csound.Dynamic hiding (writeArr, writeInitArr, readArr, newLocalArrVar, newTmpArrVar, int)
 import qualified Csound.Dynamic as D
@@ -89,7 +90,7 @@ newtype Arr ix a = Arr { unArr :: [Var] }
 
 newArrBy :: forall ix a . (Tuple a, Tuple ix) => (Rate -> GE [E] -> SE Var) -> [D] -> SE (Arr ix a)
 newArrBy mkVar sizes =
-    fmap Arr $ mapM (\x -> mkVar x (mapM toGE sizes)) (tupleRates $ (undefined :: a))
+    fmap Arr $ mapM (\x -> mkVar x (mapM toGE sizes)) (tupleRates $ (Proxy :: Proxy a))
 
 getIndices :: Tuple ix => [Int] -> [ix]
 getIndices xs = fmap (toTuple . return . fmap D.int) $ getIntIndices xs

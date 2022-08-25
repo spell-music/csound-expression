@@ -9,6 +9,7 @@ module Csound.Typed.Control.Ref(
 ) where
 
 import Data.Boolean
+import Data.Proxy
 
 import Control.Monad
 import Control.Monad.Trans.Class
@@ -42,14 +43,14 @@ readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM readVar vars
 
 -- | Allocates a new local (it is visible within the instrument) mutable value and initializes it with value.
 -- A reference can contain a tuple of variables.
-newRef :: Tuple a => a -> SE (Ref a)
-newRef t = fmap Ref $ newLocalVars (tupleRates t) (fromTuple t)
+newRef :: forall a. Tuple a => a -> SE (Ref a)
+newRef t = fmap Ref $ newLocalVars (tupleRates (Proxy :: Proxy a)) (fromTuple t)
 
 -- | Allocates a new local (it is visible within the instrument) mutable value and initializes it with value.
 -- A reference can contain a tuple of variables.
 -- It contains control signals (k-rate) and constants for numbers (i-rates).
-newCtrlRef :: Tuple a => a -> SE (Ref a)
-newCtrlRef t = fmap Ref $ newLocalVars (fmap toCtrlRate $ tupleRates t) (fromTuple t)
+newCtrlRef :: forall a. Tuple a => a -> SE (Ref a)
+newCtrlRef t = fmap Ref $ newLocalVars (fmap toCtrlRate $ tupleRates (Proxy :: Proxy a)) (fromTuple t)
 
 toCtrlRate :: Rate -> Rate
 toCtrlRate x = case x of
@@ -90,14 +91,14 @@ sensorsSE a = do
 
 -- | Allocates a new global mutable value and initializes it with value.
 -- A reference can contain a tuple of variables.
-newGlobalRef :: Tuple a => a -> SE (Ref a)
-newGlobalRef t = fmap Ref $ newGlobalVars (tupleRates t) (fromTuple t)
+newGlobalRef :: forall a. Tuple a => a -> SE (Ref a)
+newGlobalRef t = fmap Ref $ newGlobalVars (tupleRates (Proxy :: Proxy a)) (fromTuple t)
 
 -- | Allocates a new global mutable value and initializes it with value.
 -- A reference can contain a tuple of variables.
 -- It contains control signals (k-rate) and constants for numbers (i-rates).
-newGlobalCtrlRef :: Tuple a => a -> SE (Ref a)
-newGlobalCtrlRef t = fmap Ref $ newGlobalVars (fmap toCtrlRate $ tupleRates t) (fromTuple t)
+newGlobalCtrlRef :: forall a . Tuple a => a -> SE (Ref a)
+newGlobalCtrlRef t = fmap Ref $ newGlobalVars (fmap toCtrlRate $ tupleRates (Proxy :: Proxy a)) (fromTuple t)
 
 -- | An alias for the function @newRef@. It returns not the reference
 -- to mutable value but a pair of reader and writer functions.
@@ -110,8 +111,8 @@ globalSensorsSE a = do
 -- A reference can contain a tuple of variables.
 -- The variable is set to zero at the end of every iteration.
 -- It's useful for accumulation of audio values from several instruments.
-newClearableGlobalRef :: Tuple a => a -> SE (Ref a)
-newClearableGlobalRef t = fmap Ref $ newClearableGlobalVars (tupleRates t) (fromTuple t)
+newClearableGlobalRef :: forall a . Tuple a => a -> SE (Ref a)
+newClearableGlobalRef t = fmap Ref $ newClearableGlobalVars (tupleRates (Proxy :: Proxy a)) (fromTuple t)
 
 -------------------------------------------------------------------------------
 -- writable tables
