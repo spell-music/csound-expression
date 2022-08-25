@@ -200,7 +200,7 @@ noTab :: Tab
 noTab = fromE (-1)
 
 -- | Detects that table is no tab (rebndered as -1)
-isNoTab :: Tab -> D
+isNoTab :: Tab -> BoolD
 isNoTab = fromGE . fmap (==* (-1)) . toGE
 
 {-
