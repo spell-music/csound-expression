@@ -77,10 +77,12 @@ makeTupleMethods to from = TupleMethods
     { fromTuple_  = fromTuple . from
     , toTuple_    = to . toTuple
     , tupleArity_ = const $ tupleArity $ proxy to
-    , tupleRates_ = tupleRates . from
+    , tupleRates_ = const $ tupleRates $ proxy to
     , defTuple_   = to defTuple }
-    where proxy :: (a -> b) -> a
-          proxy = undefined
+    where
+      proxy :: (a -> b) -> a
+      proxy = undefined
+
 
 -- Tuple instances
 
