@@ -5,7 +5,7 @@ module Csound.Tab (
     -- you are pobably not aware of the fact that for efficiency reasons Csound requires that table size is equal
     -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the
     -- table once but you don't need the guard point if you read the table in many cycles, then the guard point is the the first point of your table).
-    Tab, noTab,
+    Tab, noTab, isNoTab,
 
     -- * Table querries
 
@@ -193,10 +193,15 @@ import Csound.Dynamic hiding (int, when1, whens, genId, pn)
 import Data.Default
 import Csound.Typed
 import Data.Maybe
+import Data.Boolean
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
 noTab :: Tab
 noTab = fromE (-1)
+
+-- | Detects that table is no tab (rebndered as -1)
+isNoTab :: Tab -> D
+isNoTab = fromGE . fmap (==* (-1)) . toGE
 
 {-
 -- | Creates a new table. The Tab could be used while the instrument
