@@ -87,6 +87,7 @@ module Csound.Control.Gui (
     hbind', vbind', happly', vapply', hmapM', vmapM', gridMapM
 ) where
 
+import Data.Text (Text)
 import Control.Monad
 
 import Csound.Typed
@@ -115,10 +116,10 @@ instance (At Sig2 (SE Sig2) a) => At Sig2 (SE Sig2) (Source a) where
 -- | Creates a window with the given name, size and content
 --
 -- > win name (width, height) gui
-win :: String -> (Int, Int) -> Gui -> SE ()
+win :: Text -> (Int, Int) -> Gui -> SE ()
 win name (x, y) = panelBy name (Just $ Rect 0 0 x y)
 
-keyWin :: String -> (Int, Int) -> Gui -> SE ()
+keyWin :: Text -> (Int, Int) -> Gui -> SE ()
 keyWin name (x, y) = keyPanelBy name (Just $ Rect 0 0 x y)
 
 -- | Hides the SE inside Source.

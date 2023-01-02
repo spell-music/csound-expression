@@ -90,8 +90,12 @@ Library
         csound-expression-typed >= 0.2.7,
         csound-expression-dynamic >= 0.3.8,
         temporal-media >= 0.6.3,
-        csound-expression-opcodes >= 0.0.5.1
+        csound-expression-opcodes >= 0.0.5.1,
+        text
   default-language: Haskell2010
+  default-extensions:
+    ImportQualifiedPost
+    OverloadedStrings
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Base
@@ -152,6 +156,7 @@ Library
         Csound.Control.Overload.Outs
         Csound.Control.Overload.MidiInstr
         Csound.Control.Overload.SpecInstr
+
 
 
 benchmark csound-expression-benchmark

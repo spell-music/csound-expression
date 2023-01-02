@@ -194,6 +194,7 @@ module Csound.Air.Fx.FxBox(
 ) where
 
 import Data.Default
+import Data.Text (Text)
 
 import Csound.Typed
 import Csound.Typed.Opcode(scale, expcurve)
@@ -707,7 +708,7 @@ ringo5 = ringo' size5
 ----------------------------------------------------------
 -- UI
 
-setAll :: Double -> [String] -> [(String, Double)]
+setAll :: Double -> [Text] -> [(Text, Double)]
 setAll size names = fmap (\s -> (s, size)) names
 
 

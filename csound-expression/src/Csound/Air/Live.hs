@@ -37,6 +37,8 @@ import Control.Monad
 
 import Data.Bool
 import Data.Boolean
+import Data.Text (Text)
+import Data.Text qualified as Text
 import Data.Default
 import qualified Data.Colour.Names as C
 import qualified Data.Colour.SRGB as C
@@ -58,14 +60,14 @@ import qualified Csound.Typed.Plugins as P
 -- mixer
 
 -- | Widget that represents a mixer.
-mixer :: (Sigs a) => [(String, SE a)] -> Source a
+mixer :: (Sigs a) => [(Text, SE a)] -> Source a
 mixer = genMixer (ver, hor)
 
 -- | Widget that represents a mixer with horizontal grouping of elements.
-hmixer :: (Sigs a) => [(String, SE a)] -> Source a
+hmixer :: (Sigs a) => [(Text, SE a)] -> Source a
 hmixer = genMixer (hor, ver)
 
-genMixer :: (Sigs a) => ([Gui] -> Gui, [Gui] -> Gui) -> [(String, SE a)] -> Source a
+genMixer :: (Sigs a) => ([Gui] -> Gui, [Gui] -> Gui) -> [(Text, SE a)] -> Source a
 genMixer (parentGui, childGui) as = source $ do
     gTags <- mapM box names
     (gs, vols) <- fmap unzip $ mapM (const $ defSlider "") names
@@ -86,10 +88,10 @@ genMixer (parentGui, childGui) as = source $ do
 
 -- | Transforms the mono signal to the stereo input
 -- for the mixer widget.
-mixMono :: String -> Sig -> (String, SE Sig2)
+mixMono :: Text -> Sig -> (Text, SE Sig2)
 mixMono name asig = (name, return (asig, asig))
 
-defSlider :: String -> Source Sig
+defSlider :: Text -> Source Sig
 defSlider tag = slider tag (linSpan 0 1) 0.5
 
 ----------------------------------------------------------------------
@@ -119,8 +121,8 @@ defSlider tag = slider tag (linSpan 0 1) 0.5
 --
 -- It's cool to set the color of the widget with @fxColor@ function.
 -- we can make our widgets much more intersting to look at.
--- fxBox :: forall a. (FxUI a, Num  (FxArg a), Tuple (FxArg a)) => String -> a -> Bool -> [(String, Double)] -> Source (Fx (FxArg a))
-fxBox :: forall a. Sigs a => String -> ([Sig] -> Fx a) -> Bool -> [(String, Double)] -> Source (Fx a)
+-- fxBox :: forall a. (FxUI a, Num  (FxArg a), Tuple (FxArg a)) => Text -> a -> Bool -> [(Text, Double)] -> Source (Fx (FxArg a))
+fxBox :: forall a. Sigs a => Text -> ([Sig] -> Fx a) -> Bool -> [(Text, Double)] -> Source (Fx a)
 fxBox name fx onOff args = source $ do
     (gOff0, off) <- toggleSig name onOff
     let gOff = setFontSize 25 gOff0
@@ -148,7 +150,7 @@ fxBox name fx onOff args = source $ do
 
 -- | Creates an FX-box from the given visual representation.
 -- It inserts a big On/Off button atop of the GUI.
-uiBox :: (Sigs a) => String -> Source (Fx a) -> Bool -> Source (Fx a)
+uiBox :: (Sigs a) => Text -> Source (Fx a) -> Bool -> Source (Fx a)
 uiBox name fx' onOff =
   mapGuiSource (setBorder UpBoxBorder) $ vlift2' uiOnOffSize uiBoxSize go offs fx'
     where
@@ -346,23 +348,23 @@ uiPink isOn freq depth = mapSource bindSig $ sourceColor2 C.deeppink $
     [("freq", freq), ("depth", depth)]
 
 -- | The constructor for signal processing functions with no arguments (controlls).
-uiFx :: Sigs a => String -> Fx a -> Bool -> Source (Fx a)
+uiFx :: Sigs a => Text -> Fx a -> Bool -> Source (Fx a)
 uiFx name f isOn = fxBox name (\[] -> f) isOn []
 
 -- | Midi chooser implemented as FX-box.
-uiMidi :: (Sigs a) => [(String, Msg -> SE a)] -> Int -> Source (Fx a)
+uiMidi :: (Sigs a) => [(Text, Msg -> SE a)] -> Int -> Source (Fx a)
 uiMidi xs initVal = sourceColor2 C.forestgreen $ uiBox "Midi" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vmidiChooser xs initVal
 
 {-
 -- | Patch chooser implemented as FX-box.
-uiPatch :: [(String, Patch2)] -> Int -> Source FxFun
+uiPatch :: [(Text, Patch2)] -> Int -> Source FxFun
 uiPatch xs initVal = sourceColor2 C.forestgreen $ uiBox "Patch" fx True
     where fx = lift1 (\aout arg -> return $ aout + arg) $ vpatchChooser xs initVal
 -}
 
 -- | the widget for mixing in a signal to the signal.
-uiSig :: (Sigs a) => String -> Bool -> Source a -> Source (Fx a)
+uiSig :: (Sigs a) => Text -> Bool -> Source a -> Source (Fx a)
 uiSig name onOff widget = source $ do
     (gs, asig) <- widget
     (gOff0, off) <- toggleSig name onOff
@@ -372,7 +374,7 @@ uiSig name onOff widget = source $ do
 
 -- | A mixer widget represented as an effect.
 -- The effect sums the signals with given wieghts.
-uiMix :: (Sigs a) => Bool -> [(String, SE a)] -> Source (Fx a)
+uiMix :: (Sigs a) => Bool -> [(Text, SE a)] -> Source (Fx a)
 uiMix onOff as = sourceColor2 C.blue $ uiSig "Mix" onOff (mixer as)
 
 ----------------------------------------------------------------------
@@ -392,14 +394,14 @@ data AdsrInit = AdsrInit
 expEps :: Fractional a => a
 expEps = 0.00001
 
-linAdsr :: String -> AdsrBound -> AdsrInit -> Source Sig
+linAdsr :: Text -> AdsrBound -> AdsrInit -> Source Sig
 linAdsr = genAdsr $ \a d s r -> linsegr [0, a, 1, d, s] r 0
 
-expAdsr :: String -> AdsrBound -> AdsrInit -> Source Sig
+expAdsr :: Text -> AdsrBound -> AdsrInit -> Source Sig
 expAdsr = genAdsr $ \a d s r -> expsegr [double expEps, a, 1, d, s] r (double expEps)
 
 genAdsr :: (D -> D -> D -> D -> Sig)
-    -> String -> AdsrBound -> AdsrInit -> Source Sig
+    -> Text -> AdsrBound -> AdsrInit -> Source Sig
 genAdsr mkAdsr name b inits = source $ do
     (gatt, att) <- knob "A" (linSpan expEps $ attBound b) (attInit inits)
     (gdec, dec) <- knob "D" (linSpan expEps $ decBound b) (decInit inits)
@@ -411,7 +413,7 @@ genAdsr mkAdsr name b inits = source $ do
 
 -- | A widget with four standard waveforms: pure tone, triangle, square and sawtooth.
 -- The last parameter is a default waveform (it's set at init time).
-classicWaves :: String -> Int -> Source (Sig -> Sig)
+classicWaves :: Text -> Int -> Source (Sig -> Sig)
 classicWaves name initVal = funnyRadio name
     [ ("osc", osc)
     , ("tri", tri)
@@ -435,22 +437,22 @@ genMidiChooser :: Sigs a => (t1 -> t2 -> Source (Msg -> SE a)) -> t1 -> t2 -> So
 genMidiChooser chooser xs initVal = joinSource $ lift1 midi $ chooser xs initVal
 
 -- | Chooses a midi instrument among several alternatives. It uses the @hradio@ for GUI groupping.
-hmidiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
+hmidiChooser :: Sigs a => [(Text, Msg -> SE a)] -> Int -> Source a
 hmidiChooser = genMidiChooser hinstrChooser
 
 -- | Chooses a midi instrument among several alternatives. It uses the @vradio@ for GUI groupping.
-vmidiChooser :: Sigs a => [(String, Msg -> SE a)] -> Int -> Source a
+vmidiChooser :: Sigs a => [(Text, Msg -> SE a)] -> Int -> Source a
 vmidiChooser = genMidiChooser vinstrChooser
 
 -- | Chooses an instrument among several alternatives. It uses the @hradio@ for GUI groupping.
-hinstrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+hinstrChooser :: (Sigs b) => [(Text, a -> SE b)] -> Int -> Source (a -> SE b)
 hinstrChooser = genInstrChooser hradioSig
 
 -- | Chooses an instrument among several alternatives. It uses the @vradio@ for GUI groupping.
-vinstrChooser :: (Sigs b) => [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+vinstrChooser :: (Sigs b) => [(Text, a -> SE b)] -> Int -> Source (a -> SE b)
 vinstrChooser = genInstrChooser vradioSig
 
-genInstrChooser :: (Sigs b) => ([String] -> Int -> Source Sig) -> [(String, a -> SE b)] -> Int -> Source (a -> SE b)
+genInstrChooser :: (Sigs b) => ([Text] -> Int -> Source Sig) -> [(Text, a -> SE b)] -> Int -> Source (a -> SE b)
 genInstrChooser widget xs initVal = lift1 (routeInstr instrs) $ widget names initVal
     where (names, instrs) = unzip xs
         -- go instrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> playWhen (sig (int n) ==* instrId) instr) [0 ..] instrs
@@ -462,13 +464,13 @@ routeInstr instrs instrId arg = fmap sum $ mapM ( $ arg) $ zipWith (\n instr -> 
 ----------------------------------------------------
 -- effect choosers
 
-hpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a
+hpatchChooser :: (SigSpace a, Sigs a) => [(Text, Patch D a)] -> Int -> Source a
 hpatchChooser = genPatchChooser hradioSig
 
-vpatchChooser :: (SigSpace a, Sigs a) => [(String, Patch D a)] -> Int -> Source a
+vpatchChooser :: (SigSpace a, Sigs a) => [(Text, Patch D a)] -> Int -> Source a
 vpatchChooser = genPatchChooser vradioSig
 
-genPatchChooser :: (SigSpace a, Sigs a) => ([String] -> Int -> Source Sig) -> [(String, Patch D a)] -> Int -> Source a
+genPatchChooser :: (SigSpace a, Sigs a) => ([Text] -> Int -> Source Sig) -> [(Text, Patch D a)] -> Int -> Source a
 genPatchChooser widget xs initVal = joinSource $ lift1 go $ widget names initVal
     where
         (names, patches) = unzip xs

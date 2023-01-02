@@ -71,6 +71,7 @@ module Csound.IO (
 --import Control.Concurrent
 import Control.Monad
 
+import Data.Text qualified as Text
 import System.Process
 import System.Directory
 import System.FilePath
@@ -83,8 +84,6 @@ import Csound.Control.Gui
 
 import Csound.Options(setSilent, setDac, setAdc, setDacBy, setAdcBy, setCabbage)
 import Temporal.Class(Harmony(..))
-
-import qualified Data.List as L
 
 render :: Sigs a => Options -> SE a -> IO String
 render = renderOutBy
@@ -277,13 +276,13 @@ jackConnect :: Options -> IO ()
 jackConnect opt
   | Just conns <- csdJackConnect opt = case conns of
                                          [] -> pure ()
-                                         _  -> void $ runCommand $ jackCmd conns
+                                         _  -> void $ runCommand $ Text.unpack $ jackCmd conns
   | otherwise                        = pure ()
   where
     addSleep = ("sleep 0.1; " `mappend` )
 
-    jackCmd = addSleep . L.intercalate ";" . fmap jackConn
-    jackConn (port1, port2) = unwords ["jack_connect", port1, port2]
+    jackCmd = addSleep . Text.intercalate ";" . fmap jackConn
+    jackConn (port1, port2) = Text.unwords ["jack_connect", port1, port2]
 
 hasJackConnections :: Options -> Bool
 hasJackConnections opt

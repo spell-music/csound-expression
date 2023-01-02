@@ -62,6 +62,7 @@ module Csound.Air.Patch(
 ) where
 
 import Data.Boolean hiding (cond)
+import Data.Text (Text)
 import Data.Default
 import Control.Monad
 import Control.Applicative
@@ -644,16 +645,16 @@ sfPatch sf = polySynt $ \(amp, cps) -> return $ sfCps sf 0.5 amp cps
 --
 -- > i "givenName" 1 pitchKey volumeKey     -- note on
 -- > i "givenName" 0 pitchKey volumeKey     -- note off
-patchByNameMidi :: (SigSpace a, Sigs a) => String -> Patch a -> SE a
+patchByNameMidi :: (SigSpace a, Sigs a) => Text -> Patch a -> SE a
 patchByNameMidi = genPatchByNameMidi cpsmidinn cpsmidinn
 
 -- | Triggers patch with Csound API.
 -- It creates a named instruement with given name (second argument).
 -- It behaves like the function @patchByNameMidi@ but we can specify custom temperament.
-patchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> String -> Patch a -> SE a
+patchByNameMidiTemp :: (SigSpace a, Sigs a) => Temp -> Text -> Patch a -> SE a
 patchByNameMidiTemp tm = genPatchByNameMidi (cpsmidi'Sig tm) (cpsmidi'D tm)
 
-genPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => (Sig -> Sig) -> (D -> D) -> String -> Patch a -> SE a
+genPatchByNameMidi :: forall a . (SigSpace a, Sigs a) => (Sig -> Sig) -> (D -> D) -> Text -> Patch a -> SE a
 genPatchByNameMidi monoKey2cps polyKey2cps name x = go Nothing x
     where
         go maybeSkin = \case
