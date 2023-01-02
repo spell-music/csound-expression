@@ -63,6 +63,8 @@ import Csound.Typed.Types
 import Csound.Control.SE
 import Csound.Control.Evt(listAt, Tick, snaps2, dropE, devt, loadbang, evtToSig)
 import Csound.Typed.Opcode(changed)
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 --------------------------------------------------------------------
 -- aux widgets
@@ -77,7 +79,7 @@ readMatrix xn yn as = transp $ take (xn * yn) $ as ++ repeat (head as)
             where (a, b) = splitAt y qs
 
 -- | A radio button. It takes a list of values with labels.
-radioButton :: Arg a => String -> [(String, a)] -> Int -> Source (Evt a)
+radioButton :: Arg a => Text -> [(Text, a)] -> Int -> Source (Evt a)
 radioButton title as initVal = source $ do
     (g, ind) <- butBank1 "" 1 (length as) (0, initVal)
     gnames   <- mapM box names
@@ -87,7 +89,7 @@ radioButton title as initVal = source $ do
     where (names, vals) = unzip as
 
 -- | A matrix of values.
-matrixButton :: Arg a => String -> Int -> Int -> [a] -> (Int, Int) -> Source (Evt a)
+matrixButton :: Arg a => Text -> Int -> Int -> [a] -> (Int, Int) -> Source (Evt a)
 matrixButton name xn yn vals initVal = source $ do
     (gui, ind) <- butBank1 name xn yn initVal
     let val = listAt allVals ind
@@ -95,7 +97,7 @@ matrixButton name xn yn vals initVal = source $ do
     where allVals = readMatrix xn yn vals
 
 -- | Radio button that returns functions. Useful for picking a waveform or type of filter.
-funnyRadio :: Tuple b => String -> [(String, a -> b)] -> Int -> Source (a -> b)
+funnyRadio :: Tuple b => Text -> [(Text, a -> b)] -> Int -> Source (a -> b)
 funnyRadio name as initVal = source $ do
     (gui, ind) <- radioButton name (zip names (fmap int [0 ..])) initVal
     contInd <- stepper (sig $ int initVal) $ fmap sig ind
@@ -106,7 +108,7 @@ funnyRadio name as initVal = source $ do
     where (names, funs) = unzip as
 
 -- | Matrix of functional values.
-funnyMatrix :: Tuple b => String -> Int -> Int -> [(a -> b)] -> (Int, Int) -> Source (a -> b)
+funnyMatrix :: Tuple b => Text -> Int -> Int -> [(a -> b)] -> (Int, Int) -> Source (a -> b)
 funnyMatrix name xn yn funs initVal@(x0, y0) = source $ do
     (gui, ind) <- butBank1 name xn yn initVal
     contInd <- stepper flattenInitVal $ fmap sig ind
@@ -187,7 +189,7 @@ vnumbers = genNumbers ver
 genNumbers :: ([Gui] -> Gui) -> [Double] -> Source Sig
 genNumbers gx as@(d:_) = source $ do
     ref <- newGlobalCtrlRef (sig $ double d)
-    (gs, evts) <- fmap unzip $ mapM (button . show) as
+    (gs, evts) <- fmap unzip $ mapM (button . Text.pack . show) as
     zipWithM_ (\x e -> runEvt e $ \_ -> writeRef ref (sig $ double x)) as evts
     res <- readRef ref
     return (gx gs, res)
@@ -205,7 +207,7 @@ genNumbers _ [] = error "Not implemented for empty list"
 -- if names are not important) and list of init values.
 -- It returns a function that takes in indices and produces the signal in
 -- the corresponding cell.
-knobPad :: Int -> Int -> [String] -> [Double] -> Source (Int -> Int -> Sig)
+knobPad :: Int -> Int -> [Text] -> [Double] -> Source (Int -> Int -> Sig)
 knobPad = genPad mkKnob 0.5
     where mkKnob name = knob name uspan
 
@@ -217,7 +219,7 @@ knobPad = genPad mkKnob 0.5
 -- if names are not important) and list of init values (on/off booleans).
 -- It returns a function that takes in indices and produces the event stream in
 -- the corresponding cell.
-togglePad :: Int -> Int -> [String] -> [Bool] -> Source (Int -> Int -> Evt D)
+togglePad :: Int -> Int -> [Text] -> [Bool] -> Source (Int -> Int -> Evt D)
 togglePad = genPad toggle False
 
 -- | The matrix of buttons.
@@ -228,7 +230,7 @@ togglePad = genPad toggle False
 -- if names are not important).
 -- It returns a function that takes in indices and produces the event stream in
 -- the corresponding cell.
-buttonPad :: Int -> Int -> [String] -> Source (Int -> Int -> Evt Unit)
+buttonPad :: Int -> Int -> [Text] -> Source (Int -> Int -> Evt Unit)
 buttonPad width height names = genPad mkButton False width height names []
     where mkButton name _ = button name
 
@@ -236,7 +238,7 @@ buttonPad width height names = genPad mkButton False width height names []
 -- It takes the constructor of the widget, a default initial value,
 -- the dimensions of the matrix, the list of names and the list of initial values.
 -- It produces the function that maps indices to corresponding values.
-genPad :: (String -> a -> Source b) -> a -> Int -> Int -> [String] -> [a] -> Source (Int -> Int -> b)
+genPad :: (Text -> a -> Source b) -> a -> Int -> Int -> [Text] -> [a] -> Source (Int -> Int -> b)
 genPad mk initVal width height names as = source $ do
     (gui, vals) <- fmap reGroupCol $ mapM mkRow inits
     let f x y = (vals !! y) !! x
@@ -258,25 +260,25 @@ genPad mk initVal width height names as = source $ do
 
 
 -- | Horizontal radio group.
-hradio :: [String] -> Int -> Source (Evt D)
+hradio :: [Text] -> Int -> Source (Evt D)
 hradio = radioGroup hor
 
 -- | Vertical radio group.
-vradio :: [String] -> Int -> Source (Evt D)
+vradio :: [Text] -> Int -> Source (Evt D)
 vradio = radioGroup ver
 
 -- | Horizontal radio group.
-hradioSig :: [String] -> Int -> Source Sig
+hradioSig :: [Text] -> Int -> Source Sig
 hradioSig = radioGroupSig hor
 
 -- | Vertical radio group.
-vradioSig :: [String] -> Int -> Source Sig
+vradioSig :: [Text] -> Int -> Source Sig
 vradioSig = radioGroupSig ver
 
-radioGroup :: ([Gui] -> Gui) -> [String] -> Int -> Source (Evt D)
+radioGroup :: ([Gui] -> Gui) -> [Text] -> Int -> Source (Evt D)
 radioGroup gcat names initVal = mapSource snaps $ radioGroupSig gcat names initVal
 
-radioGroupSig  :: ([Gui] -> Gui) -> [String] -> Int -> Source Sig
+radioGroupSig  :: ([Gui] -> Gui) -> [Text] -> Int -> Source Sig
 radioGroupSig gcat names initVal = source $ do
     (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
     curRef <- newGlobalCtrlRef (sig $ int initVal)
@@ -393,18 +395,18 @@ fromRelative (kmin, kmax) = floor' . uon (f kmin) (f kmax - 0.01)
 
 -- | It's like simple @button@, but it can be controlled with external control.
 -- The first argument is for external control.
-button' :: Tick -> String -> Source Tick
+button' :: Tick -> Text -> Source Tick
 button' ctrl name = mapSource (mappend ctrl) $ button name
 
 -- | It's like simple @toggle@, but it can be controlled with external control.
 -- The first argument is for external control.
-toggle' :: Evt D -> String -> Bool -> Source (Evt D)
+toggle' :: Evt D -> Text -> Bool -> Source (Evt D)
 toggle' ctrl name initVal = source $ do
     (gui, output, input) <- setToggle name initVal
     output ctrl
     return $ (gui, mappend ctrl input)
 
-toggleSig' :: Sig -> String -> Bool -> Source Sig
+toggleSig' :: Sig -> Text -> Bool -> Source Sig
 toggleSig' ctrl name initVal =
     ctrlSig (if initVal then 1 else 0) ctrl $ setToggleSig name initVal
 
@@ -420,38 +422,38 @@ uslider' ctrl initVal = ctrlSig (double initVal) ctrl $ setSlider "" uspan initV
 
 -- | It's like simple @knob@, but it can be controlled with external control.
 -- The first argument is for external control.
-knob' :: Sig -> String -> ValSpan -> Double -> Source Sig
+knob' :: Sig -> Text -> ValSpan -> Double -> Source Sig
 knob' ctrl name span initVal = ctrlSig (double initVal) ctrl $ setKnob name span initVal
 
 -- | It's like simple @slider@, but it can be controlled with external control.
 -- The first argument is for external control.
-slider' :: Sig -> String -> ValSpan -> Double -> Source Sig
+slider' :: Sig -> Text -> ValSpan -> Double -> Source Sig
 slider' ctrl name span initVal = ctrlSig (double initVal) ctrl $ setSlider name span initVal
 
 -- | It's like simple @hradioSig@, but it can be controlled with external control.
 -- The first argument is for external control.
-hradioSig' :: Sig -> [String] -> Int -> Source Sig
+hradioSig' :: Sig -> [Text] -> Int -> Source Sig
 hradioSig' = radioGroupSig' hor
 
 -- | It's like simple @vradioSig@, but it can be controlled with external control.
 -- The first argument is for external control.
-vradioSig' :: Sig -> [String] -> Int -> Source Sig
+vradioSig' :: Sig -> [Text] -> Int -> Source Sig
 vradioSig' = radioGroupSig' ver
 
 -- | It's like simple @hradio@, but it can be controlled with external control.
 -- The first argument is for external control.
-hradio' :: Evt D -> [String] -> Int -> Source (Evt D)
+hradio' :: Evt D -> [Text] -> Int -> Source (Evt D)
 hradio' = radioGroup' hor
 
 -- | It's like simple @vradio@, but it can be controlled with external control.
 -- The first argument is for external control.
-vradio' :: Evt D -> [String] -> Int -> Source (Evt D)
+vradio' :: Evt D -> [Text] -> Int -> Source (Evt D)
 vradio' = radioGroup' ver
 
-radioGroup'  :: ([Gui] -> Gui) -> Evt D -> [String] -> Int -> Source (Evt D)
+radioGroup'  :: ([Gui] -> Gui) -> Evt D -> [Text] -> Int -> Source (Evt D)
 radioGroup' gcat ctrl names initVal =  mapSource snaps $ radioGroupSig' gcat (evtToSig (int initVal) ctrl) names initVal
 
-radioGroupSig'  :: ([Gui] -> Gui) -> Sig -> [String] -> Int -> Source Sig
+radioGroupSig'  :: ([Gui] -> Gui) -> Sig -> [Text] -> Int -> Source Sig
 radioGroupSig' gcat ctrl names initVal = source $ do
     (guis, writes, reads) <- fmap unzip3 $ mapM (\(i, tag) -> flip setToggleSig (i == initVal) tag) $ zip [0 ..] names
     curRef <- newGlobalCtrlRef (sig $ int initVal)

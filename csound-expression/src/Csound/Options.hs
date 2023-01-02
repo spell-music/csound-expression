@@ -39,6 +39,8 @@ module Csound.Options(
 ) where
 
 import Data.Default
+import Data.Text (Text)
+import Data.Text qualified as Text
 import Csound.Typed
 
 -- | Sets sample rate and block size
@@ -61,7 +63,7 @@ setGain d = def { csdGain = Just d' }
     where d' = max 0 $ min 1 $ d
 
 -- | Runs as JACK unit with given name (first argument).
-setJack :: String -> Options
+setJack :: Text -> Options
 setJack name = def { csdFlags = def { rtaudio = Just $ Jack name "input" "output" } }
 
 -- | Defines a header for a Jacko opcodes. The Jacko opcodes allow for greater flexibility
@@ -92,26 +94,26 @@ setAdc :: Options
 setAdc = setAdcBy ""
 
 -- | Set's the input name of the device or file.
-setInput :: String -> Options
+setInput :: Text -> Options
 setInput a = def { csdFlags = def { audioFileOutput = def { input = Just a } } }
 
 -- | Set's the output name of the device or file.
-setOutput :: String -> Options
+setOutput :: Text -> Options
 setOutput a = def { csdFlags = def { audioFileOutput = def { output = Just a } } }
 
 -- | Provides name identifier for dac.
-setDacBy :: String -> Options
+setDacBy :: Text -> Options
 setDacBy port = setOutput name
     where name
-            | null port = "dac"
-            | otherwise = "dac:" ++ port
+            | Text.null port = "dac"
+            | otherwise = "dac:" <> port
 
 -- | Provides name identifier for adc.
-setAdcBy :: String -> Options
+setAdcBy :: Text -> Options
 setAdcBy port = setInput name
     where name
-            | null port = "adc"
-            | otherwise = "adc:" ++ port
+            | Text.null port = "adc"
+            | otherwise = "adc:" <> port
 
 -- | Sets both dac and adc.
 setThru :: Options
@@ -130,7 +132,7 @@ setSilent = (def { csdFlags = def { audioFileOutput = def { nosound = True } } }
 -- an error occurs and the valid device numbers are printed. When using PortMidi,
 -- you can use '-Ma' to enable all devices. This is also convenient when you
 -- don't have devices as it will not generate an error.
-setMidiDevice :: String -> Options
+setMidiDevice :: Text -> Options
 setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } }
 
 -- | Sets midi device to all.
@@ -161,5 +163,5 @@ setCabbage = mconcat [setRates 48000 64, setNoRtMidi, setMidiDevice "0"]
 -- | Defines what ports we should connect after application is launched
 --
 -- It invokes @jack_connect@ for every pair of port-names in the list.
-setJackConnect :: [(String, String)] -> Options
+setJackConnect :: [(Text, Text)] -> Options
 setJackConnect connections = def { csdJackConnect = Just connections }

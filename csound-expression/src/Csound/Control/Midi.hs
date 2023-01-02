@@ -28,6 +28,7 @@ module Csound.Control.Midi(
 ) where
 
 import Data.Boolean
+import Data.Text (Text)
 
 import Csound.Typed hiding (arg)
 import Csound.Typed.Opcode hiding (initc7)
@@ -232,10 +233,10 @@ genHoldAmpCpsSig key2cps midiFun = do
 -- > i "givenName" 0 pitchKey volumeKey     -- note off
 --
 -- The output is a pair of signals @(midiVolume, midiPitch)@.
-trigNamedMono :: String -> SE MonoArg
+trigNamedMono :: Text -> SE MonoArg
 trigNamedMono name = namedMonoMsg name
 
-namedAmpCpsSig:: String -> SE (Sig, Sig, Sig)
+namedAmpCpsSig:: Text -> SE (Sig, Sig, Sig)
 namedAmpCpsSig name = do
   ref <- newGlobalCtrlRef ((0, 0) :: (Sig, Sig))
   statusRef <- newGlobalCtrlRef (0 :: Sig)

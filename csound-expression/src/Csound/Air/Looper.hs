@@ -9,6 +9,8 @@ import Control.Monad
 import Data.List
 
 import Data.Default
+import Data.Text (Text)
+import Data.Text qualified as Text
 import Data.Boolean hiding (cond)
 import Csound.Typed
 import Csound.Typed.Gui hiding (button)
@@ -111,8 +113,8 @@ instance Default LoopControl where
     , loopDel  = Nothing
     , loopThrough = Nothing }
 
-type TapControl     = [String] -> Int -> Source Sig
-type FadeControl    = [String -> Source (Evt D)]
+type TapControl     = [Text] -> Int -> Source Sig
+type FadeControl    = [Text -> Source (Evt D)]
 type DelControl     = Source Tick
 type ThroughControl = Source Sig
 
@@ -204,8 +206,8 @@ genLoop playInstr spec dtBpm times' instrs = do
     through = throughControl
 
     throughDel = hlift2' 6 1 (\a b -> (a, b)) through delControl
-    sw = tapControl (fmap show ids) initInstr
-    sil = hlifts id $ zipWith (\g n -> g (show n)) fadeControl [0 .. length silencer - 1]
+    sw = tapControl (fmap (Text.pack . show) ids) initInstr
+    sil = hlifts id $ zipWith (\g n -> g (Text.pack $ show n)) fadeControl [0 .. length silencer - 1]
 
     maxDel = 3
 

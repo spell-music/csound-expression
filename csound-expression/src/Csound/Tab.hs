@@ -194,6 +194,7 @@ import Data.Default
 import Csound.Typed
 import Data.Maybe
 import Data.Boolean
+import Data.Text (Text)
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
 noTab :: Tab
@@ -739,7 +740,7 @@ padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch sh
 
                                     -- 261.625565     25.0         1.0             1.0             2.0                 1.0             1.0 0.5 0.0 0.2
 
-plainStringTab :: String -> [Double] -> Tab
+plainStringTab :: Text -> [Double] -> Tab
 plainStringTab genId as = preStringTab def genId (ArgsPlain $ return as)
 
 -- | Creates a table of doubles (It's f-table in Csound).
