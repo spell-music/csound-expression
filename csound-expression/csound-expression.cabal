@@ -78,7 +78,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4.6, base < 5,
+        base >= 4.10, base < 5,
         process,
         data-default,
         directory,

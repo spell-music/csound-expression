@@ -24,7 +24,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4.6, base < 5, data-default, containers, array, transformers >= 0.3, wl-pprint >= 1.2.1,
+        base >= 4.10, base < 5, data-default, containers, array, transformers >= 0.3, wl-pprint >= 1.2.1,
         Boolean >= 0.1.0, data-fix >= 0.3.2, data-fix-cse >= 0.0.3, hashable >=1.2.7.0,
         deriving-compat
   Hs-Source-Dirs:      src/

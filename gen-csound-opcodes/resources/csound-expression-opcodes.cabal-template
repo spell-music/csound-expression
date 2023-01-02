@@ -16,7 +16,7 @@ Description:   opcodes for the library csound-expression
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers, csound-expression-typed >= 0.2.5, csound-expression-dynamic >= 0.3.7
+        base >= 4.10, base < 5, transformers, csound-expression-typed >= 0.2.5, csound-expression-dynamic >= 0.3.9
   Hs-Source-Dirs:      src/
   Default-language: Haskell2010
   Exposed-Modules:
