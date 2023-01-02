@@ -43,8 +43,8 @@ data Orient = Hor | Ver
 -- | A value span is a diapason of the value and a type
 -- of the scale (can be linear or exponential).
 data ValSpan = ValSpan
-    { valSpanDiap  :: ValDiap
-    , valSpanScale :: ValScaleType }
+    { valSpanDiap  :: !ValDiap
+    , valSpanScale :: !ValScaleType }
 
 -- | Makes a linear @ValSpan@ with specified boundaries.
 --

@@ -52,8 +52,8 @@ type LineNum = Int
 -- | An instrument identifier
 data InstrId
     = InstrId
-    { instrIdFrac :: Maybe Int
-    , instrIdCeil :: Int }
+    { instrIdFrac :: !(Maybe Int)
+    , instrIdCeil :: !Int }
     | InstrLabel Text
     deriving (Show, Eq, Ord, Generic)
 
@@ -162,53 +162,53 @@ type Exp a = MainExp (PrimOr a)
 data MainExp a
     = EmptyExp
     -- | Primitives
-    | ExpPrim Prim
+    | ExpPrim !Prim
     -- | Application of the opcode: we have opcode information (Info) and the arguments [a]
-    | Tfm Info [a]
+    | Tfm Info ![a]
     -- | Rate conversion
-    | ConvertRate Rate Rate a
+    | ConvertRate !Rate !Rate !a
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
-    | Select Rate Int a
+    | Select !Rate !Int !a
     -- | if-then-else
-    | If (CondInfo a) a a
+    | If !(CondInfo a) !a !a
     -- | Boolean expressions (rendered in infix notation in the Csound)
-    | ExpBool (BoolExp a)
+    | ExpBool !(BoolExp a)
     -- | Numerical expressions (rendered in infix notation in the Csound)
-    | ExpNum (NumExp a)
+    | ExpNum !(NumExp a)
     -- | Reading/writing a named variable
-    | InitVar Var a
-    | ReadVar Var
-    | WriteVar Var a
+    | InitVar !Var !a
+    | ReadVar !Var
+    | WriteVar !Var !a
     -- | Arrays
-    | InitArr Var (ArrSize a)
-    | ReadArr Var (ArrIndex a)
-    | WriteArr Var (ArrIndex a) a
-    | WriteInitArr Var (ArrIndex a) a
-    | TfmArr IsArrInit Var Info [a]
+    | InitArr !Var !(ArrSize a)
+    | ReadArr !Var !(ArrIndex a)
+    | WriteArr !Var !(ArrIndex a) !a
+    | WriteInitArr !Var !(ArrIndex a) !a
+    | TfmArr !IsArrInit !Var !Info ![a]
     -- | Imperative If-then-else
-    | IfBegin Rate (CondInfo a)
+    | IfBegin Rate !(CondInfo a)
 --  | ElseIfBegin (CondInfo a) -- It's expressed with nested if-else
     | ElseBegin
     | IfEnd
     -- | looping constructions
-    | UntilBegin (CondInfo a)
+    | UntilBegin !(CondInfo a)
     | UntilEnd
-    | WhileBegin (CondInfo a)
-    | WhileRefBegin Var
+    | WhileBegin !(CondInfo a)
+    | WhileRefBegin !Var
     | WhileEnd
     -- | Verbatim stmt
-    | Verbatim Text
+    | Verbatim !Text
     -- | Dependency tracking
     | Starts
     | Seq a a
     | Ends a
     -- | read macros arguments
-    | InitMacrosInt Text Int
-    | InitMacrosDouble Text Double
-    | InitMacrosString Text Text
-    | ReadMacrosInt Text
-    | ReadMacrosDouble Text
-    | ReadMacrosString Text
+    | InitMacrosInt !Text !Int
+    | InitMacrosDouble !Text !Double
+    | InitMacrosString !Text !Text
+    | ReadMacrosInt !Text
+    | ReadMacrosDouble !Text
+    | ReadMacrosString !Text
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
 
@@ -238,12 +238,12 @@ type ArrIndex a = [a]
 -- Named variable
 data Var
     = Var
-        { varType :: VarType    -- global / local
-        , varRate :: Rate
-        , varName :: Name }
+        { varType :: !VarType    -- global / local
+        , varRate :: !Rate
+        , varName :: !Name }
     | VarVerbatim
-        { varRate :: Rate
-        , varName :: Name
+        { varRate :: !Rate
+        , varName :: !Name
         } deriving (Show, Eq, Ord, Generic)
 
 -- Variables can be global (then we have to prefix them with `g` in the rendering) or local.
@@ -253,11 +253,11 @@ data VarType = LocalVar | GlobalVar
 -- Opcode information.
 data Info = Info
     -- Opcode name
-    { infoName          :: Name
+    { infoName          :: !Name
     -- Opcode type signature
-    , infoSignature     :: Signature
+    , infoSignature     :: !Signature
     -- Opcode can be infix or prefix
-    , infoOpcFixity     :: OpcFixity
+    , infoOpcFixity     :: !OpcFixity
     } deriving (Show, Eq, Ord, Generic)
 
 isPrefix, isInfix :: Info -> Bool
@@ -289,37 +289,37 @@ data Rate   -- rate:
 data Signature
     -- For SingleRate-opcodes type signature is the Map from output rate to the rate of the arguments.
     -- With it we can deduce the type of the argument from the type of the output.
-    = SingleRate (Map Rate [Rate])
+    = SingleRate !(Map Rate [Rate])
     -- For MultiRate-opcodes Map degenerates to the singleton. We have only one link.
     -- It contains rates for outputs and inputs.
     | MultiRate
-        { outMultiRate :: [Rate]
-        , inMultiRate  :: [Rate] }
+        { outMultiRate :: ![Rate]
+        , inMultiRate  :: ![Rate] }
     deriving (Show, Eq, Ord, Generic)
 
 -- Primitive values
 data Prim
     -- instrument p-arguments
-    = P Int
-    | PString Int       -- >> p-string (read p-string notes at the bottom of the file):
-    | PrimInt Int
-    | PrimDouble Double
-    | PrimString Text
-    | PrimInstrId InstrId
+    = P !Int
+    | PString !Int       -- >> p-string (read p-string notes at the bottom of the file):
+    | PrimInt !Int
+    | PrimDouble !Double
+    | PrimString !Text
+    | PrimInstrId !InstrId
     | PrimVar
-        { primVarTargetRate :: Rate
-        , primVar           :: Var }
+        { primVarTargetRate :: !Rate
+        , primVar           :: !Var }
     deriving (Show, Eq, Ord, Generic)
 
 -- Gen routine.
 data Gen = Gen
-    { genSize    :: Int
-    , genId      :: GenId
-    , genArgs    :: [Double]
-    , genFile    :: Maybe Text
+    { genSize    :: !Int
+    , genId      :: !GenId
+    , genArgs    :: ![Double]
+    , genFile    :: !(Maybe Text)
     } deriving (Show, Eq, Ord, Generic)
 
-data GenId = IntGenId Int | StringGenId Text
+data GenId = IntGenId !Int | StringGenId !Text
     deriving (Show, Eq, Ord, Generic)
 
 -- Csound note
@@ -329,18 +329,18 @@ type Note = [Prim]
 -- types for arithmetic and boolean expressions
 
 data Inline a b = Inline
-    { inlineExp :: InlineExp a
-    , inlineEnv :: IM.IntMap b
+    { inlineExp :: !(InlineExp a)
+    , inlineEnv :: !(IM.IntMap b)
     } deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic1, Generic)
 
 -- Inlined expression.
 data InlineExp a
-    = InlinePrim Int
-    | InlineExp a [InlineExp a]
+    = InlinePrim !Int
+    | InlineExp !a ![InlineExp a]
     deriving (Show, Eq, Ord, Generic)
 
 -- Expression as a tree (to be inlined)
-data PreInline a b = PreInline a [b]
+data PreInline a b = PreInline !a ![b]
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
 -- booleans

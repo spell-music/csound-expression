@@ -105,28 +105,29 @@ instance MonadIO GE where
     liftIO = GE . liftIO . liftIO
 
 data History = History
-    { genMap            :: GenMap
-    , writeGenMap       :: WriteGenMap
-    , globalGenCounter  :: Int
-    , stringMap         :: StringMap
-    , sfMap             :: SfMap
-    , midiMap           :: MidiMap GE
-    , globals           :: Globals
-    , instrs            :: Instrs
-    , udoPlugins        :: [UdoPlugin]
-    , namedInstrs       :: NamedInstrs
-    , midis             :: [MidiAssign]
-    , midiCtrls         :: [MidiCtrl]
-    , totalDur          :: Maybe TotalDur
-    , alwaysOnInstrs    :: [InstrId]
-    , notes             :: [(InstrId, CsdEvent)]
-    , userInstr0        :: Dep ()
-    , bandLimitedMap    :: BandLimitedMap
-    , cache             :: Cache GE
-    , guis              :: Guis
-    , oscListenPorts    :: OscListenPorts
-    , cabbageGui        :: Maybe Cabbage.Lang
-    , macrosInits       :: MacrosInits }
+    { genMap            :: !GenMap
+    , writeGenMap       :: !WriteGenMap
+    , globalGenCounter  :: !Int
+    , stringMap         :: !StringMap
+    , sfMap             :: !SfMap
+    , midiMap           :: !(MidiMap GE)
+    , globals           :: !Globals
+    , instrs            :: !Instrs
+    , udoPlugins        :: ![UdoPlugin]
+    , namedInstrs       :: !NamedInstrs
+    , midis             :: ![MidiAssign]
+    , midiCtrls         :: ![MidiCtrl]
+    , totalDur          :: !(Maybe TotalDur)
+    , alwaysOnInstrs    :: ![InstrId]
+    , notes             :: ![(InstrId, CsdEvent)]
+    , userInstr0        :: !(Dep ())
+    , bandLimitedMap    :: !BandLimitedMap
+    , cache             :: !(Cache GE)
+    , guis              :: !Guis
+    , oscListenPorts    :: !OscListenPorts
+    , cabbageGui        :: !(Maybe Cabbage.Lang)
+    , macrosInits       :: !MacrosInits
+    }
 
 instance Default History where
     def = History def def def def def def def def def def def def def def def (return ()) def def def def def def

@@ -11,16 +11,16 @@ import Control.Monad.Trans.State.Strict
 import Data.Default
 
 data Interval = Interval
-    { start :: Int
-    , leng  :: Int
+    { start :: !Int
+    , leng  :: !Int
     } deriving (Show)
 
 -- | A rectangle.
 data Rect = Rect
-    { px        :: Int
-    , py        :: Int
-    , width     :: Int
-    , height    :: Int
+    { px        :: !Int
+    , py        :: !Int
+    , width     :: !Int
+    , height    :: !Int
     } deriving (Show)
 
 fromRect :: Rect -> (Interval, Interval)
@@ -30,10 +30,10 @@ toRect :: Interval -> Interval -> Rect
 toRect a b = Rect (start a) (start b) (leng a) (leng b)
 
 data AbsScene ctx a
-    = Elem Rect a
+    = Elem !Rect !a
     | EmptyScene
-    | Group [AbsScene ctx a]
-    | Ctx Rect ctx (AbsScene ctx a)
+    | Group ![AbsScene ctx a]
+    | Ctx !Rect !ctx !(AbsScene ctx a)
     deriving (Show)
 
 
