@@ -28,6 +28,7 @@ module Csound.Dynamic.Build (
 ) where
 
 import qualified Data.Map as M(fromList, toList)
+import Data.Serialize qualified as Cereal
 
 import Data.List(transpose)
 import Data.Fix(Fix(..))
@@ -69,7 +70,9 @@ tfmNoInlineArgs :: Info -> [E] -> E
 tfmNoInlineArgs info args = noRate $ Tfm info $ fmap (PrimOr . Right) args
 
 inlineVar :: Var -> E
-inlineVar = Fix . RatedExp Nothing Nothing . ReadVar
+inlineVar var = Fix $ RatedExp h Nothing Nothing $ ReadVar var
+  where
+    h = Cereal.encode var
 
 pn :: Int -> E
 pn = prim . P

@@ -49,12 +49,12 @@ module Csound.Typed.GlobalState.Elements(
 ) where
 
 import Data.List
-import Data.Hashable
+import Data.ByteString (ByteString)
 
 import Control.Monad.Trans.State.Strict
 import Control.Monad(zipWithM_)
 import Data.Default
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.IntMap as IM
 
 import Csound.Dynamic.Types hiding (genId)
@@ -396,13 +396,13 @@ renderGlobals a = (initAll, clear)
 -- instrs
 
 data Instrs = Instrs
-    { instrsCache   :: IM.IntMap InstrId
+    { instrsCache   :: M.Map ByteString InstrId
     , instrsNewId   :: Int
     , instrsContent :: [(InstrId, InstrBody)]
     }
 
 instance Default Instrs where
-    def = Instrs IM.empty 18 []
+    def = Instrs M.empty 18 []
 
 getInstrIds :: Instrs -> [InstrId]
 getInstrIds = fmap fst . instrsContent
@@ -410,48 +410,17 @@ getInstrIds = fmap fst . instrsContent
 -----------------------------------------------------------------
 --
 
-
 saveInstr :: InstrBody -> State Instrs InstrId
 saveInstr body = state $ \s ->
-    let h = hash body
-    in  case IM.lookup h $ instrsCache s of
+    let h = hashE body
+    in  case M.lookup h $ instrsCache s of
             Just  n -> (n, s)
             Nothing ->
                 let newId = instrsNewId s
-                    s1    = s { instrsCache   = IM.insert h (intInstrId newId) $ instrsCache s
+                    s1    = s { instrsCache   = M.insert h (intInstrId newId) $ instrsCache s
                               , instrsNewId   = succ newId
                               , instrsContent = (intInstrId newId, body) : instrsContent s }
                 in  (intInstrId newId, s1)
-
-{-
-saveCachedInstr :: InstrBody -> State Instrs InstrId
-saveCachedInstr name body = state $ \s ->
-    case IM.lookup name $ instrsCache s of
-        Just n  -> (n, s)
-        Nothing ->
-            let newId   = instrsNewId s
-                s1      = s { instrsCache   = IM.insert name (intInstrId newId) $ instrsCache s
-                            , instrsNewId   = succ newId
-                            , instrsContent = (intInstrId newId, body) : instrsContent s }
-            in  (intInstrId newId, s1)
-
-newInstrId :: State Instrs InstrId
-newInstrId = state $ \s ->
-    let newId   = instrsNewId s
-        s1      = s { instrsNewId = succ newId }
-    in  (intInstrId newId, s1)
-
-saveInstrById :: InstrId -> InstrBody -> State Instrs ()
-saveInstrById instrId body = state $ \s ->
-    let s1 = s { instrsContent = (instrId, body) : instrsContent s }
-    in  ((), s1)
-
-saveInstr :: InstrBody -> State Instrs InstrId
-saveInstr body = do
-    newId <- newInstrId
-    saveInstrById newId body
-    return newId
--}
 
 -----------------------------------------------------------------
 -- named instrs
