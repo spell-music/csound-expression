@@ -41,10 +41,11 @@ import Data.Eq.Deriving
 import Data.Ord.Deriving
 import Text.Show.Deriving
 import Data.Hashable.Lifted
+import Data.Text (Text)
 
 import qualified Csound.Dynamic.Tfm.DeduceTypes as R(Var(..))
 
-type Name = String
+type Name = Text
 type LineNum = Int
 
 -- | An instrument identifier
@@ -52,7 +53,7 @@ data InstrId
     = InstrId
     { instrIdFrac :: Maybe Int
     , instrIdCeil :: Int }
-    | InstrLabel String
+    | InstrLabel Text
     deriving (Show, Eq, Ord, Generic)
 
 -- | Constructs an instrument id with the integer.
@@ -64,7 +65,7 @@ ratioInstrId :: Int -> Int -> InstrId
 ratioInstrId beforeDot afterDot = InstrId (Just $ afterDot) beforeDot
 
 -- | Constructs an instrument id with the string label.
-stringInstrId :: String -> InstrId
+stringInstrId :: Text -> InstrId
 stringInstrId = InstrLabel
 
 -- | The inner representation of csound expressions.
@@ -180,18 +181,18 @@ data MainExp a
     | WhileRefBegin Var
     | WhileEnd
     -- | Verbatim stmt
-    | Verbatim String
+    | Verbatim Text
     -- | Dependency tracking
     | Starts
     | Seq a a
     | Ends a
     -- | read macros arguments
-    | InitMacrosInt String Int
-    | InitMacrosDouble String Double
-    | InitMacrosString String String
-    | ReadMacrosInt String
-    | ReadMacrosDouble String
-    | ReadMacrosString String
+    | InitMacrosInt Text Int
+    | InitMacrosDouble Text Double
+    | InitMacrosString Text Text
+    | ReadMacrosInt Text
+    | ReadMacrosDouble Text
+    | ReadMacrosString Text
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
 type IsArrInit = Bool
@@ -276,7 +277,7 @@ data Prim
     | PString Int       -- >> p-string (read p-string notes at the bottom of the file):
     | PrimInt Int
     | PrimDouble Double
-    | PrimString String
+    | PrimString Text
     | PrimInstrId InstrId
     | PrimVar
         { primVarTargetRate :: Rate
@@ -288,10 +289,10 @@ data Gen = Gen
     { genSize    :: Int
     , genId      :: GenId
     , genArgs    :: [Double]
-    , genFile    :: Maybe String
+    , genFile    :: Maybe Text
     } deriving (Show, Eq, Ord, Generic)
 
-data GenId = IntGenId Int | StringGenId String
+data GenId = IntGenId Int | StringGenId Text
     deriving (Show, Eq, Ord, Generic)
 
 -- Csound note
