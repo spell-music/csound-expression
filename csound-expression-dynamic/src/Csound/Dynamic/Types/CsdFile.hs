@@ -50,7 +50,6 @@ intInstr n expr = Instr (intInstrId n) expr
 alwaysOn :: InstrId -> (InstrId, [CsdEvent])
 alwaysOn instrId = (instrId, [(0, -1, [])])
 
-
 -- | The Csound note. It's a triple of
 --
 -- > (startTime, duration, parameters)

@@ -22,10 +22,13 @@ Source-repository head
 
 
 Library
-  Ghc-Options:    -Wall
+  Ghc-Options:    -Wall -Werror
   Build-Depends:
         base >= 4.10, base < 5
+      , bytestring
       , data-default
+      , cereal
+      , cereal-text
       , containers
       , array
       , transformers >= 0.3
@@ -33,9 +36,9 @@ Library
       , Boolean >= 0.1.0
       , data-fix >= 0.3.2
       , data-fix-cse >= 0.0.3
-      , hashable >=1.2.7.0
       , deriving-compat
       , text
+      , cryptohash-sha256
   Hs-Source-Dirs:      src/
   default-language: Haskell2010
   Exposed-Modules:
@@ -61,8 +64,10 @@ Library
     Csound.Dynamic.Tfm.UnfoldMultiOuts
 
   default-extensions:
+    DeriveGeneric
     ImportQualifiedPost
     OverloadedStrings
+    TypeApplications
 
 
 

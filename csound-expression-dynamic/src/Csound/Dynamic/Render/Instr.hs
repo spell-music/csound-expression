@@ -21,6 +21,7 @@ import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Build(getRates, isMultiOutSignature)
 import Csound.Dynamic.Render.Pretty
 import qualified Csound.Dynamic.Types as T(Var)
+import Data.Serialize qualified as Cereal
 
 type Dag f = [(Int, f Int)]
 
@@ -95,16 +96,17 @@ rateGraph dag = (stmts, lastId)
      where (stmts, lastId) = deduceTypes algSpec dag
            algSpec = TypeGraph mkConvert' defineType'
 
-           mkConvert' a = (to, RatedExp Nothing Nothing $
+           mkConvert' a = (to, RatedExp (Cereal.encode from) Nothing Nothing $
                    ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from)
                where from = convertFrom a
                      to   = convertTo   a
 
            defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
-               where possibleRate = deduceRate desiredRates expr
-                     ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
-                     expr' = RatedExp Nothing Nothing $ rateExp possibleRate $ ratedExpExp expr
-                     outVar' = ratedVar possibleRate outVar
+               where
+                possibleRate = deduceRate desiredRates expr
+                ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
+                expr' = RatedExp (ratedExpHash expr)  Nothing Nothing $ rateExp possibleRate $ ratedExpExp expr
+                outVar' = ratedVar possibleRate outVar
 
 ----------------------------------------------------------
 -- unfolds multiple rates

@@ -3,7 +3,7 @@ module Csound.Dynamic (
     module Csound.Dynamic.Types,
     module Csound.Dynamic.Types.Exp,
     module Csound.Dynamic.Types.Dep,
-    module Csound.Dynamic.Types.CsdFile,    
+    module Csound.Dynamic.Types.CsdFile,
     module Csound.Dynamic.Types.Flags,
 
     module Csound.Dynamic.Build,

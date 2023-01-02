@@ -10,6 +10,8 @@ import qualified Data.Traversable as T
 import Data.STRef
 import Control.Monad.ST
 import Data.Array.ST
+import Data.Serialize qualified as Cereal
+import GHC.Generics
 
 type TypeRequests s ty = STArray s Int [ty]
 
@@ -29,7 +31,9 @@ getTypes n arr = readArray arr n
 data Var a = Var
     { varId   :: Int
     , varType :: a
-    } deriving (Show, Eq, Ord)
+    } deriving (Show, Eq, Ord, Generic)
+
+instance Cereal.Serialize a => Cereal.Serialize (Var a)
 
 data GetType ty
     = NoConversion ty

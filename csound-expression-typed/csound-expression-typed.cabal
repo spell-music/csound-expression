@@ -69,6 +69,7 @@ Library
   Build-Depends:
         base >= 4.10,
         base < 5,
+        bytestring,
         ghc-prim,
         containers,
         transformers >= 0.3,

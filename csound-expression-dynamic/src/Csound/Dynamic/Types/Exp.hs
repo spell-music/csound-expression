@@ -19,18 +19,18 @@ module Csound.Dynamic.Types.Exp(
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,
     NumExp, NumOp(..), Note,
     MultiOut,
-    IsArrInit, ArrSize, ArrIndex
+    IsArrInit, ArrSize, ArrIndex,
+    hashE
 ) where
 
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
 #endif
+import Crypto.Hash.SHA256 qualified as Crypto
 
 import GHC.Generics (Generic, Generic1)
 import Data.Traversable
-import Data.Foldable hiding (concat)
-
-import Data.Hashable
+import Data.ByteString (ByteString)
 
 import Data.Map(Map)
 import Data.Maybe(isNothing)
@@ -40,8 +40,9 @@ import Data.Fix
 import Data.Eq.Deriving
 import Data.Ord.Deriving
 import Text.Show.Deriving
-import Data.Hashable.Lifted
 import Data.Text (Text)
+import Data.Serialize qualified as Cereal
+import Data.Serialize.Text ()
 
 import qualified Csound.Dynamic.Tfm.DeduceTypes as R(Var(..))
 
@@ -72,15 +73,23 @@ stringInstrId = InstrLabel
 type E = Fix RatedExp
 
 data RatedExp a = RatedExp
-    { ratedExpRate      :: Maybe Rate
+    { ratedExpHash      :: !ByteString
+       -- ^ expression hash for fast comparison
+    , ratedExpRate      :: !(Maybe Rate)
         -- ^ Rate (can be undefined or Nothing,
         -- it means that rate should be deduced automatically from the context)
-    , ratedExpDepends   :: Maybe LineNum
+    , ratedExpDepends   :: !(Maybe LineNum)
         -- ^ Dependency (it is used for expressions with side effects,
         -- value contains the privious statement)
-    , ratedExpExp       :: Exp a
+    , ratedExpExp       :: !(Exp a)
         -- ^ Main expression
-    } deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
+    } deriving (Show, Functor, Foldable, Traversable, Generic, Generic1)
+
+instance Eq (RatedExp a) where
+  (==) a b = ratedExpHash a == ratedExpHash b
+
+instance Ord (RatedExp a) where
+  compare a b = ratedExpHash a `compare` ratedExpHash b
 
 -- | RatedVar is for pretty printing of the wiring ports.
 type RatedVar = R.Var Rate
@@ -98,13 +107,18 @@ ratedVarId :: RatedVar -> Int
 ratedVarId   = R.varId
 
 ratedExp :: Maybe Rate -> Exp E -> E
-ratedExp r = Fix . RatedExp r Nothing
+ratedExp r expr = Fix $ RatedExp h r Nothing expr
+  where
+    h = Crypto.hash $ Cereal.encode $ fmap (fmap hashE) expr
 
 noRate :: Exp E -> E
 noRate = ratedExp Nothing
 
 withRate :: Rate -> Exp E -> E
 withRate r = ratedExp (Just r)
+
+hashE :: E -> ByteString
+hashE (Fix expr) = ratedExpHash expr
 
 -- rate coversion
 
@@ -115,6 +129,8 @@ setRate r a = Fix $ (\x -> x { ratedExpRate = Just r }) $ unFix a
 -- of the constants (primitive values).
 newtype PrimOr a = PrimOr { unPrimOr :: Either Prim a }
     deriving (Show, Eq, Ord, Functor, Generic, Generic1)
+
+instance Cereal.Serialize a => Cereal.Serialize (PrimOr a)
 
 -- | Constructs PrimOr values from the expressions. It does inlining in
 -- case of primitive values.
@@ -195,6 +211,26 @@ data MainExp a
     | ReadMacrosString Text
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
+
+-- | Can be infinite so fe just ignore the value
+instance Cereal.Serialize Signature where
+  put = \_a -> pure ()
+  get = undefined
+
+instance Cereal.Serialize Prim
+instance Cereal.Serialize Rate
+instance Cereal.Serialize Info
+instance Cereal.Serialize OpcFixity
+instance Cereal.Serialize InstrId
+instance Cereal.Serialize CondOp
+instance Cereal.Serialize NumOp
+instance Cereal.Serialize Var
+instance Cereal.Serialize VarType
+instance Cereal.Serialize a => Cereal.Serialize (MainExp a)
+instance (Cereal.Serialize a, Cereal.Serialize b) => Cereal.Serialize (Inline a b)
+instance (Cereal.Serialize a, Cereal.Serialize b) => Cereal.Serialize (PreInline a b)
+instance (Cereal.Serialize a) => Cereal.Serialize (InlineExp a)
+
 type IsArrInit = Bool
 type ArrSize a = [a]
 type ArrIndex a = [a]
@@ -259,16 +295,7 @@ data Signature
     | MultiRate
         { outMultiRate :: [Rate]
         , inMultiRate  :: [Rate] }
-    deriving (Show, Eq, Ord)
-
-instance Hashable Signature where
-    hashWithSalt s x = case x of
-        SingleRate m -> s `hashWithSalt` (0 :: Int) `hashWithSalt` (hash $ fmap (\b -> (take 5 b)) $ head' $ toList m)
-        MultiRate a b -> s `hashWithSalt` (1 :: Int) `hashWithSalt` (hash $ take 5 a) `hashWithSalt` (hash $ take 5 b)
-        where
-            head' xs = case xs of
-                [] -> Nothing
-                value:_ -> Just value
+    deriving (Show, Eq, Ord, Generic)
 
 -- Primitive values
 data Prim
@@ -304,10 +331,7 @@ type Note = [Prim]
 data Inline a b = Inline
     { inlineExp :: InlineExp a
     , inlineEnv :: IM.IntMap b
-    } deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic1)
-
-instance (Hashable a, Hashable b) => Hashable (Inline a b) where
-    hashWithSalt s (Inline a m) = s `hashWithSalt` (hash a) `hashWithSalt` (hash $ IM.toList m)
+    } deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic1, Generic)
 
 -- Inlined expression.
 data InlineExp a
@@ -369,27 +393,6 @@ type MultiOut a = Int -> a
 ------------------------------------------------------
 -- hashable instances
 
-
-instance (Hashable a, Hashable b) => Hashable (PreInline a b)
-instance (Hashable a) => Hashable (InlineExp a)
-instance Hashable CondOp
-instance Hashable NumOp
-
-instance Hashable Gen
-instance Hashable GenId
-instance Hashable Prim
-instance Hashable Rate
-
-instance Hashable OpcFixity
-instance Hashable Info
-instance Hashable VarType
-instance Hashable Var
-
-instance Hashable a => Hashable (MainExp a)
-instance Hashable a => Hashable (PrimOr a)
-instance Hashable a => Hashable (RatedExp a)
-instance Hashable InstrId
-
 $(deriveEq1 ''PrimOr)
 $(deriveEq1 ''PreInline)
 $(deriveEq1 ''Inline)
@@ -408,15 +411,7 @@ $(deriveShow1 ''Inline)
 $(deriveShow1 ''MainExp)
 $(deriveShow1 ''RatedExp)
 
-#if !MIN_VERSION_hashable(1,3,4)
-instance Hashable1 IM.IntMap
-#endif
 deriving instance Generic1 IM.IntMap
-instance Hashable a => Hashable1 (PreInline a)
-instance Hashable a => Hashable1 (Inline a)
-instance Hashable1 RatedExp
-instance Hashable1 MainExp
-instance Hashable1 PrimOr
 
 isEmptyExp :: E -> Bool
 isEmptyExp (Fix re) = isNothing (ratedExpDepends re) && (ratedExpExp re == EmptyExp)
