@@ -62,6 +62,8 @@ import Csound.Dynamic.Build
 import Csound.Dynamic.Build.Numeric()
 
 import Csound.Typed.GlobalState.Opcodes
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 -- tables of identifiers
 
@@ -156,9 +158,9 @@ nextWriteTableId x = tableWriteStep + x
 
 -- strings
 
-type StringMap = IdMap String
+type StringMap = IdMap Text
 
-newString :: String -> State StringMap Prim
+newString :: Text -> State StringMap Prim
 newString = fmap PrimInt . saveId
 
 -- gen counter
@@ -173,7 +175,7 @@ data SfFluid = SfFluid
     , sfVars :: [Var] }
 
 data SfSpec = SfSpec
-    { sfName    :: String
+    { sfName    :: Text
     , sfBank    :: Int
     , sfProgram :: Int
     } deriving (Eq, Ord, Show)
@@ -186,22 +188,24 @@ newSf = saveId
 sfVar :: Int -> E
 sfVar n = readOnlyVar (VarVerbatim Ir $ sfEngineName n)
 
-sfEngineName :: Int -> String
-sfEngineName n = "gi_Sf_engine_" ++ show n
+sfEngineName :: Int -> Text
+sfEngineName n = "gi_Sf_engine_" <> Text.pack (show n)
 
-sfInstrName :: Int -> String
-sfInstrName n = "i_Sf_instr_" ++ show n
+sfInstrName :: Int -> Text
+sfInstrName n = "i_Sf_instr_" <> Text.pack (show n)
 
 renderSf :: Monad m => SfSpec -> Int -> DepT m ()
 renderSf (SfSpec name bank prog) n = verbatim $
-    engineStr ++ "\n" ++
-    loadStr   ++ "\n" ++
-    selectProgStr ++ "\n"
+  Text.unlines
+    [ engineStr
+    , loadStr
+    , selectProgStr
+    ]
     where
-        engineStr = engineName ++ " fluidEngine"
-        loadStr   = insName ++ " fluidLoad \"" ++ name ++ "\", " ++  engineName ++ ", 1"
-        selectProgStr = "fluidProgramSelect " ++ engineName ++ ", 1, " ++ insName
-            ++ ", " ++ show bank ++ ", " ++ show prog
+        engineStr = engineName <> " fluidEngine"
+        loadStr   = insName <> " fluidLoad \"" <> name <> "\", " <>  engineName <> ", 1"
+        selectProgStr = "fluidProgramSelect " <> engineName <> ", 1, " <> insName
+            <> ", " <> Text.pack (show bank) <> ", " <> Text.pack (show prog)
 
         engineName = sfEngineName n
         insName    = sfInstrName n
@@ -220,7 +224,7 @@ bandLimitedIdToExpr x = case x of
     UserBandLimitedWave   userId   -> noRate $ ReadVar $ bandLimitedVar userId
 
 bandLimitedVar :: Show a => a -> Var
-bandLimitedVar userId = Var GlobalVar Ir ("BandLim" ++ show userId)
+bandLimitedVar userId = Var GlobalVar Ir ("BandLim" <> Text.pack (show userId))
 
 data BandLimitedMap = BandLimitedMap
     { simpleBandLimitedMap :: M.Map BandLimited BandLimitedId
@@ -271,7 +275,7 @@ renderBandLimited genMap blMap =
             renderVcoVarAssignment genId
 
         freeVcoVar = Var GlobalVar Ir "free_vco"
-        ftVar n = Var GlobalVar Ir $ "vco_table_" ++ show n
+        ftVar n = Var GlobalVar Ir $ "vco_table_" <> Text.pack (show n)
 
         renderFtgen lastGenId (g, n) = writeVar (ftVar n) $ ftgen (int $ lastGenId + n) g
 
@@ -343,13 +347,13 @@ instance Default Globals where
 bpmVar :: Var
 bpmVar = Var GlobalVar Kr bpmVarName
 
-bpmVarName :: String
+bpmVarName :: Text
 bpmVarName = "gBpmVar"
 
 newGlobalVar :: GlobalVarType -> Rate -> E -> State Globals Var
 newGlobalVar ty rate initVal = state $ \s ->
     let newId = globalsNewId s
-        var   = Var GlobalVar rate ('g' : show newId)
+        var   = Var GlobalVar rate (Text.cons 'g' (Text.pack $ show newId))
         s1    = s { globalsNewId = succ newId
                   , globalsVars  = AllocVar ty var initVal : globalsVars s }
     in  (var, s1)
@@ -363,7 +367,7 @@ newClearableGlobalVar = newGlobalVar ClearableGlobalVar
 newPersistentGloabalArrVar :: Rate -> [E] -> State Globals Var
 newPersistentGloabalArrVar rate sizes = state $ \s ->
     let newId = globalsNewId s
-        var   = Var GlobalVar rate ('g' : show newId)
+        var   = Var GlobalVar rate (Text.cons 'g' (Text.pack $ show newId))
         s1    = s { globalsNewId = succ newId
                   , globalsVars  = AllocArrVar var sizes : globalsVars s }
     in (var, s1)
@@ -452,12 +456,12 @@ saveInstr body = do
 -----------------------------------------------------------------
 -- named instrs
 
-newtype NamedInstrs = NamedInstrs { unNamedInstrs :: [(String, InstrBody)] }
+newtype NamedInstrs = NamedInstrs { unNamedInstrs :: [(Text, InstrBody)] }
 
 instance Default NamedInstrs where
     def = NamedInstrs []
 
-saveNamedInstr :: String -> InstrBody -> State NamedInstrs ()
+saveNamedInstr :: Text -> InstrBody -> State NamedInstrs ()
 saveNamedInstr name body = state $ \(NamedInstrs xs) -> ((), NamedInstrs $ (name, body) : xs)
 
 -----------------------------------------------------------------
@@ -528,12 +532,12 @@ allocOscPortVar oscPort = newGlobalVar PersistentGlobalVar Ir $ oscInit (fromInt
 ----------------------------------------------------------
 -- macros arguments
 
-type MacrosInits = M.Map String MacrosInit
+type MacrosInits = M.Map Text MacrosInit
 
 data MacrosInit
-    = MacrosInitDouble { macrosInitName :: String, macrosInitValueDouble :: Double }
-    | MacrosInitString { macrosInitName :: String, macrosInitValueString :: String }
-    | MacrosInitInt    { macrosInitName :: String, macrosInitValueInt    :: Int  }
+    = MacrosInitDouble { macrosInitName :: Text, macrosInitValueDouble :: Double }
+    | MacrosInitString { macrosInitName :: Text, macrosInitValueString :: Text }
+    | MacrosInitInt    { macrosInitName :: Text, macrosInitValueInt    :: Int  }
     deriving (Show, Eq, Ord)
 
 initMacros :: MacrosInit -> State MacrosInits ()
@@ -542,12 +546,12 @@ initMacros macrosInit = modify $ \xs -> M.insert (macrosInitName macrosInit)  ma
 --------------------------------------------------------
 -- Udo plugins
 
-newtype UdoPlugin  = UdoPlugin { unUdoPlugin :: String }
+newtype UdoPlugin  = UdoPlugin { unUdoPlugin :: Text }
 
 addUdoPlugin :: UdoPlugin -> State [UdoPlugin] ()
 addUdoPlugin a = modify (a :)
 
-getUdoPluginNames :: [UdoPlugin] -> [String]
+getUdoPluginNames :: [UdoPlugin] -> [Text]
 getUdoPluginNames xs = nub (fmap unUdoPlugin xs)
 
 -- tabQueue

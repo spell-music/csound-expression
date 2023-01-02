@@ -50,6 +50,8 @@ import Data.Default
 import Data.Boolean
 import Data.Kind (Type)
 import Data.String
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Csound.Dynamic hiding (genId, double, int, str, when1, whens, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, untilDo, whileBegin, whileEnd, whileDo)
 import qualified Csound.Dynamic as D(double, int, str, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, whileBegin, whileEnd)
@@ -170,7 +172,7 @@ data Tab
 preTab :: TabSize -> Int -> TabArgs -> Tab
 preTab size gen args = TabPre $ PreTab size (IntGenId gen) args
 
-preStringTab :: TabSize -> String -> TabArgs -> Tab
+preStringTab :: TabSize -> Text -> TabArgs -> Tab
 preStringTab size gen args = TabPre $ PreTab size (StringGenId gen) args
 
 data PreTab = PreTab
@@ -215,7 +217,7 @@ fromPreTab :: PreTab -> GE Gen
 fromPreTab a = withOptions $ \opt -> go (defTabFi opt) a
     where
         go :: TabFi -> PreTab -> Gen
-        go tabFi tab = Gen size (preTabGen tab) args file
+        go tabFi tab = Gen size (preTabGen tab) args (Text.pack <$> file)
             where size = defineTabSize (getTabSizeBase tabFi tab) (preTabSize tab)
                   (args, file) = defineTabArgs size (preTabArgs tab)
 

@@ -20,6 +20,7 @@ import Prelude hiding (show, min, max)
 
 import Data.Maybe
 import Control.Monad.Trans.Writer.Strict
+import Data.Text (Text)
 
 import Csound.Typed.Gui.Cabbage.CabbageLang
 
@@ -43,7 +44,7 @@ runCabProp = snd . runWriter . unCabProp'
 ---------------------------------------
 -- widgets
 
-widget :: String -> CabProp -> Cab
+widget :: Text -> CabProp -> Cab
 widget name props = Cab' $ tell [Line name $ runCabProp props]
 
 ---------------------------------------
@@ -79,10 +80,10 @@ xypad       = widget "xypad"
 ---------------------------------------
 -- properties
 
-mkProperty :: String -> [Arg] -> CabProp
+mkProperty :: Text -> [Arg] -> CabProp
 mkProperty name args = CabProp' $ tell [Property name args]
 
-data Col = Hash String | Rgb Int Int Int
+data Col = Hash Text | Rgb Int Int Int
 
 colProp :: Col -> [Arg]
 colProp x = case x of
@@ -95,13 +96,13 @@ boolProp x = IntArg $ if x then 1 else 0
 bounds :: Int -> Int -> Int -> Int -> CabProp
 bounds x y w h = mkProperty "bounds" (fmap IntArg [x, y, w, h])
 
-channel :: String -> CabProp
+channel :: Text -> CabProp
 channel name = mkProperty "channel" [StringArg name]
 
-text1 :: String -> CabProp
+text1 :: Text -> CabProp
 text1 name = mkProperty "text" [StringArg name]
 
-text2 :: String -> String -> CabProp
+text2 :: Text -> Text -> CabProp
 text2 name1 name2 = mkProperty "text" [StringArg name1, StringArg name2]
 
 value :: Float -> CabProp
@@ -140,7 +141,7 @@ fontcolour1 col = mkProperty "fontcolour:1" (colProp col)
 latched :: Bool -> CabProp
 latched b = mkProperty "latched" [boolProp b]
 
-identchannel :: String -> CabProp
+identchannel :: Text -> CabProp
 identchannel s = mkProperty "identchannel" [StringArg s]
 
 rotate :: Float -> Float -> Float -> CabProp
@@ -152,40 +153,40 @@ alpha a = mkProperty "alpha" [FloatArg a]
 visible :: Bool -> CabProp
 visible a = mkProperty "visible" [boolProp a]
 
-caption :: String -> CabProp
+caption :: Text -> CabProp
 caption a = mkProperty "caption" [StringArg a]
 
-widgetarray :: String -> Int -> CabProp
+widgetarray :: Text -> Int -> CabProp
 widgetarray name n = mkProperty "widgetarray" [StringArg name, IntArg n]
 
-popuptext :: String -> CabProp
+popuptext :: Text -> CabProp
 popuptext a = mkProperty "popuptext" [StringArg a]
 
 active :: Bool -> CabProp
 active a = mkProperty "active" [boolProp a]
 
-svgfile :: String -> String -> CabProp
+svgfile :: Text -> Text -> CabProp
 svgfile ty fileName = mkProperty "svgfile" (fmap StringArg [ty, fileName])
 
-populate :: String -> String -> CabProp
+populate :: Text -> Text -> CabProp
 populate filetype dir = mkProperty "populate" (fmap StringArg [filetype, dir])
 
-mode :: String -> CabProp
+mode :: Text -> CabProp
 mode a = mkProperty "mode" [StringArg a]
 
-file :: String -> CabProp
+file :: Text -> CabProp
 file a = mkProperty "file" [StringArg a]
 
-shape :: String -> CabProp
+shape :: Text -> CabProp
 shape a = mkProperty "shape" [StringArg a]
 
 corners :: Float -> CabProp
 corners a = mkProperty "corners" [FloatArg a]
 
-channeltype :: String -> CabProp
+channeltype :: Text -> CabProp
 channeltype a = mkProperty "channeltype" [StringArg a]
 
-align :: String -> CabProp
+align :: Text -> CabProp
 align a = mkProperty "align" [StringArg a]
 
 sliderincr :: Float -> CabProp
@@ -215,13 +216,13 @@ range2 minVal maxVal val mskew mincr = mkProperty "range" $ catMaybes [Just $ Fl
 size :: Int -> Int -> CabProp
 size w h = mkProperty "size" (fmap IntArg [w, h])
 
-pluginid :: String -> CabProp
+pluginid :: Text -> CabProp
 pluginid a = mkProperty "pluginid" [StringArg a]
 
 guirefresh :: Int -> CabProp
 guirefresh a = mkProperty "guirefresh" [IntArg a]
 
-plant :: String -> CabProp
+plant :: Text -> CabProp
 plant a = mkProperty "plant" [StringArg a]
 
 child :: Bool -> CabProp
@@ -239,7 +240,7 @@ keywidth a = mkProperty "keywidth" [IntArg a]
 scrollbars :: Bool -> CabProp
 scrollbars a = mkProperty "scrollbars" [boolProp a]
 
-fontstyle :: String -> CabProp
+fontstyle :: Text -> CabProp
 fontstyle a = mkProperty "fontstyle" [StringArg a]
 
 scrubberpos :: Int -> CabProp
@@ -248,7 +249,7 @@ scrubberpos a = mkProperty "scrubberpos" [IntArg a]
 zoom :: Float -> CabProp
 zoom a = mkProperty "zoom" [FloatArg a]
 
-displaytype :: String -> CabProp
+displaytype :: Text -> CabProp
 displaytype a = mkProperty "displaytype" [StringArg a]
 
 updaterate :: Int -> CabProp

@@ -5,12 +5,13 @@ module Csound.Typed.Control.MacrosArgs(
 
 import Csound.Typed.Types
 import qualified Csound.Typed.GlobalState as G(readMacrosString, readMacrosDouble, readMacrosInt)
+import Data.Text (Text)
 
-readMacrosString :: String -> String -> Str
+readMacrosString :: Text -> Text -> Str
 readMacrosString name value = fromGE $ G.readMacrosString name value
 
-readMacrosDouble :: String -> Double -> D
+readMacrosDouble :: Text -> Double -> D
 readMacrosDouble name value = fromGE $ G.readMacrosDouble name value
 
-readMacrosInt :: String -> Int -> D
+readMacrosInt :: Text -> Int -> D
 readMacrosInt name value = fromGE $ G.readMacrosInt  name value

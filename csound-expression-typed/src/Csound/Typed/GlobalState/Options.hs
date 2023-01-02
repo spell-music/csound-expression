@@ -28,6 +28,8 @@ import Data.Maybe
 
 import qualified Data.IntMap as IM
 import qualified Data.Map    as M
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Csound.Dynamic hiding (csdFlags)
 
@@ -48,7 +50,7 @@ data Options = Options
     , csdTabFi          :: Maybe TabFi              -- ^ Default fidelity of the arrays
     , csdScaleUI        :: Maybe (Double, Double)   -- ^ Scale factors for UI-window
     , csdJacko          :: Maybe Jacko
-    , csdJackConnect    :: Maybe [(String, String)] -- ^ list of jack connections to make after csound app is launched (Linux only)
+    , csdJackConnect    :: Maybe [(Text, Text)] -- ^ list of jack connections to make after csound app is launched (Linux only)
     , csdTrace          :: Maybe Bool               -- ^ Do we need debug-trace, default is False
     } deriving (Eq, Show, Read)
 
@@ -101,7 +103,7 @@ defTabFi = maybe def id . csdTabFi
 data TabFi = TabFi
     { tabFiBase   :: Int
     , tabFiGens   :: IM.IntMap Int
-    , tabNamedFiGens :: M.Map String Int
+    , tabNamedFiGens :: M.Map Text Int
     } deriving (Eq, Show, Read)
 
 instance Default TabFi where
@@ -122,7 +124,7 @@ instance Default TabFi where
 --   given GEN-routine.
 --
 -- with this function we can set lower table sizes for tables that are usually used in the envelopes.
-fineFi :: Int -> [(Int, Int)] -> [(String, Int)] -> TabFi
+fineFi :: Int -> [(Int, Int)] -> [(Text, Int)] -> TabFi
 fineFi n xs ys = TabFi n (IM.fromList xs) (M.fromList ys)
 
 -- | Sets the same table size for all tables.
@@ -193,7 +195,7 @@ idWave     = "wave"
 
 -- Identifiers for named GEN-routines
 
-idPadsynth, idTanh, idExp, idSone, idFarey, idWave :: String
+idPadsynth, idTanh, idExp, idSone, idFarey, idWave :: Text
 
 idPadsynth = "padsynth"
 
@@ -206,7 +208,7 @@ idPolynomFuns = 15
 ----------------------------------------------------------
 -- Jacko
 
-type JackoConnect = (String, String)
+type JackoConnect = (Text, Text)
 
 -- | Describes the Jacko header. All information that is going to be set in the global settings for Jacko opcodes.
 -- The jacko opcodes allows us to easily turn our app into Jack-client. We can also do it with command line flags.
@@ -214,8 +216,8 @@ type JackoConnect = (String, String)
 --
 -- see the Csound docs for details: <http://csound.github.io/docs/manual/JackoOpcodes.html>
 data Jacko = Jacko
-    { jackoClient       :: String
-    , jackoServer       :: String
+    { jackoClient       :: Text
+    , jackoServer       :: Text
     , jackoAudioIns     :: [JackoConnect]
     , jackoAudioOuts    :: [JackoConnect]
     , jackoMidiIns      :: [JackoConnect]
@@ -235,9 +237,9 @@ instance Default Jacko where
         , jackoFreewheel    = False
         , jackoInfo         = False }
 
-renderJacko :: Jacko -> String
-renderJacko spec = unlines $ filter ( /= "")
-    [ "JackoInit " ++ (show $ jackoServer spec) ++ ", " ++ (show $ jackoClient spec)
+renderJacko :: Jacko -> Text
+renderJacko spec = Text.unlines $ filter ( /= "")
+    [ "JackoInit " <> (Text.pack $ show $ jackoServer spec) <> ", " <> (Text.pack $ show $ jackoClient spec)
     , if (jackoFreewheel spec) then "JackoFreewheel 1" else ""
     , if (jackoInfo spec) then "JackoInfo" else ""
     , renderConnections "JackoAudioInConnect" $ jackoAudioIns spec
@@ -246,9 +248,9 @@ renderJacko spec = unlines $ filter ( /= "")
     , renderConnections "JackoMidiOutConnect" $ jackoMidiOuts spec
     , "JackoOn" ]
     where
-        renderConnections name links = unlines $ fmap (renderLink name) links
+        renderConnections name links = Text.unlines $ fmap (renderLink name) links
 
-        renderLink name (a, b) = name ++ " " ++ (show a) ++ ", " ++  (show b)
+        renderLink name (a, b) = name <> " " <> Text.pack (show a) <> ", " <> Text.pack (show b)
 
 
 csdNeedTrace :: Options -> Bool

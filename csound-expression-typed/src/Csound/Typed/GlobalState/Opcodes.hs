@@ -42,6 +42,8 @@ import Control.Monad(zipWithM_, forM_)
 import Data.Boolean
 
 import Csound.Dynamic
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 -- channels
 
@@ -151,15 +153,15 @@ chnclear :: Monad m => E -> DepT m ()
 chnclear name = depT_ $ opcs "chnclear" [(Xr, [Sr])] [name]
 
 chnUpdateUdo :: Monad m => DepT m ()
-chnUpdateUdo = verbatim $ unlines [
+chnUpdateUdo = verbatim $ Text.unlines [
     "giPort init 1",
-    "opcode " ++ chnUpdateOpcodeName ++ ", i, 0",
+    "opcode " <> chnUpdateOpcodeName <> ", i, 0",
     "xout giPort",
     "giPort = giPort + 1",
     "endop"]
 
 
-chnUpdateOpcodeName :: String
+chnUpdateOpcodeName :: Text
 chnUpdateOpcodeName = "FreePort"
 
 freeChn :: Monad m => DepT m E
@@ -185,7 +187,7 @@ eventi = eventBy "event" Ir
 event_i :: Monad m => Event -> DepT m ()
 event_i = eventBy "event_i" Ir
 
-eventBy :: Monad m => String -> Rate -> Event -> DepT m ()
+eventBy :: Monad m => Text -> Rate -> Event -> DepT m ()
 eventBy name rate a = depT_ $ opcs name [(Xr, Sr : repeat rate)]
     (str "i" : (eventInstrId a) : (eventStart a) : (eventDur a) : (eventArgs a))
 
@@ -300,13 +302,13 @@ vco2ift cps iwave = opcs "vco2ift" [(Kr, [Ir, Ir, Ir])] [cps, iwave]
 ftgen :: E -> Gen -> E
 ftgen n g = opcs "ftgen" [(Ir, repeat Ir)]
     $ [n, 0, int $ genSize g, genIdE $ genId g]
-    ++ (maybe [] (return . str) $ genFile g)
+    ++ (maybe [] (return . prim . PrimString) $ genFile g)
     ++ (fmap double $ genArgs g)
 
 genIdE :: GenId -> E
 genIdE = \case
     IntGenId n -> int n
-    StringGenId a -> str a
+    StringGenId a -> prim (PrimString a)
 
 vco2init :: [E] -> E
 vco2init = opcs "vco2init" [(Ir, repeat Ir)]
@@ -368,8 +370,8 @@ fluidProgramSelect engine sfInstr bank prog = depT $ opcs "fluidProgramSelect"
 -----------------------------------------------------------
 -- soundfonts
 
-sfload :: Monad m => String -> DepT m E
-sfload fileName =  depT $ opcs "sfload" [(Ir, [Sr])] [str fileName]
+sfload :: Monad m => Text -> DepT m E
+sfload fileName =  depT $ opcs "sfload" [(Ir, [Sr])] [prim $ PrimString fileName]
 
 sfplist :: Monad m => E -> DepT m ()
 sfplist sf = depT_ $ opcs "sfplist" [(Xr, [Ir])] [sf]
@@ -377,7 +379,7 @@ sfplist sf = depT_ $ opcs "sfplist" [(Xr, [Ir])] [sf]
 sfpreset :: Monad m => Int -> Int -> E -> Int -> DepT m ()
 sfpreset bank prog sf index = depT_ $ opcs "iPreset sfpreset" [(Xr, [Ir, Ir, Ir, Ir])] [int prog, int bank, sf, int index]
 
-sfSetList :: Monad m => String -> [(Int, Int, Int)] -> DepT m ()
+sfSetList :: Monad m => Text -> [(Int, Int, Int)] -> DepT m ()
 sfSetList fileName presets = do
     sf <- sfload fileName
     sfplist sf

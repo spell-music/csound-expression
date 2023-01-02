@@ -30,17 +30,19 @@ module Csound.Typed.Gui.Gui (
 ) where
 
 import Prelude hiding(elem, span)
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Data.Default
 import Data.Maybe(isNothing)
 import Data.Monoid
 
 import qualified Data.IntMap as IM
-import Text.PrettyPrint.Leijen(Doc)
+import Text.PrettyPrint.Leijen.Text (Doc)
 
 import Csound.Dynamic(DepT, depT_, Var(..), VarType(..), Rate(..), noRate, MainExp(..), InstrId(..))
 
-import qualified Text.PrettyPrint.Leijen as P(int, double, vcat, empty, text)
+import qualified Text.PrettyPrint.Leijen.Text as P(int, double, vcat, empty, textStrict)
 import qualified Csound.Typed.Gui.BoxModel as Box
 import Csound.Typed.Constants(infiniteDur)
 
@@ -59,7 +61,7 @@ data Panel
         { singleContent :: Win
         , singleIsKeybdSensitive :: Bool }
     | Tabs
-        { tabsTitle     :: String
+        { tabsTitle     :: Text
         , tabsRect      :: Maybe Rect
         , tabsContent   :: [Win]
         , tabsIsKeybdSensitive :: Bool }
@@ -70,7 +72,7 @@ panelIsKeybdSensitive x = case x of
     Tabs _ _ _ res -> res
 
 data Win = Win
-    { winTitle :: String
+    { winTitle :: Text
     , winRect  :: Maybe Rect
     , winGui   :: Gui }
 
@@ -99,7 +101,7 @@ data Elem
     | Text   ValDiap ValStep
 
     -- other widgets
-    | Box String
+    | Box Text
     | ButBank Int Int
     | Button InstrId
     | Toggle
@@ -108,7 +110,7 @@ data Elem
 
 type ElemOuts = [Var]
 
-defText :: String -> Gui
+defText :: Text -> Gui
 defText str = Gui $ Box.Prim (ElemWithOuts [Var LocalVar Ir "keybd"] [] $ Box str)
 
 fromElem :: ElemOuts -> [InitMe] -> Elem -> Gui
@@ -226,7 +228,7 @@ guiStmt :: Monad m => ScaleFactor -> [Panel] -> DepT m ()
 guiStmt defaultScaleUI panels = depT_ $ noRate (phi defaultScaleUI)
     where phi scaleUI
             | null panels = EmptyExp
-            | otherwise   = Verbatim $ show $ P.vcat [P.vcat $ fmap (drawGui scaleUI) panels, P.text "FLrun"]
+            | otherwise   = Verbatim $ Text.pack $ show $ P.vcat [P.vcat $ fmap (drawGui scaleUI) panels, P.textStrict "FLrun"]
 
 drawGui :: ScaleFactor -> Panel -> Doc
 drawGui defaultScaleUI x = case x of
@@ -249,7 +251,7 @@ drawGui defaultScaleUI x = case x of
 
           onPanel title isKeybdSensitive rect body = P.vcat
             -- panel with default position no border and capture of keyboard events
-            [ ppProc "FLpanel" [ P.text $ show title, P.int $ width rect, P.int $ height rect, P.int (-1), P.int (-1), P.int 0
+            [ ppProc "FLpanel" [ P.textStrict title, P.int $ width rect, P.int $ height rect, P.int (-1), P.int (-1), P.int 0
                                , P.int $ if isKeybdSensitive then 1 else 0 ]
             , body
             , ppProc "FLpanelEnd" []]
@@ -260,7 +262,7 @@ drawGui defaultScaleUI x = case x of
             , ppProc "FLtabsEnd" []]
 
 
-panelTitle :: Panel -> String
+panelTitle :: Panel -> Text
 panelTitle x = case x of
     Single w _       -> winTitle w
     Tabs title _ _ _ -> title
@@ -302,7 +304,7 @@ winBoundingRect defaultScaleUI w = maybe (shiftBy 50 $ bestRect defaultScaleUI $
 drawTab :: (Int, Int) -> Rect -> Win -> Doc
 drawTab shift r w = group (winTitle w) r $ drawWin (withRelWinMargin $ shiftRect shift r) w
     where group title rect body = P.vcat
-            [ ppProc "FLgroup" $ (P.text $ show title) : rectToFrame rect
+            [ ppProc "FLgroup" $ (P.textStrict $ Text.pack $ show title) : rectToFrame rect
             , body
             , ppProc "FLgroupEnd" []]
 
@@ -324,7 +326,7 @@ drawWin rect w = renderAbsScene $ Box.draw rect $ unGui $ winGui w
 
 drawBorder :: BorderType -> Rect -> Doc -> Doc
 drawBorder borderType rect a = P.vcat
-    [ ppProc "FLgroup" $ ((P.text $ show "") : frame) ++ [borderAsInt borderType]
+    [ ppProc "FLgroup" $ (P.empty : frame) ++ [borderAsInt borderType]
     , a
     , ppProc "FLgroupEnd" []]
     where borderAsInt = P.int . fromEnum
@@ -371,7 +373,9 @@ drawElemDef ctx rectWithoutLabel el = case elemContent el of
             where label = getLabel ctx
 
         f = fWithLabel (getLabel ctx)
-        fWithLabel label name args = ppMoOpc (fmap ppVar $ elemOuts el) name ((P.text $ show $ label) : args)
+
+        fWithLabel :: Text -> Text -> [Doc] -> Doc
+        fWithLabel label name args = ppMoOpc (fmap ppVar $ elemOuts el) name ((P.textStrict label) : args)
         fNoLabel name args = ppMoOpc (fmap ppVar $ elemOuts el) name args
         frame = frameBy rect
         frameWithoutLabel = frameBy rectWithoutLabel
@@ -464,7 +468,7 @@ drawElemDef ctx rectWithoutLabel el = case elemContent el of
 setProp :: Prop -> Gui -> Gui
 setProp p = props [p]
 
-setLabel :: String -> Gui -> Gui
+setLabel :: Text -> Gui -> Gui
 setLabel = setProp . SetLabel
 
 setLabelType :: LabelType -> Gui -> Gui
@@ -580,7 +584,7 @@ bestElemSizes orient x = case x of
     -- other widgets
     Box     label    ->
         let symbolsPerLine = 60
-            numOfLines = succ $ div (length label) symbolsPerLine
+            numOfLines = succ $ div (Text.length label) symbolsPerLine
         in  (xBox 15 symbolsPerLine, yBox 15 numOfLines)
 
     ButBank xn yn   -> (xn * 70, yn * 35)
@@ -618,7 +622,7 @@ flSetAll handle ctx = P.vcat $ fmap (\f -> f handle ctx)
 flSetColor, flSetColor2, flSetTextColor, flSetTextSize, flSetTextType,
     flSetFont :: Var -> PropCtx -> Doc
 
-flSetProp :: String
+flSetProp :: Text
     -> (PropCtx -> Maybe a)
     -> (PropCtx -> Doc)
     -> Var -> PropCtx -> Doc

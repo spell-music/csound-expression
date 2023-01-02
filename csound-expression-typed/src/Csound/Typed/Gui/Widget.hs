@@ -26,6 +26,8 @@ import Control.Monad
 import Control.Monad.Trans.Class
 
 import Data.Boolean
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Csound.Dynamic hiding (int, when1)
 import qualified Csound.Typed.GlobalState.Elements as C
@@ -58,41 +60,41 @@ genPanel isKeybd g = geToSe $ saveGuiRoot $ Single (Win "" Nothing g) isKeybd
 
 -- | Renders the GUI elements with tabs. Rectangles are calculated
 -- automatically.
-tabs :: [(String, Gui)] -> SE ()
+tabs :: [(Text, Gui)] -> SE ()
 tabs = genTabs False
 
 -- | Renders the GUI elements with tabs. Rectangles are calculated
 -- automatically.
-keyTabs :: [(String, Gui)] -> SE ()
+keyTabs :: [(Text, Gui)] -> SE ()
 keyTabs = genTabs True
 
-genTabs :: Bool -> [(String, Gui)] -> SE ()
+genTabs :: Bool -> [(Text, Gui)] -> SE ()
 genTabs isKey xs = geToSe $ saveGuiRoot $ Tabs "" Nothing (fmap (\(title, gui) -> Win title Nothing gui) xs) isKey
 
 -- | Renders the GUI elements on the window. We can specify the window title
 -- and rectangle of the window.
-panelBy :: String -> Maybe Rect -> Gui -> SE ()
+panelBy :: Text -> Maybe Rect -> Gui -> SE ()
 panelBy = genPanelBy False
 
 -- | Renders the GUI elements on the window. We can specify the window title
 -- and rectangle of the window. Panesls are sensitive to keyboard events.
-keyPanelBy :: String -> Maybe Rect -> Gui -> SE ()
+keyPanelBy :: Text -> Maybe Rect -> Gui -> SE ()
 keyPanelBy = genPanelBy True
 
-genPanelBy :: Bool -> String -> Maybe Rect -> Gui -> SE ()
+genPanelBy :: Bool -> Text -> Maybe Rect -> Gui -> SE ()
 genPanelBy isKeybd title mrect gui = geToSe $ saveGuiRoot $ Single (Win title mrect gui) isKeybd
 
 -- | Renders the GUI elements with tabs. We can specify the window title and
 -- rectangles for all tabs and for the main window.
-tabsBy :: String -> Maybe Rect -> [(String, Maybe Rect, Gui)] -> SE ()
+tabsBy :: Text -> Maybe Rect -> [(Text, Maybe Rect, Gui)] -> SE ()
 tabsBy = genTabsBy False
 
 -- | Renders the GUI elements with tabs. We can specify the window title and
 -- rectangles for all tabs and for the main window. Tabs are sensitive to keyboard events.
-keyTabsBy :: String -> Maybe Rect -> [(String, Maybe Rect, Gui)] -> SE ()
+keyTabsBy :: Text -> Maybe Rect -> [(Text, Maybe Rect, Gui)] -> SE ()
 keyTabsBy = genTabsBy True
 
-genTabsBy :: Bool -> String -> Maybe Rect -> [(String, Maybe Rect, Gui)] -> SE ()
+genTabsBy :: Bool -> Text -> Maybe Rect -> [(Text, Maybe Rect, Gui)] -> SE ()
 genTabsBy isKeybd title mrect gui = geToSe $ saveGuiRoot $ Tabs title mrect (fmap (\(a, b, c) -> Win a b c) gui) isKeybd
 
 -- | Widgets that produce something has inputs.
@@ -197,33 +199,33 @@ display x = fmap select $ widget $ fmap append x
 -- primitive elements
 
 -- | Appends a title to a group of widgets.
-setTitle :: String -> Gui -> SE Gui
+setTitle :: Text -> Gui -> SE Gui
 setTitle name g
-    | null name = return g
+    | Text.null name = return g
     | otherwise = do
         gTitle <- box name
         return $ ver [sca 0.01 gTitle, g]
 
-setSourceTitle :: String -> Source a -> Source a
+setSourceTitle :: Text -> Source a -> Source a
 setSourceTitle name ma = source $ do
     (gui, val) <- ma
     newGui <- setTitle name gui
     return (newGui, val)
 
-setLabelSource :: String -> Source a -> Source a
+setLabelSource :: Text -> Source a -> Source a
 setLabelSource a
-    | null a    = id
+    | Text.null a    = id
     | otherwise = fmap (first $ setLabel a)
 
-setLabelSink :: String -> Sink a -> Sink a
+setLabelSink :: Text -> Sink a -> Sink a
 setLabelSink a
-    | null a    = id
+    | Text.null a = id
     | otherwise = fmap (first $ setLabel a)
 
-setLabelSnkSource :: String -> SinkSource a -> SinkSource a
+setLabelSnkSource :: Text -> SinkSource a -> SinkSource a
 setLabelSnkSource a
-    | null a    = id
-    | otherwise = fmap (\(x, y, z) -> (setLabel a x, y, z))
+    | Text.null a = id
+    | otherwise   = fmap (\(x, y, z) -> (setLabel a x, y, z))
 
 singleOut :: Maybe Double -> Elem -> Source Sig
 singleOut v0 el = geToSe $ do
@@ -290,7 +292,7 @@ joy sp1 sp2 (x, y) = geToSe $ do
 -- > knob valueSpan initValue
 --
 -- doc: <http://www.csounds.com/manual/html/FLknob.html>
-knob :: String -> ValSpan -> Double -> Source Sig
+knob :: Text -> ValSpan -> Double -> Source Sig
 knob name sp v0 = setLabelSource name $ singleOut (Just v0) $ Knob sp
 
 -- | FLroller is a sort of knob, but put transversally.
@@ -298,7 +300,7 @@ knob name sp v0 = setLabelSource name $ singleOut (Just v0) $ Knob sp
 -- > roller valueSpan step initVal
 --
 -- doc: <http://www.csounds.com/manual/html/FLroller.html>
-roller :: String -> ValSpan -> ValStep -> Double -> Source Sig
+roller :: Text -> ValSpan -> ValStep -> Double -> Source Sig
 roller name sp step v0 = setLabelSource name $ singleOut (Just v0) $ Roller sp step
 
 -- | FLslider puts a slider into the corresponding container.
@@ -306,14 +308,14 @@ roller name sp step v0 = setLabelSource name $ singleOut (Just v0) $ Roller sp s
 -- > slider valueSpan initVal
 --
 -- doc: <http://www.csounds.com/manual/html/FLslider.html>
-slider :: String -> ValSpan -> Double -> Source Sig
+slider :: Text -> ValSpan -> Double -> Source Sig
 slider name sp v0 = setLabelSource name $ singleOut (Just v0) $ Slider sp
 
 -- | Constructs a list of linear unit sliders (ranges in [0, 1]). It takes a list
 -- of init values.
-sliderBank :: String -> [Double] -> Source [Sig]
+sliderBank :: Text -> [Double] -> Source [Sig]
 sliderBank name ds = source $ do
-    (gs, vs) <- fmap unzip $ zipWithM (\n d -> slider (show n) uspan d) [(1::Int) ..] ds
+    (gs, vs) <- fmap unzip $ zipWithM (\n d -> slider (Text.pack $ show n) uspan d) [(1::Int) ..] ds
     gui <- setTitle name  $ hor gs
     return (gui, vs)
 
@@ -323,7 +325,7 @@ sliderBank name ds = source $ do
 -- > numeric diapason step initValue
 --
 -- doc: <http://www.csounds.com/manual/html/FLtext.html>
-numeric :: String -> ValDiap -> ValStep -> Double -> Source Sig
+numeric :: Text -> ValDiap -> ValStep -> Double -> Source Sig
 numeric name diap step v0 = setLabelSource name $ singleOut (Just v0) $ Text diap step
 
 -- | A FLTK widget that displays text inside of a box.
@@ -333,18 +335,18 @@ numeric name diap step v0 = setLabelSource name $ singleOut (Just v0) $ Text dia
 -- > box text
 --
 -- doc: <http://www.csounds.com/manual/html/FLbox.html>
-box :: String -> Display
+box :: Text -> Display
 box label
-    | length label < lim = rawBox label
-    | otherwise          = fmap (padding 0 . ver) $ mapM rawBox $ parts lim label
+    | Text.length label < lim = rawBox label
+    | otherwise               = fmap (padding 0 . ver) $ mapM rawBox $ parts lim label
     where
         parts n xs
-            | length xs < n = [xs]
+            | Text.length xs < n = [xs]
             | otherwise     = a : parts n b
-            where (a, b) = splitAt n xs
+            where (a, b) = Text.splitAt n xs
         lim = 255
 
-rawBox :: String -> Display
+rawBox :: Text -> Display
 rawBox label = geToSe $ do
     (_, handle) <- newGuiVar
     let gui = fromElem [guiHandleToVar handle] [] (Box label)
@@ -356,7 +358,7 @@ rawBox label = geToSe $ do
 -- > button text
 --
 -- doc: <http://www.csounds.com/manual/html/FLbutton.html>
-button :: String -> Source (Evt Unit)
+button :: Text -> Source (Evt Unit)
 button name = setLabelSource name $ source $ do
     flag <- geToSe $ onGlobals $ C.newPersistentGlobalVar Kr 0
     flagChanged <- geToSe $ onGlobals $ C.newPersistentGlobalVar Kr 0
@@ -382,12 +384,12 @@ button name = setLabelSource name $ source $ do
 -- > button text
 --
 -- doc: <http://www.csounds.com/manual/html/FLbutton.html>
-toggle :: String -> Bool -> Source (Evt D)
+toggle :: Text -> Bool -> Source (Evt D)
 toggle name initVal = mapSource snaps $ toggleSig name initVal
 
 -- | A variance on the function 'Csound.Gui.Widget.toggle', but it produces
 -- a signal of piecewise constant function.
-toggleSig :: String -> Bool -> Source Sig
+toggleSig :: Text -> Bool -> Source Sig
 toggleSig name initVal = setLabelSource name $ singleOut (initToggle initVal) Toggle
 
 initToggle :: Bool -> Maybe Double
@@ -399,7 +401,7 @@ initToggle a = if a then (Just 1) else Nothing
 -- > butBank xNumOfButtons yNumOfButtons
 --
 -- doc: <http://www.csounds.com/manual/html/FLbutBank.html>
-butBank :: String -> Int -> Int -> (Int, Int) -> Source (Evt (D, D))
+butBank :: Text -> Int -> Int -> (Int, Int) -> Source (Evt (D, D))
 butBank name xn yn inits = mapSource (fmap split2 . snaps) $ butBankSig1 name xn yn inits
     where
         split2 a = (floor' $ a / y, mod' a x)
@@ -409,7 +411,7 @@ butBank name xn yn inits = mapSource (fmap split2 . snaps) $ butBankSig1 name xn
 -- | A variance on the function 'Csound.Gui.Widget.butBank', but it produces
 -- a signal of piecewise constant function.
 -- Result is (x, y) coordinate of the triggered button.
-butBankSig :: String -> Int -> Int -> (Int, Int) -> Source (Sig, Sig)
+butBankSig :: Text -> Int -> Int -> (Int, Int) -> Source (Sig, Sig)
 butBankSig name xn yn inits = mapSource split2 $ butBankSig1 name xn yn inits
     where
         split2 a = (floor' $ a / y, mod' a x)
@@ -421,39 +423,39 @@ butBankSig name xn yn inits = mapSource split2 $ butBankSig1 name xn yn inits
 -- > butBank xNumOfButtons yNumOfButtons
 --
 -- doc: <http://www.csounds.com/manual/html/FLbutBank.html>
-butBank1 :: String -> Int -> Int -> (Int, Int) -> Source (Evt D)
+butBank1 :: Text -> Int -> Int -> (Int, Int) -> Source (Evt D)
 butBank1 name xn yn inits = mapSource snaps $ butBankSig1 name xn yn inits
 
-butBankSig1 :: String -> Int -> Int -> (Int, Int) -> Source Sig
+butBankSig1 :: Text -> Int -> Int -> (Int, Int) -> Source Sig
 butBankSig1 name xn yn (x0, y0) = setSourceTitle name $ singleOut (Just n) $ ButBank xn yn
     where n = fromIntegral $ y0 + x0 * yn
 
 -- |  FLtext that is sink shows current the value of a valuator in a text field.
-setNumeric :: String -> ValDiap -> ValStep -> Double -> Sink Sig
+setNumeric :: Text -> ValDiap -> ValStep -> Double -> Sink Sig
 setNumeric name diap step v0 = setLabelSink name $ singleIn printk2 (Just v0) $ Text diap step
 
 -- | A slider that serves as indicator. It consumes values instead of producing.
 --
 -- > meter valueSpan initValue
-meter :: String -> ValSpan -> Double -> Sink Sig
+meter :: Text -> ValSpan -> Double -> Sink Sig
 meter name sp v = setLabelSink name $ singleIn setVal (Just v) (Slider sp)
 
 -------------------------------------------------------------
 -- writeable widgets
 
-setToggleSig :: String -> Bool -> SinkSource Sig
+setToggleSig :: Text -> Bool -> SinkSource Sig
 setToggleSig name initVal = setLabelSnkSource name $ singleInOut setVal (initToggle initVal) Toggle
 
-setToggle :: String -> Bool -> SinkSource (Evt D)
+setToggle :: Text -> Bool -> SinkSource (Evt D)
 setToggle name initVal = sinkSource $ do
     (g, outs, ins) <- setToggleSig name initVal
     let evtOuts a = outs =<< stepper 0 (fmap sig a)
     return (g, evtOuts, snaps ins)
 
-setKnob :: String -> ValSpan -> Double -> SinkSource Sig
+setKnob :: Text -> ValSpan -> Double -> SinkSource Sig
 setKnob name sp v0 = setLabelSnkSource name $ singleInOut setVal' (Just v0) $ Knob sp
 
-setSlider :: String -> ValSpan -> Double -> SinkSource Sig
+setSlider :: Text -> ValSpan -> Double -> SinkSource Sig
 setSlider name sp v0 = setLabelSnkSource name $ singleInOut setVal' (Just v0) $ Slider sp
 
 -------------------------------------------------------------

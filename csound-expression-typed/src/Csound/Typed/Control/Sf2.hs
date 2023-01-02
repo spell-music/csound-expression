@@ -5,6 +5,7 @@ module Csound.Typed.Control.Sf2(
 
 import Data.Boolean
 import Data.Default
+import Data.Text (Text)
 
 import qualified Csound.Dynamic as D
 
@@ -13,12 +14,12 @@ import Csound.Typed.GlobalState
 
 -- | The sf2 sound font preset. It is defined with
 -- file name, bank and program integers.
-data Sf = Sf 
-    { sfName :: String
+data Sf = Sf
+    { sfName :: Text
     , sfBank :: Int
-    , sfProg :: Int } 
+    , sfProg :: Int }
     | SfId (GE E)
-    
+
 instance Val Sf where
     fromGE = SfId
     toGE   = unSf
@@ -28,7 +29,7 @@ unSf x = case x of
     SfId a -> a
     Sf name bank prog -> fmap D.int $ saveSf (SfSpec name bank prog)
 
-instance Default Sf where 
+instance Default Sf where
     def = fromE 0
 
 type instance BooleanOf Sf  = BoolD

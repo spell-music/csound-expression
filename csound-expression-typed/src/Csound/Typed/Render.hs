@@ -23,7 +23,7 @@ import System.Directory
 import System.FilePath
 import Text.Read (readMaybe)
 
-import Text.PrettyPrint.Leijen(displayS, renderPretty)
+import Text.PrettyPrint.Leijen.Text (displayTStrict, renderPretty)
 
 import Csound.Dynamic hiding (csdFlags)
 import Csound.Typed.Types
@@ -106,7 +106,7 @@ renderHistory mnchnls_i nchnls opt = do
 
         getPlugins hist = case cabbageGui hist of
                 Nothing -> []
-                Just x  -> [(Plugin "Cabbage" (displayS (renderPretty 1 10000 $ ppCabbage x) ""))]
+                Just x  -> [(Plugin "Cabbage" (displayTStrict (renderPretty 1 10000 $ ppCabbage x)))]
 
 getInstr0 :: Maybe Int -> Int -> Options -> Dep () -> History -> Dep ()
 getInstr0 mnchnls_i nchnls opt udos hist = do
