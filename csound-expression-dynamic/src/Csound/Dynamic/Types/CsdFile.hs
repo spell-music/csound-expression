@@ -7,6 +7,7 @@ module Csound.Dynamic.Types.CsdFile(
 
 import Csound.Dynamic.Types.Exp
 import Csound.Dynamic.Types.Flags
+import Data.Text (Text)
 
 data Csd = Csd
     { csdFlags   :: Flags
@@ -33,8 +34,8 @@ data Sco = Sco
     , scoNotes      :: [(InstrId, [CsdEvent])]  }
 
 data Plugin = Plugin
-    { pluginName    :: String
-    , pluginContent :: String
+    { pluginName    :: Text
+    , pluginContent :: Text
     }
 
 ----------------------------------------------------------------

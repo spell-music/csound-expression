@@ -30,8 +30,10 @@ import Data.Char
 import Data.Default
 import Data.Maybe
 import Data.Monoid
+import Data.Text (Text)
+import Data.Text qualified as Text
 
-import Text.PrettyPrint.Leijen
+import Text.PrettyPrint.Leijen.Text
 
 mappendBool :: Bool -> Bool -> Bool
 mappendBool a b = getAny $ mappend (Any a) (Any b)
@@ -46,7 +48,7 @@ data Flags = Flags
     , rtmidi            :: Maybe Rtmidi
     , displays          :: Displays
     , config            :: Config
-    , flagsVerbatim     :: Maybe String
+    , flagsVerbatim     :: Maybe Text
     } deriving (Eq, Show, Read)
 
 instance Default Flags where
@@ -88,8 +90,8 @@ mappendFlags a b = Flags
 data AudioFileOutput = AudioFileOutput
     { formatSamples     :: Maybe FormatSamples
     , formatType        :: Maybe FormatType
-    , output            :: Maybe String
-    , input             :: Maybe String
+    , output            :: Maybe Text
+    , input             :: Maybe Text
     , nosound           :: Bool
     , nopeaks           :: Bool
     , dither            :: Maybe Dither
@@ -144,12 +146,12 @@ data FormatType
 -- Output file id tags
 
 data IdTags = IdTags
-    { idArtist      :: Maybe String
-    , idComment     :: Maybe String
-    , idCopyright   :: Maybe String
-    , idDate        :: Maybe String
-    , idSoftware    :: Maybe String
-    , idTitle       :: Maybe String
+    { idArtist      :: Maybe Text
+    , idComment     :: Maybe Text
+    , idCopyright   :: Maybe Text
+    , idDate        :: Maybe Text
+    , idSoftware    :: Maybe Text
+    , idTitle       :: Maybe Text
     } deriving (Eq, Show, Read)
 
 instance Default IdTags where
@@ -184,25 +186,25 @@ mappendIdTags a b = IdTags
 data Rtaudio
     = PortAudio | Alsa
     | Jack
-        { jackClient    :: String
-        , jackInport    :: String
-        , jackOutport   :: String }
+        { jackClient    :: Text
+        , jackInport    :: Text
+        , jackOutport   :: Text }
     | Mme | CoreAudio
     | NoRtaudio
     deriving (Eq, Show, Read)
 
 data PulseAudio = PulseAudio
-    { paServer  :: String
-    , paOutput  :: String
-    , paInput   :: String
+    { paServer  :: Text
+    , paOutput  :: Text
+    , paInput   :: Text
     } deriving (Eq, Show, Read)
 
 -- MIDI File Input/Ouput
 
 data MidiIO = MidiIO
-    { midiFile          :: Maybe String
-    , midiOutFile       :: Maybe String
-    , muteTracks        :: Maybe String
+    { midiFile          :: Maybe Text
+    , midiOutFile       :: Maybe Text
+    , muteTracks        :: Maybe Text
     , rawControllerMode :: Bool
     , terminateOnMidi   :: Bool
     } deriving (Eq, Show, Read)
@@ -237,14 +239,14 @@ mappendMidiIO a b = MidiIO
 -- MIDI Realtime Input/Ouput
 
 data MidiRT = MidiRT
-    { midiDevice        :: Maybe String
+    { midiDevice        :: Maybe Text
     , midiKey           :: Maybe Int
     , midiKeyCps        :: Maybe Int
     , midiKeyOct        :: Maybe Int
     , midiKeyPch        :: Maybe Int
     , midiVelocity      :: Maybe Int
     , midiVelocityAmp   :: Maybe Int
-    , midiOutDevice     :: Maybe String
+    , midiOutDevice     :: Maybe Text
     } deriving (Eq, Show, Read)
 
 instance Default MidiRT where
@@ -347,12 +349,12 @@ data Config = Config
     , ioBuf         :: Maybe Int
     , newKr         :: Maybe Int
     , newSr         :: Maybe Int
-    , scoreIn       :: Maybe String
-    , omacro        :: Maybe (String, String)
-    , smacro        :: Maybe (String, String)
+    , scoreIn       :: Maybe Text
+    , omacro        :: Maybe (Text, Text)
+    , smacro        :: Maybe (Text, Text)
     , setSched      :: Bool
     , schedNum      :: Maybe Int
-    , strsetN       :: Maybe (Int, String)
+    , strsetN       :: Maybe (Int, Text)
     , skipSeconds   :: Maybe Double
     , setTempo      :: Maybe Int
     } deriving (Eq, Show, Read)
@@ -406,28 +408,25 @@ pe f = phi . f
             | otherwise         = Just res
             where res = pretty x
 
-bo :: String -> (a -> Bool) -> (a -> Maybe Doc)
+bo :: Text -> (a -> Bool) -> (a -> Maybe Doc)
 bo property extract a
-    | extract a = Just $ text property
+    | extract a = Just $ textStrict property
     | otherwise = Nothing
 
-mp :: (String -> String) -> (a -> Maybe String) -> (a -> Maybe Doc)
-mp f a = p (fmap f . a)
+mp :: Pretty b => (Doc -> Doc) -> (a -> Maybe b) -> (a -> Maybe Doc)
+mp f a = fmap (f . pretty) . a
 
-mi :: (String -> String) -> (a -> Maybe Int) -> (a -> Maybe Doc)
-mi f a = mp f (fmap show . a)
+p1 :: Doc -> Doc -> Doc
+p1 pref x = hcat [char '-', pref, char ' ', x]
 
-p1 :: String -> String -> String
-p1 pref x = ('-' : pref) ++ (' ' : x)
+p2 :: Doc -> Doc -> Doc
+p2 pref x = hcat [char '-', char '-', pref, char '=', x]
 
-p2 :: String -> String -> String
-p2 pref x = ('-' : '-' : pref) ++ ('=' : x)
-
-p3 :: String -> String -> String
-p3 pref x = ('-' : '+' : pref) ++ ('=' : x)
+p3 :: Doc -> Doc -> Doc
+p3 pref x = hcat [char '-', char '+', pref, char '=', x]
 
 fields :: [a -> Maybe Doc] -> a -> Doc
-fields fs a = hsep $ catMaybes $ fmap ( $ a) fs
+fields fs a = hsep $ mapMaybe ( $ a) fs
 
 instance Pretty Flags where
     pretty = fields
@@ -449,7 +448,7 @@ instance Pretty AudioFileOutput where
         , mp (p2 "input")  input
         , bo "--nosound" nosound
         , bo "--nopeaks" nopeaks
-        , mp (p2 "d/Mither") $ fmap (firstToLower . show) . dither ]
+        , mp (p2 "d/Mither") $ fmap (firstToLower . Text.pack . show) . dither ]
 
 pSamplesAndType :: (Maybe FormatSamples, Maybe FormatType) -> Maybe Doc
 pSamplesAndType (ma, mb) = fmap pretty $ case (ma, mb) of
@@ -461,25 +460,26 @@ pSamplesAndType (ma, mb) = fmap pretty $ case (ma, mb) of
         samplesToStr x = case x of
             Bit24   -> "24bit"
             FloatSamples -> "float"
-            _   -> firstToLower $ show x
+            _   -> textStrict $ firstToLower $ Text.pack $ show x
 
-        typeToStr = firstToLower . show
+        typeToStr = textStrict . firstToLower . Text.pack . show
 
-        samplesAndTypeToStr a b = samplesToStr a ++ ":" ++ typeToStr b
+        samplesAndTypeToStr a b = hcat [samplesToStr a, ":", typeToStr b]
 
 instance Pretty Dither where
-    pretty = pretty . p2 "dither" . show
+    pretty = p2 "dither" . textStrict . Text.pack . show
 
 instance Pretty IdTags where
     pretty = fields
-        [ mp (p3' "id_artist")       idArtist
-        , mp (p3' "id_comment")      idComment
-        , mp (p3' "id_copyright")    idCopyright
-        , mp (p3' "id_date")         idDate
-        , mp (p3' "id_software")     idSoftware
-        , mp (p3' "id_title")        idTitle ]
+        [ mp (p3 "id_artist")       (subst idArtist)
+        , mp (p3 "id_comment")      (subst idComment)
+        , mp (p3 "id_copyright")    (subst idCopyright)
+        , mp (p3 "id_date")         (subst idDate)
+        , mp (p3 "id_software")     (subst idSoftware)
+        , mp (p3 "id_title")        (subst idTitle) ]
         where
-            p3' a b = fmap substSpaces $ p3 a b
+            subst f = fmap (Text.map substSpaces) . f
+
             substSpaces x
                 | isSpace x = '_'
                 | otherwise = x
@@ -493,17 +493,21 @@ instance Pretty Rtaudio where
         CoreAudio -> rt "auhal"
         NoRtaudio   -> rt "0"
         where
-            rt = text . p3 "rtaudio"
-            jackFields name ins outs = hsep
-                [ text $ p3 "jack_client" name
-                , text $ p3 "jack_inportname" ins
-                , text $ p3 "jack_outportname" outs ]
+            rt = p3 "rtaudio"
+
+            jackFields name ins outs =
+              hsep
+                [ p3 "jack_client" (textStrict name)
+                , p3 "jack_inportname" (textStrict ins)
+                , p3 "jack_outportname" (textStrict outs) ]
 
 instance Pretty PulseAudio where
-    pretty a = hsep $ fmap text $
-        [ p3 "server" $ paServer a
-        , p3 "output_stream" $ paOutput a
-        , p3 "input_stream" $ paInput a ]
+    pretty a =
+      hsep
+        [ p3 "server" $ textStrict (paServer a)
+        , p3 "output_stream" $ textStrict (paOutput a)
+        , p3 "input_stream" $ textStrict (paInput a)
+        ]
 
 instance Pretty MidiIO where
     pretty = fields
@@ -516,16 +520,16 @@ instance Pretty MidiIO where
 instance Pretty MidiRT where
     pretty = fields
         [ mp (p2 "midi-device")         midiDevice
-        , mi (p2 "midi-key")            midiKey
-        , mi (p2 "midi-key-cps")        midiKeyCps
-        , mi (p2 "midi-key-oct")        midiKeyOct
-        , mi (p2 "midi-key-pch")        midiKeyPch
-        , mi (p2 "midi-velocity")       midiVelocity
-        , mi (p2 "midi-velocity-amp")   midiVelocityAmp
+        , mp (p2 "midi-key")            midiKey
+        , mp (p2 "midi-key-cps")        midiKeyCps
+        , mp (p2 "midi-key-oct")        midiKeyOct
+        , mp (p2 "midi-key-pch")        midiKeyPch
+        , mp (p2 "midi-velocity")       midiVelocity
+        , mp (p2 "midi-velocity-amp")   midiVelocityAmp
         , mp (p1 "Q")                   midiOutDevice ]
 
 instance Pretty Rtmidi where
-    pretty x = text $ p3 "rtmidi" $ case x of
+    pretty x = p3 "rtmidi" $ case x of
         VirtualMidi -> "virtual"
         PortMidi    -> "PortMidi"
         AlsaMidi    -> "alsa"
@@ -537,51 +541,52 @@ instance Pretty Rtmidi where
 
 instance Pretty Displays where
     pretty = fields
-        [ mi (p2 "csd-line-nums")   csdLineNums
+        [ mp (p2 "csd-line-nums")   csdLineNums
         , p                         displayMode
-        , mi (p2 "heartbeat")       displayHeartbeat
-        , mi (p2 "messagelevel")    messageLevel
-        , mi (p2 "m-amps")          mAmps
-        , mi (p2 "m-range")         mRange
-        , mi (p2 "m-warnings")      mWarnings
-        , mi (p2 "m-dB")            mDb
-        , mi (p2 "m-colours")       mColours
-        , mi (p2 "m-benchmarks")    mBenchmarks
+        , mp (p2 "heartbeat")       displayHeartbeat
+        , mp (p2 "messagelevel")    messageLevel
+        , mp (p2 "m-amps")          mAmps
+        , mp (p2 "m-range")         mRange
+        , mp (p2 "m-warnings")      mWarnings
+        , mp (p2 "m-dB")            mDb
+        , mp (p2 "m-colours")       mColours
+        , mp (p2 "m-benchmarks")    mBenchmarks
         , bo "-+msg_color"          msgColor
         , bo "--verbose"            displayVerbose
-        , mi (p2 "list-opcodes")    listOpcodes ]
+        , mp (p2 "list-opcodes")    listOpcodes ]
 
 instance Pretty DisplayMode where
-    pretty x = text $ case x of
+    pretty x = case x of
         NoDisplay           -> "--nodisplays"
         PostScriptDisplay   -> "--postscriptdisplay"
         AsciiDisplay        -> "--asciidisplay"
 
 instance Pretty Config where
     pretty = fields
-        [ mi (p2 "hardwarebufsamps")    hwBuf
-        , mi (p2 "iobufsamps")          ioBuf
-        , mi (p2 "control-rate")        newKr
-        , mi (p2 "sample-rate")         newSr
+        [ mp (p2 "hardwarebufsamps")    hwBuf
+        , mp (p2 "iobufsamps")          ioBuf
+        , mp (p2 "control-rate")        newKr
+        , mp (p2 "sample-rate")         newSr
         , mp (p2 "score-in")            scoreIn
         , macro "omacro"                omacro
         , macro "smacro"                smacro
         , bo "--sched"                  setSched
-        , mi (p2 "sched")               schedNum
+        , mp (p2 "sched")               schedNum
         , strset                        strsetN
-        , mp (p3 "skip_seconds")        (fmap show . skipSeconds)
-        , mi (p2 "tempo")               setTempo ]
+        , mp (p3 "skip_seconds")        skipSeconds
+        , mp (p2 "tempo")               setTempo ]
         where
-            macro name f = fmap (pretty . phi) . f
-                where phi (a, b) = "--" ++ name ++ ":" ++ a ++ "=" ++ b
-            strset f = fmap (pretty . phi) . f
-                where phi (n, a) = "--strset" ++ (show n) ++ "=" ++ a
+            macro :: Doc -> (a -> Maybe (Text, Text)) -> a -> Maybe Doc
+            macro name f = fmap phi . f
+                where phi (a, b) = hcat ["--", pretty name, ":", textStrict a, "=", textStrict b]
+
+            strset f = fmap phi . f
+                where phi (n, a) = hcat ["--strset", int n,"=", textStrict a]
 
 ---------------------------------------------------
 -- utilities
 
-firstToLower :: String -> String
-firstToLower x = case x of
-    a:as -> toLower a : as
-    []   -> []
-
+firstToLower :: Text -> Text
+firstToLower x = case Text.uncons x of
+    Just (a, as) -> Text.cons (toLower a) as
+    Nothing      -> x

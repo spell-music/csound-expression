@@ -28,6 +28,8 @@ import Control.Monad(ap, liftM, zipWithM_)
 import Data.Default
 
 import Data.Fix(Fix(..))
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Csound.Dynamic.Types.Exp
 
@@ -114,7 +116,7 @@ newLocalVar rate val = do
 newVar :: Monad m => Rate -> DepT m Var
 newVar rate = DepT $ do
     s <- get
-    let v = Var LocalVar rate (show $ newLocalVarId s)
+    let v = Var LocalVar rate (Text.pack $ show $ newLocalVarId s)
     put $ s { newLocalVarId = succ $ newLocalVarId s }
     return v
 
@@ -175,28 +177,28 @@ appendArrBy op v ixs x = writeArr v ixs . op x =<< readArr v ixs
 --------------------------------------------------
 -- read global macros arguments
 
-readMacrosDouble :: String -> E
+readMacrosDouble :: Text -> E
 readMacrosDouble = readMacrosBy ReadMacrosDouble Ir
 
-readMacrosInt :: String -> E
+readMacrosInt :: Text -> E
 readMacrosInt = readMacrosBy ReadMacrosInt Ir
 
-readMacrosString :: String -> E
+readMacrosString :: Text -> E
 readMacrosString = readMacrosBy ReadMacrosString Sr
 
-initMacrosDouble :: Monad m => String -> Double -> DepT m ()
+initMacrosDouble :: Monad m => Text -> Double -> DepT m ()
 initMacrosDouble = initMacrosBy InitMacrosDouble
 
-initMacrosString :: Monad m => String -> String -> DepT m ()
+initMacrosString :: Monad m => Text -> Text -> DepT m ()
 initMacrosString = initMacrosBy InitMacrosString
 
-initMacrosInt :: Monad m => String -> Int -> DepT m ()
+initMacrosInt :: Monad m => Text -> Int -> DepT m ()
 initMacrosInt = initMacrosBy InitMacrosInt
 
-readMacrosBy :: (String -> Exp E) -> Rate -> String -> E
+readMacrosBy :: (Text -> Exp E) -> Rate -> Text -> E
 readMacrosBy readMacro rate name = withRate rate $ readMacro name
 
-initMacrosBy :: Monad m => (String -> a -> Exp E) -> String -> a -> DepT m ()
+initMacrosBy :: Monad m => (Text -> a -> Exp E) -> Text -> a -> DepT m ()
 initMacrosBy maker name value = depT_ $ noRate $ maker name value
 
 

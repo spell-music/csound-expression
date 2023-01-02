@@ -2,7 +2,7 @@ module Csound.Dynamic.Render(
     renderCsd
 ) where
 
-import qualified Text.PrettyPrint.Leijen as P
+import qualified Text.PrettyPrint.Leijen.Text as P
 
 import Csound.Dynamic.Render.Instr
 import Csound.Dynamic.Render.Pretty

@@ -34,6 +34,8 @@ import Data.Fix(Fix(..))
 
 import Csound.Dynamic.Types.Exp
 import Csound.Dynamic.Types.Dep
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 ------------------------------------------------
 -- basic constructors
@@ -87,20 +89,21 @@ double = prim . PrimDouble
 
 -- | Converts Haskell's strings to Csound's strings
 str :: String -> E
-str = prim . PrimString
+str = prim . PrimString . Text.pack
 
 -- | Converts Haskell's integers to Csound's doubles
 int :: Int -> E
 int = prim . PrimInt
 
-verbatim :: Monad m => String -> DepT m ()
+verbatim :: Monad m => Text -> DepT m ()
 verbatim = stmtOnlyT . Verbatim
 
 instrIdE :: InstrId -> E
 instrIdE x = case x of
     InstrId Nothing  m -> int m
     InstrId (Just _) _ -> error "instrId undefined for fractional InstrIds"
-    InstrLabel s -> str s
+    InstrLabel s -> prim (PrimString s)
+
 ----------------------------------------------------------------------
 -- constructing opcodes
 
@@ -198,8 +201,8 @@ setSr, setKsmps, setNchnls, setNchnls_i, setKr :: Monad m => Int -> DepT m ()
 
 setZeroDbfs :: Monad m => Double -> DepT m  ()
 
-setGlobal :: (Monad m, Show a) => String -> a -> DepT m  ()
-setGlobal name val = verbatim $ name ++ " = " ++ show val
+setGlobal :: (Monad m, Show a) => Text -> a -> DepT m  ()
+setGlobal name val = verbatim $ Text.unwords [name, "=", Text.pack $ show val]
 
 setSr       = setGlobal "sr"
 setKr       = setGlobal "kr"
@@ -208,9 +211,9 @@ setNchnls_i = setGlobal "nchnls_i"
 setKsmps    = setGlobal "ksmps"
 setZeroDbfs = setGlobal "0dbfs"
 
-gInit :: Monad m => String -> Int -> DepT m ()
+gInit :: Monad m => Text -> Int -> DepT m ()
 gInit name val = writeVar (VarVerbatim Ir name) (int val)
 
-gInitDouble :: Monad m => String -> Double -> DepT m ()
+gInitDouble :: Monad m => Text -> Double -> DepT m ()
 gInitDouble name val = writeVar (VarVerbatim Ir name) (double val)
 

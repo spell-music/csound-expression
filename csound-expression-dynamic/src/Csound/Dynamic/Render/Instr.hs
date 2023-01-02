@@ -11,7 +11,7 @@ import Data.Maybe(fromJust)
 import Data.Fix(Fix(..), foldFix)
 import Data.Fix.Cse(fromDag, cseFramed, FrameInfo(..))
 
-import qualified Text.PrettyPrint.Leijen as P
+import qualified Text.PrettyPrint.Leijen.Text as P
 
 import Csound.Dynamic.Tfm.DeduceTypes
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
