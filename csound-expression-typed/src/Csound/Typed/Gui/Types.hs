@@ -28,6 +28,7 @@ import Data.Default
 import Data.Colour
 
 import Csound.Typed.Gui.BoxModel(Rect(..))
+import Data.Text (Text)
 
 -- | The Csound colours.
 type Color = Colour Double
@@ -190,7 +191,7 @@ instance Default Props where
 
 -- | Properties of the widgets.
 data Prop
-    = SetLabel String
+    = SetLabel Text
     | SetMaterial Material
     | SetBoxType BoxType
     | SetColor1 Color | SetColor2 Color | SetTextColor Color
@@ -206,7 +207,7 @@ data Prop
 -- cascading context, here we group properties by type
 
 data PropCtx = PropCtx
-    { ctxLabel        :: Maybe String
+    { ctxLabel        :: Maybe Text
     , ctxMaterial     :: Maybe Material
     , ctxLabelType    :: Maybe LabelType
     , ctxBoxType      :: Maybe BoxType
@@ -245,5 +246,5 @@ setPropCtx p x = case p of
             SetTextType     a -> x { ctxTextType = Just a }
             SetKnobType     a -> x { ctxKnobType = Just a }
 
-getLabel :: PropCtx -> String
+getLabel :: PropCtx -> Text
 getLabel = maybe "" id . ctxLabel

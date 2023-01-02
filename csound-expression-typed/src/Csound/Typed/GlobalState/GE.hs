@@ -52,6 +52,8 @@ import Control.Applicative
 import Control.Monad
 import Data.Boolean
 import Data.Default
+import Data.Text (Text)
+import Data.Text qualified as Text
 import qualified Data.IntMap as IM
 import qualified Data.Map    as M
 
@@ -174,7 +176,7 @@ setDuration = setTotalDur . ExpDur
 setDurationForce :: E -> GE ()
 setDurationForce = setTotalDur . ExpDur
 
-saveStr :: String -> GE E
+saveStr :: Text -> GE E
 saveStr = fmap prim . onStringMap . newString
     where onStringMap = onHistory stringMap (\val h -> h{ stringMap = val })
 
@@ -299,7 +301,7 @@ onGlobals = onHistory globals (\a h -> h { globals = a })
 ----------------------------------------------------------------------
 -- named instruments
 
-saveNamedInstr :: String -> InstrBody -> GE ()
+saveNamedInstr :: Text -> InstrBody -> GE ()
 saveNamedInstr name body = onNamedInstrs $ E.saveNamedInstr name body
     where onNamedInstrs = onHistory namedInstrs (\a h -> h { namedInstrs = a })
 
@@ -353,7 +355,7 @@ newGuiHandle = modifyWithHistory $ \h ->
     in  (GuiHandle n, h{ guis = g' })
 
 guiHandleToVar :: GuiHandle -> Var
-guiHandleToVar (GuiHandle n) = Var GlobalVar Ir ('h' : show n)
+guiHandleToVar (GuiHandle n) = Var GlobalVar Ir (Text.cons 'h' $ Text.pack $ show n)
 
 newGuiVar :: GE (Var, GuiHandle)
 newGuiVar = liftA2 (,) (onGlobals $ newPersistentGlobalVar Kr 0) newGuiHandle
@@ -568,16 +570,16 @@ hrtfFileNames sr = liftA2 (,) (getDataFileName (name "left" sr)) (getDataFileNam
 -----------------------------------------------
 -- read macros
 
-readMacrosDouble :: String -> Double -> GE E
+readMacrosDouble :: Text -> Double -> GE E
 readMacrosDouble = readMacrosBy D.readMacrosDouble MacrosInitDouble
 
-readMacrosString :: String -> String -> GE E
+readMacrosString :: Text -> Text -> GE E
 readMacrosString = readMacrosBy D.readMacrosString MacrosInitString
 
-readMacrosInt :: String -> Int -> GE E
+readMacrosInt :: Text -> Int -> GE E
 readMacrosInt    = readMacrosBy D.readMacrosInt    MacrosInitInt
 
-readMacrosBy :: (String ->  E) -> (String -> a -> MacrosInit) -> String -> a -> GE E
+readMacrosBy :: (Text ->  E) -> (Text -> a -> MacrosInit) -> Text -> a -> GE E
 readMacrosBy extract allocator name initValue = do
     onMacrosInits $ initMacros $ allocator name initValue
     return $ extract name
@@ -590,13 +592,9 @@ addUdoPlugin :: UdoPlugin -> GE ()
 addUdoPlugin p = onUdo (E.addUdoPlugin p)
     where onUdo = onHistory udoPlugins (\val h -> h{ udoPlugins = val })
 
-renderUdoPlugins :: History -> IO String
-renderUdoPlugins h = fmap concat $ mapM getUdoPluginBody $ getUdoPluginNames $ udoPlugins h
+renderUdoPlugins :: History -> IO Text
+renderUdoPlugins h = fmap mconcat $ mapM getUdoPluginBody $ getUdoPluginNames $ udoPlugins h
 
-getUdoPluginBody :: String -> IO String
-getUdoPluginBody name = readFile =<< getDataFileName filename
-    where filename = concat ["data/opcodes/", name, ".udo"]
-
-
-
-
+getUdoPluginBody :: Text -> IO Text
+getUdoPluginBody name = fmap Text.pack $ readFile =<< getDataFileName filename
+    where filename = concat ["data/opcodes/", Text.unpack name, ".udo"]

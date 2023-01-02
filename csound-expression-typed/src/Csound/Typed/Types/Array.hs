@@ -32,6 +32,7 @@ module Csound.Typed.Types.Array(
 
 import Control.Monad
 import Data.Proxy
+import Data.Text (Text)
 
 import Csound.Dynamic hiding (writeArr, writeInitArr, readArr, newLocalArrVar, newTmpArrVar, int)
 import qualified Csound.Dynamic as D
@@ -418,7 +419,7 @@ isArrayInit, noArrayInit :: Bool
 isArrayInit = True
 noArrayInit = False
 
-binOp :: String -> Arr a b -> Arr a b -> SE (Arr a b)
+binOp :: Text -> Arr a b -> Arr a b -> SE (Arr a b)
 binOp name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
     where
         go x y = SE $ do
@@ -426,7 +427,7 @@ binOp name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
             infOprArr isArrayInit outVar name (inlineVar x) (inlineVar y)
             return outVar
 
-convert :: String -> Arr a b -> SE (Arr a b)
+convert :: Text -> Arr a b -> SE (Arr a b)
 convert name (Arr vars) = fmap Arr $ mapM go vars
     where
         go v = SE $ do
@@ -436,7 +437,7 @@ convert name (Arr vars) = fmap Arr $ mapM go vars
 
         idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
 
-convert2 :: String -> Arr a b -> Arr a b -> SE (Arr a b)
+convert2 :: Text -> Arr a b -> Arr a b -> SE (Arr a b)
 convert2 name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
     where
         go x y = SE $ do
@@ -446,15 +447,15 @@ convert2 name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
 
         idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]
 
-extractArray :: (Tuple b) => String -> Arr a b -> SE b
+extractArray :: (Tuple b) => Text -> Arr a b -> SE b
 extractArray name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . inlineVar) vs
     where f a = depT $ opcs name [(Xr, [Xr])] [a]
 
-extract1 :: (Tuple b, Tuple c) => Rate -> String -> Arr a b -> SE c
+extract1 :: (Tuple b, Tuple c) => Rate -> Text -> Arr a b -> SE c
 extract1 rate name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . inlineVar) vs
     where f a = depT $ opcs name [(rate, [Xr])] [a]
 
-extractWith :: (Tuple b, Tuple c, Tuple d) => String -> (Rate, [Rate]) -> Arr a b -> c -> SE d
+extractWith :: (Tuple b, Tuple c, Tuple d) => Text -> (Rate, [Rate]) -> Arr a b -> c -> SE d
 extractWith name rates (Arr vs) argument = SE $ fmap (toTuple . return) $ hideGEinDep $ do
         argExps <- fromTuple argument
         return $ zipWithM (\var x -> f (inlineVar var) x) vs argExps
@@ -601,18 +602,18 @@ phsArrayCopy = convertCopy "phs"
 
 ---------------------------------------------------------------
 
-binOpCopy :: String -> Arr a b -> Arr a b -> Arr a b -> SE ()
+binOpCopy :: Text -> Arr a b -> Arr a b -> Arr a b -> SE ()
 binOpCopy name (Arr xs) (Arr ys) (Arr outs) = mapM_ go $ zip3 xs ys outs
     where
         go (x, y, outVar) = SE $ infOprArr noArrayInit outVar name (inlineVar x) (inlineVar y)
 
-convertCopy :: String -> Arr a b -> Arr a b -> SE ()
+convertCopy :: Text -> Arr a b -> Arr a b -> SE ()
 convertCopy name (Arr vars) (Arr outs) = zipWithM_ go vars outs
     where
         go v outVar = SE $ opcsArr noArrayInit outVar name idRate1 [inlineVar v]
         idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
 
-convert2Copy :: String -> Arr a b -> Arr a b -> Arr a b -> SE ()
+convert2Copy :: Text -> Arr a b -> Arr a b -> Arr a b -> SE ()
 convert2Copy name (Arr xs) (Arr ys) (Arr outs) = mapM_ go $ zip3 xs ys outs
     where
         go (x, y, outVar) = SE $ opcsArr noArrayInit outVar name idRate2 [inlineVar x, inlineVar y]

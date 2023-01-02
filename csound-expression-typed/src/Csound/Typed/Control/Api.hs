@@ -14,6 +14,7 @@ import Csound.Typed.Control.Ref
 import Csound.Typed.GlobalState
 import Csound.Typed.GlobalState.Opcodes(eventi, Event(..), downsamp)
 import Csound.Typed.InnerOpcodes
+import Data.Text (Text)
 
 import Csound.Typed.Plugins.TabQueue
 
@@ -23,7 +24,7 @@ import Csound.Typed.Plugins.TabQueue
 -- With Csound API we can send messages
 --
 -- > i "name" time duration arg1 arg2 arg3
-trigByName_ :: Arg a => String -> (a -> SE ()) -> SE ()
+trigByName_ :: Arg a => Text -> (a -> SE ()) -> SE ()
 trigByName_ name instr = geToSe $ saveNamedInstr name =<< (execSE $ instr toArg)
 
 -- | Creates an instrument that can be triggered by name with Csound API.
@@ -33,7 +34,7 @@ trigByName_ name instr = geToSe $ saveNamedInstr name =<< (execSE $ instr toArg)
 -- @p1@ is the name of teh instrument, @p2@ is the start time of the note,
 -- @p3@ is the duration of the note. Then @p4@ and @p5@ are going to be doubles and @p6@
 -- is an integer that denotes a functional table.
-trigByName  :: (Arg a, Sigs b) => String -> (a -> SE b) -> SE b
+trigByName  :: (Arg a, Sigs b) => Text -> (a -> SE b) -> SE b
 trigByName name instr = do
     ref <- newClearableGlobalRef 0
     trigByName_ name (go ref)
@@ -43,7 +44,7 @@ trigByName name instr = do
 
 -- | It behaves just like the function @trigByNameMidi@. Only it doesn't produce an audio
 -- signal. It performs some procedure on note on and stops doing the precedure on note off.
-trigByNameMidi_ :: forall a . Arg a => String -> ((D, D, a) -> SE ()) -> SE ()
+trigByNameMidi_ :: forall a . Arg a => Text -> ((D, D, a) -> SE ()) -> SE ()
 trigByNameMidi_ name instr = do
     instrId <- geToSe $ saveInstr (instr toArg)
     trigByName_ name (go instrId)
@@ -87,14 +88,14 @@ trigByNameMidi_ name instr = do
 -- Csound procedure invokes:
 --
 -- > turnoff 18.pitchKey
-trigByNameMidi  :: (Arg a, Sigs b) => String -> ((D, D, a) -> SE b) -> SE b
+trigByNameMidi  :: (Arg a, Sigs b) => Text -> ((D, D, a) -> SE b) -> SE b
 trigByNameMidi name instr = do
     ref <- newClearableGlobalRef 0
     trigByNameMidi_ name (go ref)
     readRef ref
     where go ref x = mixRef ref =<< instr x
 
-namedMonoMsg :: String -> SE MonoArg
+namedMonoMsg :: Text -> SE MonoArg
 namedMonoMsg name = do
     refPch <- newGlobalRef 0
     refVol <- newGlobalRef 0
@@ -118,7 +119,7 @@ namedMonoMsg name = do
         onNote = tabQueue2_append
         offNote tab (pch, _vol) = tabQueue2_delete tab pch
 
-trigByNameMidiCbk :: String -> ((D, D) -> SE ())  -> ((D, D) -> SE ()) -> SE ()
+trigByNameMidiCbk :: Text -> ((D, D) -> SE ())  -> ((D, D) -> SE ()) -> SE ()
 trigByNameMidiCbk name noteOn noteOff =
     trigByName_ name go
     where

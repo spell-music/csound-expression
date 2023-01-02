@@ -15,7 +15,7 @@ import Csound.Typed.Types
 import Csound.Typed.GlobalState
 
 funArity :: forall a b. (Tuple a, Tuple b) => (a -> SE b) -> Arity
-funArity instr = Arity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
+funArity _instr = Arity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
 constArity :: (Tuple a) => SE a -> Arity
 constArity a = Arity 0 (outArity a)

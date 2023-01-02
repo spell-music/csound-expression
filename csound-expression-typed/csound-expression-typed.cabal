@@ -79,10 +79,11 @@ Library
         NumInstances,
         filepath,
         directory,
-        wl-pprint >= 1.2.1,
+        wl-pprint-text >= 1.2.0,
         csound-expression-dynamic >= 0.3.8,
         temporal-media >= 0.6.3,
-        hashable
+        hashable,
+        text
   Hs-Source-Dirs:      src/
   Exposed-Modules:
     Csound.Typed
@@ -163,4 +164,6 @@ Library
 
   Default-Language: Haskell2010
   Default-extensions:
+    ImportQualifiedPost
     LambdaCase
+    OverloadedStrings

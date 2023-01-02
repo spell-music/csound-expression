@@ -19,6 +19,8 @@ Library
         base >= 4, base < 5, transformers, csound-expression-typed >= 0.2.5, csound-expression-dynamic >= 0.3.7
   Hs-Source-Dirs:      src/
   Default-language: Haskell2010
+  default-extensions:
+    OverloadedStrings
   Exposed-Modules:
     Csound.Typed.Opcode
     Csound.Typed.Opcode.SignalGenerators

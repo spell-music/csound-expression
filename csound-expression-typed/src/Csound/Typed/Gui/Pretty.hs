@@ -7,13 +7,14 @@ module Csound.Typed.Gui.Pretty (
   getToggleType, appMaterial, getColor1, getColor2, getTextColor, genGetColor
 ) where
 
-import Data.Char
 import Data.Default
 import Data.Colour.Names(white, gray, black)
 import Data.Colour.SRGB
+import Data.Text (Text)
+import Data.Text qualified as Text
 
-import Text.PrettyPrint.Leijen(Doc, int, hcat, hsep, punctuate, comma, text, char)
-import qualified Text.PrettyPrint.Leijen as P((<+>), empty)
+import Text.PrettyPrint.Leijen.Text(Doc, int, hcat, hsep, punctuate, comma, textStrict, char)
+import qualified Text.PrettyPrint.Leijen.Text as P((<+>), empty)
 
 import Csound.Dynamic(Var(..), VarType(..), Rate(..))
 
@@ -22,17 +23,17 @@ import Csound.Typed.Gui.Types
 -------------------------------------------------------------
 -- pretty printers
 
-ppProc :: String -> [Doc] -> Doc
-ppProc name xs = text name P.<+> (hsep $ punctuate comma xs)
+ppProc :: Text -> [Doc] -> Doc
+ppProc name xs = textStrict name P.<+> (hsep $ punctuate comma xs)
 
-ppMoOpc :: [Doc] -> String -> [Doc] -> Doc
-ppMoOpc outs name ins = f outs P.<+> text name P.<+> f ins
+ppMoOpc :: [Doc] -> Text -> [Doc] -> Doc
+ppMoOpc outs name ins = f outs P.<+> textStrict name P.<+> f ins
     where f = hsep . punctuate comma
 
 ppVar :: Var -> Doc
 ppVar v = case v of
-    Var ty rate name   -> hcat [ppVarType ty, ppRate rate, text (varPrefix ty : name)]
-    VarVerbatim _ name -> text name
+    Var ty rate name   -> hcat [ppVarType ty, ppRate rate, textStrict (Text.cons (varPrefix ty) name)]
+    VarVerbatim _ name -> textStrict name
 
 varPrefix :: VarType -> Char
 varPrefix x = case x of
@@ -48,7 +49,7 @@ ppRate :: Rate -> Doc
 ppRate x = case x of
     Sr -> char 'S'
     _  -> phi x
-    where phi = text . map toLower . show
+    where phi = textStrict . Text.toLower . Text.pack . show
 
 ------------------------------------------------------------------
 -- Converting readable properties to integer codes
