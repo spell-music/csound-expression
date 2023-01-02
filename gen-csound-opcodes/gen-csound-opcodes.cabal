@@ -31,7 +31,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-      base >= 4,
+      base >= 4.10,
       shelly,
       xml,
       containers,
