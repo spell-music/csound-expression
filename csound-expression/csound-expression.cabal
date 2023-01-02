@@ -152,3 +152,14 @@ Library
         Csound.Control.Overload.Outs
         Csound.Control.Overload.MidiInstr
         Csound.Control.Overload.SpecInstr
+
+
+benchmark csound-expression-benchmark
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      benchmark
+  main-is:             Main.hs
+  build-depends:       base
+                     , csound-expression
+                     , gauge
+  default-language:    Haskell2010
+

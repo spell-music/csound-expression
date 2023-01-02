@@ -1,0 +1,21 @@
+## Baseline results for current-master
+
+benchmarked drone tests/drone: 1
+time                 5.889 ms   (5.835 ms .. 5.942 ms)
+                     0.999 R²   (0.998 R² .. 1.000 R²)
+mean                 5.820 ms   (5.781 ms .. 5.883 ms)
+std dev              146.3 μs   (91.70 μs .. 268.6 μs)
+
+benchmarked drone tests/drone: 2
+time                 1.570 ms   (1.555 ms .. 1.582 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 1.558 ms   (1.552 ms .. 1.567 ms)
+std dev              26.23 μs   (21.79 μs .. 33.46 μs)
+
+benchmarked drone tests/drone: 3
+time                 14.12 ms   (14.00 ms .. 14.23 ms)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 14.21 ms   (14.09 ms .. 14.46 ms)
+std dev              406.3 μs   (181.7 μs .. 759.7 μs)
+
+Benchmark csound-expression-benchmark: FINISH
