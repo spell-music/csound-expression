@@ -41,9 +41,9 @@ import Csound.Dynamic.Types.Exp
 newtype DepT m a = DepT { unDepT :: StateT LocalHistory m a }
 
 data LocalHistory = LocalHistory
-    { expDependency :: E
-    , newLineNum    :: Int
-    , newLocalVarId :: Int }
+    { expDependency :: !E
+    , newLineNum    :: !Int
+    , newLocalVarId :: !Int }
 
 instance Default LocalHistory where
     def = LocalHistory start 0 0
