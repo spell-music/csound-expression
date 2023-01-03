@@ -16,7 +16,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Default
 
-import Data.Maybe(fromJust, fromMaybe)
+import Data.Maybe(fromMaybe)
 import Data.Fix(Fix(..), foldFix)
 import Data.Fix.Cse(fromDag, cseFramed, FrameInfo(..))
 
@@ -159,7 +159,7 @@ deduceRate desiredRates expr = case ratedExpExp expr of
       SingleRate tab ->
         case ratedExpRate expr of
           Just r | not irRequested && M.member r tab -> r
-          _                       -> tfmNoRate tab
+          _                       -> tfmNoRate (infoDefaultRate info) tab
 
   ExpNum _ ->
     case ratedExpRate expr of
@@ -190,15 +190,11 @@ deduceRate desiredRates expr = case ratedExpExp expr of
       | any (== Ir) xs = Ir : xs
       | otherwise      = xs
 
-    tfmNoRate :: Map Rate [Rate] -> Rate
-    tfmNoRate tab =
+    tfmNoRate :: Rate -> Map Rate [Rate] -> Rate
+    tfmNoRate defaultRate tab =
       fromMaybe defaultRate $ findMember desiredRatesSorted
       where
         findMember = find (flip M.member tab)
-        defaultRate = fromJust $ findMember allRates
-
-allRates :: [Rate]
-allRates = [minBound .. maxBound]
 
 rateExp :: Rate -> Exp Int -> Exp RatedVar
 rateExp curRate expr = case expr of
