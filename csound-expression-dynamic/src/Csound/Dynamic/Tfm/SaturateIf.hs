@@ -21,6 +21,7 @@
 -- > endif
 module Csound.Dynamic.Tfm.SaturateIf
   ( saturateIf
+  , SaturateIfOptions (..)
   ) where
 
 import Control.Monad
@@ -32,9 +33,12 @@ import Data.Semigroup (Max (..))
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
 import Control.Monad.Trans.State.Strict
+import Data.Default
 import Data.Text qualified as Text
 import Data.DList (DList)
 import Data.DList qualified as DList
+import Data.Maybe
+
 
 type Var  = D.Var Rate
 
@@ -42,8 +46,19 @@ type Lhs = [Var]
 type Rhs = RatedExp Var
 type Exp = (Lhs, Rhs)
 
-saturateIf :: [Exp] -> [Exp]
-saturateIf dag = List.reverse $ DList.toList $ go IntSet.empty $ List.reverse dag
+data SaturateIfOptions = SaturateIfOptions
+  { saturateIfStatements :: Bool -- ^ flag to turn off if-saturation for statements
+  }
+
+instance Default SaturateIfOptions where
+  def =
+    SaturateIfOptions
+      { saturateIfStatements = True
+      }
+
+saturateIf :: SaturateIfOptions -> [Exp] -> [Exp]
+saturateIf SaturateIfOptions{..} dag =
+  List.reverse $ DList.toList $ go IntSet.empty $ List.reverse dag
   where
     go :: IntSet -> [Exp] -> DList Exp
     go freeVars = \case
@@ -52,21 +67,14 @@ saturateIf dag = List.reverse $ DList.toList $ go IntSet.empty $ List.reverse da
         If cond th el ->
           let
             localFreeVars = fromCond cond
-            (thExprs, elExprs, restExprs) = saturateIfExpr (freeVars <> localFreeVars) exprIds th el exprs
-            thExprsSaturated = go localFreeVars thExprs
-            elExprsSaturated = go localFreeVars elExprs
-            restExprsSaturated = go freeVars restExprs
-            ifBeginExpr = expr { ratedExpExp = IfBegin (getCondRate cond) cond }
-            elseExpr = expr { ratedExpRate = Nothing, ratedExpExp = ElseBegin }
-            endExpr = expr { ratedExpRate = Nothing, ratedExpExp = IfEnd }
-          in mconcat
-            [ DList.singleton ([], endExpr)
-            , elExprsSaturated
-            , DList.singleton ([], elseExpr)
-            , thExprsSaturated
-            , DList.singleton ([], ifBeginExpr)
-            , restExprsSaturated
-            ]
+            newFreeVars = localFreeVars <> freeVars
+          in  processRes  (getCondRate cond) localFreeVars cond expr newFreeVars $ saturateIfExpr newFreeVars exprIds th el exprs
+        IfEnd | saturateIfStatements ->
+          let
+            (Res ths els restExprs, (ifRate, cond)) = getIfElseBlock exprs
+            localFreeVars = fromCond cond
+            newFreeVars = localFreeVars <> freeVars
+          in processRes ifRate localFreeVars cond expr newFreeVars $ saturateIfStatement newFreeVars ths els restExprs
         _ ->
           let
             newFreeVars = (freeVars `IntSet.union` fromRatedExp expr) `IntSet.difference` fromVars exprIds
@@ -74,21 +82,159 @@ saturateIf dag = List.reverse $ DList.toList $ go IntSet.empty $ List.reverse da
           in
             DList.singleton (exprIds, expr) <> exprsSaturated
 
+    processRes :: Rate -> IntSet -> CondInfo (PrimOr Var) -> RatedExp Var -> IntSet -> Res -> DList Exp
+    processRes ifRate localFreeVars cond expr freeVars (Res thExprs elExprs restExprs) =
+      mconcat
+        [ DList.singleton ([], endExpr)
+        , elExprsSaturated
+        , DList.singleton ([], elseExpr)
+        , thExprsSaturated
+        , DList.singleton ([], ifBeginExpr)
+        , restExprsSaturated
+        ]
+      where
+        thExprsSaturated = go localFreeVars thExprs
+        elExprsSaturated = go localFreeVars elExprs
+        restExprsSaturated = go freeVars restExprs
+        ifBeginExpr = expr { ratedExpExp = IfBegin ifRate cond }
+        elseExpr = expr { ratedExpRate = Nothing, ratedExpExp = ElseBegin }
+        endExpr = expr { ratedExpRate = Nothing, ratedExpExp = IfEnd }
+
+data IfBlockSt = IfBlockSt
+  { nestingCount :: !Int
+  , ifRes        :: !Res
+  , currentBlock :: !CurrentBlock
+  , ifArgs       :: !(Maybe (Rate, CondInfo (PrimOr Var)))
+  }
+
+
+data CurrentBlock = IfBlock | ElseBlock | EndBlock
+
+-- | we go over expressions in reverse and accumulate
+-- all blocks for if-then-else-endif statemnt.
+--
+-- We first encounter endif then we go into else or if-begin
+-- and after that we go over rest.
+--
+-- We use nesting counter to not to be distracted by nested if-statements
+getIfElseBlock :: [Exp] -> (Res, (Rate, CondInfo (PrimOr Var)))
+getIfElseBlock es =
+  (reverseRes $ ifRes blocks, fromMaybe (defRate, defCond) $ ifArgs blocks)
+  where
+    blocks = execState (mapM_ go es) initSt
+
+    defRate = Kr
+    defCond = Inline (InlineExp TrueOp []) mempty
+
+    initSt :: IfBlockSt
+    initSt =
+      IfBlockSt
+        { ifRes = Res [] [] []
+        , nestingCount = 0
+        , currentBlock = EndBlock
+        , ifArgs = Nothing
+        }
+
+    go, onIf, onElse, onEnd, onProcess, save :: Exp -> State IfBlockSt ()
+
+    go expr = do
+      block <- gets currentBlock
+      case block of
+        IfBlock -> save expr
+        _       -> onProcess expr
+
+    onProcess expr
+      | isIfBegin expr   = onIf expr
+      | isElseBegin expr = onElse expr
+      | isIfEnd expr     = onEnd expr
+      | otherwise        = save expr
+
+    onIf expr = do
+      count <- gets nestingCount
+      if (count > 0)
+        then do
+          updateNesting pred
+          save expr
+        else do
+          block <- gets currentBlock
+          case block of
+            -- there were no else-block
+            EndBlock -> moveElseToIf
+            _        -> pure ()
+
+          setBlock IfBlock
+          modify' $ \st -> st { ifArgs = getIfArgs expr }
+
+    onElse expr = do
+      count <- gets nestingCount
+      if (count > 0)
+        then save expr
+        else setBlock ElseBlock
+
+    onEnd expr = do
+      updateNesting succ
+      save expr
+
+    save expr = do
+      block <- gets currentBlock
+      case block of
+        IfBlock   -> modify' $ \st -> st { ifRes = appendRest expr $ ifRes st }
+        ElseBlock -> modify' $ \st -> st { ifRes = appendIf expr $ ifRes st }
+        EndBlock  -> modify' $ \st -> st { ifRes = appendElse expr $ ifRes st }
+
+    setBlock :: CurrentBlock -> State IfBlockSt ()
+    setBlock block = modify' $ \s -> s { currentBlock = block }
+
+    updateNesting :: (Int -> Int) -> State IfBlockSt ()
+    updateNesting f = modify' $ \s -> s { nestingCount = f (nestingCount s) }
+
+    moveElseToIf :: State IfBlockSt ()
+    moveElseToIf = modify' $ \s -> s { ifRes = move $ ifRes s }
+      where
+        move Res{..} = Res { ifExps = elseExps, elseExps = [], restExps = restExps }
+
+    isIfBegin, isElseBegin, isIfEnd :: Exp -> Bool
+
+    isIfBegin = overRatedExpr $ \case
+      IfBegin _ _ -> True
+      _           -> False
+
+    isElseBegin = overRatedExpr $ \case
+      ElseBegin -> True
+      _         -> False
+
+    isIfEnd = overRatedExpr $ \case
+      IfEnd -> True
+      _     -> False
+
+    getIfArgs (_, expr) =
+      case ratedExpExp expr of
+        IfBegin rate cond -> Just (rate, cond)
+        _                 -> Nothing
+
+    overRatedExpr p (_, expr) = p (ratedExpExp expr)
+
+
 getCondRate :: CondInfo (PrimOr Var) -> Rate
 getCondRate = max Kr . getMax . foldMap (Max . getRate)
   where
     getRate = either (const Kr) ratedVarRate . unPrimOr
 
 
-saturateIfExpr :: IntSet -> [Var] -> PrimOr Var -> PrimOr Var -> [Exp] -> ([Exp], [Exp], [Exp])
+saturateIfExpr :: IntSet -> [Var] -> PrimOr Var -> PrimOr Var -> [Exp] -> Res
 saturateIfExpr freeVars resIds ifExp elseExp exps =
-  toResult $ stRes $ execState (go exps) $ initSt freeVars ifExp elseExp
+  collectIfs initSt exps
   where
-    toResult Res{..} =
-      ( List.reverse $ ifExps ++ map (flip writeRes ifExp) resIds
-      , List.reverse $ elseExps ++ map (flip writeRes elseExp) resIds
-      , List.reverse restExps
-      )
+    initSt =
+      St
+        { stRes = Res (map (flip writeRes ifExp) resIds) (map (flip writeRes elseExp) resIds) []
+        , stFilter =
+            IfThenFilter
+              { ifIds   = fromExp ifExp
+              , elseIds = fromExp elseExp
+              , restIds = freeVars
+              }
+        }
 
     writeRes :: Var -> PrimOr Var -> Exp
     writeRes resId expr =
@@ -105,6 +251,25 @@ saturateIfExpr freeVars resIds ifExp elseExp exps =
       where
         name = Text.toLower $ Text.pack $ show (D.varType v) ++ show (D.varId v)
 
+saturateIfStatement :: IntSet -> [Exp] -> [Exp] -> [Exp] -> Res
+saturateIfStatement freeVars ifStmts elseStmts exps =
+  collectIfs initSt exps
+  where
+    toSet stmts = foldMap (fromRatedExp . snd) stmts `IntSet.difference`  freeVars
+
+    initSt =
+      St
+        { stRes = Res (List.reverse ifStmts) (List.reverse elseStmts) []
+        , stFilter = IfThenFilter
+            { ifIds   = toSet ifStmts
+            , elseIds = toSet elseStmts
+            , restIds = freeVars
+            }
+        }
+
+collectIfs :: St -> [Exp] -> Res
+collectIfs initSt exps = reverseRes $ stRes $ execState (go exps) initSt
+  where
     go :: [Exp] -> State St ()
     go = \case
       [] -> pure ()
@@ -149,23 +314,27 @@ saturateIfExpr freeVars resIds ifExp elseExp exps =
       pure inElse
 
     toIf :: Exp -> State St ()
-    toIf = toBy updateIf updateIfFilter
+    toIf = toBy appendIf updateIfFilter
       where
-        updateIf item res = res { ifExps = item : ifExps res }
-
         updateIfFilter excludeIds includeIds filt =
           filt
             { ifIds = (ifIds filt `IntSet.difference` excludeIds) `IntSet.union` includeIds
             }
 
     toElse :: Exp -> State St ()
-    toElse = toBy updateElse updateElseFilter
+    toElse = toBy appendElse updateElseFilter
       where
-        updateElse item res = res { elseExps = item : elseExps res }
-
         updateElseFilter excludeIds includeIds filt =
           filt
             { elseIds = (elseIds filt `IntSet.difference` excludeIds) `IntSet.union` includeIds
+            }
+
+    toRest :: Exp -> State St ()
+    toRest = toBy appendRest updateRestFilter
+      where
+        updateRestFilter oldIds newIds filt =
+          filt
+            { restIds = mconcat [restIds filt, oldIds, newIds]
             }
 
     toBy :: (Exp -> Res -> Res) -> (IntSet -> IntSet -> IfThenFilter -> IfThenFilter) -> Exp -> State St ()
@@ -178,29 +347,6 @@ saturateIfExpr freeVars resIds ifExp elseExp exps =
         oldIds = IntSet.fromList $ map D.varId ids
 
         newIds = foldMap (either (const IntSet.empty) (IntSet.singleton . D.varId) . unPrimOr) $ ratedExpExp expr
-
-    toRest :: Exp -> State St ()
-    toRest = toBy updateRest updateRestFilter
-      where
-        updateRest item res = res { restExps = item : restExps res }
-
-        updateRestFilter oldIds newIds filt =
-          filt
-            { restIds = mconcat [restIds filt, oldIds, newIds]
-            }
-
-initSt :: IntSet -> PrimOr Var -> PrimOr Var -> St
-initSt freeVars ifExp elseExp =
-  St
-    { stRes = Res [] [] []
-    , stFilter =
-        IfThenFilter
-          { ifIds   = fromExp ifExp
-          , elseIds = fromExp elseExp
-          , restIds = freeVars
-          }
-    }
-
 fromVars :: [Var] -> IntSet
 fromVars = IntSet.fromList . map D.varId
 
@@ -214,15 +360,32 @@ fromRatedExp :: RatedExp Var -> IntSet
 fromRatedExp = foldMap fromExp  . ratedExpExp
 
 data St = St
-  { stRes :: Res
-  , stFilter :: IfThenFilter
+  { stRes    :: !Res
+  , stFilter :: !IfThenFilter
   }
 
 data Res = Res
-  { ifExps :: ![Exp]
+  { ifExps   :: ![Exp]
   , elseExps :: ![Exp]
   , restExps :: ![Exp]
   }
+
+appendIf :: Exp -> Res -> Res
+appendIf item res = res { ifExps = item : ifExps res }
+
+appendElse :: Exp -> Res -> Res
+appendElse item res = res { elseExps = item : elseExps res }
+
+appendRest :: Exp -> Res -> Res
+appendRest item res = res { restExps = item : restExps res }
+
+reverseRes :: Res -> Res
+reverseRes Res{..} =
+  Res
+    { ifExps = List.reverse ifExps
+    , elseExps = List.reverse elseExps
+    , restExps = List.reverse restExps
+    }
 
 data IfThenFilter = IfThenFilter
   { ifIds   :: !IntSet
@@ -246,3 +409,4 @@ isCondMember :: IntSet -> IntSet -> [Var] -> Bool
 isCondMember includeSet excludeSet ids =
      all (flip IntSet.member includeSet . D.varId) ids
   && not (any (flip IntSet.member excludeSet . D.varId) ids)
+

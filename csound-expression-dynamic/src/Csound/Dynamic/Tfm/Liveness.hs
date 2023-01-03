@@ -1,3 +1,5 @@
+-- | Analyses variable for reusal.
+-- So that we spend less memory and allocate lesser variables and audio vectors.
 module Csound.Dynamic.Tfm.Liveness (
     liveness
 ) where
