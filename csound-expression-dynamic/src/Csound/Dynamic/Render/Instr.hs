@@ -16,6 +16,7 @@ import qualified Text.PrettyPrint.Leijen.Text as P
 import Csound.Dynamic.Tfm.DeduceTypes
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
 import Csound.Dynamic.Tfm.Liveness
+import Csound.Dynamic.Tfm.SaturateIf (saturateIf)
 
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Build(getRates, isMultiOutSignature)
@@ -72,10 +73,12 @@ clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, expr) = (filter ((/= Xr) . ratedVarRate) res, expr)
 
 collectRates :: Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates dag = fmap (second ratedExpExp) res2
-    where res2 = liveness lastFreshId1 res1
-          (res1, lastFreshId1)= unfoldMultiOuts unfoldSpec lastFreshId dag1
-          (dag1, lastFreshId) = rateGraph dag
+collectRates dag = fmap (second ratedExpExp) res3
+    where
+      res3 = liveness lastFreshId1 res2
+      res2 = saturateIf res1
+      (res1, lastFreshId1)= unfoldMultiOuts unfoldSpec lastFreshId dag1
+      (dag1, lastFreshId) = rateGraph dag
 
 -----------------------------------------------------------
 -- Dag -> Dag

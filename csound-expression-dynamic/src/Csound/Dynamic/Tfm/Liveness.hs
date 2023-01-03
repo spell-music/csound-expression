@@ -7,7 +7,7 @@ import Prelude hiding (mapM, mapM_)
 import Control.Monad.Trans.State.Strict
 import Data.Traversable
 import Data.Foldable
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 
 import Control.Monad.Trans.Class
 import Control.Monad hiding (mapM, mapM_)
@@ -20,6 +20,8 @@ import qualified Csound.Dynamic.Tfm.DeduceTypes as D
 import Csound.Dynamic.Tfm.DeduceTypes(varType, varId)
 import Csound.Dynamic.Types.Exp(Rate(..))
 
+-- | Reuses variables. It analyses weather the vraibel is used further
+-- in the code and if it's not used it tries to reuse it for the next assignments
 liveness :: Traversable f => Int -> Dag f -> Dag f
 liveness lastFreshId as = runST $ do
   st <- initSt lastFreshId $ analyse lastFreshId as
@@ -42,7 +44,7 @@ type Dag f = [Exp f]
 
 data IdList = IdList
     [Int] -- fresh ids
-    Int   -- the biggest used id
+    !Int   -- the biggest used id
 
 allocId :: IdList -> (Int, IdList)
 allocId (IdList is lastId) = (head is, IdList (tail is) (max (head is) lastId))
@@ -66,9 +68,9 @@ type LivenessTable = A.UArray Int Int
 type SubstTable s  = StArr s
 
 data Registers s = Registers
-  { registers     :: M.Map Rate IdList
-  , livenessTable :: LivenessTable
-  , substTable    :: SubstTable s
+  { registers     :: !(M.Map Rate IdList)
+  , livenessTable :: !LivenessTable
+  , substTable    :: !(SubstTable s)
   }
 
 type Memory s a = StateT (Registers s) (ST s) a
