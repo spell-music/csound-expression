@@ -224,7 +224,6 @@ rateExp curRate expr = case expr of
     UntilBegin _ -> rec2 condRate expr
     WhileBegin _ -> rec2 condRate expr
     WhileRefBegin var -> WhileRefBegin var
---    ElseIfBegin _ -> rec2 condRate expr
     ElseBegin -> ElseBegin
     IfEnd -> IfEnd
     UntilEnd -> UntilEnd
