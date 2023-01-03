@@ -12,7 +12,7 @@ module Csound.Dynamic.Types.Exp(
     ratedExp, noRate, withRate, setRate,
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId,
-    VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
+    VarType(..), Var(..), Info(..), toDefaultInfoRate, OpcFixity(..), Rate(..),
     Signature(..), isInfix, isPrefix,
     Prim(..), Gen(..), GenId(..),
     Inline(..), InlineExp(..), PreInline(..),
@@ -43,6 +43,9 @@ import Text.Show.Deriving
 import Data.Text (Text)
 import Data.Serialize qualified as Cereal
 import Data.Serialize.Text ()
+import qualified Data.Map as M
+import Data.Maybe (fromJust)
+import Data.List (find)
 
 import qualified Csound.Dynamic.Tfm.DeduceTypes as R(Var(..))
 
@@ -257,7 +260,20 @@ data Info = Info
     , infoSignature     :: !Signature
     -- Opcode can be infix or prefix
     , infoOpcFixity     :: !OpcFixity
+    -- default preferred rate
+    , infoDefaultRate   :: !Rate
     } deriving (Show, Eq, Ord, Generic)
+
+toDefaultInfoRate :: Signature -> Rate
+toDefaultInfoRate = \case
+  SingleRate tab ->
+    let findMember = find (flip M.member tab)
+    in  fromJust $ findMember allRates
+  MultiRate _ _ -> Xr
+
+allRates :: [Rate]
+allRates = [minBound .. maxBound]
+
 
 isPrefix, isInfix :: Info -> Bool
 
