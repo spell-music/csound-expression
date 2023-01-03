@@ -33,6 +33,8 @@ import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
 import Control.Monad.Trans.State.Strict
 import Data.Text qualified as Text
+import Data.DList (DList)
+import Data.DList qualified as DList
 
 type Var  = D.Var Rate
 
@@ -40,13 +42,12 @@ type Lhs = [Var]
 type Rhs = RatedExp Var
 type Exp = (Lhs, Rhs)
 
-
 saturateIf :: [Exp] -> [Exp]
-saturateIf dag = List.reverse $ go IntSet.empty $ List.reverse dag
+saturateIf dag = List.reverse $ DList.toList $ go IntSet.empty $ List.reverse dag
   where
-    go :: IntSet -> [Exp] -> [Exp]
+    go :: IntSet -> [Exp] -> DList Exp
     go freeVars = \case
-      [] -> []
+      [] -> DList.empty
       (exprIds, expr) : exprs -> case ratedExpExp expr of
         If cond th el ->
           let
@@ -59,11 +60,11 @@ saturateIf dag = List.reverse $ go IntSet.empty $ List.reverse dag
             elseExpr = expr { ratedExpRate = Nothing, ratedExpExp = ElseBegin }
             endExpr = expr { ratedExpRate = Nothing, ratedExpExp = IfEnd }
           in mconcat
-            [ [([], endExpr)]
+            [ DList.singleton ([], endExpr)
             , elExprsSaturated
-            , [([], elseExpr)]
+            , DList.singleton ([], elseExpr)
             , thExprsSaturated
-            , [([], ifBeginExpr)]
+            , DList.singleton ([], ifBeginExpr)
             , restExprsSaturated
             ]
         _ ->
@@ -71,7 +72,7 @@ saturateIf dag = List.reverse $ go IntSet.empty $ List.reverse dag
             newFreeVars = (freeVars `IntSet.union` fromRatedExp expr) `IntSet.difference` fromVars exprIds
             exprsSaturated = go newFreeVars exprs
           in
-            (exprIds, expr) : exprsSaturated
+            DList.singleton (exprIds, expr) <> exprsSaturated
 
 getCondRate :: CondInfo (PrimOr Var) -> Rate
 getCondRate = max Kr . getMax . foldMap (Max . getRate)

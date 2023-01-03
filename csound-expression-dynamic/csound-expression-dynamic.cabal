@@ -27,6 +27,7 @@ Library
         base >= 4.10, base < 5
       , bytestring
       , data-default
+      , dlist
       , cereal
       , cereal-text
       , containers
