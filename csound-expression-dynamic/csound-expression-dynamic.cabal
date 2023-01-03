@@ -38,6 +38,7 @@ Library
       , data-fix >= 0.3.2
       , data-fix-cse >= 0.0.3
       , deriving-compat
+      , safe
       , text
       , cryptohash-sha256
       , vector
@@ -67,6 +68,7 @@ Library
     Csound.Dynamic.Tfm.UnfoldMultiOuts
 
   default-extensions:
+    BangPatterns
     DeriveGeneric
     ImportQualifiedPost
     LambdaCase

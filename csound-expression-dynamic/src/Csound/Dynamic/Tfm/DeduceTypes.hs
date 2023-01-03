@@ -2,10 +2,13 @@ module Csound.Dynamic.Tfm.DeduceTypes(
     Var(..), TypeGraph(..), Convert(..), Stmt, deduceTypes
 ) where
 
+import Prelude hiding (lines)
 import Data.Functor (void)
+import Data.List qualified as List
 import qualified Data.Map as M
 import qualified Data.IntMap as IM
 import qualified Data.Traversable as T
+import Safe (headMay)
 
 import Data.Set (Set)
 import Data.Set qualified as Set
@@ -61,7 +64,8 @@ data Convert ty = Convert
     , convertTo     :: !(Var ty) }
 
 data Line f ty = Line
-    { lineType      :: !(Int, GetType ty)
+    { lineId        :: !Int
+    , lineGetType   :: !(GetType ty)
     , lineStmt      :: !(Stmt f (Var ty))
     , lineConverts  :: ![Convert ty] }
 
@@ -96,27 +100,32 @@ data TypeGraph f ty = TypeGraph
 --
 deduceTypes :: forall ty f . (Show ty, Ord ty, T.Traversable f) => TypeGraph f ty -> [Stmt f Int] -> ([Stmt f (Var ty)], Int)
 deduceTypes spec as = runST $ do
-    freshIds <- newSTRef n
-    typeRequests <- initTypeRequests n
-    lines' <- mapM (discussLine spec typeRequests freshIds) $ reverse as
-    let typeMap = IM.fromList $ fmap lineType lines'
-    lastId <- readSTRef freshIds
-    return (reverse $ processLine typeMap =<< lines', lastId)
-    where
-      n = succ $ if (null as) then 0 else (fst $ last as)
+  freshIds <- newSTRef nextLastIndex
+  typeRequests <- initTypeRequests nextLastIndex
+  lines <- mapM (discussLine spec typeRequests freshIds) revAs
+  let typeMap = toTypeMap lines
+  lastId <- readSTRef freshIds
+  return (List.foldl' (processLine typeMap) [] lines, lastId)
+  where
+    toTypeMap :: [Line f ty] -> TypeMap ty
+    toTypeMap lines =
+      IM.fromList $ map (\Line{..} -> (lineId, lineGetType)) lines
 
-      processLine :: TypeMap ty -> Line f ty -> [Stmt f (Var ty)]
-      processLine typeMap line =
-        fmap (mkConvert spec) (lineConverts line) ++ [(a, fmap (lookupVar typeMap) b)]
-        where
-          (a, b) = lineStmt line
+    revAs = reverse as
+    nextLastIndex = succ $ maybe 0 fst $ headMay revAs
+
+    processLine :: TypeMap ty -> [Stmt f (Var ty)] -> Line f ty -> [Stmt f (Var ty)]
+    processLine !typeMap !res !line =
+      ((lhs, fmap (lookupVar typeMap) rhs) : fmap (mkConvert spec) (lineConverts line)) ++ res
+      where
+        (lhs, rhs) = lineStmt line
 
 discussLine :: forall a f s . (Ord a, T.Traversable f) => TypeGraph f a -> TypeRequests s a -> STRef s Int -> Stmt f Int -> ST s (Line f a)
 discussLine spec typeRequests freshIds stmt@(pid, _) = do
-    (conv, expr') <- defineType spec stmt <$> getTypes pid typeRequests
-    updateTypeRequests expr'
-    (getType, convs) <- mkGetType conv (fst expr') freshIds
-    return $ Line (pid, getType) expr' convs
+  (conv, expr') <- defineType spec stmt <$> getTypes pid typeRequests
+  updateTypeRequests expr'
+  (getType, convs) <- mkGetType conv (fst expr') freshIds
+  return $ Line pid getType expr' convs
   where
     -- update type requests with derived RHS in the statement
     updateTypeRequests :: Stmt f (Var a) -> ST s ()
@@ -125,11 +134,11 @@ discussLine spec typeRequests freshIds stmt@(pid, _) = do
 
 mkGetType :: Ord ty => [ty] -> Var ty -> STRef s Int -> ST s (GetType ty, [Convert ty])
 mkGetType typesToConvert curVar freshIds
-    | null typesToConvert = return (NoConversion $ varType curVar, [])
-    | otherwise = do
-        ids <- nextIds n freshIds
-        return (ConversionLookup curVar $ M.fromList (zip typesToConvert ids),
-                zipWith (\i t -> Convert curVar (Var i t)) ids typesToConvert)
+  | null typesToConvert = return (NoConversion $ varType curVar, [])
+  | otherwise = do
+      ids <- nextIds n freshIds
+      return (ConversionLookup curVar $ M.fromList (zip typesToConvert ids),
+              zipWith (\i t -> Convert curVar (Var i t)) ids typesToConvert)
     where n = length typesToConvert
 
 nextIds :: Int -> STRef s Int -> ST s [Int]
