@@ -1,3 +1,10 @@
+--  Bug: we got line:
+-- > kN = cpspch iM
+-- > iE = i(kN)
+-- > kN * comb a b iE  -- here iE is zero at the init time
+--
+--  With this example:
+-- > writeCsd "tmp.csd" $ let q = cpspch 8.04 in (kr q) * comb (osc 220) 1 q
 module Csound.Dynamic.Render.Instr(
     renderInstr, renderInstrBody
 ) where
@@ -5,10 +12,11 @@ module Csound.Dynamic.Render.Instr(
 import Control.Arrow(second)
 import Control.Monad.Trans.State.Strict
 import Data.List(sort, find)
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Default
 
-import Data.Maybe(fromJust)
+import Data.Maybe(fromJust, fromMaybe)
 import Data.Fix(Fix(..), foldFix)
 import Data.Fix.Cse(fromDag, cseFramed, FrameInfo(..))
 
@@ -97,23 +105,27 @@ filterDepCases = filter (not . isDepCase . snd)
 -- deduces types
 
 rateGraph :: [Stmt RatedExp Int] -> ([Stmt RatedExp (Var Rate)], Int)
-rateGraph dag = (stmts, lastId)
-     where (stmts, lastId) = deduceTypes algSpec dag
-           algSpec = TypeGraph mkConvert' defineType'
+rateGraph dag = deduceTypes (TypeGraph mkConvert' defineType') dag
+  where
+    mkConvert' Convert{..} = (convertTo, RatedExp h Nothing Nothing expr)
+      where
+        h = Crypto.hash $ Cereal.encode expr
+        expr = ConvertRate (ratedVarRate convertTo) (ratedVarRate convertFrom) $ PrimOr $ Right convertFrom
 
-           mkConvert' a = (to, RatedExp h Nothing Nothing expr)
-               where
-                 h = Crypto.hash $ Cereal.encode expr
-                 expr = ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from
-                 from = convertFrom a
-                 to   = convertTo   a
+    defineType' :: Stmt RatedExp Int -> [Rate] -> ([Rate], Stmt RatedExp RatedVar)
+    defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
+      where
+        possibleRate :: Rate
+        possibleRate = deduceRate desiredRates expr
 
-           defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
-               where
-                possibleRate = deduceRate desiredRates expr
-                ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
-                expr' = RatedExp (ratedExpHash expr) Nothing Nothing $ rateExp possibleRate $ ratedExpExp expr
-                outVar' = ratedVar possibleRate outVar
+        ratesForConversion :: [Rate]
+        ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
+
+        expr' :: RatedExp RatedVar
+        expr' = RatedExp (ratedExpHash expr) Nothing Nothing $ rateExp possibleRate $ ratedExpExp expr
+
+        outVar' :: RatedVar
+        outVar' = ratedVar possibleRate outVar
 
 ----------------------------------------------------------
 -- unfolds multiple rates
@@ -138,40 +150,55 @@ coherentRates to from = case (to, from) of
 
 deduceRate :: [Rate] -> RatedExp Int -> Rate
 deduceRate desiredRates expr = case ratedExpExp expr of
-    ExpPrim _ -> case desiredRates of
-        [Sr] -> Sr
-        _ -> Ir
+  ExpPrim _ -> case desiredRates of
+      [Sr] -> Sr
+      _ -> Ir
 
-    Tfm info _ -> case infoSignature info of
-        MultiRate _ _ -> Xr
-        SingleRate tab ->
-            let r1 = tfmNoRate (infoName info) desiredRates tab
-            in  case ratedExpRate expr of
-                    Just r | M.member r tab -> r
-                    Just _ -> r1
-                    Nothing -> r1
+  Tfm info _ -> case infoSignature info of
+      MultiRate _ _ -> Xr
+      SingleRate tab ->
+        case ratedExpRate expr of
+          Just r | not irRequested && M.member r tab -> r
+          _                       -> tfmNoRate tab
 
-    ExpNum _ -> case ratedExpRate expr of
-        Just r  -> r
-        Nothing -> case maximum (Ar : desiredRates) of
-            Xr -> Ar
-            r -> r
+  ExpNum _ ->
+    case ratedExpRate expr of
+      Just r | not irRequested -> r
+      _ -> maximum (Ar : desiredRates)
 
-    Select rate _ _ -> rate
-    If _ _ _ -> case head $ sort desiredRates of
-        Xr -> Ar
-        r  -> r
-    ReadVar v -> varRate v
-    ReadArr v _ -> varRate v
-    ReadMacrosString _ -> Sr
-    ReadMacrosDouble _ -> Ir
-    ReadMacrosInt _ -> Ir
-    _  -> Xr
-    where tfmNoRate name rates tab = case sort rates of
-              [Xr]  -> tfmNoRate name [Ar] tab
-              Xr:as -> tfmNoRate name as tab
-              as | any (== Ir) as  -> fromJust $ find (flip M.member tab) (Ir : as ++ [minBound .. maxBound])
-              as -> fromJust $ find (flip M.member tab) (as ++ [minBound .. maxBound])
+  Select rate _ _ -> rate
+  If _ _ _ -> case head $ sort desiredRates of
+      Xr -> Ar
+      r  -> r
+  ReadVar v -> varRate v
+  ReadArr v _ -> varRate v
+  ReadMacrosString _ -> Sr
+  ReadMacrosDouble _ -> Ir
+  ReadMacrosInt _ -> Ir
+  _  -> Xr
+  where
+    irRequested = case desiredRatesSorted of
+      Ir : _ -> True
+      _      -> False
+
+    desiredRatesSorted = moveIrToTop $
+      case sort desiredRates of
+        Xr : rest -> rest
+        other     -> other
+
+    moveIrToTop xs
+      | any (== Ir) xs = Ir : xs
+      | otherwise      = xs
+
+    tfmNoRate :: Map Rate [Rate] -> Rate
+    tfmNoRate tab =
+      fromMaybe defaultRate $ findMember desiredRatesSorted
+      where
+        findMember = find (flip M.member tab)
+        defaultRate = fromJust $ findMember allRates
+
+allRates :: [Rate]
+allRates = [minBound .. maxBound]
 
 rateExp :: Rate -> Exp Int -> Exp RatedVar
 rateExp curRate expr = case expr of

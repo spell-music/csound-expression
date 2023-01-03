@@ -96,7 +96,7 @@ type RatedVar = R.Var Rate
 
 -- | Makes an rated variable.
 ratedVar :: Rate -> Int -> RatedVar
-ratedVar     = flip R.Var
+ratedVar = flip R.Var
 
 -- | Querries a rate.
 ratedVarRate :: RatedVar -> Rate
