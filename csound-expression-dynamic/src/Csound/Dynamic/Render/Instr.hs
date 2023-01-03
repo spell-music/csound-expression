@@ -1,10 +1,3 @@
---  Bug: we got line:
--- > kN = cpspch iM
--- > iE = i(kN)
--- > kN * comb a b iE  -- here iE is zero at the init time
---
---  With this example:
--- > writeCsd "tmp.csd" $ let q = cpspch 8.04 in (kr q) * comb (osc 220) 1 q
 module Csound.Dynamic.Render.Instr(
     renderInstr, renderInstrBody
 ) where
