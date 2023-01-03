@@ -42,18 +42,19 @@ type Exp = (Lhs, Rhs)
 
 
 saturateIf :: [Exp] -> [Exp]
-saturateIf dag = List.reverse $ go $ List.reverse dag
+saturateIf dag = List.reverse $ go IntSet.empty $ List.reverse dag
   where
-    go :: [Exp] -> [Exp]
-    go = \case
+    go :: IntSet -> [Exp] -> [Exp]
+    go freeVars = \case
       [] -> []
       (exprIds, expr) : exprs -> case ratedExpExp expr of
         If cond th el ->
           let
-            (thExprs, elExprs, restExprs) = saturateIfExpr exprIds cond th el exprs
-            thExprsSaturated = go thExprs
-            elExprsSaturated = go elExprs
-            restExprsSaturated = go restExprs
+            localFreeVars = fromCond cond
+            (thExprs, elExprs, restExprs) = saturateIfExpr (freeVars <> localFreeVars) exprIds th el exprs
+            thExprsSaturated = go localFreeVars thExprs
+            elExprsSaturated = go localFreeVars elExprs
+            restExprsSaturated = go freeVars restExprs
             ifBeginExpr = expr { ratedExpExp = IfBegin (getCondRate cond) cond }
             elseExpr = expr { ratedExpRate = Nothing, ratedExpExp = ElseBegin }
             endExpr = expr { ratedExpRate = Nothing, ratedExpExp = IfEnd }
@@ -67,7 +68,8 @@ saturateIf dag = List.reverse $ go $ List.reverse dag
             ]
         _ ->
           let
-            exprsSaturated = go exprs
+            newFreeVars = (freeVars `IntSet.union` fromRatedExp expr) `IntSet.difference` fromVars exprIds
+            exprsSaturated = go newFreeVars exprs
           in
             (exprIds, expr) : exprsSaturated
 
@@ -77,9 +79,9 @@ getCondRate = max Kr . getMax . foldMap (Max . getRate)
     getRate = either (const Kr) ratedVarRate . unPrimOr
 
 
-saturateIfExpr :: [Var] -> CondInfo (PrimOr Var) -> PrimOr Var -> PrimOr Var -> [Exp] -> ([Exp], [Exp], [Exp])
-saturateIfExpr resIds condExp ifExp elseExp exps =
-  toResult $ stRes $ execState (go exps) $ initSt condExp ifExp elseExp
+saturateIfExpr :: IntSet -> [Var] -> PrimOr Var -> PrimOr Var -> [Exp] -> ([Exp], [Exp], [Exp])
+saturateIfExpr freeVars resIds ifExp elseExp exps =
+  toResult $ stRes $ execState (go exps) $ initSt freeVars ifExp elseExp
   where
     toResult Res{..} =
       ( List.reverse $ ifExps ++ map (flip writeRes ifExp) resIds
@@ -186,23 +188,29 @@ saturateIfExpr resIds condExp ifExp elseExp exps =
             { restIds = mconcat [restIds filt, oldIds, newIds]
             }
 
-initSt :: CondInfo (PrimOr Var) -> PrimOr Var -> PrimOr Var -> St
-initSt condExp ifExp elseExp =
+initSt :: IntSet -> PrimOr Var -> PrimOr Var -> St
+initSt freeVars ifExp elseExp =
   St
     { stRes = Res [] [] []
     , stFilter =
         IfThenFilter
           { ifIds   = fromExp ifExp
           , elseIds = fromExp elseExp
-          , restIds = fromCond condExp
+          , restIds = freeVars
           }
     }
-  where
-    fromExp :: PrimOr Var -> IntSet
-    fromExp (PrimOr eVar) = either (const IntSet.empty) (IntSet.singleton . D.varId) eVar
 
-    fromCond :: CondInfo (PrimOr Var) -> IntSet
-    fromCond = foldMap fromExp
+fromVars :: [Var] -> IntSet
+fromVars = IntSet.fromList . map D.varId
+
+fromExp :: PrimOr Var -> IntSet
+fromExp (PrimOr eVar) = either (const IntSet.empty) (IntSet.singleton . D.varId) eVar
+
+fromCond :: CondInfo (PrimOr Var) -> IntSet
+fromCond = foldMap fromExp
+
+fromRatedExp :: RatedExp Var -> IntSet
+fromRatedExp = foldMap fromExp  . ratedExpExp
 
 data St = St
   { stRes :: Res
