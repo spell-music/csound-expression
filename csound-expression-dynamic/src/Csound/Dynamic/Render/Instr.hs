@@ -6,6 +6,7 @@ import Control.Arrow(second)
 import Control.Monad.Trans.State.Strict
 import Data.List(sort, find)
 import qualified Data.Map as M
+import Data.Default
 
 import Data.Maybe(fromJust)
 import Data.Fix(Fix(..), foldFix)
@@ -15,7 +16,7 @@ import qualified Text.PrettyPrint.Leijen.Text as P
 
 import Csound.Dynamic.Tfm.DeduceTypes
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
-import Csound.Dynamic.Tfm.Liveness
+-- import Csound.Dynamic.Tfm.Liveness
 import Csound.Dynamic.Tfm.SaturateIf (saturateIf)
 
 import Csound.Dynamic.Types hiding (Var)
@@ -73,11 +74,11 @@ clearEmptyResults :: ([RatedVar], Exp RatedVar) -> ([RatedVar], Exp RatedVar)
 clearEmptyResults (res, expr) = (filter ((/= Xr) . ratedVarRate) res, expr)
 
 collectRates :: Dag RatedExp -> [([RatedVar], Exp RatedVar)]
-collectRates dag = fmap (second ratedExpExp) res3
+collectRates dag = fmap (second ratedExpExp) res2
     where
-      res3 = liveness lastFreshId1 res2
-      res2 = saturateIf res1
-      (res1, lastFreshId1)= unfoldMultiOuts unfoldSpec lastFreshId dag1
+      -- res3 = liveness lastFreshId1 res2
+      res2 = saturateIf def res1
+      (res1, _lastFreshId1)= unfoldMultiOuts unfoldSpec lastFreshId dag1
       (dag1, lastFreshId) = rateGraph dag
 
 -----------------------------------------------------------
