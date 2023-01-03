@@ -24,6 +24,7 @@ import Csound.Dynamic.Build(getRates, isMultiOutSignature)
 import Csound.Dynamic.Render.Pretty
 import qualified Csound.Dynamic.Types as T(Var)
 import Data.Serialize qualified as Cereal
+import Crypto.Hash.SHA256 qualified as Crypto
 
 type Dag f = [(Int, f Int)]
 
@@ -100,16 +101,18 @@ rateGraph dag = (stmts, lastId)
      where (stmts, lastId) = deduceTypes algSpec dag
            algSpec = TypeGraph mkConvert' defineType'
 
-           mkConvert' a = (to, RatedExp (Cereal.encode from) Nothing Nothing $
-                   ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from)
-               where from = convertFrom a
-                     to   = convertTo   a
+           mkConvert' a = (to, RatedExp h Nothing Nothing expr)
+               where
+                 h = Crypto.hash $ Cereal.encode expr
+                 expr = ConvertRate (ratedVarRate to) (ratedVarRate from) $ PrimOr $ Right from
+                 from = convertFrom a
+                 to   = convertTo   a
 
            defineType' (outVar, expr) desiredRates = (ratesForConversion, (outVar', expr'))
                where
                 possibleRate = deduceRate desiredRates expr
                 ratesForConversion = filter (not . flip coherentRates possibleRate) desiredRates
-                expr' = RatedExp (ratedExpHash expr)  Nothing Nothing $ rateExp possibleRate $ ratedExpExp expr
+                expr' = RatedExp (ratedExpHash expr) Nothing Nothing $ rateExp possibleRate $ ratedExpExp expr
                 outVar' = ratedVar possibleRate outVar
 
 ----------------------------------------------------------
