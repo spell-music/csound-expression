@@ -389,7 +389,6 @@ instance Traversable PrimOr where
 -- | Multiple output. Specify the number of outputs to get the result.
 type MultiOut a = Int -> a
 
-
 ------------------------------------------------------
 -- hashable instances
 

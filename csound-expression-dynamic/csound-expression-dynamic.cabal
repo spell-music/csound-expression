@@ -39,6 +39,7 @@ Library
       , deriving-compat
       , text
       , cryptohash-sha256
+      , vector
   Hs-Source-Dirs:      src/
   default-language: Haskell2010
   Exposed-Modules:
@@ -61,11 +62,14 @@ Library
   Other-Modules:
     Csound.Dynamic.Tfm.DeduceTypes
     Csound.Dynamic.Tfm.Liveness
+    Csound.Dynamic.Tfm.SaturateIf
     Csound.Dynamic.Tfm.UnfoldMultiOuts
 
   default-extensions:
     DeriveGeneric
     ImportQualifiedPost
+    LambdaCase
+    RecordWildCards
     OverloadedStrings
     TypeApplications
 
