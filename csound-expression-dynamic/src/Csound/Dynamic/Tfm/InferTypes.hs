@@ -289,8 +289,9 @@ inferIter opts (Stmt lhs rhs) =
           Just (SignatureChoice prevScores prevCandidate) | prevScores < scores -> (SignatureChoice prevScores prevCandidate)
           _ -> (SignatureChoice scores candidate)
 
-    onConvertRate toRate fromRate arg =
-      save toRate (ConvertRate toRate fromRate (Var fromRate <$> arg))
+    onConvertRate toRate mFromRate arg = do
+      fromRate <- maybe (either primRate varType . unPrimOr <$> mapM (getVar Ir) arg) pure mFromRate
+      save toRate (ConvertRate toRate (Just fromRate) (Var fromRate <$> arg))
 
     onSelect rate outId arg =
       save rate (Select rate outId (Var Xr <$> arg))
@@ -449,7 +450,7 @@ convert toRate (PrimOr fromVar) = do
 
     convertVar :: Var -> State St Var
     convertVar inVar = do
-      let rhs = newExp $ ConvertRate toRate (varType inVar) (PrimOr $ Right inVar)
+      let rhs = newExp $ ConvertRate toRate (Just $ varType inVar) (PrimOr $ Right inVar)
       outVar <- defineVar toRate rhs
       saveConversion outVar inVar
       pure outVar

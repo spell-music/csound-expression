@@ -135,7 +135,7 @@ readOnlyVar :: Var -> E
 readOnlyVar v = noRate $ ReadVar v
 
 initVar :: Monad m => Var -> E -> DepT m ()
-initVar v x = depT_ $ setRate Ir $ noRate $ InitVar v $ toPrimOr x
+initVar v x = depT_ $ noRate $ InitVar v $ toPrimOr $ setRate Ir x
 
 appendVarBy :: Monad m => (E -> E -> E) -> Var -> E -> DepT m ()
 appendVarBy op v x = writeVar v . op x =<< readVar v

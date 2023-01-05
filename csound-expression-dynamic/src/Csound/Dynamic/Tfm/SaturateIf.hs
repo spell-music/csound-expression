@@ -281,7 +281,7 @@ collectIfs ifRate initSt exps = reverseRes $ stRes $ execState (go exps) initSt
         -- we can not convert to Kr-inside if-block
         hasKrConvertStmt =
           case ratedExpExp expr of
-            ConvertRate Kr Ir _ -> True
+            ConvertRate Kr (Just Ir) _ -> True
             _ -> False
 
     fin :: [Exp] -> State St ()
