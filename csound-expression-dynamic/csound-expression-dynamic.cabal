@@ -63,7 +63,6 @@ Library
     Csound.Dynamic.Render.Pretty
   Other-Modules:
     Csound.Dynamic.Tfm.InferTypes
-    Csound.Dynamic.Tfm.DeduceTypes
     Csound.Dynamic.Tfm.Liveness
     Csound.Dynamic.Tfm.SaturateIf
     Csound.Dynamic.Tfm.UnfoldMultiOuts
