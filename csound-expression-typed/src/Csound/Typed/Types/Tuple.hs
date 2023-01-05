@@ -248,7 +248,7 @@ type instance BooleanOf BoolTuple = BoolSig
 
 instance IfB BoolTuple where
     ifB mp (BoolTuple mas) (BoolTuple mbs) = BoolTuple $
-        liftA3 (\p as bs -> zipWith (ifB p) as bs) (toGE mp) mas mbs
+        liftA3 (\p as bs -> zipWith (ifExp IfKr p) as bs) (toGE mp) mas mbs
 
 -- | @ifB@ for tuples of csound values.
 ifTuple :: (Tuple a) => BoolSig -> a -> a -> a
@@ -276,7 +276,7 @@ type instance BooleanOf BoolArg = BoolD
 
 instance IfB BoolArg where
     ifB mp (BoolArg mas) (BoolArg mbs) = BoolArg $
-        liftA3 (\p as bs -> zipWith (ifB p) as bs) (toGE mp) mas mbs
+        liftA3 (\p as bs -> zipWith (ifExp IfIr p) as bs) (toGE mp) mas mbs
 
 -- | @ifB@ for constants.
 ifArg :: (Arg a, Tuple a) => BoolD -> a -> a -> a

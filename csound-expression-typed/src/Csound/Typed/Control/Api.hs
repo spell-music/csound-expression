@@ -56,9 +56,9 @@ trigByNameMidi_ name instr = do
             noteFlagExpr <- toGE noteFlag
             args <- fromTuple (pch, vol, other)
             return $ do
-                    D.when1 D.Ir (noteFlagExpr ==* 1) $ do
+                    D.when1 D.IfIr (noteFlagExpr ==* 1) $ do
                         eventi (Event instrIdExpr 0 (-1) args)
-                    D.when1 D.Ir (noteFlagExpr ==* 0) $ do
+                    D.when1 D.IfIr (noteFlagExpr ==* 0) $ do
                         eventi (Event (negate instrIdExpr) 0 0 args)
                     turnoff
 

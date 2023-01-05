@@ -1,9 +1,12 @@
+-- Overview of csound types
+-- http://www.csounds.com/journal/issue10/CsoundRates.html
+-- http://www.csoundjournal.com/2006spring/controlFlow.html
 module Csound.Dynamic.Tfm.DeduceTypes(
-    Var(..), TypeGraph(..), Convert(..), Stmt, deduceTypes
+  Var(..), TypeGraph(..), Convert(..), Stmt(..), TypeReq(..), fromTypeReq, deduceTypes,
+  unifies
 ) where
 
 import Prelude hiding (lines)
-import Data.Functor (void)
 import Data.List qualified as List
 import qualified Data.Map as M
 import qualified Data.IntMap as IM
@@ -19,25 +22,25 @@ import Data.Serialize qualified as Cereal
 import GHC.Generics
 
 
-type TypeRequests s ty = STArray s Int (Set ty)
+type TypeRequests s ty = STArray s Int (Set (TypeReq ty))
 
 initTypeRequests :: Int -> ST s (TypeRequests s ty)
 initTypeRequests size = newArray (0, size - 1) Set.empty
 
-requestType :: Ord ty => TypeRequests s ty -> Var ty-> ST s ()
-requestType arr v = modifyArray arr (varId v) (Set.insert (varType v))
+saveRequestType :: Ord ty => TypeRequests s ty -> Var (TypeReq ty)-> ST s ()
+saveRequestType arr v = modifyArray arr (varId v) (Set.insert (varType v))
 
 modifyArray :: Ix i => STArray s i a -> i -> (a -> a) -> ST s ()
 modifyArray arr i f = writeArray arr i . f =<< readArray arr i
 
-getTypes :: Int -> TypeRequests s ty -> ST s [ty]
-getTypes n arr = Set.toList <$> readArray arr n
+getTypes :: TypeRequests s ty -> Int -> ST s [TypeReq ty]
+getTypes arr n = Set.toList <$> readArray arr n
 
 -- | Typed variable.
 data Var a = Var
     { varId   :: !Int
     , varType :: !a
-    } deriving (Show, Eq, Ord, Generic)
+    } deriving (Show, Eq, Ord, Generic, Functor)
 
 instance Cereal.Serialize a => Cereal.Serialize (Var a)
 
@@ -49,14 +52,30 @@ data GetType ty
 
 type TypeMap ty = IM.IntMap (GetType ty)
 
-lookupVar :: (Show a, Ord a) => TypeMap a -> Var a -> Var a
-lookupVar m (Var i r) = case m IM.! i of
+lookupVar :: (Ord a) => TypeMap a -> Var (TypeReq a) -> Var a
+lookupVar m (Var i r) =
+  case m IM.! i of
     NoConversion     ty        -> Var i ty
-    ConversionLookup noConv f  -> maybe noConv (flip Var r) $ M.lookup r f
+    ConversionLookup noConv f  ->
+      if unifies (varType noConv) r
+        then noConv
+        else maybe noConv (flip Var rTy) $ M.lookup rTy f
+  where
+    rTy = fromTypeReq r
+
+
+unifies :: Eq ty => ty -> TypeReq ty -> Bool
+unifies rate = \case
+  ExactType reqRate  -> rate == reqRate
+  AnyTypeOf reqRates -> List.elem rate reqRates
 
 -- Statement: assignment, like
 --    leftHandSide = RightHandSide( arguments )
-type Stmt f a = (a, f a)
+data Stmt f a = Stmt
+  { stmtLhs :: !a
+  , stmtRhs :: !(f a)
+  }
+  deriving (Functor, Foldable, Traversable)
 
 -- When we have type collisions we have to insert converters:
 data Convert ty = Convert
@@ -64,10 +83,21 @@ data Convert ty = Convert
     , convertTo     :: !(Var ty) }
 
 data Line f ty = Line
-    { lineId        :: !Int
+    { lineLhs        :: !(Var ty)
     , lineGetType   :: !(GetType ty)
-    , lineStmt      :: !(Stmt f (Var ty))
-    , lineConverts  :: ![Convert ty] }
+    , lineStmt      :: !(f (Var (TypeReq ty)))
+    , lineConverts  :: ![Convert ty]
+    }
+
+data TypeReq ty
+  = ExactType ty
+  | AnyTypeOf [ty]
+  deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
+
+fromTypeReq :: Ord ty => TypeReq ty -> ty
+fromTypeReq = \case
+  ExactType ty -> ty
+  AnyTypeOf ty -> maximum ty
 
 -- Algorithm specification for the given functor 'f' and type labels of 'a'.
 data TypeGraph f ty = TypeGraph
@@ -76,7 +106,7 @@ data TypeGraph f ty = TypeGraph
     -- for a given statement and a list of requested types for the output produces a pair of
     -- (nonConvertibleTypes, statementWithDeducedTypes)
     -- nonConvertibleTypes is used for insertion of converters.
-    , defineType  :: Stmt f Int -> [ty] -> ([ty], Stmt f (Var ty)) }
+    , defineType  :: Var [TypeReq ty] -> f Int -> ([ty], Var ty, f (Var (TypeReq ty))) }
 
 -- | Deduces types for a dag:
 --
@@ -98,39 +128,46 @@ data TypeGraph f ty = TypeGraph
 -- due to converters. If there are converters we have to insert new statements and substitute identifiers
 -- with new ones. That's why we convert variables to variables in the processLine.
 --
-deduceTypes :: forall ty f . (Show ty, Ord ty, T.Traversable f) => TypeGraph f ty -> [Stmt f Int] -> ([Stmt f (Var ty)], Int)
+deduceTypes :: forall ty f . (Ord ty, T.Traversable f) => TypeGraph f ty -> [Stmt f Int] -> ([Stmt f (Var ty)], Int)
 deduceTypes spec as = runST $ do
   freshIds <- newSTRef nextLastIndex
   typeRequests <- initTypeRequests nextLastIndex
   lines <- mapM (discussLine spec typeRequests freshIds) revAs
   let typeMap = toTypeMap lines
   lastId <- readSTRef freshIds
-  return (List.foldl' (processLine typeMap) [] lines, lastId)
+  return (List.foldl' (processLine spec typeMap) [] lines, lastId)
   where
     toTypeMap :: [Line f ty] -> TypeMap ty
     toTypeMap lines =
-      IM.fromList $ map (\Line{..} -> (lineId, lineGetType)) lines
+      IM.fromList $ map (\Line{..} -> (varId lineLhs, lineGetType)) lines
 
     revAs = reverse as
-    nextLastIndex = succ $ maybe 0 fst $ headMay revAs
+    nextLastIndex = succ $ maybe 0 stmtLhs $ headMay revAs
 
-    processLine :: TypeMap ty -> [Stmt f (Var ty)] -> Line f ty -> [Stmt f (Var ty)]
-    processLine !typeMap !res !line =
-      ((lhs, fmap (lookupVar typeMap) rhs) : fmap (mkConvert spec) (lineConverts line)) ++ res
-      where
-        (lhs, rhs) = lineStmt line
+processLine ::
+     (Functor f, Ord ty)
+  => TypeGraph f ty
+  -> TypeMap ty -> [Stmt f (Var ty)] -> Line f ty -> [Stmt f (Var ty)]
+processLine spec !typeMap !res !line =
+  ((Stmt lhs $ fmap (lookupVar typeMap) rhs) : fmap (mkConvert spec) (lineConverts line)) ++ res
+  where
+    lhs = lineLhs line
+    rhs = lineStmt line
 
-discussLine :: forall a f s . (Ord a, T.Traversable f) => TypeGraph f a -> TypeRequests s a -> STRef s Int -> Stmt f Int -> ST s (Line f a)
-discussLine spec typeRequests freshIds stmt@(pid, _) = do
-  (conv, expr') <- defineType spec stmt <$> getTypes pid typeRequests
-  updateTypeRequests expr'
-  (getType, convs) <- mkGetType conv (fst expr') freshIds
-  return $ Line pid getType expr' convs
+discussLine :: forall ty f s . (Ord ty, T.Traversable f)
+  => TypeGraph f ty
+  -> TypeRequests s ty -> STRef s Int -> Stmt f Int -> ST s (Line f ty)
+discussLine spec typeRequests freshIds stmt = do
+  outTypeReq <- getTypes typeRequests (stmtLhs stmt)
+  let (conv, lhs, rhs) = defineType spec (Var (stmtLhs stmt) outTypeReq) (stmtRhs stmt)
+  updateTypeRequests rhs
+  (getType, convs) <- mkGetType conv lhs freshIds
+  return $ Line lhs getType rhs convs
   where
     -- update type requests with derived RHS in the statement
-    updateTypeRequests :: Stmt f (Var a) -> ST s ()
-    updateTypeRequests expr' =
-      void $ T.traverse (requestType typeRequests) (snd expr')
+    updateTypeRequests :: f (Var (TypeReq ty)) -> ST s ()
+    updateTypeRequests expr =
+      mapM_ (saveRequestType typeRequests) expr
 
 mkGetType :: Ord ty => [ty] -> Var ty -> STRef s Int -> ST s (GetType ty, [Convert ty])
 mkGetType typesToConvert curVar freshIds

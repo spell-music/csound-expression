@@ -90,7 +90,7 @@ servantUpdateChnAlive :: Monad m => Int -> DepT m ()
 servantUpdateChnAlive pargId = do
     let sName = chnAliveName (pn pargId)
     kAlive <- chngetK sName
-    when1 Kr (kAlive <* -10) $ do
+    when1 IfKr (kAlive <* -10) $ do
         turnoff
     chnsetK sName (kAlive - 1)
 
@@ -102,14 +102,14 @@ servantUpdateChnRetrig pargId = do
     let sName = chnRetrigName (pn pargId)
     let retrigVal = pn $ pargId + 1
     kRetrig <- chngetK sName
-    when1 Kr (kRetrig /=* retrigVal) $ do
+    when1 IfKr (kRetrig /=* retrigVal) $ do
         turnoff
 
 servantUpdateChnEvtLoop :: Monad m => Int -> DepT m ()
 servantUpdateChnEvtLoop pargId = do
     let sName = chnEvtLoopName (pn pargId)
     kEvtLoop <- chngetK sName
-    chnsetK sName (ifB (kEvtLoop ==* 0) 1 0)
+    chnsetK sName (ifExp IfKr (kEvtLoop ==* 0) 1 0)
     turnoff
 
 readChnEvtLoop :: Monad m => ChnRef -> DepT m E
@@ -233,7 +233,7 @@ limiter x = opcs "compress" [(Ar, [Ar, Ar, Kr, Kr, Kr, Kr, Kr, Kr, Ir])] [x, 1, 
 autoOff :: Monad m => E -> [E] -> DepT m [E]
 autoOff dt a = do
     ihold
-    when1 Kr (trig a)
+    when1 IfKr (trig a)
         turnoff
     return a
     where
@@ -391,7 +391,7 @@ sfSetList fileName presets = do
 -- if we use the scaling at I-rate we don't need to use portamento.
 -- If we want to scale with signal the portamento is must
 midiVolumeFactor :: E -> E
-midiVolumeFactor idx = ifB (n <* 2) 1 (recip sqrtN)
+midiVolumeFactor idx = ifExp IfIr (n <* 2) 1 (recip sqrtN)
     where sqrtN = sqrt n
           n     = activeIr idx
 

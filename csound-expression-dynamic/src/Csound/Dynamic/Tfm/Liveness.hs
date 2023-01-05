@@ -18,8 +18,7 @@ import qualified Data.Array.Unboxed as A
 import qualified Data.Array.MArray as A
 import qualified Data.Array.ST as A
 
-import qualified Csound.Dynamic.Tfm.DeduceTypes as D
-import Csound.Dynamic.Tfm.DeduceTypes(varType, varId)
+import Csound.Dynamic.Tfm.InferTypes (Var (..))
 import Csound.Dynamic.Types.Exp(Rate(..))
 
 -- | Reuses variables. It analyses weather the vraibel is used further
@@ -33,8 +32,6 @@ type LineNumber = Int
 
 countLines :: [a] -> [(LineNumber, a)]
 countLines = zip [0 ..]
-
-type Var  = D.Var Rate
 
 type Lhs   = [Var]
 type Rhs f = f Var
@@ -108,7 +105,7 @@ substLhs v = do
 substRhs :: LineNumber -> Var -> Memory s Var
 substRhs lineNum v = do
   i1 <- lookUpSubst (varId v)
-  let v1 = D.Var i1 (varType v)
+  let v1 = Var (varType v) i1
   b <- isAlive lineNum v
   unless b $ free v1
   return v1
@@ -124,7 +121,7 @@ allocAndSkipInits v
 alloc :: Rate -> Memory s Var
 alloc rate = state $ \mem ->
   let (i, mem1) = allocRegister rate mem
-  in  (D.Var i rate, mem1)
+  in  (Var rate i, mem1)
   where
     allocRegister :: Rate -> Registers s -> (Int, Registers s)
     allocRegister r mem = (i, onRegs (M.update (const $ Just is) r) mem)

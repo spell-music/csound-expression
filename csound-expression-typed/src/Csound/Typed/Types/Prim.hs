@@ -631,27 +631,27 @@ instance Boolean BoolD    where { true = PrimBoolD   True;  false = PrimBoolD   
 instance IfB Sig  where
     ifB x a b = case x of
         PrimBoolSig c -> if c then a else b
-        _                -> on3 ifB x a b
+        _                -> on3 (ifExp IfKr) x a b
 
 instance IfB D    where
     ifB x a b = case x of
         PrimBoolD c -> if c then a else b
-        _              -> on3 ifB x a b
+        _              -> on3 (ifExp IfIr) x a b
 
 instance IfB Tab  where
     ifB x a b = case x of
         PrimBoolD c -> if c then a else b
-        _              -> on3 ifB x a b
+        _              -> on3 (ifExp IfIr) x a b
 
 instance IfB Str  where
     ifB x a b = case x of
         PrimBoolD c -> if c then a else b
-        _              -> on3 ifB x a b
+        _              -> on3 (ifExp IfIr) x a b
 
 instance IfB Spec where
     ifB x a b = case x of
         PrimBoolD c -> if c then a else b
-        _           -> on3 ifB x a b
+        _           -> on3 (ifExp IfIr) x a b
 
 instance EqB Sig  where { (==*) = op2 (==) (==*);    (/=*) = op2 (/=) (/=*) }
 instance EqB D    where { (==*) = op2 (==) (==*);    (/=*) = op2 (/=) (/=*) }
@@ -683,7 +683,7 @@ whens bodies el = case bodies of
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin p >> body)
 
 ifBegin :: BoolSig -> SE ()
-ifBegin a = fromDep_ $ D.ifBegin Kr =<< lift (toGE a)
+ifBegin a = fromDep_ $ D.ifBegin IfKr =<< lift (toGE a)
 
 ifEnd :: SE ()
 ifEnd = fromDep_ D.ifEnd
@@ -715,7 +715,7 @@ whenDs bodies el = case bodies of
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBeginD p >> body)
 
 ifBeginD :: BoolD -> SE ()
-ifBeginD a = fromDep_ $ D.ifBegin Ir =<< lift (toGE a)
+ifBeginD a = fromDep_ $ D.ifBegin IfIr =<< lift (toGE a)
 
 -- elseIfBegin :: BoolSig -> SE ()
 -- elseIfBegin a = fromDep_ $ D.elseIfBegin =<< lift (toGE a)

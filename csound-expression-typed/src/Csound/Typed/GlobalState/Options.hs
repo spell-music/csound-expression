@@ -52,10 +52,11 @@ data Options = Options
     , csdJacko          :: Maybe Jacko
     , csdJackConnect    :: Maybe [(Text, Text)] -- ^ list of jack connections to make after csound app is launched (Linux only)
     , csdTrace          :: Maybe Bool               -- ^ Do we need debug-trace, default is False
+    , csdRender         :: Maybe RenderOptions
     } deriving (Eq, Show, Read)
 
 instance Default Options where
-    def = Options def def def def def def def def def
+    def = Options def def def def def def def def def def
 
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Options where
@@ -82,7 +83,9 @@ mappendOptions a b = Options
     , csdScaleUI        = csdScaleUI a <|> csdScaleUI b
     , csdJacko          = csdJacko a <|> csdJacko b
     , csdJackConnect    = mappend (csdJackConnect a) (csdJackConnect b)
-    , csdTrace          = csdTrace a <|> csdTrace b }
+    , csdTrace          = csdTrace a <|> csdTrace b
+    , csdRender         = csdRender a <|> csdRender b
+    }
 
 defScaleUI :: Options -> (Double, Double)
 defScaleUI = maybe (1, 1) id . csdScaleUI

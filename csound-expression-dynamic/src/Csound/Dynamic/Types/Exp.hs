@@ -8,7 +8,7 @@
         TemplateHaskell,
         CPP #-}
 module Csound.Dynamic.Types.Exp(
-    E, RatedExp(..), isEmptyExp, RatedVar, ratedVar, ratedVarRate, ratedVarId,
+    E, RatedExp(..), isEmptyExp,
     ratedExp, noRate, withRate, setRate,
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId,
@@ -20,6 +20,7 @@ module Csound.Dynamic.Types.Exp(
     NumExp, NumOp(..), Note,
     MultiOut,
     IsArrInit, ArrSize, ArrIndex,
+    IfRate(..), fromIfRate,
     hashE
 ) where
 
@@ -46,8 +47,6 @@ import Data.Serialize.Text ()
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import Data.List (find)
-
-import qualified Csound.Dynamic.Tfm.DeduceTypes as R(Var(..))
 
 type Name = Text
 type LineNum = Int
@@ -93,21 +92,6 @@ instance Eq (RatedExp a) where
 
 instance Ord (RatedExp a) where
   compare a b = ratedExpHash a `compare` ratedExpHash b
-
--- | RatedVar is for pretty printing of the wiring ports.
-type RatedVar = R.Var Rate
-
--- | Makes an rated variable.
-ratedVar :: Rate -> Int -> RatedVar
-ratedVar = flip R.Var
-
--- | Querries a rate.
-ratedVarRate :: RatedVar -> Rate
-ratedVarRate = R.varType
-
--- | Querries an integral identifier.
-ratedVarId :: RatedVar -> Int
-ratedVarId   = R.varId
 
 ratedExp :: Maybe Rate -> Exp E -> E
 ratedExp r expr = Fix $ RatedExp h r Nothing expr
@@ -173,7 +157,7 @@ data MainExp a
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
     | Select !Rate !Int !a
     -- | if-then-else
-    | If !(CondInfo a) !a !a
+    | If !IfRate !(CondInfo a) !a !a
     -- | Boolean expressions (rendered in infix notation in the Csound)
     | ExpBool !(BoolExp a)
     -- | Numerical expressions (rendered in infix notation in the Csound)
@@ -189,7 +173,7 @@ data MainExp a
     | WriteInitArr !Var !(ArrIndex a) !a
     | TfmArr !IsArrInit !Var !Info ![a]
     -- | Imperative If-then-else
-    | IfBegin Rate !(CondInfo a)
+    | IfBegin !IfRate !(CondInfo a)
     | ElseBegin
     | IfEnd
     -- | looping constructions
@@ -213,6 +197,15 @@ data MainExp a
     | ReadMacrosString !Text
     deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
+-- | Rate of if-then-else conditional.
+-- It can run at Ir or Kr
+data IfRate = IfIr | IfKr
+  deriving (Show, Eq, Ord, Generic)
+
+fromIfRate :: IfRate -> Rate
+fromIfRate = \case
+  IfKr -> Kr
+  IfIr -> Ir
 
 -- | Can be infinite so fe just ignore the value
 instance Cereal.Serialize Signature where
@@ -221,6 +214,7 @@ instance Cereal.Serialize Signature where
 
 instance Cereal.Serialize Prim
 instance Cereal.Serialize Rate
+instance Cereal.Serialize IfRate
 instance Cereal.Serialize Info
 instance Cereal.Serialize OpcFixity
 instance Cereal.Serialize InstrId
@@ -260,20 +254,7 @@ data Info = Info
     , infoSignature     :: !Signature
     -- Opcode can be infix or prefix
     , infoOpcFixity     :: !OpcFixity
-    -- default preferred rate
-    , infoDefaultRate   :: !Rate
     } deriving (Show, Eq, Ord, Generic)
-
-toDefaultInfoRate :: Signature -> Rate
-toDefaultInfoRate = \case
-  SingleRate tab ->
-    let findMember = find (flip M.member tab)
-    in  fromJust $ findMember allRates
-  MultiRate _ _ -> Xr
-
-allRates :: [Rate]
-allRates = [minBound .. maxBound]
-
 
 isPrefix, isInfix :: Info -> Bool
 
@@ -343,15 +324,15 @@ type Note = [Prim]
 ------------------------------------------------------------
 -- types for arithmetic and boolean expressions
 
-data Inline a b = Inline
-    { inlineExp :: !(InlineExp a)
-    , inlineEnv :: !(IM.IntMap b)
+data Inline op arg = Inline
+    { inlineExp :: !(InlineExp op)
+    , inlineEnv :: !(IM.IntMap arg)
     } deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic1, Generic)
 
 -- Inlined expression.
-data InlineExp a
+data InlineExp op
     = InlinePrim !Int
-    | InlineExp !a ![InlineExp a]
+    | InlineExp !op ![InlineExp op]
     deriving (Show, Eq, Ord, Generic)
 
 -- Expression as a tree (to be inlined)

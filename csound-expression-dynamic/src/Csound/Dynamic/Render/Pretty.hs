@@ -8,7 +8,7 @@ import qualified Data.IntMap as IM
 
 import Text.PrettyPrint.Leijen.Text
 import Csound.Dynamic.Types
-import qualified Csound.Dynamic.Tfm.DeduceTypes as R(Var(..))
+import Csound.Dynamic.Tfm.InferTypes qualified as R(Var(..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 
@@ -115,22 +115,22 @@ ppInstrId x = case x of
 
 type TabDepth = Int
 
-ppStmt :: [RatedVar] -> Exp RatedVar -> State TabDepth Doc
+ppStmt :: [R.Var] -> Exp R.Var -> State TabDepth Doc
 ppStmt outs expr = maybe (ppExp (ppOuts outs) expr) id (maybeStringCopy outs expr)
 
-maybeStringCopy :: [RatedVar] -> Exp RatedVar -> Maybe (State TabDepth Doc)
+maybeStringCopy :: [R.Var] -> Exp R.Var -> Maybe (State TabDepth Doc)
 maybeStringCopy outs expr = case (outs, expr) of
-    ([R.Var _ Sr], ExpPrim (PrimVar _rate var)) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
-    ([R.Var _ Sr], ReadVar var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
+    ([R.Var Sr _], ExpPrim (PrimVar _rate var)) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
+    ([R.Var Sr _], ReadVar var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
     ([], WriteVar outVar a) | varRate outVar == Sr  -> Just $ tab $ ppStringCopy (ppVar outVar) (ppPrimOrVar a)
-    ([R.Var _ Sr], ReadArr var as) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
+    ([R.Var Sr _], ReadArr var as) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
     ([], WriteArr outVar bs a) | varRate outVar == Sr -> Just $ tab $ ppStringCopy (ppArrIndex outVar $ fmap ppPrimOrVar bs) (ppPrimOrVar a)
     _ -> Nothing
 
 ppStringCopy :: Doc -> Doc -> Doc
 ppStringCopy outs src = ppOpc outs "strcpyk" [src]
 
-ppExp :: Doc -> Exp RatedVar -> State TabDepth Doc
+ppExp :: Doc -> Exp R.Var -> State TabDepth Doc
 ppExp res expr = case fmap ppPrimOrVar expr of
     ExpPrim (PString n)             -> tab $ ppStrget res n
     ExpPrim p                       -> tab $ res $= ppPrim p
@@ -138,7 +138,7 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     Tfm info xs     | isPrefix info -> tab $ res $= prefix (infoName info) xs
     Tfm info xs                     -> tab $ ppOpc res (infoName info) xs
     ConvertRate to from x           -> tab $ ppConvertRate res to from x
-    If info t e                     -> tab $ ppIf res (ppCond info) t e
+    If _ifRate info t e             -> tab $ ppIf res (ppCond info) t e
     ExpNum (PreInline op as)        -> tab $ res $= ppNumOp op as
     WriteVar v a                    -> tab $ ppVar v $= a
     InitVar v a                     -> tab $ ppOpc (ppVar v) "init" [a]
@@ -237,10 +237,10 @@ ppCond = ppInline ppCondOp
 ($=) :: Doc -> Doc -> Doc
 ($=) a b = a <+> equals <+> b
 
-ppOuts :: [RatedVar] -> Doc
+ppOuts :: [R.Var] -> Doc
 ppOuts xs = hsep $ punctuate comma $ map ppRatedVar xs
 
-ppPrimOrVar :: PrimOr RatedVar -> Doc
+ppPrimOrVar :: PrimOr R.Var -> Doc
 ppPrimOrVar x = either ppPrim ppRatedVar $ unPrimOr x
 
 ppStrget :: Doc -> Int -> Doc
@@ -281,11 +281,12 @@ ppConvertRate out to from var = case (to, from) of
     (Ar, Kr) -> upsamp var
     (Ar, Ir) -> upsamp $ k var
     (Kr, Ar) -> downsamp var
-    (Kr, Ir) -> out $= k var
+    (Kr, Ir) -> initKr var
     (Ir, Ar) -> downsamp var
     (Ir, Kr) -> out $= i var
     (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
     where
+        initKr x = ppOpc out "init" [x]
         upsamp x = ppOpc out "upsamp" [x]
         downsamp x = ppOpc out "downsamp" [x]
         k = func "k"
@@ -330,8 +331,8 @@ ppNumOp op = case  op of
         bi  = binaries
         uno = unaries
 
-ppRatedVar :: RatedVar -> Doc
-ppRatedVar v = ppRate (ratedVarRate v) <> int (ratedVarId v)
+ppRatedVar :: R.Var -> Doc
+ppRatedVar v = ppRate (R.varType v) <> int (R.varId v)
 
 ppRate :: Rate -> Doc
 ppRate x = case x of

@@ -370,7 +370,7 @@ button name = setLabelSource name $ source $ do
     where
         instr ref = SE $ do
             val <- readVar ref
-            whens Kr
+            whens IfKr
                 [ (val ==* 0, writeVar ref 1)
                 ] (writeVar ref 0)
             turnoff
