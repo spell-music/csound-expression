@@ -340,7 +340,7 @@ inferIter opts (Stmt lhs rhs) =
           | rate == Ir = do
               thVar1 <- convertIf Kr thVar
               elVar1 <- convertIf Kr elVar
-              save Ir (If ifRate condVarSafe thVar1 elVar1)
+              save Kr (If ifRate condVarSafe thVar1 elVar1)
           | otherwise  = save rate (If ifRate condVarSafe thVar elVar)
 
     onIfBegin ifRate cond = do
