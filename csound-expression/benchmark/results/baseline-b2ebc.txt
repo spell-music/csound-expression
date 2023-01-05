@@ -1,0 +1,19 @@
+benchmarked drone tests/drone: 1
+time                 7.083 ms   (6.963 ms .. 7.188 ms)
+                     0.998 R²   (0.997 R² .. 0.999 R²)
+mean                 7.223 ms   (7.152 ms .. 7.339 ms)
+std dev              257.3 μs   (157.0 μs .. 443.7 μs)
+variance introduced by outliers: 14% (moderately inflated)
+
+benchmarked drone tests/drone: 2
+time                 2.054 ms   (2.033 ms .. 2.072 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 2.107 ms   (2.088 ms .. 2.144 ms)
+std dev              82.90 μs   (47.68 μs .. 149.5 μs)
+variance introduced by outliers: 22% (moderately inflated)
+
+benchmarked drone tests/drone: 3
+time                 17.29 ms   (17.05 ms .. 17.54 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 17.71 ms   (17.59 ms .. 17.88 ms)
+std dev              355.1 μs   (223.3 μs .. 537.1 μs)
