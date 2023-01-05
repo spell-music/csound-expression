@@ -7,7 +7,7 @@ import Data.List(sortBy)
 import Data.Ord(comparing)
 import Data.Maybe(mapMaybe, isNothing)
 import Control.Monad.Trans.State.Strict
-import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as IM
 
 import Csound.Dynamic.Tfm.InferTypes(Var(..), Stmt(..), InferenceResult(..))
 import Csound.Dynamic.Types.Exp hiding (Var (..))

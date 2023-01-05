@@ -37,29 +37,61 @@ import Control.Monad (zipWithM, foldM)
 import Data.Semigroup (Min(..))
 import Data.Maybe (fromMaybe)
 import Data.List qualified as List
-import Csound.Dynamic.Types.Exp hiding (Var, varType)
-import Csound.Dynamic.Types.Exp qualified as Exp
-import Data.IntMap (IntMap)
-import Data.IntMap qualified as IntMap
+import Data.IntMap.Strict (IntMap)
+import Data.IntMap.Strict qualified as IntMap
 import Control.Monad.Trans.State.Strict
-import Data.Map (Map)
-import Data.Map qualified as Map
+import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
 import Data.ByteString (ByteString)
 import Data.Default
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HashSet
+
+import Csound.Dynamic.Const qualified as Const
+import Csound.Dynamic.Types.Exp hiding (Var, varType)
+import Csound.Dynamic.Types.Exp qualified as Exp
 
 data OpcodeInferenceStrategy
   = PreferControlRate  -- prefer Kr-outputs for opcodes
   | PreferAudioRate    -- prefer Ar-outputs for opcodes
   deriving (Eq, Ord, Show, Read)
 
+data OpcodeInferencePreference = OpcodeInferencePreference
+  { preferControlOpcodes :: HashSet Name  -- ^ set of opcode names to use Kr by default
+  , preferAudioOpcodes   :: HashSet Name  -- ^ set of opcode names to use Ar by default
+  }
+  deriving (Eq, Ord, Show, Read)
+
+preferOpc :: InferenceOptions -> Name -> Map Rate [Rate] -> Either [OpcSignature] OpcSignature
+preferOpc (InferenceOptions strategy opcPrefs) name signatureMap
+  | Just sig <- getControl = Right sig
+  | Just sig <- getAudio   = Right sig
+  | otherwise              = Left $
+      case strategy of
+        PreferControlRate -> List.reverse $ Map.toList signatureMap
+        PreferAudioRate   -> Map.toList signatureMap
+  where
+    getControl = getBy Kr (preferControlOpcodes opcPrefs)
+    getAudio = getBy Ar (preferAudioOpcodes opcPrefs)
+
+    getBy rate s
+      | HashSet.member name s = (rate, ) <$> Map.lookup rate signatureMap
+      | otherwise = Nothing
+
 data InferenceOptions = InferenceOptions
-  { opcodeInferenceStrategy :: !OpcodeInferenceStrategy
+  { opcodeInferenceStrategy    :: !OpcodeInferenceStrategy
+  , opcodeInferencePreference  :: !OpcodeInferencePreference
   }
   deriving (Eq, Ord, Show, Read)
 
 instance Default InferenceOptions where
   def = InferenceOptions
-    { opcodeInferenceStrategy = PreferControlRate
+    { opcodeInferenceStrategy   = PreferControlRate
+    , opcodeInferencePreference =
+        OpcodeInferencePreference
+          { preferControlOpcodes = Const.controlOpcodes
+          , preferAudioOpcodes   = Const.audioOpcodes
+          }
     }
 
 data Stmt a = Stmt
@@ -207,12 +239,12 @@ inferIter opts (Stmt lhs rhs) =
 
     onFreeTfm info rateTab args = do
       signature <-
-        case Map.toList rateTab of
-          [opcRate] -> pure opcRate
-          opcRates  -> findSignature args $
-            case opcodeInferenceStrategy opts of
-              PreferAudioRate   -> opcRates
-              PreferControlRate -> List.reverse opcRates
+        if Map.size rateTab == 1
+          then pure $ head $ Map.toList rateTab
+          else
+            case preferOpc opts (infoName info) rateTab of
+              Right opcRate -> pure opcRate
+              Left opcRates -> findSignature args opcRates
       onFixedRateTfm info signature args
 
     findSignature :: [PrimOr Int] -> [OpcSignature] -> State St OpcSignature
@@ -291,9 +323,25 @@ inferIter opts (Stmt lhs rhs) =
       let rate = min (primOrRate thVar ) (primOrRate elVar)
       condVar <- mapM (mapM $ getVar condMaxRate) cond
       condVarSafe <- insertBoolConverters condMaxRate condVar
-      save rate (If ifRate condVarSafe thVar elVar)
+      case ifRate of
+        IfIr -> saveIr rate condVarSafe thVar elVar
+        IfKr -> saveKr rate condVarSafe thVar elVar
       where
         condMaxRate = fromIfRate ifRate
+
+        saveIr rate condVarSafe thVar elVar
+          | rate < Ir = do
+              thVar1 <- convertIf Ir thVar
+              elVar1 <- convertIf Ir elVar
+              save Ir (If ifRate condVarSafe thVar1 elVar1)
+          | otherwise = save rate (If ifRate condVarSafe thVar elVar)
+
+        saveKr rate condVarSafe thVar elVar
+          | rate == Ir = do
+              thVar1 <- convertIf Kr thVar
+              elVar1 <- convertIf Kr elVar
+              save Ir (If ifRate condVarSafe thVar1 elVar1)
+          | otherwise  = save rate (If ifRate condVarSafe thVar elVar)
 
     onIfBegin ifRate cond = do
       setHasIfs
@@ -342,16 +390,13 @@ data OpcodeArg = OpcodeArg
 unifies :: OpcodeArg -> Bool
 unifies (OpcodeArg to (PrimOr from)) =
   case to of
-    Xr -> True -- is Ar || is Kr || is Ir || isPrim
+    Xr -> True
     Ar -> is Ar
     Kr -> is Kr || is Ir || isPrim
     Ir -> is Ir || isPrim
     _  -> is to
   where
-    is r =
-      case from of
-        Right fromRate -> fromRate == r
-        Left prim      -> primRate prim == r
+    is r = either primRate id from == r
 
     isPrim = either (const True) (const False) from
 
@@ -414,6 +459,12 @@ convert toRate (PrimOr fromVar) = do
       var <- defineVar (primRate prim) (newExp $ ExpPrim prim)
       modify' $ \s -> s { stPrims = Map.insert prim var $ stPrims s }
       pure var
+
+-- | Checks if convertion is identity, then returns original
+convertIf :: Rate -> PrimOr Var -> State St (PrimOr Var)
+convertIf toRate var
+  | toRate == primOrRate var = pure var
+  | otherwise                = PrimOr . Right <$> convert toRate var
 
 newExp :: Exp a -> RatedExp a
 newExp rhs =
