@@ -41,23 +41,19 @@ type Dag f = [Exp f]
 
 -----------------------------------------------
 
-data IdList = IdList
-    [Int] -- fresh ids
-    !Int   -- the biggest used id
+newtype IdList = IdList [Int] -- fresh ids
+
+initIdList :: IdList
+initIdList = IdList [0..]
 
 allocId :: IdList -> (Int, IdList)
-allocId (IdList is lastId) = (head is, IdList (tail is) (max (head is) lastId))
+allocId (IdList ids) =
+  case ids of
+    a:as -> (a, IdList as)
+    []    -> error "Can not be empty"
 
 freeId :: Int -> IdList -> IdList
-freeId  n (IdList is lastId) = IdList (insertSorted n is) lastId1
-  where lastId1 = if (n == lastId) then (lastId - 1) else lastId
-
-insertSorted :: Int -> [Int] -> [Int]
-insertSorted n (a:as)
-  | n < a  = n : a : as
-  | n == a = a : as
-  | otherwise = a : insertSorted n as
-insertSorted n [] = [n]
+freeId a (IdList as) = IdList (a:as)
 
 -----------------------------------------------
 
@@ -79,7 +75,6 @@ onRegs f rs = rs { registers = f $ registers rs }
 
 initRegs :: M.Map Rate IdList
 initRegs = M.fromList $ fmap (\x -> (x, initIdList)) [(minBound :: Rate) .. maxBound]
-  where initIdList = IdList [0..] 0
 
 isAlive :: LineNumber -> Var -> Memory s Bool
 isAlive lineNum v = do
