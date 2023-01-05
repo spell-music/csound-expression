@@ -156,9 +156,9 @@ ppExp res expr = case fmap ppPrimOrVar expr of
 --     ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")
     ElseBegin                       -> left >> (succTab $ text "else")
     IfEnd                           -> left >> (tab     $ text "endif")
-    UntilBegin a                    -> succTab          $ text "until " <> ppCond a <> text " do"
+    UntilBegin _ a                  -> succTab          $ text "until " <> ppCond a <> text " do"
     UntilEnd                        -> left >> (tab     $ text "od")
-    WhileBegin a                    -> succTab          $ text "while " <> ppCond a <> text " do"
+    WhileBegin _ a                  -> succTab          $ text "while " <> ppCond a <> text " do"
     WhileRefBegin var               -> succTab          $ text "while " <> ppVar var <+> equals <+> text "1" <+> text "do"
     WhileEnd                        -> left >> (tab     $ text "od")
     InitMacrosString name initValue -> tab $ initMacros (textStrict name) (textStrict initValue)
@@ -281,7 +281,7 @@ ppConvertRate out to from var = case (to, from) of
     (Ar, Just Kr) -> upsamp var
     (Ar, Just Ir) -> upsamp $ toK var
     (Kr, Just Ar) -> downsamp var
-    (Kr, Just Ir) -> initKr var
+    (Kr, Just Ir) -> out $= var
     (Ir, Just Ar) -> downsamp var
     (Ir, Just Kr) -> out $= toI var
     (Ar, Nothing) -> out $= toA var
@@ -289,7 +289,6 @@ ppConvertRate out to from var = case (to, from) of
     (Ir, Nothing) -> out $= toI var
     (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
     where
-        initKr x = ppOpc out "init" [x]
         upsamp x = ppOpc out "upsamp" [x]
         downsamp x = ppOpc out "downsamp" [x]
         toA = func "a"

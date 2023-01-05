@@ -48,9 +48,9 @@ getFrameInfo x = case ratedExpExp x of
     ElseBegin     -> NextFrame
     IfEnd         -> StopFrame
     -- looping constructions
-    UntilBegin _ -> StartFrame
+    UntilBegin _ _ -> StartFrame
     UntilEnd     -> StopFrame
-    WhileBegin _ -> StartFrame
+    WhileBegin _ _ -> StartFrame
     WhileRefBegin _ -> StartFrame
     WhileEnd     -> StopFrame
     _            -> NoFrame

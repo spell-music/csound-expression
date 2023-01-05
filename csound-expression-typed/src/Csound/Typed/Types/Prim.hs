@@ -733,13 +733,13 @@ whileDo p body = do
     whileEnd
 
 whileBegin :: BoolSig -> SE ()
-whileBegin a = fromDep_ $ D.whileBegin =<< lift (toGE a)
+whileBegin a = fromDep_ $ D.whileBegin IfKr =<< lift (toGE a)
 
 whileEnd :: SE ()
 whileEnd = fromDep_ D.whileEnd
 
 untilBegin :: BoolSig -> SE ()
-untilBegin a = fromDep_ $ D.untilBegin =<< lift (toGE a)
+untilBegin a = fromDep_ $ D.untilBegin IfKr =<< lift (toGE a)
 
 untilEnd :: SE ()
 untilEnd = fromDep_ D.untilEnd
@@ -757,10 +757,10 @@ whileDoD p body = do
     whileEnd
 
 whileBeginD :: BoolD -> SE ()
-whileBeginD a = fromDep_ $ D.whileBegin =<< lift (toGE a)
+whileBeginD a = fromDep_ $ D.whileBegin IfIr =<< lift (toGE a)
 
 untilBeginD :: BoolD -> SE ()
-untilBeginD a = fromDep_ $ D.untilBegin =<< lift (toGE a)
+untilBeginD a = fromDep_ $ D.untilBegin IfIr =<< lift (toGE a)
 
 -- | Creates a constant boolean signal.
 boolSig :: BoolD -> BoolSig
