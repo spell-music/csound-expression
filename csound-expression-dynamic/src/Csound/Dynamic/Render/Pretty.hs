@@ -287,6 +287,7 @@ ppConvertRate out to from var = case (to, from) of
     (Ar, Nothing) -> out $= toA var
     (Kr, Nothing) -> out $= toK var
     (Ir, Nothing) -> out $= toI var
+    (a, Just b) | a == b -> out $= var
     (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
     where
         upsamp x = ppOpc out "upsamp" [x]
