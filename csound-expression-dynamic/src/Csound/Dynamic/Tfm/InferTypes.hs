@@ -198,9 +198,9 @@ inferIter opts (Stmt lhs rhs) =
     ReadMacrosString name -> save Ir (ReadMacrosString name)
 
     -- | looping constructions
-    UntilBegin cond -> onUntilBegin cond
+    UntilBegin ifRate cond -> onUntilBegin ifRate cond
     UntilEnd -> saveProcedure UntilEnd
-    WhileBegin cond -> onWhileBegin cond
+    WhileBegin ifRate cond -> onWhileBegin ifRate cond
     WhileRefBegin v -> saveProcedure (WhileRefBegin v)
     WhileEnd -> saveProcedure WhileEnd
 
@@ -348,8 +348,8 @@ inferIter opts (Stmt lhs rhs) =
       setHasIfs
       ifBeginBy IfBegin ifRate cond
 
-    onWhileBegin = ifBeginBy (const WhileBegin) IfKr
-    onUntilBegin = ifBeginBy (const UntilBegin) IfKr
+    onWhileBegin = ifBeginBy WhileBegin
+    onUntilBegin = ifBeginBy UntilBegin
 
     ifBeginBy cons ifRate cond = do
       condVar <- mapM (mapM $ getVar condMaxRate) cond

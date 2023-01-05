@@ -115,6 +115,8 @@ setRate r a =
     ExpPrim _  -> a
     -- don't convert rate twice
     ConvertRate _ b arg -> withRate r $ ConvertRate r b arg
+    -- for booleans pass conversion over boolean operators
+    ExpBool boolArg -> noRate $ ExpBool $ fmap (fmap (setRate r)) boolArg
     -- for other cases we insert rate conversion
     _          -> withRate r $ ConvertRate r Nothing (PrimOr $ Right a)
 
@@ -183,9 +185,9 @@ data MainExp a
     | ElseBegin
     | IfEnd
     -- | looping constructions
-    | UntilBegin !(CondInfo a)
+    | UntilBegin IfRate !(CondInfo a)
     | UntilEnd
-    | WhileBegin !(CondInfo a)
+    | WhileBegin IfRate !(CondInfo a)
     | WhileRefBegin !Var
     | WhileEnd
     -- | Verbatim stmt

@@ -21,6 +21,9 @@ import Csound.Dynamic.Build(onExp, toExp)
 ------------------------------------------------------
 -- imperative if-then-else
 
+setIfRate :: IfRate -> E -> E
+setIfRate rate = setRate (fromIfRate rate)
+
 when1 :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 when1 rate p body = do
     ifBegin rate p
@@ -40,7 +43,7 @@ whens rate bodies el = case bodies of
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin rate p >> body)
 
 ifBegin :: Monad m => IfRate -> E -> DepT m ()
-ifBegin rate = withCond $ IfBegin rate
+ifBegin ifRate = withCond ifRate $ (IfBegin ifRate)
 
 elseBegin :: Monad m => DepT m ()
 elseBegin = stmtOnlyT ElseBegin
@@ -48,26 +51,26 @@ elseBegin = stmtOnlyT ElseBegin
 ifEnd :: Monad m => DepT m ()
 ifEnd = stmtOnlyT IfEnd
 
-untilDo :: Monad m => E -> DepT m () -> DepT m ()
-untilDo p body = do
-    untilBegin p
+untilDo :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
+untilDo ifRate p body = do
+    untilBegin ifRate p
     body
     untilEnd
 
-untilBegin :: Monad m => E -> DepT m ()
-untilBegin = withCond UntilBegin
+untilBegin :: Monad m => IfRate -> E -> DepT m ()
+untilBegin ifRate = withCond ifRate (UntilBegin ifRate)
 
 untilEnd :: Monad m => DepT m ()
 untilEnd = stmtOnlyT UntilEnd
 
-whileDo :: Monad m => E -> DepT m () -> DepT m ()
-whileDo p body = do
-    whileBegin p
+whileDo :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
+whileDo ifRate p body = do
+    whileBegin ifRate p
     body
     whileEnd
 
-whileBegin :: Monad m => E -> DepT m ()
-whileBegin = withCond WhileBegin
+whileBegin :: Monad m => IfRate -> E -> DepT m ()
+whileBegin ifRate = withCond IfKr (WhileBegin ifRate)
 
 whileRef :: Monad m => Var -> DepT m ()
 whileRef var = stmtOnlyT $ WhileRefBegin var
@@ -75,8 +78,8 @@ whileRef var = stmtOnlyT $ WhileRefBegin var
 whileEnd :: Monad m => DepT m ()
 whileEnd = stmtOnlyT WhileEnd
 
-withCond :: Monad m => (CondInfo (PrimOr E) -> MainExp (PrimOr E)) -> E -> DepT m ()
-withCond stmt p = depT_ $ noRate $ stmt (condInfo p)
+withCond :: Monad m => IfRate -> (CondInfo (PrimOr E) -> MainExp (PrimOr E)) -> E -> DepT m ()
+withCond ifRate stmt p = depT_ $ noRate $ stmt (condInfo $ setIfRate ifRate p)
 
 instance Boolean E where
     true = boolOp0 TrueOp
@@ -108,7 +111,7 @@ boolExp :: a -> [b] -> PreInline a b
 boolExp = PreInline
 
 ifExp :: IfRate -> E -> E -> E -> E
-ifExp ifRate = mkCond . condInfo
+ifExp ifRate c = mkCond (condInfo (setIfRate ifRate c))
     where mkCond :: CondInfo (PrimOr E) -> E -> E -> E
           mkCond pr th el
             | isTrue pr = th
@@ -120,9 +123,12 @@ condInfo p = go $ toPrimOr p
     where
         go :: PrimOr E -> CondInfo (PrimOr E)
         go expr = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' expr) 0
+
         condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
         condInfo' e = maybe (onLeaf e) (onExpr e) $ parseNode e
+
         onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n+1)
+
         onExpr  _ (op, args) = fmap mkNode $ mapM condInfo' args
             where mkNode as = (InlineExp op (map fst as), concat $ map snd as)
 
