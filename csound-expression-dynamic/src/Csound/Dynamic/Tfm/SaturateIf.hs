@@ -64,13 +64,13 @@ saturateIf SaturateIfOptions{..} dag =
           let
             localFreeVars = fromCond cond
             newFreeVars = localFreeVars <> freeVars
-          in  processRes ifRate localFreeVars cond expr newFreeVars $ saturateIfExpr newFreeVars exprIds th el exprs
+          in  processRes ifRate localFreeVars cond expr newFreeVars $ saturateIfExpr ifRate newFreeVars exprIds th el exprs
         IfEnd | saturateIfStatements ->
           let
             (Res ths els restExprs, (ifRate, cond)) = getIfElseBlock exprs
             localFreeVars = fromCond cond
             newFreeVars = localFreeVars <> freeVars
-          in processRes ifRate localFreeVars cond expr newFreeVars $ saturateIfStatement newFreeVars ths els restExprs
+          in processRes ifRate localFreeVars cond expr newFreeVars $ saturateIfStatement ifRate newFreeVars ths els restExprs
         _ ->
           let
             newFreeVars = (freeVars `IntSet.union` fromRatedExp expr) `IntSet.difference` fromVars exprIds
@@ -210,9 +210,9 @@ getIfElseBlock es =
 
     overRatedExpr p (_, expr) = p (ratedExpExp expr)
 
-saturateIfExpr :: IntSet -> [Var] -> PrimOr Var -> PrimOr Var -> [Exp] -> Res
-saturateIfExpr freeVars resIds ifExp elseExp exps =
-  collectIfs initSt exps
+saturateIfExpr :: IfRate -> IntSet -> [Var] -> PrimOr Var -> PrimOr Var -> [Exp] -> Res
+saturateIfExpr ifRate freeVars resIds ifExp elseExp exps =
+  collectIfs ifRate initSt exps
   where
     initSt =
       St
@@ -240,9 +240,9 @@ saturateIfExpr freeVars resIds ifExp elseExp exps =
       where
         name = Text.toLower $ Text.pack $ show (varType v) ++ show (varId v)
 
-saturateIfStatement :: IntSet -> [Exp] -> [Exp] -> [Exp] -> Res
-saturateIfStatement freeVars ifStmts elseStmts exps =
-  collectIfs initSt exps
+saturateIfStatement :: IfRate -> IntSet -> [Exp] -> [Exp] -> [Exp] -> Res
+saturateIfStatement ifRate freeVars ifStmts elseStmts exps =
+  collectIfs ifRate initSt exps
   where
     toSet stmts = foldMap (fromRatedExp . snd) stmts `IntSet.difference`  freeVars
 
@@ -256,8 +256,8 @@ saturateIfStatement freeVars ifStmts elseStmts exps =
             }
         }
 
-collectIfs :: St -> [Exp] -> Res
-collectIfs initSt exps = reverseRes $ stRes $ execState (go exps) initSt
+collectIfs :: IfRate -> St -> [Exp] -> Res
+collectIfs ifRate initSt exps = reverseRes $ stRes $ execState (go exps) initSt
   where
     go :: [Exp] -> State St ()
     go = \case
@@ -266,11 +266,23 @@ collectIfs initSt exps = reverseRes $ stRes $ execState (go exps) initSt
         filt <- gets stFilter
         let isIfNotOk = ifNotActive filt
             isElseNotOk = elseNotActive filt
-        if (isIfNotOk && isElseNotOk)
+        if (isIfNotOk && isElseNotOk) || isIrInsideKr ids expr
           then fin ((ids, expr) : rest)
           else do
             process isIfNotOk isElseNotOk (ids, expr)
             go rest
+
+    -- we can not put Ir-statements inside Kr if-then block
+    isIrInsideKr ids expr = ifRate == IfKr && (hasIrOuts || hasKrConvertStmt)
+      where
+        -- we can not use Ir outputs inside if-block
+        hasIrOuts   = any ((== Ir) . varType) ids
+
+        -- we can not convert to Kr-inside if-block
+        hasKrConvertStmt =
+          case ratedExpExp expr of
+            ConvertRate Kr Ir _ -> True
+            _ -> False
 
     fin :: [Exp] -> State St ()
     fin rest = modify' $ \st -> st { stRes = updateRest $ stRes st }
