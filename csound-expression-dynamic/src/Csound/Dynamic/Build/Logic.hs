@@ -3,6 +3,7 @@
 -- | Boolean instances
 module Csound.Dynamic.Build.Logic(
     when1, whens,
+    ifExp,
     ifBegin, ifEnd, elseBegin,
     untilDo,
     untilBegin, untilEnd,
@@ -20,13 +21,13 @@ import Csound.Dynamic.Build(onExp, toExp)
 ------------------------------------------------------
 -- imperative if-then-else
 
-when1 :: Monad m => Rate -> E -> DepT m () -> DepT m ()
+when1 :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 when1 rate p body = do
     ifBegin rate p
     body
     ifEnd
 
-whens :: Monad m => Rate -> [(E, DepT m ())] -> DepT m () -> DepT m ()
+whens :: Monad m => IfRate -> [(E, DepT m ())] -> DepT m () -> DepT m ()
 whens rate bodies el = case bodies of
     []   -> el
     a:as -> do
@@ -38,7 +39,7 @@ whens rate bodies el = case bodies of
         foldl1 (>>) $ replicate (1 + length as) ifEnd
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin rate p >> body)
 
-ifBegin :: Monad m => Rate -> E -> DepT m ()
+ifBegin :: Monad m => IfRate -> E -> DepT m ()
 ifBegin rate = withCond $ IfBegin rate
 
 elseBegin :: Monad m => DepT m ()
@@ -88,9 +89,6 @@ instance Boolean E where
 
 type instance BooleanOf E = E
 
-instance IfB E where
-    ifB = condExp
-
 instance EqB E where
     (==*) = boolOp2 Equals
     (/=*) = boolOp2 NotEquals
@@ -109,13 +107,13 @@ instance OrdB E where
 boolExp :: a -> [b] -> PreInline a b
 boolExp = PreInline
 
-condExp :: E -> E -> E -> E
-condExp = mkCond . condInfo
+ifExp :: IfRate -> E -> E -> E -> E
+ifExp ifRate = mkCond . condInfo
     where mkCond :: CondInfo (PrimOr E) -> E -> E -> E
           mkCond pr th el
             | isTrue pr = th
             | isFalse pr = el
-            | otherwise = noRate $ If pr (toPrimOr th) (toPrimOr el)
+            | otherwise = noRate $ If ifRate pr (toPrimOr th) (toPrimOr el)
 
 condInfo :: E -> CondInfo (PrimOr E)
 condInfo p = go $ toPrimOr p

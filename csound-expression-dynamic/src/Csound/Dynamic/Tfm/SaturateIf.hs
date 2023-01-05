@@ -25,11 +25,10 @@ module Csound.Dynamic.Tfm.SaturateIf
   ) where
 
 import Control.Monad
-import qualified Csound.Dynamic.Tfm.DeduceTypes as D
+import Csound.Dynamic.Tfm.InferTypes (Var (..))
 import Data.List qualified as List
-import Csound.Dynamic.Types hiding (Exp, Var)
+import Csound.Dynamic.Types hiding (Exp, Var (..))
 import Csound.Dynamic.Types.Exp qualified as E
-import Data.Semigroup (Max (..))
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
 import Control.Monad.Trans.State.Strict
@@ -38,9 +37,6 @@ import Data.Text qualified as Text
 import Data.DList (DList)
 import Data.DList qualified as DList
 import Data.Maybe
-
-
-type Var  = D.Var Rate
 
 type Lhs = [Var]
 type Rhs = RatedExp Var
@@ -64,11 +60,11 @@ saturateIf SaturateIfOptions{..} dag =
     go freeVars = \case
       [] -> DList.empty
       (exprIds, expr) : exprs -> case ratedExpExp expr of
-        If cond th el ->
+        If ifRate cond th el ->
           let
             localFreeVars = fromCond cond
             newFreeVars = localFreeVars <> freeVars
-          in  processRes  (getCondRate cond) localFreeVars cond expr newFreeVars $ saturateIfExpr newFreeVars exprIds th el exprs
+          in  processRes ifRate localFreeVars cond expr newFreeVars $ saturateIfExpr newFreeVars exprIds th el exprs
         IfEnd | saturateIfStatements ->
           let
             (Res ths els restExprs, (ifRate, cond)) = getIfElseBlock exprs
@@ -82,7 +78,7 @@ saturateIf SaturateIfOptions{..} dag =
           in
             DList.singleton (exprIds, expr) <> exprsSaturated
 
-    processRes :: Rate -> IntSet -> CondInfo (PrimOr Var) -> RatedExp Var -> IntSet -> Res -> DList Exp
+    processRes :: E.IfRate -> IntSet -> CondInfo (PrimOr Var) -> RatedExp Var -> IntSet -> Res -> DList Exp
     processRes ifRate localFreeVars cond expr freeVars (Res thExprs elExprs restExprs) =
       mconcat
         [ DList.singleton ([], endExpr)
@@ -104,7 +100,7 @@ data IfBlockSt = IfBlockSt
   { nestingCount :: !Int
   , ifRes        :: !Res
   , currentBlock :: !CurrentBlock
-  , ifArgs       :: !(Maybe (Rate, CondInfo (PrimOr Var)))
+  , ifArgs       :: !(Maybe (IfRate, CondInfo (PrimOr Var)))
   }
 
 
@@ -117,13 +113,13 @@ data CurrentBlock = IfBlock | ElseBlock | EndBlock
 -- and after that we go over rest.
 --
 -- We use nesting counter to not to be distracted by nested if-statements
-getIfElseBlock :: [Exp] -> (Res, (Rate, CondInfo (PrimOr Var)))
+getIfElseBlock :: [Exp] -> (Res, (IfRate, CondInfo (PrimOr Var)))
 getIfElseBlock es =
   (reverseRes $ ifRes blocks, fromMaybe (defRate, defCond) $ ifArgs blocks)
   where
     blocks = execState (mapM_ go es) initSt
 
-    defRate = Kr
+    defRate = E.IfKr
     defCond = Inline (InlineExp TrueOp []) mempty
 
     initSt :: IfBlockSt
@@ -214,13 +210,6 @@ getIfElseBlock es =
 
     overRatedExpr p (_, expr) = p (ratedExpExp expr)
 
-
-getCondRate :: CondInfo (PrimOr Var) -> Rate
-getCondRate = max Kr . getMax . foldMap (Max . getRate)
-  where
-    getRate = either (const Kr) ratedVarRate . unPrimOr
-
-
 saturateIfExpr :: IntSet -> [Var] -> PrimOr Var -> PrimOr Var -> [Exp] -> Res
 saturateIfExpr freeVars resIds ifExp elseExp exps =
   collectIfs initSt exps
@@ -247,9 +236,9 @@ saturateIfExpr freeVars resIds ifExp elseExp exps =
           }
       )
 
-    toVar v = E.VarVerbatim (D.varType v) name
+    toVar v = E.VarVerbatim (varType v) name
       where
-        name = Text.toLower $ Text.pack $ show (D.varType v) ++ show (D.varId v)
+        name = Text.toLower $ Text.pack $ show (varType v) ++ show (varId v)
 
 saturateIfStatement :: IntSet -> [Exp] -> [Exp] -> [Exp] -> Res
 saturateIfStatement freeVars ifStmts elseStmts exps =
@@ -344,14 +333,14 @@ collectIfs initSt exps = reverseRes $ stRes $ execState (go exps) initSt
         , stFilter = updateFilter oldIds newIds (stFilter st)
         }
       where
-        oldIds = IntSet.fromList $ map D.varId ids
+        oldIds = IntSet.fromList $ map varId ids
 
-        newIds = foldMap (either (const IntSet.empty) (IntSet.singleton . D.varId) . unPrimOr) $ ratedExpExp expr
+        newIds = foldMap (either (const IntSet.empty) (IntSet.singleton . varId) . unPrimOr) $ ratedExpExp expr
 fromVars :: [Var] -> IntSet
-fromVars = IntSet.fromList . map D.varId
+fromVars = IntSet.fromList . map varId
 
 fromExp :: PrimOr Var -> IntSet
-fromExp (PrimOr eVar) = either (const IntSet.empty) (IntSet.singleton . D.varId) eVar
+fromExp (PrimOr eVar) = either (const IntSet.empty) (IntSet.singleton . varId) eVar
 
 fromCond :: CondInfo (PrimOr Var) -> IntSet
 fromCond = foldMap fromExp
@@ -407,6 +396,6 @@ isElse (IfThenFilter _ elseSet restSet) (ids, _) = isCondMember elseSet restSet 
 
 isCondMember :: IntSet -> IntSet -> [Var] -> Bool
 isCondMember includeSet excludeSet ids =
-     all (flip IntSet.member includeSet . D.varId) ids
-  && not (any (flip IntSet.member excludeSet . D.varId) ids)
+     all (flip IntSet.member includeSet . varId) ids
+  && not (any (flip IntSet.member excludeSet . varId) ids)
 

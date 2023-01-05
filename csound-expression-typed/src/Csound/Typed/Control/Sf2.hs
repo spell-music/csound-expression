@@ -33,5 +33,5 @@ instance Default Sf where
     def = fromE 0
 
 type instance BooleanOf Sf  = BoolD
-instance IfB Sf where ifB = on3 ifB
+instance IfB Sf where ifB = on3 (D.ifExp D.IfIr)
 

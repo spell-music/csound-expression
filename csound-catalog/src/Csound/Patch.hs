@@ -844,7 +844,9 @@ scrape k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig 
 
 scrapem k m = fx1 0.15 largeHall2 $ monoSynt $ (\(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 1.97) . at fromMono . C.scrapeModes m) cps) . monoArgToNote
 
-scrapePad k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 2.27  )) . at fromMono . C.scrapeModes m) (sig cps)
+scrapePad k m =
+  fx1 0.15 largeHall2 $
+    polySynt $ \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 2.27)) . at fromMono . C.scrapeModes m) (sig cps)
 
 scrapePadm k m = fx1 0.15 largeHall2 $ monoSynt $ (\(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 2.27) . at fromMono . C.scrapeModes m) cps) . monoArgToNote
 

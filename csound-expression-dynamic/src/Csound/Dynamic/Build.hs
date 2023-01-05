@@ -45,13 +45,13 @@ prim :: Prim -> E
 prim = noRate . ExpPrim
 
 opcPrefix :: Name -> Signature -> Info
-opcPrefix name signature = Info name signature Opcode (toDefaultInfoRate signature)
+opcPrefix name signature = Info name signature Opcode
 
 oprPrefix :: Name -> Signature -> Info
-oprPrefix name signature = Info name signature Prefix (toDefaultInfoRate signature)
+oprPrefix name signature = Info name signature Prefix
 
 oprInfix :: Name -> Signature -> Info
-oprInfix name signature = Info name signature Infix (toDefaultInfoRate signature)
+oprInfix name signature = Info name signature Infix
 
 tfm :: Info -> [E] -> E
 tfm info args = noRate $ Tfm info $ zipWith toPrimOrTfm (getInfoRates info) args

@@ -62,6 +62,7 @@ Library
     Csound.Dynamic.Render.Instr
     Csound.Dynamic.Render.Pretty
   Other-Modules:
+    Csound.Dynamic.Tfm.InferTypes
     Csound.Dynamic.Tfm.DeduceTypes
     Csound.Dynamic.Tfm.Liveness
     Csound.Dynamic.Tfm.SaturateIf
@@ -69,13 +70,18 @@ Library
 
   default-extensions:
     BangPatterns
+    DeriveFunctor
+    DeriveFoldable
+    DeriveTraversable
     DeriveGeneric
     ImportQualifiedPost
     LambdaCase
     RecordWildCards
     OverloadedStrings
     ScopedTypeVariables
+    TupleSections
     TypeApplications
+
 
 
 

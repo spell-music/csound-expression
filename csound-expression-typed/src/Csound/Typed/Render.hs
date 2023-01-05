@@ -59,24 +59,31 @@ renderOut_ = renderOutBy_ def
 
 renderOutBy_ :: Options -> SE () -> IO String
 renderOutBy_ options sigs = do
-    finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
-    evalGE finalOptions $ fmap renderCsd $ toCsd Nothing finalOptions (fmap (const unit) sigs)
+  finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
+  evalGE finalOptions $ fmap (renderCsd renderOpts) $ toCsd Nothing finalOptions (fmap (const unit) sigs)
+  where
+    renderOpts = fromMaybe def $ csdRender options
+
 
 renderOut :: Sigs a => SE a -> IO String
 renderOut = renderOutBy def
 
 renderOutBy :: Sigs a => Options -> SE a -> IO String
 renderOutBy options sigs = do
-    finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
-    evalGE finalOptions $ fmap renderCsd $ toCsd Nothing finalOptions sigs
+  finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
+  evalGE finalOptions $ fmap (renderCsd renderOpts) $ toCsd Nothing finalOptions sigs
+  where
+    renderOpts = fromMaybe def $ csdRender options
 
 renderEff :: (Sigs a, Sigs b) => (a -> SE b) -> IO String
 renderEff = renderEffBy def
 
 renderEffBy :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO String
 renderEffBy options eff = do
-    finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
-    evalGE finalOptions $ fmap renderCsd $ toCsd (Just (arityIns $ funArity eff)) finalOptions (eff =<< getIns)
+  finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
+  evalGE finalOptions $ fmap (renderCsd renderOpts) $ toCsd (Just (arityIns $ funArity eff)) finalOptions (eff =<< getIns)
+  where
+    renderOpts = fromMaybe def $ csdRender options
 
 renderHistory :: Maybe Int -> Int -> Options -> GE Csd
 renderHistory mnchnls_i nchnls opt = do
