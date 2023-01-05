@@ -12,7 +12,7 @@ module Csound.Dynamic.Types.Exp(
     ratedExp, noRate, withRate, setRate,
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId,
-    VarType(..), Var(..), Info(..), toDefaultInfoRate, OpcFixity(..), Rate(..),
+    VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
     Signature(..), isInfix, isPrefix,
     Prim(..), Gen(..), GenId(..),
     Inline(..), InlineExp(..), PreInline(..),
@@ -33,9 +33,9 @@ import GHC.Generics (Generic, Generic1)
 import Data.Traversable
 import Data.ByteString (ByteString)
 
-import Data.Map(Map)
+import Data.Map.Strict (Map)
 import Data.Maybe(isNothing)
-import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as IM
 import qualified Data.IntMap.Internal as IM
 import Data.Fix
 import Data.Eq.Deriving
@@ -44,9 +44,6 @@ import Text.Show.Deriving
 import Data.Text (Text)
 import Data.Serialize qualified as Cereal
 import Data.Serialize.Text ()
-import qualified Data.Map as M
-import Data.Maybe (fromJust)
-import Data.List (find)
 
 type Name = Text
 type LineNum = Int
