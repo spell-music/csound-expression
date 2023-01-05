@@ -107,7 +107,16 @@ hashE (Fix expr) = ratedExpHash expr
 -- rate coversion
 
 setRate :: Rate -> E -> E
-setRate r a = Fix $ (\x -> x { ratedExpRate = Just r }) $ unFix a
+setRate r a =
+  case ratedExpExp $ unFix a of
+    -- for Tfm we add rate to ratedExpRate hint
+    Tfm _ _    -> Fix $ (unFix a) { ratedExpRate = Just r }
+    -- conversion is meaningless for constants
+    ExpPrim _  -> a
+    -- don't convert rate twice
+    ConvertRate _ b arg -> withRate r $ ConvertRate r b arg
+    -- for other cases we insert rate conversion
+    _          -> withRate r $ ConvertRate r Nothing (PrimOr $ Right a)
 
 -- | It's a primitive value or something else. It's used for inlining
 -- of the constants (primitive values).
@@ -150,7 +159,7 @@ data MainExp a
     -- | Application of the opcode: we have opcode information (Info) and the arguments [a]
     | Tfm Info ![a]
     -- | Rate conversion
-    | ConvertRate !Rate !Rate !a
+    | ConvertRate !Rate !(Maybe Rate) !a
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
     | Select !Rate !Int !a
     -- | if-then-else

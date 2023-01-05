@@ -276,21 +276,25 @@ ppVarType x = case x of
     LocalVar  -> empty
     GlobalVar -> char 'g'
 
-ppConvertRate :: Doc -> Rate -> Rate -> Doc -> Doc
+ppConvertRate :: Doc -> Rate -> Maybe Rate -> Doc -> Doc
 ppConvertRate out to from var = case (to, from) of
-    (Ar, Kr) -> upsamp var
-    (Ar, Ir) -> upsamp $ k var
-    (Kr, Ar) -> downsamp var
-    (Kr, Ir) -> initKr var
-    (Ir, Ar) -> downsamp var
-    (Ir, Kr) -> out $= i var
+    (Ar, Just Kr) -> upsamp var
+    (Ar, Just Ir) -> upsamp $ toK var
+    (Kr, Just Ar) -> downsamp var
+    (Kr, Just Ir) -> initKr var
+    (Ir, Just Ar) -> downsamp var
+    (Ir, Just Kr) -> out $= toI var
+    (Ar, Nothing) -> out $= toA var
+    (Kr, Nothing) -> out $= toK var
+    (Ir, Nothing) -> out $= toI var
     (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
     where
         initKr x = ppOpc out "init" [x]
         upsamp x = ppOpc out "upsamp" [x]
         downsamp x = ppOpc out "downsamp" [x]
-        k = func "k"
-        i = func "i"
+        toA = func "a"
+        toK = func "k"
+        toI = func "i"
 
 -- expressions
 
