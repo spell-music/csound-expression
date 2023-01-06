@@ -1,3 +1,7 @@
+-- Bug example (duplicates SE-expressions):
+--
+-- res <- evalGE def $ execSE $ runEvt (randInts (1,3) (metro 2)) $ \k -> Csound.Typed.when1 (k >* 3) turnoff
+
 {-# Language CPP #-}
 -- | Dependency tracking
 module Csound.Dynamic.Types.Dep(
@@ -46,7 +50,7 @@ data LocalHistory = LocalHistory
     , newLocalVarId :: !Int }
 
 instance Default LocalHistory where
-    def = LocalHistory start 0 0
+    def = LocalHistory (noRate Starts) 0 0
 
 instance Monad m => Functor (DepT m) where
     fmap = liftM
@@ -72,16 +76,13 @@ execDepT a = fmap expDependency $ execStateT (unDepT $ a) def
 
 -- dependency tracking
 
-start :: E
-start = noRate Starts
-
 depends :: E -> E -> E
 depends a1 a2 = noRate $ Seq (toPrimOr a1) (toPrimOr a2)
 
 depT :: Monad m => E -> DepT m E
 depT a = DepT $ do
     s <- get
-    let a1 = Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
+    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
     put $ s {
         newLineNum = succ $ newLineNum s,
         expDependency = depends (expDependency s) a1 }
