@@ -37,7 +37,6 @@ import Control.Monad (zipWithM, foldM)
 import Data.Semigroup (Min(..))
 import Data.List qualified as List
 import Control.Monad.Trans.State.Strict
-import Control.Monad.Trans.Class (lift)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.ByteString (ByteString)
@@ -47,10 +46,14 @@ import Data.HashSet qualified as HashSet
 import Data.Vector.Mutable (STVector)
 import Data.Vector.Mutable qualified as Vector
 import Control.Monad.ST
+import Data.Maybe (fromMaybe)
+import Data.IntMap (IntMap)
+import Data.IntMap qualified as IntMap
 
 import Csound.Dynamic.Const qualified as Const
 import Csound.Dynamic.Types.Exp hiding (Var, varType)
 import Csound.Dynamic.Types.Exp qualified as Exp
+-- import Debug.Trace (trace)
 
 -- core types
 
@@ -101,10 +104,9 @@ inferTypes opts exprs = runST $ do
     initEnv :: ST s (InferEnv s)
     initEnv = do
       typeMap <- Vector.replicate size Xr
-      conversions <- Vector.replicate size Map.empty
       pure InferEnv
         { envTypeMap = typeMap
-        , envConversions = conversions
+        , envConversions = IntMap.empty
         , envLastFreshId = size
         , envResult = []
         , envHasIfs = False
@@ -126,7 +128,7 @@ type Infer s a = StateT (InferEnv s) (ST s) a
 data InferEnv s = InferEnv
   { envTypeMap     :: !(STVector s Rate)
       -- ^ types inferrred so far
-  , envConversions :: !(STVector s (Map Rate Var))
+  , envConversions :: !(IntMap (Map Rate Var))
      -- ^ conversions
   , envLastFreshId :: !Int
       -- ^ last fresh id (we use it to insert new variables for conversions)
@@ -173,6 +175,7 @@ instance Default InferenceOptions where
 
 inferIter :: forall s . InferenceOptions -> Stmt Int -> Infer s ()
 inferIter opts (Stmt lhs rhs) =
+  -- trace (unlines ["INFER RHS", show $ ratedExpExp rhs, show $ ratedExpRate rhs, "\n"]) $
   case ratedExpExp rhs of
     -- primitives
     ExpPrim p -> onPrim p
@@ -233,7 +236,9 @@ inferIter opts (Stmt lhs rhs) =
     Ends a -> saveProcedure (Ends (setXr a))
 
   where
-    onPrim p = save (primRate p) (ExpPrim p)
+    onPrim p = save rate (ExpPrim p)
+      where
+        rate = fromMaybe (primRate p) $ ratedExpRate rhs
 
     onTfm info args =
       case infoSignature info of
@@ -298,7 +303,7 @@ inferIter opts (Stmt lhs rhs) =
                   { opcodeTo = targetRate
                   , opcodeFrom = varType <$> argVar
                   }
-          pure $ if nonDestructive opcodeArg || unifies opcodeArg
+          pure $ if not (destructiveConversion opcodeArg) || unifies opcodeArg
             then total
             else total + 1
 
@@ -427,22 +432,27 @@ unifies (OpcodeArg to (PrimOr from)) =
     Xr -> True
     Ar -> is Ar
     Kr -> is Kr || is Ir || isPrim
-    Ir -> is Ir || isPrim
+    Ir -> is Ir
     _  -> is to
   where
     is r = either primRate id from == r
 
     isPrim = either (const True) (const False) from
 
--- | Checks if opcode conversion is non-destructive
-nonDestructive :: OpcodeArg -> Bool
-nonDestructive (OpcodeArg to (PrimOr from)) =
+-- | Checks if opcode conversion is destructive
+-- Note that we rely on Haskell type-checker and don't consider
+-- cases of type-mismatch lke comparing number with string.
+--
+-- There are two cases of destructive updates:
+--
+-- * Ar or Kr is converted to Ir
+-- * Ar is converted to Kr
+destructiveConversion :: OpcodeArg -> Bool
+destructiveConversion (OpcodeArg to (PrimOr from)) =
   case to of
-    Xr -> True
-    Ar -> True
-    Kr -> fromRate /= Ar
-    Ir -> fromRate /= Ar || fromRate /= Kr
-    _  -> fromRate == to
+    Ir -> fromRate /= Ir
+    Kr -> fromRate == Ar
+    _  -> False
   where
     fromRate = either primRate id from
 
@@ -483,10 +493,19 @@ convert toRate (PrimOr fromVar) = do
 
     convertVar :: Var -> Infer s Var
     convertVar inVar = do
-      let rhs = newExp $ ConvertRate toRate (Just $ varType inVar) (PrimOr $ Right inVar)
-      outVar <- defineVar toRate rhs
-      saveConversion outVar inVar
-      pure outVar
+      mOutVar <- tryExistingConverters inVar
+      case mOutVar of
+        Just outVar -> pure outVar
+        Nothing     -> do
+          let rhs = newExp $ ConvertRate toRate (Just $ varType inVar) (PrimOr $ Right inVar)
+          outVar <- defineVar toRate rhs
+          saveConversion outVar inVar
+          pure outVar
+
+    tryExistingConverters :: Var -> Infer s (Maybe Var)
+    tryExistingConverters (Var _ name) = do
+      convMap <- gets envConversions
+      pure $ Map.lookup toRate =<< IntMap.lookup name convMap
 
     allocatePrim :: Prim -> Infer s Var
     allocatePrim prim = do
@@ -545,9 +564,14 @@ saveStmt expr = do
   appendResult expr
 
 saveConversion :: Var -> Var -> Infer s ()
-saveConversion outVar inVar = do
-  conversions <- gets envConversions
-  lift $ Vector.modify conversions (Map.insert (varType outVar) outVar) (varId inVar)
+saveConversion outVar inVar =
+  modify' $ \s -> s { envConversions = update $ envConversions s }
+  where
+    update conversionMap = IntMap.alter go (varId inVar) conversionMap
+
+    go = Just . \case
+      Nothing -> Map.singleton (varType outVar) outVar
+      Just m  -> Map.insert (varType outVar) outVar m
 
 setHasIfs :: Infer s ()
 setHasIfs = modify' $ \s -> s { envHasIfs = True }

@@ -277,7 +277,7 @@ midiKeyOnBy midiFun key = do
     writeRef evtRef $ diff a
 
   evtSig <- readRef evtRef
-  return $ filterE ( >* 0) $ snaps evtSig
+  return $ filterE (( >* 0) . sig) $ snaps evtSig
   where
     instr msg = do
       print' [notnum msg]
@@ -295,7 +295,7 @@ midiKeyOffBy midiFun key = do
     writeRef evtRef $ diff a
 
   evtSig <- readRef evtRef
-  return $ fmap (const unit) $ filterE ( `lessThan` 0) $ snaps evtSig
+  return $ fmap (const unit) $ filterE (( `lessThan` 0) . sig) $ snaps evtSig
   where
     instr msg = do
       print' [notnum msg]

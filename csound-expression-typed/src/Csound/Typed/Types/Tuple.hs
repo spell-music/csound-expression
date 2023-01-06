@@ -266,28 +266,28 @@ caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (t
 
 newtype BoolArg = BoolArg { unBoolArg :: GE [E] }
 
-toBoolArg :: (Arg a, Tuple a) => a -> BoolArg
+toBoolArg :: (Tuple a) => a -> BoolArg
 toBoolArg   = BoolArg . fromTuple
 
-fromBoolArg :: (Arg a, Tuple a) => BoolArg -> a
+fromBoolArg :: (Tuple a) => BoolArg -> a
 fromBoolArg = toTuple . unBoolArg
 
-type instance BooleanOf BoolArg = BoolD
+type instance BooleanOf BoolArg = BoolSig
 
 instance IfB BoolArg where
     ifB mp (BoolArg mas) (BoolArg mbs) = BoolArg $
-        liftA3 (\p as bs -> zipWith (ifExp IfIr p) as bs) (toGE mp) mas mbs
+        liftA3 (\p as bs -> zipWith (ifExp IfKr p) as bs) (toGE mp) mas mbs
 
 -- | @ifB@ for constants.
-ifArg :: (Arg a, Tuple a) => BoolD -> a -> a -> a
+ifArg :: (Arg a, Tuple a) => BoolSig -> a -> a -> a
 ifArg p a b = fromBoolArg $ ifB p (toBoolArg a) (toBoolArg b)
 
 -- | @guardedB@ for constants.
-guardedArg :: (Tuple b, Arg b) => [(BoolD, b)] -> b -> b
+guardedArg :: (Tuple b) => [(BoolSig, b)] -> b -> b
 guardedArg bs b = fromBoolArg $ guardedB undefined (fmap (second toBoolArg) bs) (toBoolArg b)
 
 -- | @caseB@ for constants.
-caseArg :: (Tuple b, Arg b) => a -> [(a -> BoolD, b)] -> b -> b
+caseArg :: (Tuple b, Arg b) => a -> [(a -> BoolSig, b)] -> b -> b
 caseArg a bs other = fromBoolArg $ caseB a (fmap (second toBoolArg) bs) (toBoolArg other)
 
 -----------------------------------------------------------

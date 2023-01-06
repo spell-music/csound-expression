@@ -150,7 +150,7 @@ arrowRightTap = toArrowTap rightNum
 
 toArrowTap :: D -> LkChn -> SE Tick
 toArrowTap idx chn =
-  fmap (fmap (const unit) . filterE (==* 1) . snaps) $ arrowSig idx chn
+  fmap (fmap (const unit) . filterE ((==* 1) . sig) . snaps) $ arrowSig idx chn
 
 ------------------------------------------------
 

@@ -5,7 +5,6 @@ module Csound.Dynamic.Render.Instr(
 
 import Control.Arrow(second)
 import Control.Monad.Trans.State.Strict
-import Data.Default
 
 import Data.Fix(Fix(..), foldFix)
 import Data.Fix.Cse(fromDag, cseFramed, FrameInfo(..))
@@ -15,8 +14,8 @@ import qualified Text.PrettyPrint.Leijen.Text as P
 import Csound.Dynamic.Tfm.InferTypes (InferenceOptions)
 import Csound.Dynamic.Tfm.InferTypes qualified as Infer
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
-import Csound.Dynamic.Tfm.Liveness
-import Csound.Dynamic.Tfm.SaturateIf (saturateIf)
+-- import Csound.Dynamic.Tfm.Liveness
+-- import Csound.Dynamic.Tfm.SaturateIf (saturateIf)
 
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Render.Pretty
@@ -73,16 +72,17 @@ clearEmptyResults :: ([Infer.Var], Exp Infer.Var) -> ([Infer.Var], Exp Infer.Var
 clearEmptyResults (res, expr) = (filter ((/= Xr) . Infer.varType) res, expr)
 
 collectRates :: InferenceOptions -> Dag RatedExp -> [([Infer.Var], Exp Infer.Var)]
-collectRates opts dag = fmap (second ratedExpExp) res3
+collectRates opts dag = fmap (second ratedExpExp) res1
   where
+  {-
     res3 = liveness lastFreshId1 res2
 
     res2 =
       if Infer.programHasIfs inferRes
-        then saturateIf def res1
+        then saturateIf opts res1
         else res1
-
-    (res1, lastFreshId1) = unfoldMultiOuts inferRes
+-}
+    (res1, _lastFreshId1) = unfoldMultiOuts inferRes
     inferRes = Infer.inferTypes opts $ fmap (uncurry Infer.Stmt) dag
 
 -----------------------------------------------------------

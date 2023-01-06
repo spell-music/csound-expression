@@ -83,7 +83,7 @@ radioButton :: Arg a => Text -> [(Text, a)] -> Int -> Source (Evt a)
 radioButton title as initVal = source $ do
     (g, ind) <- butBank1 "" 1 (length as) (0, initVal)
     gnames   <- mapM box names
-    let val = listAt vals ind
+    let val = listAt vals $ fmap sig ind
     gui <- setTitle title $ padding 0 $ hor [sca 0.15 g, ver gnames]
     return (gui, val)
     where (names, vals) = unzip as
@@ -92,7 +92,7 @@ radioButton title as initVal = source $ do
 matrixButton :: Arg a => Text -> Int -> Int -> [a] -> (Int, Int) -> Source (Evt a)
 matrixButton name xn yn vals initVal = source $ do
     (gui, ind) <- butBank1 name xn yn initVal
-    let val = listAt allVals ind
+    let val = listAt allVals $ fmap sig ind
     return (gui, val)
     where allVals = readMatrix xn yn vals
 

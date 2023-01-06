@@ -55,7 +55,6 @@ newCtrlRef t = fmap Ref $ newLocalVars (fmap toCtrlRate $ tupleRates (Proxy :: P
 toCtrlRate :: Rate -> Rate
 toCtrlRate x = case x of
     Ar -> Kr
-    Kr -> Ir
     _  -> x
 
 concatRef :: (Tuple a, Tuple b) => Ref a -> Ref b -> Ref (a, b)
@@ -86,7 +85,7 @@ modifyRef ref f = do
 -- to mutable value but a pair of reader and writer functions.
 sensorsSE :: Tuple a => a -> SE (SE a, a -> SE ())
 sensorsSE a = do
-    ref <- newRef a
+    ref <- newCtrlRef a
     return $ (readRef ref, writeRef ref)
 
 -- | Allocates a new global mutable value and initializes it with value.

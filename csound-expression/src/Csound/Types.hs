@@ -117,8 +117,8 @@ import Csound.Typed.Types
 import Csound.Typed.Control
 
 -- | Gets an init-rate value from the list by index.
-atArg :: (Tuple a, Arg a) => [a] -> D -> a
-atArg as ind = guardedArg (zip (fmap (\x -> int x ==* ind) [0 .. ]) as) (head as)
+atArg :: (Tuple a) => [a] -> Sig -> a
+atArg as ind = guardedArg (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
 -- | Gets an control/audio-rate value from the list by index.
 atTuple :: (Tuple a) => [a] -> Sig -> a

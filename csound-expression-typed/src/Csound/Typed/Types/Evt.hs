@@ -58,15 +58,15 @@ sigToEvt :: Sig -> Evt Unit
 sigToEvt = boolToEvt . ( ==* 1) . kr
 
 -- | Filters events with predicate.
-filterE :: (a -> BoolD) -> Evt a -> Evt a
+filterE :: (a -> BoolSig) -> Evt a -> Evt a
 filterE pr evt = Evt $ \bam -> runEvt evt $ \a ->
-    when1 (boolSig $ pr a) $ bam a
+    when1 (pr a) $ bam a
 
 -- | Filters events with effectful predicate.
-filterSE :: (a -> SE BoolD) -> Evt a -> Evt a
+filterSE :: (a -> SE BoolSig) -> Evt a -> Evt a
 filterSE mpr evt = Evt $ \bam -> runEvt evt $ \a -> do
     pr <- mpr a
-    when1 (boolSig pr) $ bam a
+    when1 pr $ bam a
 
 -- | Accumulator for events with side effects.
 accumSE :: (Tuple s) => s -> (a -> s -> SE (b, s)) -> Evt a -> Evt b
@@ -84,19 +84,19 @@ accumE s0 update = accumSE s0 (\a s -> return $ update a s)
 
 -- | Accumulator for events with side effects and filtering. Event triggers
 -- only if the first element in the tripplet is true.
-filterAccumSE :: (Tuple s) => s -> (a -> s -> SE (BoolD, b, s)) -> Evt a -> Evt b
+filterAccumSE :: (Tuple s) => s -> (a -> s -> SE (BoolSig, b, s)) -> Evt a -> Evt b
 filterAccumSE s0 update evt = Evt $ \bam -> do
     (readSt, writeSt) <- sensorsSE s0
     runEvt evt $ \a -> do
         s1 <- readSt
         (isOn, b, s2) <- update a s1
-        when1 (boolSig isOn) $ bam b
+        when1 isOn $ bam b
         writeSt s2
 
 -- | Accumulator with filtering. It can skip the events from the event stream.
 -- If the third element of the triple equals to 1 then we should include the
 -- event in the resulting stream. If the element equals to 0 we skip the event.
-filterAccumE :: (Tuple s) => s -> (a -> s -> (BoolD, b, s)) -> Evt a -> Evt b
+filterAccumE :: (Tuple s) => s -> (a -> s -> (BoolSig, b, s)) -> Evt a -> Evt b
 filterAccumE s0 update = filterAccumSE s0 $ \a s -> return $ update a s
 
 -- | Get values of some signal at the given events.
