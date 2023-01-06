@@ -25,6 +25,7 @@ Library
   Ghc-Options:    -Wall -Werror
   Build-Depends:
         base >= 4.10, base < 5
+      , base64-bytestring
       , bytestring
       , data-default
       , dlist
@@ -43,6 +44,7 @@ Library
       , cryptohash-sha256
       , vector
       , unordered-containers
+      , pretty-show
   Hs-Source-Dirs:      src/
   default-language: Haskell2010
   Exposed-Modules:

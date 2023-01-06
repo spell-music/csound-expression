@@ -1,6 +1,8 @@
 module Csound.Dynamic.Render.Pretty(
     Doc, vcatSep,
-    ppCsdFile, ppGen, ppNotes, ppInstr, ppStmt, ppTotalDur
+    ppCsdFile, ppGen, ppNotes, ppInstr, ppStmt, ppTotalDur,
+    PrettyE(..), PrettyShowE(..),
+    ppE
 ) where
 
 import Control.Monad.Trans.State.Strict
@@ -11,6 +13,10 @@ import Csound.Dynamic.Types
 import Csound.Dynamic.Tfm.InferTypes qualified as R(Var(..))
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Text.Show.Pretty (ppShow)
+import Data.Fix (foldFix)
+import Data.ByteString.Base64 qualified as Base64
+import Data.Text.Encoding qualified as Text
 
 vcatSep :: [Doc] -> Doc
 vcatSep = vcat . punctuate line
@@ -346,4 +352,105 @@ ppRate x = case x of
 
 ppTotalDur :: Double -> Doc
 ppTotalDur d = text "f0" <+> double d
+
+--------------------------------------------------------------
+-- debug
+
+newtype PrettyShowE = PrettyShowE E
+newtype PrettyE = PrettyE E
+
+instance Show PrettyShowE where
+  show (PrettyShowE expr) = ppShow expr
+
+instance Show PrettyE where
+  show (PrettyE expr) = show $ ppE expr
+
+ppE :: E -> Doc
+ppE = foldFix go
+  where
+    go :: RatedExp Doc -> Doc
+    go x = fromExp (fromInfo x) x
+
+    fromInfo :: RatedExp Doc -> Doc
+    fromInfo RatedExp{..} =
+      hsep
+        [ ppHash ratedExpHash
+        , maybe mempty ppRate ratedExpRate
+        , maybe mempty pretty ratedExpDepends
+        ]
+
+    ppHash = textStrict . Text.take 4 . Text.decodeUtf8 . Base64.encode
+
+
+    fromExp :: Doc -> RatedExp Doc -> Doc
+    fromExp info RatedExp{..} = indent 2 $ post $
+      case ratedExpExp of
+        ExpPrim p -> ppPrim p
+        EmptyExp -> textStrict "EMPTY_EXPR"
+        Tfm inf args -> ppTfm inf args
+        ConvertRate to from a -> ppConvert to from a
+        Select r n a -> ppSelect r n a
+        If rate cond th el -> ppIff rate cond th el
+        ExpBool args -> hsep ["some bool expr", pretty $ show args]
+        ExpNum arg -> ppExpNum arg
+        InitVar v a -> ppInitVar v a
+        ReadVar v -> "ReadVar" <+> ppVar v
+        WriteVar v a -> ppVar v $= pp a
+
+        InitArr _v _size -> undefined
+        ReadArr _v _index -> undefined
+        WriteArr _v _index _ -> undefined
+        WriteInitArr _v _index _ -> undefined
+        TfmArr _isInit _v _info _args -> undefined
+
+        IfBegin rate cond -> hsep ["IF", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
+        ElseBegin -> "ELSE"
+        IfEnd -> "END_IF"
+        UntilBegin rate cond -> hsep ["UNTIL", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
+        UntilEnd -> "END_UNTIL"
+        WhileBegin rate cond -> hsep ["WHILE", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
+        WhileRefBegin v -> hsep ["WHILE_REF", ppVar v]
+        WhileEnd -> "END_WHILE"
+        Verbatim txt -> ppFun "VERBATIM" [textStrict txt]
+        Starts -> "STARTS"
+        Seq a b -> vcat ["SEQ", pp a, pp b]
+        Ends a -> vcat ["ENDS", pp a]
+        InitMacrosInt _name _n  -> undefined
+        InitMacrosDouble _name _d -> undefined
+        InitMacrosString _name _str -> undefined
+        ReadMacrosInt _name -> undefined
+        ReadMacrosDouble _name -> undefined
+        ReadMacrosString _name -> undefined
+      where
+        post a = hsep [hcat ["{",info, "}:"], a]
+
+    ppTfm info args = ppFun (textStrict $ infoName info) (fmap pp args)
+
+    ppConvert to from a =
+      ppFun (hsep [textStrict "Convert-rate", ppRate to, maybe mempty ppRate from]) [pp a]
+
+    ppSelect rate n arg =
+      ppFun (hsep ["select", ppRate rate, pretty n]) [pp arg]
+
+    ppIff rate cond th el =
+      vcat
+        [ hsep ["if", ppRate (fromIfRate rate), ppCond $ fmap pp cond]
+        , indent 2 $ vcat
+            [ "then" <+> pp th
+            , "else" <+> pp el
+            ]
+        ]
+
+    ppExpNum (PreInline op as) = ppNumOp op (fmap pp as)
+
+    ppInitVar v a =
+      ppFun (hsep ["InitVar", ppVar v]) [pp a]
+
+    ppFun name args =
+      vcat
+        [ name
+        , indent 2 $ vcat args
+        ]
+
+    pp = either ppPrim id . unPrimOr
 

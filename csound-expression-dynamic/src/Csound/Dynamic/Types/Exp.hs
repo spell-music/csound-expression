@@ -21,7 +21,8 @@ module Csound.Dynamic.Types.Exp(
     MultiOut,
     IsArrInit, ArrSize, ArrIndex,
     IfRate(..), fromIfRate,
-    hashE
+    hashE,
+    rehashE,
 ) where
 
 #if __GLASGOW_HASKELL__ < 710
@@ -103,6 +104,13 @@ withRate r = ratedExp (Just r)
 
 hashE :: E -> ByteString
 hashE (Fix expr) = ratedExpHash expr
+
+-- | Call it on every change in underlying expression
+rehashE :: E -> E
+rehashE (Fix expr) = Fix $
+  expr
+    { ratedExpHash = Crypto.hash $ Cereal.encode $ fmap hashE expr
+    }
 
 -- rate coversion
 
@@ -221,6 +229,7 @@ instance Cereal.Serialize Signature where
   put = \_a -> pure ()
   get = undefined
 
+instance Cereal.Serialize a => Cereal.Serialize (RatedExp a)
 instance Cereal.Serialize Prim
 instance Cereal.Serialize Rate
 instance Cereal.Serialize IfRate

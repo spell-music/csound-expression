@@ -106,7 +106,6 @@ Library
 
     Csound.Typed.Plugins
 
-  Other-Modules:
     Csound.Typed.GlobalState
     Csound.Typed.GlobalState.Options
     Csound.Typed.GlobalState.GE

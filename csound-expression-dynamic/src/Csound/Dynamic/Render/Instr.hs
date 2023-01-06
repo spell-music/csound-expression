@@ -7,7 +7,7 @@ import Control.Arrow(second)
 import Control.Monad.Trans.State.Strict
 
 import Data.Fix(Fix(..), foldFix)
-import Data.Fix.Cse(fromDag, cseFramed, FrameInfo(..))
+import Data.Fix.Cse(fromDag, cse {-cseFramed, FrameInfo(..)-})
 
 import qualified Text.PrettyPrint.Leijen.Text as P
 
@@ -37,8 +37,10 @@ renderInstrBody opts a
 -- E -> Dag
 
 toDag :: E -> Dag RatedExp
-toDag expr = filterDepCases $ fromDag $ cseFramed getFrameInfo $ trimByArgLength expr
+-- toDag expr = filterDepCases $ fromDag $ cseFramed getFrameInfo $ trimByArgLength expr
+toDag expr = filterDepCases $ fromDag $ cse $ trimByArgLength expr
 
+{-
 getFrameInfo :: RatedExp a -> FrameInfo
 getFrameInfo x = case ratedExpExp x of
     -- Imperative If-then-else
@@ -53,7 +55,7 @@ getFrameInfo x = case ratedExpExp x of
     WhileRefBegin _ -> StartFrame
     WhileEnd     -> StopFrame
     _            -> NoFrame
-
+-}
 
 trimByArgLength :: E -> E
 trimByArgLength = foldFix $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
