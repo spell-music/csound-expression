@@ -13,9 +13,7 @@ import Data.Foldable
 import Control.Monad.Trans.Class
 import Control.Monad hiding (mapM, mapM_)
 import Control.Monad.ST
-import qualified Data.Array.Unboxed as A
-import qualified Data.Array.MArray as A
-import qualified Data.Array.ST as A
+import Data.Vector.Unboxed.Mutable qualified as UVector
 
 import Csound.Dynamic.Tfm.InferTypes (Var (..))
 import Csound.Dynamic.Types.Exp(Rate(..))
@@ -24,7 +22,7 @@ import Csound.Dynamic.Types.Exp(Rate(..))
 -- in the code and if it's not used it tries to reuse it for the next assignments
 liveness :: Traversable f => Int -> Dag f -> Dag f
 liveness lastFreshId as = runST $ do
-  st <- initSt lastFreshId $ analyse lastFreshId as
+  st <- initSt lastFreshId =<< analyse lastFreshId as
   evalStateT (mapM substExp $ countLines $ as) st
 
 type LineNumber = Int
@@ -63,15 +61,15 @@ initIdList = IdList [0..] 0
 
 -----------------------------------------------
 
-type StArr s = A.STUArray s Int Int
+type StArr s = UVector.STVector s Int
 
-type LivenessTable = A.UArray Int Int
-type SubstTable s  = StArr s
+type LivenessTable s = UVector.STVector s Int
+type SubstTable s    = StArr s
 
 data Registers s = Registers
   { arRegisters   :: !IdList
   , krRegisters   :: !IdList
-  , livenessTable :: !LivenessTable
+  , livenessTable :: !(LivenessTable s)
   , substTable    :: !(SubstTable s)
   }
 
@@ -94,17 +92,18 @@ setKrRegisters ids = modify' $ \s -> s { krRegisters = ids }
 isAlive :: LineNumber -> Var -> Memory s Bool
 isAlive lineNum v = do
   tab <- fmap livenessTable get
-  return $ lineNum < tab A.! (varId v)
+  lastUsage <- UVector.read tab (varId v)
+  pure $ lineNum < lastUsage
 
 lookUpSubst :: Int -> Memory s Int
 lookUpSubst i = do
   tab <- fmap substTable get
-  lift $ A.readArray tab i
+  lift $ UVector.read tab i
 
 saveSubst :: Int -> Int -> Memory s ()
 saveSubst from to = do
   tab <- fmap substTable get
-  lift $ A.writeArray tab from to
+  lift $ UVector.write tab from to
 
 substLhs :: Var -> Memory s Var
 substLhs = onlyForAK $ \v -> do
@@ -138,9 +137,9 @@ free (Var rate name) = onRegs rate (freeId name)
 
 --------------------------------------------------------------------------
 
-analyse :: Traversable f => Int -> Dag f -> LivenessTable
-analyse lastFreshId as = A.runSTUArray $ do
-  arr <- A.newArray (0, lastFreshId) 0
+analyse :: Traversable f => Int -> Dag f -> ST s (LivenessTable s)
+analyse lastFreshId as = do
+  arr <- UVector.replicate lastFreshId 0
   mapM_ (go arr) $ countLines as
   return arr
   where
@@ -149,7 +148,7 @@ analyse lastFreshId as = A.runSTUArray $ do
 
     countVar :: StArr s  -> LineNumber -> Var -> ST s ()
     countVar arr lineNum v
-      | isAOrK v  = A.writeArray arr (varId v) lineNum
+      | isAOrK v  = UVector.write arr (varId v) lineNum
       | otherwise = pure ()
 
 onlyForAK :: Monad f => (Var -> f Var) -> Var -> f Var
@@ -171,9 +170,9 @@ substExp (lineNum, (lhs, rhs)) = do
   freshRhs <- traverse (substRhs lineNum) rhs
   return (freshLhs, freshRhs)
 
-initSt :: Int -> LivenessTable -> ST s (Registers s)
+initSt :: Int -> LivenessTable s -> ST s (Registers s)
 initSt lastFreshId livenessTab = fmap (Registers initIdList initIdList livenessTab) (initSubstTable lastFreshId)
 
 initSubstTable :: Int ->  ST s (SubstTable s)
-initSubstTable n = A.newListArray (0, n+1) [0 .. n + 1]
+initSubstTable n = UVector.generate (n + 1) id
 
