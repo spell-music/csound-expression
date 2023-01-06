@@ -9,7 +9,6 @@ import Prelude hiding (mapM, mapM_)
 import Control.Monad.Trans.State.Strict
 import Data.Traversable
 import Data.Foldable
-import qualified Data.Map.Strict as M
 
 import Control.Monad.Trans.Class
 import Control.Monad hiding (mapM, mapM_)
@@ -63,18 +62,27 @@ type LivenessTable = A.UArray Int Int
 type SubstTable s  = StArr s
 
 data Registers s = Registers
-  { registers     :: !(M.Map Rate IdList)
+  { arRegisters   :: !IdList
+  , krRegisters   :: !IdList
   , livenessTable :: !LivenessTable
   , substTable    :: !(SubstTable s)
   }
 
 type Memory s a = StateT (Registers s) (ST s) a
 
-onRegs ::  (M.Map Rate IdList -> M.Map Rate IdList) -> (Registers s -> Registers s)
-onRegs f rs = rs { registers = f $ registers rs }
+onRegs :: Rate -> (IdList -> IdList) -> Memory s ()
+onRegs rate f = modify' $ \rs ->
+  case rate of
+    Ar -> rs { arRegisters = f $ arRegisters rs }
+    Kr -> rs { krRegisters = f $ krRegisters rs }
+    _  -> rs
 
-initRegs :: M.Map Rate IdList
-initRegs = M.fromList $ fmap (\x -> (x, initIdList)) [(minBound :: Rate) .. maxBound]
+setArRegisters :: IdList -> Memory s ()
+setArRegisters ids = modify' $ \s -> s { arRegisters = ids }
+
+setKrRegisters :: IdList -> Memory s ()
+setKrRegisters ids = modify' $ \s -> s { krRegisters = ids }
+
 
 isAlive :: LineNumber -> Var -> Memory s Bool
 isAlive lineNum v = do
@@ -92,43 +100,34 @@ saveSubst from to = do
   lift $ A.writeArray tab from to
 
 substLhs :: Var -> Memory s Var
-substLhs v = do
-  v1 <- allocAndSkipInits v
+substLhs = onlyForAK $ \v -> do
+  v1 <- alloc v
   saveSubst (varId v) (varId v1)
   return v1
 
 substRhs :: LineNumber -> Var -> Memory s Var
-substRhs lineNum v = do
+substRhs lineNum = onlyForAK $ \v -> do
   i1 <- lookUpSubst (varId v)
   let v1 = Var (varType v) i1
   b <- isAlive lineNum v
   unless b $ free v1
   return v1
 
-allocAndSkipInits :: Var -> Memory s Var
-allocAndSkipInits v
-    | isInit r  = return v
-    | otherwise = alloc r
-    where
-        r = varType v
-        isInit x = x == Ir || x == Sr
-
-alloc :: Rate -> Memory s Var
-alloc rate = state $ \mem ->
-  let (i, mem1) = allocRegister rate mem
-  in  (Var rate i, mem1)
+alloc :: Var -> Memory s Var
+alloc v =
+  case varType v of
+    Ar -> allocBy arRegisters setArRegisters
+    Kr -> allocBy krRegisters setKrRegisters
+    _  -> pure v
   where
-    allocRegister :: Rate -> Registers s -> (Int, Registers s)
-    allocRegister r mem = (i, onRegs (M.update (const $ Just is) r) mem)
-      where (i, is) = allocId $ registers mem M.! r
+    allocBy extract update = do
+      ids <- gets extract
+      let (name, newIds) = allocId ids
+      void $ update newIds
+      pure (Var (varType v) name)
 
 free :: Var -> Memory s ()
-free v = state $ \mem ->
-  let mem1 = freeRegister (varType v) (varId v) mem
-  in  ((), mem1)
-  where
-    freeRegister :: Rate -> Int -> Registers s -> Registers s
-    freeRegister rate i = onRegs $ M.update (Just . freeId i) rate
+free (Var rate name) = onRegs rate (freeId name)
 
 --------------------------------------------------------------------------
 
@@ -139,13 +138,25 @@ analyse lastFreshId as = A.runSTUArray $ do
   return arr
   where
     go :: Traversable f => StArr s -> (LineNumber, Exp f) -> ST s ()
-    go arr (lineNum, (_, rhs)) =  mapM (countVar arr lineNum) rhs >> return ()
+    go arr (lineNum, (_, rhs)) = mapM_ (countVar arr lineNum) rhs
 
     countVar :: StArr s  -> LineNumber -> Var -> ST s ()
-    countVar arr lineNum v = do
-      val <- A.readArray arr i
-      A.writeArray arr i (val `max` lineNum)
-      where i = varId v
+    countVar arr lineNum v
+      | isAOrK v  = A.writeArray arr (varId v) lineNum
+      | otherwise = pure ()
+
+onlyForAK :: Monad f => (Var -> f Var) -> Var -> f Var
+onlyForAK go v
+  | isAOrK v  = go v
+  | otherwise = pure v
+
+-- we optimise for livenes only for Ar and Kr variables
+isAOrK :: Var -> Bool
+isAOrK v =
+  case varType v of
+    Ar -> True
+    Kr -> True
+    _  -> False
 
 substExp :: Traversable f => (LineNumber, Exp f) -> Memory s (Exp f)
 substExp (lineNum, (lhs, rhs)) = do
@@ -154,7 +165,7 @@ substExp (lineNum, (lhs, rhs)) = do
   return (freshLhs, freshRhs)
 
 initSt :: Int -> LivenessTable -> ST s (Registers s)
-initSt lastFreshId livenessTab = fmap (Registers initRegs livenessTab) (initSubstTable lastFreshId)
+initSt lastFreshId livenessTab = fmap (Registers initIdList initIdList livenessTab) (initSubstTable lastFreshId)
 
 initSubstTable :: Int ->  ST s (SubstTable s)
 initSubstTable n = A.newListArray (0, n+1) [0 .. n + 1]
