@@ -111,8 +111,9 @@ setRate r a =
   case ratedExpExp $ unFix a of
     -- for Tfm we add rate to ratedExpRate hint
     Tfm _ _    -> Fix $ (unFix a) { ratedExpRate = Just r }
-    -- conversion is meaningless for constants
-    ExpPrim _  -> a
+    -- conversion set's the rate for constants
+    -- ExpPrim _  -> a
+    ExpPrim _  -> Fix $ (unFix a) { ratedExpRate = Just r }
     -- don't convert rate twice
     ConvertRate _ b arg -> withRate r $ ConvertRate r b arg
     -- for booleans pass conversion over boolean operators
@@ -417,7 +418,11 @@ $(deriveShow1 ''RatedExp)
 deriving instance Generic1 IM.IntMap
 
 isEmptyExp :: E -> Bool
-isEmptyExp (Fix re) = isNothing (ratedExpDepends re) && (ratedExpExp re == EmptyExp)
+isEmptyExp (Fix re) = isNothing (ratedExpDepends re) &&
+  (case ratedExpExp re of
+    EmptyExp -> True
+    _ -> False
+  )
 
 --------------------------------------------------------------
 -- comments

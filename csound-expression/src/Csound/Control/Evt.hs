@@ -123,7 +123,7 @@ syncBpm :: (Default a, Tuple a) => Sig -> Evt a -> Evt a
 syncBpm dt = sync (dt / 60)
 
 -- | Splits event stream on two streams with predicate.
-partitionE :: (a -> BoolD) -> Evt a -> (Evt a, Evt a)
+partitionE :: (a -> BoolSig) -> Evt a -> (Evt a, Evt a)
 partitionE p evts = (a, b)
     where
         a = filterE p          evts
@@ -131,7 +131,7 @@ partitionE p evts = (a, b)
 
 -- | Splits a toggle event stream on on-events and off-events.
 splitToggle :: Evt D -> (Evt D, Evt D)
-splitToggle = swap . partitionE (==* 0)
+splitToggle = swap . partitionE ((==* 0) . sig)
 
 -- | Constructs an event stream that contains pairs from the
 -- given pair of signals. Events happens when any signal changes.
@@ -151,28 +151,28 @@ cycleE vals evts = listAt vals $ range (0, int $ length vals) evts
 
 -- | Turns an event of indices to the event of the values from the list.
 -- A value is taken with index.
-listAt :: (Tuple a, Arg a) => [a] -> Evt D -> Evt a
+listAt :: (Tuple a, Arg a) => [a] -> Evt Sig -> Evt a
 listAt vals evt
     | null vals = mempty
     | otherwise = fmap (atArg vals) $ filterE withinBounds evt
     where
-        withinBounds x = (x >=* 0) &&* (x `lessThan` len)
+        withinBounds x = (x >=* 0) &&* (x `lessThan` sig len)
         len = int $ length vals
 
 -- |
 --
 -- > range (xMin, xMax) === cycleE [xMin .. pred xMax]
-range :: (D, D) -> Evt b -> Evt D
-range (xMin, xMax) = iterateE xMin $ \x -> ifB ((x + 1) >=* xMax) xMin (x + 1)
+range :: (D, D) -> Evt b -> Evt Sig
+range (xMin, xMax) = iterateE (sig xMin) $ \x -> ifB ((x + 1) >=* sig xMax) (sig xMin) (x + 1)
 
 -- | An event stream of the integers taken from the given diapason.
-randInts :: (D, D) -> Evt b -> Evt D
-randInts (xMin, xMax) = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ getRnd
-    where getRnd = fmap (int' . readSnap) $ random (sig $ int' xMin) (sig $ int' xMax)
+randInts :: (D, D) -> Evt b -> Evt Sig
+randInts (xMin, xMax) = accumSE (0 :: Sig) $ const $ \s -> fmap (, s) $ getRnd
+    where getRnd = fmap int' $ random (sig $ int' xMin) (sig $ int' xMax)
 
 -- | An event stream of the random values in the interval @(0, 1)@.
 randDs :: Evt b -> Evt D
-randDs = accumSE (0 :: D) $ const $ \s -> fmap (, s) $ fmap readSnap $ random (0::D) 1
+randDs = accumSE (0 ::Sig) $ const $ \s -> fmap (, s) $ fmap readSnap $ random (0::Sig) 1
 
 -- | An event stram of lists of random values in the interval @(0, 1)@.
 -- The first argument is the length of the each list.
@@ -186,7 +186,7 @@ randList n = accumSE (0 :: D) $ const $ \s -> fmap (, s) $
 --
 -- where @prob@ is probability of includinng the element in the output stream.
 randSkip :: Sig -> Evt a -> Evt a
-randSkip d = filterSE (const $ fmap (<=* ir d) $ random (0::D) 1)
+randSkip d = filterSE (const $ fmap (<=*  d) $ random (0::Sig) 1)
 
 -- | Skips elements at random.
 --
@@ -194,7 +194,7 @@ randSkip d = filterSE (const $ fmap (<=* ir d) $ random (0::D) 1)
 --
 -- It behaves just like @randSkip@, but probability depends on the value.
 randSkipBy :: (a -> Sig) -> Evt a -> Evt a
-randSkipBy d = filterSE (\x -> fmap (<=* ir (d x)) $ random (0::D) 1)
+randSkipBy d = filterSE (\x -> fmap (<=* d x) $ random (0::Sig) 1)
 
 -- | When something happens on the given event stream resulting
 -- event stream contains an application of some unary function to the
@@ -290,9 +290,9 @@ every empties beats = masked mask
 -- n'th element from the given list should be included in the resulting stream
 -- if the n'th element from the list equals to one or skipped if the element
 -- equals to zero.
-masked :: (Tuple a, Arg a) => [D] -> Evt a -> Evt a
+masked :: (Tuple a) => [Sig] -> Evt a -> Evt a
 masked ms = filterAccumE 0 $ \a s ->
-    let n  = int $ length ms
+    let n  = sig $ int $ length ms
         s1 = ifB (s + 1 `lessThan` n) (s + 1) 0
     in  (atArg ms s ==* 1, a, s1)
 
@@ -319,27 +319,27 @@ toTog1 :: Tick -> Evt D
 toTog1 = togGen 0
 
 
-mkRow :: Evt a -> Evt (a, D)
-mkRow = accumE (0 :: D) (\a s -> ((a, s), s + 1) )
+mkRow :: Evt a -> Evt (a, Sig)
+mkRow = accumE (0 :: Sig) (\a s -> ((a, s), s + 1) )
 
-filterRow :: (D -> BoolD) -> Evt a -> Evt a
+filterRow :: (Sig -> BoolSig) -> Evt a -> Evt a
 filterRow p = fmap fst . filterE (p . snd) . mkRow
 
 -- | Takes the ns events from the event stream and ignores the rest of the stream.
 takeE :: Int -> Evt a -> Evt a
-takeE n = filterRow ( `lessThan` int n)
+takeE n = filterRow ( `lessThan` sig (int n))
 
 -- | Drops the ns events from the event stream and leaves the rest of the stream.
 dropE :: Int -> Evt a -> Evt a
-dropE n = filterRow ( >=* int n)
+dropE n = filterRow ( >=* sig (int n))
 
 -- | Takes events while the predicate is true.
-takeWhileE :: (a -> BoolD) -> Evt a -> Evt a
-takeWhileE p = fmap fst . filterE snd . accumE (1 :: D) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0))
+takeWhileE :: (a -> BoolSig) -> Evt a -> Evt a
+takeWhileE p = fmap fst . filterE snd . accumE (1 :: Sig) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0))
 
 -- | Drops events while the predicate is true.
-dropWhileE :: (a -> BoolD) -> Evt a -> Evt a
-dropWhileE p = fmap fst . filterE (notB . snd) . accumE (1 :: D) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0))
+dropWhileE :: (a -> BoolSig) -> Evt a -> Evt a
+dropWhileE p = fmap fst . filterE (notB . snd) . accumE (1 :: Sig) (\a s -> let s1 = s ==* 1 &&* p a in ((a, s1), ifB s1 1 0))
 
 -- | Delays event stream by given amount of seconds
 delEvt :: Arg a => D -> Evt a -> Evt a

@@ -225,7 +225,7 @@ maybeElim mdt a = case mdt of
 
 -- | Takes the first event from the event stream and ignores the rest of the stream.
 take1 :: Evt a -> Evt a
-take1 = fmap fst . filterE ((==* 0) . snd) . accumE (0 :: D) (\a s -> ((a, s), s + 1) )
+take1 = fmap fst . filterE ((==* 0) . snd) . accumE (0 :: Sig) (\a s -> ((a, s), s + 1) )
 
 -----------------------------------------------------------
 -- tick funs with less instrs

@@ -392,7 +392,7 @@ instance Val Sig    where
 
     toGE x = case x of
         Sig a       -> a
-        PrimSig d   -> return $ D.double d
+        PrimSig d   -> return $ setRate Kr $ D.double d
 
 instance Val D      where
     fromGE  = D
