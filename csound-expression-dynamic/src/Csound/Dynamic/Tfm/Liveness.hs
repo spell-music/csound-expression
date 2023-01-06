@@ -40,19 +40,26 @@ type Dag f = [Exp f]
 
 -----------------------------------------------
 
-newtype IdList = IdList [Int] -- fresh ids
-
-initIdList :: IdList
-initIdList = IdList [0..]
+data IdList = IdList
+    [Int] -- fresh ids
+    !Int   -- the biggest used id
 
 allocId :: IdList -> (Int, IdList)
-allocId (IdList ids) =
-  case ids of
-    a:as -> (a, IdList as)
-    []    -> error "Can not be empty"
+allocId (IdList is lastId) = (head is, IdList (tail is) (max (head is) lastId))
 
 freeId :: Int -> IdList -> IdList
-freeId a (IdList as) = IdList (a:as)
+freeId  n (IdList is lastId) = IdList (insertSorted n is) lastId1
+  where lastId1 = if (n == lastId) then (lastId - 1) else lastId
+
+insertSorted :: Int -> [Int] -> [Int]
+insertSorted n (a:as)
+  | n < a  = n : a : as
+  | n == a = a : as
+  | otherwise = a : insertSorted n as
+insertSorted n [] = [n]
+
+initIdList :: IdList
+initIdList = IdList [0..] 0
 
 -----------------------------------------------
 
