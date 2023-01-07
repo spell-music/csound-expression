@@ -159,6 +159,8 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     TfmArr isInit v op xs                  -> tab $ ppOpc (ppTfmArrOut isInit v) (infoName op) xs
 
     IfBegin _ a                     -> succTab          $ text "if "     <> ppCond a <> text " then"
+    IfBlock _ cond (CodeBlock th) -> tab $ ppIf res (ppCond cond)  th th
+    IfElseBlock _ cond (CodeBlock th) (CodeBlock el) -> tab $ ppIf res (ppCond cond)  th el
 --     ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")
     ElseBegin                       -> left >> (succTab $ text "else")
     IfEnd                           -> left >> (tab     $ text "endif")
@@ -175,8 +177,14 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     ReadMacrosInt name              -> tab $ res $= readMacro name
     EmptyExp                        -> return empty
     Verbatim str                    -> return $ textStrict str
-    x -> error $ "unknown expression: " ++ show x
 
+    Select _rate _n a                 -> tab $ res $= ("SELECTS" <+> a)
+    Starts                          -> tab $ res $= "STARTS"
+    Seq a b                         -> tab $ hsep ["SEQ", a, b]
+    Ends _a                          -> tab $ "ENDS"
+    ExpBool _                        -> tab "ExpBool"
+
+    -- x -> error $ "unknown expression: " ++ show x
 
 -- pp macros
 
@@ -404,6 +412,18 @@ ppE = foldFix go
         TfmArr _isInit _v _info _args -> undefined
 
         IfBegin rate cond -> hsep ["IF", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
+        IfBlock rate cond (CodeBlock th) ->
+          ppFun (hsep ["IF-BLOCK", ppRate $ fromIfRate rate, ppCond $ fmap pp cond ])
+            [ pp th
+            , "END-BLOCK"
+            ]
+        IfElseBlock rate cond (CodeBlock th) (CodeBlock el) ->
+          ppFun (hsep ["IF-BLOCK", ppRate $ fromIfRate rate, ppCond $ fmap pp cond ])
+            [ pp th
+            , "ELSE-BLOCK"
+            , pp el
+            , "END-BLOCK"
+            ]
         ElseBegin -> "ELSE"
         IfEnd -> "END_IF"
         UntilBegin rate cond -> hsep ["UNTIL", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]

@@ -37,6 +37,7 @@ module Csound.Typed.GlobalState.Opcodes(
     downsamp
 ) where
 
+import Control.Monad
 import Prelude hiding ((<*))
 import Control.Monad(zipWithM_, forM_)
 import Data.Boolean
@@ -91,7 +92,7 @@ servantUpdateChnAlive pargId = do
     let sName = chnAliveName (pn pargId)
     kAlive <- chngetK sName
     when1 IfKr (kAlive <* -10) $ do
-        turnoff
+        toBlock turnoff
     chnsetK sName (kAlive - 1)
 
 getRetrigVal :: Int -> E
@@ -103,7 +104,7 @@ servantUpdateChnRetrig pargId = do
     let retrigVal = pn $ pargId + 1
     kRetrig <- chngetK sName
     when1 IfKr (kRetrig /=* retrigVal) $ do
-        turnoff
+        toBlock turnoff
 
 servantUpdateChnEvtLoop :: Monad m => Int -> DepT m ()
 servantUpdateChnEvtLoop pargId = do
@@ -233,8 +234,8 @@ limiter x = opcs "compress" [(Ar, [Ar, Ar, Kr, Kr, Kr, Kr, Kr, Kr, Ir])] [x, 1, 
 autoOff :: Monad m => E -> [E] -> DepT m [E]
 autoOff dt a = do
     ihold
-    when1 IfKr (trig a)
-        turnoff
+    when1 IfKr (trig a) $
+        toBlock turnoff
     return a
     where
         trig = (<* eps) . (env + ) . setRate Kr . flip follow dt . l2

@@ -54,7 +54,7 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 
 import Csound.Dynamic hiding (genId, double, int, str, when1, whens, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, untilDo, whileBegin, whileEnd, whileDo)
-import qualified Csound.Dynamic as D(double, int, str, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, whileBegin, whileEnd)
+import qualified Csound.Dynamic as D(double, int, str, {-ifBegin, ifEnd, elseBegin, -} untilBegin, untilEnd, whileBegin, whileEnd, when1, whens)
 import Csound.Typed.GlobalState.GE
 import Csound.Typed.GlobalState.SE
 import Csound.Typed.GlobalState.Options
@@ -663,17 +663,26 @@ instance OrdB D   where { (<*)  = op2 (<) (<*) ;    (>*)  = op2 (>) (>*);     (<
 when1 :: BoolSig -> SE () -> SE ()
 when1 xp body = case xp of
     PrimBoolSig p -> if p then body else return ()
-    _             -> do
+    _             -> fromDep_ $ join $ lift $ do
+      pE <- toGE xp
+      pure $ D.when1 IfKr pE (toBlock $ unSE body)
+
+    {-
         ifBegin xp
         body
         ifEnd
-
+-}
 -- | The chain of @when1@s. Tests all the conditions in sequence
 -- if everything is false it invokes the procedure given in the second argument.
 whens :: [(BoolSig, SE ())] -> SE () -> SE ()
 whens bodies el = case bodies of
     []   -> el
-    a:as -> do
+    _    -> fromDep_ $ join $ lift $ do
+        checksE <- mapM (toGE . fst) bodies
+        let bodiesE = fmap (toBlock . unSE . snd) bodies
+            elE = toBlock $ unSE el
+        pure $ D.whens IfKr (zip checksE bodiesE) elE
+{-
         ifBegin (fst a)
         snd a
         elseIfs as
@@ -681,7 +690,9 @@ whens bodies el = case bodies of
         el
         foldl1 (>>) $ replicate (length bodies) ifEnd
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin p >> body)
+-}
 
+{-
 ifBegin :: BoolSig -> SE ()
 ifBegin a = fromDep_ $ D.ifBegin IfKr =<< lift (toGE a)
 
@@ -690,22 +701,32 @@ ifEnd = fromDep_ D.ifEnd
 
 elseBegin :: SE ()
 elseBegin = fromDep_ D.elseBegin
+-}
 
 -- | Invokes the given procedure if the boolean signal is true.
 whenD1 :: BoolD -> SE () -> SE ()
 whenD1 xp body = case xp of
     PrimBoolD p -> if p then body else return ()
-    _             -> do
+    _             -> fromDep_ $ do
+      pE <- lift $ toGE xp
+      D.when1 IfIr pE (toBlock $ unSE body)
+  {-
         ifBeginD xp
         body
         ifEnd
+  -}
 
 -- | The chain of @when1@s. Tests all the conditions in sequence
 -- if everything is false it invokes the procedure given in the second argument.
 whenDs :: [(BoolD, SE ())] -> SE () -> SE ()
 whenDs bodies el = case bodies of
     []   -> el
-    a:as -> do
+    _    -> fromDep_ $ join $ lift $ do
+        checksE <- mapM (toGE . fst) bodies
+        let bodiesE = fmap (toBlock . unSE . snd) bodies
+            elE = toBlock $ unSE el
+        pure $ D.whens IfIr (zip checksE bodiesE) elE
+{-
         ifBeginD (fst a)
         snd a
         elseIfs as
@@ -713,10 +734,12 @@ whenDs bodies el = case bodies of
         el
         foldl1 (>>) $ replicate (length bodies) ifEnd
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBeginD p >> body)
+-}
 
+{-
 ifBeginD :: BoolD -> SE ()
 ifBeginD a = fromDep_ $ D.ifBegin IfIr =<< lift (toGE a)
-
+-}
 -- elseIfBegin :: BoolSig -> SE ()
 -- elseIfBegin a = fromDep_ $ D.elseIfBegin =<< lift (toGE a)
 

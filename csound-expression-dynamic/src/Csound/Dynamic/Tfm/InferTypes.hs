@@ -61,11 +61,13 @@ data Stmt a = Stmt
   { stmtLhs :: !a
   , stmtRhs :: !(RatedExp a)
   }
+  deriving (Show, Eq, Ord)
 
 data Var = Var
   { varType :: !Rate
   , varId   :: !Int
   }
+  deriving (Show, Eq, Ord)
 
 data InferenceResult = InferenceResult
   { typedProgram       :: ![Stmt Var]
@@ -199,6 +201,8 @@ inferIter opts (Stmt lhs rhs) =
     -- | if-then-else
     If ifRate cond th el -> onIf ifRate cond th el
     -- | Imperative If-then-else
+    IfBlock ifRate cond th -> onIfBlock ifRate cond th
+    IfElseBlock ifRate cond th el -> onIfElseBlock ifRate cond th el
     IfBegin ifRate cond -> onIfBegin ifRate cond
     ElseBegin -> saveProcedure ElseBegin
     IfEnd -> saveProcedure IfEnd
@@ -369,6 +373,22 @@ inferIter opts (Stmt lhs rhs) =
               elVar1 <- convertIf Kr elVar
               save Kr (If ifRate condVarSafe thVar1 elVar1)
           | otherwise  = save rate (If ifRate condVarSafe thVar elVar)
+
+    onIfBlock ifRate cond th = do
+      setHasIfs
+      condVar <- mapM (mapM $ getVar condMaxRate) cond
+      condVarSafe <- insertBoolConverters condMaxRate condVar
+      saveProcedure (IfBlock ifRate condVarSafe (fmap (Var Xr) <$> th))
+      where
+        condMaxRate = fromIfRate ifRate
+
+    onIfElseBlock ifRate cond th el = do
+      setHasIfs
+      condVar <- mapM (mapM $ getVar condMaxRate) cond
+      condVarSafe <- insertBoolConverters condMaxRate condVar
+      saveProcedure (IfElseBlock ifRate condVarSafe (fmap (Var Xr) <$> th) (fmap (Var Xr) <$> el))
+      where
+        condMaxRate = fromIfRate ifRate
 
     onIfBegin ifRate cond = do
       setHasIfs

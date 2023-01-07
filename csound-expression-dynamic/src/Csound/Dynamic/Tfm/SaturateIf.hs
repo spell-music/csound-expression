@@ -104,7 +104,7 @@ data IfBlockSt = IfBlockSt
   }
 
 
-data CurrentBlock = IfBlock | ElseBlock | EndBlock
+data CurrentBlock = IffBlock | ElseBlock | EndBlock
 
 -- | we go over expressions in reverse and accumulate
 -- all blocks for if-then-else-endif statemnt.
@@ -136,7 +136,7 @@ getIfElseBlock es =
     go expr = do
       block <- gets currentBlock
       case block of
-        IfBlock -> save expr
+        IffBlock -> save expr
         _       -> onProcess expr
 
     onProcess expr
@@ -158,7 +158,7 @@ getIfElseBlock es =
             EndBlock -> moveElseToIf
             _        -> pure ()
 
-          setBlock IfBlock
+          setBlock IffBlock
           modify' $ \st -> st { ifArgs = getIfArgs expr }
 
     onElse expr = do
@@ -174,7 +174,7 @@ getIfElseBlock es =
     save expr = do
       block <- gets currentBlock
       case block of
-        IfBlock   -> modify' $ \st -> st { ifRes = appendRest expr $ ifRes st }
+        IffBlock   -> modify' $ \st -> st { ifRes = appendRest expr $ ifRes st }
         ElseBlock -> modify' $ \st -> st { ifRes = appendIf expr $ ifRes st }
         EndBlock  -> modify' $ \st -> st { ifRes = appendElse expr $ ifRes st }
 

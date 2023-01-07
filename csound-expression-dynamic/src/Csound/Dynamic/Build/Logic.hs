@@ -4,19 +4,64 @@
 module Csound.Dynamic.Build.Logic(
     when1, whens,
     ifExp,
-    ifBegin, ifEnd, elseBegin,
+    ifElseBlock,
+    -- ifBegin, ifEnd, elseBegin,
     untilDo,
     untilBegin, untilEnd,
     whileDo,
     whileBegin, whileRef, whileEnd
 ) where
 
-import Control.Monad.Trans.State(State, state, evalState)
+import Control.Monad
+import Control.Monad.Trans.State.Strict (State, state, evalState, runStateT, StateT(..))
 import qualified Data.IntMap as IM(fromList)
 
 import Data.Boolean
 import Csound.Dynamic.Types
 import Csound.Dynamic.Build(onExp, toExp)
+import Data.List qualified as List
+import Data.Fix
+
+ifT :: forall m . Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m (CodeBlock E) -> DepT m E
+ifT ifRate check (DepT th) (DepT el) = DepT $ StateT $ \s -> do
+  (_thE, thS) <- runStateT th (startSt s)
+  (_elE, elS) <- runStateT el (startSt thS)
+  let thDeps = expDependency thS
+      elDeps = expDependency elS
+      a  = noRate $ IfElseBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps) (CodeBlock $ PrimOr $ Right elDeps)
+      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum elS) }
+      s1 = elS
+            { newLineNum = succ $ newLineNum elS
+            , expDependency = a1
+            -- depends (expDependency thS) (depends (expDependency elS) a1)
+            }
+  pure (a1, s1)
+  where
+    startSt s = s
+      { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s) }
+      , newLineNum = succ $ newLineNum s
+      }
+
+
+ifT1 :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m E
+ifT1 ifRate check (DepT th) = DepT $ StateT $ \s -> do
+  (_thE, thS)  <- runStateT th (startSt s)
+  let thDeps = expDependency thS
+      a  = noRate $ IfBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps)
+      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum thS) }
+      s1 = thS
+            { newLineNum = succ $ newLineNum thS
+            , expDependency = a1
+            -- depends (expDependency thS) (depends (expDependency elS) a1)
+            }
+  pure (a1, s1)
+  where
+    startSt s = s
+      { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s) }
+      , newLineNum = succ $ newLineNum s
+      }
+
+
 
 ------------------------------------------------------
 -- imperative if-then-else
@@ -24,14 +69,28 @@ import Csound.Dynamic.Build(onExp, toExp)
 setIfRate :: IfRate -> E -> E
 setIfRate rate = setRate (fromIfRate rate)
 
-when1 :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
-when1 rate p body = do
+when1 :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m ()
+when1 ifRate p body = void $ ifT1 ifRate p body
+{-  bodyE <- body
+  depT_ $ noRate $
+    IfBlock ifRate
+      (condInfo $ setIfRate ifRate p)
+      (PrimOr . Right <$> bodyE)
+  -}
+
+{-
     ifBegin rate p
     body
     ifEnd
+-}
 
-whens :: Monad m => IfRate -> [(E, DepT m ())] -> DepT m () -> DepT m ()
-whens rate bodies el = case bodies of
+whens :: Monad m => IfRate -> [(E, DepT m (CodeBlock E))] -> DepT m (CodeBlock E) -> DepT m ()
+whens rate bodies el =
+  void $ List.foldl' go el (List.reverse bodies)
+  where
+    go res (check, th) = CodeBlock <$> ifT rate check th res
+{-
+case bodies of
     []   -> el
     a:as -> do
         ifBegin rate (fst a)
@@ -41,7 +100,25 @@ whens rate bodies el = case bodies of
         el
         foldl1 (>>) $ replicate (1 + length as) ifEnd
     where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin rate p >> body)
+-}
 
+ifElseBlock :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m (CodeBlock E) -> DepT m ()
+ifElseBlock rate p th el = void $ ifElseBlock rate p th el
+
+{-
+ifElseBlock' :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m (CodeBlock E) -> DepT m (CodeBlock E)
+ifElseBlock' ifRate p th el = do
+  thE <- th
+  elE <- el
+  fmap CodeBlock $ depT $ noRate $
+    IfElseBlock ifRate
+      (condInfo $ setIfRate ifRate p)
+      (PrimOr . Right <$> thE)
+      (PrimOr . Right <$> elE)
+-}
+-- withCond ifRate stmt p = depT_ $ noRate $ stmt (condInfo $ setIfRate ifRate p)
+
+{-
 ifBegin :: Monad m => IfRate -> E -> DepT m ()
 ifBegin ifRate = withCond ifRate $ (IfBegin ifRate)
 
@@ -50,6 +127,7 @@ elseBegin = stmtOnlyT ElseBegin
 
 ifEnd :: Monad m => DepT m ()
 ifEnd = stmtOnlyT IfEnd
+-}
 
 untilDo :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 untilDo ifRate p body = do
