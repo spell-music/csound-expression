@@ -15,11 +15,11 @@ import Csound.Dynamic.Tfm.InferTypes (InferenceOptions)
 import Csound.Dynamic.Tfm.InferTypes qualified as Infer
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
 import Csound.Dynamic.Tfm.IfBlocks
--- import Csound.Dynamic.Tfm.Liveness
+import Csound.Dynamic.Tfm.Liveness
 
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Render.Pretty
-import Debug.Trace
+-- import Debug.Trace
 
 type Dag f = [(Int, f Int)]
 
@@ -57,14 +57,14 @@ clearEmptyResults :: ([Infer.Var], Exp Infer.Var) -> ([Infer.Var], Exp Infer.Var
 clearEmptyResults (res, expr) = (filter ((/= Xr) . Infer.varType) res, expr)
 
 collectRates :: InferenceOptions -> Dag RatedExp -> [([Infer.Var], Exp Infer.Var)]
-collectRates opts dag = fmap (second ratedExpExp) res3
+collectRates opts dag = fmap (second ratedExpExp) res4
   where
-    -- res4 = liveness lastFreshId3 res3
-    (res3, _lastFreshId3) = unfoldMultiOuts inferRes2
+    res4 = liveness lastFreshId3 res3
+    (res3, lastFreshId3) = unfoldMultiOuts inferRes2
     inferRes2 = inferRes1 { Infer.typedProgram = filterDepCases $ Infer.typedProgram inferRes1 }
     inferRes1 = collectIfBlocks inferRes
     inferRes = Infer.inferTypes opts $ fmap (uncurry Infer.Stmt) $
-         (\a -> trace (unlines ["DAG", unlines $ fmap (\(ls, rs) -> unwords [show ls, "=", show $ fmap (either (const (-1)) id . unPrimOr) $ ratedExpExp rs]) a]) $ a)
+        -- (\a -> trace (unlines ["DAG", unlines $ fmap (\(ls, rs) -> unwords [show ls, "=", show $ fmap (either (const (-1)) id . unPrimOr) $ ratedExpExp rs]) a]) $ a)
         dag
 
 -----------------------------------------------------------
