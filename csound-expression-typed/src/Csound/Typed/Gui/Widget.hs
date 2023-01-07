@@ -371,8 +371,8 @@ button name = setLabelSource name $ source $ do
         instr ref = SE $ do
             val <- readVar ref
             whens IfKr
-                [ (val ==* 0, writeVar ref 1)
-                ] (writeVar ref 0)
+                [ (val ==* 0, toBlock $ writeVar ref 1)
+                ] (toBlock $ writeVar ref 0)
             turnoff
 
         instrCh ref refCh = SE $ do

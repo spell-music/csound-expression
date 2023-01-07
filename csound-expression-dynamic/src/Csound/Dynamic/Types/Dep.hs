@@ -1,13 +1,9 @@
--- Bug example (duplicates SE-expressions):
---
--- res <- evalGE def $ execSE $ runEvt (randInts (1,3) (metro 2)) $ \k -> Csound.Typed.when1 (k >* 3) turnoff
-
 {-# Language CPP #-}
 -- | Dependency tracking
 module Csound.Dynamic.Types.Dep(
     DepT(..), LocalHistory(..), runDepT, execDepT, evalDepT,
     -- * Dependencies
-    depT, depT_, mdepT, stripDepT, stmtOnlyT,
+    depT, depT_, mdepT, stripDepT, stmtOnlyT, toBlock, depends,
 
     -- * Variables
     newLocalVar, newLocalVars,
@@ -60,8 +56,37 @@ instance Monad m => Applicative (DepT m) where
     (<*>) = ap
 
 instance Monad m => Monad (DepT m) where
-    ma >>= mf = DepT $ unDepT ma >>= unDepT . mf
+    ma >>= mf = -- DepT $ unDepT ma >>= unDepT . mf
+      DepT $ StateT $ \s -> do
+        (aE, aS) <- runStateT (unDepT ma) (startSt s)
+        (bE, bS) <- runStateT (unDepT (mf aE)) (startSt aS)
+        pure (bE, setDeps bS aS)
+      where
+        startSt s = s
+          { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s) }
+          , newLineNum = succ $ newLineNum s
+          }
 
+        setDeps bS aS = bS
+          { expDependency = depends (expDependency aS) (expDependency bS)
+          , newLineNum = succ $ newLineNum bS
+          }
+
+
+{-
+ifT1 :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m E
+ifT1 ifRate check (DepT th) = DepT $ StateT $ \s -> do
+  (_thE, thS)  <- runStateT th s
+  let thDeps = expDependency thS
+      a  = noRate $ IfBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps)
+      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum thS) }
+      s1 = thS
+            { newLineNum = succ $ newLineNum thS
+            , expDependency = a1
+            -- depends (expDependency thS) (depends (expDependency elS) a1)
+            }
+  pure (a1, s1)
+-}
 instance MonadTrans DepT where
     lift ma = DepT $ lift ma
 
@@ -77,19 +102,40 @@ execDepT a = fmap expDependency $ execStateT (unDepT $ a) def
 -- dependency tracking
 
 depends :: E -> E -> E
-depends a1 a2 = noRate $ Seq (toPrimOr a1) (toPrimOr a2)
+depends a1 a2 =
+  case ratedExpExp (unFix a2) of
+    Starts -> a1
+    _ ->
+      case ratedExpExp (unFix a1) of
+        Starts -> a2
+        _      -> noRate $ Seq (toPrimOr a1) (toPrimOr a2)
 
 depT :: Monad m => E -> DepT m E
 depT a = DepT $ do
     s <- get
     let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
     put $ s {
-        newLineNum = succ $ newLineNum s,
-        expDependency = depends (expDependency s) a1 }
+        newLineNum = succ $ newLineNum s -- ,
+        -- expDependency = depends (expDependency s) a1
+        }
     return a1
 
 depT_ :: (Monad m) => E -> DepT m ()
-depT_ = fmap (const ()) . depT
+depT_ a = -- fmap (const ()) . depT
+  DepT $ do
+    s <- get
+    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
+    put $ s {
+        newLineNum = succ $ newLineNum s,
+        expDependency = depends (expDependency s) a1
+        }
+    return ()
+
+
+toBlock :: Monad m => DepT m () -> DepT m (CodeBlock E)
+toBlock (DepT act) = DepT $ do
+  act
+  CodeBlock <$> gets expDependency
 
 mdepT :: (Monad m) => MultiOut [E] -> MultiOut (DepT m [E])
 mdepT mas = \n -> mapM depT $ ( $ n) mas

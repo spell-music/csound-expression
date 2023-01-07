@@ -13,6 +13,7 @@ module Csound.Dynamic.Types.Exp(
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
+    CodeBlock (..),
     Signature(..), isInfix, isPrefix,
     Prim(..), Gen(..), GenId(..),
     Inline(..), InlineExp(..), PreInline(..),
@@ -162,6 +163,9 @@ toPrimOrTfm r a = PrimOr $ case ratedExpExp $ unFix a of
 -- Expressions with inlining.
 type Exp a = MainExp (PrimOr a)
 
+newtype CodeBlock a = CodeBlock a
+  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
+
 -- Csound expressions
 data MainExp a
     = EmptyExp
@@ -190,6 +194,8 @@ data MainExp a
     | WriteInitArr !Var !(ArrIndex a) !a
     | TfmArr !IsArrInit !Var !Info ![a]
     -- | Imperative If-then-else
+    | IfBlock !IfRate !(CondInfo a) (CodeBlock a)
+    | IfElseBlock !IfRate !(CondInfo a) (CodeBlock a) (CodeBlock a)
     | IfBegin !IfRate !(CondInfo a)
     | ElseBegin
     | IfEnd
@@ -240,6 +246,7 @@ instance Cereal.Serialize CondOp
 instance Cereal.Serialize NumOp
 instance Cereal.Serialize Var
 instance Cereal.Serialize VarType
+instance Cereal.Serialize a => Cereal.Serialize (CodeBlock a)
 instance Cereal.Serialize a => Cereal.Serialize (MainExp a)
 instance (Cereal.Serialize a, Cereal.Serialize b) => Cereal.Serialize (Inline a b)
 instance (Cereal.Serialize a, Cereal.Serialize b) => Cereal.Serialize (PreInline a b)
@@ -409,18 +416,21 @@ type MultiOut a = Int -> a
 $(deriveEq1 ''PrimOr)
 $(deriveEq1 ''PreInline)
 $(deriveEq1 ''Inline)
+$(deriveEq1 ''CodeBlock)
 $(deriveEq1 ''MainExp)
 $(deriveEq1 ''RatedExp)
 
 $(deriveOrd1 ''PrimOr)
 $(deriveOrd1 ''PreInline)
 $(deriveOrd1 ''Inline)
+$(deriveOrd1 ''CodeBlock)
 $(deriveOrd1 ''MainExp)
 $(deriveOrd1 ''RatedExp)
 
 $(deriveShow1 ''PrimOr)
 $(deriveShow1 ''PreInline)
 $(deriveShow1 ''Inline)
+$(deriveShow1 ''CodeBlock)
 $(deriveShow1 ''MainExp)
 $(deriveShow1 ''RatedExp)
 

@@ -14,11 +14,12 @@ import qualified Text.PrettyPrint.Leijen.Text as P
 import Csound.Dynamic.Tfm.InferTypes (InferenceOptions)
 import Csound.Dynamic.Tfm.InferTypes qualified as Infer
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
+import Csound.Dynamic.Tfm.IfBlocks
 -- import Csound.Dynamic.Tfm.Liveness
--- import Csound.Dynamic.Tfm.SaturateIf (saturateIf)
 
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Render.Pretty
+import Debug.Trace
 
 type Dag f = [(Int, f Int)]
 
@@ -37,25 +38,7 @@ renderInstrBody opts a
 -- E -> Dag
 
 toDag :: E -> Dag RatedExp
--- toDag expr = filterDepCases $ fromDag $ cseFramed getFrameInfo $ trimByArgLength expr
-toDag expr = filterDepCases $ fromDag $ cse $ trimByArgLength expr
-
-{-
-getFrameInfo :: RatedExp a -> FrameInfo
-getFrameInfo x = case ratedExpExp x of
-    -- Imperative If-then-else
-    IfBegin _ _   -> StartFrame
---     ElseIfBegin _ -> NextFrame
-    ElseBegin     -> NextFrame
-    IfEnd         -> StopFrame
-    -- looping constructions
-    UntilBegin _ _ -> StartFrame
-    UntilEnd     -> StopFrame
-    WhileBegin _ _ -> StartFrame
-    WhileRefBegin _ -> StartFrame
-    WhileEnd     -> StopFrame
-    _            -> NoFrame
--}
+toDag expr = fromDag $ cse $ trimByArgLength expr
 
 trimByArgLength :: E -> E
 trimByArgLength = foldFix $ \x -> Fix x{ ratedExpExp = phi $ ratedExpExp x }
@@ -74,24 +57,21 @@ clearEmptyResults :: ([Infer.Var], Exp Infer.Var) -> ([Infer.Var], Exp Infer.Var
 clearEmptyResults (res, expr) = (filter ((/= Xr) . Infer.varType) res, expr)
 
 collectRates :: InferenceOptions -> Dag RatedExp -> [([Infer.Var], Exp Infer.Var)]
-collectRates opts dag = fmap (second ratedExpExp) res1
+collectRates opts dag = fmap (second ratedExpExp) res3
   where
-  {-
-    res3 = liveness lastFreshId1 res2
-
-    res2 =
-      if Infer.programHasIfs inferRes
-        then saturateIf opts res1
-        else res1
--}
-    (res1, _lastFreshId1) = unfoldMultiOuts inferRes
-    inferRes = Infer.inferTypes opts $ fmap (uncurry Infer.Stmt) dag
+    -- res4 = liveness lastFreshId3 res3
+    (res3, _lastFreshId3) = unfoldMultiOuts inferRes2
+    inferRes2 = inferRes1 { Infer.typedProgram = filterDepCases $ Infer.typedProgram inferRes1 }
+    inferRes1 = collectIfBlocks inferRes
+    inferRes = Infer.inferTypes opts $ fmap (uncurry Infer.Stmt) $
+         (\a -> trace (unlines ["DAG", unlines $ fmap (\(ls, rs) -> unwords [show ls, "=", show $ fmap (either (const (-1)) id . unPrimOr) $ ratedExpExp rs]) a]) $ a)
+        dag
 
 -----------------------------------------------------------
 -- Dag -> Dag
 
-filterDepCases :: Dag RatedExp -> Dag RatedExp
-filterDepCases = filter (not . isDepCase . snd)
+filterDepCases :: [Infer.Stmt Infer.Var] -> [Infer.Stmt Infer.Var]
+filterDepCases = filter (not . isDepCase . Infer.stmtRhs)
   where isDepCase x = case ratedExpExp x of
           Starts  -> True
           Seq _ _ -> True

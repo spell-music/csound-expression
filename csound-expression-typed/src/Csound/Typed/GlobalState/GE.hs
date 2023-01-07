@@ -510,11 +510,11 @@ keyEventInstrBody keyMap = execDepT $ do
     let keys     = flKeyIn
         isChange = changed keys ==* 1
     when1 IfKr isChange $ do
-        whens IfKr (fmap (uncurry $ listenEvt keys) events) doNothing
+        toBlock $ whens IfKr (fmap (uncurry $ listenEvt keys) events) (toBlock doNothing)
     where
         doNothing = return ()
 
-        listenEvt keySig keyCode var = (keySig ==* int keyCode, writeVar var 1)
+        listenEvt keySig keyCode var = (keySig ==* int keyCode, toBlock $ writeVar var 1)
 
         events = IM.toList keyMap
 

@@ -67,9 +67,9 @@ Library
     Csound.Dynamic.Render.Instr
     Csound.Dynamic.Render.Pretty
   Other-Modules:
+    Csound.Dynamic.Tfm.IfBlocks
     Csound.Dynamic.Tfm.InferTypes
     Csound.Dynamic.Tfm.Liveness
-    Csound.Dynamic.Tfm.SaturateIf
     Csound.Dynamic.Tfm.UnfoldMultiOuts
 
   default-extensions:
@@ -77,7 +77,9 @@ Library
     DeriveFunctor
     DeriveFoldable
     DeriveTraversable
+    DerivingStrategies
     DeriveGeneric
+    GeneralizedNewtypeDeriving
     ImportQualifiedPost
     LambdaCase
     RecordWildCards
