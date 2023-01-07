@@ -101,7 +101,7 @@ import Data.STRef
 import Data.Bifunctor (first)
 import Csound.Dynamic.Tfm.InferTypes (InferenceResult (..), Stmt(..), Var(..))
 import Data.Text qualified as Text
-import Debug.Trace
+-- import Debug.Trace
 
 type Expr  = Stmt Var
 
@@ -304,9 +304,9 @@ collectIter results = \case
 
     blockLocalVars ifRate root = do
       localUsage <- getLocalUsage ifRate root
-      globals <- mapM (\v -> (\g -> (v, (g, localUsage IntMap.! v))) <$> readGlobalUsages v) $ IntMap.keys localUsage
-      trace (unlines $ show <$> globals) $
-        getLocalVars localUsage ifRate root
+      -- globals <- mapM (\v -> (\g -> (v, (g, localUsage IntMap.! v))) <$> readGlobalUsages v) $ IntMap.keys localUsage
+      -- trace (unlines $ show <$> globals) $
+      getLocalVars localUsage ifRate root
 
     onIfElse ifRate check th el cons lhs exprs = do
       thVars <- blockLocalVars ifRate th
@@ -561,7 +561,7 @@ getExprType expr =
   case ratedExpExp expr of
     If rate c th el -> IfExpType rate c th el
     IfBlock rate c (CodeBlock th) -> IfType rate c th $ IfCons { ifBegin = IfBegin, ifEnd = IfEnd }
-    IfElseBlock rate c (CodeBlock th) (CodeBlock el) -> trace (unlines ["TH/EL", show (th, el)])
+    IfElseBlock rate c (CodeBlock th) (CodeBlock el) -> -- trace (unlines ["TH/EL", show (th, el)])
       IfElseType rate c th el $ IfElseCons { ifElseBegin = IfBegin, elseBegin = ElseBegin, ifElseEnd = IfEnd }
     -- TODO:
     --     While case
