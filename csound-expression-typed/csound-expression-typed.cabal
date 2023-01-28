@@ -101,6 +101,7 @@ Library
     Csound.Typed.Types.Tuple
     Csound.Typed.Types.Lift
     Csound.Typed.Types.Array
+    Csound.Typed.Types.PureArray
     Csound.Typed.Types.MonoArg
     Csound.Typed.Types.SigSpace
 
@@ -167,3 +168,5 @@ Library
     ImportQualifiedPost
     LambdaCase
     OverloadedStrings
+    ScopedTypeVariables
+    TypeApplications

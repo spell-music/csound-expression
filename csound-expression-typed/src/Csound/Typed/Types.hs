@@ -8,15 +8,16 @@ module Csound.Typed.Types(
     -- can use these functions.
     withInits, withDs, withSigs, withTabs, withD, withSig, withTab, withSeed,
     -- * Tuples
-    module Csound.Typed.Types.Tuple,        
+    module Csound.Typed.Types.Tuple,
     -- * Events
     module Csound.Typed.Types.Evt,
 
     -- * Arrays
-    module Csound.Typed.Types.Array, 
+    module Csound.Typed.Types.Array,
+    module Csound.Typed.Types.PureArray,
 
     -- * Arguments for monophonic synths
-    module Csound.Typed.Types.MonoArg,  
+    module Csound.Typed.Types.MonoArg,
 
     -- * Signal space (generic signal transformers)
     module Csound.Typed.Types.SigSpace,
@@ -32,6 +33,7 @@ import Csound.Typed.Types.Tuple
 import Csound.Typed.Types.Evt
 import Csound.Typed.Types.Lift
 import Csound.Typed.Types.Array
+import Csound.Typed.Types.PureArray
 import Csound.Typed.Types.MonoArg
 import Csound.Typed.Types.SigSpace
 
@@ -50,7 +52,7 @@ getNextGlobalGenId = geToSe G.getNextGlobalGenId
 withInits :: (Tuple a, Tuple b) => a -> b -> a
 withInits a b = genWithInits a (fromTuple b)
 
--- | A special case of @withInits@. Here all inits are numbers. 
+-- | A special case of @withInits@. Here all inits are numbers.
 withDs :: Tuple a => a -> [D] -> a
 withDs a ds = genWithInits a (mapM toGE ds)
 
@@ -58,7 +60,7 @@ withDs a ds = genWithInits a (mapM toGE ds)
 withD :: Tuple a => a -> D -> a
 withD = withInits
 
--- | A special case of @withInits@. Here all inits are signals. 
+-- | A special case of @withInits@. Here all inits are signals.
 withSigs :: Tuple a => a -> [Sig] -> a
 withSigs a sigs = genWithInits a (mapM toGE sigs)
 
@@ -66,7 +68,7 @@ withSigs a sigs = genWithInits a (mapM toGE sigs)
 withSig :: Tuple a => a -> Sig -> a
 withSig = withInits
 
--- | A special case of @withInits@. Here all inits are arrays. 
+-- | A special case of @withInits@. Here all inits are arrays.
 withTabs :: Tuple a => a -> [Tab] -> a
 withTabs a tabs = genWithInits a (mapM toGE tabs)
 
@@ -74,8 +76,8 @@ withTabs a tabs = genWithInits a (mapM toGE tabs)
 withTab :: Tuple a => a -> Tab -> a
 withTab = withInits
 
--- | Applies a seed to the random value. 
--- It's equivalent to the @withD@ but it has a special 
+-- | Applies a seed to the random value.
+-- It's equivalent to the @withD@ but it has a special
 -- meaning of canceling the side effect. When random
 -- opcode is provided with seed value it's no longer
 -- contains a side effect so we don't need to restrict it.

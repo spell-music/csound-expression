@@ -100,6 +100,10 @@ module Csound.Types(
 
     maparrayCopy, slicearrayCopy,
 
+    -- * Pure Arrays (read-only)
+    PureArr, newPureArr, readPureArr,
+    PureArrD, newPureArrD, readPureArrD,
+
     -- ** Spectral opcodes
     SpecArr,
 
