@@ -55,13 +55,29 @@ The next thing is a working Haskell environment with `ghc` and `cabal-install`
 It can be installed with [Haskell Platform](http://www.haskell.org/platform/).
 If it works to install the `csound-expression` we can type in the terminal:
 
+### Installing with cabal
+
 ~~~
 > cabal update
-> cabal install csound-expression
+> cabal install csound-expression --lib
 ~~~
 
 Let's have a break and take a cup of tea. The library contains 
 a lot of modules to install. 
+
+### Installing with Stack (recommended)
+
+I prefer to use the library with stack. 
+My usual workflow is to try ideas in the ghci and to save the expressions that sound cool in the file.
+To setup ghci with the most recent library we can clone the github repo.
+And create an alias in `.bashrc` file to load with dependency:
+
+```
+alias cei='stack exec ghci --stack-yaml /home/anton/dev/hs/csound/csound-expression/stack.yaml -- -XOverloadedStrings -ghci-script /home/anton/dev/hs/csound/csound-expression/scripts/default.ghci'
+``` 
+
+It launches the ghci interpreter and loads the needed default modules to the interpreter session.
+See file `scripts/default.ghci` for defaults.
 
 The first sound
 ---------------------------------------------------------
