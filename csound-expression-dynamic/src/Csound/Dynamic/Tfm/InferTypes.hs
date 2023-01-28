@@ -15,7 +15,7 @@
 --
 --  * If-then-else type:
 --      * for condition it is derived form ifRate in the argument of If-constructor
---      * the output is a minum of types of the branches
+--      * the output is a minimum of types of the branches
 --
 --  * procedures' output is asssigned with Xr type
 --
@@ -49,6 +49,7 @@ import Control.Monad.ST
 import Data.Maybe (fromMaybe)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
+import Data.Text qualified as Text
 
 import Csound.Dynamic.Const qualified as Const
 import Csound.Dynamic.Types.Exp hiding (Var, varType)
@@ -211,11 +212,11 @@ inferIter opts (Stmt lhs rhs) =
     Verbatim txt -> saveProcedure (Verbatim txt)
 
     -- | Arrays
-    InitArr _v _arrSize -> undefined -- !Var !(ArrSize a)
-    ReadArr _v _index -> undefined -- !(ArrIndex a)
-    WriteArr _v _index _val -> undefined --  !Var !(ArrIndex a) !a
-    WriteInitArr _v _arrSize _initVal -> undefined -- !Var !(ArrIndex a) !a
-    TfmArr _isArrInit _v _info _args -> undefined -- !IsArrInit !Var !Info ![a]
+    InitArr v arrSize -> onInitArr v arrSize
+    ReadArr v index -> onReadArr v index
+    WriteArr v index val -> onWriteArr v index val
+    WriteInitArr v arrSize initVal -> onWriteInitArr v arrSize initVal
+    TfmArr isArrInit v info args -> onTfmArr isArrInit v info args
 
     -- | read macros arguments
     InitMacrosInt name n -> saveProcedure (InitMacrosInt name n)
@@ -417,6 +418,54 @@ inferIter opts (Stmt lhs rhs) =
       saveProcedure (cons ifRate condVarSafe)
       where
         condMaxRate = fromIfRate ifRate
+
+    -------------------------------------------------------------
+    -- arrays
+
+    onInitArr v arrSize = do
+      typedArrSize <- mapM (mapM (getVar Ir)) arrSize
+      saveProcedure (InitArr v typedArrSize)
+
+    onReadArr v index = save (Exp.varRate v) . ReadArr v =<< typedIndex
+      where
+        indexRate = getArrIndexRate v
+        typedIndex = mapM (mapM (getVar indexRate)) index
+
+    onWriteArr v index arg = do
+      typedIndex <- mapM (mapM (getVar indexRate)) index
+      argVar <- mapM (getVar (Exp.varRate v)) arg
+      saveProcedure (WriteArr v typedIndex argVar)
+      where
+        indexRate = getArrIndexRate v
+
+    onWriteInitArr v arrSize initVal = do
+      typedArrSize <- mapM (mapM (getVar Ir)) arrSize
+      typedInitVal <- mapM (getVar (Exp.varRate v)) initVal
+      saveProcedure (WriteInitArr v typedArrSize typedInitVal)
+
+    getArrIndexRate v=
+      case Exp.varRate v of
+        Ir -> Ir
+        Sr -> Ir
+        _  -> Kr
+
+    onTfmArr isArrInit vout info args = do
+      typedArgs <- getTypedArrArgs args
+      saveProcedure (TfmArr isArrInit vout info typedArgs)
+      where
+        outRate = Exp.varRate vout
+
+        inRates =
+          case infoSignature info of
+            SingleRate rateMap ->
+              case Map.lookup outRate rateMap of
+                Just res -> res
+                Nothing -> toError "Rate conversion is not supported for arrays"
+            MultiRate _ _ -> toError "Arrays with multiple argument s are not supported"
+          where
+            toError msg = error (unwords [msg, "Found on array opcode", Text.unpack $ infoName info])
+
+        getTypedArrArgs ins = zipWithM applyArg inRates ins
 
     -------------------------------------------------------------
     -- generic funs

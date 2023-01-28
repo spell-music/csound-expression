@@ -256,7 +256,11 @@ instance (Cereal.Serialize a, Cereal.Serialize b) => Cereal.Serialize (PreInline
 instance (Cereal.Serialize a) => Cereal.Serialize (InlineExp a)
 
 type IsArrInit = Bool
+
+-- | Array sizes by demensions
 type ArrSize a = [a]
+
+-- | Array multi index
 type ArrIndex a = [a]
 
 -- Named variable
