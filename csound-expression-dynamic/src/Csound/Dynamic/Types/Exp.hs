@@ -200,9 +200,12 @@ data MainExp a
     | ElseBegin
     | IfEnd
     -- | looping constructions
-    | UntilBegin IfRate !(CondInfo a)
+    | UntilBlock !IfRate !(CondInfo a) (CodeBlock a)
+    | UntilBegin !IfRate !(CondInfo a)
     | UntilEnd
-    | WhileBegin IfRate !(CondInfo a)
+    | WhileBlock !IfRate !(CondInfo a) (CodeBlock a)
+    | WhileBegin !IfRate !(CondInfo a)
+    | WhileRefBlock !Var !(CodeBlock a)
     | WhileRefBegin !Var
     | WhileEnd
     -- | Verbatim stmt

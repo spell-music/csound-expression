@@ -6,10 +6,14 @@ module Csound.Dynamic.Build.Logic(
     ifExp,
     ifElseBlock,
     -- ifBegin, ifEnd, elseBegin,
-    untilDo,
-    untilBegin, untilEnd,
-    whileDo,
-    whileBegin, whileRef, whileEnd
+    untilBlock,
+    whileBlock,
+
+    -- untilDo,
+    -- untilBegin, untilEnd,
+    -- whileDo,
+    -- whileBegin,
+    whileRef, whileEnd
 ) where
 
 import Control.Monad
@@ -43,11 +47,19 @@ ifT ifRate check (DepT th) (DepT el) = DepT $ StateT $ \s -> do
       }
 
 
-ifT1 :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m E
-ifT1 ifRate check (DepT th) = DepT $ StateT $ \s -> do
+ifT1, untilT, whileT :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m E
+
+ifT1 = ifT1By IfBlock
+untilT = ifT1By UntilBlock
+whileT = ifT1By WhileBlock
+
+ifT1By :: Monad m
+  => (IfRate -> CondInfo (PrimOr E) -> CodeBlock (PrimOr E) -> Exp E)
+  -> IfRate -> E -> DepT m (CodeBlock E) -> DepT m E
+ifT1By cons ifRate check (DepT th) = DepT $ StateT $ \s -> do
   (_thE, thS)  <- runStateT th (startSt s)
   let thDeps = expDependency thS
-      a  = noRate $ IfBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps)
+      a  = noRate $ cons ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps)
       a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum thS) }
       s1 = thS
             { newLineNum = succ $ newLineNum thS
@@ -71,36 +83,12 @@ setIfRate rate = setRate (fromIfRate rate)
 
 when1 :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m ()
 when1 ifRate p body = void $ ifT1 ifRate p body
-{-  bodyE <- body
-  depT_ $ noRate $
-    IfBlock ifRate
-      (condInfo $ setIfRate ifRate p)
-      (PrimOr . Right <$> bodyE)
-  -}
-
-{-
-    ifBegin rate p
-    body
-    ifEnd
--}
 
 whens :: Monad m => IfRate -> [(E, DepT m (CodeBlock E))] -> DepT m (CodeBlock E) -> DepT m ()
 whens rate bodies el =
   void $ List.foldl' go el (List.reverse bodies)
   where
     go res (check, th) = CodeBlock <$> ifT rate check th res
-{-
-case bodies of
-    []   -> el
-    a:as -> do
-        ifBegin rate (fst a)
-        snd a
-        elseIfs as
-        elseBegin
-        el
-        foldl1 (>>) $ replicate (1 + length as) ifEnd
-    where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin rate p >> body)
--}
 
 ifElseBlock :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m (CodeBlock E) -> DepT m ()
 ifElseBlock rate p th el = void $ ifElseBlock rate p th el
@@ -129,6 +117,13 @@ ifEnd :: Monad m => DepT m ()
 ifEnd = stmtOnlyT IfEnd
 -}
 
+untilBlock :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m ()
+untilBlock ifRate p body = void $ untilT ifRate p body
+
+whileBlock :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m ()
+whileBlock ifRate p body = void $ whileT ifRate p body
+
+{-
 untilDo :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 untilDo ifRate p body = do
     untilBegin ifRate p
@@ -140,7 +135,9 @@ untilBegin ifRate = withCond ifRate (UntilBegin ifRate)
 
 untilEnd :: Monad m => DepT m ()
 untilEnd = stmtOnlyT UntilEnd
+-}
 
+{-
 whileDo :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 whileDo ifRate p body = do
     whileBegin ifRate p
@@ -149,6 +146,7 @@ whileDo ifRate p body = do
 
 whileBegin :: Monad m => IfRate -> E -> DepT m ()
 whileBegin ifRate = withCond IfKr (WhileBegin ifRate)
+-}
 
 whileRef :: Monad m => Var -> DepT m ()
 whileRef var = stmtOnlyT $ WhileRefBegin var
@@ -156,8 +154,10 @@ whileRef var = stmtOnlyT $ WhileRefBegin var
 whileEnd :: Monad m => DepT m ()
 whileEnd = stmtOnlyT WhileEnd
 
+{-
 withCond :: Monad m => IfRate -> (CondInfo (PrimOr E) -> MainExp (PrimOr E)) -> E -> DepT m ()
 withCond ifRate stmt p = depT_ $ noRate $ stmt (condInfo $ setIfRate ifRate p)
+-}
 
 instance Boolean E where
     true = boolOp0 TrueOp

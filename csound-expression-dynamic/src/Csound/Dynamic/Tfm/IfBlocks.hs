@@ -1,4 +1,4 @@
--- | We collect all if-blocks under the if-the-else constructs.
+-- | We collect all if-blocks under the if-the-else expressions and statements.
 --
 -- For a given if-block of code the taks is to agregate all expressions
 -- that can be used inside that block and don't affect external expressions
@@ -563,7 +563,8 @@ getExprType expr =
     IfBlock rate c (CodeBlock th) -> IfType rate c th $ IfCons { ifBegin = IfBegin, ifEnd = IfEnd }
     IfElseBlock rate c (CodeBlock th) (CodeBlock el) -> -- trace (unlines ["TH/EL", show (th, el)])
       IfElseType rate c th el $ IfElseCons { ifElseBegin = IfBegin, elseBegin = ElseBegin, ifElseEnd = IfEnd }
+    WhileBlock rate c (CodeBlock th) -> IfType rate c th $ IfCons { ifBegin = WhileBegin, ifEnd = WhileEnd }
+    UntilBlock rate c (CodeBlock th) -> IfType rate c th $ IfCons { ifBegin = UntilBegin, ifEnd = UntilEnd }
     -- TODO:
-    --     While case
-    --     Until case
+    --     While Ref case
     _ -> PlainType

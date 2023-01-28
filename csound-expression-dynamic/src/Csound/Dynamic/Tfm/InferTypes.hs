@@ -226,6 +226,10 @@ inferIter opts (Stmt lhs rhs) =
     ReadMacrosString name -> save Ir (ReadMacrosString name)
 
     -- | looping constructions
+    UntilBlock ifRate cond th -> onUntilBlock ifRate cond th
+    WhileBlock ifRate cond th -> onWhileBlock ifRate cond th
+    WhileRefBlock var th -> onWhileRefBlock var th
+
     UntilBegin ifRate cond -> onUntilBegin ifRate cond
     UntilEnd -> saveProcedure UntilEnd
     WhileBegin ifRate cond -> onWhileBegin ifRate cond
@@ -374,11 +378,21 @@ inferIter opts (Stmt lhs rhs) =
               save Kr (If ifRate condVarSafe thVar1 elVar1)
           | otherwise  = save rate (If ifRate condVarSafe thVar elVar)
 
-    onIfBlock ifRate cond th = do
+    onIfBlock = onIfBlockBy IfBlock
+
+    onUntilBlock = onIfBlockBy UntilBlock
+
+    onWhileBlock = onIfBlockBy WhileBlock
+
+    onWhileRefBlock var th = do
+      setHasIfs
+      saveProcedure (WhileRefBlock var (fmap (Var Xr) <$> th))
+
+    onIfBlockBy cons ifRate cond th = do
       setHasIfs
       condVar <- mapM (mapM $ getVar condMaxRate) cond
       condVarSafe <- insertBoolConverters condMaxRate condVar
-      saveProcedure (IfBlock ifRate condVarSafe (fmap (Var Xr) <$> th))
+      saveProcedure (cons ifRate condVarSafe (fmap (Var Xr) <$> th))
       where
         condMaxRate = fromIfRate ifRate
 

@@ -32,7 +32,7 @@ module Csound.Typed.Types.Prim(
     -- ** logic funs
     when1, whens, untilDo, whileDo, boolSig,
     equalsTo, notEqualsTo, lessThan, greaterThan, lessThanEquals, greaterThanEquals,
-    whenD1, whenDs, untilDoD, whileDoD, untilBeginD,
+    whenD1, whenDs, untilDoD, whileDoD
 ) where
 
 import Prelude hiding ((<*))
@@ -53,8 +53,8 @@ import Data.String
 import Data.Text (Text)
 import Data.Text qualified as Text
 
-import Csound.Dynamic hiding (genId, double, int, str, when1, whens, ifBegin, ifEnd, elseBegin, untilBegin, untilEnd, untilDo, whileBegin, whileEnd, whileDo)
-import qualified Csound.Dynamic as D(double, int, str, {-ifBegin, ifEnd, elseBegin, -} untilBegin, untilEnd, whileBegin, whileEnd, when1, whens)
+import Csound.Dynamic hiding (genId, double, int, str, when1, whens, whileEnd)
+import qualified Csound.Dynamic as D
 import Csound.Typed.GlobalState.GE
 import Csound.Typed.GlobalState.SE
 import Csound.Typed.GlobalState.Options
@@ -659,19 +659,20 @@ instance EqB D    where { (==*) = op2 (==) (==*);    (/=*) = op2 (/=) (/=*) }
 instance OrdB Sig where { (<*)  = op2 (<) (<*) ;    (>*)  = op2 (>) (>*);     (<=*) = op2 (<=) (<=*);    (>=*) = op2 (>=) (>=*) }
 instance OrdB D   where { (<*)  = op2 (<) (<*) ;    (>*)  = op2 (>) (>*);     (<=*) = op2 (<=) (<=*);    (>=*) = op2 (>=) (>=*) }
 
+-- | Constructs generic if-block statement with single then case
+-- We can choose constructors for: if, while, until statements
+ifBlockBy :: Val cond => (E -> DepT GE (CodeBlock E) -> DepT GE ()) -> cond -> SE () -> SE ()
+ifBlockBy cons p body =
+  fromDep_ $ do
+    pE <- lift $ toGE p
+    cons pE (toBlock $ unSE body)
+
 -- | Invokes the given procedure if the boolean signal is true.
 when1 :: BoolSig -> SE () -> SE ()
 when1 xp body = case xp of
     PrimBoolSig p -> if p then body else return ()
-    _             -> fromDep_ $ join $ lift $ do
-      pE <- toGE xp
-      pure $ D.when1 IfKr pE (toBlock $ unSE body)
+    _             -> ifBlockBy (D.when1 IfKr) xp body
 
-    {-
-        ifBegin xp
-        body
-        ifEnd
--}
 -- | The chain of @when1@s. Tests all the conditions in sequence
 -- if everything is false it invokes the procedure given in the second argument.
 whens :: [(BoolSig, SE ())] -> SE () -> SE ()
@@ -682,39 +683,12 @@ whens bodies el = case bodies of
         let bodiesE = fmap (toBlock . unSE . snd) bodies
             elE = toBlock $ unSE el
         pure $ D.whens IfKr (zip checksE bodiesE) elE
-{-
-        ifBegin (fst a)
-        snd a
-        elseIfs as
-        elseBegin
-        el
-        foldl1 (>>) $ replicate (length bodies) ifEnd
-    where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBegin p >> body)
--}
-
-{-
-ifBegin :: BoolSig -> SE ()
-ifBegin a = fromDep_ $ D.ifBegin IfKr =<< lift (toGE a)
-
-ifEnd :: SE ()
-ifEnd = fromDep_ D.ifEnd
-
-elseBegin :: SE ()
-elseBegin = fromDep_ D.elseBegin
--}
 
 -- | Invokes the given procedure if the boolean signal is true.
 whenD1 :: BoolD -> SE () -> SE ()
 whenD1 xp body = case xp of
     PrimBoolD p -> if p then body else return ()
-    _             -> fromDep_ $ do
-      pE <- lift $ toGE xp
-      D.when1 IfIr pE (toBlock $ unSE body)
-  {-
-        ifBeginD xp
-        body
-        ifEnd
-  -}
+    _           -> ifBlockBy (D.when1 IfIr) xp body
 
 -- | The chain of @when1@s. Tests all the conditions in sequence
 -- if everything is false it invokes the procedure given in the second argument.
@@ -726,64 +700,18 @@ whenDs bodies el = case bodies of
         let bodiesE = fmap (toBlock . unSE . snd) bodies
             elE = toBlock $ unSE el
         pure $ D.whens IfIr (zip checksE bodiesE) elE
-{-
-        ifBeginD (fst a)
-        snd a
-        elseIfs as
-        elseBegin
-        el
-        foldl1 (>>) $ replicate (length bodies) ifEnd
-    where elseIfs = mapM_ (\(p, body) -> elseBegin >> ifBeginD p >> body)
--}
-
-{-
-ifBeginD :: BoolD -> SE ()
-ifBeginD a = fromDep_ $ D.ifBegin IfIr =<< lift (toGE a)
--}
--- elseIfBegin :: BoolSig -> SE ()
--- elseIfBegin a = fromDep_ $ D.elseIfBegin =<< lift (toGE a)
 
 untilDo :: BoolSig -> SE () -> SE ()
-untilDo p body = do
-    untilBegin p
-    body
-    untilEnd
+untilDo = ifBlockBy (D.untilBlock IfKr)
 
 whileDo :: BoolSig -> SE () -> SE ()
-whileDo p body = do
-    whileBegin p
-    body
-    whileEnd
-
-whileBegin :: BoolSig -> SE ()
-whileBegin a = fromDep_ $ D.whileBegin IfKr =<< lift (toGE a)
-
-whileEnd :: SE ()
-whileEnd = fromDep_ D.whileEnd
-
-untilBegin :: BoolSig -> SE ()
-untilBegin a = fromDep_ $ D.untilBegin IfKr =<< lift (toGE a)
-
-untilEnd :: SE ()
-untilEnd = fromDep_ D.untilEnd
+whileDo = ifBlockBy (D.whileBlock IfKr)
 
 untilDoD :: BoolD -> SE () -> SE ()
-untilDoD p body = do
-    untilBeginD p
-    body
-    untilEnd
+untilDoD = ifBlockBy (D.untilBlock IfIr)
 
 whileDoD :: BoolD -> SE () -> SE ()
-whileDoD p body = do
-    whileBeginD p
-    body
-    whileEnd
-
-whileBeginD :: BoolD -> SE ()
-whileBeginD a = fromDep_ $ D.whileBegin IfIr =<< lift (toGE a)
-
-untilBeginD :: BoolD -> SE ()
-untilBeginD a = fromDep_ $ D.untilBegin IfIr =<< lift (toGE a)
+whileDoD = ifBlockBy (D.whileBlock IfIr)
 
 -- | Creates a constant boolean signal.
 boolSig :: BoolD -> BoolSig

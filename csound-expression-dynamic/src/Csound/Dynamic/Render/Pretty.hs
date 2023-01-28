@@ -159,11 +159,15 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     TfmArr isInit v op xs                  -> tab $ ppOpc (ppTfmArrOut isInit v) (infoName op) xs
 
     IfBegin _ a                     -> succTab          $ text "if "     <> ppCond a <> text " then"
-    IfBlock _ cond (CodeBlock th) -> tab $ ppIf res (ppCond cond)  th th
+    IfBlock _ cond (CodeBlock th) ->  tab $ ppIf1 res (ppCond cond)  th
     IfElseBlock _ cond (CodeBlock th) (CodeBlock el) -> tab $ ppIf res (ppCond cond)  th el
 --     ElseIfBegin a                   -> left >> (succTab $ text "elseif " <> ppCond a <> text " then")
     ElseBegin                       -> left >> (succTab $ text "else")
     IfEnd                           -> left >> (tab     $ text "endif")
+    UntilBlock _ cond (CodeBlock th) -> tab $ ppUntil res (ppCond cond)  th
+    WhileBlock _ cond (CodeBlock th) -> tab $ ppWhile res (ppCond cond)  th
+    WhileRefBlock var (CodeBlock th) -> tab $ ppWhileRef res var th
+
     UntilBegin _ a                  -> succTab          $ text "until " <> ppCond a <> text " do"
     UntilEnd                        -> left >> (tab     $ text "od")
     WhileBegin _ a                  -> succTab          $ text "while " <> ppCond a <> text " do"
@@ -266,6 +270,26 @@ ppIf res p t e = vcat
     , text "    " <> res <+> char '=' <+> t
     , text "else"
     , text "    " <> res <+> char '=' <+> e
+    , text "endif"
+    ]
+
+ppIf1, ppWhile, ppUntil :: Doc -> Doc -> Doc -> Doc
+
+ppIf1 = ppIfBy "if"
+ppWhile = ppIfBy "while"
+ppUntil = ppIfBy "until"
+
+ppIfBy :: Text -> Doc -> Doc -> Doc -> Doc
+ppIfBy leadTag res p t = vcat
+    [ textStrict leadTag <+> p <+> text "then"
+    , text "    " <> res <+> char '=' <+> t
+    , text "endif"
+    ]
+
+ppWhileRef :: Doc -> Var -> Doc -> Doc
+ppWhileRef res p t = vcat
+    [ textStrict "while" <+> ppVar p <+> text "then"
+    , text "    " <> res <+> char '=' <+> t
     , text "endif"
     ]
 
@@ -389,7 +413,6 @@ ppE = foldFix go
 
     ppHash = textStrict . Text.take 4 . Text.decodeUtf8 . Base64.encode
 
-
     fromExp :: Doc -> RatedExp Doc -> Doc
     fromExp info RatedExp{..} = indent 2 $ post $
       case ratedExpExp of
@@ -412,11 +435,8 @@ ppE = foldFix go
         TfmArr _isInit _v _info _args -> undefined
 
         IfBegin rate cond -> hsep ["IF", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
-        IfBlock rate cond (CodeBlock th) ->
-          ppFun (hsep ["IF-BLOCK", ppRate $ fromIfRate rate, ppCond $ fmap pp cond ])
-            [ pp th
-            , "END-BLOCK"
-            ]
+
+        IfBlock rate cond (CodeBlock th) -> ppIfBlockBy "IF-BLOCK" rate cond th
         IfElseBlock rate cond (CodeBlock th) (CodeBlock el) ->
           ppFun (hsep ["IF-BLOCK", ppRate $ fromIfRate rate, ppCond $ fmap pp cond ])
             [ pp th
@@ -431,6 +451,11 @@ ppE = foldFix go
         WhileBegin rate cond -> hsep ["WHILE", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
         WhileRefBegin v -> hsep ["WHILE_REF", ppVar v]
         WhileEnd -> "END_WHILE"
+
+        UntilBlock rate cond (CodeBlock th) -> ppIfBlockBy "UNTIL-BLOCK" rate cond th
+        WhileBlock rate cond (CodeBlock th) -> ppIfBlockBy "WHILE-BLOCK" rate cond th
+        WhileRefBlock var (CodeBlock th) -> ppWhileRefBlock var th
+
         Verbatim txt -> ppFun "VERBATIM" [textStrict txt]
         Starts -> "STARTS"
         Seq a b -> vcat ["SEQ", pp a, pp b]
@@ -443,6 +468,18 @@ ppE = foldFix go
         ReadMacrosString _name -> undefined
       where
         post a = hsep [hcat ["{",info, "}:"], a]
+
+    ppIfBlockBy leadTag rate cond th =
+      ppFun (hsep [leadTag, ppRate $ fromIfRate rate, ppCond $ fmap pp cond ])
+        [ pp th
+        , "END-BLOCK"
+        ]
+
+    ppWhileRefBlock var th =
+      ppFun (hsep ["WHILE-REF-BLOCK", ppVar var])
+        [ pp th
+        , "END-BLOCK"
+        ]
 
     ppTfm info args = ppFun (textStrict $ infoName info) (fmap pp args)
 
