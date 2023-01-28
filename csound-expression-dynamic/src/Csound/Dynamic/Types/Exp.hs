@@ -10,6 +10,7 @@
 module Csound.Dynamic.Types.Exp(
     E, RatedExp(..), isEmptyExp,
     ratedExp, noRate, withRate, setRate,
+    toArrRate, removeArrRate,
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
@@ -314,7 +315,27 @@ data Rate   -- rate:
     | Fr    -- spectrum (for pvs opcodes)
     | Wr    -- special spectrum
     | Tvar  -- I don't understand what it is (fix me) used with Fr
+    | ArArr -- array rates
+    | KrArr
+    | IrArr
+    | SrArr
     deriving (Show, Eq, Ord, Enum, Bounded, Generic)
+
+toArrRate :: Rate -> Rate
+toArrRate = \case
+  Ar -> ArArr
+  Kr -> KrArr
+  Ir -> IrArr
+  Sr -> SrArr
+  other -> other
+
+removeArrRate :: Rate -> Rate
+removeArrRate = \case
+  ArArr -> Ar
+  KrArr -> Kr
+  IrArr -> Ir
+  SrArr -> Sr
+  other -> other
 
 -- Opcode type signature. Opcodes can produce single output (SingleRate) or multiple outputs (MultiRate).
 -- In Csound opcodes are often have several signatures. That is one opcode name can produce signals of the

@@ -383,7 +383,7 @@ ppRatedVar :: R.Var -> Doc
 ppRatedVar v = ppRate (R.varType v) <> int (R.varId v)
 
 ppRate :: Rate -> Doc
-ppRate x = case x of
+ppRate x = case removeArrRate x of
     Sr -> char 'S'
     _  -> phi x
     where phi = textStrict . Text.toLower . Text.pack . show

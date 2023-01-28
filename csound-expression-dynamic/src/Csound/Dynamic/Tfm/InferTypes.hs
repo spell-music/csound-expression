@@ -476,7 +476,7 @@ inferIter opts (Stmt lhs rhs) =
 
     onInitPureArr outRate processingRate initVals = do
       typedInits <- mapM (mapM (getVar initRate)) initVals
-      save outRate (InitPureArr outRate processingRate typedInits)
+      save (toArrRate outRate) (InitPureArr outRate processingRate typedInits)
       where
         initRate = fromIfRate processingRate
 
@@ -486,7 +486,6 @@ inferIter opts (Stmt lhs rhs) =
       save outRate (ReadPureArr outRate processingRate typedArr typedIndex)
       where
         initRate = fromIfRate processingRate
-
 
     -------------------------------------------------------------
     -- generic funs
