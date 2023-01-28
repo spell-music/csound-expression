@@ -193,6 +193,12 @@ data MainExp a
     | WriteArr !Var !(ArrIndex a) !a
     | WriteInitArr !Var !(ArrIndex a) !a
     | TfmArr !IsArrInit !Var !Info ![a]
+    -- | inits 1-dimensional read only array (uses fillaray)
+    -- args: rateOfTheOutput processingRate initValues
+    | InitPureArr !Rate !IfRate ![a]
+    -- | Reads read only array with index
+    -- args: rateOfTheOutput processingRate array index
+    | ReadPureArr !Rate !IfRate !a !a
     -- | Imperative If-then-else
     | IfBlock !IfRate !(CondInfo a) (CodeBlock a)
     | IfElseBlock !IfRate !(CondInfo a) (CodeBlock a) (CodeBlock a)

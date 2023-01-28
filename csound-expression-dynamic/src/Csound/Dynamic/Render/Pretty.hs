@@ -150,13 +150,16 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     InitVar v a                     -> tab $ ppOpc (ppVar v) "init" [a]
     ReadVar v                       -> tab $ res $= ppVar v
 
-    InitArr v as                    -> tab $ ppOpc (ppArrVar (length as) v) "init" as
+    InitArr v as                    -> tab $ ppOpc (ppArrVar (length as) (ppVar v)) "init" as
     ReadArr v as                    -> tab $ if (varRate v /= Sr) then res $= ppReadArr v as else res <+> text "strcpy" <+> ppReadArr v as
     WriteArr v as b                 -> tab $ ppWriteArr v as b
     WriteInitArr v as b             -> tab $ ppWriteInitArr v as b
     TfmArr isInit v op [a,b]| isInfix  op  -> tab $ ppTfmArrOut isInit v <+> binary (infoName op) a b
     TfmArr isInit v op args | isPrefix op  -> tab $ ppTfmArrOut isInit v <+> prefix (infoName op) args
     TfmArr isInit v op xs                  -> tab $ ppOpc (ppTfmArrOut isInit v) (infoName op) xs
+
+    InitPureArr _outRate _procRate initVals -> tab $ ppOpc (ppArrVar 1 res) "fillarray" initVals
+    ReadPureArr outRate _procRate arr index -> tab $ if (outRate /= Sr) then res $= ppReadPureArr arr [index] else res <+> text "strcpy" <+> ppReadPureArr arr [index]
 
     IfBegin _ a                     -> succTab          $ text "if "     <> ppCond a <> text " then"
     IfBlock _ cond (CodeBlock th) ->  tab $ ppIf1 res (ppCond cond)  th
@@ -210,11 +213,14 @@ ppTfmArrOut isInit v = ppVar v <> (if isInit then (text "[]") else empty)
 ppArrIndex :: Var -> [Doc] -> Doc
 ppArrIndex v as = ppVar v <> (hcat $ fmap brackets as)
 
-ppArrVar :: Int -> Var -> Doc
-ppArrVar n v = ppVar v <> (hcat $ replicate n $ text "[]")
+ppArrVar :: Int -> Doc -> Doc
+ppArrVar n v = v <> (hcat $ replicate n $ text "[]")
 
 ppReadArr :: Var -> [Doc] -> Doc
 ppReadArr v as = ppArrIndex v as
+
+ppReadPureArr :: Doc -> [Doc] -> Doc
+ppReadPureArr v as = v <> (hcat $ fmap brackets as)
 
 ppWriteArr :: Var -> ArrIndex Doc -> Doc -> Doc
 ppWriteArr v as b = ppArrIndex v as <+> equalsWord <+> b
@@ -428,11 +434,15 @@ ppE = foldFix go
         ReadVar v -> "ReadVar" <+> ppVar v
         WriteVar v a -> ppVar v $= pp a
 
+        -- TODO
         InitArr _v _size -> undefined
         ReadArr _v _index -> undefined
         WriteArr _v _index _ -> undefined
         WriteInitArr _v _index _ -> undefined
         TfmArr _isInit _v _info _args -> undefined
+
+        InitPureArr _outRate _procRate _vals -> undefined
+        ReadPureArr _outRate _procRate _arr _index -> undefined
 
         IfBegin rate cond -> hsep ["IF", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
 

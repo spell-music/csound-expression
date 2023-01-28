@@ -24,7 +24,7 @@ module Csound.Dynamic.Build (
     setSr, setKsmps, setNchnls, setNchnls_i, setKr, setZeroDbfs,
 
     -- * Arrays
-    opcsArr, infOprArr
+    opcsArr, infOprArr, initPureArr, readPureArr
 ) where
 
 import qualified Data.Map as M(fromList, toList)
@@ -53,11 +53,14 @@ oprPrefix name signature = Info name signature Prefix
 oprInfix :: Name -> Signature -> Info
 oprInfix name signature = Info name signature Infix
 
+toArgs :: [Rate] -> [E] -> [PrimOr E]
+toArgs = zipWith toPrimOrTfm
+
 tfm :: Info -> [E] -> E
-tfm info args = noRate $ Tfm info $ zipWith toPrimOrTfm (getInfoRates info) args
+tfm info args = noRate $ Tfm info $ toArgs (getInfoRates info) args
 
 tfmArr :: Monad m => IsArrInit -> Var -> Info -> [E] -> DepT m ()
-tfmArr isArrInit var info args = depT_ $ noRate $ TfmArr isArrInit var info $ zipWith toPrimOrTfm (getInfoRates info) args
+tfmArr isArrInit var info args = depT_ $ noRate $ TfmArr isArrInit var info $ toArgs (getInfoRates info) args
 
 getInfoRates :: Info -> [Rate]
 getInfoRates a = getInRates $ infoSignature a
@@ -144,6 +147,16 @@ opcsArr isArrInit out name signature = tfmArr isArrInit out (opcPrefix name $ sp
 
 infOprArr :: Monad m => IsArrInit -> Var -> Name -> E -> E -> DepT m ()
 infOprArr isArrInit out name a b = tfmArr isArrInit out (oprInfix name $ spec1 [(Ar, [Ar, Ar]), (Kr, [Kr, Kr]), (Ir, [Ir, Ir])]) [a, b]
+
+initPureArr :: Rate -> IfRate -> [E] -> E
+initPureArr outRate procRate initVals =
+  noRate $ InitPureArr outRate procRate $ toArgs (repeat initRate) initVals
+  where
+    initRate = fromIfRate procRate
+
+readPureArr :: Rate -> IfRate -> E -> E -> E
+readPureArr outRate procRate arr index =
+  noRate $ ReadPureArr outRate procRate (toPrimOr arr) (toPrimOrTfm (fromIfRate procRate) index)
 
 -- multiple output
 

@@ -218,6 +218,10 @@ inferIter opts (Stmt lhs rhs) =
     WriteInitArr v arrSize initVal -> onWriteInitArr v arrSize initVal
     TfmArr isArrInit v info args -> onTfmArr isArrInit v info args
 
+    -- | Pure arrays (read-only)
+    InitPureArr outRate procRate initVals -> onInitPureArr outRate procRate initVals
+    ReadPureArr outRate procRate inArr index -> onReadPureArr outRate procRate inArr index
+
     -- | read macros arguments
     InitMacrosInt name n -> saveProcedure (InitMacrosInt name n)
     InitMacrosDouble name dbl -> saveProcedure (InitMacrosDouble name dbl)
@@ -466,6 +470,23 @@ inferIter opts (Stmt lhs rhs) =
             toError msg = error (unwords [msg, "Found on array opcode", Text.unpack $ infoName info])
 
         getTypedArrArgs ins = zipWithM applyArg inRates ins
+
+    -------------------------------------------------------------
+    -- pure (read-only) arrays
+
+    onInitPureArr outRate processingRate initVals = do
+      typedInits <- mapM (mapM (getVar initRate)) initVals
+      save outRate (InitPureArr outRate processingRate typedInits)
+      where
+        initRate = fromIfRate processingRate
+
+    onReadPureArr outRate processingRate arr index = do
+      typedIndex <- mapM (getVar initRate) index
+      typedArr <- mapM (getVar outRate) arr
+      save outRate (ReadPureArr outRate processingRate typedArr typedIndex)
+      where
+        initRate = fromIfRate processingRate
+
 
     -------------------------------------------------------------
     -- generic funs
