@@ -79,6 +79,12 @@ alias cei='stack exec ghci --stack-yaml /home/anton/dev/hs/csound/csound-express
 It launches the ghci interpreter and loads the needed default modules to the interpreter session.
 See file `scripts/default.ghci` for defaults.
 
+Also we can add to this command `-interactive-print=Csound.Base.dac`.
+By default interpreter prints values to console, but when we work we sound we would like
+to listen to result. And with this line we can substitute the default `print` function
+with `dac` which sends the sound to speakers.
+
+
 The first sound
 ---------------------------------------------------------
 
