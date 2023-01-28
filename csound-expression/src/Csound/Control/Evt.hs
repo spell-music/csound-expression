@@ -137,7 +137,8 @@ splitToggle = swap . partitionE ((==* 0) . sig)
 -- given pair of signals. Events happens when any signal changes.
 snaps2 :: Sig2 -> Evt (D, D)
 snaps2 (x, y) = snapshot const (x, y) triggerSig
-    where triggerSig = sigToEvt $ changed [x, y]
+  where
+    triggerSig = sigToEvt $ changed [x, y]
 
 ----------------------------------------------------------------------
 -- higher level evt-funs
@@ -153,11 +154,11 @@ cycleE vals evts = listAt vals $ range (0, int $ length vals) evts
 -- A value is taken with index.
 listAt :: (Tuple a, Arg a) => [a] -> Evt Sig -> Evt a
 listAt vals evt
-    | null vals = mempty
-    | otherwise = fmap (atArg vals) $ filterE withinBounds evt
-    where
-        withinBounds x = (x >=* 0) &&* (x `lessThan` sig len)
-        len = int $ length vals
+  | null vals = mempty
+  | otherwise = fmap (atArg vals) $ filterE withinBounds evt
+  where
+    withinBounds x = (x >=* 0) &&* (x `lessThan` sig len)
+    len = int $ length vals
 
 -- |
 --

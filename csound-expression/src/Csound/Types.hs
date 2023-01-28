@@ -122,11 +122,17 @@ import Csound.Typed.Control
 
 -- | Gets an init-rate value from the list by index.
 atArg :: (Tuple a) => [a] -> Sig -> a
-atArg as ind = guardedArg (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
+atArg as ind = readPureArr arr ind
+  where
+    arr = newPureArr as
+-- guardedArg (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
 -- | Gets an control/audio-rate value from the list by index.
 atTuple :: (Tuple a) => [a] -> Sig -> a
-atTuple as ind = guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
+atTuple as ind = readPureArr arr ind
+  where
+    arr = newPureArr as
+-- guardedTuple (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
 
 
 whenElseD :: BoolD -> SE () -> SE () -> SE ()

@@ -1,30 +1,29 @@
 module Csound.Dynamic.Build (
+  -- * Expression tree
+  -- | Working with expression tree
+  toExp, onExp,
 
-    -- * Expression tree
-    -- | Working with expression tree
-    toExp, onExp,
+  -- * Rates
+  -- * Queries
+  getRates, isMultiOutSignature, getPrimUnsafe,
 
-    -- * Rates
-    -- * Queries
-    getRates, isMultiOutSignature, getPrimUnsafe,
+  -- * Constructors
+  -- | Basic constructors
+  prim, opcPrefix, oprPrefix, oprInfix,
+  numExp1,
+  tfm, tfmNoInlineArgs, pn, withInits,
+  double, int, str, verbatim, instrIdE,
+  inlineVar, gInit, gInitDouble,
 
-    -- * Constructors
-    -- | Basic constructors
-    prim, opcPrefix, oprPrefix, oprInfix,
-    numExp1,
-    tfm, tfmNoInlineArgs, pn, withInits,
-    double, int, str, verbatim, instrIdE,
-    inlineVar, gInit, gInitDouble,
+  -- ** Opcodes constructors
+  Spec1, spec1, opcs, opcsNoInlineArgs, opr1, opr1k, infOpr, oprBy,
+  Specs, specs, MultiOut, mopcs, mo,
 
-    -- ** Opcodes constructors
-    Spec1, spec1, opcs, opcsNoInlineArgs, opr1, opr1k, infOpr, oprBy,
-    Specs, specs, MultiOut, mopcs, mo,
+  -- * Global init statements
+  setSr, setKsmps, setNchnls, setNchnls_i, setKr, setZeroDbfs,
 
-    -- * Global init statements
-    setSr, setKsmps, setNchnls, setNchnls_i, setKr, setZeroDbfs,
-
-    -- * Arrays
-    opcsArr, infOprArr, initPureArr, readPureArr
+  -- * Arrays
+  opcsArr, infOprArr, initPureArr, readPureArr
 ) where
 
 import qualified Data.Map as M(fromList, toList)
@@ -64,10 +63,11 @@ tfmArr isArrInit var info args = depT_ $ noRate $ TfmArr isArrInit var info $ to
 
 getInfoRates :: Info -> [Rate]
 getInfoRates a = getInRates $ infoSignature a
-    where
-        getInRates x = case x of
-            SingleRate m    -> fmap minimum $ transpose $ fmap snd $ M.toList m
-            MultiRate _ ins -> ins
+  where
+    getInRates x =
+      case x of
+        SingleRate m    -> fmap minimum $ transpose $ fmap snd $ M.toList m
+        MultiRate _ ins -> ins
 
 tfmNoInlineArgs :: Info -> [E] -> E
 tfmNoInlineArgs info args = noRate $ Tfm info $ fmap (PrimOr . Right) args
@@ -82,12 +82,13 @@ pn = prim . P
 
 withInits :: E -> [E] -> E
 withInits a es = onExp phi a
-    where phi x = case x of
-            -- for opcodes with single output
-            Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr es))
-            -- for opcodes with multiple outputs
-            Select r n expr -> Select r n $ fmap (\t -> withInits t es) expr
-            _        -> x
+  where
+    phi = \case
+      -- for opcodes with single output
+      Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr es))
+      -- for opcodes with multiple outputs
+      Select r n expr -> Select r n $ fmap (\t -> withInits t es) expr
+      x        -> x
 
 -- | Converts Haskell's doubles to Csound's doubles
 double :: Double -> E
@@ -105,7 +106,8 @@ verbatim :: Monad m => Text -> DepT m ()
 verbatim = stmtOnlyT . Verbatim
 
 instrIdE :: InstrId -> E
-instrIdE x = case x of
+instrIdE x =
+  case x of
     InstrId Nothing  m -> int m
     InstrId (Just _) _ -> error "instrId undefined for fractional InstrIds"
     InstrLabel s -> prim (PrimString s)
@@ -171,27 +173,31 @@ mopcs name signature as = \numOfOuts -> mo numOfOuts $ tfm (opcPrefix name $ spe
 
 mo :: Int -> E -> [E]
 mo n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates
-    where outRates = take n $ getRates $ toExp e
-          e' = onExp (setMultiRate outRates) e
+  where
+    outRates = take n $ getRates $ toExp e
+    e' = onExp (setMultiRate outRates) e
 
-          setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs
-              where ins = case infoSignature info of
-                        MultiRate _ a -> a
-                        _ -> error "Tuple.hs: multiOutsSection -- should be multiOut expression"
-          setMultiRate _ _ = error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"
+    setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs
+        where
+          ins = case infoSignature info of
+              MultiRate _ a -> a
+              _ -> error "Tuple.hs: multiOutsSection -- should be multiOut expression"
+    setMultiRate _ _ = error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"
 
-          select cellId rate expr = withRate rate $ Select rate cellId (PrimOr $ Right expr)
+    select cellId rate expr = withRate rate $ Select rate cellId (PrimOr $ Right expr)
 
 
 getRates :: MainExp a -> [Rate]
-getRates (Tfm info _) = case infoSignature info of
+getRates (Tfm info _) =
+  case infoSignature info of
     MultiRate outs _ -> outs
     _ -> error "Build.hs:getRates - argument should be multiOut"
 getRates _ = error "Build.hs:getRates - argument should be Tfm-expression"
 
 
 isMultiOutSignature :: Signature -> Bool
-isMultiOutSignature x = case x of
+isMultiOutSignature x =
+  case x of
     MultiRate _ _ -> True
     _ -> False
 
@@ -207,7 +213,8 @@ toExp = ratedExpExp . unFix
 
 -- Lifts transformation of main expression
 onExp :: (Exp E -> Exp E) -> E -> E
-onExp f x = case unFix x of
+onExp f x =
+  case unFix x of
     a -> Fix $ a{ ratedExpExp = f (ratedExpExp a) }
 
 ----------------------------------------------------------------

@@ -68,6 +68,3 @@ readPureArrBy procRate vals index = toTuple $ do
   where
     indexRate = D.fromIfRate procRate
     outRates = tupleRates (Proxy @a)
-
-
-

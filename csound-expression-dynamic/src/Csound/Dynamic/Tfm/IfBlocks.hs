@@ -242,6 +242,7 @@ newEnv exprSize exprs = do
       when (isInitExpr expr) $
         UnboxedVector.write isInit (varId $ stmtLhs expr) True
 
+-- | Be sure not to bring initialization expression inside the if-blocks
 isInitExpr :: Stmt Var -> Bool
 isInitExpr expr =
   (varType (stmtLhs expr) == Ir) || checkExpr (ratedExpExp $ stmtRhs expr)
@@ -249,6 +250,8 @@ isInitExpr expr =
     checkExpr = \case
       InitVar _ _ -> True
       InitArr _ _ -> True
+      TfmArr isInit _ _ _ -> isInit
+      InitPureArr _ _ _ -> True
       InitMacrosInt _ _ -> True
       InitMacrosDouble _ _ -> True
       InitMacrosString _ _ -> True
