@@ -417,7 +417,7 @@ ppE = foldFix go
         , maybe mempty pretty ratedExpDepends
         ]
 
-    ppHash = textStrict . Text.take 4 . Text.decodeUtf8 . Base64.encode
+    ppHash = textStrict . Text.take 4 . Text.decodeUtf8 . Base64.encode . unExpHash
 
     fromExp :: Doc -> RatedExp Doc -> Doc
     fromExp info RatedExp{..} = indent 2 $ post $

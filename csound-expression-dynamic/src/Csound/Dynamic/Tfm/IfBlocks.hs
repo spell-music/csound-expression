@@ -488,7 +488,7 @@ redefineIfElseExp thLocalVars elLocalVars th el ifResultId ifRate condInfo IfEls
 toRatedExp :: MainExp (PrimOr a) -> RatedExp a
 toRatedExp expr =
   RatedExp
-    { ratedExpHash = ""
+    { ratedExpHash = ExpHash ""
     , ratedExpDepends = Nothing
     , ratedExpRate = Nothing
     , ratedExpExp = expr

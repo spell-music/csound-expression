@@ -11,6 +11,7 @@ packages:
   # - gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
   - csound-expression-dynamic
   - csound-expression-typed
+  - csound-expression-typed-core
   - csound-expression-opcodes
   - csound-expression
   - csound-sampler

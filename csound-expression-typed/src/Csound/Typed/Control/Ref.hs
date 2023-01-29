@@ -103,7 +103,7 @@ newGlobalCtrlRef t = fmap Ref $ newGlobalVars (fmap toCtrlRate $ tupleRates (Pro
 -- to mutable value but a pair of reader and writer functions.
 globalSensorsSE :: Tuple a => a -> SE (SE a, a -> SE ())
 globalSensorsSE a = do
-    ref <- newRef a
+    ref <- newGlobalRef a
     return $ (readRef ref, writeRef ref)
 
 -- | Allocates a new clearable global mutable value and initializes it with value.

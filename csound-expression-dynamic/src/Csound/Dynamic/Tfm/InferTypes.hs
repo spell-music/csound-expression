@@ -39,7 +39,6 @@ import Data.List qualified as List
 import Control.Monad.Trans.State.Strict
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.ByteString (ByteString)
 import Data.Default
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
@@ -632,8 +631,8 @@ newExp rhs =
     }
 
 -- | On this stage we don't need expression hashes anymore
-ignoreHash :: ByteString
-ignoreHash = ""
+ignoreHash :: ExpHash
+ignoreHash = ExpHash ""
 
 -- | Allocate new var and assign RHS expression to it
 defineVar :: Rate -> RatedExp Var -> Infer s Var

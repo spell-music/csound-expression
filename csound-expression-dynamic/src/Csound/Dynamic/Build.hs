@@ -9,7 +9,7 @@ module Csound.Dynamic.Build (
 
   -- * Constructors
   -- | Basic constructors
-  prim, opcPrefix, oprPrefix, oprInfix,
+  emptyE, prim, opcPrefix, oprPrefix, oprInfix,
   numExp1,
   tfm, tfmNoInlineArgs, pn, withInits,
   double, int, str, verbatim, instrIdE,
@@ -39,6 +39,9 @@ import Data.Text qualified as Text
 
 ------------------------------------------------
 -- basic constructors
+
+emptyE :: E
+emptyE = noRate EmptyExp
 
 prim :: Prim -> E
 prim = noRate . ExpPrim
@@ -75,7 +78,7 @@ tfmNoInlineArgs info args = noRate $ Tfm info $ fmap (PrimOr . Right) args
 inlineVar :: Var -> E
 inlineVar var = Fix $ RatedExp h Nothing Nothing $ ReadVar var
   where
-    h = Cereal.encode var
+    h = ExpHash (Cereal.encode var)
 
 pn :: Int -> E
 pn = prim . P

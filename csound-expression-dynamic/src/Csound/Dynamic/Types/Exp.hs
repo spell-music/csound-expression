@@ -25,6 +25,7 @@ module Csound.Dynamic.Types.Exp(
     IfRate(..), fromIfRate,
     hashE,
     rehashE,
+    ExpHash (..),
 ) where
 
 #if __GLASGOW_HASKELL__ < 710
@@ -47,6 +48,7 @@ import Text.Show.Deriving
 import Data.Text (Text)
 import Data.Serialize qualified as Cereal
 import Data.Serialize.Text ()
+import Data.Hashable
 
 type Name = Text
 type LineNum = Int
@@ -75,7 +77,7 @@ stringInstrId = InstrLabel
 type E = Fix RatedExp
 
 data RatedExp a = RatedExp
-    { ratedExpHash      :: !ByteString
+    { ratedExpHash      :: !ExpHash
        -- ^ expression hash for fast comparison
     , ratedExpRate      :: !(Maybe Rate)
         -- ^ Rate (can be undefined or Nothing,
@@ -96,7 +98,7 @@ instance Ord (RatedExp a) where
 ratedExp :: Maybe Rate -> Exp E -> E
 ratedExp r expr = Fix $ RatedExp h r Nothing expr
   where
-    h = Crypto.hash $ Cereal.encode $ fmap (fmap hashE) expr
+    h = ExpHash $ Crypto.hash $ Cereal.encode $ fmap (fmap hashE) expr
 
 noRate :: Exp E -> E
 noRate = ratedExp Nothing
@@ -104,14 +106,18 @@ noRate = ratedExp Nothing
 withRate :: Rate -> Exp E -> E
 withRate r = ratedExp (Just r)
 
-hashE :: E -> ByteString
+-- | Hash of the expression for fast comparison
+newtype ExpHash = ExpHash { unExpHash :: ByteString }
+  deriving newtype (Eq, Show, Ord, Hashable, Cereal.Serialize)
+
+hashE :: E -> ExpHash
 hashE (Fix expr) = ratedExpHash expr
 
 -- | Call it on every change in underlying expression
 rehashE :: E -> E
 rehashE (Fix expr) = Fix $
   expr
-    { ratedExpHash = Crypto.hash $ Cereal.encode $ fmap hashE expr
+    { ratedExpHash = ExpHash $ Crypto.hash $ Cereal.encode $ fmap hashE expr
     }
 
 -- rate coversion

@@ -1,0 +1,77 @@
+Name:          csound-expression-typed-core
+Version:       0.2.7
+Cabal-Version: >= 1.22
+License:       BSD3
+License-file:  LICENSE
+Author:	       Anton Kholomiov
+Synopsis:      typed core for the library csound-expression
+Stability:     Experimental
+Tested-With:   GHC==7.10
+Build-Type:    Simple
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+
+Description: typed core for library csound-expression. Provides typed core lang for csound
+
+Homepage:        https://github.com/anton-k/csound-expression-typed-core
+Bug-Reports:     https://github.com/anton-k/csound-expression-typed-core/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression-typed
+
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+        base >= 4.10,
+        base < 5,
+        bytestring,
+        ghc-prim,
+        containers,
+        transformers >= 0.3,
+        Boolean >= 0.1.0,
+        colour >= 2.0,
+        data-default,
+        deepseq,
+        NumInstances,
+        filepath,
+        directory,
+        wl-pprint-text >= 1.2.0,
+        csound-expression-dynamic >= 0.3.8,
+        temporal-media >= 0.6.3,
+        hashable,
+        text,
+        data-fix,
+        unordered-containers
+
+
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+    Csound.Typed.Core
+    Csound.Typed.Core.Opcodes
+    Csound.Typed.Core.State
+    Csound.Typed.Core.State.Options
+    Csound.Typed.Core.Types
+    Csound.Typed.Core.Types.Prim
+    Csound.Typed.Core.Types.Prim.D
+    Csound.Typed.Core.Types.Prim.Sig
+    Csound.Typed.Core.Types.Prim.SigSpace
+    Csound.Typed.Core.Types.Prim.Val
+    Csound.Typed.Core.Types.Prim.Tab
+    Csound.Typed.Core.Types.SE
+    Csound.Typed.Core.Types.SE.Ref
+    Csound.Typed.Core.Types.Tuple
+
+    Paths_csound_expression_typed_core
+
+  Default-Language: Haskell2010
+  Default-extensions:
+    FlexibleInstances
+    DerivingStrategies
+    ImportQualifiedPost
+    LambdaCase
+    OverloadedStrings
+    ScopedTypeVariables
+    TypeApplications
+    GeneralizedNewtypeDeriving
