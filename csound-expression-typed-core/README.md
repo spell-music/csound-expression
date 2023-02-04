@@ -148,9 +148,15 @@ That's it. It's all you need to know to start making music with Csound's core.
 Also if you like an easy to use functional approach you can use csound-expression library. 
 Which adds functional model on top of this tiny core. And let's you treat instruments
 like functions from inits to signals and we can also ues FRP-style events and other nice functional
-programming stuff.
+programming stuff. But the core is simple to grasp.
 
-But the core is simple to grasp.
+If two instrument start at the same time the instrument which was defined first is going to be also called first.
+It can be useful to know when you orchestrate communication between instruments with global variables.
+If several instruments send audio to output the audio is summed up from all `outs` inputs. 
+I mean several instruments can send audio at the same time and all audio is going to be summed up.
+Audio range is `[-1, 1]`. Be careful that Csound can produce very loud signals.
+In the csound-expression we use built in limiter to avoid to be damaged by sound. But it's not done
+at the core package.
 
 ### Where to find audio-processors
 
@@ -159,6 +165,17 @@ You can study the hackage docs and every opcode has reference to the original Cs
 In fact those functions are genrated from the Csound's docs. Csound is very feature rich language.
 It has more than 1000 different audio units of high quality. Enjoy!
 I also recommend reading Csound Floss manual to know the Csound's details.
+
+#### How to use global opcodes
+
+Some Csound opcodes are meant to be used in the global header section. 
+To put the statement there use the function:
+
+```
+global :: SE () -> SE ()
+```
+
+It will put the expression in the global scope. In Csound terms it's called instrument 0.
 
 ### Some peculiar stuff
 
@@ -174,3 +191,8 @@ Use only top-level references inside several instruments to share the values!
 
 but thsi property is relaxed in the functional moel of csound-expression package.
 In that package we can define nested instruments.
+
+## What Csound typed adds to the dynamic core
+
+Typed csound adds type-wrappers to distinguish types. Auto allocation of integers for tables
+and way to define instruments and trigger notes that fit into Haskell model. We do it all with SE-monad.
