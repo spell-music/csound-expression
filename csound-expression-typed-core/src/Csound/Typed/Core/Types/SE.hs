@@ -16,9 +16,9 @@ import Csound.Typed.Core.Types.Tuple
 import Control.Monad.Trans.Class (lift)
 import Data.Default
 
-type GE a = DepT Run a
+type Dep a = DepT Run a
 
-newtype SE a = SE { unSE :: GE a }
+newtype SE a = SE { unSE :: Dep a }
   deriving newtype (Functor, Applicative, Monad)
 
 setTotalDur :: Double -> SE a -> SE a

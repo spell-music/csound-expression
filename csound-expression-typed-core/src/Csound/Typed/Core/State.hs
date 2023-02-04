@@ -8,6 +8,7 @@ module Csound.Typed.Core.State
   , setTotalDur
   , insertGlobalExpr
   , initGlobalVar
+  , initGlobalArrVar
   , isGlobalInstr
   , saveGen
   , saveTabs
@@ -103,6 +104,14 @@ initGlobalVar rate initVal = do
   where
     initVarExpr v = noRate $ InitVar v (toPrimOr initVal)
 
+initGlobalArrVar :: Rate -> [E] -> Run Var
+initGlobalArrVar rate sizes = do
+  var <- getFreshGlobalVar rate
+  insertGlobalExpr $ initVarExpr var
+  pure var
+  where
+    initVarExpr v = noRate $ InitArr v (fmap toPrimOr sizes)
+
 isGlobalInstr :: Run Bool
 isGlobalInstr = Run $ gets stIsGlobal
 
@@ -138,6 +147,9 @@ globalConstants opt = execDepT $ do
   setNchnls   $ Options.defNchnls opt
   setZeroDbfs 1
   maybe (return ()) setNchnls_i  (Options.csdNchnlsIn opt)
+  jackos
+  where
+    jackos = maybe (return ()) (verbatim . Options.renderJacko) $ Options.csdJacko opt
 
 -----------------------------------------------------------------------------
 -- internal state

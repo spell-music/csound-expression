@@ -32,7 +32,6 @@ res = do
       where
         ares = linseg [a, 1, a] * oscil 1 220 (sines [1])
 
-
 pureSine :: SE ()
 pureSine = do
   instr1 <- newInstr sineInstr

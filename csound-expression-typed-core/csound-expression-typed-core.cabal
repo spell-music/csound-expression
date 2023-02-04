@@ -45,7 +45,6 @@ Library
         data-fix,
         unordered-containers
 
-
   Hs-Source-Dirs:      src/
   Exposed-Modules:
     Csound.Typed.Core
@@ -58,11 +57,14 @@ Library
     Csound.Typed.Core.Types.Prim.Bool
     Csound.Typed.Core.Types.Prim.D
     Csound.Typed.Core.Types.Prim.Sig
-    Csound.Typed.Core.Types.Prim.SigSpace
     Csound.Typed.Core.Types.Prim.Val
+    Csound.Typed.Core.Types.Prim.Spec
     Csound.Typed.Core.Types.Prim.Str
     Csound.Typed.Core.Types.Prim.Tab
+    Csound.Typed.Core.Types.Array
+    Csound.Typed.Core.Types.PureArray
     Csound.Typed.Core.Types.SE
+    Csound.Typed.Core.Types.SE.Logic
     Csound.Typed.Core.Types.SE.Ref
     Csound.Typed.Core.Types.Tuple
 
@@ -71,6 +73,7 @@ Library
   Default-Language: Haskell2010
   Default-extensions:
     FlexibleInstances
+    FlexibleContexts
     DerivingStrategies
     ImportQualifiedPost
     LambdaCase

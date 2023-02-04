@@ -1,5 +1,5 @@
 {-# Language AllowAmbiguousTypes #-}
--- | Tuples of Csound values
+-- | Tuples of values
 module Csound.Typed.Core.Types.Tuple
   ( Tuple (..), Arg
   , fromTuple
@@ -89,6 +89,7 @@ instance Tuple Sig where { tupleMethods = primTuple Ar }
 instance Tuple D   where { tupleMethods = primTuple Ir }
 instance Tuple Tab where { tupleMethods = primTuple Ir }
 instance Tuple Str where { tupleMethods = primTuple Sr }
+instance Tuple Spec where { tupleMethods = primTuple Ir }
 instance Tuple InstrId where { tupleMethods = primTuple Ir }
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where
