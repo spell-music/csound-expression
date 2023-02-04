@@ -67,6 +67,3 @@ event b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE b2 <*> u
 event_i ::  Str -> InstrId -> D -> D -> [D] -> SE ()
 event_i b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
     where f a1 a2 a3 a4 a5 = opcs "event_i" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
-
-
-

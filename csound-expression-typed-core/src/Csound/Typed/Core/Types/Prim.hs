@@ -1,33 +1,68 @@
+-- | Primitive Csound types
 module Csound.Typed.Core.Types.Prim
-  ( Sig (..)
-  , D (..)
-  , Str (..)
-  , InstrId (..)
+  ( InstrId (..)
+  , SigOrD
   , module X
+  -- * Converters
+  , sig
+  -- * Constants
+  , idur
+  , getSampleRate
+  , getControlRate
+  , getBlockSize
+  , getZeroDbfs
+  -- * Utils
+  , ceil'
   ) where
 
-
-import Data.String
-
 import Csound.Typed.Core.State
-import Csound.Dynamic (E)
+import Csound.Dynamic (E, Name, Rate (..))
 import Csound.Dynamic qualified as Dynamic
+import Csound.Typed.Core.Types.Prim.Bool as X
 import Csound.Typed.Core.Types.Prim.D as X
 import Csound.Typed.Core.Types.Prim.Sig as X
 import Csound.Typed.Core.Types.Prim.Tab as X
 import Csound.Typed.Core.Types.Prim.Val as X
+import Csound.Typed.Core.Types.Prim.Str as X
 
-newtype Str = Str { unStr :: Run E }
+class Val a => SigOrD a where
+
+instance SigOrD Sig
+instance SigOrD D
 
 newtype InstrId = InstrId { unInstrId :: Run E }
-
-instance Val Str where
-  fromE = Str
-  toE   = unStr
 
 instance Val InstrId where
   fromE = InstrId
   toE   = unInstrId
 
-instance IsString Str where
-  fromString = fromE . pure . Dynamic.prim . Dynamic.PrimString . fromString
+-------------------------------------------------------------------------------
+-- converters
+
+sig :: D -> Sig
+sig (D a) = Sig a
+
+ceil' :: D -> D
+ceil' = liftE Dynamic.ceilE
+
+-------------------------------------------------------------------------------
+-- constants
+
+-- | Querries a total duration of the note. It's equivallent to Csound's @p3@ field.
+idur :: D
+idur = fromE $ pure $ Dynamic.pn 3
+
+getSampleRate :: D
+getSampleRate = readConstant "sr"
+
+getControlRate :: D
+getControlRate = readConstant "kr"
+
+getBlockSize :: D
+getBlockSize = readConstant "ksmps"
+
+getZeroDbfs :: D
+getZeroDbfs =  readConstant "0dbfs"
+
+readConstant :: Val a => Name -> a
+readConstant name = fromE $ pure $ Dynamic.readOnlyVar (Dynamic.VarVerbatim Ir name)

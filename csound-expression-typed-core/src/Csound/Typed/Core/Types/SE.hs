@@ -3,6 +3,7 @@ module Csound.Typed.Core.Types.SE
   , newInstr
   , setTotalDur
   , renderSE
+  , global
   ) where
 
 import Csound.Dynamic (DepT, E)
@@ -32,7 +33,7 @@ newInstr instr = SE $ lift $ State.localy $ do
   where
     renderBody :: (a -> SE ()) -> Run E
     renderBody instrBody = Dynamic.execDepT $ unSE $
-      instrBody (toTuple $ pure $ take (tupleArity @a) $ Dynamic.pn <$> [3..])
+      instrBody (toTuple $ pure $ take (tupleArity @a) $ Dynamic.pn <$> [4..])
 
 toInstrId :: Dynamic.InstrId -> InstrId
 toInstrId = fromE . pure . Dynamic.instrIdE
@@ -42,3 +43,10 @@ renderSE config (SE act) = fmap (Dynamic.renderCsd def) $ State.exec config $ do
   mainInstr <- Dynamic.execDepT act
   instrId <- State.insertInstr mainInstr
   State.insertNote instrId (0, -1, [])
+
+-- | Adds expression to the global scope.
+-- It is instrument 0 in csound terms.
+global :: SE () -> SE ()
+global (SE expr) = SE $ lift $ do
+  ge <- Dynamic.execDepT expr
+  State.insertGlobalExpr ge

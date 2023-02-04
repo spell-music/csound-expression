@@ -1,6 +1,7 @@
+
 {-# Language LambdaCase #-}
 -- | Creating Function Tables (Buffers)
-module Csound.Tab (
+module Csound.Typed.Core.Types.Gen (
     -- | If you are not familliar with Csound's conventions
     -- you are pobably not aware of the fact that for efficiency reasons Csound requires that table size is equal
     -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the
@@ -19,7 +20,7 @@ module Csound.Tab (
 
     -- * Create new tables to write/update data
 
-    newTab, newGlobalTab, tabSizeSeconds, tabSizePower2, tabSizeSecondsPower2,
+    {- newTab, newGlobalTab, -} tabSizeSeconds, tabSizePower2, tabSizeSecondsPower2,
 
     -- * Read from files
     WavChn(..), Mp3Chn(..),
@@ -187,22 +188,34 @@ module Csound.Tab (
 
 import Control.Arrow(second)
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Reader
 import Csound.Dynamic hiding (int, when1, whens, genId, pn)
+import Csound.Dynamic qualified as Dynamic
 
 import Data.Default
-import Csound.Typed
+import Csound.Typed.Core.Types.Prim
+import Csound.Typed.Core.Types.SE
 import Data.Maybe
 import Data.Boolean
 import Data.Text (Text)
+import Csound.Typed.Core.State.Options
+
+withTab :: Tab -> (Int -> PreTab) -> Tab
+withTab tab cont = Tab $ do
+  tabId <- renderTab tab
+  fmap Dynamic.int $ renderTab $ TabPre $ cont tabId
+
+withTabs :: [Tab] -> ([Int] -> PreTab) -> Tab
+withTabs tabs cont = Tab $ do
+  tabIds <- mapM renderTab tabs
+  fmap Dynamic.int $ renderTab $ TabPre $ cont tabIds
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
 noTab :: Tab
-noTab = fromE (-1)
+noTab = fromE $ pure (-1)
 
 -- | Detects that table is no tab (rebndered as -1)
 isNoTab :: Tab -> BoolD
-isNoTab = fromGE . fmap (==* (-1)) . toGE
+isNoTab = fromE . fmap (==* (-1)) . toE
 
 {-
 -- | Creates a new table. The Tab could be used while the instrument
@@ -221,8 +234,8 @@ newGlobalTab size = do
     identifier <- getNextGlobalGenId
     ref <- newGlobalRef (0 :: D)
     tabId <- ftgenonce 0 (int identifier) size 7 0 [size, 0]
-    writeRef ref (fromGE $ toGE tabId)
-    fmap (fromGE . toGE) $ readRef ref
+    writeRef ref (fromE $ toE tabId)
+    fmap (fromE . toE) $ readRef ref
 -}
 
 -- | Calculates the number of samples needed to store the given amount of seconds.
@@ -232,7 +245,7 @@ tabSizeSeconds x = x * getSampleRate
 
 -- | Calculates the closest power of two value for a given size.
 tabSizePower2 :: D -> D
-tabSizePower2 x = 2 ** (ceil' $ logBase 2 x)
+tabSizePower2 = liftE (\x -> 2 ** (Dynamic.ceilE $ logBase 2 x))
 
 -- | Calculates the closest power of two value in samples for a given size in seconds.
 tabSizeSecondsPower2 :: D -> D
@@ -259,7 +272,7 @@ fromWavChn x = case x of
 --
 -- with channel argument we can read left, right or both channels.
 wavs :: String -> Double -> WavChn -> Tab
-wavs filename skiptime channel = preTab (SizePlain 0) idWavs
+wavs filename skiptime channel = TabPre $ preTab (SizePlain 0) idWavs
     (FileAccess filename [skiptime, format, fromIntegral $ fromWavChn channel])
     where format = 0
 
@@ -298,7 +311,7 @@ wavRight file = wavs file 0 WavRight
 -- format is: 1 - for mono files, 2 - for stereo files, 3 - for left channel of stereo file,
 -- 4 for right channel of stereo file
 mp3s :: String -> Double -> Mp3Chn -> Tab
-mp3s filename skiptime channel = preTab (SizePlain 0) idMp3s
+mp3s filename skiptime channel = TabPre $ preTab (SizePlain 0) idMp3s
     (FileAccess filename [skiptime, format])
     where format = fromIntegral $ fromMp3Chn channel
 
@@ -315,10 +328,13 @@ mp3m :: String -> Tab
 mp3m file = mp3s file 0 Mp3Mono
 
 interp :: Int -> [Double] -> Tab
-interp genId as = preTab def genId (relativeArgs as)
+interp genId as = TabPre $ preTab def genId (relativeArgs as)
 
 plains :: Int -> [Double] -> Tab
-plains genId as = preTab def genId (ArgsPlain $ return as)
+plains genId as = TabPre $ plainsPre genId as
+
+plainsPre :: Int -> [Double] -> PreTab
+plainsPre genId as = preTab def genId (ArgsPlain $ return as)
 
 insertOnes :: [Double] -> [Double]
 insertOnes xs = case xs of
@@ -473,7 +489,7 @@ econsts = consts . insertOnes
 --
 -- * dur - duration of the segment
 startEnds :: [Double] -> Tab
-startEnds as = preTab def idStartEnds (relativeArgsGen16 as)
+startEnds as = TabPre $ preTab def idStartEnds (relativeArgsGen16 as)
 
 -- | Equally spaced interpolation for the function @startEnds@
 --
@@ -489,7 +505,6 @@ estartEnds = startEnds . insertOnes16
             a:b:as  -> a : 1 : b : insertOnes16 as
             _       -> xs
 
-
 -- | Linear segments in breakpoint fashion:
 --
 -- > bpLins [x1, y1, x2, y2, ..., xN, yN]
@@ -498,8 +513,7 @@ estartEnds = startEnds . insertOnes16
 --
 -- All x1, x2, .. should belong to the interval [0, 1]. The actual values are rescaled to fit the table size.
 bpLins :: [Double] -> Tab
-bpLins xs = preTab def idLinsBreakPoints $ bpRelativeArgs xs
-
+bpLins xs = TabPre $ preTab def idLinsBreakPoints $ bpRelativeArgs xs
 
 -- | Exponential segments in breakpoint fashion:
 --
@@ -509,8 +523,7 @@ bpLins xs = preTab def idLinsBreakPoints $ bpRelativeArgs xs
 --
 -- All x1, x2, .. should belong to the interval [0, 1]. The actual values are rescaled to fit the table size.
 bpExps :: [Double] -> Tab
-bpExps xs = preTab def idExpsBreakPoints $ bpRelativeArgs xs
-
+bpExps xs = TabPre $ preTab def idExpsBreakPoints $ bpRelativeArgs xs
 
 type PartialNumber = Double
 type PartialStrength = Double
@@ -741,7 +754,10 @@ padsynth (PadsynthSpec fundamentalFreq partialBW partialScale harmonicStretch sh
                                     -- 261.625565     25.0         1.0             1.0             2.0                 1.0             1.0 0.5 0.0 0.2
 
 plainStringTab :: Text -> [Double] -> Tab
-plainStringTab genId as = preStringTab def genId (ArgsPlain $ return as)
+plainStringTab genId as = TabPre $ plainStringPreTab genId as
+
+plainStringPreTab :: Text -> [Double] -> PreTab
+plainStringPreTab genId as = preStringTab def genId (ArgsPlain $ return as)
 
 -- | Creates a table of doubles (It's f-table in Csound).
 -- Arguments are:
@@ -752,7 +768,10 @@ plainStringTab genId as = preStringTab def genId (ArgsPlain $ return as)
 --
 -- All tables are created at 0 and memory is never released.
 gen :: Int -> [Double] -> Tab
-gen genId args = preTab def genId (ArgsPlain $ return args)
+gen genId args = TabPre $ genPre genId args
+
+genPre :: Int -> [Double] -> PreTab
+genPre genId args = preTab def genId (ArgsPlain $ return args)
 
 -- | Adds guard point to the table size (details of the interpolation schemes: you do need guard point if your intention is to read the
 -- table once but you don't need the guard point if you read table in many cycles, the guard point is the the first point of your table).
@@ -834,9 +853,8 @@ tabDur t = ftlen t / (ftsr t * ftchnls t)
 -- GEN30 for Csound: <http://www.csounds.com/manual/html/GEN30.html>
 --
 tabHarmonics :: Tab -> Double -> Double -> Maybe Double -> Maybe Double -> Tab
-tabHarmonics tab minh maxh mrefSr mInterp = hideGE $ do
-    idx <- renderTab tab
-    return $ preTab def idTabHarmonics (ArgsPlain $ return (catMaybes $ fmap Just [fromIntegral idx, minh, maxh] ++ [mrefSr, mInterp]))
+tabHarmonics tab minh maxh mrefSr mInterp = withTab tab $ \idx ->
+  preTab def idTabHarmonics (ArgsPlain $ return (catMaybes $ fmap Just [fromIntegral idx, minh, maxh] ++ [mrefSr, mInterp]))
 
 ---------------------------------
 -- mixing tabs GEN31 GEN32
@@ -847,28 +865,26 @@ tabHarmonics tab minh maxh mrefSr mInterp = hideGE $ do
 --
 -- phahse is in range [0, 1]
 mixOnTab :: Tab -> [(PartialNumber, PartialStrength, PartialPhase)] -> Tab
-mixOnTab tab xs = hideGE $ do
-    idx <- renderTab tab
-    return $ plains idMixOnTab $ fromIntegral idx : [a | (pn, strength, phs) <- xs, a <- [pn, strength, phs]]
+mixOnTab tab xs = withTab tab $ \idx -> do
+  plainsPre idMixOnTab $ fromIntegral idx : [a | (pn, strength, phs) <- xs, a <- [pn, strength, phs]]
 
 -- | It's like @mixOnTab@ but it's more generic since we can mix not only one shape.
 -- But we can specify shape for each harmonic.
 mixTabs  :: [(Tab, PartialNumber, PartialStrength, PartialPhase)] -> Tab
-mixTabs xs = hideGE $ do
-    args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (fmap fromIntegral $ renderTab tab) : fmap return [pn, strength, phs]]
-    return $ plains idMixTabs args
+mixTabs xs = Tab $ do
+  args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (fmap fromIntegral $ renderTab tab) : fmap return [pn, strength, phs]]
+  fmap Dynamic.int $ renderTab $ plains idMixTabs args
 
 -- | Normalizing table
 --
 -- Csound GEN04: <http://www.csounds.com/manual/html/GEN04.html>
 normTab :: NormTabSpec -> Tab -> Tab
-normTab spec tab = hideGE $ do
-    idx <- renderTab tab
-    return $ plains idNormTab $ fmap fromIntegral [idx, fromNormTabSpec spec]
-    where
-        fromNormTabSpec x = case x of
-            ScanLeftToRight -> 0
-            ScanFromMiddle  -> 1
+normTab spec tab = withTab tab $ \idx ->
+  plainsPre idNormTab $ fmap fromIntegral [idx, fromNormTabSpec spec]
+  where
+    fromNormTabSpec = \case
+        ScanLeftToRight -> 0
+        ScanFromMiddle  -> 1
 
 data NormTabSpec = ScanLeftToRight | ScanFromMiddle
 
@@ -876,9 +892,8 @@ data NormTabSpec = ScanLeftToRight | ScanFromMiddle
 --
 -- > scaleTab (minValue, maxValue) sourceTab
 scaleTab :: (Double, Double) -> Tab -> Tab
-scaleTab (minVal, maxVal) tab = hideGE $ do
-    tabId <- renderTab tab
-    return $ skipNorm $ gen idReadNumTab [fromIntegral tabId, minVal, maxVal]
+scaleTab (minVal, maxVal) tab = withTab tab $ \tabId ->
+  skipNormPreTab $ genPre idReadNumTab [fromIntegral tabId, minVal, maxVal]
 
 ----------------------------------------------------
 
@@ -892,13 +907,12 @@ scaleTab (minVal, maxVal) tab = hideGE $ do
 -- here we only specify the relative length of segments. Segments are arranged so
 -- that the start f next segment comes right after the end of the prev segment.
 tabseg :: [(Tab, PartialStrength, Double)] -> Tab
-tabseg xs = hideGE $ do
-    tabIds <- mapM renderTab tabs
-    return $ preTab def idLinTab $ mkArgs tabIds
-    where
-        (tabs, amps, durs) = unzip3 xs
-        segments n = fmap (second $ \x -> x - 1) $ tail $ scanl (\(_, b) x -> (b, b + x)) (0, 0) $ mkRelative n durs
-        mkArgs ids = ArgsPlain $ reader $ \size -> concat $ zipWith3 (\tabId amp (start, finish) -> [fromIntegral tabId, amp, start, finish]) ids amps (segments size)
+tabseg xs = withTabs tabs $ \tabIds ->
+  preTab def idLinTab $ mkArgs tabIds
+  where
+    (tabs, amps, durs) = unzip3 xs
+    segments n = fmap (second $ \x -> x - 1) $ tail $ scanl (\(_, b) x -> (b, b + x)) (0, 0) $ mkRelative n durs
+    mkArgs ids = ArgsPlain $ \size -> concat $ zipWith3 (\tabId amp (start, finish) -> [fromIntegral tabId, amp, start, finish]) ids amps (segments size)
 
 etabseg :: [(Tab, PartialStrength)] -> Tab
 etabseg = tabseg . fmap (\(tab, amp) -> (tab, amp, 1))
@@ -1034,9 +1048,8 @@ poissonDist' = dist' 11
 --
 -- Csound docs: <http://www.csounds.com/manual/html/GEN40.html>
 tabDist :: Tab -> Tab
-tabDist src = hideGE $ do
-    tabId <- renderTab src
-    return $ gen idRandHist [fromIntegral tabId]
+tabDist src = withTab src $ \tabId ->
+  genPre idRandHist [fromIntegral tabId]
 
 -- | randDist — Generates a random list of numerical pairs (GEN41).
 --
@@ -1070,19 +1083,19 @@ rangeDist xs = skipNorm $ gen idRandRanges xs
 --
 -- csound doc: <http://www.csounds.com/manual/html/GEN23.html>
 readNumFile :: String -> Tab
-readNumFile filename = skipNorm $ preTab def idReadNumFile $ FileAccess filename []
+readNumFile filename = TabPre $ skipNormPreTab $ preTab def idReadNumFile $ FileAccess filename []
 
 -- | Reads trajectory from file (GEN28)
 --
 -- csound doc: <http://www.csounds.com/manual/html/GEN28.html>
 readTrajectoryFile :: String -> Tab
-readTrajectoryFile filename = skipNorm $ preTab def idReadTrajectoryFile $ FileAccess filename []
+readTrajectoryFile filename = TabPre $ skipNormPreTab $ preTab def idReadTrajectoryFile $ FileAccess filename []
 
 -- | Reads PVOCEX files (GEN43)
 --
 -- csound doc: <http://www.csounds.com/manual/html/GEN43.html>
 readPvocex :: String -> Int -> Tab
-readPvocex filename channel = preTab def idPvocex $ FileAccess filename [fromIntegral channel]
+readPvocex filename channel = TabPre $ preTab def idPvocex $ FileAccess filename [fromIntegral channel]
 
 -- | readMultichannel — Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode (GEN52).
 --
@@ -1090,11 +1103,10 @@ readPvocex filename channel = preTab def idPvocex $ FileAccess filename [fromInt
 --
 -- csound doc: <http://www.csounds.com/manual/html/GEN52.html>
 readMultichannel :: Int -> [(Tab, Int, Int)] -> Tab
-readMultichannel n args = hideGE $ do
-    idSrcs <- mapM renderTab fsrcs
-    return $ skipNorm $ gen idMultichannel $ fmap fromIntegral $ n : (concat $ zipWith3 (\a b c -> [a, b, c]) idSrcs offsets chnls)
-    where
-        (fsrcs, offsets, chnls) = unzip3 args
+readMultichannel n args = withTabs fsrcs $ \idSrcs ->
+  skipNormPreTab $ genPre idMultichannel $ fmap fromIntegral $ n : (concat $ zipWith3 (\a b c -> [a, b, c]) idSrcs offsets chnls)
+  where
+    (fsrcs, offsets, chnls) = unzip3 args
 
 ------------------------------------------------------
 
@@ -1115,9 +1127,8 @@ tabSines2 :: Tab -> Double -> Double -> Maybe Double -> Tab
 tabSines2 = tabSinesBy idMixSines2
 
 tabSinesBy :: Int -> Tab -> Double -> Double -> Maybe Double -> Tab
-tabSinesBy genId tab nh amp fmode = hideGE $ do
-    tabId <- renderTab tab
-    return $ preTab def genId $ ArgsPlain $ return $ [fromIntegral tabId, nh, amp] ++ (maybe [] return fmode)
+tabSinesBy genId tab nh amp fmode = withTab tab $ \tabId ->
+  preTab def genId $ ArgsPlain $ return $ [fromIntegral tabId, nh, amp] ++ (maybe [] return fmode)
 
 -------------------
 -- wavelets
@@ -1139,9 +1150,8 @@ rescaleWaveletTab :: Tab -> Int -> Tab
 rescaleWaveletTab = waveletTabBy 1
 
 waveletTabBy :: Int -> Tab -> Int -> Tab
-waveletTabBy rescaleFlag srcTab sq = hideGE $ do
-    tabId <- renderTab srcTab
-    return $ plainStringTab idWave $ fmap fromIntegral [tabId, sq, rescaleFlag]
+waveletTabBy rescaleFlag srcTab sq = withTab srcTab $ \tabId ->
+  plainStringPreTab idWave $ fmap fromIntegral [tabId, sq, rescaleFlag]
 
 -------------------
 -- specific tabs
@@ -1291,7 +1301,7 @@ readTab b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <
 --
 -- csound doc: <http://www.csounds.com/manual/html/table.html>
 readTable :: SigOrD a => a -> Tab -> SE a
-readTable b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> unTab b2
+readTable b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> unTab b2
     where f a1 a2 = opcs "table" [(Ar,[Ar,Ir,Ir,Ir,Ir])
                                  ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                  ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
@@ -1309,7 +1319,7 @@ readTable b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b
 --
 -- csound doc: <http://www.csounds.com/manual/html/table3.html>
 readTable3 :: SigOrD a => a -> Tab -> SE a
-readTable3 b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> unTab b2
+readTable3 b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> unTab b2
     where f a1 a2 = opcs "table3" [(Ar,[Ar,Ir,Ir,Ir,Ir])
                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
@@ -1327,7 +1337,7 @@ readTable3 b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE 
 --
 -- csound doc: <http://www.csounds.com/manual/html/tablei.html>
 readTablei :: SigOrD a => a -> Tab -> SE a
-readTablei b1 b2 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> unTab b2
+readTablei b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> unTab b2
     where f a1 a2 = opcs "tablei" [(Ar,[Ar,Ir,Ir,Ir,Ir])
                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
@@ -1386,7 +1396,7 @@ tablexkt b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <*> unD b4
 --
 -- the tab should be done with tabDist, randDist or rangeDist
 cuserrnd :: SigOrD a => a -> a -> Tab -> SE a
-cuserrnd b1 b2 b3 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> unTab b3
+cuserrnd b1 b2 b3 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> toE b2 <*> unTab b3
     where f a1 a2 a3 = opcs "cuserrnd" [(Ar,[Kr,Kr,Kr])
                                   ,(Ir,[Ir,Ir,Ir])
                                   ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
@@ -1403,7 +1413,7 @@ cuserrnd b1 b2 b3 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE
 --
 -- the tab should be done with tabDist, randDist or rangeDist
 duserrnd :: SigOrD a => Tab -> SE a
-duserrnd b1 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b1
+duserrnd b1 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b1
     where f a1 = opcs "duserrnd" [(Ar,[Kr])
                                   ,(Ir,[Ir])
                                   ,(Kr,[Kr])] [a1]
@@ -1412,7 +1422,7 @@ duserrnd b1 = fmap (fromGE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b
 -- tab args
 
 bpRelativeArgs :: [Double] -> TabArgs
-bpRelativeArgs ys = ArgsPlain $ reader $ \size -> fromRelative size ys
+bpRelativeArgs ys = ArgsPlain $ \size -> fromRelative size ys
     where
         fromRelative n as = substOdds (makeRelative n $ getOdds as) as
 
@@ -1424,7 +1434,7 @@ bpRelativeArgs ys = ArgsPlain $ reader $ \size -> fromRelative size ys
         makeRelative size as = fmap ((fromIntegral :: (Int -> Double)) . round . (fromIntegral size * )) as
 
 relativeArgs :: [Double] -> TabArgs
-relativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
+relativeArgs xs = ArgsPlain $ \size -> fromRelative size xs
     where
         fromRelative n as = substEvens (mkRelative n $ getEvens as) as
 
@@ -1440,19 +1450,19 @@ relativeArgs xs = ArgsPlain $ reader $ \size -> fromRelative size xs
             _ -> error "table argument list should contain even number of elements"
 
 relativeArgsGen16 :: [Double] -> TabArgs
-relativeArgsGen16 xs = ArgsPlain $ reader $ \size -> formRelativeGen16 size xs
-    where
-        formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
+relativeArgsGen16 xs = ArgsPlain $ \size -> formRelativeGen16 size xs
+  where
+    formRelativeGen16 n as = substGen16 (mkRelative n $ getGen16 as) as
 
-        getGen16 = \case
-            _:durN:_:rest    -> durN : getGen16 rest
-            _                -> []
+    getGen16 = \case
+        _:durN:_:rest    -> durN : getGen16 rest
+        _                -> []
 
-        substGen16 durs ys = case (durs, ys) of
-            ([], as) -> as
-            (_, [])  -> []
-            (d:ds, valN:_:typeN:rest)   -> valN : d : typeN : substGen16 ds rest
-            (_, _)   -> ys
+    substGen16 durs ys = case (durs, ys) of
+        ([], as) -> as
+        (_, [])  -> []
+        (d:ds, valN:_:typeN:rest)   -> valN : d : typeN : substGen16 ds rest
+        (_, _)   -> ys
 
 mkRelative :: (Functor t, Foldable t, RealFrac b, Integral a) => a -> t b -> t Double
 mkRelative n as = fmap ((fromIntegral :: (Int -> Double)) . round . (s * )) as

@@ -16,6 +16,7 @@ module Csound.Typed.Core.State
 
 import Csound.Dynamic
 import Csound.Typed.Core.State.Options (Options)
+import Csound.Typed.Core.State.Options qualified as Options
 import Control.Monad.Trans.State.Strict
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
@@ -23,17 +24,24 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as Text
 
+-- | Monad for typed Csound expressions
 newtype Run a = Run { unRun :: StateT St IO a }
   deriving newtype (Functor, Applicative, Monad)
 
+-- | Run the typed Csound monad to get underlying dynamic Csound file
+-- for rendering to text.
 exec :: Options -> Run () -> IO Csd
-exec opts (Run act) = stCsd <$> execStateT act initSt
+exec opts (Run act) = stCsd <$> execStateT act' initSt
   where
+    act' = do
+      unRun $ insertGlobalExpr =<< globalConstants opts
+      act
+
     initSt = St
       { stCsd = Csd
-          { csdFlags = mempty
+          { csdFlags = Options.csdFlags opts
           , csdOrc   = Orc emptyE []
-          , csdSco   = Sco Nothing [] []
+          , csdSco   = Sco (Just foreverTime) [] []
           , csdPlugins = []
           }
       , stFreshId = initFreshId
@@ -42,6 +50,8 @@ exec opts (Run act) = stCsd <$> execStateT act initSt
       , stGens = Map.empty
       , stOptions = opts
       }
+
+    foreverTime = 100 * 604800.0
 
 -----------------------------------------------------------------------------
 -- basic functions
@@ -96,15 +106,22 @@ initGlobalVar rate initVal = do
 isGlobalInstr :: Run Bool
 isGlobalInstr = Run $ gets stIsGlobal
 
-saveGen :: Gen -> Run E
+saveGen :: Gen -> Run Int
 saveGen gen = Run $ do
   genMap <- gets stGens
   case Map.lookup gen genMap of
-    Just n  -> pure $ int n
+    Just n  -> pure n
     Nothing -> do
       let newId = Map.size genMap + 1
-      modify' $ \st -> st { stGens = Map.insert gen newId $ stGens st }
-      pure $ int newId
+      modify' $ \st -> st
+        { stGens = Map.insert gen newId $ stGens st
+        , stCsd = insertTabToSco newId (stCsd st)
+        }
+      pure newId
+  where
+    insertTabToSco newId x = x { csdSco = insertSco $ csdSco x }
+      where
+        insertSco s = s { scoGens = (newId, gen) : scoGens s }
 
 -- | TODO
 saveTabs :: [Gen] -> Run E
@@ -113,22 +130,37 @@ saveTabs = undefined
 getOptions :: Run Options
 getOptions = Run $ gets stOptions
 
+-- | Creates expression with global constants
+globalConstants :: Options -> Run E
+globalConstants opt = execDepT $ do
+  setSr       $ Options.defSampleRate opt
+  setKsmps    $ Options.defBlockSize opt
+  setNchnls   $ Options.defNchnls opt
+  setZeroDbfs 1
+  maybe (return ()) setNchnls_i  (Options.csdNchnlsIn opt)
+
 -----------------------------------------------------------------------------
 -- internal state
 
 -- | Internal state for rendering typed expressions to Csd
 data St = St
-  { stCsd        :: !Csd
-  , stFreshId    :: !FreshId
-  , stFreshVar   :: !Int
-  , stIsGlobal   :: !Bool
-  , stGens       :: !(Map Gen Int)
-  , stOptions    :: !Options
+  { stCsd        :: !Csd               -- ^ Dynamic Csound code
+  , stFreshId    :: !FreshId           -- ^ fresh instrument ids
+  , stFreshVar   :: !Int               -- ^ fresh names for mutable variables
+  , stIsGlobal   :: !Bool              -- ^ do we render global or local instrument
+  , stGens       :: !(Map Gen Int)     -- ^ map of Gen-tables to generate unique integer identifiers
+  , stOptions    :: !Options           -- ^ Csound flags and initial options / settings
   }
 
+-- | Fresh ids for instruments
 data FreshId = FreshId
   { freshIdCounter :: !Int
+      -- ^ counter for new id
   , freshIdMem     :: !(HashMap ExpHash InstrId)
+      -- ^ hash map of already defined instruments,
+      -- we use it to avoid duplication of defined instruments
+      -- here we assme that instrument is unique by hash of it's expression
+      -- which is not true, but it's necessary trade-off
   }
 
 initFreshId :: FreshId

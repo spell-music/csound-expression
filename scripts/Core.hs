@@ -30,4 +30,15 @@ res = do
     setInstr2 a = do
       outs ares ares
       where
-        ares = linseg [a, 1, a] * oscil 1 220 (preTab (SizePlain 2048) 10 (ArgsPlain $ const [1]))
+        ares = linseg [a, 1, a] * oscil 1 220 (sines [1])
+
+
+pureSine :: SE ()
+pureSine = do
+  instr1 <- newInstr sineInstr
+  event_i "i" instr1 0 2 [220]
+  where
+    sineInstr cps = outs ares ares
+      where
+        ares = 0.5 * oscil 1 (sig cps) (sines [1])
+

@@ -53,11 +53,14 @@ Library
     Csound.Typed.Core.State
     Csound.Typed.Core.State.Options
     Csound.Typed.Core.Types
+    Csound.Typed.Core.Types.Gen
     Csound.Typed.Core.Types.Prim
+    Csound.Typed.Core.Types.Prim.Bool
     Csound.Typed.Core.Types.Prim.D
     Csound.Typed.Core.Types.Prim.Sig
     Csound.Typed.Core.Types.Prim.SigSpace
     Csound.Typed.Core.Types.Prim.Val
+    Csound.Typed.Core.Types.Prim.Str
     Csound.Typed.Core.Types.Prim.Tab
     Csound.Typed.Core.Types.SE
     Csound.Typed.Core.Types.SE.Ref
@@ -75,3 +78,4 @@ Library
     ScopedTypeVariables
     TypeApplications
     GeneralizedNewtypeDeriving
+    TypeFamilies

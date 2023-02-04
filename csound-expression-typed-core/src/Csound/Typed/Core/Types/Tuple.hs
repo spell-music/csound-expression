@@ -1,4 +1,5 @@
 {-# Language AllowAmbiguousTypes #-}
+-- | Tuples of Csound values
 module Csound.Typed.Core.Types.Tuple
   ( Tuple (..), Arg
   , fromTuple

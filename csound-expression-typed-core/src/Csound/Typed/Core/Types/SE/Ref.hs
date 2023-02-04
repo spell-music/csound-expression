@@ -1,3 +1,5 @@
+-- | Mutable references. Which can hold Csound values and
+-- allow us to xreate mutable values.
 module Csound.Typed.Core.Types.SE.Ref
   ( Ref (..)
   , newRef

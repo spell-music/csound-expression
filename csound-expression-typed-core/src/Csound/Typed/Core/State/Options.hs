@@ -1,7 +1,7 @@
 {-# Language CPP #-}
 module Csound.Typed.Core.State.Options (
     Options(..),
-    defGain, defSampleRate, defBlockSize, defTabFi, defScaleUI,
+    defGain, defSampleRate, defBlockSize, defTabFi, defScaleUI, defNchnls,
     -- * Table fidelity
     TabFi(..), fineFi, coarseFi,
     -- ** Gen identifiers
@@ -46,6 +46,8 @@ data Options = Options
     { csdFlags          :: Flags                    -- ^ Csound command line flags
     , csdSampleRate     :: Maybe Int                -- ^ The sample rate
     , csdBlockSize      :: Maybe Int                -- ^ The number of audio samples in one control step
+    , csdNchnlsOut      :: Maybe Int                -- ^ The number of output channels
+    , csdNchnlsIn       :: Maybe Int                -- ^ The number of input channels (if Nothing it's not set)
     , csdGain           :: Maybe Double             -- ^ A gain of the final output
     , csdTabFi          :: Maybe TabFi              -- ^ Default fidelity of the arrays
     , csdScaleUI        :: Maybe (Double, Double)   -- ^ Scale factors for UI-window
@@ -56,7 +58,7 @@ data Options = Options
     } deriving (Eq, Show, Read)
 
 instance Default Options where
-    def = Options def def def def def def def def def def
+    def = Options def def def def def def def def def def def def
 
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Options where
@@ -79,6 +81,8 @@ mappendOptions a b = Options
     , csdSampleRate     = csdSampleRate a <|> csdSampleRate b
     , csdBlockSize      = csdBlockSize a <|> csdBlockSize b
     , csdGain           = csdGain a <|> csdGain b
+    , csdNchnlsOut      = csdNchnlsOut a <|> csdNchnlsOut b
+    , csdNchnlsIn       = csdNchnlsIn a <|> csdNchnlsIn b
     , csdTabFi          = csdTabFi a <|> csdTabFi b
     , csdScaleUI        = csdScaleUI a <|> csdScaleUI b
     , csdJacko          = csdJacko a <|> csdJacko b
@@ -88,19 +92,23 @@ mappendOptions a b = Options
     }
 
 defScaleUI :: Options -> (Double, Double)
-defScaleUI = maybe (1, 1) id . csdScaleUI
+defScaleUI = fromMaybe (1, 1) . csdScaleUI
 
 defGain :: Options -> Double
-defGain = maybe 0.8 id . csdGain
+defGain = fromMaybe 0.8 . csdGain
 
 defSampleRate :: Options -> Int
-defSampleRate = maybe 44100 id . csdSampleRate
+defSampleRate = fromMaybe 44100 . csdSampleRate
 
 defBlockSize :: Options -> Int
-defBlockSize = maybe 64 id . csdBlockSize
+defBlockSize = fromMaybe 64 . csdBlockSize
+
+-- | Stereo audio by default
+defNchnls :: Options -> Int
+defNchnls = max 1 . fromMaybe 2 . csdNchnlsOut
 
 defTabFi :: Options -> TabFi
-defTabFi = maybe def id . csdTabFi
+defTabFi = fromMaybe def . csdTabFi
 
 -- | Table size fidelity (how many points in the table by default).
 data TabFi = TabFi
@@ -113,7 +121,6 @@ instance Default TabFi where
     def = fineFi 13
                 [(idLins, 11), (idExps, 11), (idConsts, 9), (idSplines, 11), (idStartEnds, 12), (idExpsBreakPoints, 11), (idLinsBreakPoints, 11), (idRandDists, 6)]
                 [(idPadsynth, 18), (idSone, 14), (idTanh, 13), (idExp, 13)]
-
 
 -- | Sets different table size for different GEN-routines.
 --
@@ -207,7 +214,6 @@ idPadsynth = "padsynth"
 
 idPolynomFuns = 15
 
-
 ----------------------------------------------------------
 -- Jacko
 
@@ -254,7 +260,6 @@ renderJacko spec = Text.unlines $ filter ( /= "")
         renderConnections name links = Text.unlines $ fmap (renderLink name) links
 
         renderLink name (a, b) = name <> " " <> Text.pack (show a) <> ", " <> Text.pack (show b)
-
 
 csdNeedTrace :: Options -> Bool
 csdNeedTrace opt = fromMaybe False $ csdTrace opt

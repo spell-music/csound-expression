@@ -1,3 +1,7 @@
+-- | Control or audio rate signals,
+-- expressed as a-rate or k-rate signals in Csound code.
+-- The type depends on the context and derived from the context.
+-- Also type can by specified by the user with functions @ar@ and @kr@.
 module Csound.Typed.Core.Types.Prim.Sig
   ( Sig (..)
   , Sig3, Sig2, Sig4, Sig5, Sig6, Sig7, Sig8

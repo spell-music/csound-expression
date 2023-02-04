@@ -1,8 +1,11 @@
--- | tables
+-- | Csound tables, which are creted in the score section and referenced
+-- by numbers in the Csound code. In the haskell library this process is automated
+-- numbers are assigned automatically.
 module Csound.Typed.Core.Types.Prim.Tab
   ( Tab (..), unTab
+  , PreTab (..)
   , preTab, preStringTab, TabSize(..), TabArgs(..), updateTabSize
-  , fromPreTab, getPreTabUnsafe, skipNorm, forceNorm
+  , renderTab, fromPreTab, getPreTabUnsafe, skipNorm, skipNormPreTab, forceNorm
   , nsamp, ftlen, ftchnls, ftsr, ftcps
   , TabList, tabList, fromTabList, fromTabListD
   ) where
@@ -30,17 +33,22 @@ data Tab
 unTab :: Tab -> Run E
 unTab = toE
 
+renderTab :: Tab -> Run Int
+renderTab x = case x of
+    TabPre a -> State.saveGen =<< fromPreTab a
+    Tab _    -> error "table should be primitive"
+
 instance Val Tab where
     fromE = Tab
     toE = \case
       Tab a -> a
-      TabPre a -> renderPreTab a
+      TabPre a -> D.int <$> renderPreTab a
 
-preTab :: TabSize -> Int -> TabArgs -> Tab
-preTab size gen args = TabPre $ PreTab size (IntGenId gen) args
+preTab :: TabSize -> Int -> TabArgs -> PreTab
+preTab size gen args = PreTab size (IntGenId gen) args
 
-preStringTab :: TabSize -> Text -> TabArgs -> Tab
-preStringTab size gen args = TabPre $ PreTab size (StringGenId gen) args
+preStringTab :: TabSize -> Text -> TabArgs -> PreTab
+preStringTab size gen args = PreTab size (StringGenId gen) args
 
 data PreTab = PreTab
     { preTabSize    :: TabSize
@@ -72,7 +80,7 @@ data TabArgs
     | ArgsGen16 [Double] -}
     | FileAccess String [Double]
 
-renderPreTab :: PreTab -> Run E
+renderPreTab :: PreTab -> Run Int
 renderPreTab a = State.saveGen =<< fromPreTab a
 
 getPreTabUnsafe :: String -> Tab -> PreTab
@@ -115,7 +123,11 @@ defineTabArgs size args = case args of
 skipNorm :: Tab -> Tab
 skipNorm x = case x of
     Tab _ -> error "you can skip normalization only for primitive tables (made with gen-routines)"
-    TabPre a -> TabPre $ a{ preTabGen = skipNormGenId $ preTabGen a }
+    TabPre a -> TabPre $ skipNormPreTab a
+
+-- | Skips normalization (sets table size to negative value)
+skipNormPreTab :: PreTab -> PreTab
+skipNormPreTab a = a{ preTabGen = skipNormGenId $ preTabGen a }
 
 skipNormGenId :: GenId -> GenId
 skipNormGenId = mapIntGenId (negate . abs)
@@ -207,5 +219,3 @@ ftsr = liftE $ D.opr1 "ftsr"
 -- | Returns the base frequency for a table that stores wav files
 ftcps :: Tab -> D
 ftcps = liftE $ D.opr1 "ftcps"
-
-

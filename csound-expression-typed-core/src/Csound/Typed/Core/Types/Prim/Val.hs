@@ -1,3 +1,5 @@
+-- | Class for conversion of newtype-wrapped values
+-- to low level dynamic representation
 module Csound.Typed.Core.Types.Prim.Val
   ( Val (..)
   , liftE

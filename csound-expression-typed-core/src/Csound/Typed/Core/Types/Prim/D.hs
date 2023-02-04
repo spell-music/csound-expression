@@ -1,3 +1,5 @@
+-- | Init rate constants, they are expressed as
+-- i-rate numbers in the rendered code
 module Csound.Typed.Core.Types.Prim.D
   ( D (..)
   ) where
