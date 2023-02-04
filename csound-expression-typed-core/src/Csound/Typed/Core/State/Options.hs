@@ -110,6 +110,9 @@ defNchnls = max 1 . fromMaybe 2 . csdNchnlsOut
 defTabFi :: Options -> TabFi
 defTabFi = fromMaybe def . csdTabFi
 
+---------------------------------------------------------------------------------------------------
+-- tables
+
 -- | Table size fidelity (how many points in the table by default).
 data TabFi = TabFi
     { tabFiBase   :: Int

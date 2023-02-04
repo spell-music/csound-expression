@@ -53,4 +53,3 @@ liftPrim3 primFun exprFun xa xb xc = case getPrim xa of
   _ -> res
   where
     res = liftE3 exprFun xa xb xc
-

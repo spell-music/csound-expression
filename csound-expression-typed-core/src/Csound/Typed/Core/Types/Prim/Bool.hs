@@ -158,5 +158,3 @@ lessThanEquals = (<=*)
 
 greaterThanEquals :: OrdB a => a -> a -> BooleanOf a
 greaterThanEquals = (>=*)
-
-
