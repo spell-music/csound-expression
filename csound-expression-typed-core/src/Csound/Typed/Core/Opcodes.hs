@@ -10,7 +10,7 @@ module Csound.Typed.Core.Opcodes
   , schedulek
   ) where
 
-import Csound.Dynamic hiding (InstrId)
+import Csound.Dynamic hiding (InstrId (..))
 import Csound.Typed.Core.Types hiding (setRate)
 import Control.Monad.Trans.Class (lift)
 
@@ -55,9 +55,9 @@ linseg b1 = Sig $ f <$> mapM unD b1
 -- >  event  "scorechar", "insname", kdelay, kdur, [, kp4] [, kp5] [, ...]
 --
 -- csound doc: <http://csound.com/docs/manual/event.html>
-event ::  Str -> InstrId -> Sig -> Sig -> [Sig] -> SE ()
-event b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE b2 <*> unSig b3 <*> unSig b4 <*> mapM unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "event" [(Xr,[Sr] ++ (repeat Kr))] ([a1,a2,a3,a4] ++ a5)
+event :: Tuple a => Str -> InstrId a -> Sig -> Sig -> a -> SE ()
+event b1 instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE instrId <*> toE start <*> toE dur <*> fromTuple args
+    where f a1 a2 a3 a4 a5 = opcs "event" [(Xr,[Sr,getInstrIdRate instrId] ++ (repeat Kr))] ([a1,a2,a3,a4] ++ a5)
 
 -- |
 -- Generates a score event from an instrument.
@@ -66,19 +66,19 @@ event b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE b2 <*> u
 -- >  event_i  "scorechar", "insname", idelay, idur, [, ip4] [, ip5] [, ...]
 --
 -- csound doc: <http://csound.com/docs/manual/event_i.html>
-event_i ::  Str -> InstrId -> D -> D -> [D] -> SE ()
-event_i b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = opcs "event_i" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
+event_i ::  Arg a => Str -> InstrId a -> D -> D -> a -> SE ()
+event_i b1 instrId b3 b4 args = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE instrId <*> unD b3 <*> unD b4 <*> fromTuple args
+    where f a1 a2 a3 a4 a5 = opcs "event_i" [(Xr,[Sr,getInstrIdRate instrId] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
 
 diskin2 :: Tuple a => Str -> a
 diskin2 b1 = pureTuple $ f <$> unStr b1
     where f a1 = mopcs "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1]
 
 
-schedule :: forall a . Arg a => InstrId -> D -> D -> a -> SE ()
+schedule :: forall a . Arg a => InstrId a -> D -> D -> a -> SE ()
 schedule instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> toE instrId <*> toE start <*> toE dur <*> fromTuple args
     where f a1 a2 a3 as = opcs "schedule" [(Xr,[Ir, Ir, Ir] ++ tupleRates @a)] ([a1,a2,a3] ++ as)
 
-schedulek :: forall a . Tuple a => InstrId -> D -> D -> a -> SE ()
+schedulek :: forall a . Tuple a => InstrId a -> D -> D -> a -> SE ()
 schedulek instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> toE instrId <*> toE start <*> toE dur <*> fromTuple args
     where f a1 a2 a3 as = opcs "schedulek" [(Xr,[Kr, Kr, Kr] ++ tupleRates @(K a))] ([a1,a2,a3] ++ as)

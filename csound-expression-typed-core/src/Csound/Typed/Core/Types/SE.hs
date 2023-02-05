@@ -26,17 +26,14 @@ setTotalDur duration (SE act) = SE $ do
   lift $ State.setTotalDur duration
   act
 
-newInstr :: forall a . Arg a => (a -> SE ()) -> SE InstrId
+newInstr :: forall a . Arg a => (a -> SE ()) -> SE (InstrId a)
 newInstr instr = SE $ lift $ State.localy $ do
   expr <- renderBody instr
-  toInstrId <$> State.insertInstr expr
+  PrimInstrId <$> State.insertInstr expr
   where
     renderBody :: (a -> SE ()) -> Run E
     renderBody instrBody = Dynamic.execDepT $ unSE $
       instrBody (toTuple $ pure $ take (tupleArity @a) $ zipWith Dynamic.pn (tupleRates @a) [4..])
-
-toInstrId :: Dynamic.InstrId -> InstrId
-toInstrId = fromE . pure . Dynamic.instrIdE
 
 renderSE :: Options -> SE () -> IO String
 renderSE config (SE act) = fmap (Dynamic.renderCsd def) $ State.exec config $ do

@@ -26,8 +26,7 @@ module Csound.Typed.Core.Types.Prim
   , div'
   ) where
 
-import Csound.Typed.Core.State
-import Csound.Dynamic (E, Name, Rate (..))
+import Csound.Dynamic (Name, Rate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.Types.Prim.Bool as X
 import Csound.Typed.Core.Types.Prim.D as X
@@ -36,18 +35,12 @@ import Csound.Typed.Core.Types.Prim.Tab as X
 import Csound.Typed.Core.Types.Prim.Val as X
 import Csound.Typed.Core.Types.Prim.Str as X
 import Csound.Typed.Core.Types.Prim.Spec as X
+import Csound.Typed.Core.Types.Prim.InstrId as X
 
 class (IsPrim a, RealFrac (PrimOf a), Val a, Floating a) => SigOrD a where
 
 instance SigOrD Sig
 instance SigOrD D
-
-newtype InstrId = InstrId { unInstrId :: Run E }
-
-instance Val InstrId where
-  fromE = InstrId
-  toE   = unInstrId
-
 -------------------------------------------------------------------------------
 -- converters
 

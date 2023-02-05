@@ -12,7 +12,7 @@ module Csound.Dynamic.Types.Exp(
     ratedExp, noRate, withRate, setRate, toCtrlRate, toInitRate,
     toArrRate, removeArrRate,
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
-    InstrId(..), intInstrId, ratioInstrId, stringInstrId,
+    InstrId(..), intInstrId, ratioInstrId, stringInstrId, instrIdRate,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
     CodeBlock (..),
     Signature(..), isInfix, isPrefix,
@@ -60,6 +60,11 @@ data InstrId
     , instrIdCeil :: !Int }
     | InstrLabel Text
     deriving (Show, Eq, Ord, Generic)
+
+instrIdRate :: InstrId -> Rate
+instrIdRate = \case
+  InstrId{}    -> Ir
+  InstrLabel{} -> Sr
 
 -- | Constructs an instrument id with the integer.
 intInstrId :: Int -> InstrId

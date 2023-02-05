@@ -1,7 +1,7 @@
 {-# Language AllowAmbiguousTypes #-}
 -- | Tuples of values
 module Csound.Typed.Core.Types.Tuple
-  ( Tuple (..), Arg
+  ( Tuple (..), Arg, Sigs
   , fromTuple
   , toTuple
   , defTuple
@@ -19,9 +19,11 @@ import Csound.Typed.Core.Types.Prim
 
 class Tuple a => Arg a where
 
+instance Arg ()
 instance Arg D
 instance Arg Str
 instance Arg Tab
+instance Arg a => Arg (InstrId a)
 
 instance (Arg a, Arg b) => Arg (a, b)
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c)
@@ -88,12 +90,21 @@ primTuple rate = TupleMethods
     , defTuple_ = fromE (pure 0)
     }
 
+instance Tuple () where
+  tupleMethods = TupleMethods
+    { tupleArity_ = 0
+    , tupleRates_ = []
+    , defTuple_ = ()
+    , fromTuple_ = const $ pure []
+    , toTuple_ = const ()
+    }
+
 instance Tuple Sig where { tupleMethods = primTuple Ar }
 instance Tuple D   where { tupleMethods = primTuple Ir }
 instance Tuple Tab where { tupleMethods = primTuple Ir }
 instance Tuple Str where { tupleMethods = primTuple Sr }
 instance Tuple Spec where { tupleMethods = primTuple Ir }
-instance Tuple InstrId where { tupleMethods = primTuple Ir }
+instance Arg a => Tuple (InstrId a) where { tupleMethods = primTuple Ir }
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where
   tupleMethods = TupleMethods

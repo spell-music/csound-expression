@@ -683,10 +683,11 @@ setHasIfs = modify' $ \s -> s { envHasIfs = True }
 
 primRate :: Prim -> Rate
 primRate = \case
-  PrimString _ -> Sr
-  PrimVar r _  -> r
-  P r _        -> r
-  _            -> Ir
+  PrimString _      -> Sr
+  PrimVar r _       -> r
+  P r _             -> r
+  PrimInstrId instr -> instrIdRate instr
+  _                 -> Ir
 
 primOrRate :: PrimOr Var -> Rate
 primOrRate = either primRate varType . unPrimOr

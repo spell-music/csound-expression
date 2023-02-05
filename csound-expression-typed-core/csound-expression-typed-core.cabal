@@ -55,6 +55,7 @@ Library
     Csound.Typed.Core.Types.Gen
     Csound.Typed.Core.Types.Prim
     Csound.Typed.Core.Types.Prim.Bool
+    Csound.Typed.Core.Types.Prim.InstrId
     Csound.Typed.Core.Types.Prim.D
     Csound.Typed.Core.Types.Prim.Sig
     Csound.Typed.Core.Types.Prim.Val
