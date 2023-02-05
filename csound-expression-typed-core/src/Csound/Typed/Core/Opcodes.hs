@@ -3,8 +3,8 @@ module Csound.Typed.Core.Opcodes
   ( outs
   , oscil
   , linseg
-  , event
-  , event_i
+--  , event
+--  , event_i
   , diskin2
   , schedule
   , schedulek
@@ -48,6 +48,7 @@ linseg ::  [D] -> Sig
 linseg b1 = Sig $ f <$> mapM unD b1
     where f a1 = setRate Kr $ opcs "linseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
+{-
 -- |
 -- Generates a score event from an instrument.
 --
@@ -69,16 +70,16 @@ event b1 instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> t
 event_i ::  Arg a => Str -> InstrId a -> D -> D -> a -> SE ()
 event_i b1 instrId b3 b4 args = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> toE instrId <*> unD b3 <*> unD b4 <*> fromTuple args
     where f a1 a2 a3 a4 a5 = opcs "event_i" [(Xr,[Sr,getInstrIdRate instrId] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
+-}
 
 diskin2 :: Tuple a => Str -> a
 diskin2 b1 = pureTuple $ f <$> unStr b1
     where f a1 = mopcs "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1]
 
-
-schedule :: forall a . Arg a => InstrId a -> D -> D -> a -> SE ()
+schedule :: forall args ty . (Val ty, Arg args) => InstrId ty args -> D -> D -> args -> SE ()
 schedule instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> toE instrId <*> toE start <*> toE dur <*> fromTuple args
-    where f a1 a2 a3 as = opcs "schedule" [(Xr,[Ir, Ir, Ir] ++ tupleRates @a)] ([a1,a2,a3] ++ as)
+    where f a1 a2 a3 as = opcs "schedule" [(Xr, tupleRates @(InstrId ty args, D, D, args))] ([a1,a2,a3] ++ as)
 
-schedulek :: forall a . Tuple a => InstrId a -> D -> D -> a -> SE ()
+schedulek :: forall a ty . (Val ty, Arg a) => InstrId ty a -> D -> D -> a -> SE ()
 schedulek instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> toE instrId <*> toE start <*> toE dur <*> fromTuple args
-    where f a1 a2 a3 as = opcs "schedulek" [(Xr,[Kr, Kr, Kr] ++ tupleRates @(K a))] ([a1,a2,a3] ++ as)
+    where f a1 a2 a3 as = opcs "schedulek" [(Xr, tupleRates @(K (InstrId ty a, D, D, a)))] ([a1,a2,a3] ++ as)

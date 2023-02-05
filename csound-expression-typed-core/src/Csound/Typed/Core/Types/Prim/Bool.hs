@@ -23,7 +23,7 @@ import Csound.Typed.Core.Types.Prim.Sig
 import Csound.Typed.Core.Types.Prim.Spec
 import Csound.Typed.Core.Types.Prim.Str
 
-import Csound.Dynamic (E, IfRate (..), ifExp)
+import Csound.Dynamic (E, IfRate (..), ifExp, Rate (..))
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.Types.Prim.Val
 
@@ -45,15 +45,21 @@ unBoolD = toE
 
 instance Val BoolSig where
     fromE = BoolSig
+
     toE x = case x of
         BoolSig a -> a
         PrimBoolSig b -> return $ if b then true else false
 
+    valRate = Kr
+
 instance Val BoolD   where
     fromE = BoolD
+
     toE x = case x of
         BoolD a -> a
         PrimBoolD b -> return $ if b then true else false
+
+    valRate = Kr
 
 instance IsPrim BoolSig where
     type PrimOf BoolSig = Bool

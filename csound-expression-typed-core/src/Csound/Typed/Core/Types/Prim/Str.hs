@@ -4,7 +4,7 @@ module Csound.Typed.Core.Types.Prim.Str
 
 import Data.String
 
-import Csound.Dynamic (E)
+import Csound.Dynamic (E, Rate(..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.Types.Prim.Val
@@ -15,6 +15,7 @@ newtype Str = Str { unStr :: Run E }
 instance Val Str where
   fromE = Str
   toE   = unStr
+  valRate = Sr
 
 instance IsString Str where
   fromString = Str . pure . Dynamic.prim . Dynamic.PrimString . fromString

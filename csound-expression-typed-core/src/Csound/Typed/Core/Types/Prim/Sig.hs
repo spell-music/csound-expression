@@ -8,7 +8,7 @@ module Csound.Typed.Core.Types.Prim.Sig
   , Sig2, Sig3, Sig4, Sig5, Sig6, Sig7, Sig8
   ) where
 
-import Csound.Dynamic (E)
+import Csound.Dynamic (E, Rate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.Types.Prim.Val
@@ -24,6 +24,8 @@ instance Val Sig where
     toE = \case
       Sig a     -> a
       PrimSig d -> pure $ Dynamic.double d
+
+    valRate = Ar
 
 unSig :: Sig -> Run E
 unSig = toE

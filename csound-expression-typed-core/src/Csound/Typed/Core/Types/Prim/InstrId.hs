@@ -1,6 +1,6 @@
 module Csound.Typed.Core.Types.Prim.InstrId
   ( InstrId (..)
-  , getInstrIdRate
+--  , getInstrIdRate
   ) where
 
 import Csound.Dynamic (Rate (..), E)
@@ -8,6 +8,10 @@ import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.Types.Prim.Val
 
+newtype InstrId ty args = InstrId { unInstrId :: ty }
+  deriving (Val, IsPrim)
+
+{-
 -- | Typed instrument identificator.
 -- The type is a type of the argument that triggers an instrument
 data InstrId a
@@ -25,3 +29,4 @@ getInstrIdRate :: InstrId a -> Rate
 getInstrIdRate = \case
   PrimInstrId ix -> Dynamic.instrIdRate ix
   _              -> Ir
+-}

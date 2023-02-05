@@ -3,7 +3,7 @@ module Csound.Typed.Core.Types.Prim.Spec
   ( Spec (..)
   ) where
 
-import Csound.Dynamic (E)
+import Csound.Dynamic (E, Rate (..))
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.Types.Prim.Val
 
@@ -13,3 +13,4 @@ newtype Spec = Spec { unSpec :: Run E }
 instance Val Spec where
   fromE = Spec
   toE   = unSpec
+  valRate = Fr

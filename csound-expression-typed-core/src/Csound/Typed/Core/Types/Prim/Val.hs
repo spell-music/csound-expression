@@ -1,3 +1,4 @@
+{-# Language AllowAmbiguousTypes #-}
 -- | Class for conversion of newtype-wrapped values
 -- to low level dynamic representation
 module Csound.Typed.Core.Types.Prim.Val
@@ -11,13 +12,14 @@ module Csound.Typed.Core.Types.Prim.Val
   , liftPrim3
   ) where
 
-import Csound.Dynamic (E)
+import Csound.Dynamic (E, Rate)
 import Csound.Typed.Core.State (Run)
 import Data.Kind (Type)
 
 class Val a where
-  fromE :: Run E -> a
-  toE   :: a -> Run E
+  fromE   :: Run E -> a
+  toE     :: a -> Run E
+  valRate :: Rate
 
 liftE :: (Val a, Val b) => (E -> E) -> a -> b
 liftE f a = fromE $ f <$> toE a

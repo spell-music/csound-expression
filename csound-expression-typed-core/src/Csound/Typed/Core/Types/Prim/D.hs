@@ -5,7 +5,7 @@ module Csound.Typed.Core.Types.Prim.D
   , D2, D3, D4, D5, D6
   ) where
 
-import Csound.Dynamic (E)
+import Csound.Dynamic (E, Rate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.Types.Prim.Val
@@ -24,6 +24,8 @@ instance Val D where
     toE = \case
       D a     -> a
       PrimD d -> pure $ Dynamic.double d
+
+    valRate = Ir
 
 instance IsPrim D where
     type PrimOf D = Double

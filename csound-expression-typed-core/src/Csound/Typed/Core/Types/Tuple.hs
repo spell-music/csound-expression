@@ -23,7 +23,8 @@ instance Arg ()
 instance Arg D
 instance Arg Str
 instance Arg Tab
-instance Arg a => Arg (InstrId a)
+instance Arg a => Arg (InstrId D a)
+instance Arg a => Arg (InstrId Str a)
 
 instance (Arg a, Arg b) => Arg (a, b)
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c)
@@ -81,14 +82,14 @@ tupleArity = tupleArity_ @a tupleMethods
 defTuple :: Tuple a => a
 defTuple = defTuple_ tupleMethods
 
-primTuple :: Val a => Rate -> TupleMethods a
-primTuple rate = TupleMethods
-    { fromTuple_ = fmap pure . toE
-    , toTuple_ = fromE . fmap head
-    , tupleArity_ = 1
-    , tupleRates_ = [rate]
-    , defTuple_ = fromE (pure 0)
-    }
+primTuple :: forall a . Val a => TupleMethods a
+primTuple = TupleMethods
+  { fromTuple_ = fmap pure . toE
+  , toTuple_ = fromE . fmap head
+  , tupleArity_ = 1
+  , tupleRates_ = [valRate @a]
+  , defTuple_ = fromE (pure 0)
+  }
 
 instance Tuple () where
   tupleMethods = TupleMethods
@@ -99,12 +100,12 @@ instance Tuple () where
     , toTuple_ = const ()
     }
 
-instance Tuple Sig where { tupleMethods = primTuple Ar }
-instance Tuple D   where { tupleMethods = primTuple Ir }
-instance Tuple Tab where { tupleMethods = primTuple Ir }
-instance Tuple Str where { tupleMethods = primTuple Sr }
-instance Tuple Spec where { tupleMethods = primTuple Ir }
-instance Arg a => Tuple (InstrId a) where { tupleMethods = primTuple Ir }
+instance Tuple Sig where { tupleMethods = primTuple }
+instance Tuple D   where { tupleMethods = primTuple }
+instance Tuple Tab where { tupleMethods = primTuple }
+instance Tuple Str where { tupleMethods = primTuple }
+instance Tuple Spec where { tupleMethods = primTuple }
+instance (Val ty, Arg a) => Tuple (InstrId ty a) where { tupleMethods = primTuple }
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where
   tupleMethods = TupleMethods

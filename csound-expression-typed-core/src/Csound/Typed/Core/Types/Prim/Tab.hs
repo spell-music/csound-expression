@@ -40,9 +40,12 @@ renderTab x = case x of
 
 instance Val Tab where
     fromE = Tab
+
     toE = \case
       Tab a -> a
       TabPre a -> D.int <$> renderPreTab a
+
+    valRate = Ir
 
 preTab :: TabSize -> Int -> TabArgs -> PreTab
 preTab size gen args = PreTab size (IntGenId gen) args
@@ -164,6 +167,7 @@ data TabList = TabList { unTabList :: Run E }
 instance Val TabList where
   fromE = TabList
   toE = unTabList
+  valRate = Ir
 
 tabList :: [Tab] -> TabList
 tabList xs = TabList $ State.saveTabs =<< mapM fromPreTab (getPreTabs xs)
