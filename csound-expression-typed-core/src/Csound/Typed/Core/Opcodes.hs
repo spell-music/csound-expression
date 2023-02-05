@@ -20,8 +20,8 @@ import Control.Monad.Trans.Class (lift)
 -- >  outs  asig1, asig2
 --
 -- csound doc: <http://csound.com/docs/manual/outs.html>
-outs ::  Sig -> Sig -> SE ()
-outs b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> toE b1 <*> toE b2
+outs :: (Sig, Sig) -> SE ()
+outs (b1, b2) = SE $ (depT_ =<<) $ lift $ f <$> toE b1 <*> toE b2
     where f a1 a2 = opcs "outs" [(Xr,[Ar,Ar])] [a1,a2]
 
 -- |

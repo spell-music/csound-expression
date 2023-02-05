@@ -6,6 +6,8 @@ module Csound.Typed.Core.Types
   -- * Rate conversions
   , K (..)
   , setRate, ar, kr, ir
+  -- * control rate ref
+  , sensorRef
   ) where
 
 import Csound.Typed.Core.Types.Gen       as X
@@ -60,8 +62,12 @@ kr = setRate Kr
 ir :: Val a => a -> a
 ir = setRate Ir
 
-
-
 setRate :: Val a => Rate -> a -> a
 setRate rate = liftE (Dynamic.setRate rate)
 
+-- | An alias for the function @newRef@. It returns not the reference
+-- to mutable value but a pair of reader and writer functions.
+sensorRef :: Tuple a => a -> SE (SE a, a -> SE ())
+sensorRef a = do
+    ref <- newRef (K a)
+    return $ (unK <$> readRef ref, writeRef ref . K)

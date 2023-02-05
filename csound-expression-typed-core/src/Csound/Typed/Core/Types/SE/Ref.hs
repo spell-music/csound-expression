@@ -3,11 +3,9 @@
 module Csound.Typed.Core.Types.SE.Ref
   ( Ref (..)
   , newRef
-  , newCtrlRef
   , readRef
   , writeRef
   , modifyRef
-  , sensorRef
   ) where
 
 import Control.Monad
@@ -32,11 +30,6 @@ newRefBy setRate initVals = fmap Ref $ SE $ do
 newRef :: forall a . Tuple a => a -> SE (Ref a)
 newRef = newRefBy id
 
--- | Control rate reference.
--- Csound detail: it uses Kr instead of both Ar or Ir
-newCtrlRef :: forall a . Tuple a => a -> SE (Ref a)
-newCtrlRef = newRefBy Dynamic.toCtrlRate
-
 readRef  :: Tuple a => Ref a -> SE a
 readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM Dynamic.readVar vars
 
@@ -50,10 +43,3 @@ modifyRef :: Tuple a => Ref a -> (a -> a) -> SE ()
 modifyRef ref f = do
     v <- readRef ref
     writeRef ref (f v)
-
--- | An alias for the function @newRef@. It returns not the reference
--- to mutable value but a pair of reader and writer functions.
-sensorRef :: Tuple a => a -> SE (SE a, a -> SE ())
-sensorRef a = do
-    ref <- newCtrlRef a
-    return $ (readRef ref, writeRef ref)
