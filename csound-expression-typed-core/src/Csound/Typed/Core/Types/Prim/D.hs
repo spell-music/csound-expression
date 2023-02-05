@@ -2,6 +2,7 @@
 -- i-rate numbers in the rendered code
 module Csound.Typed.Core.Types.Prim.D
   ( D (..), unD
+  , D2, D3, D4, D5, D6
   ) where
 
 import Csound.Dynamic (E)
@@ -50,3 +51,10 @@ instance Floating D where
     { pi = PrimD pi;  exp = liftPrim exp exp;  sqrt = liftPrim sqrt sqrt; log = liftPrim log log;  logBase = liftPrim2 logBase logBase; (**) = liftPrim2 (**) (**)
     ; sin = liftPrim sin sin;  tan = liftPrim tan tan;  cos = liftPrim cos cos; sinh = liftPrim sinh sinh; tanh = liftPrim tanh tanh; cosh = liftPrim cosh cosh
     ; asin = liftPrim asin asin; atan = liftPrim atan atan;  acos = liftPrim acos acos ; asinh = liftPrim asinh asinh; acosh = liftPrim acosh acosh; atanh = liftPrim atanh atanh }
+
+type D2 = (D, D)
+type D3 = (D, D, D)
+type D4 = (D, D, D, D)
+type D5 = (D, D, D, D, D)
+type D6 = (D, D, D, D, D, D)
+

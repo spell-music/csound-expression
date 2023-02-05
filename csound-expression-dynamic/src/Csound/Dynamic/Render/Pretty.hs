@@ -64,7 +64,7 @@ ppNote instrId evt = char 'i'
 
 ppPrim :: Prim -> Doc
 ppPrim x = case x of
-    P n -> char 'p' <> int n
+    P _rate n -> char 'p' <> int n
     PrimInstrId a -> ppInstrId a
     PString a -> int a
     PrimInt n -> int n

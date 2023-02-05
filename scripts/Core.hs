@@ -1,3 +1,4 @@
+{-# Language OverloadedStrings #-}
 module Core where
 
 import Csound.Typed.Core.Types
@@ -40,4 +41,13 @@ pureSine = do
     sineInstr cps = outs ares ares
       where
         ares = 0.5 * oscil 1 (sig cps) (sines [1])
+
+playFile :: SE ()
+playFile = do
+  instr1 <- newInstr fileInstr
+  schedule instr1 0 3 ("/home/anton/over-minus.wav" :: Str)
+  schedule instr1 5 7 ("/home/anton/over-minus.wav" :: Str)
+  where
+    fileInstr :: Str -> SE ()
+    fileInstr file = uncurry outs $ diskin2 file
 

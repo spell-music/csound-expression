@@ -80,8 +80,8 @@ inlineVar var = Fix $ RatedExp h Nothing Nothing $ ReadVar var
   where
     h = ExpHash (Cereal.encode var)
 
-pn :: Int -> E
-pn = prim . P
+pn :: Rate -> Int -> E
+pn rate = prim . P rate
 
 withInits :: E -> [E] -> E
 withInits a es = onExp phi a

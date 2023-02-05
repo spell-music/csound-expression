@@ -8,6 +8,7 @@ module Csound.Typed.Core.Types.Tuple
   , tupleRates
   , tupleArity
   , makeTupleMethods
+  , TupleMethods (..)
   ) where
 
 import Control.Applicative (liftA2)
@@ -19,6 +20,8 @@ import Csound.Typed.Core.Types.Prim
 class Tuple a => Arg a where
 
 instance Arg D
+instance Arg Str
+instance Arg Tab
 
 instance (Arg a, Arg b) => Arg (a, b)
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c)

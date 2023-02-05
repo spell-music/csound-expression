@@ -35,13 +35,7 @@ newRef = newRefBy id
 -- | Control rate reference.
 -- Csound detail: it uses Kr instead of both Ar or Ir
 newCtrlRef :: forall a . Tuple a => a -> SE (Ref a)
-newCtrlRef = newRefBy toCtrlRate
-
-toCtrlRate :: Rate -> Rate
-toCtrlRate = \case
-  Ar -> Kr
-  Ir -> Kr
-  x  -> x
+newCtrlRef = newRefBy Dynamic.toCtrlRate
 
 readRef  :: Tuple a => Ref a -> SE a
 readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM Dynamic.readVar vars

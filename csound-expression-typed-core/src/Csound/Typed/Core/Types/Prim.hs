@@ -70,7 +70,7 @@ int = fromE . pure . Dynamic.int
 
 -- | Querries a total duration of the note. It's equivallent to Csound's @p3@ field.
 idur :: D
-idur = fromE $ pure $ Dynamic.pn 3
+idur = fromE $ pure $ Dynamic.pn Ir 3
 
 getSampleRate :: D
 getSampleRate = readConstant "sr"

@@ -33,7 +33,7 @@ newInstr instr = SE $ lift $ State.localy $ do
   where
     renderBody :: (a -> SE ()) -> Run E
     renderBody instrBody = Dynamic.execDepT $ unSE $
-      instrBody (toTuple $ pure $ take (tupleArity @a) $ Dynamic.pn <$> [4..])
+      instrBody (toTuple $ pure $ take (tupleArity @a) $ zipWith Dynamic.pn (tupleRates @a) [4..])
 
 toInstrId :: Dynamic.InstrId -> InstrId
 toInstrId = fromE . pure . Dynamic.instrIdE

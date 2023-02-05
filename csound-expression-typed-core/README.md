@@ -166,7 +166,27 @@ In fact those functions are genrated from the Csound's docs. Csound is very feat
 It has more than 1000 different audio units of high quality. Enjoy!
 I also recommend reading Csound Floss manual to know the Csound's details.
 
-#### How to use global opcodes
+### How to run results and listen to the created music
+
+We use `runSE` functin to render the Csound code:
+
+```haskell
+runSE :: SE () -> IO String
+```
+
+It gives us the Csound code as a String. After that we can save the code to file
+and invoke the `csound` compiler on it to get audio performance in real time or to
+write audio to file. Or also we can use it to embed in other programs as Csound also can be used as C-library.
+And there bindings to various languages.
+
+So the typical routine is:
+
+* define the audio system and get `SE ()` value
+* render it to csound code with `runSE`
+* save csound code to file with `writeFile`
+* invoke `csound` compiler on that file
+
+### How to use global opcodes
 
 Some Csound opcodes are meant to be used in the global header section. 
 To put the statement there use the function:
@@ -196,3 +216,4 @@ In that package we can define nested instruments.
 
 Typed csound adds type-wrappers to distinguish types. Auto allocation of integers for tables
 and way to define instruments and trigger notes that fit into Haskell model. We do it all with SE-monad.
+It adds convenient way to allocate global variables and offers typed value for Csound flags instead of plain string.

@@ -5,6 +5,7 @@
 module Csound.Typed.Core.Types.Prim.Sig
   ( Sig (..)
   , unSig
+  , Sig2, Sig3, Sig4, Sig5, Sig6, Sig7, Sig8
   ) where
 
 import Csound.Dynamic (E)
@@ -53,3 +54,13 @@ instance Floating Sig where
     { pi = PrimSig pi;  exp = liftPrim exp exp;  sqrt = liftPrim sqrt sqrt; log = liftPrim log log; logBase = liftPrim2 logBase logBase; (**) = liftPrim2 (**) (**)
     ; sin = liftPrim sin sin;  tan = liftPrim tan tan;  cos = liftPrim cos cos; sinh = liftPrim sinh sinh; tanh = liftPrim tanh tanh; cosh = liftPrim cosh cosh
     ; asin = liftPrim asin asin; atan = liftPrim atan atan;  acos = liftPrim acos acos ; asinh = liftPrim asinh asinh; acosh = liftPrim acosh acosh; atanh = liftPrim atanh atanh }
+
+
+type Sig2 = (Sig, Sig)
+type Sig3 = (Sig, Sig, Sig)
+type Sig4 = (Sig, Sig, Sig, Sig)
+type Sig5 = (Sig, Sig, Sig, Sig, Sig)
+type Sig6 = (Sig, Sig, Sig, Sig, Sig, Sig)
+type Sig7 = (Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+type Sig8 = (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
+

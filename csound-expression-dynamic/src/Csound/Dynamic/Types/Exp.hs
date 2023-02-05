@@ -9,7 +9,7 @@
         CPP #-}
 module Csound.Dynamic.Types.Exp(
     E, RatedExp(..), isEmptyExp,
-    ratedExp, noRate, withRate, setRate,
+    ratedExp, noRate, withRate, setRate, toCtrlRate, toInitRate,
     toArrRate, removeArrRate,
     Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId,
@@ -141,6 +141,19 @@ setRate r a =
 -- of the constants (primitive values).
 newtype PrimOr a = PrimOr { unPrimOr :: Either Prim a }
     deriving (Show, Eq, Ord, Functor, Generic, Generic1)
+
+-- | Converts rate to control rate (affects Ir and Ar, other are unchainged)
+toCtrlRate :: Rate -> Rate
+toCtrlRate = \case
+  Ar -> Kr
+  Ir -> Kr
+  x  -> x
+
+-- | Converts rate to init rate (affects Kr other are unchainged)
+toInitRate :: Rate -> Rate
+toInitRate = \case
+  Ir -> Ir
+  x  -> x
 
 instance Cereal.Serialize a => Cereal.Serialize (PrimOr a)
 
@@ -361,7 +374,7 @@ data Signature
 -- Primitive values
 data Prim
     -- instrument p-arguments
-    = P !Int
+    = P !Rate !Int
     | PString !Int       -- >> p-string (read p-string notes at the bottom of the file):
     | PrimInt !Int
     | PrimDouble !Double

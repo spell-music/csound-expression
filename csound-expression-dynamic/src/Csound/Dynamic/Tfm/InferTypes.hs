@@ -685,6 +685,7 @@ primRate :: Prim -> Rate
 primRate = \case
   PrimString _ -> Sr
   PrimVar r _  -> r
+  P r _        -> r
   _            -> Ir
 
 primOrRate :: PrimOr Var -> Rate
