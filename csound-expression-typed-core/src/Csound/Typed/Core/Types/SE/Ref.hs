@@ -3,9 +3,6 @@
 module Csound.Typed.Core.Types.SE.Ref
   ( Ref (..)
   , newRef
-  , readRef
-  , writeRef
-  , modifyRef
   ) where
 
 import Control.Monad
@@ -27,19 +24,13 @@ newRefBy setRate initVals = fmap Ref $ SE $ do
     then lift $ zipWithM State.initGlobalVar (fmap setRate $ tupleRates @a) =<< fromTuple initVals
     else Dynamic.newLocalVars (fmap setRate $ tupleRates @a) (fromTuple initVals)
 
-newRef :: forall a . Tuple a => a -> SE (Ref a)
+newRef :: Tuple a => a -> SE (Ref a)
 newRef = newRefBy id
 
-readRef  :: Tuple a => Ref a -> SE a
-readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM Dynamic.readVar vars
+instance IsRef Ref where
 
-writeRef :: Tuple a => Ref a -> a -> SE ()
-writeRef (Ref vars) a = SE $ do
-  vals <- lift $ fromTuple a
-  zipWithM_ Dynamic.writeVar vars vals
+  readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM Dynamic.readVar vars
 
--- | Modifies the Ref value with given function.
-modifyRef :: Tuple a => Ref a -> (a -> a) -> SE ()
-modifyRef ref f = do
-    v <- readRef ref
-    writeRef ref (f v)
+  writeRef (Ref vars) a = SE $ do
+    vals <- lift $ fromTuple a
+    zipWithM_ Dynamic.writeVar vars vals

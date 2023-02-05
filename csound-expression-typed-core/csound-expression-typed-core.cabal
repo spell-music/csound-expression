@@ -65,8 +65,10 @@ Library
     Csound.Typed.Core.Types.Array
     Csound.Typed.Core.Types.PureArray
     Csound.Typed.Core.Types.SE
+    Csound.Typed.Core.Types.SE.Instr
     Csound.Typed.Core.Types.SE.Logic
     Csound.Typed.Core.Types.SE.Ref
+    Csound.Typed.Core.Types.SE.Port
     Csound.Typed.Core.Types.Tuple
 
     Paths_csound_expression_typed_core
