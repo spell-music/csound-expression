@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language AllowAmbiguousTypes #-}
 -- | Tuples of values
 module Csound.Typed.Core.Types.Tuple
@@ -11,6 +12,8 @@ module Csound.Typed.Core.Types.Tuple
   , TupleMethods (..)
   ) where
 
+import Data.NumInstances.Tuple ()
+
 import Control.Applicative (liftA2)
 
 import Csound.Dynamic (E, Rate (..))
@@ -23,8 +26,8 @@ instance Arg ()
 instance Arg D
 instance Arg Str
 instance Arg Tab
-instance Arg a => Arg (InstrId D a)
-instance Arg a => Arg (InstrId Str a)
+instance Arg a => Arg (ProcId D a)
+instance Arg a => Arg (ProcId Str a)
 
 instance (Arg a, Arg b) => Arg (a, b)
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c)
@@ -34,7 +37,7 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f)
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e, f, h)
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g)
 
-class Tuple a => Sigs a where
+class (Num a, Tuple a) => Sigs a where
 
 instance Sigs Sig
 
@@ -105,7 +108,7 @@ instance Tuple D   where { tupleMethods = primTuple }
 instance Tuple Tab where { tupleMethods = primTuple }
 instance Tuple Str where { tupleMethods = primTuple }
 instance Tuple Spec where { tupleMethods = primTuple }
-instance (Val ty, Arg a) => Tuple (InstrId ty a) where { tupleMethods = primTuple }
+instance (Val ty, Arg a) => Tuple (ProcId ty a) where { tupleMethods = primTuple }
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where
   tupleMethods = TupleMethods
@@ -155,3 +158,22 @@ split5 (a, b, c, d, e) = (a, (b, c, d, e))
 split6 (a, b, c, d, e, f) = (a, (b, c, d, e, f))
 split7 (a, b, c, d, e, f, g) = (a, (b, c, d, e, f, g))
 split8 (a, b, c, d, e, f, g, h) = (a, (b, c, d, e, f, g, h))
+
+
+------------------------------------------------------------------------------------------
+-- missing num instance
+
+lift8 :: (a->u) -> (b->v) -> (c->w) -> (d->x) -> (e->y) -> (f->t) -> (g->z) -> (h->z1)
+      -> (a,b,c,d,e,f,g,h) -> (u,v,w,x,y,t,z,z1)
+lift8 fa fb fc fd fe ff fg fh (a,b,c,d,e,f,g,h) =
+  (fa a, fb b, fc c, fd d, fe e, ff f, fg g, fh h)
+
+instance (Num a, Num b, Num c, Num d, Num e, Num f, Num g, Num h) => Num (a,b,c,d,e,f,g,h) where
+  fromInteger n = (fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n)
+  (a,b,c,d,e,f,g,h) + (a',b',c',d',e',f',g',h') = (a+a',b+b',c+c',d+d',e+e',f+f',g+g',h+h')
+  (a,b,c,d,e,f,g,h) - (a',b',c',d',e',f',g',h') = (a-a',b-b',c-c',d-d',e-e',f-f',g-g',h-h')
+  (a,b,c,d,e,f,g,h) * (a',b',c',d',e',f',g',h') = (a*a',b*b',c*c',d*d',e*e',f*f',g*g', h*h')
+  negate = lift8 negate negate negate negate negate negate negate negate
+  abs    = lift8 abs abs abs abs abs abs abs abs
+  signum = lift8 signum signum signum signum signum signum signum signum
+

@@ -29,6 +29,7 @@ Library
         bytestring,
         ghc-prim,
         containers,
+        mtl,
         transformers >= 0.3,
         Boolean >= 0.1.0,
         colour >= 2.0,
@@ -45,6 +46,7 @@ Library
         data-fix,
         unordered-containers
 
+
   Hs-Source-Dirs:      src/
   Exposed-Modules:
     Csound.Typed.Core
@@ -53,6 +55,7 @@ Library
     Csound.Typed.Core.State.Options
     Csound.Typed.Core.Types
     Csound.Typed.Core.Types.Gen
+    Csound.Typed.Core.Types.Rate
     Csound.Typed.Core.Types.Prim
     Csound.Typed.Core.Types.Prim.Bool
     Csound.Typed.Core.Types.Prim.InstrId

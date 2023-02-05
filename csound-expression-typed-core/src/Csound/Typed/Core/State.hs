@@ -13,7 +13,10 @@ module Csound.Typed.Core.State
   , saveGen
   , saveTabs
   , getOptions
+  , getFreshPort
   ) where
+
+import Control.Monad.IO.Class
 
 import Csound.Dynamic
 import Csound.Typed.Core.State.Options (Options)
@@ -27,7 +30,7 @@ import Data.Text qualified as Text
 
 -- | Monad for typed Csound expressions
 newtype Run a = Run { unRun :: StateT St IO a }
-  deriving newtype (Functor, Applicative, Monad)
+  deriving newtype (Functor, Applicative, Monad, MonadIO)
 
 -- | Run the typed Csound monad to get underlying dynamic Csound file
 -- for rendering to text.
@@ -150,6 +153,9 @@ globalConstants opt = execDepT $ do
   jackos
   where
     jackos = maybe (return ()) (verbatim . Options.renderJacko) $ Options.csdJacko opt
+
+getFreshPort :: Run E
+getFreshPort = undefined
 
 -----------------------------------------------------------------------------
 -- internal state

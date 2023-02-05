@@ -5,9 +5,12 @@ module Csound.Typed.Core.Types.SE
   , global
   , IsRef (..)
   , modifyRef
+  , getCurrentRate
   ) where
 
-import Csound.Dynamic (DepT)
+import Control.Monad.IO.Class
+
+import Csound.Dynamic (DepT, IfRate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Run)
 import Csound.Typed.Core.State.Options (Options)
@@ -20,6 +23,9 @@ type Dep a = DepT Run a
 
 newtype SE a = SE { unSE :: Dep a }
   deriving newtype (Functor, Applicative, Monad)
+
+instance MonadIO SE where
+  liftIO = SE . lift . liftIO
 
 setTotalDur :: Double -> SE a -> SE a
 setTotalDur duration (SE act) = SE $ do
@@ -45,3 +51,7 @@ class IsRef ref where
 
 modifyRef :: (Tuple a, IsRef ref) => ref a -> (a -> a) -> SE ()
 modifyRef ref f = writeRef ref . f =<< readRef ref
+
+getCurrentRate :: SE (Maybe IfRate)
+getCurrentRate = pure (Just IfIr) -- TODO
+

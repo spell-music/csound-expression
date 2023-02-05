@@ -76,10 +76,10 @@ diskin2 :: Tuple a => Str -> a
 diskin2 b1 = pureTuple $ f <$> unStr b1
     where f a1 = mopcs "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1]
 
-schedule :: forall args ty . (Val ty, Arg args) => InstrId ty args -> D -> D -> args -> SE ()
+schedule :: forall args ty . (Val ty, Arg args) => ProcId ty args -> D -> D -> args -> SE ()
 schedule instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> fromTuple (instrId, start, dur, args)
-    where f as = opcs "schedule" [(Xr, tupleRates @(InstrId ty args, D, D, args))] as
+    where f as = opcs "schedule" [(Xr, tupleRates @(ProcId ty args, D, D, args))] as
 
-schedulek :: forall a ty . (Val ty, Arg a) => InstrId ty a -> D -> D -> a -> SE ()
+schedulek :: forall a ty . (Val ty, Arg a) => ProcId ty a -> D -> D -> a -> SE ()
 schedulek instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> fromTuple (instrId, start, dur, args)
-    where f as = opcs "schedulek" [(Xr, tupleRates @(K (InstrId ty a, D, D, a)))] as
+    where f as = opcs "schedulek" [(Xr, tupleRates @(K (ProcId ty a, D, D, a)))] as

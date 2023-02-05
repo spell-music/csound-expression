@@ -1,7 +1,6 @@
 -- | Primitive Csound types
 module Csound.Typed.Core.Types.Prim
-  ( InstrId (..)
-  , SigOrD
+  ( SigOrD
   , module X
   -- * Converters
   , sig
