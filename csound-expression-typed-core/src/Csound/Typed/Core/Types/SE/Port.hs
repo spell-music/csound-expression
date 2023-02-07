@@ -8,13 +8,13 @@ module Csound.Typed.Core.Types.SE.Port
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
 
-import Csound.Dynamic (Rate, E, toInitRate)
-import Csound.Typed.Core.State (Run)
+import Csound.Dynamic (Rate (..), E, toInitRate)
+import Csound.Dynamic qualified as Dynamic
+import Csound.Typed.Core.State (Dep)
 import Csound.Typed.Core.Types.SE
 import Csound.Typed.Core.Types.Tuple
 import Csound.Typed.Core.Types.Prim.D
 import Csound.Typed.Core.Types.Prim.Val
-import Csound.Typed.Core.Types.Prim.Str
 import Csound.Typed.Core.State qualified as State
 
 -- https://flossmanual.csound.com/csound-language/local-and-global-variables#the-chn-opcodes-for-global-variables
@@ -23,38 +23,58 @@ newtype Port a = Port { unPort :: D }
 
 newPort :: Tuple a => a -> SE (Port a)
 newPort initVal = do
-  pid <- Port . fromE . pure <$> SE (lift State.getFreshPort)
-  writeBy toInitRate pid initVal
+  pid <- Port . fromE . pure <$> SE State.getFreshPort
+--  writeBy chnset toInitRate pid initVal
   pure pid
 
 instance IsRef Port where
-  readRef :: forall a . Tuple a => Port a -> SE a
-  readRef (Port pid) = do
-    toTuple . pure <$> zipWithM chnget rates names
-    where
-      names = toPortName pid <$> [1 .. tupleArity @a]
-      rates = tupleRates @a
+  readRef pid = fmap (toTuple . pure) $ SE $
+    zipWithM (\rate name -> chnget rate name) (getRates pid) =<< getNames pid
 
-  writeRef = writeBy id
+  writeRef = writeBy chnset id
 
-writeBy :: forall a . Tuple a => (Rate -> Rate) -> Port a -> a -> SE ()
-writeBy toRate (Port pid) val =
-  fromRunSE $ zipWithM_ (\(rate, name) v -> chnset (toRate rate) name v) (zip rates names) <$> (fromTuple val)
-  where
-    names = toPortName pid <$> [1 .. tupleArity @a]
-    rates = tupleRates @a
+  mixRef = writeBy chnmix id
 
-fromRunSE :: Run (SE ()) -> SE ()
-fromRunSE act = SE $ join $ lift (unSE <$> act)
+  clearRef pid = SE $ mapM_ chnclear =<< getNames pid
+
+writeBy :: forall a . Tuple a => (Rate -> E -> E -> Dep ()) -> (Rate -> Rate) -> Port a -> a -> SE ()
+writeBy set toRate pid val = SE $ do
+  valE <- lift (fromTuple val)
+  names <- getNames pid
+  zipWithM_ (\(rate, name) v -> set (toRate rate) name v) (zip (getRates pid) names) valE
 
 --------------------------------------------------------------
 -- utils
 
-toPortName :: D -> Int -> Str
-toPortName = undefined
+getNames :: forall a . Tuple a => Port a -> Dep [E]
+getNames pid = do
+  pidE <- lift (toE pid)
+  pure $ toPortName pidE <$> [1 .. tupleArity @a]
 
-chnset :: Rate -> Str -> E -> SE ()
-chnset = undefined
+getRates :: forall a . Tuple a => Port a -> [Rate]
+getRates _ = tupleRates @a
 
-chnget :: Rate -> Str -> SE E
-chnget = undefined
+toPortName :: E -> Int -> E
+toPortName chnId name =
+    sprintf formatString [chnId]
+    where
+      formatString = Dynamic.str $ 'p' : show name ++ "_" ++ "%d"
+
+--------------------------------------------------------------
+-- opcodes
+
+chnset :: Rate -> E -> E -> Dep ()
+chnset rate name value = Dynamic.depT_ $ Dynamic.opcs "chnset" [(Xr, [rate, Sr])] [value, name]
+
+chnmix :: Rate -> E -> E -> Dep ()
+chnmix rate name value = Dynamic.depT_ $ Dynamic.opcs "chnmix" [(Xr, [rate, Sr])] [value, name]
+
+chnget :: Rate -> E -> Dep E
+chnget rate name = Dynamic.depT $ Dynamic.opcs "chnget" [(rate, [Sr])] [name]
+
+chnclear :: E -> Dep ()
+chnclear name =  Dynamic.depT_ $ Dynamic.opcs "chnclear" [(Xr, [Sr])] [name]
+
+sprintf :: E -> [E] -> E
+sprintf a as = Dynamic.opcs "sprintf" [(Sr, Sr:repeat Ir)] (a:as)
+

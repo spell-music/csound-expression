@@ -1,7 +1,7 @@
 -- | Define instruments
 module Csound.Typed.Core.Types.SE.Instr
   ( newProc
-  , InstrId (..), InstrPort (..)
+  , InstrId (..)
   , newInstr
   , EffId (..), EffPort (..)
   , newEff
@@ -10,7 +10,6 @@ module Csound.Typed.Core.Types.SE.Instr
   , play
   ) where
 
-import Data.Kind (Type)
 import Data.Maybe
 
 import Csound.Dynamic (E, Rate (..), IfRate (..))
@@ -46,46 +45,34 @@ newProc instr = SE $ lift $ State.localy $ do
 -- procedures
 
 data InstrId out arg = InstrId
-  { instrIdInternal :: ProcId D (Port (InstrPort out), arg)
-  , instrIdPort     :: Port (InstrPort out)
+  { instrIdInternal  :: ProcId D (Port (K Sig), Port out, arg)
+  , instrIdPortAlive :: Port (K Sig)
+  , instrIdPortOuts   :: Port out
   }
-
-data InstrPort a = InstrPort
-  { instrAlive :: Sig
-  , instrOuts  :: a
-  }
-
-instance (Tuple out, Arg arg) => Tuple (InstrId out arg) where
-  tupleMethods = makeTupleMethods (uncurry InstrId) (\(InstrId inId port) -> (inId, port))
-
-instance Tuple a => Tuple (InstrPort a) where
-  tupleMethods = makeTupleMethods (uncurry InstrPort) (\(InstrPort isAlive outs) -> (isAlive, outs))
 
 -- | Instrument can produce output that is read from another instrument
 newInstr :: forall a b . (Arg a, Sigs b)
   => (a -> SE b)
   -> SE (InstrId b a, b)
 newInstr body = do
-  port :: Port (InstrPort b) <- newPort (InstrPort 1 defTuple)
-  instrId <- InstrId <$> newProc body' <*> pure port
-  outs <- instrOuts <$> readRef port
-  writeRef port $ InstrPort
-    { instrAlive = linsegr [1] 0.25 0
-    , instrOuts  = 0
-    }
+  portAlive <- newPort 1
+  portOuts  <- newPort defTuple
+  instrId <- InstrId <$> newProc body' <*> pure portAlive <*> pure portOuts
+  outs <- readRef portOuts
+  writeRef portAlive $ K (linsegr [0] 0.25 1)
+  clearRef portOuts
   pure (instrId, outs)
   where
-    body' :: (Port (InstrPort b), a) -> SE ()
-    body' (port, arg) = do
-      checkLive port
-      out <- body arg
-      modifyRef port $ \s -> s { instrOuts = out }
+    body' :: (Port (K Sig), Port b, a) -> SE ()
+    body' (portAlive, portOuts, arg) = do
+      checkLive portAlive
+      writeRef portOuts =<< body arg
 
     -- we turn off the child instrument if parent instrument is no longer alive
-    checkLive :: Port (InstrPort b) -> SE ()
+    checkLive :: Port (K Sig) -> SE ()
     checkLive port = do
-      isAlive <- instrAlive <$> readRef port
-      when1 (isAlive `lessThan` 1) $ turnoff
+      isAlive <- unK <$> readRef port
+      when1 (isAlive `greaterThan` 0) $ turnoff
 
 ---------------------------------------------------------------
 -- Effects
@@ -96,7 +83,7 @@ data EffId ins outs arg = EffId
   }
 
 data EffPort ins outs = EffPort
-  { effAlive :: Sig
+  { effAlive :: K Sig
   , effIns   :: ins
   , effOuts  :: outs
   }
@@ -120,7 +107,7 @@ newEff body ins = do
   instrId <- EffId <$> newProc body' <*> pure port
   outs <- effOuts <$> readRef port
   writeRef port $ EffPort
-    { effAlive = linsegr [1] 0.25 0
+    { effAlive = K (linsegr [1] 0.25 0)
     , effIns   = ins
     , effOuts  = 0
     }
@@ -136,7 +123,7 @@ newEff body ins = do
     -- we turn off the child instrument if parent instrument is no longer alive
     checkLive :: Port (EffPort ins outs) -> SE ()
     checkLive port = do
-      isAlive <- effAlive <$> readRef port
+      isAlive <- unK . effAlive <$> readRef port
       when1 (isAlive `lessThan` 1) $ turnoff
 
 ------------------------------------------------------------------------------
@@ -156,38 +143,28 @@ instance Tuple a => Tuple (Note a) where
       (\(start, dur, args) -> Note start dur args)
       (\(Note start dur args) -> (start, dur, args))
 
-class (Val (InternalType instrId), Tuple (InternalPort instrId)) => IsInstrId instrId where
-  type InternalPort instrId :: Type
-  type InternalType instrId :: Type
-
-  getInternalId   :: instrId a -> ProcId (InternalType instrId) (Port (InternalPort instrId), a)
-  getInternalPort :: instrId a -> Port (InternalPort instrId)
+class IsInstrId instrId where
+  play :: (Arg a) => instrId a -> [Note a] -> SE ()
 
 instance Val ty => IsInstrId (ProcId ty) where
-  type InternalPort (ProcId ty) = ()
-  type InternalType (ProcId ty) = ty
-
-  getInternalId (ProcId procId) = ProcId procId
-  getInternalPort = const $ defTuple
+  play instrId notes = do
+    currentRate <- fromMaybe IfIr <$> getCurrentRate
+    mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur args) notes
 
 instance Sigs outs => IsInstrId (InstrId outs) where
-  type InternalPort (InstrId outs) = InstrPort outs
-  type InternalType (InstrId outs) = D
-
-  getInternalId = instrIdInternal
-  getInternalPort = instrIdPort
+  play (InstrId instrId portAlive portOuts) notes = do
+    currentRate <- fromMaybe IfIr <$> getCurrentRate
+    mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur (portAlive, portOuts, args)) notes
 
 instance (Sigs outs, Sigs ins) => IsInstrId (EffId ins outs) where
-  type InternalPort (EffId ins outs) = EffPort ins outs
-  type InternalType (EffId ins outs) = D
+  play = undefined
 
-  getInternalId = effIdInternal
-  getInternalPort = effIdPort
-
+{-
 play :: (IsInstrId instrId, Arg a) => instrId a -> [Note a] -> SE ()
 play instrId notes = do
   currentRate <- fromMaybe IfIr <$> getCurrentRate
   mapM_ (\(Note start dur args) -> schedule currentRate (getInternalId instrId) start dur (getInternalPort instrId, args)) notes
+-}
 
 ------------------------------------------------------------------------------
 -- utils

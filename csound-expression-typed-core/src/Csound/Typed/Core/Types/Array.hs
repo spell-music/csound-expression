@@ -34,13 +34,13 @@ import Control.Monad
 import Control.Monad.Trans.Class (lift)
 import Data.Text (Text)
 
-import Csound.Dynamic (E, Rate (..), Var, DepT)
+import Csound.Dynamic (E, Rate (..), Var)
 import qualified Csound.Dynamic as D
 
 import Csound.Typed.Core.Types.Prim
 import Csound.Typed.Core.Types.Tuple
 import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.State (Run)
+import Csound.Typed.Core.State (Run, Dep)
 import Csound.Typed.Core.State qualified as State
 
 ------------------------------------------------------------------
@@ -48,8 +48,6 @@ import Csound.Typed.Core.State qualified as State
 
 newGlobalArrVar :: Rate -> Run [E] -> Dep Var
 newGlobalArrVar r v = lift $ State.initGlobalArrVar r =<< v
-
-type Dep a = DepT Run a
 
 -- | An array with single signal index.
 type Arr1 a  = Arr Sig a

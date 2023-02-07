@@ -10,16 +10,14 @@ module Csound.Typed.Core.Types.SE
 
 import Control.Monad.IO.Class
 
-import Csound.Dynamic (DepT, IfRate (..))
+import Csound.Dynamic (IfRate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
+import Csound.Typed.Core.State (Dep)
 import Csound.Typed.Core.State.Options (Options)
 import Csound.Typed.Core.State qualified as State
 import Csound.Typed.Core.Types.Tuple
 import Control.Monad.Trans.Class (lift)
 import Data.Default
-
-type Dep a = DepT Run a
 
 newtype SE a = SE { unSE :: Dep a }
   deriving newtype (Functor, Applicative, Monad)
@@ -48,6 +46,12 @@ global (SE expr) = SE $ lift $ do
 class IsRef ref where
   readRef  :: Tuple a => ref a -> SE a
   writeRef :: Tuple a => ref a -> a -> SE ()
+
+  mixRef   :: (Num a, Tuple a) => ref a -> a -> SE ()
+  clearRef :: (Num a, Tuple a) => ref a -> SE ()
+
+  mixRef ref a = modifyRef ref (a +)
+  clearRef ref = writeRef ref 0
 
 modifyRef :: (Tuple a, IsRef ref) => ref a -> (a -> a) -> SE ()
 modifyRef ref f = writeRef ref . f =<< readRef ref

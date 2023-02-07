@@ -1,6 +1,7 @@
 -- | Internal state for typed core of the EDSL
 module Csound.Typed.Core.State
   ( Run (..)
+  , Dep
   , localy
   , exec
   , insertInstr
@@ -26,7 +27,10 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
+import Data.Text (Text)
 import Data.Text qualified as Text
+
+type Dep a = DepT Run a
 
 -- | Monad for typed Csound expressions
 newtype Run a = Run { unRun :: StateT St IO a }
@@ -35,12 +39,8 @@ newtype Run a = Run { unRun :: StateT St IO a }
 -- | Run the typed Csound monad to get underlying dynamic Csound file
 -- for rendering to text.
 exec :: Options -> Run () -> IO Csd
-exec opts (Run act) = stCsd <$> execStateT act' initSt
+exec opts act = stCsd <$> execStateT (unRun $ setupInstr0 opts >> act) initSt
   where
-    act' = do
-      unRun $ insertGlobalExpr =<< globalConstants opts
-      act
-
     initSt = St
       { stCsd = Csd
           { csdFlags = Options.csdFlags opts
@@ -56,6 +56,8 @@ exec opts (Run act) = stCsd <$> execStateT act' initSt
       }
 
     foreverTime = 100 * 604800.0
+
+
 
 -----------------------------------------------------------------------------
 -- basic functions
@@ -142,9 +144,18 @@ saveTabs = undefined
 getOptions :: Run Options
 getOptions = Run $ gets stOptions
 
+-- | Preambule instrument which sets up global constants and utilities
+setupInstr0 :: Options -> Run ()
+setupInstr0 opt = insertGlobalExpr =<< execDepT instr0
+  where
+    instr0 :: Dep ()
+    instr0 = do
+      globalConstants opt
+      chnUpdateUdo
+
 -- | Creates expression with global constants
-globalConstants :: Options -> Run E
-globalConstants opt = execDepT $ do
+globalConstants :: Options -> Dep ()
+globalConstants opt = do
   setSr       $ Options.defSampleRate opt
   setKsmps    $ Options.defBlockSize opt
   setNchnls   $ Options.defNchnls opt
@@ -154,8 +165,21 @@ globalConstants opt = execDepT $ do
   where
     jackos = maybe (return ()) (verbatim . Options.renderJacko) $ Options.csdJacko opt
 
-getFreshPort :: Run E
-getFreshPort = undefined
+-----------------------------------------------------------------------------
+
+chnUpdateUdo :: Dep ()
+chnUpdateUdo = verbatim $ Text.unlines [
+    "giPort init 1",
+    "opcode " <> chnUpdateOpcodeName <> ", i, 0",
+    "xout giPort",
+    "giPort = giPort + 1",
+    "endop"]
+
+chnUpdateOpcodeName :: Text
+chnUpdateOpcodeName = "FreePort"
+
+getFreshPort :: Dep E
+getFreshPort = depT $ opcs chnUpdateOpcodeName [(Ir, [])] []
 
 -----------------------------------------------------------------------------
 -- internal state

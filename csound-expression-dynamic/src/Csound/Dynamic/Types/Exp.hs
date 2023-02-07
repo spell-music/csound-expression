@@ -157,7 +157,8 @@ toCtrlRate = \case
 -- | Converts rate to init rate (affects Kr other are unchainged)
 toInitRate :: Rate -> Rate
 toInitRate = \case
-  Ir -> Ir
+  Kr -> Ir
+  Ar -> Ir
   x  -> x
 
 instance Cereal.Serialize a => Cereal.Serialize (PrimOr a)
