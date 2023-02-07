@@ -125,7 +125,8 @@ newEff mixMode userRelease body ins = do
       checkLive portAlive
       parentIns <- readRef portIns
       out <- body arg parentIns
-      setRef portOuts out
+      let env = linsegr [1] release 0
+      setRef portOuts (mulSigs env out)
 
     setRef = case mixMode of
       PolyMix -> mixRef
@@ -191,12 +192,6 @@ schedule ifRate instrId start dur args = SE $ (Dynamic.depT_ =<<) $ lift $ f <$>
       f as = case ifRate of
         IfIr -> Dynamic.opcs "schedule"  [(Xr, tupleRates @(ProcId ty args, D, D, args))] as
         IfKr -> Dynamic.opcs "schedulek" [(Xr, tupleRates @(K (ProcId ty args, D, D, args)))] as
-
-{-
-schedulek :: forall a ty . (Val ty, Arg a) => ProcId ty a -> D -> D -> a -> SE ()
-schedulek instrId start dur args = SE $ (depT_ =<<) $ lift $ f <$> fromTuple (instrId, start, dur, args)
-    where f as = opcs "schedulek" [(Xr, tupleRates @(K (ProcId ty a, D, D, a)))] as
--}
 
 -- |
 -- Trace a series of line segments between specified points including a release segment.
