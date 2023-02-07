@@ -4,7 +4,7 @@ module Csound.Typed.Core.Types.SE.Instr
   , InstrId (..)
   , MixMode (..)
   , newInstr
-  , EffId (..), EffPort (..)
+  , EffId (..)
   , newEff
   , IsInstrId
   , Note (..)
@@ -44,11 +44,11 @@ newProc instr = SE $ lift $ State.localy $ do
     toInstrId = ProcId . fromE . pure . Dynamic.prim . Dynamic.PrimInstrId
 
 ------------------------------------------------------------
--- procedures
+-- instruments
 
 data InstrId out arg = InstrId
-  { instrIdInternal  :: ProcId D (Port (K Sig), Port out, arg)
-  , instrIdPortAlive :: Port (K Sig)
+  { instrIdInternal   :: ProcId D (Port (K Sig), Port out, arg)
+  , instrIdPortAlive  :: Port (K Sig)
   , instrIdPortOuts   :: Port out
   }
 
@@ -95,53 +95,47 @@ mulSigs k sigs = toTuple $ do
 -- Effects
 
 data EffId ins outs arg = EffId
-  { effIdInternal :: ProcId D (Port (EffPort ins outs), arg)
-  , effIdPort     :: Port (EffPort ins outs)
+  { effIdInternal :: ProcId D (Port (K Sig), Port ins, Port outs, arg)
+  , effIdAlive    :: Port (K Sig)
+  , effIdOuts     :: Port ins
+  , effIdIns      :: Port outs
   }
-
-data EffPort ins outs = EffPort
-  { effAlive :: K Sig
-  , effIns   :: ins
-  , effOuts  :: outs
-  }
-
-instance (Tuple out, Tuple ins, Arg arg) => Tuple (EffId ins out arg) where
-  tupleMethods = makeTupleMethods (uncurry EffId) (\(EffId inId port) -> (inId, port))
-
-instance (Tuple ins, Tuple outs) => Tuple (EffPort ins outs) where
-  tupleMethods =
-    makeTupleMethods
-      (\(isAlive, ins, outs) -> EffPort isAlive ins outs)
-      (\(EffPort isAlive ins outs) -> (isAlive, ins, outs))
 
 -- | Eff can produce output that is read from another instrument
 -- and can consume input from the parent instrument
 newEff :: forall a ins outs . (Arg a, Sigs ins, Sigs outs)
-  => (a -> ins -> SE outs)
+  => MixMode -> D -> (a -> ins -> SE outs)
   -> ins -> SE (EffId ins outs a, outs)
-newEff body ins = do
-  port <- newPort (EffPort 1 defTuple defTuple)
-  instrId <- EffId <$> newProc body' <*> pure port
-  outs <- effOuts <$> readRef port
-  writeRef port $ EffPort
-    { effAlive = K (linsegr [1] 0.25 0)
-    , effIns   = ins
-    , effOuts  = 0
-    }
+newEff mixMode userRelease body ins = do
+  portAlive <- newPort (K 0)
+  portOuts <- newPort 0
+  portIns <- newPort ins
+  instrId <- EffId <$> newProc body' <*> pure portAlive <*> pure portIns <*> pure portOuts
+  outs <- readRef portOuts
+
+  writeRef portAlive (K $ linsegr [0] 0.25 1)
+  writeRef portIns ins
+  clearRef portOuts
   pure (instrId, outs)
   where
-    body' :: (Port (EffPort ins outs), a) -> SE ()
-    body' (port, arg) = do
-      checkLive port
-      parentIns <- effIns <$> readRef port
+    release = maxB 0.01 userRelease
+
+    body' :: (Port (K Sig), Port ins, Port outs, a) -> SE ()
+    body' (portAlive, portIns, portOuts, arg) = do
+      checkLive portAlive
+      parentIns <- readRef portIns
       out <- body arg parentIns
-      modifyRef port $ \s -> s { effOuts = out }
+      setRef portOuts out
+
+    setRef = case mixMode of
+      PolyMix -> mixRef
+      MonoMix -> writeRef
 
     -- we turn off the child instrument if parent instrument is no longer alive
-    checkLive :: Port (EffPort ins outs) -> SE ()
+    checkLive :: Port (K Sig) -> SE ()
     checkLive port = do
-      isAlive <- unK . effAlive <$> readRef port
-      when1 (isAlive `lessThan` 1) $ turnoff
+      isAlive <- unK <$> readRef port
+      when1 (isAlive `greaterThan` 0) $ turnoffSelf release
 
 ------------------------------------------------------------------------------
 -- trigger instr with note
@@ -180,18 +174,6 @@ instance (Sigs outs, Sigs ins) => IsInstrId (EffId ins outs) where
 -- utils
 
 -- TODO: use turnoff2 with release time as param
-
--- |
--- Enables an instrument to turn itself off or to turn an instance of another instrument off.
---
--- >  turnoff
--- >  turnoff  inst
--- >  turnoff  knst
---
--- csound doc: <http://csound.com/docs/manual/turnoff.html>
-turnoff :: SE ()
-turnoff  = SE $ (Dynamic.depT_ =<<) $ lift $ pure f
-    where f  = Dynamic.opcs "turnoff" [(Xr,[])] []
 
 turnoffSelf :: D -> SE ()
 turnoffSelf rel = SE $ do
