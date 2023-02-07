@@ -57,5 +57,5 @@ modifyRef :: (Tuple a, IsRef ref) => ref a -> (a -> a) -> SE ()
 modifyRef ref f = writeRef ref . f =<< readRef ref
 
 getCurrentRate :: SE (Maybe IfRate)
-getCurrentRate = pure (Just IfIr) -- TODO
+getCurrentRate = SE $ lift State.getCurrentRate
 

@@ -11,6 +11,8 @@ module Csound.Typed.Core.State
   , initGlobalVar
   , initGlobalArrVar
   , isGlobalInstr
+  , withCurrentRate
+  , getCurrentRate
   , saveGen
   , saveTabs
   , getOptions
@@ -18,17 +20,18 @@ module Csound.Typed.Core.State
   ) where
 
 import Control.Monad.IO.Class
-
-import Csound.Dynamic
-import Csound.Typed.Core.State.Options (Options)
-import Csound.Typed.Core.State.Options qualified as Options
 import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.Class (lift)
 import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as Text
+
+import Csound.Dynamic
+import Csound.Typed.Core.State.Options (Options)
+import Csound.Typed.Core.State.Options qualified as Options
 
 type Dep a = DepT Run a
 
@@ -51,6 +54,7 @@ exec opts act = stCsd <$> execStateT (unRun $ setupInstr0 opts >> act) initSt
       , stFreshId = initFreshId
       , stFreshVar = 1
       , stIsGlobal = True
+      , stCurrentRate = Nothing
       , stGens = Map.empty
       , stOptions = opts
       }
@@ -181,17 +185,32 @@ chnUpdateOpcodeName = "FreePort"
 getFreshPort :: Dep E
 getFreshPort = depT $ opcs chnUpdateOpcodeName [(Ir, [])] []
 
+getCurrentRate :: Run (Maybe IfRate)
+getCurrentRate = Run (gets stCurrentRate)
+
+withCurrentRate :: IfRate -> Dep a -> Dep a
+withCurrentRate rate act = do
+  prevRate <- lift getCurrentRate
+  setCurrentRate (Just rate)
+  res <- act
+  setCurrentRate prevRate
+  pure res
+  where
+    setCurrentRate :: Maybe IfRate -> Dep ()
+    setCurrentRate r = lift $ Run $ modify' $ \s -> s { stCurrentRate = r }
+
 -----------------------------------------------------------------------------
 -- internal state
 
 -- | Internal state for rendering typed expressions to Csd
 data St = St
-  { stCsd        :: !Csd               -- ^ Dynamic Csound code
-  , stFreshId    :: !FreshId           -- ^ fresh instrument ids
-  , stFreshVar   :: !Int               -- ^ fresh names for mutable variables
-  , stIsGlobal   :: !Bool              -- ^ do we render global or local instrument
-  , stGens       :: !(Map Gen Int)     -- ^ map of Gen-tables to generate unique integer identifiers
-  , stOptions    :: !Options           -- ^ Csound flags and initial options / settings
+  { stCsd         :: !Csd               -- ^ Dynamic Csound code
+  , stFreshId     :: !FreshId           -- ^ fresh instrument ids
+  , stFreshVar    :: !Int               -- ^ fresh names for mutable variables
+  , stIsGlobal    :: !Bool              -- ^ do we render global or local instrument
+  , stCurrentRate :: !(Maybe IfRate)    -- ^ current rate of execution (Ir or Kr)
+  , stGens        :: !(Map Gen Int)     -- ^ map of Gen-tables to generate unique integer identifiers
+  , stOptions     :: !Options           -- ^ Csound flags and initial options / settings
   }
 
 -- | Fresh ids for instruments
