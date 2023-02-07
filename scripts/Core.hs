@@ -65,7 +65,7 @@ playFile = do
 
 playFileInstr :: SE ()
 playFileInstr = do
-  (instr1, (al, ar)) <- newInstr fileInstr
+  (instr1, (al, ar)) <- newInstr PolyMix 0.2 fileInstr
   schedule instr1 0 3 "/home/anton/over-minus.wav"
   schedule instr1 5 7 "/home/anton/over-minus.wav"
   outs (al, ar)

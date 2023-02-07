@@ -2,6 +2,7 @@
 module Csound.Typed.Core.Types.SE.Instr
   ( newProc
   , InstrId (..)
+  , MixMode (..)
   , newInstr
   , EffId (..), EffPort (..)
   , newEff
@@ -11,10 +12,11 @@ module Csound.Typed.Core.Types.SE.Instr
   ) where
 
 import Data.Maybe
+import Data.Boolean (maxB)
 
 import Csound.Dynamic (E, Rate (..), IfRate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
+import Csound.Typed.Core.State (Run, Dep)
 import Csound.Typed.Core.State qualified as State
 import Csound.Typed.Core.Types.Prim
 import Csound.Typed.Core.Types.Tuple
@@ -50,29 +52,44 @@ data InstrId out arg = InstrId
   , instrIdPortOuts   :: Port out
   }
 
+data MixMode = PolyMix | MonoMix
+
 -- | Instrument can produce output that is read from another instrument
 newInstr :: forall a b . (Arg a, Sigs b)
-  => (a -> SE b)
+  => MixMode -> D -> (a -> SE b)
   -> SE (InstrId b a, b)
-newInstr body = do
+newInstr mixMode userRelease body = do
   portAlive <- newPort 1
   portOuts  <- newPort defTuple
   instrId <- InstrId <$> newProc body' <*> pure portAlive <*> pure portOuts
   outs <- readRef portOuts
-  writeRef portAlive $ K (linsegr [0] 0.25 1)
+  writeRef portAlive $ K (linsegr [0] release 1)
   clearRef portOuts
   pure (instrId, outs)
   where
+    release = maxB 0.01 userRelease
+
     body' :: (Port (K Sig), Port b, a) -> SE ()
     body' (portAlive, portOuts, arg) = do
       checkLive portAlive
-      writeRef portOuts =<< body arg
+      let env = linsegr [1] release 0
+      setRef portOuts . mulSigs env =<< body arg
+
+    setRef = case mixMode of
+      PolyMix -> mixRef
+      MonoMix -> writeRef
 
     -- we turn off the child instrument if parent instrument is no longer alive
     checkLive :: Port (K Sig) -> SE ()
     checkLive port = do
       isAlive <- unK <$> readRef port
-      when1 (isAlive `greaterThan` 0) $ turnoff
+      when1 (isAlive `greaterThan` 0) $ turnoffSelf release
+
+mulSigs :: Sigs a => Sig -> a -> a
+mulSigs k sigs = toTuple $ do
+  es <- fromTuple sigs
+  kE <- toE k
+  pure $ fmap (kE * ) es
 
 ---------------------------------------------------------------
 -- Effects
@@ -159,13 +176,6 @@ instance Sigs outs => IsInstrId (InstrId outs) where
 instance (Sigs outs, Sigs ins) => IsInstrId (EffId ins outs) where
   play = undefined
 
-{-
-play :: (IsInstrId instrId, Arg a) => instrId a -> [Note a] -> SE ()
-play instrId notes = do
-  currentRate <- fromMaybe IfIr <$> getCurrentRate
-  mapM_ (\(Note start dur args) -> schedule currentRate (getInternalId instrId) start dur (getInternalPort instrId, args)) notes
--}
-
 ------------------------------------------------------------------------------
 -- utils
 
@@ -179,9 +189,19 @@ play instrId notes = do
 -- >  turnoff  knst
 --
 -- csound doc: <http://csound.com/docs/manual/turnoff.html>
-turnoff ::   SE ()
+turnoff :: SE ()
 turnoff  = SE $ (Dynamic.depT_ =<<) $ lift $ pure f
     where f  = Dynamic.opcs "turnoff" [(Xr,[])] []
+
+turnoffSelf :: D -> SE ()
+turnoffSelf rel = SE $ do
+  relE <- lift $ toE rel
+  let self = Dynamic.pn Ir 1
+  csdTurnoff2 self 0 relE
+
+csdTurnoff2 :: E -> E -> E -> Dep ()
+csdTurnoff2 instrId mode release =
+  Dynamic.depT_ $ Dynamic.opcs "turnoff2" [(Xr, [Kr, Kr, Kr])] [instrId, mode, release]
 
 schedule :: forall args ty . (Val ty, Arg args) => IfRate -> ProcId ty args -> D -> D -> args -> SE ()
 schedule ifRate instrId start dur args = SE $ (Dynamic.depT_ =<<) $ lift $ f <$> fromTuple (instrId, start, dur, args)
