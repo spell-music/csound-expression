@@ -493,7 +493,7 @@ inferIter opts (Stmt lhs rhs) =
     save rate typedRhs =
       saveStmt $ Stmt
         { stmtLhs = Var rate lhs
-        , stmtRhs = rhs { ratedExpExp = typedRhs }
+        , stmtRhs = rhs { ratedExpExp = typedRhs, ratedExpDepends = Nothing }
         }
 
     -- procedure does not save output rate to type map, as it's never going to
@@ -504,7 +504,7 @@ inferIter opts (Stmt lhs rhs) =
     saveProcedure typedRhs =
       appendResult $ Stmt
         { stmtLhs = Var Xr lhs
-        , stmtRhs = rhs { ratedExpExp = typedRhs }
+        , stmtRhs = rhs { ratedExpExp = typedRhs, ratedExpDepends = Nothing }
         }
 
 -------------------------------------------------------------

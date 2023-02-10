@@ -19,7 +19,7 @@ import Csound.Dynamic.Tfm.Liveness
 
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Render.Pretty
--- import Debug.Trace
+import Debug.Trace
 
 type Dag f = [(Int, f Int)]
 
@@ -64,8 +64,20 @@ collectRates opts dag = fmap (second ratedExpExp) res4
     inferRes2 = inferRes1 { Infer.typedProgram = filterDepCases $ Infer.typedProgram inferRes1 }
     inferRes1 = collectIfBlocks inferRes
     inferRes = Infer.inferTypes opts $ fmap (uncurry Infer.Stmt) $
-        -- (\a -> trace (unlines ["DAG", unlines $ fmap (\(ls, rs) -> unwords [show ls, "=", show $ fmap (either (const (-1)) id . unPrimOr) $ ratedExpExp rs]) a]) $ a)
+        (\a -> trace (ppDag a) a)
         dag
+
+ppDag :: Dag RatedExp -> String
+ppDag a =
+  unlines
+    [ "DAG"
+    , unlines $
+        fmap (\(ls, rs) -> unwords
+          [ show ls, "="
+          , show $ fmap (either (const (-1)) id . unPrimOr) $ ratedExpExp rs
+          , maybe "" show $ snd <$> ratedExpDepends rs
+          ] ) a
+    ]
 
 -----------------------------------------------------------
 -- Dag -> Dag

@@ -19,6 +19,9 @@ module Csound.Typed.Core.State
   , getFreshPort
   ) where
 
+import Debug.Trace (trace)
+import Csound.Dynamic.Render.Pretty (ppE)
+
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class (lift)
@@ -69,7 +72,7 @@ exec opts act = stCsd <$> execStateT (unRun $ setupInstr0 opts >> act) initSt
 -- | Inserts new instrument body.
 -- The instrument identifier is automatically allocated to fresh integer
 insertInstr :: E -> Run InstrId
-insertInstr expr = do
+insertInstr expr = trace (show $ ppE expr) $ do
   freshInstrId <- getFreshInstrId expr
   case freshInstrId of
     InstrExist instrId -> pure instrId

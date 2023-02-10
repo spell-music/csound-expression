@@ -56,14 +56,15 @@ instance Monad m => Applicative (DepT m) where
     (<*>) = ap
 
 instance Monad m => Monad (DepT m) where
-    ma >>= mf = -- DepT $ unDepT ma >>= unDepT . mf
+    ma >>= mf = DepT $ unDepT ma >>= unDepT . mf
+      {-
       DepT $ StateT $ \s -> do
         (aE, aS) <- runStateT (unDepT ma) (startSt s)
         (bE, bS) <- runStateT (unDepT (mf aE)) (startSt aS)
         pure (bE, setDeps bS aS)
       where
         startSt s = s
-          { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s) }
+          { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s, noRate Starts) }
           , newLineNum = succ $ newLineNum s
           }
 
@@ -71,22 +72,8 @@ instance Monad m => Monad (DepT m) where
           { expDependency = depends (expDependency aS) (expDependency bS)
           , newLineNum = succ $ newLineNum bS
           }
+          -}
 
-
-{-
-ifT1 :: Monad m => IfRate -> E -> DepT m (CodeBlock E) -> DepT m E
-ifT1 ifRate check (DepT th) = DepT $ StateT $ \s -> do
-  (_thE, thS)  <- runStateT th s
-  let thDeps = expDependency thS
-      a  = noRate $ IfBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps)
-      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum thS) }
-      s1 = thS
-            { newLineNum = succ $ newLineNum thS
-            , expDependency = a1
-            -- depends (expDependency thS) (depends (expDependency elS) a1)
-            }
-  pure (a1, s1)
--}
 instance MonadTrans DepT where
     lift ma = DepT $ lift ma
 
@@ -113,10 +100,10 @@ depends a1 a2 =
 depT :: Monad m => E -> DepT m E
 depT a = DepT $ do
     s <- get
-    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
+    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s, expDependency s) }
     put $ s {
-        newLineNum = succ $ newLineNum s -- ,
-        -- expDependency = depends (expDependency s) a1
+        newLineNum = succ $ newLineNum s,
+        expDependency = depends (expDependency s) a1
         }
     return a1
 
@@ -124,7 +111,7 @@ depT_ :: (Monad m) => E -> DepT m ()
 depT_ a = -- fmap (const ()) . depT
   DepT $ do
     s <- get
-    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
+    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s, expDependency s) }
     put $ s {
         newLineNum = succ $ newLineNum s,
         expDependency = depends (expDependency s) a1

@@ -33,7 +33,7 @@ ifT ifRate check (DepT th) (DepT el) = DepT $ StateT $ \s -> do
   let thDeps = expDependency thS
       elDeps = expDependency elS
       a  = noRate $ IfElseBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps) (CodeBlock $ PrimOr $ Right elDeps)
-      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum elS) }
+      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum elS, expDependency elS) }
       s1 = elS
             { newLineNum = succ $ newLineNum elS
             , expDependency = a1
@@ -42,7 +42,7 @@ ifT ifRate check (DepT th) (DepT el) = DepT $ StateT $ \s -> do
   pure (a1, s1)
   where
     startSt s = s
-      { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s) }
+      { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s, noRate Starts) }
       , newLineNum = succ $ newLineNum s
       }
 
@@ -60,7 +60,7 @@ ifT1By cons ifRate check (DepT th) = DepT $ StateT $ \s -> do
   (_thE, thS)  <- runStateT th (startSt s)
   let thDeps = expDependency thS
       a  = noRate $ cons ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thDeps)
-      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum thS) }
+      a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum thS, expDependency thS) }
       s1 = thS
             { newLineNum = succ $ newLineNum thS
             , expDependency = a1
@@ -69,7 +69,7 @@ ifT1By cons ifRate check (DepT th) = DepT $ StateT $ \s -> do
   pure (a1, s1)
   where
     startSt s = s
-      { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s) }
+      { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s, noRate Starts) }
       , newLineNum = succ $ newLineNum s
       }
 

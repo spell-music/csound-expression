@@ -87,9 +87,9 @@ data RatedExp a = RatedExp
     , ratedExpRate      :: !(Maybe Rate)
         -- ^ Rate (can be undefined or Nothing,
         -- it means that rate should be deduced automatically from the context)
-    , ratedExpDepends   :: !(Maybe LineNum)
+    , ratedExpDepends   :: !(Maybe (LineNum, a))
         -- ^ Dependency (it is used for expressions with side effects,
-        -- value contains the privious statement)
+        -- value contains the previous statement)
     , ratedExpExp       :: !(Exp a)
         -- ^ Main expression
     } deriving (Show, Functor, Foldable, Traversable, Generic, Generic1)
