@@ -17,7 +17,7 @@ module Csound.Dynamic.Build (
 
   -- ** Opcodes constructors
   Spec1, spec1, opcs, opcsDep, opcsNoInlineArgs, opr1, opr1k, infOpr, oprBy,
-  Specs, specs, MultiOut, mopcs, mo,
+  Specs, specs, MultiOut, mopcs, mopcsDep, mo,
 
   -- * Global init statements
   setSr, setKsmps, setNchnls, setNchnls_i, setKr, setZeroDbfs,
@@ -166,6 +166,9 @@ specs = uncurry MultiRate
 
 mopcs :: Name -> Specs -> [E] -> MultiOut [E]
 mopcs name signature as = \numOfOuts -> mo numOfOuts $ tfm (opcPrefix name $ specs signature) as
+
+mopcsDep :: Monad m => Name -> Specs -> [E] -> Int -> DepT m [E]
+mopcsDep name signature as numOfOuts = mo numOfOuts <$> tfmDep (opcPrefix name $ specs signature) as
 
 mo :: Int -> E -> [E]
 mo n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates

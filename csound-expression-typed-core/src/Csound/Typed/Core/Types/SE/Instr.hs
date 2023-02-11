@@ -100,7 +100,7 @@ newInstr mixMode userRelease body = do
     checkLive :: Port (K Sig) -> SE ()
     checkLive port = do
       isAlive <- unK <$> readRef port
-      when1 (isAlive `greaterThan` 0) $ turnoffSelf release
+      when1 (isAlive `greater` 0) $ turnoffSelf release
 
 mulSigs :: Sigs a => Sig -> a -> a
 mulSigs k sigs = toTuple $ do
@@ -153,7 +153,7 @@ newEff mixMode userRelease body ins = do
     checkLive :: Port (K Sig) -> SE ()
     checkLive port = do
       isAlive <- unK <$> readRef port
-      when1 (isAlive `greaterThan` 0) $ turnoffSelf release
+      when1 (isAlive `greater` 0) $ turnoffSelf release
 
 ------------------------------------------------------------------------------
 -- trigger instr with note

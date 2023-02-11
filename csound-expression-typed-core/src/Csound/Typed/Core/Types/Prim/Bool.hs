@@ -6,12 +6,12 @@ module Csound.Typed.Core.Types.Prim.Bool
   , BoolD (..)
   , unBoolD
   , boolSig
-  , equalsTo
-  , notEqualsTo
-  , greaterThan
-  , greaterThanEquals
-  , lessThan
-  , lessThanEquals
+  , equals
+  , notEquals
+  , greater
+  , greaterEquals
+  , less
+  , lessEquals
   ) where
 
 import Prelude hiding ((<*))
@@ -145,22 +145,22 @@ boolSig x = case x of
     PrimBoolD b -> PrimBoolSig b
     BoolD a     -> BoolSig a
 
-infix  4  `equalsTo`, `notEqualsTo`, `lessThan`, `lessThanEquals`, `greaterThanEquals`, `greaterThan`
+infix  4  `equals`, `notEquals`, `less`, `lessEquals`, `greater`, `greaterEquals`
 
-equalsTo :: EqB a => a -> a -> BooleanOf a
-equalsTo = (==*)
+equals :: EqB a => a -> a -> BooleanOf a
+equals = (==*)
 
-notEqualsTo :: EqB a => a -> a -> BooleanOf a
-notEqualsTo = (/=*)
+notEquals :: EqB a => a -> a -> BooleanOf a
+notEquals = (/=*)
 
-lessThan :: OrdB a => a -> a -> BooleanOf a
-lessThan = (<*)
+less :: OrdB a => a -> a -> BooleanOf a
+less = (<*)
 
-greaterThan :: OrdB a => a -> a -> BooleanOf a
-greaterThan = (>*)
+greater :: OrdB a => a -> a -> BooleanOf a
+greater = (>*)
 
-lessThanEquals :: OrdB a => a -> a -> BooleanOf a
-lessThanEquals = (<=*)
+lessEquals :: OrdB a => a -> a -> BooleanOf a
+lessEquals = (<=*)
 
-greaterThanEquals :: OrdB a => a -> a -> BooleanOf a
-greaterThanEquals = (>=*)
+greaterEquals :: OrdB a => a -> a -> BooleanOf a
+greaterEquals = (>=*)
