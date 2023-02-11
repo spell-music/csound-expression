@@ -1,12 +1,11 @@
 -- | Define instruments
 module Csound.Typed.Core.Types.SE.Instr
-  ( newProc
-  , InstrId (..)
+  ( InstrRef
   , MixMode (..)
+  , newProc
+  , newNamedProc
   , newInstr
-  , EffId (..)
   , newEff
-  , IsInstrId
   , Note (..)
   , play
   ) where
@@ -26,14 +25,32 @@ import Csound.Typed.Core.Types.SE.Logic
 import Csound.Typed.Core.Types.SE.Port
 import Control.Monad.Trans.Class (lift)
 
+data InstrRef a
+  = ProcRef (ProcId D a)
+  | StrRef (ProcId Str a)
+  | InstrRef (InstrId a)
+  | EffRef (EffId a)
+
 ------------------------------------------------------------
 -- procedures
+
+newNamedProc :: forall a . Arg a
+  => Str
+  -> (a -> SE ())
+  -> SE (InstrRef a)
+newNamedProc _str _instr = undefined
 
 -- | Procedure is a regular Csound-instrument
 newProc :: forall a . Arg a
   => (a -> SE ())
+  -> SE (InstrRef a)
+newProc instr = ProcRef <$> newProcId instr
+
+-- | Procedure is a regular Csound-instrument
+newProcId :: forall a . Arg a
+  => (a -> SE ())
   -> SE (ProcId D a)
-newProc instr = SE $ lift $ State.localy $ do
+newProcId instr = SE $ lift $ State.localy $ do
   expr <- renderBody instr
   toInstrId <$> State.insertInstr expr
   where
@@ -46,30 +63,30 @@ newProc instr = SE $ lift $ State.localy $ do
 ------------------------------------------------------------
 -- instruments
 
-data InstrId out arg = InstrId
-  { instrIdInternal   :: ProcId D (Port (K Sig), Port out, arg)
-  , instrIdPortAlive  :: Port (K Sig)
-  , instrIdPortOuts   :: Port out
+data InstrId arg = forall out . Sigs out => InstrId
+  { _instrIdInternal   :: ProcId D (Port (K Sig), Port out, arg)
+  , _instrIdPortAlive  :: Port (K Sig)
+  , _instrIdPortOuts   :: Port out
   }
 
 data MixMode = PolyMix | MonoMix
 
 -- | Instrument can produce output that is read from another instrument
-newInstr :: forall a b . (Arg a, Sigs b)
-  => MixMode -> D -> (a -> SE b)
-  -> SE (InstrId b a, b)
+newInstr :: forall arg outs . (Arg arg, Sigs outs)
+  => MixMode -> D -> (arg -> SE outs)
+  -> SE (InstrRef arg, outs)
 newInstr mixMode userRelease body = do
-  portAlive <- newPort 1
-  portOuts  <- newPort defTuple
-  instrId <- InstrId <$> newProc body' <*> pure portAlive <*> pure portOuts
+  portAlive <- newPort @(K Sig)
+  portOuts  <- newPort @outs
+  instrId <- InstrId <$> newProcId body' <*> pure portAlive <*> pure portOuts
   outs <- readRef portOuts
   writeRef portAlive $ K (linsegr [0] release 1)
   clearRef portOuts
-  pure (instrId, outs)
+  pure (InstrRef instrId, outs)
   where
     release = maxB 0.01 userRelease
 
-    body' :: (Port (K Sig), Port b, a) -> SE ()
+    body' :: (Port (K Sig), Port outs, arg) -> SE ()
     body' (portAlive, portOuts, arg) = do
       checkLive portAlive
       let env = linsegr [1] release 0
@@ -94,33 +111,33 @@ mulSigs k sigs = toTuple $ do
 ---------------------------------------------------------------
 -- Effects
 
-data EffId ins outs arg = EffId
-  { effIdInternal :: ProcId D (Port (K Sig), Port ins, Port outs, arg)
-  , effIdAlive    :: Port (K Sig)
-  , effIdOuts     :: Port ins
-  , effIdIns      :: Port outs
+data EffId arg = forall ins outs . (Sigs ins, Sigs outs) => EffId
+  { _effIdInternal :: ProcId D (Port (K Sig), Port ins, Port outs, arg)
+  , _effIdAlive    :: Port (K Sig)
+  , _effIdOuts     :: Port ins
+  , _effIdIns      :: Port outs
   }
 
 -- | Eff can produce output that is read from another instrument
 -- and can consume input from the parent instrument
-newEff :: forall a ins outs . (Arg a, Sigs ins, Sigs outs)
-  => MixMode -> D -> (a -> ins -> SE outs)
-  -> ins -> SE (EffId ins outs a, outs)
+newEff :: forall arg ins outs . (Arg arg, Sigs ins, Sigs outs)
+  => MixMode -> D -> (arg -> ins -> SE outs)
+  -> ins -> SE (InstrRef arg, outs)
 newEff mixMode userRelease body ins = do
-  portAlive <- newPort (K 0)
-  portOuts <- newPort 0
-  portIns <- newPort ins
-  instrId <- EffId <$> newProc body' <*> pure portAlive <*> pure portIns <*> pure portOuts
+  portAlive <- newPort @(K Sig)
+  portOuts <- newPort @outs
+  portIns <- newPort @ins
+  instrId <- EffId <$> newProcId body' <*> pure portAlive <*> pure portIns <*> pure portOuts
   outs <- readRef portOuts
 
   writeRef portAlive (K $ linsegr [0] 0.25 1)
   writeRef portIns ins
   clearRef portOuts
-  pure (instrId, outs)
+  pure (EffRef instrId, outs)
   where
     release = maxB 0.01 userRelease
 
-    body' :: (Port (K Sig), Port ins, Port outs, a) -> SE ()
+    body' :: (Port (K Sig), Port ins, Port outs, arg) -> SE ()
     body' (portAlive, portIns, portOuts, arg) = do
       checkLive portAlive
       parentIns <- readRef portIns
@@ -155,21 +172,24 @@ instance Tuple a => Tuple (Note a) where
       (\(start, dur, args) -> Note start dur args)
       (\(Note start dur args) -> (start, dur, args))
 
-class IsInstrId instrId where
-  play :: (Arg a) => instrId a -> [Note a] -> SE ()
+play :: (Arg a) => InstrRef a -> [Note a] -> SE ()
+play = \case
+  ProcRef instrId  -> playProc instrId
+  StrRef instrId   -> playProc instrId
+  InstrRef instrId -> playInstr instrId
+  EffRef instrId   -> playEff instrId
+  where
+    playProc instrId notes = do
+      currentRate <- fromMaybe IfIr <$> getCurrentRate
+      mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur args) notes
 
-instance Val ty => IsInstrId (ProcId ty) where
-  play instrId notes = do
-    currentRate <- fromMaybe IfIr <$> getCurrentRate
-    mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur args) notes
+    playInstr (InstrId instrId portAlive portOuts) notes = do
+      currentRate <- fromMaybe IfIr <$> getCurrentRate
+      mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur (portAlive, portOuts, args)) notes
 
-instance Sigs outs => IsInstrId (InstrId outs) where
-  play (InstrId instrId portAlive portOuts) notes = do
-    currentRate <- fromMaybe IfIr <$> getCurrentRate
-    mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur (portAlive, portOuts, args)) notes
-
-instance (Sigs outs, Sigs ins) => IsInstrId (EffId ins outs) where
-  play = undefined
+    playEff (EffId instrId portAlive portOuts portIns) notes = do
+      currentRate <- fromMaybe IfIr <$> getCurrentRate
+      mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur (portAlive, portOuts, portIns, args)) notes
 
 ------------------------------------------------------------------------------
 -- utils

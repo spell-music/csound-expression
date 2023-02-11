@@ -16,6 +16,7 @@ import Csound.Dynamic.Tfm.InferTypes qualified as Infer
 import Csound.Dynamic.Tfm.UnfoldMultiOuts
 import Csound.Dynamic.Tfm.IfBlocks
 import Csound.Dynamic.Tfm.Liveness
+import Csound.Dynamic.Tfm.TmpVars
 
 import Csound.Dynamic.Types hiding (Var)
 import Csound.Dynamic.Render.Pretty
@@ -32,7 +33,7 @@ renderInstrBody opts a
   | otherwise = render dag
     where
       dag = toDag a
-      render = P.vcat . flip evalState 0 . mapM (uncurry ppStmt . clearEmptyResults) . collectRates opts
+      render = P.vcat . flip evalState 0 . mapM (uncurry ppStmt . clearEmptyResults) . collectRates opts . removeTmpVars . (\p -> trace (ppDag p) p)
 
 -------------------------------------------------------------
 -- E -> Dag
@@ -74,7 +75,7 @@ ppDag a =
     , unlines $
         fmap (\(ls, rs) -> unwords
           [ show ls, "="
-          , show $ fmap (either (const (-1)) id . unPrimOr) $ ratedExpExp rs
+          , show $ fmap (either show show . unPrimOr) $ ratedExpExp rs
           , maybe "" show $ snd <$> ratedExpDepends rs
           ] ) a
     ]

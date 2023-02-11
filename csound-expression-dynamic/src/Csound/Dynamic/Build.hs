@@ -16,7 +16,7 @@ module Csound.Dynamic.Build (
   inlineVar, gInit, gInitDouble,
 
   -- ** Opcodes constructors
-  Spec1, spec1, opcs, opcsNoInlineArgs, opr1, opr1k, infOpr, oprBy,
+  Spec1, spec1, opcs, opcsDep, opcsNoInlineArgs, opr1, opr1k, infOpr, oprBy,
   Specs, specs, MultiOut, mopcs, mo,
 
   -- * Global init statements
@@ -26,10 +26,8 @@ module Csound.Dynamic.Build (
   opcsArr, infOprArr, initPureArr, readPureArr
 ) where
 
-import qualified Data.Map as M(fromList, toList)
+import qualified Data.Map as M(fromList)
 import Data.Serialize qualified as Cereal
-
-import Data.List(transpose)
 import Data.Fix(Fix(..))
 
 import Csound.Dynamic.Types.Exp
@@ -63,14 +61,6 @@ tfm info args = noRate $ Tfm info $ toArgs (getInfoRates info) args
 
 tfmArr :: Monad m => IsArrInit -> Var -> Info -> [E] -> DepT m ()
 tfmArr isArrInit var info args = depT_ $ noRate $ TfmArr isArrInit var info $ toArgs (getInfoRates info) args
-
-getInfoRates :: Info -> [Rate]
-getInfoRates a = getInRates $ infoSignature a
-  where
-    getInRates x =
-      case x of
-        SingleRate m    -> fmap minimum $ transpose $ fmap snd $ M.toList m
-        MultiRate _ ins -> ins
 
 tfmNoInlineArgs :: Info -> [E] -> E
 tfmNoInlineArgs info args = noRate $ Tfm info $ fmap (PrimOr . Right) args
@@ -128,6 +118,9 @@ spec1 = SingleRate . M.fromList
 
 opcs :: Name -> Spec1 -> [E] -> E
 opcs name signature = tfm (opcPrefix name $ spec1 signature)
+
+opcsDep :: Monad m => Name -> Spec1 -> [E] -> DepT m E
+opcsDep name signature = tfmDep (opcPrefix name $ spec1 signature)
 
 opcsNoInlineArgs :: Name -> Spec1 -> [E] -> E
 opcsNoInlineArgs name signature = tfmNoInlineArgs (opcPrefix name $ spec1 signature)

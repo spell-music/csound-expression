@@ -187,6 +187,7 @@ module Csound.Typed.Core.Types.Gen (
 ) where
 
 import Control.Arrow(second)
+import Control.Monad
 import Control.Monad.Trans.Class
 import Csound.Dynamic hiding (int, when1, whens, genId, pn)
 import Csound.Dynamic qualified as Dynamic
@@ -821,8 +822,8 @@ hhhifi  = setDegree 3
 --
 -- csound docs: <http://www.csounds.com/manual/html/tablewa.html>
 tablewa ::  Tab -> Sig -> Sig -> SE Sig
-tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unTab b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "tablewa" [(Kr,[Kr,Ar,Kr])] [a1,a2,a3]
+tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ join $ f <$> lift (unTab b1) <*> lift (unSig b2) <*> lift (unSig b3)
+    where f a1 a2 a3 = opcsDep "tablewa" [(Kr,[Kr,Ar,Kr])] [a1,a2,a3]
 
 
 -- | Transforms phasor that is defined in seconds to relative phasor that ranges in 0 to 1.
@@ -1283,8 +1284,8 @@ tablew b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTa
 --
 -- csound doc: <http://www.csounds.com/manual/html/tab.html>
 readTab ::  Sig -> Tab -> SE Sig
-readTab b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "tab" [(Kr,[Kr,Ir,Ir]),(Ar,[Xr,Ir,Ir])] [a1,a2]
+readTab b1 b2 = fmap ( Sig . return) $ SE $ join $ f <$> lift (unSig b1) <*> lift (unTab b2)
+    where f a1 a2 = opcsDep "tab" [(Kr,[Kr,Ir,Ir]),(Ar,[Xr,Ir,Ir])] [a1,a2]
 
 
 
@@ -1301,8 +1302,8 @@ readTab b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <
 --
 -- csound doc: <http://www.csounds.com/manual/html/table.html>
 readTable :: SigOrD a => a -> Tab -> SE a
-readTable b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> unTab b2
-    where f a1 a2 = opcs "table" [(Ar,[Ar,Ir,Ir,Ir,Ir])
+readTable b1 b2 = fmap (fromE . return) $ SE $ join $ f <$> lift (toE b1) <*> lift (unTab b2)
+    where f a1 a2 = opcsDep "table" [(Ar,[Ar,Ir,Ir,Ir,Ir])
                                  ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                  ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
@@ -1319,8 +1320,8 @@ readTable b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 
 --
 -- csound doc: <http://www.csounds.com/manual/html/table3.html>
 readTable3 :: SigOrD a => a -> Tab -> SE a
-readTable3 b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> unTab b2
-    where f a1 a2 = opcs "table3" [(Ar,[Ar,Ir,Ir,Ir,Ir])
+readTable3 b1 b2 = fmap (fromE . return) $ SE $ join $ f <$> lift (toE b1) <*> lift (unTab b2)
+    where f a1 a2 = opcsDep "table3" [(Ar,[Ar,Ir,Ir,Ir,Ir])
                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
@@ -1337,8 +1338,8 @@ readTable3 b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1
 --
 -- csound doc: <http://www.csounds.com/manual/html/tablei.html>
 readTablei :: SigOrD a => a -> Tab -> SE a
-readTablei b1 b2 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> unTab b2
-    where f a1 a2 = opcs "tablei" [(Ar,[Ar,Ir,Ir,Ir,Ir])
+readTablei b1 b2 = fmap (fromE . return) $ SE $ join $ f <$> lift (toE b1) <*> lift (unTab b2)
+    where f a1 a2 = opcsDep "tablei" [(Ar,[Ar,Ir,Ir,Ir,Ir])
                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
@@ -1396,8 +1397,8 @@ tablexkt b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <*> unD b4
 --
 -- the tab should be done with tabDist, randDist or rangeDist
 cuserrnd :: SigOrD a => a -> a -> Tab -> SE a
-cuserrnd b1 b2 b3 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b1 <*> toE b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "cuserrnd" [(Ar,[Kr,Kr,Kr])
+cuserrnd b1 b2 b3 = fmap (fromE . return) $ SE $ join $ f <$> lift (toE b1) <*> lift (toE b2) <*> lift (unTab b3)
+    where f a1 a2 a3 = opcsDep "cuserrnd" [(Ar,[Kr,Kr,Kr])
                                   ,(Ir,[Ir,Ir,Ir])
                                   ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
@@ -1413,8 +1414,8 @@ cuserrnd b1 b2 b3 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ f <$> toE b
 --
 -- the tab should be done with tabDist, randDist or rangeDist
 duserrnd :: SigOrD a => Tab -> SE a
-duserrnd b1 = fmap (fromE . return) $ SE $ (depT =<<) $ lift $ fmap f $ unTab b1
-    where f a1 = opcs "duserrnd" [(Ar,[Kr])
+duserrnd b1 = fmap (fromE . return) $ SE $ f =<< lift (unTab b1)
+    where f a1 = opcsDep "duserrnd" [(Ar,[Kr])
                                   ,(Ir,[Ir])
                                   ,(Kr,[Kr])] [a1]
 

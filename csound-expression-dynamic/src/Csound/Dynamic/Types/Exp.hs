@@ -16,7 +16,7 @@ module Csound.Dynamic.Types.Exp(
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
     CodeBlock (..),
     Signature(..), isInfix, isPrefix,
-    Prim(..), Gen(..), GenId(..),
+    Prim(..), TmpVar (..), Gen(..), GenId(..),
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,
     NumExp, NumOp(..), Note,
@@ -26,6 +26,7 @@ module Csound.Dynamic.Types.Exp(
     hashE,
     rehashE,
     ExpHash (..),
+    getInfoRates,
 ) where
 
 #if __GLASGOW_HASKELL__ < 710
@@ -49,6 +50,8 @@ import Data.Text (Text)
 import Data.Serialize qualified as Cereal
 import Data.Serialize.Text ()
 import Data.Hashable
+import qualified Data.Map as M(toList)
+import Data.List qualified as L
 
 type Name = Text
 type LineNum = Int
@@ -169,10 +172,7 @@ toPrimOr :: E -> PrimOr E
 toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
     ExpPrim p  -> Left p
-    ReadVar v | noDeps -> Left (PrimVar (varRate v) v)
     _         -> Right a
-    where
-        noDeps = isNothing $ ratedExpDepends $ unFix a
 
 -- | Constructs PrimOr values from the expressions. It does inlining in
 -- case of primitive values.
@@ -180,16 +180,13 @@ toPrimOrTfm :: Rate -> E -> PrimOr E
 toPrimOrTfm r a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
     ExpPrim p | (r == Ir || r == Sr) -> Left p
-    ReadVar v | noDeps -> Left (PrimVar (varRate v) v)
+    ExpPrim (PrimTmpVar tmp) -> Left (PrimTmpVar tmp)
     _         -> Right a
-    where
-        noDeps = isNothing $ ratedExpDepends $ unFix a
-
 
 -- Expressions with inlining.
 type Exp a = MainExp (PrimOr a)
 
-newtype CodeBlock a = CodeBlock a
+newtype CodeBlock a = CodeBlock { unCodeBlock :: a }
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
 -- Csound expressions
@@ -199,6 +196,8 @@ data MainExp a
     | ExpPrim !Prim
     -- | Application of the opcode: we have opcode information (Info) and the arguments [a]
     | Tfm Info ![a]
+    -- | init variable with opcode expression
+    | TfmInit TmpVar Info ![a]
     -- | Rate conversion
     | ConvertRate !Rate !(Maybe Rate) !a
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
@@ -212,6 +211,7 @@ data MainExp a
     -- | Reading/writing a named variable
     | InitVar !Var !a
     | ReadVar !Var
+    | ReadVarTmp !TmpVar !Var
     | WriteVar !Var !a
     -- | Arrays
     | InitArr !Var !(ArrSize a)
@@ -304,7 +304,8 @@ data Var
     | VarVerbatim
         { varRate :: !Rate
         , varName :: !Name
-        } deriving (Show, Eq, Ord, Generic)
+        }
+      deriving (Show, Eq, Ord, Generic)
 
 -- Variables can be global (then we have to prefix them with `g` in the rendering) or local.
 data VarType = LocalVar | GlobalVar
@@ -319,6 +320,14 @@ data Info = Info
     -- Opcode can be infix or prefix
     , infoOpcFixity     :: !OpcFixity
     } deriving (Show, Eq, Ord, Generic)
+
+getInfoRates :: Info -> [Rate]
+getInfoRates a = getInRates $ infoSignature a
+  where
+    getInRates x =
+      case x of
+        SingleRate m    -> fmap minimum $ L.transpose $ fmap snd $ M.toList m
+        MultiRate _ ins -> ins
 
 isPrefix, isInfix :: Info -> Bool
 
@@ -389,7 +398,12 @@ data Prim
     | PrimVar
         { primVarTargetRate :: !Rate
         , primVar           :: !Var }
+    | PrimTmpVar !TmpVar
     deriving (Show, Eq, Ord, Generic)
+
+-- | temporary var
+newtype TmpVar = TmpVar { unTmpVar :: Int }
+  deriving newtype (Show, Eq, Ord, Cereal.Serialize)
 
 -- Gen routine.
 data Gen = Gen

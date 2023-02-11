@@ -8,7 +8,7 @@ module Csound.Typed.Core.Types.SE.Port
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
 
-import Csound.Dynamic (Rate (..), E, toInitRate)
+import Csound.Dynamic (Rate (..), E)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Dep)
 import Csound.Typed.Core.Types.SE
@@ -21,11 +21,8 @@ import Csound.Typed.Core.State qualified as State
 newtype Port a = Port { unPort :: D }
   deriving (IsPrim, Val, Tuple, Arg)
 
-newPort :: Tuple a => a -> SE (Port a)
-newPort initVal = do
-  pid <- Port . fromE . pure <$> SE State.getFreshPort
---  writeBy chnset toInitRate pid initVal
-  pure pid
+newPort :: Tuple a => SE (Port a)
+newPort = Port . fromE . pure <$> SE State.getFreshPort
 
 instance IsRef Port where
   readRef pid = fmap (toTuple . pure) $ SE $
@@ -70,7 +67,7 @@ chnmix :: Rate -> E -> E -> Dep ()
 chnmix rate name value = Dynamic.depT_ $ Dynamic.opcs "chnmix" [(Xr, [rate, Sr])] [value, name]
 
 chnget :: Rate -> E -> Dep E
-chnget rate name = Dynamic.depT $ Dynamic.opcs "chnget" [(rate, [Sr])] [name]
+chnget rate name = Dynamic.opcsDep "chnget" [(rate, [Sr])] [name]
 
 chnclear :: E -> Dep ()
 chnclear name =  Dynamic.depT_ $ Dynamic.opcs "chnclear" [(Xr, [Sr])] [name]

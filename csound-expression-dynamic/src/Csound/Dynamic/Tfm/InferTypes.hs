@@ -195,6 +195,7 @@ inferIter opts (Stmt lhs rhs) =
     -- | Reading/writing a named variable
     InitVar v arg -> onInitVar v arg
     ReadVar v -> onReadVar v
+    ReadVarTmp tmp v -> onReadVarTmp tmp v
     WriteVar v arg -> onWriteVar v arg
 
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
@@ -247,6 +248,7 @@ inferIter opts (Stmt lhs rhs) =
     Seq a b -> saveProcedure (Seq (setXr a) (setXr b))
     Ends a -> saveProcedure (Ends (setXr a))
 
+    TfmInit _ _ _ -> error "No inference for TfmInit"
   where
     onPrim p = save rate (ExpPrim p)
       where
@@ -341,6 +343,7 @@ inferIter opts (Stmt lhs rhs) =
           pure (InitVar v argVar)
 
     onReadVar v = save (Exp.varRate v) (ReadVar v)
+    onReadVarTmp tmp v = save (Exp.varRate v) (ReadVarTmp tmp v)
 
     onWriteVar v arg = saveProcedure =<< typedRhs
       where

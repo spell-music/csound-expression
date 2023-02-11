@@ -71,6 +71,7 @@ ppPrim x = case x of
     PrimDouble d -> double d
     PrimString s -> dquotes $ textStrict s
     PrimVar targetRate v -> ppConverter targetRate (varRate v) $ ppVar v
+    PrimTmpVar v -> ppTmpVar v
     where
         ppConverter dst src t
             | dst == src = t
@@ -86,6 +87,8 @@ ppPrim x = case x of
                 k = tfm 'k'
                 i = tfm 'i'
 
+ppTmpVar :: TmpVar -> Doc
+ppTmpVar (TmpVar n) = "tmp_var_" <> int n
 
 ppGen :: Int -> Gen -> Doc
 ppGen tabId ft = char 'f'
@@ -128,6 +131,7 @@ maybeStringCopy :: [R.Var] -> Exp R.Var -> Maybe (State TabDepth Doc)
 maybeStringCopy outs expr = case (outs, expr) of
     ([R.Var Sr _], ExpPrim (PrimVar _rate var)) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
     ([R.Var Sr _], ReadVar var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
+    ([R.Var Sr _], ReadVarTmp _tmp var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
     ([], WriteVar outVar a) | varRate outVar == Sr  -> Just $ tab $ ppStringCopy (ppVar outVar) (ppPrimOrVar a)
     ([R.Var Sr _], ReadArr var as) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
     ([], WriteArr outVar bs a) | varRate outVar == Sr -> Just $ tab $ ppStringCopy (ppArrIndex outVar $ fmap ppPrimOrVar bs) (ppPrimOrVar a)
@@ -143,12 +147,14 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     Tfm info [a, b] | isInfix  info -> tab $ res $= binary (infoName info) a b
     Tfm info xs     | isPrefix info -> tab $ res $= prefix (infoName info) xs
     Tfm info xs                     -> tab $ ppOpc res (infoName info) xs
+    TfmInit _ _ _                   -> error "TfmInit should not stay to the rendering stage, it's temporal"
     ConvertRate to from x           -> tab $ ppConvertRate res to from x
     If _ifRate info t e             -> tab $ ppIf res (ppCond info) t e
     ExpNum (PreInline op as)        -> tab $ res $= ppNumOp op as
     WriteVar v a                    -> tab $ ppVar v $= a
     InitVar v a                     -> tab $ ppOpc (ppVar v) "init" [a]
-    ReadVar v                       -> tab $ res $= ppVar v
+    ReadVar v                  -> tab $ res $= ppVar v
+    ReadVarTmp _tmp v                  -> tab $ res $= ppVar v
 
     InitArr v as                    -> tab $ ppOpc (ppArrVar (length as) (ppVar v)) "init" as
     ReadArr v as                    -> tab $ if (varRate v /= Sr) then res $= ppReadArr v as else res <+> text "strcpy" <+> ppReadArr v as
@@ -425,6 +431,7 @@ ppE = foldFix go
         ExpPrim p -> ppPrim p
         EmptyExp -> textStrict "EMPTY_EXPR"
         Tfm inf args -> ppTfm inf args
+        TfmInit v inf args -> ppTfmInit v inf args
         ConvertRate to from a -> ppConvert to from a
         Select r n a -> ppSelect r n a
         If rate cond th el -> ppIff rate cond th el
@@ -432,6 +439,7 @@ ppE = foldFix go
         ExpNum arg -> ppExpNum arg
         InitVar v a -> ppInitVar v a
         ReadVar v -> "ReadVar" <+> ppVar v
+        ReadVarTmp tmp v -> hcat [ppTmpVar tmp, "=", "ReadVarTmp" <+> ppVar v]
         WriteVar v a -> ppVar v $= pp a
 
         -- TODO
@@ -492,6 +500,8 @@ ppE = foldFix go
         ]
 
     ppTfm info args = ppFun (textStrict $ infoName info) (fmap pp args)
+
+    ppTfmInit v info args = hcat [ppTmpVar v, "=", ppFun (textStrict $ infoName info) (fmap pp args)]
 
     ppConvert to from a =
       ppFun (hsep [textStrict "Convert-rate", ppRate to, maybe mempty ppRate from]) [pp a]

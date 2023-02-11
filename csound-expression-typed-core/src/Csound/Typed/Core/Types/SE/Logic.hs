@@ -9,9 +9,9 @@ import Control.Monad
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe
 
-import Csound.Dynamic (E, DepT, CodeBlock, IfRate (..))
+import Csound.Dynamic (E, IfRate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
+import Csound.Typed.Core.State (Dep)
 import Csound.Typed.Core.State qualified as State
 import Csound.Typed.Core.Types.Prim
 import Csound.Typed.Core.Types.SE
@@ -63,9 +63,8 @@ whenBy ifRate bodies el = case bodies of
     []   -> el
     _    -> withRate ifRate $ \rate -> SE $ join $ lift $ do
         checksE <- mapM (toE . fst) bodies
-        let bodiesE = fmap (Dynamic.toBlock . unSE . snd) bodies
-            elE = Dynamic.toBlock $ unSE el
-        pure $ Dynamic.whens rate (zip checksE bodiesE) elE
+        let bodiesE = fmap (unSE . snd) bodies
+        pure $ Dynamic.whens rate (zip checksE bodiesE) (unSE el)
 
 -- | Invokes the given procedure if the boolean signal is true.
 when1By :: (IsPrim bool, Val bool, PrimOf bool ~ Bool)
@@ -76,8 +75,8 @@ when1By ifRate xp body = case getPrim xp of
 
 -- | Constructs generic if-block statement with single then case
 -- We can choose constructors for: if, while, until statements
-ifBlockBy :: Val cond => IfRate -> (IfRate -> E -> DepT Run (CodeBlock E) -> DepT Run ()) -> cond -> SE () -> SE ()
+ifBlockBy :: Val cond => IfRate -> (IfRate -> E -> Dep () -> Dep ()) -> cond -> SE () -> SE ()
 ifBlockBy defRate cons p body = withRate defRate $ \rate ->
   SE $ do
     pE <- lift $ toE p
-    cons rate pE (Dynamic.toBlock $ unSE body)
+    cons rate pE (unSE body)

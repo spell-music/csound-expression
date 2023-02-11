@@ -456,17 +456,17 @@ convert2 name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
 
 extractArray :: (Tuple b) => Text -> Arr a b -> SE b
 extractArray name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . D.inlineVar) vs
-    where f a = D.depT $ D.opcs name [(Xr, [Xr])] [a]
+    where f a = D.opcsDep name [(Xr, [Xr])] [a]
 
 extract1 :: (Tuple b, Tuple c) => Rate -> Text -> Arr a b -> SE c
 extract1 rate name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . D.inlineVar) vs
-    where f a = D.depT $ D.opcs name [(rate, [Xr])] [a]
+    where f a = D.opcsDep name [(rate, [Xr])] [a]
 
 extractWith :: (Tuple b, Tuple c, Tuple d) => Text -> (Rate, [Rate]) -> Arr a b -> c -> SE d
 extractWith name rates (Arr vs) argument = SE $ fmap (toTuple . return) $ do
   argExps <- lift (fromTuple argument)
   zipWithM (\var x -> f (D.inlineVar var) x) vs argExps
-  where f a b = D.depT $ D.opcs name [rates] [a, b]
+  where f a b = D.opcsDep name [rates] [a, b]
 
 ---------------------------------------------------
 -- opcodes with copy

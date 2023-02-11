@@ -10,6 +10,7 @@ module Csound.Typed.Core.Types.Tuple
   , tupleArity
   , makeTupleMethods
   , TupleMethods (..)
+  , primTuple
   ) where
 
 import Data.NumInstances.Tuple ()

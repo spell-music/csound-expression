@@ -70,6 +70,7 @@ Library
   Other-Modules:
     Csound.Dynamic.Tfm.IfBlocks
     Csound.Dynamic.Tfm.InferTypes
+    Csound.Dynamic.Tfm.TmpVars
     Csound.Dynamic.Tfm.Liveness
     Csound.Dynamic.Tfm.UnfoldMultiOuts
 

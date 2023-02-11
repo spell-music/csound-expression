@@ -3,7 +3,8 @@
 module Csound.Dynamic.Types.Dep(
     DepT(..), LocalHistory(..), runDepT, execDepT, evalDepT,
     -- * Dependencies
-    depT, depT_, mdepT, stripDepT, stmtOnlyT, toBlock, depends,
+    {-depT, -} depT_, {- mdepT, -} stripDepT, stmtOnlyT, depends,
+    tfmDep,
 
     -- * Variables
     newLocalVar, newLocalVars,
@@ -17,10 +18,6 @@ module Csound.Dynamic.Types.Dep(
     readMacrosDouble, readMacrosInt, readMacrosString,
     initMacrosDouble, initMacrosString, initMacrosInt
 ) where
-
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative
-#endif
 
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict
@@ -43,10 +40,12 @@ newtype DepT m a = DepT { unDepT :: StateT LocalHistory m a }
 data LocalHistory = LocalHistory
     { expDependency :: !E
     , newLineNum    :: !Int
-    , newLocalVarId :: !Int }
+    , newLocalVarId :: !Int
+    , newTmpVarNum  :: !Int
+    }
 
 instance Default LocalHistory where
-    def = LocalHistory (noRate Starts) 0 0
+    def = LocalHistory (noRate Starts) 0 0 0
 
 instance Monad m => Functor (DepT m) where
     fmap = liftM
@@ -57,22 +56,6 @@ instance Monad m => Applicative (DepT m) where
 
 instance Monad m => Monad (DepT m) where
     ma >>= mf = DepT $ unDepT ma >>= unDepT . mf
-      {-
-      DepT $ StateT $ \s -> do
-        (aE, aS) <- runStateT (unDepT ma) (startSt s)
-        (bE, bS) <- runStateT (unDepT (mf aE)) (startSt aS)
-        pure (bE, setDeps bS aS)
-      where
-        startSt s = s
-          { expDependency = rehashE $ Fix $ (unFix $ noRate Starts) { ratedExpDepends = Just (newLineNum s, noRate Starts) }
-          , newLineNum = succ $ newLineNum s
-          }
-
-        setDeps bS aS = bS
-          { expDependency = depends (expDependency aS) (expDependency bS)
-          , newLineNum = succ $ newLineNum bS
-          }
-          -}
 
 instance MonadTrans DepT where
     lift ma = DepT $ lift ma
@@ -97,15 +80,23 @@ depends a1 a2 =
         Starts -> a2
         _      -> noRate $ Seq (toPrimOr a1) (toPrimOr a2)
 
-depT :: Monad m => E -> DepT m E
-depT a = DepT $ do
-    s <- get
-    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s, expDependency s) }
-    put $ s {
-        newLineNum = succ $ newLineNum s,
-        expDependency = depends (expDependency s) a1
-        }
-    return a1
+tfmDep :: Monad m => Info -> [E] -> DepT m E
+tfmDep info args = do
+  v <- getNewTmpVar
+  depT_ $ tfmInit v info args
+  pure $ fromTmpVar v
+
+tfmInit:: TmpVar -> Info -> [E] -> E
+tfmInit v info args = noRate $ TfmInit v info $ toArgs (getInfoRates info) args
+
+toArgs :: [Rate] -> [E] -> [PrimOr E]
+toArgs = zipWith toPrimOrTfm
+
+getNewTmpVar :: Monad m => DepT m TmpVar
+getNewTmpVar = DepT $ do
+  n <- gets newTmpVarNum
+  modify' $ \s -> s { newTmpVarNum = n + 1 }
+  pure (TmpVar n)
 
 depT_ :: (Monad m) => E -> DepT m ()
 depT_ a = -- fmap (const ()) . depT
@@ -118,14 +109,10 @@ depT_ a = -- fmap (const ()) . depT
         }
     return ()
 
-
-toBlock :: Monad m => DepT m () -> DepT m (CodeBlock E)
-toBlock (DepT act) = DepT $ do
-  act
-  CodeBlock <$> gets expDependency
-
+{- TODO
 mdepT :: (Monad m) => MultiOut [E] -> MultiOut (DepT m [E])
-mdepT mas = \n -> mapM depT $ ( $ n) mas
+mdepT mas = \n -> mapM depT $ mas n
+-}
 
 stripDepT :: Monad m => DepT m a -> m a
 stripDepT (DepT a) = evalStateT a def
@@ -163,7 +150,13 @@ writeVar :: Monad m => Var -> E -> DepT m ()
 writeVar v x = depT_ $ noRate $ WriteVar v $ toPrimOr x
 
 readVar :: Monad m => Var -> DepT m E
-readVar v = depT $ noRate $ ReadVar v
+readVar v = do
+  tmp <- getNewTmpVar
+  depT_ $ noRate $ ReadVarTmp tmp v
+  pure $ fromTmpVar tmp
+
+fromTmpVar :: TmpVar -> E
+fromTmpVar v = noRate $ ExpPrim $ PrimTmpVar v
 
 readOnlyVar :: Var -> E
 readOnlyVar v = noRate $ ReadVar v
@@ -191,7 +184,7 @@ newTmpArrVar rate = newVar rate
 -- ops
 
 readArr :: Monad m => Var -> [E] -> DepT m E
-readArr v ixs = depT $ noRate $ ReadArr v (fmap toPrimOr ixs)
+readArr _v _ixs = undefined -- depT $ noRate $ ReadArr v (fmap toPrimOr ixs)
 
 readOnlyArr :: Var -> [E] -> E
 readOnlyArr v ixs = noRate $ ReadArr v (fmap toPrimOr ixs)
@@ -234,5 +227,4 @@ readMacrosBy readMacro rate name = withRate rate $ readMacro name
 
 initMacrosBy :: Monad m => (Text -> a -> Exp E) -> Text -> a -> DepT m ()
 initMacrosBy maker name value = depT_ $ noRate $ maker name value
-
 

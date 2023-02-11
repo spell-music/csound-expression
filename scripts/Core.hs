@@ -5,14 +5,14 @@ import Csound.Typed.Core.Types
 import Csound.Typed.Core.Opcodes hiding (schedule)
 import Data.Default
 
-event_i :: (Arg a, IsInstrId instrId) => Str -> instrId a -> D -> D -> a -> SE ()
+event_i :: (Arg a) => Str -> InstrRef a -> D -> D -> a -> SE ()
 event_i _ instrId start dur args = play instrId [Note start dur args]
 
-schedule :: (Arg a, IsInstrId instrId) => instrId a -> D -> D -> a -> SE ()
+schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
 schedule instrId start dur args = play instrId [Note start dur args]
 
 main = do
-  file <- renderSE def playFileInstr
+  file <- renderSE def (outs =<< playFileInstr)
   putStrLn file
   writeFile "tmp.csd" file
 
@@ -63,15 +63,31 @@ playFile = do
     fileInstr :: Str -> SE ()
     fileInstr file = outs $ diskin2 file
 
-playFileInstr :: SE ()
+minBugPlayFileInstr :: SE ()
+minBugPlayFileInstr = do
+  _ <- newProc instr
+  pure ()
+  where
+    instr :: Port (K Sig)-> SE ()
+    instr port = do
+      let q = oscil 1 1 (sines [1])
+      ksig <- unK <$> readRef port
+      when1 (q `greaterThan` 0) $ outs (ksig, q)
+
+playFileInstr2 :: SE ()
+playFileInstr2 = do
+  (instr1, res) <- newInstr PolyMix 0.2 (\() -> playFileInstr)
+  schedule instr1 0  10 ()
+  schedule instr1 12 8 ()
+  schedule instr1 24 10 ()
+  outs res
+
+playFileInstr :: SE (Sig, Sig)
 playFileInstr = do
   (instr1, (al, ar)) <- newInstr PolyMix 0.2 fileInstr
   schedule instr1 0 3 "/home/anton/over-minus.wav"
   schedule instr1 5 7 "/home/anton/over-minus.wav"
-  outs (al, ar)
+  pure (al, ar)
   where
     fileInstr :: Str -> SE Sig2
     fileInstr file = pure $ diskin2 file
-
-
-

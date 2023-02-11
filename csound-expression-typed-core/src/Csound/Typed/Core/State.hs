@@ -186,7 +186,7 @@ chnUpdateOpcodeName :: Text
 chnUpdateOpcodeName = "FreePort"
 
 getFreshPort :: Dep E
-getFreshPort = depT $ opcs chnUpdateOpcodeName [(Ir, [])] []
+getFreshPort = opcsDep chnUpdateOpcodeName [(Ir, [])] []
 
 getCurrentRate :: Run (Maybe IfRate)
 getCurrentRate = Run (gets stCurrentRate)
