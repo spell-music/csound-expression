@@ -6,16 +6,25 @@ module Csound.Typed.Core.Types.SE
   , IsRef (..)
   , modifyRef
   , getCurrentRate
+  , writeOuts
+  , readIns
+  , liftOpc
+  , liftMulti
+  , liftOpcDep
+  , liftOpcDep_
+  , liftOpr1kDep
+  , readOnlyVar
   ) where
 
 import Control.Monad.IO.Class
 
-import Csound.Dynamic (IfRate (..))
+import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Dep)
 import Csound.Typed.Core.State.Options (Options)
 import Csound.Typed.Core.State qualified as State
 import Csound.Typed.Core.Types.Tuple
+import Csound.Typed.Core.Types.Prim.Val
 import Control.Monad.Trans.Class (lift)
 import Data.Default
 
@@ -59,3 +68,44 @@ modifyRef ref f = writeRef ref . f =<< readRef ref
 getCurrentRate :: SE (Maybe IfRate)
 getCurrentRate = SE $ lift State.getCurrentRate
 
+-----------------------------------------------------------------------
+-- writing and reading signals from audio card
+
+writeOuts :: forall a . Sigs a => a -> SE ()
+writeOuts outs = SE $ (Dynamic.depT_ =<<) $ lift $ f <$> fromTuple outs
+  where f as = Dynamic.opcs "out" [(Xr, replicate (tupleArity @a) Ar)] as
+
+readIns :: forall a . Sigs a => SE a
+readIns = SE $ toTuple . pure <$> getIn (tupleArity @a)
+  where
+    getIn :: Int -> Dep [E]
+    getIn arity
+        | arity == 0    = pure []
+        | otherwise     = Dynamic.mopcsDep "inch" (replicate arity Ar, replicate arity Kr) (fmap Dynamic.int [1 .. arity]) arity
+
+------------------------------------------------------------------------------------
+
+-- | Expression is written in global instrument and only once
+readOnlyVar :: forall a . Val a => a -> a
+readOnlyVar expr = fromE $ do
+  e <- toE expr
+  State.getReadOnlyVar (Dynamic.toInitRate $ valRate @a) e
+
+------------------------------------------------------------------------------------
+
+liftOpc :: (Tuple a, Val b) => Name -> Spec1 -> a -> b
+liftOpc name rates a = fromE $ Dynamic.opcs name rates <$> fromTuple a
+
+liftMulti :: forall a b . (Tuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> b
+liftMulti name rates a = pureTuple $ Dynamic.mopcs name rates <$> fromTuple a
+  where
+    pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs
+
+liftOpcDep :: (Tuple a, Val b) => Name -> Spec1 -> a -> SE b
+liftOpcDep name rates a = SE $ fmap (fromE . pure) $ Dynamic.opcsDep name rates =<< lift (fromTuple a)
+
+liftOpcDep_ :: (Tuple a) => Name -> Spec1 -> a -> SE ()
+liftOpcDep_ name rates a = SE $ Dynamic.opcsDep_ name rates =<< lift (fromTuple a)
+
+liftOpr1kDep :: (Val a, Val b) => Name -> a -> SE b
+liftOpr1kDep name b1 = SE $ fmap (fromE . pure) $ Dynamic.opr1kDep name =<< lift (toE b1)

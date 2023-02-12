@@ -76,7 +76,6 @@ ppDag a =
         fmap (\(ls, rs) -> unwords
           [ show ls, "="
           , show $ fmap (either show show . unPrimOr) $ ratedExpExp rs
-          , maybe "" show $ snd <$> ratedExpDepends rs
           ] ) a
     ]
 

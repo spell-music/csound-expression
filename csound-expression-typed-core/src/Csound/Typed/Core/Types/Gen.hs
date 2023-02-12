@@ -25,16 +25,16 @@ module Csound.Typed.Core.Types.Gen (
     -- * Read from files
     WavChn(..), Mp3Chn(..),
     wavs, wavAll, wavLeft, wavRight, mp3s, mp3Left, mp3Right, mp3m,
-    readNumFile, readTrajectoryFile, readPvocex, readMultichannel,
+    readNumFile, readTrajectoryFile, readPvocex, {- readMultichannel, -}
 
     -- * (In)Harmonic series
     PartialStrength, PartialNumber, PartialPhase, PartialDC,
     sines, sines3, sines2, sines1, sines4, buzzes, bwSines, bwOddSines,
-    mixOnTab, mixTabs,
+    mixOnTab, {- mixTabs, -}
     tabSines1, tabSines2,
 
     -- * Wavelets
-    waveletTab, rescaleWaveletTab,
+    {- waveletTab, rescaleWaveletTab, -}
 
     -- ** Special cases
     sine, cosine, sigmoid, sigmoidRise, sigmoidFall, tanhSigmoid,
@@ -200,15 +200,15 @@ import Data.Boolean
 import Data.Text (Text)
 import Csound.Typed.Core.State.Options
 
-withTab :: Tab -> (Int -> PreTab) -> Tab
+withTab :: Tab -> (E -> PreTab) -> Tab
 withTab tab cont = Tab $ do
   tabId <- renderTab tab
-  fmap Dynamic.int $ renderTab $ TabPre $ cont tabId
+  renderTab $ TabPre $ cont tabId
 
-withTabs :: [Tab] -> ([Int] -> PreTab) -> Tab
+withTabs :: [Tab] -> ([E] -> PreTab) -> Tab
 withTabs tabs cont = Tab $ do
   tabIds <- mapM renderTab tabs
-  fmap Dynamic.int $ renderTab $ TabPre $ cont tabIds
+  renderTab $ TabPre $ cont tabIds
 
 -- | The default table. It's rendered to @(-1)@ in the Csound.
 noTab :: Tab
@@ -869,12 +869,14 @@ mixOnTab :: Tab -> [(PartialNumber, PartialStrength, PartialPhase)] -> Tab
 mixOnTab tab xs = withTab tab $ \idx -> do
   plainsPre idMixOnTab $ fromIntegral idx : [a | (pn, strength, phs) <- xs, a <- [pn, strength, phs]]
 
+{-
 -- | It's like @mixOnTab@ but it's more generic since we can mix not only one shape.
 -- But we can specify shape for each harmonic.
 mixTabs  :: [(Tab, PartialNumber, PartialStrength, PartialPhase)] -> Tab
 mixTabs xs = Tab $ do
-  args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (fmap fromIntegral $ renderTab tab) : fmap return [pn, strength, phs]]
-  fmap Dynamic.int $ renderTab $ plains idMixTabs args
+  args <- sequence [a | (tab, pn, strength, phs) <- xs, a <- (renderTab tab) : fmap return [pn, strength, phs]]
+  renderTab $ plains idMixTabs args
+-}
 
 -- | Normalizing table
 --
@@ -1098,6 +1100,7 @@ readTrajectoryFile filename = TabPre $ skipNormPreTab $ preTab def idReadTraject
 readPvocex :: String -> Int -> Tab
 readPvocex filename channel = TabPre $ preTab def idPvocex $ FileAccess filename [fromIntegral channel]
 
+{-
 -- | readMultichannel — Creates an interleaved multichannel table from the specified source tables, in the format expected by the ftconv opcode (GEN52).
 --
 -- > f # time size 52 nchannels fsrc1 offset1 srcchnls1 [fsrc2 offset2 srcchnls2 ... fsrcN offsetN srcchnlsN]
@@ -1108,6 +1111,7 @@ readMultichannel n args = withTabs fsrcs $ \idSrcs ->
   skipNormPreTab $ genPre idMultichannel $ fmap fromIntegral $ n : (concat $ zipWith3 (\a b c -> [a, b, c]) idSrcs offsets chnls)
   where
     (fsrcs, offsets, chnls) = unzip3 args
+-}
 
 ------------------------------------------------------
 
@@ -1134,6 +1138,7 @@ tabSinesBy genId tab nh amp fmode = withTab tab $ \tabId ->
 -------------------
 -- wavelets
 
+{-
 -- | "wave" — Generates a compactly supported wavelet function.
 --
 -- > waveletTab srcTab seq
@@ -1153,6 +1158,7 @@ rescaleWaveletTab = waveletTabBy 1
 waveletTabBy :: Int -> Tab -> Int -> Tab
 waveletTabBy rescaleFlag srcTab sq = withTab srcTab $ \tabId ->
   plainStringPreTab idWave $ fmap fromIntegral [tabId, sq, rescaleFlag]
+-}
 
 -------------------
 -- specific tabs

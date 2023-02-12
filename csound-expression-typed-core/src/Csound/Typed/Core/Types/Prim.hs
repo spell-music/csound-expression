@@ -35,8 +35,9 @@ import Csound.Typed.Core.Types.Prim.Val as X
 import Csound.Typed.Core.Types.Prim.Str as X
 import Csound.Typed.Core.Types.Prim.Spec as X
 import Csound.Typed.Core.Types.Prim.InstrId as X
+import Csound.Typed.Core.Types.Tuple (Tuple)
 
-class (IsPrim a, RealFrac (PrimOf a), Val a, Floating a) => SigOrD a where
+class (IsPrim a, RealFrac (PrimOf a), Tuple a, Val a, Floating a) => SigOrD a where
 
 instance SigOrD Sig
 instance SigOrD D

@@ -33,7 +33,7 @@ data Tab
 unTab :: Tab -> Run E
 unTab = toE
 
-renderTab :: Tab -> Run Int
+renderTab :: Tab -> Run E
 renderTab x = case x of
     TabPre a -> State.saveGen =<< fromPreTab a
     Tab _    -> error "table should be primitive"
@@ -43,7 +43,7 @@ instance Val Tab where
 
     toE = \case
       Tab a -> a
-      TabPre a -> D.int <$> renderPreTab a
+      TabPre a -> renderPreTab a
 
     valRate = Ir
 
@@ -83,7 +83,7 @@ data TabArgs
     | ArgsGen16 [Double] -}
     | FileAccess String [Double]
 
-renderPreTab :: PreTab -> Run Int
+renderPreTab :: PreTab -> Run E
 renderPreTab a = State.saveGen =<< fromPreTab a
 
 getPreTabUnsafe :: String -> Tab -> PreTab

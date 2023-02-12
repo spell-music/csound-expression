@@ -36,6 +36,9 @@ module Csound.Typed.Core
   , setTotalDur
   , global
 
+    -- ** Writing / reading signals from audio card
+  , writeOuts, readIns
+
     -- ** Imperative if statements
   , when1, whenD1, whens, whenDs
   , untilDo, untilDoD
@@ -71,6 +74,9 @@ module Csound.Typed.Core
     -- * Options
   , module Csound.Typed.Core.State.Options
 
+    -- * Render
+  , module Csound.Typed.Core.Types.SE.Render
+
     -- * Essential opcodes
   , module Csound.Typed.Core.Opcodes
   ) where
@@ -82,3 +88,4 @@ import Csound.Typed.Core.State.Options
 import Csound.Typed.Core.Types.Gen
 import Csound.Typed.Core.Types.Array
 import Csound.Typed.Core.Types.PureArray
+import Csound.Typed.Core.Types.SE.Render

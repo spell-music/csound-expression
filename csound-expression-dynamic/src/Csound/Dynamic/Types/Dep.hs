@@ -102,17 +102,11 @@ depT_ :: (Monad m) => E -> DepT m ()
 depT_ a = -- fmap (const ()) . depT
   DepT $ do
     s <- get
-    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s, expDependency s) }
-    put $ s {
-        newLineNum = succ $ newLineNum s,
-        expDependency = depends (expDependency s) a1
-        }
-    return ()
-
-{- TODO
-mdepT :: (Monad m) => MultiOut [E] -> MultiOut (DepT m [E])
-mdepT mas = \n -> mapM depT $ mas n
--}
+    let a1 = rehashE $ Fix $ (unFix a) { ratedExpDepends = Just (newLineNum s) }
+    put $ s
+      { newLineNum = succ $ newLineNum s
+      , expDependency = depends (expDependency s) a1
+      }
 
 stripDepT :: Monad m => DepT m a -> m a
 stripDepT (DepT a) = evalStateT a def

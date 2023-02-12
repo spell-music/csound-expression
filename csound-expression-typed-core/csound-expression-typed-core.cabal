@@ -24,8 +24,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4.10,
-        base < 5,
+        base >= 4.10, base < 5,
         bytestring,
         ghc-prim,
         containers,
@@ -40,12 +39,11 @@ Library
         directory,
         wl-pprint-text >= 1.2.0,
         csound-expression-dynamic >= 0.3.8,
-        temporal-media >= 0.6.3,
         hashable,
         text,
         data-fix,
-        unordered-containers
-
+        unordered-containers,
+        process
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
@@ -72,6 +70,7 @@ Library
     Csound.Typed.Core.Types.SE.Logic
     Csound.Typed.Core.Types.SE.Ref
     Csound.Typed.Core.Types.SE.Port
+    Csound.Typed.Core.Types.SE.Render
     Csound.Typed.Core.Types.Tuple
 
     Paths_csound_expression_typed_core
@@ -80,6 +79,7 @@ Library
   Default-extensions:
     FlexibleInstances
     FlexibleContexts
+    DeriveGeneric
     DerivingStrategies
     ImportQualifiedPost
     LambdaCase
@@ -89,3 +89,5 @@ Library
     GeneralizedNewtypeDeriving
     TypeFamilies
     ExistentialQuantification
+    RecordWildCards
+    TupleSections

@@ -16,7 +16,7 @@ module Csound.Dynamic.Build (
   inlineVar, gInit, gInitDouble,
 
   -- ** Opcodes constructors
-  Spec1, spec1, opcs, opcsDep, opcsNoInlineArgs, opr1, opr1k, infOpr, oprBy,
+  Spec1, spec1, opcs, opcsDep, opcsDep_, opcsNoInlineArgs, opr1, opr1k, opr1kDep, infOpr, oprBy,
   Specs, specs, MultiOut, mopcs, mopcsDep, mo,
 
   -- * Global init statements
@@ -122,6 +122,9 @@ opcs name signature = tfm (opcPrefix name $ spec1 signature)
 opcsDep :: Monad m => Name -> Spec1 -> [E] -> DepT m E
 opcsDep name signature = tfmDep (opcPrefix name $ spec1 signature)
 
+opcsDep_ :: Monad m => Name -> Spec1 -> [E] -> DepT m ()
+opcsDep_ name signature args = depT_ (tfm (opcPrefix name $ spec1 signature) args)
+
 opcsNoInlineArgs :: Name -> Spec1 -> [E] -> E
 opcsNoInlineArgs name signature = tfmNoInlineArgs (opcPrefix name $ spec1 signature)
 
@@ -133,6 +136,9 @@ oprBy name signature = tfm (oprPrefix name $ spec1 signature)
 
 opr1k :: Name -> E -> E
 opr1k name a = tfm (oprPrefix name $ spec1 [(Kr, [Kr]), (Ir, [Ir])]) [a]
+
+opr1kDep :: Monad m => Name -> E -> DepT m E
+opr1kDep name a = tfmDep (oprPrefix name $ spec1 [(Kr, [Kr]), (Ir, [Ir])]) [a]
 
 infOpr :: Name -> E -> E -> E
 infOpr name a b = tfm (oprInfix name $ spec1 [(Ar, [Ar, Ar]), (Kr, [Kr, Kr]), (Ir, [Ir, Ir])]) [a, b]

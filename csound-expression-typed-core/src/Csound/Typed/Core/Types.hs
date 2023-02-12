@@ -1,7 +1,6 @@
 -- | Csound types
 module Csound.Typed.Core.Types
   ( module X
-  , pureTuple
   , dirtyTuple
   -- * control rate ref
   , sensorRef
@@ -25,10 +24,6 @@ import Csound.Typed.Core.State (Run)
 
 ---------------------------------------------------------------------------------------
 -- tuple constructors
-
-pureTuple :: forall a . Tuple a => Run (MultiOut [E]) -> a
-pureTuple a =
-  toTuple $ fmap ($ tupleArity @a) a
 
 
 dirtyTuple :: forall a . Tuple a => Run (MultiOut [E]) -> SE a

@@ -19,7 +19,13 @@ import Control.Applicative (liftA2)
 
 import Csound.Dynamic (E, Rate (..))
 import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim
+import Csound.Typed.Core.Types.Prim.Sig
+import Csound.Typed.Core.Types.Prim.D
+import Csound.Typed.Core.Types.Prim.Tab
+import Csound.Typed.Core.Types.Prim.Str
+import Csound.Typed.Core.Types.Prim.Spec
+import Csound.Typed.Core.Types.Prim.InstrId
+import Csound.Typed.Core.Types.Prim.Val
 
 class Tuple a => Arg a where
 

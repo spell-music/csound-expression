@@ -72,7 +72,7 @@ minBugPlayFileInstr = do
     instr port = do
       let q = oscil 1 1 (sines [1])
       ksig <- unK <$> readRef port
-      when1 (q `greaterThan` 0) $ outs (ksig, q)
+      when1 (q `greater` 0) $ outs (ksig, q)
 
 playFileInstr2 :: SE ()
 playFileInstr2 = do

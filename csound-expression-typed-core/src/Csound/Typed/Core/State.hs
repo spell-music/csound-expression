@@ -17,6 +17,11 @@ module Csound.Typed.Core.State
   , saveTabs
   , getOptions
   , getFreshPort
+  , getReadOnlyVar
+  -- * Vco
+  , VcoInit (..)
+  , VcoShape (..)
+  , saveVco
   ) where
 
 import Debug.Trace (trace)
@@ -29,6 +34,7 @@ import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
+import Data.Maybe
 import Data.Text (Text)
 import Data.Text qualified as Text
 
@@ -58,13 +64,12 @@ exec opts act = stCsd <$> execStateT (unRun $ setupInstr0 opts >> act) initSt
       , stFreshVar = 1
       , stIsGlobal = True
       , stCurrentRate = Nothing
-      , stGens = Map.empty
       , stOptions = opts
+      , stReadInit = ReadInit HashMap.empty
+      , stFtables = Ftables { ftableCache = FtableMap Map.empty, ftableFreshId = 1 }
       }
 
     foreverTime = 100 * 604800.0
-
-
 
 -----------------------------------------------------------------------------
 -- basic functions
@@ -127,23 +132,6 @@ initGlobalArrVar rate sizes = do
 isGlobalInstr :: Run Bool
 isGlobalInstr = Run $ gets stIsGlobal
 
-saveGen :: Gen -> Run Int
-saveGen gen = Run $ do
-  genMap <- gets stGens
-  case Map.lookup gen genMap of
-    Just n  -> pure n
-    Nothing -> do
-      let newId = Map.size genMap + 1
-      modify' $ \st -> st
-        { stGens = Map.insert gen newId $ stGens st
-        , stCsd = insertTabToSco newId (stCsd st)
-        }
-      pure newId
-  where
-    insertTabToSco newId x = x { csdSco = insertSco $ csdSco x }
-      where
-        insertSco s = s { scoGens = (newId, gen) : scoGens s }
-
 -- | TODO
 saveTabs :: [Gen] -> Run E
 saveTabs = undefined
@@ -171,6 +159,20 @@ globalConstants opt = do
   jackos
   where
     jackos = maybe (return ()) (verbatim . Options.renderJacko) $ Options.csdJacko opt
+
+-----------------------------------------------------------------------------
+
+getReadOnlyVar :: Rate -> E -> Run E
+getReadOnlyVar rate expr = Run $ do
+  ReadInit initMap <- gets stReadInit
+  readOnlyVar <$> case HashMap.lookup hash initMap of
+    Just var -> pure var
+    Nothing  -> do
+      var <- unRun $ initGlobalVar rate expr
+      modify' $ \s -> s { stReadInit = ReadInit $ HashMap.insert hash var $ unReadInit $ stReadInit s }
+      pure var
+  where
+    hash = hashE expr
 
 -----------------------------------------------------------------------------
 
@@ -212,9 +214,15 @@ data St = St
   , stFreshVar    :: !Int               -- ^ fresh names for mutable variables
   , stIsGlobal    :: !Bool              -- ^ do we render global or local instrument
   , stCurrentRate :: !(Maybe IfRate)    -- ^ current rate of execution (Ir or Kr)
-  , stGens        :: !(Map Gen Int)     -- ^ map of Gen-tables to generate unique integer identifiers
   , stOptions     :: !Options           -- ^ Csound flags and initial options / settings
+  , stReadInit    :: !ReadInit          -- ^ read only global inits that are initialized only once
+  , stFtables     :: !Ftables
   }
+
+-- | Global vars that are initialized only once and are read-only
+-- and can be safely cached
+newtype ReadInit = ReadInit { unReadInit :: HashMap ExpHash Var }
+
 
 -- | Fresh ids for instruments
 data FreshId = FreshId
@@ -270,3 +278,99 @@ getFreshGlobalVar rate = Run $ do
     , varName = Text.pack $ show varId
     }
 
+-------------------------------------------------------------------------------------
+-- gens
+
+data Ftable
+  = GenTable Gen
+  | VcoTable VcoInit
+  deriving (Eq, Ord)
+
+newtype FtableMap = FtableMap { unFtableMap :: Map Ftable E }
+
+data Ftables = Ftables
+  { ftableCache   :: FtableMap
+  , ftableFreshId :: E
+  }
+
+setFreshId :: E -> Ftables -> Ftables
+setFreshId freshId x = x { ftableFreshId = freshId }
+
+insertFtableMap :: Ftable -> E -> Ftables -> Ftables
+insertFtableMap ft newId x = x { ftableCache = FtableMap $ Map.insert ft newId $ unFtableMap $ ftableCache x }
+
+lookupFtable :: Ftable -> Run (Maybe E)
+lookupFtable ft = Run $ do
+  FtableMap ftMap <- gets (ftableCache . stFtables)
+  pure $ Map.lookup ft ftMap
+
+saveGen :: Gen -> Run E
+saveGen gen = do
+  maybe insertGen pure =<< lookupFtable (GenTable gen)
+  where
+    insertGen = do
+      newId <- getFreshFtableId
+      v <- fmap readOnlyVar $ initGlobalVar Ir (ftgen newId gen)
+      Run $ modify' $ \st -> st { stFtables = insertFtableMap (GenTable gen) newId $ setFreshId (v + 1) $ stFtables st }
+      pure v
+
+ftgen :: E -> Gen -> E
+ftgen n g = opcs "ftgen" [(Ir, rates)]
+  $ n : 0 : (int $ genSize g) : (genIdE $ genId g) :
+  ( maybe id (\file -> (prim (PrimString file) : )) (genFile g)
+    (fmap double $ genArgs g)
+  )
+  where
+    rates = Ir : Ir : Ir : Ir : (maybe id (const (Sr : )) (genFile g) $ (repeat Ir))
+
+genIdE :: GenId -> E
+genIdE = \case
+    IntGenId n -> int n
+    StringGenId a -> prim (PrimString a)
+
+saveVco :: VcoInit -> Run E
+saveVco inits =
+  maybe insertVco' pure =<< lookupFtable (VcoTable inits)
+  where
+    insertVco' = do
+      (shapeId, mResId) <- vcoShapeId' (vcoShape inits)
+      newId <- getFreshFtableId
+      nextNewId <- fmap readOnlyVar $ initGlobalVar Ir $ fromVcoInit (isNothing mResId) shapeId newId inits
+      Run $ modify' $ \st -> st { stFtables = insertFtableMap (VcoTable inits) newId $ setFreshId nextNewId $ stFtables st }
+      pure $ fromMaybe shapeId mResId
+
+    fromVcoInit isGen shapeId newId VcoInit{..} =
+      vco2init $ shapeId : newId : maybe 1.05 double vcoMul : defInt vcoMinSize : defInt vcoMaxSize : (if isGen then [negate shapeId] else [])
+      where
+        defInt = maybe (-1) int
+
+vco2init :: [E] -> E
+vco2init = opcs "vco2init" [(Ir, repeat Ir)]
+
+vcoShapeId' :: VcoShape -> Run (E, Maybe E)
+vcoShapeId' = \case
+  Saw           -> simple 1 0
+  IntegratedSaw -> simple 2 1
+  Pulse         -> simple 4 2
+  Square        -> simple 8 3
+  Triangle      -> simple 16 4
+  UserGen gen   -> (, Nothing) . negate <$> saveGen gen
+  where
+    simple n resId = pure (int n, Just resId)
+
+getFreshFtableId :: Run E
+getFreshFtableId = Run $ gets (ftableFreshId . stFtables)
+
+-------------------------------------------------------------------------------------
+-- vco
+
+data VcoShape = Saw | Pulse | Square | Triangle | IntegratedSaw | UserGen Gen
+  deriving (Eq, Ord)
+
+data VcoInit = VcoInit
+  { vcoShape   :: VcoShape
+  , vcoMul     :: Maybe Double
+  , vcoMinSize :: Maybe Int
+  , vcoMaxSize :: Maybe Int
+  }
+  deriving (Eq, Ord)
