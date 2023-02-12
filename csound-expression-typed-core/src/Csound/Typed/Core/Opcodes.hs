@@ -1,4 +1,5 @@
--- | Essential opcodes. Top 100 opcodes
+-- | Essential opcodes. Top 100 opcodes.
+-- See the package csound-expression-opcodes for full list of Csound opcodes
 module Csound.Typed.Core.Opcodes
   (
   -- * Oscillators / Phasors
@@ -17,8 +18,34 @@ module Csound.Typed.Core.Opcodes
   , random, randomi, randomh
   , seed
 
-  , linseg
-  , diskin2
+  -- * Envelopes
+  , linen, linenr
+  , madsr, adsr
+
+  -- * Line generators
+  , linseg, expseg
+  , linsegr, expsegr
+
+  -- * Line Smooth
+  , lag, lagud
+
+  -- * Sound Files / Samples
+  , diskin, diskin2
+  , mp3in
+  , loscil, loscil3, loscilx, lphasor
+  , flooper, flooper2
+  , filescal, mincer
+  , filelen
+
+  -- * Audio I/O
+  -- for outs and ins use functions writeOuts and readIns
+  , monitor
+  , inch
+  , outch
+
+  -- * Tables (Buffers)
+  , tablei, table3
+  , tablew
   ) where
 
 import Csound.Dynamic (E, Gen)
@@ -293,9 +320,56 @@ seed b1 = global $ liftOpcDep_ "seed" rates b1
 ----------------------------------------------------------------------------------
 -- line generators
 
-----------------------------------------------------------------------------------
--- envelopes
+-- |
+-- Applies a straight line rise and decay pattern to an input amp signal.
+--
+-- linen -- apply a straight line rise and decay pattern to an input amp signal.
+--
+-- > ares  linen  xamp, irise, idur, idec
+-- > kres  linen  kamp, irise, idur, idec
+--
+-- csound doc: <http://csound.com/docs/manual/linen.html>
+linen ::  Sig -> D -> D -> D -> Sig
+linen b1 b2 b3 b4 = liftOpc "linen" rates (b1,b2,b3,b4)
+  where rates = [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir])]
 
+-- |
+-- The linen opcode extended with a final release segment.
+--
+-- linenr -- same as linen except that the final segment is entered only on sensing a MIDI note release. The note is then extended by the decay time.
+--
+-- > ares  linenr  xamp, irise, idec, iatdec
+-- > kres  linenr  kamp, irise, idec, iatdec
+--
+-- csound doc: <http://csound.com/docs/manual/linenr.html>
+linenr ::  Sig -> D -> D -> D -> Sig
+linenr b1 b2 b3 b4 = liftOpc "linenr" rates (b1,b2,b3,b4)
+  where rates = [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir])]
+
+-- |
+-- Calculates the classical ADSR envelope using the linsegr mechanism.
+--
+-- > ares  madsr  iatt, idec, islev, irel [, idel] [, ireltim]
+-- > kres  madsr  iatt, idec, islev, irel [, idel] [, ireltim]
+--
+-- csound doc: <http://csound.com/docs/manual/madsr.html>
+madsr ::  D -> D -> D -> D -> Sig
+madsr b1 b2 b3 b4 = liftOpc "madsr" rates (b1,b2,b3,b4)
+  where rates = [(Ar,[Ir,Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir,Ir])]
+
+-- |
+-- Calculates the classical ADSR envelope using linear segments.
+--
+-- > ares  adsr  iatt, idec, islev, irel [, idel]
+-- > kres  adsr  iatt, idec, islev, irel [, idel]
+--
+-- csound doc: <http://csound.com/docs/manual/adsr.html>
+adsr ::  D -> D -> D -> D -> Sig
+adsr b1 b2 b3 b4 = liftOpc "adsr" rates (b1,b2,b3,b4)
+  where rates = [(Ar,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir])]
+
+----------------------------------------------------------------------------------
+-- line generators
 
 -- |
 -- Trace a series of line segments between specified points.
@@ -308,5 +382,232 @@ linseg ::  [D] -> Sig
 linseg b1 = Sig $ f <$> mapM unD b1
     where f a1 = Dynamic.setRate Kr $ Dynamic.opcs "linseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
+-- |
+-- Trace a series of exponential segments between specified points.
+--
+-- > ares  expseg  ia, idur1, ib [, idur2] [, ic] [...]
+-- > kres  expseg  ia, idur1, ib [, idur2] [, ic] [...]
+--
+-- csound doc: <http://csound.com/docs/manual/linseg.html>
+expseg ::  [D] -> Sig
+expseg b1 = Sig $ f <$> mapM unD b1
+    where f a1 = Dynamic.setRate Kr $ Dynamic.opcs "expseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+
+-- |
+-- Trace a series of line segments between specified points including a release segment.
+--
+-- > ares  linsegr  ia, idur1, ib [, idur2] [, ic] [...], irel, iz
+-- > kres  linsegr  ia, idur1, ib [, idur2] [, ic] [...], irel, iz
+--
+-- csound doc: <http://csound.com/docs/manual/linsegr.html>
+linsegr ::  [D] -> D -> D -> Sig
+linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
+    where f a1 a2 a3 = Dynamic.setRate Kr $ Dynamic.opcs "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+
+-- |
+-- Trace a series of exponential segments between specified points including a release segment.
+--
+-- > ares  expsegr  ia, idur1, ib [, idur2] [, ic] [...], irel, iz
+-- > kres  expsegr  ia, idur1, ib [, idur2] [, ic] [...], irel, iz
+--
+-- csound doc: <http://csound.com/docs/manual/expsegr.html>
+expsegr ::  [D] -> D -> D -> Sig
+expsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
+    where f a1 a2 a3 = Dynamic.setRate Kr $ Dynamic.opcs "expsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+
+----------------------------------------------------------------------------------
+-- Line Smooth
+
+-- |
+-- Exponential lag with 60dB lag time. Port of Supercollider's Lag. This is essentially
+-- a one pole filter except that instead of supplying the coefficient directly, it is calculated from a 60 dB lag time. This is the time required for the filter to converge to within 0.01% of a value. This is useful for smoothing out control signals.
+--
+-- > aout lag ain, klagtime [, initialvalue]
+-- > kout lag kin, klagtime [, initialvalue]
+lag :: Sig -> Sig -> Sig
+lag b1 b2 = liftOpc "lag" rates (b1, b2)
+  where rates = [(Ar, [Ar, Kr, Ir]), (Kr, [Kr, Kr, Ir])]
+
+-- |
+-- Exponential lag with different smoothing time for up- and downgoing signals. Port of Supercollider's LagUD.
+--
+-- > aout lagud ain, klagup, klagdown [, initialvalue]
+-- > kout lagud kin, klagup, klagdown [, initialvalue]
+lagud :: Sig -> Sig -> Sig -> Sig
+lagud b1 b2 b3 = liftOpc "lagud" rates (b1,b2,b3)
+  where rates = [(Ar, [Ar,Kr,Kr,Ir]), (Kr, [Kr,Kr,Kr,Ir])]
+
+----------------------------------------------------------------------------------
+--- Sound Files / Samples
+
+diskin :: Str -> Sig2
+diskin a = liftMulti "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) a
+
 diskin2 :: Tuple a => Str -> a
 diskin2 a = liftMulti "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) a
+
+-- |
+-- Reads mono or stereo audio data from an external MP3 file.
+--
+-- > ar1, ar2  mp3in  ifilcod[, iskptim, iformat, iskipinit, ibufsize]
+-- > ar1  mp3in  ifilcod[, iskptim, iformat, iskipinit, ibufsize]
+--
+-- csound doc: <http://csound.com/docs/manual/mp3in.html>
+mp3in ::  Str -> (Sig, Sig)
+mp3in b1 = liftMulti "mp3in" rates b1
+  where rates = ([Ar,Ar],[Sr,Ir,Ir,Ir,Ir])
+
+-- |
+-- Read sampled sound from a table.
+--
+-- Read sampled sound (mono or stereo) from a table, with optional sustain and release looping.
+--
+-- > ar1 [,ar2]  loscil  xamp, kcps, ifn [, ibas] [, imod1] [, ibeg1] [, iend1] \
+-- >           [, imod2] [, ibeg2] [, iend2]
+--
+-- csound doc: <http://csound.com/docs/manual/loscil.html>
+loscil :: Tuple a => Sig -> Sig -> Tab -> a
+loscil b1 b2 b3 = liftMulti "loscil" rates (b1,b2,b3)
+  where rates =([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+
+-- |
+-- Read sampled sound from a table using cubic interpolation.
+--
+-- Read sampled sound (mono or stereo) from a table, with optional sustain and release looping, using cubic interpolation.
+--
+-- > ar1 [,ar2]  loscil3  xamp, kcps, ifn [, ibas] [, imod1] [, ibeg1] [, iend1] \
+-- >           [, imod2] [, ibeg2] [, iend2]
+--
+-- csound doc: <http://csound.com/docs/manual/loscil3.html>
+loscil3 :: Tuple a => Sig -> Sig -> Tab -> a
+loscil3 b1 b2 b3 = liftMulti "loscil3" rates (b1, b2, b3)
+  where rates = ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+
+-- |
+-- Read multi-channel sampled sound from a table.
+--
+-- Read sampled sound (up to 16 channels) from a table, with
+--       optional sustain and release looping.
+--
+-- > ar1 [, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9, ar10, ar11, ar12, ar13, ar14, \
+-- >           ar15, ar16]  loscilx  xamp, kcps, ifn \
+-- >           [, iwsize, ibas, istrt, imod, ibeg, iend]
+--
+-- csound doc: <http://csound.com/docs/manual/loscilx.html>
+loscilx :: Tuple a => Sig -> Sig -> Tab -> a
+loscilx b1 b2 b3 = liftMulti "loscilx" rates (b1, b2, b3)
+  where rates = ( [Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
+                , [Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+
+-- |
+-- Generates a table index for sample playback
+--
+-- This opcode can be used to generate table index for sample playback (e.g. tablexkt).
+--
+-- > ares  lphasor  xtrns [, ilps] [, ilpe] [, imode] [, istrt] [, istor]
+--
+-- csound doc: <http://csound.com/docs/manual/lphasor.html>
+lphasor ::  Sig -> Sig
+lphasor b1 = liftOpc "lphasor" rates b1
+  where rates = [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir])]
+
+-- |
+-- Function-table-based crossfading looper.
+--
+-- This opcode reads audio from a function table and plays it back in a loop with user-defined
+--    start time, duration and crossfade time. It also allows the pitch of the loop to be controlled,
+--    including reversed playback. It accepts non-power-of-two tables, such as deferred-allocation
+--    GEN01 tables, with one or two channels.
+--
+-- > asig1[, asig2]  flooper  kamp, kpitch, istart, idur, ifad, ifn
+--
+-- csound doc: <http://csound.com/docs/manual/flooper.html>
+flooper :: Tuple a => Sig -> Sig -> D -> D -> D -> Tab -> a
+flooper b1 b2 b3 b4 b5 b6 = liftMulti "flooper" rates (b1, b2, b3, b4, b5, b6)
+    where rates = ([Ar,Ar],[Kr,Kr,Ir,Ir,Ir,Ir])
+
+-- |
+-- Function-table-based crossfading looper.
+--
+-- This opcode implements a crossfading looper with variable loop parameters and three
+--   looping modes, optionally using a table for its crossfade shape. It accepts
+--   non-power-of-two tables for its source sounds, such as deferred-allocation
+--    GEN01 tables, with one or two channels.
+--
+-- > asig1[,asig2]  flooper2  kamp, kpitch, kloopstart, kloopend, kcrossfade, ifn \
+-- >           [, istart, imode, ifenv, iskip]
+--
+-- csound doc: <http://csound.com/docs/manual/flooper2.html>
+flooper2 :: Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> a
+flooper2 b1 b2 b3 b4 b5 b6 = liftMulti "flooper2" rates (b1, b2, b3, b4, b5, b6)
+  where rates = ([Ar,Ar],[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])
+
+-- |
+-- Returns the length of a sound file.
+--
+-- > ir  filelen  ifilcod, [iallowraw]
+--
+-- csound doc: <http://csound.com/docs/manual/filelen.html>
+filelen ::  Str -> D
+filelen b1 = liftOpc "filelen" rates b1
+  where rates = [(Ir,[Sr,Ir])]
+
+-- |
+-- Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.
+--
+-- filescal implements phase-locked vocoder
+--       processing from disk files, resampling if necessary.
+--
+-- > asig[,asig2]  filescal  ktimescal, kamp, kpitch, Sfile, klock [,ifftsize, idecim, ithresh]
+-- >
+--
+-- csound doc: <http://csound.com/docs/manual/filescal.html>
+filescal :: Tuple a => Sig -> Sig -> Sig -> Str -> Sig -> a
+filescal b1 b2 b3 b4 b5 = liftMulti "filescal" rates (b1, b2, b3, b4, b5)
+  where rates = ([Ar,Ar],[Kr,Kr,Kr,Sr,Kr,Ir,Ir,Ir])
+
+-- |
+-- Phase-locked vocoder processing.
+--
+-- mincer implements phase-locked vocoder processing using function tables
+-- containing sampled-sound sources, with GEN01, and
+-- mincer will accept deferred allocation tables.
+--
+-- > asig  mincer  atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
+-- >
+--
+-- csound doc: <http://csound.com/docs/manual/mincer.html>
+mincer ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
+mincer b1 b2 b3 b4 b5 = liftOpc "mincer" rates (b1, b2, b3, b4, b5)
+  where rates = [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir])]
+
+-- |
+-- Returns the audio spout frame.
+--
+-- Returns the audio spout frame (if active), otherwise it returns zero.
+--
+-- > aout1 [,aout2 ... aoutX]  monitor
+-- > aarra  monitor
+--
+-- csound doc: <http://csound.com/docs/manual/monitor.html>
+monitor :: forall a. Sigs a => SE a
+monitor = liftMultiDep "monitor" ((repeat Ar),[]) ()
+
+-- |
+-- Reads from numbered channels in an external audio signal or stream.
+--
+-- > ain1[, ...]  inch  kchan1[,...]
+--
+-- csound doc: <http://csound.com/docs/manual/inch.html>
+inch :: Tuple a => Sig -> SE a
+inch b1 = liftMultiDep "inch" ((repeat Ar),(repeat Kr)) b1
+
+-- | Writes multi-channel audio data, with user-controllable channels, to an external device or stream.
+--
+-- > outch kchan1, asig1 [, kchan2] [, asig2] [...]
+--
+-- User several invokations of outch to write to multiple channels
+outch :: Sig -> Sig -> SE ()
+outch index aout = liftOpcDep_ "outch" [(Xr, [Kr,Ar])] (index, aout)
+
+

@@ -173,8 +173,8 @@ specs = uncurry MultiRate
 mopcs :: Name -> Specs -> [E] -> MultiOut [E]
 mopcs name signature as = \numOfOuts -> mo numOfOuts $ tfm (opcPrefix name $ specs signature) as
 
-mopcsDep :: Monad m => Name -> Specs -> [E] -> Int -> DepT m [E]
-mopcsDep name signature as numOfOuts = mo numOfOuts <$> tfmDep (opcPrefix name $ specs signature) as
+mopcsDep :: Monad m => Int -> Name -> Specs -> [E] -> DepT m [E]
+mopcsDep numOfOuts name signature as = mo numOfOuts <$> tfmDep (opcPrefix name $ specs signature) as
 
 mo :: Int -> E -> [E]
 mo n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates

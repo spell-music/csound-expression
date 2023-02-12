@@ -10,6 +10,7 @@ module Csound.Typed.Core.Types.SE
   , readIns
   , liftOpc
   , liftMulti
+  , liftMultiDep
   , liftOpcDep
   , liftOpcDep_
   , liftOpr1kDep
@@ -81,7 +82,7 @@ readIns = SE $ toTuple . pure <$> getIn (tupleArity @a)
     getIn :: Int -> Dep [E]
     getIn arity
         | arity == 0    = pure []
-        | otherwise     = Dynamic.mopcsDep "inch" (replicate arity Ar, replicate arity Kr) (fmap Dynamic.int [1 .. arity]) arity
+        | otherwise     = Dynamic.mopcsDep arity "inch" (replicate arity Ar, replicate arity Kr) (fmap Dynamic.int [1 .. arity])
 
 ------------------------------------------------------------------------------------
 
@@ -106,6 +107,9 @@ liftOpcDep name rates a = SE $ fmap (fromE . pure) $ Dynamic.opcsDep name rates 
 
 liftOpcDep_ :: (Tuple a) => Name -> Spec1 -> a -> SE ()
 liftOpcDep_ name rates a = SE $ Dynamic.opcsDep_ name rates =<< lift (fromTuple a)
+
+liftMultiDep :: forall a b . (Tuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> SE b
+liftMultiDep name rates a = SE $ fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
 
 liftOpr1kDep :: (Val a, Val b) => Name -> a -> SE b
 liftOpr1kDep name b1 = SE $ fmap (fromE . pure) $ Dynamic.opr1kDep name =<< lift (toE b1)
