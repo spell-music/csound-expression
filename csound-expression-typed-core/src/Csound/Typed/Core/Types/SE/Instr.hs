@@ -1,6 +1,7 @@
 -- | Define instruments
 module Csound.Typed.Core.Types.SE.Instr
   ( InstrRef
+  , getInstrRefId
   , MixMode (..)
   , newProc
   , newNamedProc
@@ -30,6 +31,13 @@ data InstrRef a
   | StrRef (ProcId Str a)
   | InstrRef (InstrId a)
   | EffRef (EffId a)
+
+getInstrRefId :: Arg a => InstrRef a -> Either Str D
+getInstrRefId = \case
+  ProcRef pid -> Right $ fromE $ toE pid
+  StrRef pid -> Left $ fromE $ toE pid
+  InstrRef (InstrId pid _ _) -> Right $ fromE $ toE pid
+  EffRef (EffId pid _ _ _) -> Right $ fromE $ toE pid
 
 ------------------------------------------------------------
 -- procedures

@@ -44,11 +44,28 @@ module Csound.Typed.Core.Opcodes
   , outch
 
   -- * Tables (Buffers)
-  , tablei, table3
+  , table, tablei, table3
   , tablew
+  -- ** Read-only tables (pure)
+  , getTable, getTablei, getTable3
+  -- TODO
+  -- ftgen, ftsamplebank
+
+  -- * Arrays - check the list
+
+  -- * Program Control
+  , changed, changed2
+  , trigger
+
+  -- * Instrument Control
+  , active
+  , maxalloc
+  , nstrnum
+  , turnoff2
   ) where
 
-import Csound.Dynamic (E, Gen)
+import Data.Maybe
+import Csound.Dynamic (E, Gen, IfRate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Dynamic (Rate (..))
 import Csound.Typed.Core.Types hiding (setRate)
@@ -610,4 +627,150 @@ inch b1 = liftMultiDep "inch" ((repeat Ar),(repeat Kr)) b1
 outch :: Sig -> Sig -> SE ()
 outch index aout = liftOpcDep_ "outch" [(Xr, [Kr,Ar])] (index, aout)
 
+-------------------------------------------------------------------------------------
+-- Tables (Buffers)
 
+-- |
+-- Accesses table values by direct indexing.
+--
+-- > ares  table  andx, ifn [, ixmode] [, ixoff] [, iwrap]
+-- > ires  table  indx, ifn [, ixmode] [, ixoff] [, iwrap]
+-- > kres  table  kndx, ifn [, ixmode] [, ixoff] [, iwrap]
+--
+-- csound doc: <http://csound.com/docs/manual/table.html>
+table :: SigOrD a => a -> Tab -> SE a
+table b1 b2 = liftOpcDep "table" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Ir,Ir,Ir,Ir])]
+
+-- | The same as table but pure version for read-only tables
+getTable :: SigOrD a => a -> Tab -> a
+getTable b1 b2 = liftOpc "table" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Ir,Ir,Ir,Ir])]
+
+-- |
+-- Accesses table values by direct indexing with cubic interpolation.
+--
+-- > ares  table3  andx, ifn [, ixmode] [, ixoff] [, iwrap]
+-- > ires  table3  indx, ifn [, ixmode] [, ixoff] [, iwrap]
+-- > kres  table3  kndx, ifn [, ixmode] [, ixoff] [, iwrap]
+--
+-- csound doc: <http://csound.com/docs/manual/table3.html>
+table3 :: SigOrD a => a -> Tab -> SE a
+table3 b1 b2 = liftOpcDep "table3" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Ir,Ir,Ir,Ir])]
+
+-- | The same as table3 but pure version for read-only tables
+getTable3 :: SigOrD a => a -> Tab -> a
+getTable3 b1 b2 = liftOpc "table3" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Ir,Ir,Ir,Ir])]
+
+-- |
+-- Accesses table values by direct indexing with linear interpolation.
+--
+-- > ares  tablei  andx, ifn [, ixmode] [, ixoff] [, iwrap]
+-- > ires  tablei  indx, ifn [, ixmode] [, ixoff] [, iwrap]
+-- > kres  tablei  kndx, ifn [, ixmode] [, ixoff] [, iwrap]
+--
+-- csound doc: <http://csound.com/docs/manual/tablei.html>
+tablei :: SigOrD a => a -> Tab -> SE a
+tablei b1 b2 = liftOpcDep "tablei" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Ir,Ir,Ir,Ir])]
+
+-- | The same as tablei but pure version for read-only tables
+getTablei :: SigOrD a => a -> Tab -> a
+getTablei b1 b2 = liftOpc "tablei" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Ir,Ir,Ir,Ir])]
+
+-- | tablew — Change the contents of existing function tables.
+--
+-- > tablew asig, andx, ifn [, ixmode] [, ixoff] [, iwgmode]
+-- > tablew isig, indx, ifn [, ixmode] [, ixoff] [, iwgmode]
+-- > tablew ksig, kndx, ifn [, ixmode] [, ixoff] [, iwgmode]
+tablew :: SigOrD a => a -> a -> Tab -> SE ()
+tablew b1 b2 b3 = liftOpcDep_ "tablew" rates (b1,b2,b3)
+  where rates = [(Ar,[Ar,Ar,Ir,Ir,Ir,Ir])
+                ,(Ir,[Ir,Ir,Ir,Ir,Ir,Ir])
+                ,(Kr,[Kr,Kr,Ir,Ir,Ir,Ir])]
+
+-------------------------------------------------------------------------------------
+-- * Program Control
+
+-- | changed — k-rate signal change detector
+--
+-- > ktrig changed kvar1 [, kvar2,..., kvarN]
+changed :: [Sig] -> Sig
+changed as = Sig $ f <$> mapM toE as
+  where f a1 = Dynamic.opcs "changed" [(Kr, repeat Kr), (Ar, repeat Ir)] a1
+
+-- | Like @changed@ but it does not trigger the first cycle if any of the input signals is non-zero.
+changed2 :: [Sig] -> Sig
+changed2 as = Sig $ f <$> mapM toE as
+  where f a1 = Dynamic.opcs "changed" [(Kr, repeat Kr), (Ar, repeat Ir)] a1
+
+-- |
+-- Informs when a krate signal crosses a threshold.
+--
+-- > kout  trigger  ksig, kthreshold, kmode
+--
+-- csound doc: <http://csound.com/docs/manual/trigger.html>
+trigger ::  Sig -> Sig -> Sig -> Sig
+trigger b1 b2 b3 = liftOpc "trigger" rates (b1, b2, b3)
+    where rates = [(Kr,[Kr,Kr,Kr])]
+
+-------------------------------------------------------------------------------------
+
+-- | active — Returns the number of active instances of an instrument.
+active :: (Arg a, SigOrD b) => InstrRef a -> SE b
+active instrRef = case getInstrRefId instrRef  of
+  Left strId  -> liftOpcDep "active" strRates strId
+  Right intId -> liftOpcDep "active" intRates intId
+  where
+    intRates = [(Ir, [Ir,Ir,Ir]), (Kr, [Kr,Ir,Ir])]
+    strRates = [(Ir, [Sr,Ir,Ir])]
+
+-- | maxalloc — Limits the number of allocations of an instrument.
+-- It's often used with @global@
+maxalloc :: (Arg a) => InstrRef a -> D -> SE ()
+maxalloc instrRef val = case getInstrRefId instrRef of
+  Left strId -> liftOpcDep_ "maxalloc" strRates (strId, val)
+  Right intId -> liftOpcDep_ "maxalloc" intRates (intId, val)
+  where
+    strRates = [(Xr, [Sr,Ir])]
+    intRates = [(Xr, [Ir,Ir])]
+
+-- | nstrnum — Returns the number of a named instrument
+nstrnum :: Arg a => InstrRef a -> D
+nstrnum instrRef = case getInstrRefId instrRef of
+  Left strId -> liftOpc "nstrnum" [(Ir,[Sr])] strId
+  Right intId -> intId
+
+-- | turnoff2 — Turn off instance(s) of other instruments at performance time.
+turnoff2 :: Arg a => InstrRef a -> Sig -> Sig -> SE ()
+turnoff2 instrRef kmode krelease = do
+  curRate <- fromMaybe IfIr <$> getCurrentRate
+  case curRate of
+    IfIr ->
+      case getInstrRefId instrRef of
+        Left strId  -> liftOpcDep_ "turnoff2" strRates (strId, kmode, krelease)
+        Right intId -> liftOpcDep_ "turnoff2" intRates (intId, kmode, krelease)
+    IfKr ->
+      case getInstrRefId instrRef of
+        Left strId  -> liftOpcDep_ "turnoff2_i" strRates_i (strId, kmode, krelease)
+        Right intId -> liftOpcDep_ "turnoff2_i" intRates_i (intId, kmode, krelease)
+  where
+    strRates = [(Xr, [Sr,Kr,Kr])]
+    intRates = [(Xr, [Kr,Kr,Kr])]
+    strRates_i = [(Xr, [Sr,Ir,Ir])]
+    intRates_i = [(Xr, [Ir,Ir,Ir])]

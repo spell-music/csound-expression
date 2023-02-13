@@ -128,7 +128,7 @@ module Csound.Typed.Core.Types.Gen (
     TabList, tabList, fromTabList, fromTabListD,
 
     -- * Mic table functions
-    tablewa, tablew, readTab, readTable, readTable3, readTablei,
+    tablewa, readTab, readTable, readTable3, readTablei,
 
     -- ** Table Reading with Dynamic Selection
     tableikt, tablekt, tablexkt,
@@ -1251,26 +1251,6 @@ fareyTab mode num = plainStringTab idFarey $ fmap fromIntegral [num, mode]
 ---------------------------------------------------
 
 -- |
--- tablew — Change the contents of existing function tables.
---
--- This opcode operates on existing function tables, changing their contents.
--- tablew is for writing at k- or at a-rates, with the table number being
--- specified at init time. Using tablew with i-rate signal and index values
--- is allowed, but the specified data will always be written to the function
--- table at k-rate, not during the initialization pass. The valid combinations
--- of variable types are shown by the first letter of the variable names.
---
--- > tablew asig, andx, ifn [, ixmode] [, ixoff] [, iwgmode]
--- > tablew isig, indx, ifn [, ixmode] [, ixoff] [, iwgmode]
--- > tablew ksig, kndx, ifn [, ixmode] [, ixoff] [, iwgmode]
---
--- csound doc: <http://www.csounds.com/manual/html/tablew.html>
-tablew ::  Sig -> Sig -> Tab -> SE ()
-tablew b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "tablew" [(Xr,[Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3]
-
-
--- |
 -- Notice that this function is the same as @tab@, but it wraps the output in the SE-monad.
 -- So you can use the @tab@ if your table is read-only and you can use @readTab@ if
 -- you want to update the table and the order of read/write operation is important.
@@ -1292,8 +1272,6 @@ tablew b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTa
 readTab ::  Sig -> Tab -> SE Sig
 readTab b1 b2 = fmap ( Sig . return) $ SE $ join $ f <$> lift (unSig b1) <*> lift (unTab b2)
     where f a1 a2 = opcsDep "tab" [(Kr,[Kr,Ir,Ir]),(Ar,[Xr,Ir,Ir])] [a1,a2]
-
-
 
 -- |
 -- Notice that this function is the same as @table@, but it wraps the output in the SE-monad.
