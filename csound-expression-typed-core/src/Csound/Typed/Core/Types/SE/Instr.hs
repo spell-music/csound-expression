@@ -64,7 +64,15 @@ newProcId instr = SE $ lift $ State.localy $ do
   where
     renderBody :: (a -> SE ()) -> Run E
     renderBody instrBody = Dynamic.execDepT $ unSE $
-      instrBody (toTuple $ pure $ take (tupleArity @a) $ zipWith Dynamic.pn (tupleRates @a) [4..])
+      instrBody (toTuple $ pure $ take (tupleArity @a) $ zipWith toInstrArg (tupleRates @a) [4..])
+
+    toInstrArg :: Rate -> Int -> E
+    toInstrArg = \case
+      Sr   -> strcpy . Dynamic.pn Sr
+      rate -> Dynamic.pn rate
+
+    strcpy :: E -> E
+    strcpy arg = Dynamic.opcs "strcpy" [(Sr, [Sr])] [arg]
 
     toInstrId = ProcId . fromE . pure . Dynamic.prim . Dynamic.PrimInstrId
 

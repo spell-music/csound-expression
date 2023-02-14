@@ -172,7 +172,10 @@ toPrimOr :: E -> PrimOr E
 toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
     ExpPrim p  -> Left p
+    ReadVar v | noDeps -> Left (PrimVar (varRate v) v)
     _         -> Right a
+    where
+      noDeps = isNothing $ ratedExpDepends $ unFix a
 
 -- | Constructs PrimOr values from the expressions. It does inlining in
 -- case of primitive values.
@@ -181,7 +184,10 @@ toPrimOrTfm r a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
     ExpPrim p | (r == Ir || r == Sr) -> Left p
     ExpPrim (PrimTmpVar tmp) -> Left (PrimTmpVar tmp)
+    ReadVar v | noDeps -> Left (PrimVar (varRate v) v)
     _         -> Right a
+    where
+      noDeps = isNothing $ ratedExpDepends $ unFix a
 
 -- Expressions with inlining.
 type Exp a = MainExp (PrimOr a)

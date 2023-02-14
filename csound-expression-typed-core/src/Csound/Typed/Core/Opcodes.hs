@@ -80,7 +80,7 @@ module Csound.Typed.Core.Opcodes
   , initc7, initc14
 
   -- * OSC
-  , oscInit, oscListen, oscSend
+  , OscHandle, oscInit, oscListen, oscSend
 
   -- * Panning / Spatialization
   , pan2, vbap, vbaplsinit
@@ -115,7 +115,7 @@ module Csound.Typed.Core.Opcodes
   , follow, follow2, ptrack
 
   -- * Print
-  , printi, printk, prints, printks, fprint
+  , printi, printk, prints, printks, printk2, fprint
   -- * File IO
   , fout, ftsave, fprints, readf, readfi
   -- * Signal Type Conversion
@@ -186,7 +186,7 @@ instance Val VcoTab where
   valRate = Ir
 
 instance Tuple VcoTab where
-  tupleMethods = primTuple
+  tupleMethods = primTuple (fromE $ pure (-1))
 
 data VcoShape = Saw | Pulse | Square | Triangle | IntegratedSaw | UserGen Tab
 
@@ -1304,9 +1304,9 @@ printk b1 b2 = liftOpcDep_ "printk" rates (b1, b2)
 -- >  prints  "string" [, kval1] [, kval2] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/prints.html>
-prints :: Sigs a => Str -> a -> SE ()
+prints :: forall a . Tuple a => Str -> a -> SE ()
 prints b1 b2 = liftOpcDep_ "prints" rates (b1, b2)
-  where rates = [(Xr, Sr : repeat Kr)]
+  where rates = [(Xr, Sr : tupleRates @a)]
 
 -- |
 -- Prints at init-time using a printf() style syntax.
@@ -1317,6 +1317,15 @@ prints b1 b2 = liftOpcDep_ "prints" rates (b1, b2)
 printks :: Sigs a => Str -> D -> a -> SE ()
 printks b1 b2 b3 = liftOpcDep_ "printks" rates (b1, b2, b3)
   where rates = [(Xr, Sr : Ir : repeat Kr)]
+
+-- |
+-- Prints a new value every time a control variable changes.
+--
+-- >  printk2  kvar [, inumspaces]
+--
+-- csound doc: <http://csound.com/docs/manual/printk2.html>
+printk2 ::  Sig -> SE ()
+printk2 = liftOpcDep_ "printk2" [(Xr,[Kr,Ir])]
 
 -- TODO
 -- printarray
@@ -1496,15 +1505,13 @@ newtype OscHandle = OscHandle D
 
 -- | Returns OSC-handle.
 oscInit :: D -> SE OscHandle
-oscInit port = pure $ OscHandle $ readOnlyVar $ liftOpc "OSCInit" [(Ir, [Ir])] port
-
--- oscListen ::
+oscInit port = pure $ OscHandle $ readOnlyVar $ liftOpc "OSCinit" [(Ir, [Ir])] port
 
 -- | We allocate references and inline them to OSCInit expression
 -- We need to do it because in this opcode Csound mutates the arguments
 rawOscListen :: E -> E -> E -> [Var] -> Dep E
 rawOscListen oscHandle addr oscType vars =
-  Dynamic.opcsDep "OSClisten" [(Kr, Ir:Sr:Sr:repeat Xr)] (oscHandle : addr : oscType : fmap Dynamic.inlineVar vars)
+  Dynamic.opcsDep "OSClisten" [(Kr, Ir:Sr:Sr: (Dynamic.varRate <$> vars))] (oscHandle : addr : oscType : fmap Dynamic.inlineVar vars)
 
 -- | Listens for the OSC-messages. The first argument is OSC-reference.
 -- We can create it with the function @initOsc@. The next two arguments are strings.
@@ -1540,12 +1547,17 @@ oscListen handle addr typeCode = do
       oscRates <- getOscRates typeCode
       SE $ fmap Ref $ Dynamic.newLocalVars oscRates (fromTuple $ (defTuple :: a))
 
-oscSend :: Tuple a => Sig -> OscHandle -> Str -> Str -> a -> SE ()
-oscSend kwhen handle addr typeCode args = do
+-- | OSCSend - send OSC message
+--
+-- > oscSend kwhen oscHandle oscAddress typeCode args
+--
+-- csound docs: <https://csound.com/docs/manual/OSCsend.html>
+oscSend :: Tuple a => Sig -> Str -> D -> Str -> Str -> a -> SE ()
+oscSend kwhen addr port dest typeCode args = do
   oscRates <- getOscRates typeCode
-  liftOpcDep_ "OSCSend" [rates oscRates] (kwhen, handle, addr, typeCode, args)
+  liftOpcDep_ "OSCsend" [rates oscRates] (kwhen, addr, port, dest, typeCode, args)
   where
-    rates oscRates = (Xr, Kr : Ir : Sr : Sr : oscRates)
+    rates oscRates = (Xr, Kr : Sr: Ir : Sr : Sr : oscRates)
 
 getOscRates :: Str -> SE [Rate]
 getOscRates typeCode = do

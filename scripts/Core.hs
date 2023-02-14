@@ -15,7 +15,7 @@ schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
 schedule instrId start dur args = play instrId [Note start dur args]
 
 main = do
-  file <- renderSE def (outs =<< playFileInstr)
+  file <- renderSE def (oscEcho {-playFileInstr-})
   putStrLn file
   writeFile "tmp.csd" file
 
@@ -95,3 +95,35 @@ playFileInstr = do
   where
     fileInstr :: Str -> SE Sig2
     fileInstr file = pure $ diskin2 file
+
+oscEcho :: SE ()
+oscEcho = do
+  oscHandle <- oscInit 8020
+  sendId <- newProc sendInstr
+  listenId <- newProc (listenInstr oscHandle)
+  schedule sendId 0 20 ()
+  schedule listenId 0 20 ()
+  where
+    sendInstr :: () -> SE ()
+    sendInstr _ = do
+      krand <- randomh (-50) 50 4
+      let ktrig = metro 1
+      oscSend ktrig "localhost" 8020 "/foo" "sf" ("zoo" :: Str, krand)
+
+    listenInstr :: OscHandle -> () -> SE ()
+    listenInstr oscHandle _ = do
+      printId <- newProc printInstr
+      (kwhen, ref) <- oscListen oscHandle "/foo" "sf"
+      when1 kwhen $ do
+        val <- readRef ref
+        schedule printId 0 0.1 val
+
+    printInstr :: (Str, D) -> SE ()
+    printInstr s = do
+      prints "%s %f" s
+
+
+
+
+
+

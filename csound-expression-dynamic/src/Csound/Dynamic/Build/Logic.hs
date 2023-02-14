@@ -17,7 +17,7 @@ module Csound.Dynamic.Build.Logic(
 ) where
 
 import Control.Monad
-import Control.Monad.Trans.State.Strict (State, state, evalState)
+import Control.Monad.Trans.State.Strict (State, state, evalState, get, put, execStateT)
 import qualified Data.IntMap as IM(fromList)
 
 import Data.Boolean
@@ -28,8 +28,8 @@ import Control.Monad.Trans.Class (lift)
 
 ifT :: forall m . Monad m => IfRate -> E -> DepT m () -> DepT m () -> DepT m ()
 ifT ifRate check th el = do
-  thBlock <- lift (execDepT th)
-  elBlock <- lift (execDepT el)
+  thBlock <- execNoDeps th
+  elBlock <- execNoDeps el
   depT_ $ noRate $
     IfElseBlock ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right thBlock) (CodeBlock $ PrimOr $ Right elBlock)
 
@@ -39,11 +39,18 @@ ifT1 = ifT1By IfBlock
 untilT = ifT1By UntilBlock
 whileT = ifT1By WhileBlock
 
+execNoDeps :: Monad m => DepT m () -> DepT m E
+execNoDeps block = DepT $ do
+  st <- get
+  st1 <- lift $ execStateT (unDepT block) (st { expDependency = noRate Starts })
+  put $ st1 { expDependency = expDependency st }
+  pure (expDependency st1)
+
 ifT1By :: Monad m
   => (IfRate -> CondInfo (PrimOr E) -> CodeBlock (PrimOr E) -> Exp E)
   -> IfRate -> E -> DepT m () -> DepT m ()
 ifT1By cons ifRate check codeBlock = do
-  block <- lift (execDepT codeBlock)
+  block <- execNoDeps codeBlock
   depT_ $ noRate $ cons ifRate (condInfo $ setIfRate ifRate check) (CodeBlock $ PrimOr $ Right block)
 
 ------------------------------------------------------

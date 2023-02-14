@@ -338,7 +338,7 @@ ppConvertRate out to from var = case (to, from) of
     (Kr, Nothing) -> out $= toK var
     (Ir, Nothing) -> out $= toI var
     (a, Just b) | a == b -> out $= var
-    (a, b)   -> error $ "bug: no rate conversion from " ++ show b ++ " to " ++ show a ++ "."
+    (a, b)   -> hsep ["bug: no rate conversion from ", pretty (show b), "to", pretty (show a)]
     where
         upsamp x = ppOpc out "upsamp" [x]
         downsamp x = ppOpc out "downsamp" [x]

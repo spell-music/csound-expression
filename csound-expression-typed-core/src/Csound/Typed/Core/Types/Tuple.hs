@@ -92,13 +92,13 @@ tupleArity = tupleArity_ @a tupleMethods
 defTuple :: Tuple a => a
 defTuple = defTuple_ tupleMethods
 
-primTuple :: forall a . Val a => TupleMethods a
-primTuple = TupleMethods
+primTuple :: forall a . Val a => a -> TupleMethods a
+primTuple defVal = TupleMethods
   { fromTuple_ = fmap pure . toE
   , toTuple_ = fromE . fmap head
   , tupleArity_ = 1
   , tupleRates_ = [valRate @a]
-  , defTuple_ = fromE (pure 0)
+  , defTuple_ = defVal
   }
 
 instance Tuple () where
@@ -110,12 +110,12 @@ instance Tuple () where
     , toTuple_ = const ()
     }
 
-instance Tuple Sig where { tupleMethods = primTuple }
-instance Tuple D   where { tupleMethods = primTuple }
-instance Tuple Tab where { tupleMethods = primTuple }
-instance Tuple Str where { tupleMethods = primTuple }
-instance Tuple Spec where { tupleMethods = primTuple }
-instance (Val ty, Arg a) => Tuple (ProcId ty a) where { tupleMethods = primTuple }
+instance Tuple Sig where { tupleMethods = primTuple 0  }
+instance Tuple D   where { tupleMethods = primTuple 0 }
+instance Tuple Tab where { tupleMethods = primTuple (fromE $ pure (-1)) }
+instance Tuple Str where { tupleMethods = primTuple "" }
+instance Tuple Spec where { tupleMethods = primTuple (fromE $ pure 0) }
+instance (Val ty, Arg a) => Tuple (ProcId ty a) where { tupleMethods = primTuple (fromE $ pure 0) }
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where
   tupleMethods = TupleMethods
