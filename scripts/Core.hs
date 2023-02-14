@@ -5,6 +5,9 @@ import Csound.Typed.Core.Types
 import Csound.Typed.Core.Opcodes hiding (schedule)
 import Data.Default
 
+outs :: Sig2 -> SE ()
+outs = writeOuts
+
 event_i :: (Arg a) => Str -> InstrRef a -> D -> D -> a -> SE ()
 event_i _ instrId start dur args = play instrId [Note start dur args]
 
@@ -85,6 +88,7 @@ playFileInstr2 = do
 playFileInstr :: SE (Sig, Sig)
 playFileInstr = do
   (instr1, (al, ar)) <- newInstr PolyMix 0.2 fileInstr
+  global $ massign 1 instr1
   schedule instr1 0 3 "/home/anton/over-minus.wav"
   schedule instr1 5 7 "/home/anton/over-minus.wav"
   pure (al, ar)
