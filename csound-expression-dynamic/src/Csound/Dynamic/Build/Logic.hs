@@ -9,7 +9,6 @@ module Csound.Dynamic.Build.Logic(
     untilBlock,
     whileBlock,
     whileEnd,
-    whileRefBlock,
     condInfo
 ) where
 
@@ -73,11 +72,6 @@ untilBlock ifRate p body = void $ untilT ifRate p body
 
 whileBlock :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 whileBlock ifRate p body = void $ whileT ifRate p body
-
-whileRefBlock :: Monad m => IfRate -> Var -> DepT m () -> DepT m ()
-whileRefBlock rate var codeBlock = do
-  block <- execNoDeps codeBlock
-  depT_ $ noRate $ WhileRefBlock rate var (CodeBlock $ PrimOr $ Right block)
 
 whileEnd :: Monad m => DepT m ()
 whileEnd = stmtOnlyT WhileEnd

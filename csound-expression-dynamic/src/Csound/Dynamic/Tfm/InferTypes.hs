@@ -233,12 +233,10 @@ inferIter opts (Stmt lhs rhs) =
     -- | looping constructions
     UntilBlock ifRate cond th -> onUntilBlock ifRate cond th
     WhileBlock ifRate cond th -> onWhileBlock ifRate cond th
-    WhileRefBlock ifRate var th -> onWhileRefBlock ifRate var th
 
     UntilBegin ifRate cond -> onUntilBegin ifRate cond
     UntilEnd -> saveProcedure UntilEnd
     WhileBegin ifRate cond -> onWhileBegin ifRate cond
-    WhileRefBegin ifRate v -> saveProcedure (WhileRefBegin ifRate v)
     WhileEnd -> saveProcedure WhileEnd
 
     EmptyExp  -> saveProcedure EmptyExp
@@ -390,10 +388,6 @@ inferIter opts (Stmt lhs rhs) =
     onUntilBlock = onIfBlockBy UntilBlock
 
     onWhileBlock = onIfBlockBy WhileBlock
-
-    onWhileRefBlock ifRate var th = do
-      setHasIfs
-      saveProcedure (WhileRefBlock ifRate var (fmap (Var Xr) <$> th))
 
     onIfBlockBy cons ifRate cond th = do
       setHasIfs

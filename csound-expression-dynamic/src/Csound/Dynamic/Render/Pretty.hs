@@ -178,12 +178,10 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     IfEnd                           -> left >> (tab     $ text "endif")
     UntilBlock _ cond (CodeBlock th) -> tab $ ppUntil res (ppCond cond)  th
     WhileBlock _ cond (CodeBlock th) -> tab $ ppWhile res (ppCond cond)  th
-    WhileRefBlock _ var (CodeBlock th) -> tab $ ppWhileRef res var th
 
     UntilBegin _ a                  -> succTab          $ text "until " <> ppCond a <> text " do"
     UntilEnd                        -> left >> (tab     $ text "od")
     WhileBegin _ a                  -> succTab          $ text "while " <> ppCond a <> text " do"
-    WhileRefBegin _ var             -> succTab          $ text "while " <> ppVar var <+> equals <+> text "1" <+> text "do"
     WhileEnd                        -> left >> (tab     $ text "od")
     InitMacrosString name initValue -> tab $ initMacros (textStrict name) (textStrict initValue)
     InitMacrosDouble name initValue -> tab $ initMacros (textStrict name) (double initValue)
@@ -297,13 +295,6 @@ ppUntil = ppIfBy "until"
 ppIfBy :: Text -> Doc -> Doc -> Doc -> Doc
 ppIfBy leadTag res p t = vcat
     [ textStrict leadTag <+> p <+> text "then"
-    , text "    " <> res <+> char '=' <+> t
-    , text "endif"
-    ]
-
-ppWhileRef :: Doc -> Var -> Doc -> Doc
-ppWhileRef res p t = vcat
-    [ textStrict "while" <+> ppVar p <+> text "then"
     , text "    " <> res <+> char '=' <+> t
     , text "endif"
     ]
@@ -470,12 +461,10 @@ ppE = foldFix go
         UntilBegin rate cond -> hsep ["UNTIL", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
         UntilEnd -> "END_UNTIL"
         WhileBegin rate cond -> hsep ["WHILE", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
-        WhileRefBegin rate v -> hsep ["WHILE_REF", ppRate $ fromIfRate rate, ppVar v]
         WhileEnd -> "END_WHILE"
 
         UntilBlock rate cond (CodeBlock th) -> ppIfBlockBy "UNTIL-BLOCK" rate cond th
         WhileBlock rate cond (CodeBlock th) -> ppIfBlockBy "WHILE-BLOCK" rate cond th
-        WhileRefBlock rate var (CodeBlock th) -> ppWhileRefBlock rate var th
 
         Verbatim txt -> ppFun "VERBATIM" [textStrict txt]
         Starts -> "STARTS"
@@ -492,12 +481,6 @@ ppE = foldFix go
 
     ppIfBlockBy leadTag rate cond th =
       ppFun (hsep [leadTag, ppRate $ fromIfRate rate, ppCond $ fmap pp cond ])
-        [ pp th
-        , "END-BLOCK"
-        ]
-
-    ppWhileRefBlock rate var th =
-      ppFun (hsep ["WHILE-REF-BLOCK", ppRate $ fromIfRate rate, ppVar var])
         [ pp th
         , "END-BLOCK"
         ]
