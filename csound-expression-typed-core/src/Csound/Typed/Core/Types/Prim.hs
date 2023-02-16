@@ -4,6 +4,7 @@ module Csound.Typed.Core.Types.Prim
   , module X
   -- * Converters
   , sig
+  , toD
   , int
   -- * Constants
   , idur
@@ -25,6 +26,7 @@ module Csound.Typed.Core.Types.Prim
   , div'
   ) where
 
+import Data.Boolean
 import Csound.Dynamic (Name, Rate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.Types.Prim.Bool as X
@@ -37,10 +39,20 @@ import Csound.Typed.Core.Types.Prim.Spec as X
 import Csound.Typed.Core.Types.Prim.InstrId as X
 import Csound.Typed.Core.Types.Tuple (Tuple)
 
-class (IsPrim a, RealFrac (PrimOf a), Tuple a, Val a, Floating a) => SigOrD a where
+class
+  ( IsPrim a
+  , BoolVal (BooleanOf a)
+  , Tuple (BooleanOf a)
+  , RealFrac (PrimOf a)
+  , Tuple a
+  , Val a
+  , Floating a
+  , OrdB a
+  ) => SigOrD a where
 
 instance SigOrD Sig
 instance SigOrD D
+
 -------------------------------------------------------------------------------
 -- converters
 
@@ -48,6 +60,11 @@ sig :: D -> Sig
 sig = \case
   D a     -> Sig a
   PrimD a -> PrimSig a
+
+toD :: Sig -> D
+toD = \case
+  Sig a -> D a
+  PrimSig a -> PrimD a
 
 fromMono :: Sig -> (Sig, Sig)
 fromMono a = (a, a)

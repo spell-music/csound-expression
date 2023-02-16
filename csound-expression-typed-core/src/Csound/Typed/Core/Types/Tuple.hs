@@ -13,12 +13,13 @@ module Csound.Typed.Core.Types.Tuple
   , primTuple
   ) where
 
-import Data.NumInstances.Tuple ()
-
 import Control.Applicative (liftA2)
+import Data.NumInstances.Tuple ()
+import Data.Boolean
 
 import Csound.Dynamic (E, Rate (..))
 import Csound.Typed.Core.State (Run)
+import Csound.Typed.Core.Types.Prim.Bool
 import Csound.Typed.Core.Types.Prim.Sig
 import Csound.Typed.Core.Types.Prim.D
 import Csound.Typed.Core.Types.Prim.Tab
@@ -115,6 +116,8 @@ instance Tuple D   where { tupleMethods = primTuple 0 }
 instance Tuple Tab where { tupleMethods = primTuple (fromE $ pure (-1)) }
 instance Tuple Str where { tupleMethods = primTuple "" }
 instance Tuple Spec where { tupleMethods = primTuple (fromE $ pure 0) }
+instance Tuple BoolD where { tupleMethods = primTuple true }
+instance Tuple BoolSig where { tupleMethods = primTuple true }
 instance (Val ty, Arg a) => Tuple (ProcId ty a) where { tupleMethods = primTuple (fromE $ pure 0) }
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where

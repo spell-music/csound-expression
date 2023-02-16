@@ -15,7 +15,7 @@ schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
 schedule instrId start dur args = play instrId [Note start dur args]
 
 main = do
-  file <- renderSE def (oscEcho {-playFileInstr-})
+  file <- renderSE def (repeatExampleK {-playFileInstr-})
   putStrLn file
   writeFile "tmp.csd" file
 
@@ -122,8 +122,29 @@ oscEcho = do
     printInstr s = do
       prints "%s %f" s
 
+repeatExample :: SE ()
+repeatExample = do
+  instrId <- newProc instr
+  schedule instrId 0 1 4
+  schedule instrId 1 1 2
+  schedule instrId 2 1 1
+  where
+    instr :: D -> SE ()
+    instr n = doRepeat n $ (\k -> prints "Repeat: %d out of %d.\n" (k, n))
 
+repeatExampleK :: SE ()
+repeatExampleK = do
+  instrId <- newProc instr
+  schedule instrId 0 5 4
+  schedule instrId 5 5 2
+  schedule instrId 10 5 1
+  where
+    instr :: D -> SE ()
+    instr n = do
+      printId <- newProc printInstr
+      when1 (metro 1 `equals` 1) $
+        doRepeat (sig n) $ \k -> schedule printId 0 1 (toD k, n)
 
-
-
+    printInstr :: (D, D) -> SE ()
+    printInstr arg = prints "Repeat: %d out of %d.\n" arg
 

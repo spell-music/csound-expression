@@ -62,6 +62,9 @@ ppNote instrId evt = char 'i'
     <+> double (csdEventStart evt) <+> double (csdEventDur evt)
     <+> hsep (fmap ppPrim $ csdEventContent evt)
 
+ppStr :: Text -> Doc
+ppStr = textStrict . Text.pack . show
+
 ppPrim :: Prim -> Doc
 ppPrim x = case x of
     P _rate n -> char 'p' <> int n
@@ -69,7 +72,7 @@ ppPrim x = case x of
     PString a -> int a
     PrimInt n -> int n
     PrimDouble d -> double d
-    PrimString s -> dquotes $ textStrict s
+    PrimString s -> ppStr s
     PrimVar targetRate v -> ppConverter targetRate (varRate v) $ ppVar v
     PrimTmpVar v -> ppTmpVar v
     where
@@ -102,7 +105,7 @@ ppGen tabId ft = char 'f'
 ppGenId :: GenId -> Doc
 ppGenId x = case x of
     IntGenId a      -> int a
-    StringGenId a   -> dquotes $ textStrict a
+    StringGenId a   -> ppStr a
 
 ppInstr :: InstrId -> Doc -> Doc
 ppInstr instrId body = vcat [
@@ -119,7 +122,7 @@ ppInstrHeadId x = case x of
 ppInstrId :: InstrId -> Doc
 ppInstrId x = case x of
     InstrId den nom -> int nom <> maybe empty ppAfterDot den
-    InstrLabel name -> dquotes $ textStrict name
+    InstrLabel name -> ppStr name
     where ppAfterDot a = textStrict $ Text.pack $ ('.': ) $ reverse $ show a
 
 type TabDepth = Int
@@ -175,12 +178,12 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     IfEnd                           -> left >> (tab     $ text "endif")
     UntilBlock _ cond (CodeBlock th) -> tab $ ppUntil res (ppCond cond)  th
     WhileBlock _ cond (CodeBlock th) -> tab $ ppWhile res (ppCond cond)  th
-    WhileRefBlock var (CodeBlock th) -> tab $ ppWhileRef res var th
+    WhileRefBlock _ var (CodeBlock th) -> tab $ ppWhileRef res var th
 
     UntilBegin _ a                  -> succTab          $ text "until " <> ppCond a <> text " do"
     UntilEnd                        -> left >> (tab     $ text "od")
     WhileBegin _ a                  -> succTab          $ text "while " <> ppCond a <> text " do"
-    WhileRefBegin var               -> succTab          $ text "while " <> ppVar var <+> equals <+> text "1" <+> text "do"
+    WhileRefBegin _ var             -> succTab          $ text "while " <> ppVar var <+> equals <+> text "1" <+> text "do"
     WhileEnd                        -> left >> (tab     $ text "od")
     InitMacrosString name initValue -> tab $ initMacros (textStrict name) (textStrict initValue)
     InitMacrosDouble name initValue -> tab $ initMacros (textStrict name) (double initValue)
@@ -467,12 +470,12 @@ ppE = foldFix go
         UntilBegin rate cond -> hsep ["UNTIL", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
         UntilEnd -> "END_UNTIL"
         WhileBegin rate cond -> hsep ["WHILE", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
-        WhileRefBegin v -> hsep ["WHILE_REF", ppVar v]
+        WhileRefBegin rate v -> hsep ["WHILE_REF", ppRate $ fromIfRate rate, ppVar v]
         WhileEnd -> "END_WHILE"
 
         UntilBlock rate cond (CodeBlock th) -> ppIfBlockBy "UNTIL-BLOCK" rate cond th
         WhileBlock rate cond (CodeBlock th) -> ppIfBlockBy "WHILE-BLOCK" rate cond th
-        WhileRefBlock var (CodeBlock th) -> ppWhileRefBlock var th
+        WhileRefBlock rate var (CodeBlock th) -> ppWhileRefBlock rate var th
 
         Verbatim txt -> ppFun "VERBATIM" [textStrict txt]
         Starts -> "STARTS"
@@ -493,8 +496,8 @@ ppE = foldFix go
         , "END-BLOCK"
         ]
 
-    ppWhileRefBlock var th =
-      ppFun (hsep ["WHILE-REF-BLOCK", ppVar var])
+    ppWhileRefBlock rate var th =
+      ppFun (hsep ["WHILE-REF-BLOCK", ppRate $ fromIfRate rate, ppVar var])
         [ pp th
         , "END-BLOCK"
         ]

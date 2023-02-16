@@ -243,8 +243,8 @@ data MainExp a
     | UntilEnd
     | WhileBlock !IfRate !(CondInfo a) (CodeBlock a)
     | WhileBegin !IfRate !(CondInfo a)
-    | WhileRefBlock !Var !(CodeBlock a)
-    | WhileRefBegin !Var
+    | WhileRefBlock !IfRate !Var !(CodeBlock a)
+    | WhileRefBegin !IfRate !Var
     | WhileEnd
     -- | Verbatim stmt
     | Verbatim !Text

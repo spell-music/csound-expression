@@ -568,6 +568,8 @@ getExprType expr =
       IfElseType rate c th el $ IfElseCons { ifElseBegin = IfBegin, elseBegin = ElseBegin, ifElseEnd = IfEnd }
     WhileBlock rate c (CodeBlock th) -> IfType rate c th $ IfCons { ifBegin = WhileBegin, ifEnd = WhileEnd }
     UntilBlock rate c (CodeBlock th) -> IfType rate c th $ IfCons { ifBegin = UntilBegin, ifEnd = UntilEnd }
-    -- TODO:
-    --     While Ref case
+    WhileRefBlock rate v (CodeBlock th) -> IfType rate (varCond v) th $ IfCons { ifBegin = \r _c -> WhileRefBegin r v, ifEnd = WhileEnd }
     _ -> PlainType
+  where
+    varCond _v = error "No condition for whie ref"
+

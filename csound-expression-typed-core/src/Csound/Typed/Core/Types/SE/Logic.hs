@@ -1,20 +1,22 @@
 -- | Imperative branching constructs like if-then-else
 module Csound.Typed.Core.Types.SE.Logic
-  ( when1, whenD1, whens, whenDs
-  , untilDo, untilDoD
-  , whileDo, whileDoD
+  ( when1, whens, whileDo, untilDo, doRepeat, forEach
   ) where
 
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
+import Data.Boolean
 import Data.Maybe
 
 import Csound.Dynamic (E, IfRate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Typed.Core.State (Dep)
 import Csound.Typed.Core.State qualified as State
+import Csound.Typed.Core.Types.Tuple
+import Csound.Typed.Core.Types.Rate
 import Csound.Typed.Core.Types.Prim
 import Csound.Typed.Core.Types.SE
+import Csound.Typed.Core.Types.SE.Ref
 
 -- | With current rate tracking we assure that if we are inside
 -- Kr if like block then all nested blocks are also Kr.
@@ -26,34 +28,42 @@ withRate defRate act = SE $ do
   State.withCurrentRate rate (unSE $ act rate)
 
 -- | Invokes the given procedure if the boolean signal is true.
-when1 :: BoolSig -> SE () -> SE ()
-when1 xp body = when1By IfKr xp body
+when1 :: forall bool . BoolVal bool => bool -> SE () -> SE ()
+when1 xp body = when1By (boolValRate @bool) xp body
 
 -- | The chain of @when1@s. Tests all the conditions in sequence
 -- if everything is false it invokes the procedure given in the second argument.
-whens :: [(BoolSig, SE ())] -> SE () -> SE ()
-whens bodies el = whenBy IfKr bodies el
+whens :: forall bool . BoolVal bool => [(bool, SE ())] -> SE () -> SE ()
+whens bodies el = whenBy (boolValRate @bool) bodies el
 
--- | Invokes the given procedure if the boolean signal is true.
-whenD1 :: BoolD -> SE () -> SE ()
-whenD1 xp body = when1By IfIr xp body
+-- | Repeats block of statements until value in the reference wil become false
+whileDo :: forall a bool . (Tuple a, BoolVal bool) => Ref a -> (a -> bool) -> SE () -> SE ()
+whileDo = \case
+  Ref vs -> \check body -> withRate (boolValRate @bool) $ \rate ->
+    ifBlockBy rate Dynamic.whileBlock (check $ toTuple $ pure $ fmap Dynamic.inlineVar vs) body
 
--- | The chain of @when1@s. Tests all the conditions in sequence
--- if everything is false it invokes the procedure given in the second argument.
-whenDs :: [(BoolD, SE ())] -> SE () -> SE ()
-whenDs bodies el = whenBy IfIr bodies el
+-- | Repeats block of statements until value in the reference wil become true
+untilDo :: forall a bool . (Tuple a, BoolVal bool) => Ref a -> (a -> bool) -> SE () -> SE ()
+untilDo = \case
+  Ref vs -> \check body -> withRate (boolValRate @bool) $ \rate ->
+    ifBlockBy rate Dynamic.untilBlock (check $ toTuple $ pure $ fmap Dynamic.inlineVar vs) body
 
-untilDo :: BoolSig -> SE () -> SE ()
-untilDo cond act = ifBlockBy IfKr Dynamic.untilBlock cond act
+-- | Repeats statement N times, passes counter as an argument
+doRepeat :: forall a . SigOrD a => a -> (a -> SE ()) -> SE ()
+doRepeat maxCount body = forEach 0 (pure . (+1)) (`less` maxCount) body
 
-whileDo :: BoolSig -> SE () -> SE ()
-whileDo cond act = ifBlockBy IfKr Dynamic.whileBlock cond act
-
-untilDoD :: BoolD -> SE () -> SE ()
-untilDoD cond act = ifBlockBy IfIr Dynamic.untilBlock cond act
-
-whileDoD :: BoolD -> SE () -> SE ()
-whileDoD = ifBlockBy IfIr Dynamic.whileBlock
+forEach :: forall a . SigOrD a => a -> (a -> SE a) -> (a -> BooleanOf a) -> (a -> SE ()) -> SE ()
+forEach initVal next check body = withRate (boolValRate @(BooleanOf a)) $ \case
+  IfIr -> do
+    ref <- newRef initVal
+    whileDo ref check $ do
+      body =<< readRef ref
+      writeRef ref =<< next =<< readRef ref
+  IfKr -> do
+    ref <- newRef (K initVal)
+    whileDo ref (check . unK) $ do
+      body . unK =<< readRef ref
+      writeRef ref . K =<< next . unK =<< readRef ref
 
 ----------------------------------------------------------------------------------
 -- utils

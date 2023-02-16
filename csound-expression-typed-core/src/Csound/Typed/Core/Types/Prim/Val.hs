@@ -10,9 +10,11 @@ module Csound.Typed.Core.Types.Prim.Val
   , liftPrim
   , liftPrim2
   , liftPrim3
+  , BoolVal (..)
   ) where
 
-import Csound.Dynamic (E, Rate)
+import Data.Boolean
+import Csound.Dynamic (E, Rate, IfRate)
 import Csound.Typed.Core.State (Run)
 import Data.Kind (Type)
 
@@ -20,6 +22,9 @@ class Val a where
   fromE   :: Run E -> a
   toE     :: a -> Run E
   valRate :: Rate
+
+class (Boolean a, IsPrim a, Val a, PrimOf a ~ Bool) => BoolVal a where
+  boolValRate :: IfRate
 
 liftE :: (Val a, Val b) => (E -> E) -> a -> b
 liftE f a = fromE $ f <$> toE a

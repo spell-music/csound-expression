@@ -8,12 +8,9 @@ module Csound.Dynamic.Build.Logic(
     -- ifBegin, ifEnd, elseBegin,
     untilBlock,
     whileBlock,
-
-    -- untilDo,
-    -- untilBegin, untilEnd,
-    -- whileDo,
-    -- whileBegin,
-    whileRef, whileEnd
+    whileEnd,
+    whileRefBlock,
+    condInfo
 ) where
 
 import Control.Monad
@@ -77,8 +74,10 @@ untilBlock ifRate p body = void $ untilT ifRate p body
 whileBlock :: Monad m => IfRate -> E -> DepT m () -> DepT m ()
 whileBlock ifRate p body = void $ whileT ifRate p body
 
-whileRef :: Monad m => Var -> DepT m ()
-whileRef var = stmtOnlyT $ WhileRefBegin var
+whileRefBlock :: Monad m => IfRate -> Var -> DepT m () -> DepT m ()
+whileRefBlock rate var codeBlock = do
+  block <- execNoDeps codeBlock
+  depT_ $ noRate $ WhileRefBlock rate var (CodeBlock $ PrimOr $ Right block)
 
 whileEnd :: Monad m => DepT m ()
 whileEnd = stmtOnlyT WhileEnd

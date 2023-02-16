@@ -52,6 +52,9 @@ instance Val BoolSig where
 
     valRate = Kr
 
+instance BoolVal BoolSig where
+  boolValRate = IfKr
+
 instance Val BoolD   where
     fromE = BoolD
 
@@ -60,6 +63,9 @@ instance Val BoolD   where
         PrimBoolD b -> return $ if b then true else false
 
     valRate = Kr
+
+instance BoolVal BoolD where
+  boolValRate = IfIr
 
 instance IsPrim BoolSig where
     type PrimOf BoolSig = Bool

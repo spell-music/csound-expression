@@ -28,7 +28,7 @@ module Csound.Typed.Core
   , K (..), ar, kr, ir
 
     -- ** Type conversions
-  , sig, int
+  , sig, toD, int
 
     -- * Side effects
   , SE
@@ -40,9 +40,7 @@ module Csound.Typed.Core
   , writeOuts, readIns
 
     -- ** Imperative if statements
-  , when1, whenD1, whens, whenDs
-  , untilDo, untilDoD
-  , whileDo, whileDoD
+  , when1, whens, whileDo, untilDo, doRepeat
 
     -- ** Mutables
   , IsRef (..)
