@@ -141,7 +141,7 @@ maybeStringCopy outs expr = case (outs, expr) of
     _ -> Nothing
 
 ppStringCopy :: Doc -> Doc -> Doc
-ppStringCopy outs src = ppOpc outs "strcpyk" [src]
+ppStringCopy outs src = ppOpc outs "strcpy" [src]
 
 ppExp :: Doc -> Exp R.Var -> State TabDepth Doc
 ppExp res expr = case fmap ppPrimOrVar expr of

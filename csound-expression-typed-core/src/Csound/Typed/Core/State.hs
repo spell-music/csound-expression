@@ -5,6 +5,7 @@ module Csound.Typed.Core.State
   , localy
   , exec
   , insertInstr
+  , insertNamedInstr
   , insertNote
   , setTotalDur
   , insertGlobalExpr
@@ -82,10 +83,19 @@ insertInstr expr = trace (show $ ppE expr) $ do
   case freshInstrId of
     InstrExist instrId -> pure instrId
     NewInstr instrId -> do
-      modifyCsd $ \csd -> csd { csdOrc = insertOrc (Instr instrId expr) (csdOrc csd) }
+      modifyCsd $ \csd -> csd { csdOrc = insertOrcInstrument (Instr instrId expr) (csdOrc csd) }
       pure instrId
+
+-- | Inserts new named instrument body.
+insertNamedInstr :: Text -> E -> Run InstrId
+insertNamedInstr name expr = do
+  modifyCsd $ \csd -> csd { csdOrc = insertOrcInstrument (Instr instrId expr) (csdOrc csd) }
+  pure instrId
   where
-    insertOrc instr x = x { orcInstruments = instr : orcInstruments x }
+    instrId = InstrLabel name
+
+insertOrcInstrument :: Instr -> Orc -> Orc
+insertOrcInstrument instr x = x { orcInstruments = instr : orcInstruments x }
 
 -- sets stIsGlobal to False during the action
 localy :: Run a -> Run a
@@ -224,7 +234,6 @@ data St = St
 -- and can be safely cached
 newtype ReadInit = ReadInit { unReadInit :: HashMap ExpHash Var }
 
-
 -- | Fresh ids for instruments
 data FreshId = FreshId
   { freshIdCounter :: !Int
@@ -329,6 +338,19 @@ genIdE = \case
     IntGenId n -> int n
     StringGenId a -> prim (PrimString a)
 
+-------------------------------------------------------------------------------------
+-- vco
+
+data VcoShape = Saw | Pulse | Square | Triangle | IntegratedSaw | UserGen Gen
+  deriving (Eq, Ord)
+
+data VcoInit = VcoInit
+  { vcoShape   :: VcoShape
+  , vcoMul     :: Maybe Double
+  , vcoMinSize :: Maybe Int
+  , vcoMaxSize :: Maybe Int
+  }
+  deriving (Eq, Ord)
 saveVco :: VcoInit -> Run E
 saveVco inits =
   maybe insertVco' pure =<< lookupFtable (VcoTable inits)
@@ -362,16 +384,4 @@ vcoShapeId' = \case
 getFreshFtableId :: Run E
 getFreshFtableId = Run $ gets (ftableFreshId . stFtables)
 
--------------------------------------------------------------------------------------
--- vco
 
-data VcoShape = Saw | Pulse | Square | Triangle | IntegratedSaw | UserGen Gen
-  deriving (Eq, Ord)
-
-data VcoInit = VcoInit
-  { vcoShape   :: VcoShape
-  , vcoMul     :: Maybe Double
-  , vcoMinSize :: Maybe Int
-  , vcoMaxSize :: Maybe Int
-  }
-  deriving (Eq, Ord)

@@ -4,14 +4,16 @@ module Csound.Typed.Core.Opcodes.Instr
   , maxalloc
   , nstrnum
   , turnoff2
+  , turnoff2_i
+  , turnoffSelf
+  , turnoffSelf_i
+  , stopSelf
+  , stopInstr
+  , stopInstr_i
   , schedule
   ) where
 
-import Data.Maybe
-
-import Csound.Dynamic (IfRate (..))
 import Csound.Dynamic (Rate (..))
-
 import Csound.Typed.Core.Types
 
 -- | active — Returns the number of active instances of an instrument.
@@ -42,21 +44,39 @@ nstrnum instrRef = case getInstrRefId instrRef of
 -- | turnoff2 — Turn off instance(s) of other instruments at performance time.
 turnoff2 :: Arg a => InstrRef a -> Sig -> Sig -> SE ()
 turnoff2 instrRef kmode krelease = do
-  curRate <- fromMaybe IfIr <$> getCurrentRate
-  case curRate of
-    IfIr ->
-      case getInstrRefId instrRef of
-        Left strId  -> liftOpcDep_ "turnoff2" strRates (strId, kmode, krelease)
-        Right intId -> liftOpcDep_ "turnoff2" intRates (intId, kmode, krelease)
-    IfKr ->
-      case getInstrRefId instrRef of
-        Left strId  -> liftOpcDep_ "turnoff2_i" strRates_i (strId, kmode, krelease)
-        Right intId -> liftOpcDep_ "turnoff2_i" intRates_i (intId, kmode, krelease)
+  case getInstrRefId instrRef of
+    Left strId  -> liftOpcDep_ "turnoff2" strRates (strId, kmode, krelease)
+    Right intId -> liftOpcDep_ "turnoff2" intRates (intId, kmode, krelease)
   where
     strRates = [(Xr, [Sr,Kr,Kr])]
     intRates = [(Xr, [Kr,Kr,Kr])]
+
+-- | turnoff2 — Turn off instance(s) of other instruments at performance time.
+turnoff2_i :: Arg a => InstrRef a -> D -> D -> SE ()
+turnoff2_i instrRef imode irelease = do
+  case getInstrRefId instrRef of
+    Left strId  -> liftOpcDep_ "turnoff2_i" strRates_i (strId, imode, irelease)
+    Right intId -> liftOpcDep_ "turnoff2_i" intRates_i (intId, imode, irelease)
+  where
     strRates_i = [(Xr, [Sr,Ir,Ir])]
     intRates_i = [(Xr, [Ir,Ir,Ir])]
+
+-- | turnoff self instrument
+turnoffSelf :: Sig -> Sig -> SE ()
+turnoffSelf kmode krelease = turnoff2 (iself @()) kmode krelease
+
+-- | turnoff self instrument
+turnoffSelf_i :: D -> D -> SE ()
+turnoffSelf_i kmode krelease = turnoff2_i (iself @()) kmode krelease
+
+stopInstr :: Arg a => InstrRef a -> SE ()
+stopInstr instrId = turnoff2 instrId 0 0
+
+stopInstr_i :: Arg a => InstrRef a -> SE ()
+stopInstr_i instrId = turnoff2_i instrId 0 0
+
+stopSelf :: SE ()
+stopSelf = turnoffSelf 0 0
 
 schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
 schedule instrId start dur args = play instrId [Note start dur args]

@@ -1,8 +1,9 @@
 {-# Language OverloadedStrings #-}
 module Main where
 
+import Control.Monad
 import Csound.Typed.Core.Types
-import Csound.Typed.Core.Opcodes hiding (schedule)
+import Csound.Typed.Core.Opcodes
 import Data.Default
 
 outs :: Sig2 -> SE ()
@@ -12,7 +13,7 @@ event_i :: (Arg a) => Str -> InstrRef a -> D -> D -> a -> SE ()
 event_i _ instrId start dur args = play instrId [Note start dur args]
 
 main = do
-  file <- renderSE def (repeatExampleK {-playFileInstr-})
+  file <- renderSE def (playerExample {-playFileInstr-})
   putStrLn file
   writeFile "tmp.csd" file
 
@@ -144,4 +145,63 @@ repeatExampleK = do
 
     printInstr :: (D, D) -> SE ()
     printInstr arg = prints "Repeat: %d out of %d.\n" arg
+
+namedInstrExample :: SE ()
+namedInstrExample =
+  void $ newNamedProc "Osc" $ \(amp, cps) -> writeOuts $ fromMono $ 0.8 * sig amp * linsegr [0, 0.1, 1, 1.5, 0] 0.2 0 * osc (sig cps)
+
+data Player = Player
+  { playerFile   :: Ref Str
+  , playerSpeed  :: Ref (K Sig)
+  }
+
+newPlayer :: SE Player
+newPlayer = Player <$> newRef "/home/anton/over-minus.wav" <*> newRef 1
+
+playerExample :: SE ()
+playerExample = do
+  st <- newPlayer
+  playId <- newNamedProc "play"  (playInstr st)
+  void $ newNamedProc "pause" (pauseInstr st)
+  void $ newNamedProc "resume" (resumeInstr st)
+  void $ newNamedProc "reverse" (reverseInstr st)
+  _loadId <- newNamedProc "load" (loadInstr st playId)
+  pure ()
+  where
+    releaseTime = 0.01
+
+    loadInstr :: Player -> InstrRef () -> Str -> SE ()
+    loadInstr (Player fileRef speedRef) playId file = do
+      turnoff2_i playId 0 releaseTime
+      writeRef fileRef file
+      writeRef speedRef 1
+      schedule playId 0 (-1) ()
+      stopSelf
+
+    playInstr :: Player -> () -> SE ()
+    playInstr (Player fileRef speedRef) _ = do
+      file <- readRef fileRef
+      speed <- readRef speedRef
+      writeOuts (diskin file `withSig` (unK speed) `withDs` [0, 1])
+
+    pauseInstr :: Player -> () -> SE ()
+    pauseInstr st _ = setSpeed st 0
+
+    resumeInstr :: Player -> () -> SE ()
+    resumeInstr st _ = setSpeed st 1
+
+    reverseInstr :: Player -> () -> SE ()
+    reverseInstr (Player _file speedRef) _ = do
+      speed <- unK <$> readRef speedRef
+      whens
+        [ (speed `equals` 1, writeRef speedRef (-1))
+        , (speed `equals` (-1), writeRef speedRef 1)
+        ]
+        (pure ())
+      stopSelf
+
+    setSpeed ref val = do
+      writeRef (playerSpeed ref) (K val)
+      stopSelf
+
 

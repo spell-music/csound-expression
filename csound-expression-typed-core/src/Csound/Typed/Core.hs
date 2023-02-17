@@ -60,6 +60,7 @@ module Csound.Typed.Core
 
   -- * Constants
   , idur
+  , iself
   , getSampleRate
   , getControlRate
   , getBlockSize
@@ -68,6 +69,8 @@ module Csound.Typed.Core
   -- * Utils
   , fromMono, toMono
   , ceil', frac', floor', int', round', quot', rem', mod', div'
+  , withInits
+  , withDs, withD, withSig, withSigs, withTab, withTabs
 
     -- * Options
   , module Csound.Typed.Core.State.Options

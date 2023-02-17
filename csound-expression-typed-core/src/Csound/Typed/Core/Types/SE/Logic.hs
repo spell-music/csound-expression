@@ -55,13 +55,13 @@ doRepeat maxCount body = forEach 0 (pure . (+1)) (`less` maxCount) body
 forEach :: forall a . SigOrD a => a -> (a -> SE a) -> (a -> BooleanOf a) -> (a -> SE ()) -> SE ()
 forEach initVal next check body = withRate (boolValRate @(BooleanOf a)) $ \case
   IfIr -> do
-    ref <- newRef initVal
+    ref <- newLocalRef initVal
     writeRef ref initVal
     whileDo ref check $ do
       body =<< readRef ref
       writeRef ref =<< next =<< readRef ref
   IfKr -> do
-    ref <- newRef (K initVal)
+    ref <- newLocalRef (K initVal)
     writeRef ref (K initVal)
     whileDo ref (check . unK) $ do
       body . unK =<< readRef ref

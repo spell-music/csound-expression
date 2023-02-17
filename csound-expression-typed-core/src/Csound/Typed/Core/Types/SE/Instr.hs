@@ -1,6 +1,7 @@
 -- | Define instruments
 module Csound.Typed.Core.Types.SE.Instr
-  ( InstrRef
+  ( iself
+  , InstrRef
   , getInstrRefId
   , MixMode (..)
   , newProc
@@ -42,30 +43,40 @@ getInstrRefId = \case
 ------------------------------------------------------------
 -- procedures
 
-newNamedProc :: forall a . Arg a
-  => Str
-  -> (a -> SE ())
-  -> SE (InstrRef a)
-newNamedProc _str _instr = undefined
+-- | New procedure with a use given name. Procedure is a regular Csound instrument
+newNamedProc :: Arg a => Str -> (a -> SE ()) -> SE (InstrRef a)
+newNamedProc name instr = SE $ lift $ State.localy $ do
+  expr <- renderBody instr
+  instrName <- getName
+  StrRef . toInstrId <$> State.insertNamedInstr instrName expr
+  where
+    getName = do
+      nameE <- toE name
+      case Dynamic.getPrimUnsafe nameE of
+        Dynamic.PrimString str -> pure str
+        _ -> error "newNamedInstr: instr name type is not a primitive string"
 
--- | Procedure is a regular Csound-instrument
-newProc :: forall a . Arg a
-  => (a -> SE ())
-  -> SE (InstrRef a)
+-- | Procedure is a regular Csound instrument
+newProc :: Arg a => (a -> SE ()) -> SE (InstrRef a)
 newProc instr = ProcRef <$> newProcId instr
 
 -- | Procedure is a regular Csound-instrument
-newProcId :: forall a . Arg a
-  => (a -> SE ())
-  -> SE (ProcId D a)
+newProcId :: Arg a => (a -> SE ()) -> SE (ProcId D a)
 newProcId instr = SE $ lift $ State.localy $ do
   expr <- renderBody instr
   toInstrId <$> State.insertInstr expr
-  where
-    renderBody :: (a -> SE ()) -> Run E
-    renderBody instrBody = Dynamic.execDepT $ unSE $
-      instrBody (toTuple $ pure $ take (tupleArity @a) $ zipWith toInstrArg (tupleRates @a) [4..])
 
+-- | Querries a self name of the instrument
+iself :: InstrRef a
+iself = ProcRef $ ProcId $ fromE $ pure $ Dynamic.pn Ir 1
+
+toInstrId :: Val ty => Dynamic.InstrId -> ProcId ty a
+toInstrId = ProcId . fromE . pure . Dynamic.prim . Dynamic.PrimInstrId
+
+renderBody :: forall a . Arg a => (a -> SE ()) -> Run E
+renderBody instrBody = Dynamic.execDepT $ unSE $
+  instrBody (toTuple $ pure $ take (tupleArity @a) $ zipWith toInstrArg (tupleRates @a) [4..])
+  where
     toInstrArg :: Rate -> Int -> E
     toInstrArg = \case
       Sr   -> strcpy . Dynamic.pn Sr
@@ -73,8 +84,6 @@ newProcId instr = SE $ lift $ State.localy $ do
 
     strcpy :: E -> E
     strcpy arg = Dynamic.opcs "strcpy" [(Sr, [Sr])] [arg]
-
-    toInstrId = ProcId . fromE . pure . Dynamic.prim . Dynamic.PrimInstrId
 
 ------------------------------------------------------------
 -- instruments

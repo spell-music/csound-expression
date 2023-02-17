@@ -64,6 +64,12 @@ module Csound.Typed.Core.Opcodes
   , maxalloc
   , nstrnum
   , turnoff2
+  , turnoff2_i
+  , turnoffSelf
+  , turnoffSelf_i
+  , stopSelf
+  , stopInstr
+  , stopInstr_i
 
   -- * Time
   , metro, metro2
