@@ -45,7 +45,7 @@ module Csound.Typed.Core
     -- ** Mutables
   , IsRef (..)
   , modifyRef
-  , Ref, newRef, sensorRef
+  , Ref, newRef, newLocalRef
   , Port, newPort
 
     -- * Instruments

@@ -11,9 +11,6 @@ outs = writeOuts
 event_i :: (Arg a) => Str -> InstrRef a -> D -> D -> a -> SE ()
 event_i _ instrId start dur args = play instrId [Note start dur args]
 
-schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
-schedule instrId start dur args = play instrId [Note start dur args]
-
 main = do
   file <- renderSE def (repeatExampleK {-playFileInstr-})
   putStrLn file

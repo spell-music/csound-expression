@@ -22,7 +22,7 @@ Source-repository head
 
 
 Library
-  Ghc-Options:    -Wall
+  Ghc-Options:    -Wall -Werror
   Build-Depends:
         base >= 4.10, base < 5,
         bytestring,
@@ -49,6 +49,9 @@ Library
   Exposed-Modules:
     Csound.Typed.Core
     Csound.Typed.Core.Opcodes
+    Csound.Typed.Core.Opcodes.Instr
+    Csound.Typed.Core.Opcodes.Osc
+    Csound.Typed.Core.Opcodes.Vco
     Csound.Typed.Core.State
     Csound.Typed.Core.State.Options
     Csound.Typed.Core.Types

@@ -59,6 +59,7 @@ module Csound.Typed.Core.Opcodes
   , trigger
 
   -- * Instrument Control
+  , schedule
   , active
   , maxalloc
   , nstrnum
@@ -121,15 +122,15 @@ module Csound.Typed.Core.Opcodes
   -- * Signal Type Conversion
   ) where
 
-import Data.Maybe
-import Data.Text qualified as Text
-import Csound.Dynamic (E, Gen, IfRate (..), Var)
+import Control.Monad.Trans.Class (lift)
+
 import Csound.Dynamic qualified as Dynamic
 import Csound.Dynamic (Rate (..))
-import Csound.Typed.Core.Types hiding (setRate)
-import Csound.Typed.Core.State (Run, Dep)
-import Csound.Typed.Core.State qualified as State
-import Control.Monad.Trans.Class (lift)
+
+import Csound.Typed.Core.Types
+import Csound.Typed.Core.Opcodes.Instr
+import Csound.Typed.Core.Opcodes.Osc
+import Csound.Typed.Core.Opcodes.Vco
 
 ----------------------------------------------------------------------------------
 -- Oscillators / Phasors
@@ -178,69 +179,9 @@ poscil3 b1 b2 b3 = liftOpc "poscil3" rates (b1, b2, b3)
       ,(Ir,[Kr,Kr,Ir,Ir])
       ,(Kr,[Kr,Kr,Ir,Ir])]
 
-newtype VcoTab = VcoTab { unVcoTab :: Run E }
-
-instance Val VcoTab where
-  fromE = VcoTab
-  toE = unVcoTab
-  valRate = Ir
-
-instance Tuple VcoTab where
-  tupleMethods = primTuple (fromE $ pure (-1))
-
-data VcoShape = Saw | Pulse | Square | Triangle | IntegratedSaw | UserGen Tab
-
-data VcoInit = VcoInit
-  { vcoShape   :: VcoShape
-  , vcoMul     :: Maybe Double
-  , vcoMinSize :: Maybe Int
-  , vcoMaxSize :: Maybe Int
-  }
-
-toInternalVcoShape :: VcoShape -> Run State.VcoShape
-toInternalVcoShape = \case
-  Saw   -> pure State.Saw
-  Pulse -> pure State.Pulse
-  Square -> pure State.Square
-  Triangle -> pure State.Triangle
-  IntegratedSaw -> pure State.IntegratedSaw
-  UserGen t -> State.UserGen <$> tab2gen "VCO tab should be primitive" t
-
-toInternalVcoInit :: VcoInit -> Run State.VcoInit
-toInternalVcoInit inits = do
-  shape <- toInternalVcoShape (vcoShape inits)
-  pure $ State.VcoInit shape (vcoMul inits) (vcoMinSize inits) (vcoMaxSize inits)
-
-vcoInit :: VcoInit -> VcoTab
-vcoInit inits = VcoTab $ State.saveVco =<< toInternalVcoInit inits
-
-vco2ft :: Sig -> VcoTab -> Tab
-vco2ft kcps t = liftOpc "vco2ft" [(Kr, [Kr, Ir, Ir])] (kcps, t)
-
--- ares oscilikt xamp, xcps, kfn [, iphs] [, istor]
--- kres oscilikt kamp, kcps, kfn [, iphs] [, istor]
-oscilikt :: Sig -> Sig -> Tab -> Sig -> Sig
-oscilikt amp cps fn mphase = liftOpc "oscilikt" rates (amp, cps, fn, mphase)
-  where
-    rates = [ (Ar, [Xr, Xr, Kr, Ir, Ir]), (Kr, [Kr, Kr, Kr, Ir, Ir])]
-
 osc :: Sig -> Sig
 osc cps = poscil3 1 cps (sines [1])
 
-saw :: Sig -> Sig
-saw cps = oscilikt 1 cps (vco2ft cps $ vcoInit (VcoInit Saw Nothing Nothing Nothing)) 0
-
-tri :: Sig -> Sig
-tri cps = oscilikt 1 cps (vco2ft cps $ vcoInit (VcoInit Triangle Nothing Nothing Nothing)) 0
-
-sqr :: Sig -> Sig
-sqr cps = oscilikt 1 cps (vco2ft cps $ vcoInit (VcoInit Square Nothing Nothing Nothing)) 0
-
-tab2gen :: String -> Tab -> Run Gen
-tab2gen msg t = fromPreTab $ getPreTabUnsafe msg t
-
-vcoTab :: Tab -> Sig -> Sig
-vcoTab t cps = oscilikt 1 cps (vco2ft cps $ vcoInit (VcoInit (UserGen t) Nothing Nothing Nothing)) 0
 
 -- |
 -- A simple oscillator.
@@ -787,54 +728,6 @@ changed2 as = Sig $ f <$> mapM toE as
 trigger ::  Sig -> Sig -> Sig -> Sig
 trigger b1 b2 b3 = liftOpc "trigger" rates (b1, b2, b3)
     where rates = [(Kr,[Kr,Kr,Kr])]
-
--------------------------------------------------------------------------------------
--- Instrument control
-
--- | active — Returns the number of active instances of an instrument.
-active :: (Arg a, SigOrD b) => InstrRef a -> SE b
-active instrRef = case getInstrRefId instrRef  of
-  Left strId  -> liftOpcDep "active" strRates strId
-  Right intId -> liftOpcDep "active" intRates intId
-  where
-    intRates = [(Ir, [Ir,Ir,Ir]), (Kr, [Kr,Ir,Ir])]
-    strRates = [(Ir, [Sr,Ir,Ir])]
-
--- | maxalloc — Limits the number of allocations of an instrument.
--- It's often used with @global@
-maxalloc :: (Arg a) => InstrRef a -> D -> SE ()
-maxalloc instrRef val = case getInstrRefId instrRef of
-  Left strId -> liftOpcDep_ "maxalloc" strRates (strId, val)
-  Right intId -> liftOpcDep_ "maxalloc" intRates (intId, val)
-  where
-    strRates = [(Xr, [Sr,Ir])]
-    intRates = [(Xr, [Ir,Ir])]
-
--- | nstrnum — Returns the number of a named instrument
-nstrnum :: Arg a => InstrRef a -> D
-nstrnum instrRef = case getInstrRefId instrRef of
-  Left strId -> liftOpc "nstrnum" [(Ir,[Sr])] strId
-  Right intId -> intId
-
--- | turnoff2 — Turn off instance(s) of other instruments at performance time.
-turnoff2 :: Arg a => InstrRef a -> Sig -> Sig -> SE ()
-turnoff2 instrRef kmode krelease = do
-  curRate <- fromMaybe IfIr <$> getCurrentRate
-  case curRate of
-    IfIr ->
-      case getInstrRefId instrRef of
-        Left strId  -> liftOpcDep_ "turnoff2" strRates (strId, kmode, krelease)
-        Right intId -> liftOpcDep_ "turnoff2" intRates (intId, kmode, krelease)
-    IfKr ->
-      case getInstrRefId instrRef of
-        Left strId  -> liftOpcDep_ "turnoff2_i" strRates_i (strId, kmode, krelease)
-        Right intId -> liftOpcDep_ "turnoff2_i" intRates_i (intId, kmode, krelease)
-  where
-    strRates = [(Xr, [Sr,Kr,Kr])]
-    intRates = [(Xr, [Kr,Kr,Kr])]
-    strRates_i = [(Xr, [Sr,Ir,Ir])]
-    intRates_i = [(Xr, [Ir,Ir,Ir])]
-
 
 -------------------------------------------------------------------------------------
 -- Time
@@ -1497,79 +1390,4 @@ initc14 ::  CtrlInit -> SE ()
 initc14 b1  = liftOpcDep_ "initc14" rates b1
     where rates = [(Xr,[Ir,Ir,Ir])]
 
---------------------------------------------------------------------------------
--- OSC
 
-newtype OscHandle = OscHandle D
-  deriving (Val, Tuple, Arg)
-
--- | Returns OSC-handle.
-oscInit :: D -> SE OscHandle
-oscInit port = pure $ OscHandle $ readOnlyVar $ liftOpc "OSCinit" [(Ir, [Ir])] port
-
--- | We allocate references and inline them to OSCInit expression
--- We need to do it because in this opcode Csound mutates the arguments
-rawOscListen :: E -> E -> E -> [Var] -> Dep E
-rawOscListen oscHandle addr oscType vars =
-  Dynamic.opcsDep "OSClisten" [(Kr, Ir:Sr:Sr: (Dynamic.varRate <$> vars))] (oscHandle : addr : oscType : fmap Dynamic.inlineVar vars)
-
--- | Listens for the OSC-messages. The first argument is OSC-reference.
--- We can create it with the function @initOsc@. The next two arguments are strings.
--- The former specifies the path-like address to listen the messages. It can be:
---
--- > /foo/bar/baz
---
--- The latter specifies the type of expected arguments.
--- The string can contain the characters "bcdfilmst" which stand for
--- Boolean, character, double, float, 32-bit integer, 64-bit integer, MIDI,
--- string and timestamp.
---
--- The result is boolean signal that indicates when new message is received
--- and reference to mutable variables from which we can read the values
-oscListen :: forall a . Tuple a => OscHandle -> Str -> Str -> SE (BoolSig, Ref a)
-oscListen handle addr typeCode = do
-  ref <- initOscRef
-  cond <- listen ref
-  pure (cond, ref)
-  where
-    listen :: Tuple a => Ref a -> SE BoolSig
-    listen ref = fmap (equals 1) $ csdOscListen ref
-
-    csdOscListen :: Tuple a => Ref a -> SE Sig
-    csdOscListen (Ref refVars) = SE $ fmap (Sig . pure) $ do
-        expOscHandle <- lift (toE handle)
-        expAddr <- lift (toE addr)
-        expOscType <- lift (toE typeCode)
-        rawOscListen expOscHandle expAddr expOscType refVars
-
-    initOscRef :: SE (Ref a)
-    initOscRef = do
-      oscRates <- getOscRates typeCode
-      SE $ fmap Ref $ Dynamic.newLocalVars oscRates (fromTuple $ (defTuple :: a))
-
--- | OSCSend - send OSC message
---
--- > oscSend kwhen oscHandle oscAddress typeCode args
---
--- csound docs: <https://csound.com/docs/manual/OSCsend.html>
-oscSend :: Tuple a => Sig -> Str -> D -> Str -> Str -> a -> SE ()
-oscSend kwhen addr port dest typeCode args = do
-  oscRates <- getOscRates typeCode
-  liftOpcDep_ "OSCsend" [rates oscRates] (kwhen, addr, port, dest, typeCode, args)
-  where
-    rates oscRates = (Xr, Kr : Sr: Ir : Sr : Sr : oscRates)
-
-getOscRates :: Str -> SE [Rate]
-getOscRates typeCode = do
-  typeCodeE <- SE (lift (toE typeCode))
-  pure $ case Dynamic.getPrimUnsafe typeCodeE of
-    Dynamic.PrimString str -> getOscRate <$> Text.unpack str
-    _ -> error "OSCListen: osc type is not a primitive string"
-  where
-    getOscRate :: Char -> Rate
-    getOscRate x = case x of
-        'a' -> Ar
-        's' -> Sr
-        'i' -> Kr
-        'f' -> Kr
-        _   -> Kr
