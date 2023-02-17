@@ -56,11 +56,13 @@ forEach :: forall a . SigOrD a => a -> (a -> SE a) -> (a -> BooleanOf a) -> (a -
 forEach initVal next check body = withRate (boolValRate @(BooleanOf a)) $ \case
   IfIr -> do
     ref <- newRef initVal
+    writeRef ref initVal
     whileDo ref check $ do
       body =<< readRef ref
       writeRef ref =<< next =<< readRef ref
   IfKr -> do
     ref <- newRef (K initVal)
+    writeRef ref (K initVal)
     whileDo ref (check . unK) $ do
       body . unK =<< readRef ref
       writeRef ref . K =<< next . unK =<< readRef ref

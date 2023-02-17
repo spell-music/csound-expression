@@ -90,9 +90,10 @@ insertInstr expr = trace (show $ ppE expr) $ do
 -- sets stIsGlobal to False during the action
 localy :: Run a -> Run a
 localy (Run act) = Run $ do
+  prev <- gets stIsGlobal
   modify' $ \st -> st { stIsGlobal = False }
   res <- act
-  modify' $ \st -> st { stIsGlobal = True }
+  modify' $ \st -> st { stIsGlobal = prev }
   pure res
 
 insertGlobalExpr :: E -> Run ()
