@@ -1,4 +1,4 @@
-Name:          csound-expression-typed-core
+Name:          csound-core
 Version:       0.2.7
 Cabal-Version: >= 1.22
 License:       BSD3
@@ -13,8 +13,8 @@ Maintainer:    <anton.kholomiov@gmail.com>
 
 Description: typed core for library csound-expression. Provides typed core lang for csound
 
-Homepage:        https://github.com/anton-k/csound-expression-typed-core
-Bug-Reports:     https://github.com/anton-k/csound-expression-typed-core/issues
+Homepage:        https://github.com/anton-k/csound-core
+Bug-Reports:     https://github.com/anton-k/csound-core/issues
 
 Source-repository head
     Type: git
@@ -47,34 +47,34 @@ Library
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
-    Csound.Typed.Core
-    Csound.Typed.Core.Opcodes
-    Csound.Typed.Core.Opcodes.Instr
-    Csound.Typed.Core.Opcodes.Osc
-    Csound.Typed.Core.Opcodes.Vco
-    Csound.Typed.Core.State
-    Csound.Typed.Core.State.Options
-    Csound.Typed.Core.Types
-    Csound.Typed.Core.Types.Gen
-    Csound.Typed.Core.Types.Rate
-    Csound.Typed.Core.Types.Prim
-    Csound.Typed.Core.Types.Prim.Bool
-    Csound.Typed.Core.Types.Prim.InstrId
-    Csound.Typed.Core.Types.Prim.D
-    Csound.Typed.Core.Types.Prim.Sig
-    Csound.Typed.Core.Types.Prim.Val
-    Csound.Typed.Core.Types.Prim.Spec
-    Csound.Typed.Core.Types.Prim.Str
-    Csound.Typed.Core.Types.Prim.Tab
-    Csound.Typed.Core.Types.Array
-    Csound.Typed.Core.Types.PureArray
-    Csound.Typed.Core.Types.SE
-    Csound.Typed.Core.Types.SE.Instr
-    Csound.Typed.Core.Types.SE.Logic
-    Csound.Typed.Core.Types.SE.Ref
-    Csound.Typed.Core.Types.SE.Port
-    Csound.Typed.Core.Types.SE.Render
-    Csound.Typed.Core.Types.Tuple
+    Csound.Core
+    Csound.Core.Opcodes
+    Csound.Core.Opcodes.Instr
+    Csound.Core.Opcodes.Osc
+    Csound.Core.Opcodes.Vco
+    Csound.Core.State
+    Csound.Core.State.Options
+    Csound.Core.Types
+    Csound.Core.Types.Gen
+    Csound.Core.Types.Rate
+    Csound.Core.Types.Prim
+    Csound.Core.Types.Prim.Bool
+    Csound.Core.Types.Prim.InstrId
+    Csound.Core.Types.Prim.D
+    Csound.Core.Types.Prim.Sig
+    Csound.Core.Types.Prim.Val
+    Csound.Core.Types.Prim.Spec
+    Csound.Core.Types.Prim.Str
+    Csound.Core.Types.Prim.Tab
+    Csound.Core.Types.Array
+    Csound.Core.Types.PureArray
+    Csound.Core.Types.SE
+    Csound.Core.Types.SE.Instr
+    Csound.Core.Types.SE.Logic
+    Csound.Core.Types.SE.Ref
+    Csound.Core.Types.SE.Port
+    Csound.Core.Types.SE.Render
+    Csound.Core.Types.Tuple
 
     Paths_csound_expression_typed_core
 

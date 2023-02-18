@@ -1,8 +1,9 @@
 build:
-	stack build csound-expression-typed-core
+	stack build csound-core
 
 bench:
 	stack build csound-expression:bench:csound-expression-benchmark  # --profile
 
 run:
-	stack runhaskell scripts/Core.hs
+	stack runhaskell tutorial/core/live/01-play-file.hs # scripts/Core.hs
+#	csound -odac ./csound-expression-typed-core/tmp.csd
