@@ -1,7 +1,7 @@
 {-# Language AllowAmbiguousTypes #-}
 -- | Class for conversion of newtype-wrapped values
 -- to low level dynamic representation
-module Csound.Typed.Core.Types.Prim.Val
+module Csound.Core.Types.Prim.Val
   ( Val (..)
   , IsPrim (..)
   , liftE
@@ -15,7 +15,7 @@ module Csound.Typed.Core.Types.Prim.Val
 
 import Data.Boolean
 import Csound.Dynamic (E, Rate, IfRate)
-import Csound.Typed.Core.State (Run)
+import Csound.Core.State (Run)
 import Data.Kind (Type)
 
 class Val a where

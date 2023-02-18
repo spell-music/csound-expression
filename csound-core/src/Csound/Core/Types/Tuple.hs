@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language AllowAmbiguousTypes #-}
 -- | Tuples of values
-module Csound.Typed.Core.Types.Tuple
+module Csound.Core.Types.Tuple
   ( Tuple (..), Arg, Sigs
   , fromTuple
   , toTuple
@@ -18,15 +18,15 @@ import Data.NumInstances.Tuple ()
 import Data.Boolean
 
 import Csound.Dynamic (E, Rate (..))
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim.Bool
-import Csound.Typed.Core.Types.Prim.Sig
-import Csound.Typed.Core.Types.Prim.D
-import Csound.Typed.Core.Types.Prim.Tab
-import Csound.Typed.Core.Types.Prim.Str
-import Csound.Typed.Core.Types.Prim.Spec
-import Csound.Typed.Core.Types.Prim.InstrId
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim.Bool
+import Csound.Core.Types.Prim.Sig
+import Csound.Core.Types.Prim.D
+import Csound.Core.Types.Prim.Tab
+import Csound.Core.Types.Prim.Str
+import Csound.Core.Types.Prim.Spec
+import Csound.Core.Types.Prim.InstrId
+import Csound.Core.Types.Prim.Val
 
 class Tuple a => Arg a where
 

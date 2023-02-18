@@ -1,5 +1,5 @@
 -- | Imperative branching constructs like if-then-else
-module Csound.Typed.Core.Types.SE.Logic
+module Csound.Core.Types.SE.Logic
   ( when1, whens, whileDo, untilDo, doRepeat, forEach
   ) where
 
@@ -10,13 +10,13 @@ import Data.Maybe
 
 import Csound.Dynamic (E, IfRate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Dep)
-import Csound.Typed.Core.State qualified as State
-import Csound.Typed.Core.Types.Tuple
-import Csound.Typed.Core.Types.Rate
-import Csound.Typed.Core.Types.Prim
-import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.Types.SE.Ref
+import Csound.Core.State (Dep)
+import Csound.Core.State qualified as State
+import Csound.Core.Types.Tuple
+import Csound.Core.Types.Rate
+import Csound.Core.Types.Prim
+import Csound.Core.Types.SE
+import Csound.Core.Types.SE.Ref
 
 -- | With current rate tracking we assure that if we are inside
 -- Kr if like block then all nested blocks are also Kr.

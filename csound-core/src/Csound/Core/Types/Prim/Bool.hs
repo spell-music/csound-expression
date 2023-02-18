@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- Booleans and logic, if-then-else, when, until
-module Csound.Typed.Core.Types.Prim.Bool
+module Csound.Core.Types.Prim.Bool
   ( BoolSig (..)
   , unBoolSig
   , BoolD (..)
@@ -17,15 +17,15 @@ module Csound.Typed.Core.Types.Prim.Bool
 import Prelude hiding ((<*))
 import Data.Boolean
 
-import Csound.Typed.Core.Types.Prim.Tab
-import Csound.Typed.Core.Types.Prim.D
-import Csound.Typed.Core.Types.Prim.Sig
-import Csound.Typed.Core.Types.Prim.Spec
-import Csound.Typed.Core.Types.Prim.Str
+import Csound.Core.Types.Prim.Tab
+import Csound.Core.Types.Prim.D
+import Csound.Core.Types.Prim.Sig
+import Csound.Core.Types.Prim.Spec
+import Csound.Core.Types.Prim.Str
 
 import Csound.Dynamic (E, IfRate (..), ifExp, Rate (..))
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim.Val
 
 -- | A signal of booleans.
 data BoolSig

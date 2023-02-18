@@ -2,8 +2,8 @@
 module Main where
 
 import Control.Monad
-import Csound.Typed.Core.Types
-import Csound.Typed.Core.Opcodes
+import Csound.Core.Types
+import Csound.Core.Opcodes
 import Data.Default
 
 outs :: Sig2 -> SE ()

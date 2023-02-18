@@ -1,5 +1,5 @@
 -- | Primitive Csound types
-module Csound.Typed.Core.Types.Prim
+module Csound.Core.Types.Prim
   ( SigOrD
   , module X
   -- * Converters
@@ -13,8 +13,6 @@ module Csound.Typed.Core.Types.Prim
   , getBlockSize
   , getZeroDbfs
   -- * Utils
-  , fromMono
-  , toMono
   , ceil'
   , frac'
   , floor'
@@ -29,15 +27,15 @@ module Csound.Typed.Core.Types.Prim
 import Data.Boolean
 import Csound.Dynamic (Name, Rate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.Types.Prim.Bool as X
-import Csound.Typed.Core.Types.Prim.D as X
-import Csound.Typed.Core.Types.Prim.Sig as X
-import Csound.Typed.Core.Types.Prim.Tab as X
-import Csound.Typed.Core.Types.Prim.Val as X
-import Csound.Typed.Core.Types.Prim.Str as X
-import Csound.Typed.Core.Types.Prim.Spec as X
-import Csound.Typed.Core.Types.Prim.InstrId as X
-import Csound.Typed.Core.Types.Tuple (Tuple)
+import Csound.Core.Types.Prim.Bool as X
+import Csound.Core.Types.Prim.D as X
+import Csound.Core.Types.Prim.Sig as X
+import Csound.Core.Types.Prim.Tab as X
+import Csound.Core.Types.Prim.Val as X
+import Csound.Core.Types.Prim.Str as X
+import Csound.Core.Types.Prim.Spec as X
+import Csound.Core.Types.Prim.InstrId as X
+import Csound.Core.Types.Tuple (Tuple)
 
 class
   ( IsPrim a
@@ -65,12 +63,6 @@ toD :: Sig -> D
 toD = \case
   Sig a -> D a
   PrimSig a -> PrimD a
-
-fromMono :: Sig -> (Sig, Sig)
-fromMono a = (a, a)
-
-toMono :: (Sig, Sig) -> Sig
-toMono (a, b) = 0.5 * (a + b)
 
 int :: SigOrD a => Int -> a
 int = fromE . pure . Dynamic.int

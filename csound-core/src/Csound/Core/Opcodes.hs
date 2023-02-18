@@ -1,7 +1,7 @@
 {-# Language InstanceSigs #-}
 -- | Essential opcodes. Top 100 opcodes.
 -- See the package csound-expression-opcodes for full list of Csound opcodes
-module Csound.Typed.Core.Opcodes
+module Csound.Core.Opcodes
   (
   -- * Oscillators / Phasors
     poscil, poscil3
@@ -33,7 +33,7 @@ module Csound.Typed.Core.Opcodes
   -- * Sound Files / Samples
   , diskin, diskin2
   , mp3in
-  , loscil, loscil3, loscilx, lphasor
+  , loscil, loscil3, loscilx, lphasor, losc
   , flooper, flooper2
   , filescal, mincer
   , filelen
@@ -116,7 +116,7 @@ module Csound.Typed.Core.Opcodes
   , rms, balance, balance2
 
   -- * Math / Conversion
-  , ampdb, dbamp
+  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider
 
   -- * Amplitude / Pitch Tracking
   , follow, follow2, ptrack
@@ -133,10 +133,10 @@ import Control.Monad.Trans.Class (lift)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Dynamic (Rate (..))
 
-import Csound.Typed.Core.Types
-import Csound.Typed.Core.Opcodes.Instr
-import Csound.Typed.Core.Opcodes.Osc
-import Csound.Typed.Core.Opcodes.Vco
+import Csound.Core.Types
+import Csound.Core.Opcodes.Instr
+import Csound.Core.Opcodes.Osc
+import Csound.Core.Opcodes.Vco
 
 ----------------------------------------------------------------------------------
 -- Oscillators / Phasors
@@ -505,6 +505,12 @@ loscil b1 b2 b3 = liftMulti "loscil" rates (b1,b2,b3)
 loscil3 :: Tuple a => Sig -> Sig -> Tab -> a
 loscil3 b1 b2 b3 = liftMulti "loscil3" rates (b1, b2, b3)
   where rates = ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+
+-- | Loop over table stereo files. Uses loscil3 under the hood.
+-- Watch out for sample rates! If file sample rate is different
+-- from global project sample rate then playback will be distorted.
+losc :: Tab -> Sig -> Sig2
+losc tb cps = flooper @Sig2 1 cps 0 (tabDur tb) 0 tb
 
 -- |
 -- Read multi-channel sampled sound from a table.
@@ -1289,6 +1295,47 @@ ampdb b1 = fromE $ f <$> toE b1
 dbamp :: SigOrD a => a -> a
 dbamp b1 = fromE $ f <$> toE b1
     where f a1 = Dynamic.opr1k "dbamp" a1
+
+-- |
+-- Returns the amplitude equivalent (in 16-bit signed integer scale) of the full scale decibel (dB FS) value x.
+--
+-- Returns the amplitude equivalent of the full scale decibel (dB FS) value x. The logarithmic full scale decibel values will be converted to linear 16-bit signed integer values from â32,768 to +32,767.
+--
+-- >  ampdbfs (x)  (no rate restriction)
+--
+-- csound doc: <http://csound.com/docs/manual/ampdbfs.html>
+ampdbfs :: SigOrD a => a -> a
+ampdbfs b1 = fromE $ f <$> toE b1
+    where f a1 = Dynamic.opr1 "ampdbfs" a1
+
+-- |
+-- Returns the decibel equivalent of the raw amplitude x, relative to full scale amplitude.
+--
+-- Returns the decibel equivalent of the raw amplitude x, relative to full scale amplitude. Full scale is assumed to be 16 bit. New is Csound version 4.10.
+--
+-- >  dbfsamp (x)  (init-rate or control-rate args only)
+--
+-- csound doc: <http://csound.com/docs/manual/dbfsamp.html>
+dbfsamp :: SigOrD a => a -> a
+dbfsamp b1 = fromE $ f <$> toE b1
+    where f a1 = Dynamic.opr1k "dbfsamp" a1
+
+
+
+-- |
+-- An implementation of a logarithmic gain curve which is similar to the gainslider~ object from Cycling 74 Max / MSP.
+--
+-- This opcode is intended for use to multiply by an audio signal to give a console mixer like feel. There is no bounds in the
+--       source code so you can for example give higher than 127 values for extra amplitude but possibly clipped audio.
+--
+-- > kout  gainslider  kindex
+--
+-- csound doc: <http://csound.com/docs/manual/gainslider.html>
+gainslider ::  Sig -> Sig
+gainslider b1 = liftOpc "gainslider" [(Kr,[Kr])] b1
+
+dbfs :: Sig -> Sig
+dbfs x = gainslider (x / 127)
 
 -------------------------------------------------------------------------------------
 -- MIDI

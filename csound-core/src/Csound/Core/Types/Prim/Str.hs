@@ -1,4 +1,4 @@
-module Csound.Typed.Core.Types.Prim.Str
+module Csound.Core.Types.Prim.Str
   ( Str (..)
   ) where
 
@@ -6,8 +6,8 @@ import Data.String
 
 import Csound.Dynamic (E, Rate(..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim.Val
 
 -- | Strings
 newtype Str = Str { unStr :: Run E }

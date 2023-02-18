@@ -1,4 +1,4 @@
-module Csound.Typed.Core.Opcodes.Vco
+module Csound.Core.Opcodes.Vco
   ( VcoTab (..)
   , VcoShape (..)
   , VcoInit (..)
@@ -13,9 +13,9 @@ module Csound.Typed.Core.Opcodes.Vco
 
 import Csound.Dynamic (E, Gen)
 import Csound.Dynamic (Rate (..))
-import Csound.Typed.Core.Types
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.State qualified as State
+import Csound.Core.Types
+import Csound.Core.State (Run)
+import Csound.Core.State qualified as State
 
 newtype VcoTab = VcoTab { unVcoTab :: Run E }
 
@@ -77,3 +77,4 @@ oscilikt :: Sig -> Sig -> Tab -> Sig -> Sig
 oscilikt amp cps fn mphase = liftOpc "oscilikt" rates (amp, cps, fn, mphase)
   where
     rates = [ (Ar, [Xr, Xr, Kr, Ir, Ir]), (Kr, [Kr, Kr, Kr, Ir, Ir])]
+

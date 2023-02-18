@@ -5,8 +5,8 @@
         FlexibleInstances,
         FlexibleContexts,
         CPP #-}
-module Csound.Typed.Types.SigSpace(
-    SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..),
+module Csound.Core.Types.SigSpace(
+    SigSpace(..), BindSig(..), mul, mul', fromMono, toMono, on, uon, At(..), MixAt(..),
     cfd, genCfds, cfd4, cfds,
 
     -- * Stereo sig-space
@@ -15,8 +15,8 @@ module Csound.Typed.Types.SigSpace(
 
 import Control.Monad
 import Control.Applicative
-import Csound.Typed.Types.Prim
-import Csound.Typed.GlobalState.SE
+import Csound.Core.Types.Prim
+import Csound.Core.Types.SE
 import Data.Kind (Type)
 import Data.NumInstances.Tuple()
 

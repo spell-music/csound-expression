@@ -1,5 +1,5 @@
 {-# Language FlexibleInstances, ScopedTypeVariables #-}
-module Csound.Typed.Core.Types.Array(
+module Csound.Core.Types.Array(
     Arr(..),
     newLocalArr, newGlobalArr, newLocalCtrlArr, newGlobalCtrlArr,
     fillLocalArr, fillGlobalArr, fillLocalCtrlArr, fillGlobalCtrlArr,
@@ -37,11 +37,11 @@ import Data.Text (Text)
 import Csound.Dynamic (E, Rate (..), Var)
 import qualified Csound.Dynamic as D
 
-import Csound.Typed.Core.Types.Prim
-import Csound.Typed.Core.Types.Tuple
-import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.State (Run, Dep)
-import Csound.Typed.Core.State qualified as State
+import Csound.Core.Types.Prim
+import Csound.Core.Types.Tuple
+import Csound.Core.Types.SE
+import Csound.Core.State (Run, Dep)
+import Csound.Core.State qualified as State
 
 ------------------------------------------------------------------
 -- allocation of array vars

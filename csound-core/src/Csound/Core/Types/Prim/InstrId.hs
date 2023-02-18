@@ -1,8 +1,8 @@
-module Csound.Typed.Core.Types.Prim.InstrId
+module Csound.Core.Types.Prim.InstrId
   ( ProcId (..)
   ) where
 
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.Types.Prim.Val
 
 newtype ProcId ty args = ProcId { unProcId :: ty }
   deriving (Val, IsPrim)

@@ -2,7 +2,7 @@
 -- expressed as a-rate or k-rate signals in Csound code.
 -- The type depends on the context and derived from the context.
 -- Also type can by specified by the user with functions @ar@ and @kr@.
-module Csound.Typed.Core.Types.Prim.Sig
+module Csound.Core.Types.Prim.Sig
   ( Sig (..)
   , unSig
   , Sig2, Sig3, Sig4, Sig5, Sig6, Sig7, Sig8
@@ -10,8 +10,8 @@ module Csound.Typed.Core.Types.Prim.Sig
 
 import Csound.Dynamic (E, Rate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim.Val
 
 -- | Signals
 data Sig

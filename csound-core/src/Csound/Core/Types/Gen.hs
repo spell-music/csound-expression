@@ -1,7 +1,7 @@
 
 {-# Language LambdaCase #-}
 -- | Creating Function Tables (Buffers)
-module Csound.Typed.Core.Types.Gen (
+module Csound.Core.Types.Gen (
     -- | If you are not familliar with Csound's conventions
     -- you are pobably not aware of the fact that for efficiency reasons Csound requires that table size is equal
     -- to power of 2 or power of two plus one which stands for guard point (you do need guard point if your intention is to read the
@@ -193,12 +193,12 @@ import Csound.Dynamic hiding (int, when1, whens, genId, pn)
 import Csound.Dynamic qualified as Dynamic
 
 import Data.Default
-import Csound.Typed.Core.Types.Prim
-import Csound.Typed.Core.Types.SE
+import Csound.Core.Types.Prim
+import Csound.Core.Types.SE
 import Data.Maybe
 import Data.Boolean
 import Data.Text (Text)
-import Csound.Typed.Core.State.Options
+import Csound.Core.State.Options
 
 withTab :: Tab -> (E -> PreTab) -> Tab
 withTab tab cont = Tab $ do

@@ -1,6 +1,6 @@
 -- | Mutable references. Which can hold Csound values and
 -- allow us to xreate mutable values.
-module Csound.Typed.Core.Types.SE.Ref
+module Csound.Core.Types.SE.Ref
   ( Ref (..)
   , newRef
   , newLocalRef
@@ -11,9 +11,9 @@ import Control.Monad.Trans.Class (lift)
 
 import Csound.Dynamic (Var)
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State qualified as State
-import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.Types.Tuple
+import Csound.Core.State qualified as State
+import Csound.Core.Types.SE
+import Csound.Core.Types.Tuple
 
 -- | It describes a reference to mutable values.
 newtype Ref a = Ref [Var]

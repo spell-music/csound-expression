@@ -1,7 +1,7 @@
 -- | Csound tables, which are creted in the score section and referenced
 -- by numbers in the Csound code. In the haskell library this process is automated
 -- numbers are assigned automatically.
-module Csound.Typed.Core.Types.Prim.Tab
+module Csound.Core.Types.Prim.Tab
   ( Tab (..), unTab
   , PreTab (..)
   , preTab, preStringTab, TabSize(..), TabArgs(..), updateTabSize
@@ -18,12 +18,12 @@ import Data.Map       qualified as M
 
 import Csound.Dynamic (E, GenId (..), Gen (..), Rate (..))
 import Csound.Dynamic qualified as D
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.State qualified as State
-import Csound.Typed.Core.State.Options (TabFi (..), defTabFi)
-import Csound.Typed.Core.Types.Prim.Val
-import Csound.Typed.Core.Types.Prim.D
-import Csound.Typed.Core.Types.Prim.Sig
+import Csound.Core.State (Run)
+import Csound.Core.State qualified as State
+import Csound.Core.State.Options (TabFi (..), defTabFi)
+import Csound.Core.Types.Prim.Val
+import Csound.Core.Types.Prim.D
+import Csound.Core.Types.Prim.Sig
 
 -- | Tables (or arrays)
 data Tab

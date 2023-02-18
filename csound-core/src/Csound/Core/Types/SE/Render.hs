@@ -1,5 +1,5 @@
 {-# Language AllowAmbiguousTypes, CPP, UndecidableInstances #-}
-module Csound.Typed.Core.Types.SE.Render
+module Csound.Core.Types.SE.Render
   (
     -- * Rendering
     RenderCsd(..),
@@ -7,13 +7,14 @@ module Csound.Typed.Core.Types.SE.Render
     renderCsd,
     writeCsd, writeCsdBy,
     writeSnd, writeSndBy,
+    printCsd, printCsdBy,
 
     -- * Playing the sound
     playCsd, playCsdBy,
     mplayer, mplayerBy, totem, totemBy,
 
     -- * Live performance
-    dac, dacBy, vdac, vdacBy,
+    dac, dacBy, vdac, vdacBy, dacDebug,
 
     -- * Render and run
     csd, csdBy,
@@ -42,11 +43,11 @@ module Csound.Typed.Core.Types.SE.Render
     -- readMacrosString, readMacrosDouble, readMacrosInt
   ) where
 
-import Csound.Typed.Core.State.Options
+import Csound.Core.State.Options
   (Options (..), setSilent, setDac, setAdc, setDacBy, setAdcBy, setVirtual, logTrace)
-import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.Types.Prim
-import Csound.Typed.Core.Types.Tuple
+import Csound.Core.Types.SE
+import Csound.Core.Types.Prim
+import Csound.Core.Types.Tuple
 
 import Control.Monad
 
@@ -115,6 +116,14 @@ writeCsd file a = writeFile file =<< renderCsd a
 writeCsdBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
 writeCsdBy opt file a = writeFile file =<< renderCsdBy opt a
 
+-- | Render Csound file and print it on the screen
+printCsd :: RenderCsd a => a -> IO ()
+printCsd a = printCsdBy def a
+
+-- | Render Csound file with options and print it on the screen
+printCsdBy :: RenderCsd a => Options -> a -> IO ()
+printCsdBy opt a = putStrLn =<< renderCsdBy opt a
+
 -- | Render Csound file and save result sound to the wav-file.
 writeSnd :: RenderCsd a => FilePath -> a -> IO ()
 writeSnd = writeSndBy def
@@ -154,6 +163,12 @@ simplePlayCsdBy opt player = playCsdBy opt phi
 -- (sound output goes to soundcard in real time).
 dac :: (RenderCsd a) => a -> IO ()
 dac = dacBy def
+
+-- | Makes what @dac@ does and saves Csound code to tmp.csd
+dacDebug :: RenderCsd a => a -> IO ()
+dacDebug a = do
+  writeCsd "tmp.csd" a
+  dac a
 
 -- | 'Csound.Base.dac' with options.
 dacBy :: forall a. (RenderCsd a) => Options -> a -> IO ()

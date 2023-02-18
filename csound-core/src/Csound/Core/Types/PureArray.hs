@@ -1,5 +1,5 @@
 -- | Pure (read-only) arrays
-module Csound.Typed.Core.Types.PureArray
+module Csound.Core.Types.PureArray
   ( PureArr
   , PureArrD
   , newPureArr
@@ -12,9 +12,9 @@ import Data.List qualified as List
 
 import Csound.Dynamic (E, IfRate (..))
 import Csound.Dynamic qualified as D
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim
-import Csound.Typed.Core.Types.Tuple
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim
+import Csound.Core.Types.Tuple
 
 -- | Pure (read-only) array.
 -- We can initialise it and it's a pure value.

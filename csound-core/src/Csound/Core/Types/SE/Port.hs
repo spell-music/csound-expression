@@ -1,6 +1,6 @@
 {-# Language InstanceSigs #-}
 -- | With ports we can communicate non-constant values between instruments
-module Csound.Typed.Core.Types.SE.Port
+module Csound.Core.Types.SE.Port
   ( Port (..)
   , newPort
   ) where
@@ -10,12 +10,12 @@ import Control.Monad.Trans.Class (lift)
 
 import Csound.Dynamic (Rate (..), E)
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Dep)
-import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.Types.Tuple
-import Csound.Typed.Core.Types.Prim.D
-import Csound.Typed.Core.Types.Prim.Val
-import Csound.Typed.Core.State qualified as State
+import Csound.Core.State (Dep)
+import Csound.Core.Types.SE
+import Csound.Core.Types.Tuple
+import Csound.Core.Types.Prim.D
+import Csound.Core.Types.Prim.Val
+import Csound.Core.State qualified as State
 
 -- https://flossmanual.csound.com/csound-language/local-and-global-variables#the-chn-opcodes-for-global-variables
 newtype Port a = Port { unPort :: D }

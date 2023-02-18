@@ -1,5 +1,5 @@
 -- | Csound core
-module Csound.Typed.Core
+module Csound.Core
   ( -- * Types
     -- ** Primitive types
     D, Sig, Str, Spec
@@ -9,7 +9,7 @@ module Csound.Typed.Core
   , notB, (&&*), (||*)
   , ifB
     -- *** Gens
-  , module Csound.Typed.Core.Types.Gen
+  , module Csound.Core.Types.Gen
 
     -- ** Tuples
   , Tuple, Arg, Sigs, makeTupleMethods
@@ -19,16 +19,23 @@ module Csound.Typed.Core
     -- ** Arrays
 
     -- *** Mutable arrays
-  , module Csound.Typed.Core.Types.Array
+  , module Csound.Core.Types.Array
 
     -- *** Pure arrays
-  , module Csound.Typed.Core.Types.PureArray
+  , module Csound.Core.Types.PureArray
 
     -- ** Rate conversions
   , K (..), ar, kr, ir
 
     -- ** Type conversions
   , sig, toD, int
+
+   -- ** Signal space
+  , SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..)
+  , cfd, genCfds, cfd4, cfds
+
+    -- * Stereo sig-space
+  , SigSpace2(..), BindSig2(..), mul2, mul2'
 
     -- * Side effects
   , SE
@@ -73,20 +80,20 @@ module Csound.Typed.Core
   , withDs, withD, withSig, withSigs, withTab, withTabs
 
     -- * Options
-  , module Csound.Typed.Core.State.Options
+  , module Csound.Core.State.Options
 
     -- * Render
-  , module Csound.Typed.Core.Types.SE.Render
+  , module Csound.Core.Types.SE.Render
 
     -- * Essential opcodes
-  , module Csound.Typed.Core.Opcodes
+  , module Csound.Core.Opcodes
   ) where
 
 import Data.Boolean
-import Csound.Typed.Core.Types
-import Csound.Typed.Core.Opcodes
-import Csound.Typed.Core.State.Options
-import Csound.Typed.Core.Types.Gen
-import Csound.Typed.Core.Types.Array
-import Csound.Typed.Core.Types.PureArray
-import Csound.Typed.Core.Types.SE.Render
+import Csound.Core.Types
+import Csound.Core.Opcodes
+import Csound.Core.State.Options
+import Csound.Core.Types.Gen
+import Csound.Core.Types.Array
+import Csound.Core.Types.PureArray
+import Csound.Core.Types.SE.Render

@@ -1,11 +1,11 @@
 -- | Spectrums
-module Csound.Typed.Core.Types.Prim.Spec
+module Csound.Core.Types.Prim.Spec
   ( Spec (..)
   ) where
 
 import Csound.Dynamic (E, Rate (..))
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim.Val
 
 -- | Strings
 newtype Spec = Spec { unSpec :: Run E }

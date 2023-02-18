@@ -1,4 +1,4 @@
-module Csound.Typed.Core.Types.SE
+module Csound.Core.Types.SE
   ( SE (..)
   , setTotalDur
   , renderSE
@@ -21,11 +21,11 @@ import Control.Monad.IO.Class
 
 import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Dep)
-import Csound.Typed.Core.State.Options (Options)
-import Csound.Typed.Core.State qualified as State
-import Csound.Typed.Core.Types.Tuple
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Dep)
+import Csound.Core.State.Options (Options)
+import Csound.Core.State qualified as State
+import Csound.Core.Types.Tuple
+import Csound.Core.Types.Prim.Val
 import Control.Monad.Trans.Class (lift)
 import Data.Default
 

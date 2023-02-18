@@ -1,5 +1,5 @@
 -- | Rate conversions
-module Csound.Typed.Core.Types.Rate
+module Csound.Core.Types.Rate
   ( K (..)
   , setRate
   , ar, kr, ir
@@ -7,8 +7,8 @@ module Csound.Typed.Core.Types.Rate
 
 import Csound.Dynamic (toCtrlRate, Rate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.Types.Prim.Val
-import Csound.Typed.Core.Types.Tuple
+import Csound.Core.Types.Prim.Val
+import Csound.Core.Types.Tuple
 
 -- | Control rate signals or constants
 -- it can be used to create references or channels with control-rate.

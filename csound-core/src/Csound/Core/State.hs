@@ -1,5 +1,5 @@
 -- | Internal state for typed core of the EDSL
-module Csound.Typed.Core.State
+module Csound.Core.State
   ( Run (..)
   , Dep
   , localy
@@ -40,8 +40,8 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 
 import Csound.Dynamic
-import Csound.Typed.Core.State.Options (Options)
-import Csound.Typed.Core.State.Options qualified as Options
+import Csound.Core.State.Options (Options)
+import Csound.Core.State.Options qualified as Options
 
 type Dep a = DepT Run a
 
@@ -321,7 +321,7 @@ saveGen gen = do
     insertGen = do
       newId <- getFreshFtableId
       v <- fmap readOnlyVar $ initGlobalVar Ir (ftgen newId gen)
-      Run $ modify' $ \st -> st { stFtables = insertFtableMap (GenTable gen) newId $ setFreshId (v + 1) $ stFtables st }
+      Run $ modify' $ \st -> st { stFtables = insertFtableMap (GenTable gen) v $ setFreshId (v + 1) $ stFtables st }
       pure v
 
 ftgen :: E -> Gen -> E

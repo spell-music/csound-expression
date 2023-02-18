@@ -1,5 +1,5 @@
 -- | Define instruments
-module Csound.Typed.Core.Types.SE.Instr
+module Csound.Core.Types.SE.Instr
   ( iself
   , InstrRef
   , getInstrRefId
@@ -17,14 +17,14 @@ import Data.Boolean (maxB)
 
 import Csound.Dynamic (E, Rate (..), IfRate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run, Dep)
-import Csound.Typed.Core.State qualified as State
-import Csound.Typed.Core.Types.Prim
-import Csound.Typed.Core.Types.Tuple
-import Csound.Typed.Core.Types.Rate
-import Csound.Typed.Core.Types.SE
-import Csound.Typed.Core.Types.SE.Logic
-import Csound.Typed.Core.Types.SE.Port
+import Csound.Core.State (Run, Dep)
+import Csound.Core.State qualified as State
+import Csound.Core.Types.Prim
+import Csound.Core.Types.Tuple
+import Csound.Core.Types.Rate
+import Csound.Core.Types.SE
+import Csound.Core.Types.SE.Logic
+import Csound.Core.Types.SE.Port
 import Control.Monad.Trans.Class (lift)
 
 data InstrRef a

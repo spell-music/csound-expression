@@ -1,5 +1,5 @@
 -- | OSC protocol
-module Csound.Typed.Core.Opcodes.Osc
+module Csound.Core.Opcodes.Osc
   ( OscHandle (..)
   , oscInit
   , oscListen
@@ -10,8 +10,8 @@ import Data.Text qualified as Text
 import Csound.Dynamic (E, Var)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Dynamic (Rate (..))
-import Csound.Typed.Core.Types
-import Csound.Typed.Core.State (Dep)
+import Csound.Core.Types
+import Csound.Core.State (Dep)
 import Control.Monad.Trans.Class (lift)
 
 newtype OscHandle = OscHandle D

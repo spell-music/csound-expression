@@ -1,5 +1,5 @@
 -- | Csound types
-module Csound.Typed.Core.Types
+module Csound.Core.Types
   ( module X
   , withInits
   , withDs
@@ -10,21 +10,22 @@ module Csound.Typed.Core.Types
   , withTabs
   ) where
 
-import Csound.Typed.Core.Types.Gen       as X
-import Csound.Typed.Core.Types.Prim      as X
-import Csound.Typed.Core.Types.Tuple     as X
-import Csound.Typed.Core.Types.SE        as X
-import Csound.Typed.Core.Types.SE.Logic  as X
-import Csound.Typed.Core.Types.SE.Ref    as X
-import Csound.Typed.Core.Types.SE.Port   as X
-import Csound.Typed.Core.Types.SE.Instr  as X
-import Csound.Typed.Core.Types.Array     as X
-import Csound.Typed.Core.Types.PureArray as X
-import Csound.Typed.Core.Types.Rate      as X
+import Csound.Core.Types.Gen       as X
+import Csound.Core.Types.Prim      as X
+import Csound.Core.Types.Tuple     as X
+import Csound.Core.Types.SE        as X
+import Csound.Core.Types.SE.Logic  as X
+import Csound.Core.Types.SE.Ref    as X
+import Csound.Core.Types.SE.Port   as X
+import Csound.Core.Types.SE.Instr  as X
+import Csound.Core.Types.Array     as X
+import Csound.Core.Types.PureArray as X
+import Csound.Core.Types.Rate      as X
+import Csound.Core.Types.SigSpace  as X
 
 import Csound.Dynamic (E)
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
+import Csound.Core.State (Run)
 
 -- appends inits
 

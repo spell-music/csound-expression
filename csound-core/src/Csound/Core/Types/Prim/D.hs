@@ -1,14 +1,14 @@
 -- | Init rate constants, they are expressed as
 -- i-rate numbers in the rendered code
-module Csound.Typed.Core.Types.Prim.D
+module Csound.Core.Types.Prim.D
   ( D (..), unD
   , D2, D3, D4, D5, D6
   ) where
 
 import Csound.Dynamic (E, Rate (..))
 import Csound.Dynamic qualified as Dynamic
-import Csound.Typed.Core.State (Run)
-import Csound.Typed.Core.Types.Prim.Val
+import Csound.Core.State (Run)
+import Csound.Core.Types.Prim.Val
 
 -- | Constant numbers
 data D

@@ -1,5 +1,5 @@
 -- | Instrument control
-module Csound.Typed.Core.Opcodes.Instr
+module Csound.Core.Opcodes.Instr
   ( active
   , maxalloc
   , nstrnum
@@ -14,7 +14,7 @@ module Csound.Typed.Core.Opcodes.Instr
   ) where
 
 import Csound.Dynamic (Rate (..))
-import Csound.Typed.Core.Types
+import Csound.Core.Types
 
 -- | active — Returns the number of active instances of an instrument.
 active :: (Arg a, SigOrD b) => InstrRef a -> SE b
