@@ -218,7 +218,7 @@ toExp = ratedExpExp . unFix
 
 -- Lifts transformation of main expression
 onExp :: (Exp E -> Exp E) -> E -> E
-onExp f x =
+onExp f x = rehashE $
   case unFix x of
     a -> Fix $ a{ ratedExpExp = f (ratedExpExp a) }
 

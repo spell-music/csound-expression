@@ -23,6 +23,9 @@ module Csound.Core.State
   , VcoInit (..)
   , VcoShape (..)
   , saveVco
+  -- * Options
+  , setOption
+  , setDefaultOption
   ) where
 
 import Debug.Trace (trace)
@@ -52,7 +55,9 @@ newtype Run a = Run { unRun :: StateT St IO a }
 -- | Run the typed Csound monad to get underlying dynamic Csound file
 -- for rendering to text.
 exec :: Options -> Run () -> IO Csd
-exec opts act = stCsd <$> execStateT (unRun $ setupInstr0 opts >> act) initSt
+exec opts act = do
+  st <- execStateT (unRun $ setupInstr0 opts >> act) initSt
+  pure $ (stCsd st) { csdFlags = Options.csdFlags (stOptions st) }
   where
     initSt = St
       { stCsd = Csd
@@ -384,4 +389,11 @@ vcoShapeId' = \case
 getFreshFtableId :: Run E
 getFreshFtableId = Run $ gets (ftableFreshId . stFtables)
 
+-------------------------------------------------------------------------------------
+-- update options
 
+setOption :: Options -> Run ()
+setOption opt = Run $ modify' $ \st -> st { stOptions = opt <> stOptions st }
+
+setDefaultOption :: Options -> Run ()
+setDefaultOption opt = Run $ modify' $ \st -> st { stOptions = stOptions st <> opt }

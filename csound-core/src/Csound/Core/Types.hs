@@ -8,6 +8,7 @@ module Csound.Core.Types
   , withSigs
   , withTab
   , withTabs
+  , mean
   ) where
 
 import Csound.Core.Types.Gen       as X
@@ -26,6 +27,10 @@ import Csound.Core.Types.SigSpace  as X
 import Csound.Dynamic (E)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Run)
+
+-- | Mean value.
+mean :: Fractional a => [a] -> a
+mean xs = sum xs / (fromIntegral $ length xs)
 
 -- appends inits
 

@@ -131,7 +131,7 @@ rehashE (Fix expr) = Fix $
 -- rate coversion
 
 setRate :: Rate -> E -> E
-setRate r a =
+setRate r a = rehashE $
   case ratedExpExp $ unFix a of
     -- for Tfm we add rate to ratedExpRate hint
     Tfm _ _    -> Fix $ (unFix a) { ratedExpRate = Just r }

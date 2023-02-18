@@ -33,7 +33,7 @@ module Csound.Core.Opcodes
   -- * Sound Files / Samples
   , diskin, diskin2
   , mp3in
-  , loscil, loscil3, loscilx, lphasor, losc
+  , loscil, loscil3, loscilx, lphasor, losc, losc1, loopWav, loopWav1, oscWav, oscWav1, oscMp3
   , flooper, flooper2
   , filescal, mincer
   , filelen
@@ -81,7 +81,7 @@ module Csound.Core.Opcodes
 
   -- * MIDI
   , massign
-  , notnum, veloc
+  , notnum, veloc, release
   , midictrl, ctrlinit, CtrlInit (..)
   , ctrl7, ctrl14
   , initc7, initc14
@@ -137,6 +137,8 @@ import Csound.Core.Types
 import Csound.Core.Opcodes.Instr
 import Csound.Core.Opcodes.Osc
 import Csound.Core.Opcodes.Vco
+import Csound.Core.State.Options (setMa)
+
 
 ----------------------------------------------------------------------------------
 -- Oscillators / Phasors
@@ -511,6 +513,34 @@ loscil3 b1 b2 b3 = liftMulti "loscil3" rates (b1, b2, b3)
 -- from global project sample rate then playback will be distorted.
 losc :: Tab -> Sig -> Sig2
 losc tb cps = flooper @Sig2 1 cps 0 (tabDur tb) 0 tb
+
+-- | Loop over table mono files. Uses loscil3 under the hood.
+-- Watch out for sample rates! If file sample rate is different
+-- from global project sample rate then playback will be distorted.
+losc1 :: Tab -> Sig -> Sig
+losc1 tb cps = flooper @Sig 1 cps 0 (tabDur tb) 0 tb
+
+-- | Oscillate over stereo wav file (file read from disk)
+loopWav :: Str -> Sig -> Sig2
+loopWav file cps = diskin2 file `withInits` (cps, 0 :: D, 1 :: D)
+
+-- | Oscilate over mono wav-file (file read from disk)
+loopWav1 :: Str -> Sig -> Sig
+loopWav1 file cps = diskin2 file `withInits` (cps, 0 :: D, 1 :: D)
+
+-- | Oscillate over wav file (file read from memory)
+oscWav :: String -> Sig -> Sig2
+oscWav file cps = losc (wavAll file) cps
+
+-- | Oscillate over wav file (file read from memory)
+oscWav1 :: String -> Sig -> Sig
+oscWav1 file cps = losc1 (wavLeft file) cps
+
+-- | Oscillate over mp3 file (file read from memory)
+oscMp3 :: String -> Sig -> Sig2
+oscMp3 file cps = (go Mp3Left, go Mp3Right)
+  where
+    go chn = losc1 (mp3s file 0 chn) cps
 
 -- |
 -- Read multi-channel sampled sound from a table.
@@ -1335,7 +1365,7 @@ gainslider ::  Sig -> Sig
 gainslider b1 = liftOpc "gainslider" [(Kr,[Kr])] b1
 
 dbfs :: Sig -> Sig
-dbfs x = gainslider (x / 127)
+dbfs x = gainslider (x * 127)
 
 -------------------------------------------------------------------------------------
 -- MIDI
@@ -1346,9 +1376,11 @@ dbfs x = gainslider (x / 127)
 --
 -- csound doc <https://csound.com/docs/manual/massign.html>
 massign :: Arg a => D -> InstrRef a -> SE ()
-massign ichnl instrRef = case getInstrRefId instrRef of
-  Left strId  -> liftOpcDep_ "massign" strRates (ichnl, strId)
-  Right intId -> liftOpcDep_ "massign" intRates (ichnl, intId)
+massign ichnl instrRef = do
+  setDefaultOption setMa
+  case getInstrRefId instrRef of
+    Left strId  -> liftOpcDep_ "massign" strRates (ichnl, strId)
+    Right intId -> liftOpcDep_ "massign" intRates (ichnl, intId)
   where
     strRates = [(Xr, [Ir,Sr,Ir])]
     intRates = [(Xr, [Ir,Ir,Ir])]
@@ -1361,6 +1393,10 @@ massign ichnl instrRef = case getInstrRefId instrRef of
 -- csound doc: <http://csound.com/docs/manual/notnum.html>
 notnum ::  SE D
 notnum = liftOpcDep "notnum" [(Ir,[])] ()
+
+-- | release — Indicates whether a note is in its “release” stage.
+release :: SE Sig
+release = liftOpcDep "release" [(Kr, [])] ()
 
 -- |
 -- Get the velocity from a MIDI event.

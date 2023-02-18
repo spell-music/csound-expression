@@ -10,6 +10,8 @@ module Csound.Core.Types.SE.Instr
   , newEff
   , Note (..)
   , play
+  , setFraction
+  , negateInstrRef
   ) where
 
 import Data.Maybe
@@ -210,11 +212,18 @@ play = \case
 
     playInstr (InstrId instrId portAlive portOuts) notes = do
       currentRate <- fromMaybe IfIr <$> getCurrentRate
-      mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur (portAlive, portOuts, args)) notes
+      mapM_ (\(Note start dur args) -> schedule currentRate (makeNoteUnique portOuts instrId) start dur (portAlive, portOuts, args)) notes
 
     playEff (EffId instrId portAlive portOuts portIns) notes = do
       currentRate <- fromMaybe IfIr <$> getCurrentRate
-      mapM_ (\(Note start dur args) -> schedule currentRate instrId start dur (portAlive, portOuts, portIns, args)) notes
+      mapM_ (\(Note start dur args) -> schedule currentRate (makeNoteUnique portOuts instrId) start dur (portAlive, portOuts, portIns, args)) notes
+
+    -- | Adds port identifier as fraction to instrument id.
+    -- It makes turn off of the self note safe.
+    makeNoteUnique :: Val q => Port x -> q -> q
+    makeNoteUnique (Port port) instrId = setFractionD maxNotes  port instrId
+
+    maxNotes = 10000
 
 ------------------------------------------------------------------------------
 -- utils
@@ -225,7 +234,7 @@ turnoffSelf :: D -> SE ()
 turnoffSelf rel = SE $ do
   relE <- lift $ toE rel
   let self = Dynamic.pn Ir 1
-  csdTurnoff2 self 0 relE
+  csdTurnoff2 self 4 relE
 
 csdTurnoff2 :: E -> E -> E -> Dep ()
 csdTurnoff2 instrId mode release =
@@ -249,3 +258,38 @@ linsegr ::  [D] -> D -> D -> Sig
 linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
     where f a1 a2 a3 = Dynamic.setRate Kr $ Dynamic.opcs "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
 
+
+-- | Adds fractional part to the instrument reference. This trick is used in Csound to identify the notes (or specific instrument invokation).
+setFraction :: Arg a => D -> D -> InstrRef a -> InstrRef a
+setFraction maxSize value = \case
+  ProcRef pid -> ProcRef $ addFrac pid
+  StrRef pid -> ProcRef $ fromE $ toE (addFrac $ csdNstrnum pid)
+  InstrRef (InstrId pid a b) -> InstrRef (InstrId (addFrac pid) a b)
+  EffRef (EffId pid a b c) -> EffRef (EffId (addFrac pid) a b c)
+  where
+    addFrac :: Val a => a -> a
+    addFrac = setFractionD maxSize value
+
+-- | nstrnum — Returns the number of a named instrument
+csdNstrnum :: Arg a => ProcId Str a -> D
+csdNstrnum strId = liftOpc "nstrnum" [(Ir,[Sr])] strId
+
+setFractionD :: Val a => D -> D -> a -> a
+setFractionD maxSize value a = fromE $ do
+  maxSizeE <- toE maxSize
+  valueE <- toE (value `mod'` maxSize)
+  aE <- toE a
+  pure $ aE + (valueE / maxSizeE)
+
+-- | Negates instrument id.
+-- Negation is used in Csound to update initialisation parameters
+-- of indefinate instrument
+negateInstrRef ::  Arg a => InstrRef a -> InstrRef a
+negateInstrRef = \case
+  ProcRef pid -> ProcRef $ neg pid
+  StrRef pid -> ProcRef $ fromE $ toE $ csdNstrnum pid
+  InstrRef (InstrId pid a b) -> InstrRef (InstrId (neg pid) a b)
+  EffRef (EffId pid a b c) -> EffRef (EffId (neg pid) a b c)
+  where
+    neg :: Val a => a -> a
+    neg = liftE negate

@@ -33,6 +33,7 @@ module Csound.Core
    -- ** Signal space
   , SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..)
   , cfd, genCfds, cfd4, cfds
+  , mean
 
     -- * Stereo sig-space
   , SigSpace2(..), BindSig2(..), mul2, mul2'
@@ -42,6 +43,8 @@ module Csound.Core
   , renderSE
   , setTotalDur
   , global
+  , setOption
+  , setDefaultOption
 
     -- ** Writing / reading signals from audio card
   , writeOuts, readIns
@@ -64,6 +67,8 @@ module Csound.Core
   , newEff
   , Note (..)
   , play
+  , setFraction
+  , negateInstrRef
 
   -- * Constants
   , idur
@@ -87,8 +92,13 @@ module Csound.Core
 
     -- * Essential opcodes
   , module Csound.Core.Opcodes
+
+    -- * Reexports
+  , module Data.String
   ) where
 
+
+import Data.String
 import Data.Boolean
 import Csound.Core.Types
 import Csound.Core.Opcodes

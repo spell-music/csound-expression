@@ -10,10 +10,9 @@ resolver:
 packages:
   # - gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
   - csound-expression-dynamic
-  - csound-expression-typed
   - csound-core
   - csound-expression-opcodes
-  - csound-expression
+    # - csound-expression
   - csound-sampler
   - csound-controllers
   - csound-catalog

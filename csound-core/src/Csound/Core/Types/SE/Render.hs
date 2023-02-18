@@ -70,8 +70,10 @@ class RenderCsd a where
 hasInputs :: forall a . RenderCsd a => Bool
 hasInputs = csdArity'inputs (csdArity @a) > 0
 
+{-
 hasOutputs :: forall a . RenderCsd a => Bool
 hasOutputs = csdArity'outputs (csdArity @a) > 0
+-}
 
 renderEff :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO String
 renderEff opt instr = renderInstr opt (instr =<< readIns)
@@ -181,8 +183,8 @@ dacBy opt' a = do
 
       withDac
         | hasJackConnections opt'       = setDacBy "null"
-        | hasOutputs @a = setDac
-        | otherwise                     = mempty
+--        | hasOutputs @a = setDac
+        | otherwise                     = setDac -- mempty
 
       withAdc
         | hasJackConnections opt'      = setAdcBy "null"

@@ -3,6 +3,8 @@ module Csound.Core.Types.SE
   , setTotalDur
   , renderSE
   , global
+  , setOption
+  , setDefaultOption
   , IsRef (..)
   , modifyRef
   , getCurrentRate
@@ -32,6 +34,9 @@ import Data.Default
 newtype SE a = SE { unSE :: Dep a }
   deriving newtype (Functor, Applicative, Monad)
 
+instance MonadFail SE where
+  fail = error "no implementation for MonadFail"
+
 instance MonadIO SE where
   liftIO = SE . lift . liftIO
 
@@ -52,6 +57,14 @@ global :: SE () -> SE ()
 global (SE expr) = SE $ lift $ do
   ge <- Dynamic.execDepT expr
   State.insertGlobalExpr ge
+
+-- | forces set of the option option to new value
+setOption :: Options -> SE ()
+setOption opt = SE $ lift $ State.setOption opt
+
+-- | Sets option if it's not already set
+setDefaultOption :: Options -> SE ()
+setDefaultOption opt = SE $ lift $ State.setDefaultOption opt
 
 class IsRef ref where
   readRef  :: Tuple a => ref a -> SE a
