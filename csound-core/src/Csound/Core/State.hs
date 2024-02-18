@@ -57,22 +57,22 @@ newtype Run a = Run { unRun :: StateT St IO a }
 exec :: Options -> Run () -> IO Csd
 exec opts act = do
   st <- execStateT (unRun $ setupInstr0 opts >> act) initSt
-  pure $ (stCsd st) { csdFlags = Options.csdFlags (stOptions st) }
+  pure $ st.csd { csdFlags = Options.csdFlags st.options }
   where
     initSt = St
-      { stCsd = Csd
+      { csd = Csd
           { csdFlags = Options.csdFlags opts
           , csdOrc   = Orc emptyE []
           , csdSco   = Sco (Just foreverTime) [] []
           , csdPlugins = []
           }
-      , stFreshId = initFreshId
-      , stFreshVar = 1
-      , stIsGlobal = True
-      , stCurrentRate = Nothing
-      , stOptions = opts
-      , stReadInit = ReadInit HashMap.empty
-      , stFtables = Ftables { ftableCache = FtableMap Map.empty, ftableFreshId = 1 }
+      , freshId = initFreshId
+      , freshVar = 1
+      , isGlobal = True
+      , currentRate = Nothing
+      , options = opts
+      , readInit = ReadInit HashMap.empty
+      , ftables = Ftables { ftableCache = FtableMap Map.empty, ftableFreshId = 1 }
       }
 
     foreverTime = 100 * 604800.0
@@ -105,10 +105,10 @@ insertOrcInstrument instr x = x { orcInstruments = instr : orcInstruments x }
 -- sets stIsGlobal to False during the action
 localy :: Run a -> Run a
 localy (Run act) = Run $ do
-  prev <- gets stIsGlobal
-  modify' $ \st -> st { stIsGlobal = False }
+  prev <- gets (.isGlobal)
+  modify' $ \st -> st { isGlobal = False }
   res <- act
-  modify' $ \st -> st { stIsGlobal = prev }
+  modify' $ \st -> st { isGlobal = prev }
   pure res
 
 insertGlobalExpr :: E -> Run ()
@@ -146,14 +146,14 @@ initGlobalArrVar rate sizes = do
     initVarExpr v = noRate $ InitArr v (fmap toPrimOr sizes)
 
 isGlobalInstr :: Run Bool
-isGlobalInstr = Run $ gets stIsGlobal
+isGlobalInstr = Run $ gets (.isGlobal)
 
 -- | TODO
 saveTabs :: [Gen] -> Run E
 saveTabs = undefined
 
 getOptions :: Run Options
-getOptions = Run $ gets stOptions
+getOptions = Run $ gets (.options)
 
 -- | Preambule instrument which sets up global constants and utilities
 setupInstr0 :: Options -> Run ()
@@ -180,12 +180,12 @@ globalConstants opt = do
 
 getReadOnlyVar :: Rate -> E -> Run E
 getReadOnlyVar rate expr = Run $ do
-  ReadInit initMap <- gets stReadInit
+  ReadInit initMap <- gets (.readInit)
   readOnlyVar <$> case HashMap.lookup hash initMap of
     Just var -> pure var
     Nothing  -> do
       var <- unRun $ initGlobalVar rate expr
-      modify' $ \s -> s { stReadInit = ReadInit $ HashMap.insert hash var $ unReadInit $ stReadInit s }
+      modify' $ \s -> s { readInit = ReadInit $ HashMap.insert hash var $ unReadInit s.readInit }
       pure var
   where
     hash = hashE expr
@@ -207,7 +207,7 @@ getFreshPort :: Dep E
 getFreshPort = opcsDep chnUpdateOpcodeName [(Ir, [])] []
 
 getCurrentRate :: Run (Maybe IfRate)
-getCurrentRate = Run (gets stCurrentRate)
+getCurrentRate = Run (gets (.currentRate))
 
 withCurrentRate :: IfRate -> Dep a -> Dep a
 withCurrentRate rate act = do
@@ -218,21 +218,21 @@ withCurrentRate rate act = do
   pure res
   where
     setCurrentRate :: Maybe IfRate -> Dep ()
-    setCurrentRate r = lift $ Run $ modify' $ \s -> s { stCurrentRate = r }
+    setCurrentRate r = lift $ Run $ modify' $ \s -> s { currentRate = r }
 
 -----------------------------------------------------------------------------
 -- internal state
 
 -- | Internal state for rendering typed expressions to Csd
 data St = St
-  { stCsd         :: Csd               -- ^ Dynamic Csound code
-  , stFreshId     :: FreshId           -- ^ fresh instrument ids
-  , stFreshVar    :: Int               -- ^ fresh names for mutable variables
-  , stIsGlobal    :: Bool              -- ^ do we render global or local instrument
-  , stCurrentRate :: Maybe IfRate      -- ^ current rate of execution (Ir or Kr)
-  , stOptions     :: Options           -- ^ Csound flags and initial options / settings
-  , stReadInit    :: ReadInit          -- ^ read only global inits that are initialized only once
-  , stFtables     :: Ftables
+  { csd         :: Csd               -- ^ Dynamic Csound code
+  , freshId     :: FreshId           -- ^ fresh instrument ids
+  , freshVar    :: Int               -- ^ fresh names for mutable variables
+  , isGlobal    :: Bool              -- ^ do we render global or local instrument
+  , currentRate :: Maybe IfRate      -- ^ current rate of execution (Ir or Kr)
+  , options     :: Options           -- ^ Csound flags and initial options / settings
+  , readInit    :: ReadInit          -- ^ read only global inits that are initialized only once
+  , ftables     :: Ftables
   }
 
 -- | Global vars that are initialized only once and are read-only
@@ -254,7 +254,7 @@ initFreshId :: FreshId
 initFreshId = FreshId 1 HashMap.empty
 
 modifyCsd :: (Csd -> Csd) -> Run ()
-modifyCsd f = Run $ modify' $ \s -> s { stCsd = f (stCsd s) }
+modifyCsd f = Run $ modify' $ \s -> s { csd = f s.csd }
 
 data FreshInstrId
   = InstrExist InstrId
@@ -267,13 +267,13 @@ data FreshInstrId
 -- Assumption that hash identifies the instrument. It's not safe but we need it for performance
 getFreshInstrId :: E -> Run FreshInstrId
 getFreshInstrId expr = Run $ do
-  instrMem <- gets (freshIdMem . stFreshId)
+  instrMem <- gets (freshIdMem . (.freshId))
   case HashMap.lookup hash instrMem of
     Just instrId -> pure $ InstrExist instrId
     Nothing      -> do
-      freshId <- gets (freshIdCounter . stFreshId)
+      freshId <- gets (freshIdCounter . (.freshId))
       let instrId = intInstrId freshId
-      modify' $ \st -> st { stFreshId = insertFreshId instrId $ stFreshId st }
+      modify' $ \st -> st { freshId = insertFreshId instrId st.freshId }
       pure $ NewInstr instrId
   where
     hash = hashE expr
@@ -285,8 +285,8 @@ getFreshInstrId expr = Run $ do
 
 getFreshGlobalVar :: Rate -> Run Var
 getFreshGlobalVar rate = Run $ do
-  varId <- gets stFreshVar
-  modify' $ \st -> st { stFreshVar = stFreshVar st + 1 }
+  varId <- gets (.freshVar)
+  modify' $ \st -> st { freshVar = st.freshVar + 1 }
   pure $ Var
     { varType = GlobalVar
     , varRate = rate
@@ -316,7 +316,7 @@ insertFtableMap ft newId x = x { ftableCache = FtableMap $ Map.insert ft newId $
 
 lookupFtable :: Ftable -> Run (Maybe E)
 lookupFtable ft = Run $ do
-  FtableMap ftMap <- gets (ftableCache . stFtables)
+  FtableMap ftMap <- gets (ftableCache . (.ftables))
   pure $ Map.lookup ft ftMap
 
 saveGen :: Gen -> Run E
@@ -326,7 +326,7 @@ saveGen gen = do
     insertGen = do
       newId <- getFreshFtableId
       v <- fmap readOnlyVar $ initGlobalVar Ir (ftgen newId gen)
-      Run $ modify' $ \st -> st { stFtables = insertFtableMap (GenTable gen) v $ setFreshId (v + 1) $ stFtables st }
+      Run $ modify' $ \st -> st { ftables = insertFtableMap (GenTable gen) v $ setFreshId (v + 1) st.ftables }
       pure v
 
 ftgen :: E -> Gen -> E
@@ -364,7 +364,7 @@ saveVco inits =
       (shapeId, mResId) <- vcoShapeId' (vcoShape inits)
       newId <- getFreshFtableId
       nextNewId <- fmap readOnlyVar $ initGlobalVar Ir $ fromVcoInit (isNothing mResId) shapeId newId inits
-      Run $ modify' $ \st -> st { stFtables = insertFtableMap (VcoTable inits) newId $ setFreshId nextNewId $ stFtables st }
+      Run $ modify' $ \st -> st { ftables = insertFtableMap (VcoTable inits) newId $ setFreshId nextNewId st.ftables }
       pure $ fromMaybe shapeId mResId
 
     fromVcoInit isGen shapeId newId VcoInit{..} =
@@ -387,13 +387,13 @@ vcoShapeId' = \case
     simple n resId = pure (int n, Just resId)
 
 getFreshFtableId :: Run E
-getFreshFtableId = Run $ gets (ftableFreshId . stFtables)
+getFreshFtableId = Run $ gets (ftableFreshId . (.ftables))
 
 -------------------------------------------------------------------------------------
 -- update options
 
 setOption :: Options -> Run ()
-setOption opt = Run $ modify' $ \st -> st { stOptions = opt <> stOptions st }
+setOption opt = Run $ modify' $ \st -> st { options = opt <> st.options }
 
 setDefaultOption :: Options -> Run ()
-setDefaultOption opt = Run $ modify' $ \st -> st { stOptions = stOptions st <> opt }
+setDefaultOption opt = Run $ modify' $ \st -> st { options = st.options <> opt }

@@ -6,6 +6,7 @@ Author:	       Anton Kholomiov
 Synopsis:      typed core for the library csound-expression
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
+Build-Type:    Simple
 
 Description: typed core for library csound-expression. Provides typed core lang for csound
 
@@ -78,8 +79,11 @@ Library
   Default-Language: GHC2021
   Default-extensions:
     OverloadedStrings
+    OverloadedRecordDot
+    DuplicateRecordFields
     StrictData
     LambdaCase
     DerivingStrategies
     RecordWildCards
     TypeFamilies
+
