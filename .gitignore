@@ -4,3 +4,4 @@ dist
 docs
 stack.yaml.lock
 dist-newstyle/
+build/
