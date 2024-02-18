@@ -2,12 +2,8 @@ Name:          csound-core
 Version:       0.2.7
 Cabal-Version: 1.12
 License:       BSD3
-License-file:  LICENSE
 Author:	       Anton Kholomiov
 Synopsis:      typed core for the library csound-expression
-Stability:     Experimental
-Tested-With:   GHC==7.10
-Build-Type:    Simple
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
 
@@ -20,9 +16,8 @@ Source-repository head
     Type: git
     Location: https://github.com/anton-k/csound-expression-typed
 
-
 Library
-  Ghc-Options:    -Wall -Werror
+  Ghc-Options:    -Wall
   Build-Depends:
         base >= 4.10, base < 5,
         bytestring,
@@ -80,21 +75,11 @@ Library
     Csound.Core.Types.SE.Ref
     Csound.Core.Types.SE.Port
 
-  Default-Language: Haskell2010
+  Default-Language: GHC2021
   Default-extensions:
-    FlexibleInstances
-    FlexibleContexts
-    DeriveGeneric
-    DerivingStrategies
-    ImportQualifiedPost
-    LambdaCase
     OverloadedStrings
-    ScopedTypeVariables
-    TypeApplications
-    GeneralizedNewtypeDeriving
-    TypeFamilies
-    ExistentialQuantification
-    RecordWildCards
-    TupleSections
-    TypeOperators
     StrictData
+    LambdaCase
+    DerivingStrategies
+    RecordWildCards
+    TypeFamilies
