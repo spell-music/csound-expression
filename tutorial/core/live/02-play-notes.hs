@@ -69,7 +69,7 @@ midiEcho = dacBy setTrace $ do
       prints "Midi note:\n    velocity : %d\n    pitch    : %d\n" (v, n)
 
 
-midiPlay = writeCsdBy setTrace "tmp.csd" $ do
+midiPlay = dac $ do
   playId <- newProc playFile2
   melId  <- newProc playPeriodicInstr2
 
@@ -81,13 +81,13 @@ midiPlay = writeCsdBy setTrace "tmp.csd" $ do
       n <- notnum
       let tagPlayId = setFraction 1000 n playId
           tagMelId = setFraction 1000 n melId
-      v <- veloc
+      v <- (/ 127) <$> veloc
       prints "Midi note:\n    velocity : %d\n    pitch    : %d\n" (v, n)
 
-      when1 (n `equals` 9)  $ schedule tagPlayId 0 (-1) (0.8, 1, file1)
-      when1 (n `equals` 10) $ schedule tagPlayId 0 (-1) (0.8, -1, file1)
-      when1 (n `equals` 11) $ schedule tagPlayId 0 (-1) (0.8, -0.5, file1)
-      when1 (n `equals` 12) $ schedule tagPlayId 0 (-1) (0.8, 2, file1)
+      when1 (n `equals` 9)  $ schedule tagPlayId 0 (-1) (v, 1, file1)
+      when1 (n `equals` 10) $ schedule tagPlayId 0 (-1) (v, -1, file1)
+      when1 (n `equals` 11) $ schedule tagPlayId 0 (-1) (v, -0.5, file1)
+      when1 (n `equals` 12) $ schedule tagPlayId 0 (-1) (v, 2, file1)
       when1 (n `equals` 28) $ schedule tagMelId 0 (-1) ()
 
       when1 (n `equals` 26) $ schedule tagMelId 0 (-1) ()

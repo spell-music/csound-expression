@@ -42,12 +42,40 @@ Also we can check that csound-core can be loaded to terminal and used:
 Ctrl + C - to stop audio
 ```
 
+## Prerequisites
+
+Also it would be cool to have MIDI-controller with knobs and keys or buttons
+to try things out. As we build MIDI-controllable sampler.
+I personaly use Novation Launch control" but anything with keys or knobs will do.
+
 ## Contents
 
-* Play a single sample
+* Play single audio file
 
-* Play lives with notes
+* Play live with notes and MIDI
 
+* Create simple audio player (introduce global mutable references)
 
+* Launch samples synchronized on bpm
 
+* Add mixer with volume controls
 
+* Create GRID of sample playbacks
+
+* Make BPM and measure variable
+
+* Make it generic by instrument
+
+* MIDI out, control external devices
+
+* Fancy effects
+
+* Custom instruments
+
+* Randmness
+
+* Live looping
+
+* Beyond MIDI
+
+* Conclusion
