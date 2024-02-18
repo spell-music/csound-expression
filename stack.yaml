@@ -5,7 +5,10 @@
 # stack sdist --tar-dir dist --ignore-check
 
 resolver:
-  lts-20.5
+  nightly-2024-02-18 # ghc 9.8
+  # lts-20.5
+
+allow-newer: true
 
 packages:
   # - gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
