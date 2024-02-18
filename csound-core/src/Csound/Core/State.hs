@@ -356,6 +356,7 @@ data VcoInit = VcoInit
   , vcoMaxSize :: Maybe Int
   }
   deriving (Eq, Ord)
+
 saveVco :: VcoInit -> Run E
 saveVco inits =
   maybe insertVco' pure =<< lookupFtable (VcoTable inits)
