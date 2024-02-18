@@ -1,3 +1,5 @@
+.PHONY: build bench run
+
 build:
 	stack build csound-core
 
