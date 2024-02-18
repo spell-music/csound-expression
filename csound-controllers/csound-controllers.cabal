@@ -9,7 +9,7 @@ copyright:      2018 Author name here
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-cabal-version:  >= 1.22
+cabal-version:  1.12
 extra-source-files:
     ChangeLog.md
     README.md
