@@ -75,7 +75,7 @@ double = fromE . pure . Dynamic.double
 
 -- | Constructs a number.
 float :: Float -> D
-float = float . realToFrac
+float = double . realToFrac
 
 -------------------------------------------------------------------------------
 -- constants
