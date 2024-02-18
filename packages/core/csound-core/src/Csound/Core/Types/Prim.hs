@@ -70,11 +70,11 @@ int :: SigOrD a => Int -> a
 int = fromE . pure . Dynamic.int
 
 -- | Constructs a number.
-double :: Double -> D
+double :: SigOrD a => Double -> a
 double = fromE . pure . Dynamic.double
 
 -- | Constructs a number.
-float :: Float -> D
+float :: SigOrD a => Float -> a
 float = double . realToFrac
 
 -------------------------------------------------------------------------------
