@@ -225,14 +225,14 @@ withCurrentRate rate act = do
 
 -- | Internal state for rendering typed expressions to Csd
 data St = St
-  { stCsd         :: !Csd               -- ^ Dynamic Csound code
-  , stFreshId     :: !FreshId           -- ^ fresh instrument ids
-  , stFreshVar    :: !Int               -- ^ fresh names for mutable variables
-  , stIsGlobal    :: !Bool              -- ^ do we render global or local instrument
-  , stCurrentRate :: !(Maybe IfRate)    -- ^ current rate of execution (Ir or Kr)
-  , stOptions     :: !Options           -- ^ Csound flags and initial options / settings
-  , stReadInit    :: !ReadInit          -- ^ read only global inits that are initialized only once
-  , stFtables     :: !Ftables
+  { stCsd         :: Csd               -- ^ Dynamic Csound code
+  , stFreshId     :: FreshId           -- ^ fresh instrument ids
+  , stFreshVar    :: Int               -- ^ fresh names for mutable variables
+  , stIsGlobal    :: Bool              -- ^ do we render global or local instrument
+  , stCurrentRate :: Maybe IfRate      -- ^ current rate of execution (Ir or Kr)
+  , stOptions     :: Options           -- ^ Csound flags and initial options / settings
+  , stReadInit    :: ReadInit          -- ^ read only global inits that are initialized only once
+  , stFtables     :: Ftables
   }
 
 -- | Global vars that are initialized only once and are read-only
@@ -241,9 +241,9 @@ newtype ReadInit = ReadInit { unReadInit :: HashMap ExpHash Var }
 
 -- | Fresh ids for instruments
 data FreshId = FreshId
-  { freshIdCounter :: !Int
+  { freshIdCounter :: Int
       -- ^ counter for new id
-  , freshIdMem     :: !(HashMap ExpHash InstrId)
+  , freshIdMem     :: HashMap ExpHash InstrId
       -- ^ hash map of already defined instruments,
       -- we use it to avoid duplication of defined instruments
       -- here we assme that instrument is unique by hash of it's expression
