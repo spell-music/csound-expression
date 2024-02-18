@@ -275,16 +275,16 @@ inferIter opts (Stmt lhs rhs) =
 
     onFreeTfm info rateTab args = do
       signature <-
-        if Map.size rateTab == 1
-          then pure $ head $ Map.toList rateTab
-          else
+        case Map.toList rateTab of
+          [rateInfo] -> pure rateInfo
+          _ ->
             case preferOpc opts (infoName info) rateTab of
               Right opcRate -> pure opcRate
               Left opcRates -> findSignature args opcRates
       onFixedRateTfm info signature args
 
     findSignature :: [PrimOr Int] -> [OpcSignature] -> Infer s OpcSignature
-    findSignature args allOpcRates = go (head allOpcRates) Nothing allOpcRates
+    findSignature args allOpcRates = go (fromMaybe (Kr, []) $ headMay allOpcRates) Nothing allOpcRates
       where
         go :: OpcSignature -> Maybe SignatureChoice -> [OpcSignature] -> Infer s OpcSignature
         go defaultRate mBestFit candidateRates =

@@ -1,6 +1,6 @@
 Name:          csound-expression-opcodes
 Version:       0.0.5.1
-Cabal-Version: >= 1.22
+Cabal-Version: 1.12
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
@@ -16,7 +16,7 @@ Description:   opcodes for the library csound-expression
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers, csound-expression-typed >= 0.2.5, csound-expression-dynamic >= 0.3.7
+        base >= 4, base < 5, transformers, csound-expression-typed >= 0.2.5, csound-expression-dynamic >= 0.3.9.1
   Hs-Source-Dirs:      src/
   Default-language: Haskell2010
   default-extensions:

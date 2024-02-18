@@ -1,6 +1,6 @@
 Name:          csound-expression
 Version:       5.4.3
-cabal-version: >= 1.22
+cabal-version: 1.12
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
@@ -88,7 +88,7 @@ Library
         transformers >= 0.3,
         containers,
         csound-expression-typed >= 0.2.7,
-        csound-expression-dynamic >= 0.3.8,
+        csound-expression-dynamic >= 0.3.9.1,
         temporal-media >= 0.6.3,
         csound-expression-opcodes >= 0.0.5.1,
         text

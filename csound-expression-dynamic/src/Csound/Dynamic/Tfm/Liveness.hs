@@ -39,11 +39,14 @@ type Dag f = [Exp f]
 -----------------------------------------------
 
 data IdList = IdList
-    [Int] -- fresh ids
+    [Int] -- fresh ids (always infinite list)
     !Int   -- the biggest used id
 
 allocId :: IdList -> (Int, IdList)
-allocId (IdList is lastId) = (head is, IdList (tail is) (max (head is) lastId))
+allocId (IdList is lastId) =
+  case  is of
+    hd : tl -> (hd, IdList tl (max hd lastId))
+    [] -> error "impossible: list of IDs is always infinite"
 
 freeId :: Int -> IdList -> IdList
 freeId  n (IdList is lastId) = IdList (insertSorted n is) lastId1
