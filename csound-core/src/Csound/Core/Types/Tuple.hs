@@ -13,7 +13,6 @@ module Csound.Core.Types.Tuple
   , primTuple
   ) where
 
-import Control.Applicative (liftA2)
 import Data.NumInstances.Tuple ()
 import Data.Boolean
 

@@ -9,7 +9,6 @@ resolver:
   # nightly-2024-02-18 # ghc 9.8
 
 allow-newer: true
->>>>>>> origin
 
 packages:
   # - gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes

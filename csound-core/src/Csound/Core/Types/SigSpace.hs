@@ -14,7 +14,6 @@ module Csound.Core.Types.SigSpace(
 ) where
 
 import Control.Monad
-import Control.Applicative
 import Csound.Core.Types.Prim
 import Csound.Core.Types.SE
 import Data.Kind (Type)

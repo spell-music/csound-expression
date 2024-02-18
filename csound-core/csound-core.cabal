@@ -1,6 +1,6 @@
 Name:          csound-core
 Version:       0.2.7
-Cabal-Version: >= 1.22
+Cabal-Version: 1.12
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
@@ -77,8 +77,6 @@ Library
     Csound.Core.Types.SE.Render
     Csound.Core.Types.Tuple
 
-    Paths_csound_expression_typed_core
-
   Default-Language: Haskell2010
   Default-extensions:
     FlexibleInstances
@@ -95,3 +93,4 @@ Library
     ExistentialQuantification
     RecordWildCards
     TupleSections
+    TypeOperators
