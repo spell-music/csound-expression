@@ -12,13 +12,13 @@ allow-newer: true
 
 packages:
   # - gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
-  - csound-expression-dynamic
-  - csound-core
-  - csound-expression-opcodes
+  - packages/core/csound-expression-dynamic
+  - packages/core/csound-core
+  - packages/extra/csound-expression-opcodes
     # - csound-expression
-  - csound-sampler
-  - csound-controllers
-  - csound-catalog
+  - packages/batteries/csound-sampler
+  - packages/batteries/csound-controllers
+  - packages/batteries/csound-catalog
 
 extra-deps:
   - data-fix-0.3.2@sha256:bdea17f6b17c1d327f53ae6806e1bc3ca7813b46742a93c6088c72837c8ae77c,1706
