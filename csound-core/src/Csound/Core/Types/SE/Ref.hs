@@ -12,7 +12,7 @@ import Control.Monad.Trans.Class (lift)
 import Csound.Dynamic (Var)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State qualified as State
-import Csound.Core.Types.SE
+import Csound.Core.Types.SE.Core
 import Csound.Core.Types.Tuple
 
 -- | It describes a reference to mutable values.

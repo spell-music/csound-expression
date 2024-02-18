@@ -15,12 +15,7 @@ import Csound.Core.Types.Gen       as X
 import Csound.Core.Types.Prim      as X
 import Csound.Core.Types.Tuple     as X
 import Csound.Core.Types.SE        as X
-import Csound.Core.Types.SE.Logic  as X
-import Csound.Core.Types.SE.Ref    as X
-import Csound.Core.Types.SE.Port   as X
-import Csound.Core.Types.SE.Instr  as X
 import Csound.Core.Types.Array     as X
-import Csound.Core.Types.PureArray as X
 import Csound.Core.Types.Rate      as X
 import Csound.Core.Types.SigSpace  as X
 

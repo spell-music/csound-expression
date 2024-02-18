@@ -49,15 +49,18 @@ Library
   Exposed-Modules:
     Csound.Core
     Csound.Core.Opcodes
-    Csound.Core.Opcodes.Instr
-    Csound.Core.Opcodes.Osc
-    Csound.Core.Opcodes.Vco
-    Csound.Core.State
-    Csound.Core.State.Options
     Csound.Core.Types
     Csound.Core.Types.Gen
-    Csound.Core.Types.Rate
     Csound.Core.Types.Prim
+    Csound.Core.Types.SigSpace
+    Csound.Core.Types.Array
+    Csound.Core.Types.SE
+    Csound.Core.Types.Tuple
+    Csound.Core.Render
+    Csound.Core.Render.Options
+
+  Other-Modules:
+    Csound.Core.State
     Csound.Core.Types.Prim.Bool
     Csound.Core.Types.Prim.InstrId
     Csound.Core.Types.Prim.D
@@ -66,16 +69,16 @@ Library
     Csound.Core.Types.Prim.Spec
     Csound.Core.Types.Prim.Str
     Csound.Core.Types.Prim.Tab
-    Csound.Core.Types.SigSpace
-    Csound.Core.Types.Array
     Csound.Core.Types.PureArray
-    Csound.Core.Types.SE
+    Csound.Core.Types.Rate
+    Csound.Core.Opcodes.Instr
+    Csound.Core.Opcodes.Osc
+    Csound.Core.Opcodes.Vco
+    Csound.Core.Types.SE.Core
     Csound.Core.Types.SE.Instr
     Csound.Core.Types.SE.Logic
     Csound.Core.Types.SE.Ref
     Csound.Core.Types.SE.Port
-    Csound.Core.Types.SE.Render
-    Csound.Core.Types.Tuple
 
   Default-Language: Haskell2010
   Default-extensions:

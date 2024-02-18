@@ -43,8 +43,8 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 
 import Csound.Dynamic
-import Csound.Core.State.Options (Options)
-import Csound.Core.State.Options qualified as Options
+import Csound.Core.Render.Options (Options)
+import Csound.Core.Render.Options qualified as Options
 
 type Dep a = DepT Run a
 

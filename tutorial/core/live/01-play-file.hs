@@ -7,7 +7,7 @@ import Csound.Core
 
 -- change main function to listen to results
 main :: IO ()
-main = polyphony
+main = polyphony2
 
 file1, file2 :: IsString a => a
 file1 = "/home/anton/over-minus.wav"

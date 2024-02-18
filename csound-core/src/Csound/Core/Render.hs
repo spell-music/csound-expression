@@ -1,5 +1,5 @@
 {-# Language AllowAmbiguousTypes, CPP, UndecidableInstances #-}
-module Csound.Core.Types.SE.Render
+module Csound.Core.Render
   (
     -- * Rendering
     RenderCsd(..),
@@ -43,7 +43,7 @@ module Csound.Core.Types.SE.Render
     -- readMacrosString, readMacrosDouble, readMacrosInt
   ) where
 
-import Csound.Core.State.Options
+import Csound.Core.Render.Options
   (Options (..), setSilent, setDac, setAdc, setDacBy, setAdcBy, setVirtual, logTrace)
 import Csound.Core.Types.SE
 import Csound.Core.Types.Prim

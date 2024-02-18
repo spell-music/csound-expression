@@ -15,7 +15,7 @@ import Csound.Core.State qualified as State
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Rate
 import Csound.Core.Types.Prim
-import Csound.Core.Types.SE
+import Csound.Core.Types.SE.Core
 import Csound.Core.Types.SE.Ref
 
 -- | With current rate tracking we assure that if we are inside

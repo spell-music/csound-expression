@@ -198,7 +198,7 @@ import Csound.Core.Types.SE
 import Data.Maybe
 import Data.Boolean
 import Data.Text (Text)
-import Csound.Core.State.Options
+import Csound.Core.Render.Options
 
 withTab :: Tab -> (E -> PreTab) -> Tab
 withTab tab cont = Tab $ do

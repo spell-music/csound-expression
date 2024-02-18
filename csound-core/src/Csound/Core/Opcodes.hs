@@ -137,7 +137,7 @@ import Csound.Core.Types
 import Csound.Core.Opcodes.Instr
 import Csound.Core.Opcodes.Osc
 import Csound.Core.Opcodes.Vco
-import Csound.Core.State.Options (setMa)
+import Csound.Core.Render.Options (setMa)
 
 
 ----------------------------------------------------------------------------------

@@ -24,7 +24,7 @@ import Csound.Core.State qualified as State
 import Csound.Core.Types.Prim
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Rate
-import Csound.Core.Types.SE
+import Csound.Core.Types.SE.Core
 import Csound.Core.Types.SE.Logic
 import Csound.Core.Types.SE.Port
 import Control.Monad.Trans.Class (lift)

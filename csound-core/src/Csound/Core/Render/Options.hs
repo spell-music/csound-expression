@@ -1,5 +1,5 @@
 {-# Language CPP #-}
-module Csound.Core.State.Options (
+module Csound.Core.Render.Options (
     Options(..),
     defGain, defSampleRate, defBlockSize, defTabFi, defScaleUI, defNchnls,
     -- * Table fidelity

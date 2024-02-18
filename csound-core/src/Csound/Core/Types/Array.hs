@@ -1,5 +1,14 @@
 {-# Language FlexibleInstances, ScopedTypeVariables #-}
 module Csound.Core.Types.Array(
+    -- * Pure array
+    PureArr,
+    PureArrD,
+    newPureArr,
+    newPureArrD,
+    readPureArr,
+    readPureArrD,
+
+    -- * Mutable array
     Arr(..),
     newLocalArr, newGlobalArr, newLocalCtrlArr, newGlobalCtrlArr,
     fillLocalArr, fillGlobalArr, fillLocalCtrlArr, fillGlobalCtrlArr,
@@ -42,6 +51,7 @@ import Csound.Core.Types.Tuple
 import Csound.Core.Types.SE
 import Csound.Core.State (Run, Dep)
 import Csound.Core.State qualified as State
+import Csound.Core.Types.PureArray
 
 ------------------------------------------------------------------
 -- allocation of array vars

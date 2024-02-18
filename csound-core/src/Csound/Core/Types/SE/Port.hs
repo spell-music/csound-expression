@@ -11,7 +11,7 @@ import Control.Monad.Trans.Class (lift)
 import Csound.Dynamic (Rate (..), E)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Dep)
-import Csound.Core.Types.SE
+import Csound.Core.Types.SE.Core
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.D
 import Csound.Core.Types.Prim.Val

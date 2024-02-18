@@ -20,7 +20,7 @@ import Csound.Dynamic (E, GenId (..), Gen (..), Rate (..))
 import Csound.Dynamic qualified as D
 import Csound.Core.State (Run)
 import Csound.Core.State qualified as State
-import Csound.Core.State.Options (TabFi (..), defTabFi)
+import Csound.Core.Render.Options (TabFi (..), defTabFi)
 import Csound.Core.Types.Prim.Val
 import Csound.Core.Types.Prim.D
 import Csound.Core.Types.Prim.Sig

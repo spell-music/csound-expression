@@ -84,11 +84,9 @@ module Csound.Core
   , withInits
   , withDs, withD, withSig, withSigs, withTab, withTabs
 
-    -- * Options
-  , module Csound.Core.State.Options
-
     -- * Render
-  , module Csound.Core.Types.SE.Render
+  , module Csound.Core.Render
+  , module Csound.Core.Render.Options
 
     -- * Essential opcodes
   , module Csound.Core.Opcodes
@@ -102,8 +100,8 @@ import Data.String
 import Data.Boolean
 import Csound.Core.Types
 import Csound.Core.Opcodes
-import Csound.Core.State.Options
+import Csound.Core.Render.Options
 import Csound.Core.Types.Gen
 import Csound.Core.Types.Array
 import Csound.Core.Types.PureArray
-import Csound.Core.Types.SE.Render
+import Csound.Core.Render
