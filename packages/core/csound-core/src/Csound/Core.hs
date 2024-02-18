@@ -28,7 +28,7 @@ module Csound.Core
   , K (..), ar, kr, ir
 
     -- ** Type conversions
-  , sig, toD, int
+  , sig, toD, int, double, float
 
    -- ** Signal space
   , SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..)
