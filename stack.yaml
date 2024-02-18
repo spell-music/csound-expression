@@ -5,8 +5,8 @@
 # stack sdist --tar-dir dist --ignore-check
 
 resolver:
-  nightly-2024-02-18 # ghc 9.8
-  # lts-20.5
+  lts-22.11 # ghc 9.6.4
+  # nightly-2024-02-18 # ghc 9.8
 
 allow-newer: true
 

@@ -81,7 +81,7 @@ Library
         filepath,
         directory,
         wl-pprint-text >= 1.2.0,
-        csound-expression-dynamic >= 0.3.8,
+        csound-expression-dynamic >= 0.3.9.1,
         temporal-media >= 0.6.3,
         hashable,
         text
