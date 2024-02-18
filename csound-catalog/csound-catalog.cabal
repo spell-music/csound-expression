@@ -1,6 +1,6 @@
 Name:          csound-catalog
 Version:       0.7.6
-Cabal-Version: >= 1.22
+Cabal-Version: 1.12
 License:       BSD3
 License-file:  LICENSE
 Author:	       Anton Kholomiov
