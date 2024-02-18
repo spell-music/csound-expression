@@ -6,6 +6,8 @@ module Csound.Core.Types.Prim
   , sig
   , toD
   , int
+  , double
+  , float
   -- * Constants
   , idur
   , getSampleRate
@@ -66,6 +68,14 @@ toD = \case
 
 int :: SigOrD a => Int -> a
 int = fromE . pure . Dynamic.int
+
+-- | Constructs a number.
+double :: Double -> D
+double = fromE . pure . Dynamic.double
+
+-- | Constructs a number.
+float :: Float -> D
+float = float . realToFrac
 
 -------------------------------------------------------------------------------
 -- constants
