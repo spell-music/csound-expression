@@ -3,7 +3,9 @@
 module Csound.Core.Types.SE.Ref
   ( Ref (..)
   , newRef
+  , newCtrlRef
   , newLocalRef
+  , newLocalCtrlRef
   ) where
 
 import Control.Monad
@@ -39,10 +41,21 @@ newRef :: forall a . Tuple a => a -> SE (Ref a)
 newRef initVals =
   fmap Ref $ SE $ lift $ zipWithM State.initGlobalVar (tupleRates @a) =<< fromTuple initVals
 
+-- | Creates global mutable variable (reference). It can be shared between different
+-- instances ofthe instruments. If type is signal it creates K-rate signals
+newCtrlRef :: forall a . Tuple a => a -> SE (Ref a)
+newCtrlRef initVals =
+  fmap Ref $ SE $ lift $ zipWithM State.initGlobalVar (fmap toCtrlRate $ tupleRates @a) =<< fromTuple initVals
+
 -- | Creates local mutable variable (reference). It can not be shared between different local instruments
 newLocalRef :: forall a . Tuple a => a -> SE (Ref a)
 newLocalRef initVals =
   fmap Ref $ SE $ Dynamic.newLocalVars (tupleRates @a) (fromTuple initVals)
+
+-- | Creates local mutable variable (reference). It can not be shared between different local instruments
+newLocalCtrlRef :: forall a . Tuple a => a -> SE (Ref a)
+newLocalCtrlRef initVals =
+  fmap Ref $ SE $ Dynamic.newLocalVars (fmap toCtrlRate $ tupleRates @a) (fromTuple initVals)
 
 instance IsRef Ref where
   readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM Dynamic.readVar vars
@@ -50,3 +63,10 @@ instance IsRef Ref where
   writeRef (Ref vars) a = SE $ do
     vals <- lift $ fromTuple a
     zipWithM_ Dynamic.writeVar vars vals
+
+toCtrlRate :: Dynamic.Rate -> Dynamic.Rate
+toCtrlRate x = case x of
+    Dynamic.Ar -> Dynamic.Kr
+    _  -> x
+
+
