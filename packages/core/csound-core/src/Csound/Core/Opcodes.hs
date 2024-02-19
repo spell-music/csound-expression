@@ -1435,8 +1435,8 @@ ctrlinit inits = SE $ Dynamic.opcsDep_ "ctrlinit" rates =<< lift (concat <$> map
 -- > adest  ctrl7  ichan, ictlno, kmin, kmax [, ifn] [, icutoff]
 --
 -- csound doc: <http://csound.com/docs/manual/ctrl7.html>
-ctrl7 ::  D -> D -> D -> D -> SE Sig
-ctrl7 b1 b2 b3 b4 = liftOpcDep "ctrl7" rates (b1,b2,b3,b4)
+ctrl7 ::  D -> D -> D -> D -> Sig
+ctrl7 b1 b2 b3 b4 = liftOpc "ctrl7" rates (b1,b2,b3,b4)
   where rates = [(Ir,[Ir,Ir,Ir,Ir,Ir])
                 ,(Kr,[Ir,Ir,Kr,Kr,Ir])
                 ,(Ar,[Ir,Ir,Kr,Kr,Ir,Ir])]
@@ -1449,8 +1449,8 @@ ctrl7 b1 b2 b3 b4 = liftOpcDep "ctrl7" rates (b1,b2,b3,b4)
 -- > adest  ctrl7  ichan, ictlno, kmin, kmax [, ifn] [, icutoff]
 --
 -- csound doc: <http://csound.com/docs/manual/ctrl7.html>
-ctrl14 ::  D -> D -> D -> D -> SE Sig
-ctrl14 b1 b2 b3 b4 = liftOpcDep "ctrl14" rates (b1,b2,b3,b4)
+ctrl14 ::  D -> D -> D -> D -> Sig
+ctrl14 b1 b2 b3 b4 = liftOpc "ctrl14" rates (b1,b2,b3,b4)
   where rates = [(Ir,[Ir,Ir,Ir,Ir,Ir])
                 ,(Kr,[Ir,Ir,Kr,Kr,Ir])
                 ,(Ar,[Ir,Ir,Kr,Kr,Ir,Ir])]
