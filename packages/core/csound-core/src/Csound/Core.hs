@@ -55,7 +55,7 @@ module Csound.Core
     -- ** Mutables
   , IsRef (..)
   , modifyRef
-  , Ref, newRef, newLocalRef
+  , Ref, newRef, newLocalRef, newCtrlRef, newLocalCtrlRef
   , Port, newPort
 
     -- * Instruments
