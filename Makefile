@@ -1,3 +1,5 @@
+.PHONY: build bench
+
 build:
 	stack build # csound-expression # -typed
 
