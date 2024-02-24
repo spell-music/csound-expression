@@ -31,8 +31,9 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
     saveTmpVar :: (Int, RatedExp Int) -> RemoveTmp (Int, RatedExp Int)
     saveTmpVar (resId, expr) = case ratedExpExp expr of
       ReadVarTmp tmp v -> do
+        mRate <- lookupRate tmp
         insertTmpVar tmp resId
-        pure (resId, expr { ratedExpExp = ReadVar v })
+        pure (resId, expr { ratedExpExp = ReadVar v, ratedExpRate = mRate })
       TfmInit tmp info args -> do
         mRate <- lookupRate tmp
         insertTmpVar tmp resId
