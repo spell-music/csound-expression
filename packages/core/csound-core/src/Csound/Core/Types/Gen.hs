@@ -828,7 +828,7 @@ tablewa b1 b2 b3 = fmap (Sig . return) $ SE $ join $ f <$> lift (unTab b1) <*> l
 
 -- | Transforms phasor that is defined in seconds to relative phasor that ranges in 0 to 1.
 sec2rel :: Tab -> Sig -> Sig
-sec2rel tab x = x / (sig $ ftlen tab / getSampleRate)
+sec2rel tab x = x / (toSig $ ftlen tab / getSampleRate)
 
 -- | Table length in seconds for files that are read with GEN01
 -- (which a re read with functions like wavs, wavTab, wavLeft, wavRight).

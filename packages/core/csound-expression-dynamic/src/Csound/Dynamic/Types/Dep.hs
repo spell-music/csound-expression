@@ -96,7 +96,7 @@ getNewTmpVar :: Monad m => DepT m TmpVar
 getNewTmpVar = DepT $ do
   n <- gets newTmpVarNum
   modify' $ \s -> s { newTmpVarNum = n + 1 }
-  pure (TmpVar n)
+  pure (TmpVar Nothing n)
 
 depT_ :: (Monad m) => E -> DepT m ()
 depT_ a = -- fmap (const ()) . depT

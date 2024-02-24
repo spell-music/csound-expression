@@ -28,7 +28,7 @@ module Csound.Core
   , K (..), ar, kr, ir
 
     -- ** Type conversions
-  , sig, toD, int, double, float
+  , toSig, toD, int, double, float
 
    -- ** Signal space
   , SigSpace(..), BindSig(..), mul, mul', on, uon, At(..), MixAt(..)
@@ -55,6 +55,7 @@ module Csound.Core
     -- ** Mutables
   , IsRef (..)
   , modifyRef
+  , readInitRef, writeInitRef, modifyInitRef
   , Ref, newRef, newLocalRef, newCtrlRef, newLocalCtrlRef, newInitRef, newLocalInitRef
   , Port, newPort
 

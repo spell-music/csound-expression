@@ -3,7 +3,7 @@ module Csound.Core.Types.Prim
   ( SigOrD
   , module X
   -- * Converters
-  , sig
+  , toSig
   , toD
   , int
   , double
@@ -56,8 +56,8 @@ instance SigOrD D
 -------------------------------------------------------------------------------
 -- converters
 
-sig :: D -> Sig
-sig = \case
+toSig :: D -> Sig
+toSig = \case
   D a     -> Sig a
   PrimD a -> PrimSig a
 

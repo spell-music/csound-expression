@@ -91,7 +91,7 @@ ppPrim x = case x of
                 i = tfm 'i'
 
 ppTmpVar :: TmpVar -> Doc
-ppTmpVar (TmpVar n) = "tmp_var_" <> int n
+ppTmpVar (TmpVar mRate n) = "tmp_var_" <> int n <> (maybe mempty (\r -> "_" <> ppRate r) mRate)
 
 ppGen :: Int -> Gen -> Doc
 ppGen tabId ft = char 'f'

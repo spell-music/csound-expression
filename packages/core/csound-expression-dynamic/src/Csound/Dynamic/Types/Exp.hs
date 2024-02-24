@@ -27,6 +27,7 @@ module Csound.Dynamic.Types.Exp(
     rehashE,
     ExpHash (..),
     getInfoRates,
+    getTmpVars,
 ) where
 
 #if __GLASGOW_HASKELL__ < 710
@@ -137,6 +138,7 @@ setRate r a = rehashE $
     Tfm _ _    -> Fix $ (unFix a) { ratedExpRate = Just r }
     -- conversion set's the rate for constants
     -- ExpPrim _  -> a
+    ExpPrim (PrimTmpVar v) -> Fix $ (unFix a) { ratedExpExp = ExpPrim (PrimTmpVar $ v { tmpVarRate = Just r}), ratedExpRate = Just r }
     ExpPrim _  -> Fix $ (unFix a) { ratedExpRate = Just r }
     -- don't convert rate twice
     ConvertRate _ b arg -> withRate r $ ConvertRate r b arg
@@ -264,6 +266,12 @@ data MainExp a
 data IfRate = IfIr | IfKr
   deriving (Show, Eq, Ord, Generic)
 
+getTmpVars :: Exp a -> [TmpVar]
+getTmpVars = foldMap $ \(PrimOr e) ->
+  case e of
+    Left (PrimTmpVar tmp) -> [tmp]
+    _ -> []
+
 fromIfRate :: IfRate -> Rate
 fromIfRate = \case
   IfKr -> Kr
@@ -283,6 +291,7 @@ instance Cereal.Serialize OpcFixity
 instance Cereal.Serialize InstrId
 instance Cereal.Serialize CondOp
 instance Cereal.Serialize NumOp
+instance Cereal.Serialize TmpVar
 instance Cereal.Serialize Var
 instance Cereal.Serialize VarType
 instance Cereal.Serialize a => Cereal.Serialize (CodeBlock a)
@@ -406,8 +415,11 @@ data Prim
     deriving (Show, Eq, Ord, Generic)
 
 -- | temporary var
-newtype TmpVar = TmpVar { unTmpVar :: Int }
-  deriving newtype (Show, Eq, Ord, Cereal.Serialize)
+data TmpVar = TmpVar
+  { tmpVarRate :: Maybe Rate
+  , tmpVarId :: Int
+  }
+  deriving (Show, Eq, Ord, Generic)
 
 -- Gen routine.
 data Gen = Gen

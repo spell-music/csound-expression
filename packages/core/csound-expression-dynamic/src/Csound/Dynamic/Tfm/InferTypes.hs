@@ -32,6 +32,7 @@ module Csound.Dynamic.Tfm.InferTypes
   , Var(..)
   ) where
 
+import Control.Applicative ((<|>))
 import Safe
 import Control.Monad (zipWithM, foldM)
 import Data.Semigroup (Min(..))
@@ -194,8 +195,8 @@ inferIter opts (Stmt lhs rhs) =
 
     -- | Reading/writing a named variable
     InitVar v arg -> onInitVar v arg
-    ReadVar v -> onReadVar v
-    ReadVarTmp tmp v -> onReadVarTmp tmp v
+    ReadVar v -> onReadVar (ratedExpRate rhs) v
+    ReadVarTmp tmp v -> onReadVarTmp (ratedExpRate rhs) tmp v
     WriteVar v arg -> onWriteVar v arg
 
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
@@ -340,8 +341,18 @@ inferIter opts (Stmt lhs rhs) =
           argVar <- mapM (getVar Ir) arg
           pure (InitVar v argVar)
 
-    onReadVar v = save (Exp.varRate v) (ReadVar v)
-    onReadVarTmp tmp v = save (Exp.varRate v) (ReadVarTmp tmp v)
+    onReadVar mRate v =
+      save (fromMaybe varRate mRate) (withConvert v)
+      where
+        varRate = Exp.varRate v
+
+        withConvert var =
+          case mRate of
+            Nothing -> ReadVar var
+            Just target | target == varRate -> ReadVar var
+            Just target -> ExpPrim (PrimVar target var)
+
+    onReadVarTmp mRate tmp v = save (fromMaybe (Exp.varRate v) (tmpVarRate tmp <|> mRate)) (ReadVarTmp tmp v)
 
     onWriteVar v arg = saveProcedure =<< typedRhs
       where

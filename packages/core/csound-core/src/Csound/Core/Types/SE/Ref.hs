@@ -90,3 +90,5 @@ toInitRate x = case x of
     Dynamic.Ar -> Dynamic.Ir
     Dynamic.Kr -> Dynamic.Ir
     _  -> x
+
+

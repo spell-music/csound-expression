@@ -8,8 +8,9 @@ import Control.Monad.Trans.State.Strict
 import Data.IntMap.Strict (IntMap)
 import Data.IntMap.Strict qualified as IntMap
 import Data.Maybe
+-- import Debug.Trace
 
-import Csound.Dynamic.Types.Exp (RatedExp (..), TmpVar (..), MainExp (..), PrimOr (..), Prim (..), Rate (..))
+import Csound.Dynamic.Types.Exp (RatedExp (..), TmpVar (..), MainExp (..), PrimOr (..), Prim (..), Rate (..), getTmpVars)
 
 type Node f = (Int, f Int)
 type Dag f = [Node f]
@@ -25,7 +26,7 @@ data St = St
 
 removeTmpVars :: Dag RatedExp -> Dag RatedExp
 removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
-  mapM_ saveRates dag
+  mapM_ (mapM_ saveTmpVarRate . getTmpVars . ratedExpExp .  snd) dag
   mapM (substArgs <=< saveTmpVar) dag
   where
     saveTmpVar :: (Int, RatedExp Int) -> RemoveTmp (Int, RatedExp Int)
@@ -33,7 +34,9 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
       ReadVarTmp tmp v -> do
         mRate <- lookupRate tmp
         insertTmpVar tmp resId
-        pure (resId, expr { ratedExpExp = ReadVar v, ratedExpRate = mRate })
+        pure $
+          -- (\x -> trace (unwords ["TMP VAR:", show $ratedExpRate $ snd x]) x) $
+          (resId, expr { ratedExpExp = ReadVar v, ratedExpRate = mRate })
       TfmInit tmp info args -> do
         mRate <- lookupRate tmp
         insertTmpVar tmp resId
@@ -45,11 +48,6 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
       e <- mapM (substTmp resId) (ratedExpExp expr)
       pure $ (resId, expr { ratedExpExp = e })
 
-    saveRates :: Node RatedExp -> RemoveTmp ()
-    saveRates (_resId, expr) = case ratedExpExp expr of
-      ExpPrim (PrimTmpVar n) -> mapM_ (saveTmpVarRate n) (ratedExpRate expr)
-      _ -> pure ()
-
     substTmp :: Int -> PrimOr Int -> RemoveTmp (PrimOr Int)
     substTmp resId (PrimOr e) = fmap PrimOr $ case e of
       Right n -> pure (Right n)
@@ -58,16 +56,18 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
         _              -> pure $ Left p
 
 insertTmpVar :: TmpVar -> Int -> RemoveTmp ()
-insertTmpVar (TmpVar v) resId = modify' $ \st -> st { stIds = IntMap.insert v resId (stIds st) }
+insertTmpVar (TmpVar _ v) resId = modify' $ \st -> st { stIds = IntMap.insert v resId (stIds st) }
 
 lookupTmpVar :: Int -> TmpVar -> RemoveTmp Int
-lookupTmpVar resId (TmpVar n) = gets (fromMaybe err . IntMap.lookup n . stIds)
+lookupTmpVar resId (TmpVar _ n) = gets (fromMaybe err . IntMap.lookup n . stIds)
   where
     err = error $ "TmpVar not found: " <> show n <> " on res: " <> show resId
 
-saveTmpVarRate :: TmpVar -> Rate -> RemoveTmp ()
-saveTmpVarRate (TmpVar n) rate =
-  modify' $ \st -> st { stRates = IntMap.insert n rate $ stRates st }
+saveTmpVarRate :: TmpVar -> RemoveTmp ()
+saveTmpVarRate (TmpVar mRate n) =
+  mapM_
+    (\rate -> modify' $ \st -> st { stRates = IntMap.insert n rate $ stRates st })
+    mRate
 
 lookupRate :: TmpVar -> RemoveTmp (Maybe Rate)
-lookupRate (TmpVar n) = gets (IntMap.lookup n . stRates)
+lookupRate (TmpVar _ n) = gets (IntMap.lookup n . stRates)
