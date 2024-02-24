@@ -161,6 +161,30 @@ initVar v x = depT_ $ noRate $ InitVar v $ toPrimOr $ setRate Ir x
 appendVarBy :: Monad m => (E -> E -> E) -> Var -> E -> DepT m ()
 appendVarBy op v x = writeVar v . op x =<< readVar v
 
+setRateDep :: Monad m => Rate -> E -> DepT m E
+setRateDep rate a = do
+  case ratedExpExp $ unFix a of
+    ExpPrim (PrimTmpVar _) ->
+      setLastDepRate rate
+    _ -> pure ()
+  pure (setRate rate a)
+
+setLastDepRate :: Monad m => Rate -> DepT m ()
+setLastDepRate rate = DepT $
+  modify' $ \st -> st { expDependency = setOpcodeRate (expDependency st) }
+  where
+    setOpcodeRate arg@(Fix expr) =
+      case ratedExpExp expr of
+        Seq prevExpr (PrimOr (Right (Fix lastExpr))) ->
+          case ratedExpExp lastExpr of
+            TfmInit _ _ _ ->
+              let
+                wrapLast a = rehashE $ Fix $ expr { ratedExpExp = Seq prevExpr (PrimOr (Right (rehashE $ Fix a))) }
+              in
+                wrapLast $ lastExpr { ratedExpRate = Just rate }
+            _ -> arg
+        _ -> arg
+
 --------------------------------------------------
 -- arrays
 
