@@ -40,13 +40,13 @@ whens bodies el = whenBy (boolValRate @bool) bodies el
 whileDo :: forall a bool . (Tuple a, BoolVal bool) => Ref a -> (a -> bool) -> SE () -> SE ()
 whileDo = \case
   Ref vs -> \check body -> withRate (boolValRate @bool) $ \rate ->
-    ifBlockBy rate Dynamic.whileBlock (check $ toTuple $ pure $ fmap Dynamic.inlineVar vs) body
+    ifBlockBy rate Dynamic.whileBlock (check $ toTuple $ pure $ fmap (Dynamic.inlineVar rate) vs) body
 
 -- | Repeats block of statements until value in the reference wil become true
 untilDo :: forall a bool . (Tuple a, BoolVal bool) => Ref a -> (a -> bool) -> SE () -> SE ()
 untilDo = \case
   Ref vs -> \check body -> withRate (boolValRate @bool) $ \rate ->
-    ifBlockBy rate Dynamic.untilBlock (check $ toTuple $ pure $ fmap Dynamic.inlineVar vs) body
+    ifBlockBy rate Dynamic.untilBlock (check $ toTuple $ pure $ fmap (Dynamic.inlineVar rate) vs) body
 
 -- | Repeats statement N times, passes counter as an argument
 doRepeat :: forall a . SigOrD a => a -> (a -> SE ()) -> SE ()

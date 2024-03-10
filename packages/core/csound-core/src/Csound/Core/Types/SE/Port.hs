@@ -30,6 +30,9 @@ instance IsRef Port where
 
   writeRef = writeBy chnset id
 
+  writeInitRef = error "TODO: define me with chnseti"
+  readInitRef = error "TODO: define me with chnget restricted to Irate"
+
   mixRef = writeBy chnmix id
 
   clearRef pid = SE $ mapM_ chnclear =<< getNames pid

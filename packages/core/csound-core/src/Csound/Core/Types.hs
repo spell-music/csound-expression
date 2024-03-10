@@ -1,9 +1,6 @@
 -- | Csound types
 module Csound.Core.Types
   ( module X
-  , readInitRef
-  , writeInitRef
-  , modifyInitRef
   , withInits
   , withDs
   , withD
@@ -26,6 +23,14 @@ import Csound.Dynamic (E)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Run)
 
+type instance InitType Sig = D
+type instance InitType D = D
+type instance InitType Str = Str
+type instance InitType (a, b) = (InitType a, InitType b)
+type instance InitType (a, b, c) = (InitType a, InitType b, InitType c)
+type instance InitType (a, b, c, d) = (InitType a, InitType b, InitType c, InitType d)
+
+{-
 -- | Reads signals at init phase of the instrument
 readInitRef :: Ref Sig -> SE D
 readInitRef = fmap (toD . ir) . readRef
@@ -38,6 +43,7 @@ modifyInitRef :: Ref Sig -> (D -> D) -> SE ()
 modifyInitRef ref f = do
   val <- readInitRef ref
   writeInitRef ref (f val)
+-}
 
 -- | Mean value.
 mean :: Fractional a => [a] -> a

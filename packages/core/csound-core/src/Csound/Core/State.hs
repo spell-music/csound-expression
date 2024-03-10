@@ -178,10 +178,10 @@ globalConstants opt = do
 
 -----------------------------------------------------------------------------
 
-getReadOnlyVar :: Rate -> E -> Run E
-getReadOnlyVar rate expr = Run $ do
+getReadOnlyVar :: IfRate -> Rate -> E -> Run E
+getReadOnlyVar ifRate rate expr = Run $ do
   ReadInit initMap <- gets (.readInit)
-  readOnlyVar <$> case HashMap.lookup hash initMap of
+  readOnlyVar ifRate <$> case HashMap.lookup hash initMap of
     Just var -> pure var
     Nothing  -> do
       var <- unRun $ initGlobalVar rate expr
@@ -325,7 +325,7 @@ saveGen gen = do
   where
     insertGen = do
       newId <- getFreshFtableId
-      v <- fmap readOnlyVar $ initGlobalVar Ir (ftgen newId gen)
+      v <- fmap (readOnlyVar IfIr) $ initGlobalVar Ir (ftgen newId gen)
       Run $ modify' $ \st -> st { ftables = insertFtableMap (GenTable gen) v $ setFreshId (v + 1) st.ftables }
       pure v
 
@@ -364,7 +364,7 @@ saveVco inits =
     insertVco' = do
       (shapeId, mResId) <- vcoShapeId' (vcoShape inits)
       newId <- getFreshFtableId
-      nextNewId <- fmap readOnlyVar $ initGlobalVar Ir $ fromVcoInit (isNothing mResId) shapeId newId inits
+      nextNewId <- fmap (readOnlyVar IfIr) $ initGlobalVar Ir $ fromVcoInit (isNothing mResId) shapeId newId inits
       Run $ modify' $ \st -> st { ftables = insertFtableMap (VcoTable inits) newId $ setFreshId nextNewId st.ftables }
       pure $ fromMaybe shapeId mResId
 

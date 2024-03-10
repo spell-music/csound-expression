@@ -65,8 +65,8 @@ tfmArr isArrInit var info args = depT_ $ noRate $ TfmArr isArrInit var info $ to
 tfmNoInlineArgs :: Info -> [E] -> E
 tfmNoInlineArgs info args = noRate $ Tfm info $ fmap (PrimOr . Right) args
 
-inlineVar :: Var -> E
-inlineVar var = Fix $ RatedExp h Nothing Nothing $ ReadVar var
+inlineVar :: IfRate -> Var -> E
+inlineVar ifRate var = Fix $ RatedExp h Nothing Nothing $ ReadVar ifRate var
   where
     h = ExpHash (Cereal.encode var)
 
@@ -240,8 +240,8 @@ setKsmps    = setGlobal "ksmps"
 setZeroDbfs = setGlobal "0dbfs"
 
 gInit :: Monad m => Text -> Int -> DepT m ()
-gInit name val = writeVar (VarVerbatim Ir name) (int val)
+gInit name val = writeVar IfIr (VarVerbatim Ir name) (int val)
 
 gInitDouble :: Monad m => Text -> Double -> DepT m ()
-gInitDouble name val = writeVar (VarVerbatim Ir name) (double val)
+gInitDouble name val = writeVar IfIr (VarVerbatim Ir name) (double val)
 

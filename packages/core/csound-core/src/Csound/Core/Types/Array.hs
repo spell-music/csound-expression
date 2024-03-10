@@ -39,6 +39,7 @@ module Csound.Core.Types.Array(
 ) where
 
 
+import Data.Maybe
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
 import Data.Text (Text)
@@ -194,30 +195,33 @@ toCtrlRate x = case x of
 -- | Reads data from the array.
 readArr :: (Tuple a, Tuple ix) => Arr ix a -> ix -> SE a
 readArr (Arr vars) ixs = fmap (toTuple . return) $ SE $ do
+    ifRate <- getIfRate
     ixsExp <- lift (fromTuple ixs)
-    mapM (\v -> read' v ixsExp) vars
+    mapM (\v -> read' ifRate v ixsExp) vars
     where
-        read' ::  Var -> [E] -> Dep E
+        read' ::  D.IfRate -> Var -> [E] -> Dep E
         read' = D.readArr
 
 -- | Writes data to the array.
 writeArr :: (Tuple ix, Tuple a) => Arr ix a -> ix -> a -> SE ()
 writeArr (Arr vars) ixs b = SE $ do
+    ifRate <- getIfRate
     ixsExp <- lift (fromTuple ixs)
     bsExp <- lift (fromTuple b)
-    zipWithM_ (\var value -> write var ixsExp value) vars bsExp
+    zipWithM_ (\var value -> write ifRate var ixsExp value) vars bsExp
     where
-        write ::  Var -> [E] -> E -> Dep ()
+        write ::  D.IfRate -> Var -> [E] -> E -> Dep ()
         write = D.writeArr
 
 -- | Writes data to the array.
 writeInitArr :: (Tuple ix, Tuple a) => Arr ix a -> ix -> a -> SE ()
 writeInitArr (Arr vars) ixs b = SE $ do
+    ifRate <- getIfRate
     ixsExp <- lift (fromTuple ixs)
     bsExp <- lift (fromTuple b)
-    zipWithM_ (\var value -> write var ixsExp value) vars bsExp
+    zipWithM_ (\var value -> write ifRate var ixsExp value) vars bsExp
     where
-        write ::  Var -> [E] -> E -> Dep ()
+        write :: D.IfRate -> Var -> [E] -> E -> Dep ()
         write = D.writeInitArr
 
 -- | Updates the value of the array with pure function.
@@ -249,20 +253,24 @@ divArrayNew :: (Tuple b, Num b) => Arr a b -> Arr a b -> SE (Arr a b)
 divArrayNew = binOp "/"
 
 lenarray :: SigOrD c => Arr a b -> c
-lenarray (Arr vs) = fromE $ return $ f (D.inlineVar $ head vs)
-    where f a = D.opcs "lenarray" [(Kr, [Xr, Ir]), (Ir, [Xr, Ir])] [a]
+lenarray (Arr vs) = fromE $ do
+  ifRate <- fromMaybe D.IfKr <$> State.getCurrentRate
+  pure $ f (D.inlineVar ifRate $ head vs)
+  where f a = D.opcs "lenarray" [(Kr, [Xr, Ir]), (Ir, [Xr, Ir])] [a]
 
 -- | Copies table to array.
 copyf2array :: Arr Sig Sig -> Tab -> SE ()
 copyf2array (Arr vs) t = SE $ do
     tabExp <- lift (toE t)
-    D.depT_ $ D.opcs "copyf2array" [(Xr, [D.varRate $ head vs, Ir])] [D.inlineVar $ head vs, tabExp]
+    ifRate <- getIfRate
+    D.depT_ $ D.opcs "copyf2array" [(Xr, [D.varRate $ head vs, Ir])] [D.inlineVar ifRate $ head vs, tabExp]
 
 -- | Copies array to table.
 copya2ftab :: Arr Sig Sig -> Tab -> SE ()
 copya2ftab (Arr vs) t = SE $ do
     tabExp <- lift (toE t)
-    D.depT_ $ D.opcs "copya2ftab" [(Xr, [D.varRate $ head vs, Ir])] [D.inlineVar $ head vs, tabExp]
+    ifRate <- getIfRate
+    D.depT_ $ D.opcs "copya2ftab" [(Xr, [D.varRate $ head vs, Ir])] [D.inlineVar ifRate $ head vs, tabExp]
 
 -- | Mapps all values in the array with the function.
 --
@@ -273,8 +281,9 @@ maparrayNew (Arr vs) s = SE $ fmap Arr $ do
     mapM (\var -> go var strExp) vs
     where
         go var strExp = do
+            ifRate <- getIfRate
             outVar <- D.newTmpArrVar (D.varRate var)
-            D.opcsArr isArrayInit outVar "slicearray" idRate [D.inlineVar var, strExp]
+            D.opcsArr isArrayInit outVar "slicearray" idRate [D.inlineVar ifRate var, strExp]
             return $ outVar
 
         idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
@@ -298,8 +307,9 @@ scalearray (Arr vs) (a, b) = SE $ do
     bExps <- lift (fromTuple b)
     zipWithM_ (\var (aExp, bExp) -> go var (aExp, bExp)) vs (zip aExps bExps)
     where
-        go v (aExp, bExp) =
-            D.depT_ $ D.opcs "copyf2array" [(Xr, [D.varRate $ head vs, Ir])] [D.inlineVar v, aExp, bExp]
+        go v (aExp, bExp) = do
+          ifRate <- getIfRate
+          D.depT_ $ D.opcs "copyf2array" [(Xr, [D.varRate $ head vs, Ir])] [D.inlineVar ifRate v, aExp, bExp]
 
 -- | Creates a copy of some part of the given array
 slicearrayNew :: Arr D a -> (D, D) -> SE (Arr D a)
@@ -309,8 +319,9 @@ slicearrayNew (Arr vs) (from, to) = SE $ fmap Arr $ do
     mapM (\var -> go var (fromExpr, toExpr)) vs
     where
         go var (fromExpr, toExpr) = do
+            ifRate <- getIfRate
             outVar <- D.newTmpArrVar (D.varRate var)
-            D.opcsArr isArrayInit outVar "slicearray" idRate [D.inlineVar var, fromExpr, toExpr]
+            D.opcsArr isArrayInit outVar "slicearray" idRate [D.inlineVar ifRate var, fromExpr, toExpr]
             return $ outVar
 
         idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
@@ -440,16 +451,18 @@ binOp :: Text -> Arr a b -> Arr a b -> SE (Arr a b)
 binOp name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
     where
         go x y = SE $ do
+            ifRate <- getIfRate
             outVar <- D.newTmpArrVar (D.varRate x)
-            D.infOprArr isArrayInit outVar name (D.inlineVar x) (D.inlineVar y)
+            D.infOprArr isArrayInit outVar name (D.inlineVar ifRate x) (D.inlineVar ifRate y)
             return outVar
 
 convert :: Text -> Arr a b -> SE (Arr a b)
 convert name (Arr vars) = fmap Arr $ mapM go vars
     where
         go v = SE $ do
+            ifRate <- getIfRate
             outVar <- D.newTmpArrVar (D.varRate v)
-            D.opcsArr isArrayInit outVar name idRate1 [D.inlineVar v]
+            D.opcsArr isArrayInit outVar name idRate1 [D.inlineVar ifRate v]
             return outVar
 
         idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
@@ -458,24 +471,30 @@ convert2 :: Text -> Arr a b -> Arr a b -> SE (Arr a b)
 convert2 name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
     where
         go x y = SE $ do
+            ifRate <- getIfRate
             outVar <- D.newTmpArrVar (D.varRate x)
-            D.opcsArr isArrayInit outVar name idRate2 [D.inlineVar x, D.inlineVar y]
+            D.opcsArr isArrayInit outVar name idRate2 [D.inlineVar ifRate x, D.inlineVar ifRate y]
             return outVar
 
         idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]
 
 extractArray :: (Tuple b) => Text -> Arr a b -> SE b
-extractArray name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . D.inlineVar) vs
-    where f a = D.opcsDep name [(Xr, [Xr])] [a]
+extractArray name (Arr vs) = SE $ do
+  ifRate <- getIfRate
+  fmap (toTuple . return) $ mapM (f . D.inlineVar ifRate) vs
+  where f a = D.opcsDep name [(Xr, [Xr])] [a]
 
 extract1 :: (Tuple b, Tuple c) => Rate -> Text -> Arr a b -> SE c
-extract1 rate name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . D.inlineVar) vs
-    where f a = D.opcsDep name [(rate, [Xr])] [a]
+extract1 rate name (Arr vs) = SE $ do
+  ifRate <- getIfRate
+  fmap (toTuple . return) $ mapM (f . D.inlineVar ifRate) vs
+  where f a = D.opcsDep name [(rate, [Xr])] [a]
 
 extractWith :: (Tuple b, Tuple c, Tuple d) => Text -> (Rate, [Rate]) -> Arr a b -> c -> SE d
 extractWith name rates (Arr vs) argument = SE $ fmap (toTuple . return) $ do
   argExps <- lift (fromTuple argument)
-  zipWithM (\var x -> f (D.inlineVar var) x) vs argExps
+  ifRate <- getIfRate
+  zipWithM (\var x -> f (D.inlineVar ifRate var) x) vs argExps
   where f a b = D.opcsDep name [rates] [a, b]
 
 ---------------------------------------------------
@@ -487,7 +506,10 @@ maparrayCopy (Arr vs) s (Arr outs) = SE $ do
     strExp <- lift (toE s)
     zipWithM_ (\var outVar -> go var strExp outVar) vs outs
     where
-        go var strExp outVar = D.opcsArr noArrayInit outVar "slicearray" idRate [D.inlineVar var, strExp]
+        go var strExp outVar = do
+          ifRate <- getIfRate
+          D.opcsArr noArrayInit outVar "slicearray" idRate [D.inlineVar ifRate var, strExp]
+
         idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
 
 -- | Copies a part of array to another array.
@@ -498,7 +520,9 @@ slicearrayCopy (Arr vs) (from, to) (Arr outs) = SE $ do
     zipWithM_ (\var outVar -> go var (fromExpr, toExpr) outVar) vs outs
     where
         go :: Var -> (E, E) -> Var -> Dep ()
-        go var (fromExpr, toExpr) outVar = D.opcsArr noArrayInit outVar "slicearray" idRate [D.inlineVar var, fromExpr, toExpr]
+        go var (fromExpr, toExpr) outVar = do
+          ifRate <- getIfRate
+          D.opcsArr noArrayInit outVar "slicearray" idRate [D.inlineVar ifRate var, fromExpr, toExpr]
 
         idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
 
@@ -624,16 +648,30 @@ phsArrayCopy = convertCopy "phs"
 binOpCopy :: Text -> Arr a b -> Arr a b -> Arr a b -> SE ()
 binOpCopy name (Arr xs) (Arr ys) (Arr outs) = mapM_ go $ zip3 xs ys outs
   where
-    go (x, y, outVar) = SE $ D.infOprArr noArrayInit outVar name (D.inlineVar x) (D.inlineVar y)
+    go (x, y, outVar) = SE $ do
+      ifRate <- getIfRate
+      D.infOprArr noArrayInit outVar name (D.inlineVar ifRate x) (D.inlineVar ifRate y)
 
 convertCopy :: Text -> Arr a b -> Arr a b -> SE ()
 convertCopy name (Arr vars) (Arr outs) = zipWithM_ go vars outs
   where
-    go v outVar = SE $ D.opcsArr noArrayInit outVar name idRate1 [D.inlineVar v]
+    go v outVar = SE $ do
+      ifRate <- getIfRate
+      D.opcsArr noArrayInit outVar name idRate1 [D.inlineVar ifRate v]
+
     idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
 
 convert2Copy :: Text -> Arr a b -> Arr a b -> Arr a b -> SE ()
 convert2Copy name (Arr xs) (Arr ys) (Arr outs) = mapM_ go $ zip3 xs ys outs
   where
-    go (x, y, outVar) = SE $ D.opcsArr noArrayInit outVar name idRate2 [D.inlineVar x, D.inlineVar y]
+    go (x, y, outVar) =
+      SE $ do
+        ifRate <- getIfRate
+        D.opcsArr noArrayInit outVar name idRate2 [D.inlineVar ifRate x, D.inlineVar ifRate y]
+
     idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]
+
+getIfRate :: D.DepT Run D.IfRate
+getIfRate =
+  lift $ fromMaybe D.IfKr <$> State.getCurrentRate
+

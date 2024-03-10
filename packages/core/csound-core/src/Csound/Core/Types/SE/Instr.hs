@@ -37,6 +37,22 @@ data InstrRef a
   | InstrRef (InstrId a)
   | EffRef (EffId a)
 
+instance Arg a => Tuple (InstrRef a) where
+  tupleMethods = primTuple (instrRefFromNum (-1))
+
+instance Arg a => Arg (InstrRef a) where
+
+instance Arg a => Val (InstrRef a) where
+  fromE = instrRefFromNum  . fromE
+  toE = toE . nstrnum
+  valRate = valRate @D
+
+-- | nstrnum — Returns the number of a named instrument
+nstrnum :: Arg a => InstrRef a -> D
+nstrnum instrRef = case getInstrRefId instrRef of
+  Left strId -> liftOpc "nstrnum" [(Ir,[Sr])] strId
+  Right intId -> intId
+
 getInstrRefId :: Arg a => InstrRef a -> Either Str D
 getInstrRefId = \case
   ProcRef pid -> Right $ fromE $ toE pid

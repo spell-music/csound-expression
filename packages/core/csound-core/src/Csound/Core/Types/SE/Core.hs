@@ -6,7 +6,9 @@ module Csound.Core.Types.SE.Core
   , setOption
   , setDefaultOption
   , IsRef (..)
+  , InitType
   , modifyRef
+  , modifyInitRef
   , getCurrentRate
   , writeOuts
   , readIns
@@ -20,6 +22,7 @@ module Csound.Core.Types.SE.Core
   ) where
 
 import Control.Monad.IO.Class
+import Data.Kind
 
 import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
@@ -66,9 +69,14 @@ setOption opt = SE $ lift $ State.setOption opt
 setDefaultOption :: Options -> SE ()
 setDefaultOption opt = SE $ lift $ State.setDefaultOption opt
 
+type family InitType a :: Type
+
 class IsRef ref where
   readRef  :: Tuple a => ref a -> SE a
   writeRef :: Tuple a => ref a -> a -> SE ()
+
+  readInitRef  :: (Tuple a, Tuple (InitType a)) => ref a -> SE (InitType a)
+  writeInitRef :: (Tuple a, Tuple (InitType a)) => ref a -> (InitType a) -> SE ()
 
   mixRef   :: (Num a, Tuple a) => ref a -> a -> SE ()
   clearRef :: (Num a, Tuple a) => ref a -> SE ()
@@ -78,6 +86,9 @@ class IsRef ref where
 
 modifyRef :: (Tuple a, IsRef ref) => ref a -> (a -> a) -> SE ()
 modifyRef ref f = writeRef ref . f =<< readRef ref
+
+modifyInitRef :: (Tuple a, Tuple (InitType a), IsRef ref) => ref a -> (InitType a -> InitType a) -> SE ()
+modifyInitRef ref f = writeInitRef ref . f =<< readInitRef ref
 
 getCurrentRate :: SE (Maybe IfRate)
 getCurrentRate = SE $ lift State.getCurrentRate
@@ -103,7 +114,7 @@ readIns = SE $ toTuple . pure <$> getIn (tupleArity @a)
 readOnlyVar :: forall a . Val a => a -> a
 readOnlyVar expr = fromE $ do
   e <- toE expr
-  State.getReadOnlyVar (Dynamic.toInitRate $ valRate @a) e
+  State.getReadOnlyVar IfIr (Dynamic.toInitRate $ valRate @a) e
 
 ------------------------------------------------------------------------------------
 

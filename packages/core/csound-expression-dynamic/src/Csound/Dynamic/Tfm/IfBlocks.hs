@@ -477,7 +477,7 @@ redefineIfElseExp thLocalVars elLocalVars th el ifResultId ifRate condInfo IfEls
       varWriteId <- freshId
       pure $ Stmt
         { stmtLhs = Var Xr varWriteId
-        , stmtRhs = toRatedExp $ WriteVar (toVar resId) expr
+        , stmtRhs = toRatedExp $ WriteVar ifRate (toVar resId) expr
         }
 
     toVar v = Exp.VarVerbatim (varType v) name

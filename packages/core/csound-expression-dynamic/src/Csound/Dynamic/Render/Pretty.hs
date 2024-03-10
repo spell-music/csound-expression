@@ -8,6 +8,7 @@ module Csound.Dynamic.Render.Pretty(
 import Control.Monad.Trans.State.Strict
 import qualified Data.IntMap as IM
 
+import Data.String
 import Text.PrettyPrint.Leijen.Text
 import Csound.Dynamic.Types
 import Csound.Dynamic.Tfm.InferTypes qualified as R(Var(..))
@@ -132,16 +133,21 @@ ppStmt outs expr = maybe (ppExp (ppOuts outs) expr) id (maybeStringCopy outs exp
 
 maybeStringCopy :: [R.Var] -> Exp R.Var -> Maybe (State TabDepth Doc)
 maybeStringCopy outs expr = case (outs, expr) of
-    ([R.Var Sr _], ExpPrim (PrimVar _rate var)) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
-    ([R.Var Sr _], ReadVar var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
-    ([R.Var Sr _], ReadVarTmp _tmp var) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppVar var)
-    ([], WriteVar outVar a) | varRate outVar == Sr  -> Just $ tab $ ppStringCopy (ppVar outVar) (ppPrimOrVar a)
-    ([R.Var Sr _], ReadArr var as) -> Just $ tab $ ppStringCopy (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
-    ([], WriteArr outVar bs a) | varRate outVar == Sr -> Just $ tab $ ppStringCopy (ppArrIndex outVar $ fmap ppPrimOrVar bs) (ppPrimOrVar a)
+    ([R.Var Sr _], ExpPrim (PrimVar _rate var)) -> Just $ tab $ ppStringCopy IfIr (ppOuts outs) (ppVar var)
+    ([R.Var Sr _], ReadVar ifRate var) -> Just $ tab $ ppStringCopy ifRate (ppOuts outs) (ppVar var)
+    ([R.Var Sr _], ReadVarTmp ifRate _tmp var) -> Just $ tab $ ppStringCopy ifRate (ppOuts outs) (ppVar var)
+    ([], WriteVar ifRate outVar a) | varRate outVar == Sr -> Just $ tab $ ppStringCopy ifRate (ppVar outVar) (ppPrimOrVar a)
+    ([R.Var Sr _], ReadArr ifRate var as) -> Just $ tab $ ppStringCopy ifRate (ppOuts outs) (ppReadArr var $ fmap ppPrimOrVar as)
+    ([], WriteArr ifRate outVar bs a) | varRate outVar == Sr -> Just $ tab $ ppStringCopy ifRate (ppArrIndex outVar $ fmap ppPrimOrVar bs) (ppPrimOrVar a)
     _ -> Nothing
 
-ppStringCopy :: Doc -> Doc -> Doc
-ppStringCopy outs src = ppOpc outs "strcpy" [src]
+ppStringCopy :: IfRate -> Doc -> Doc -> Doc
+ppStringCopy ifRate outs src = ppOpc outs (strcpy ifRate) [src]
+
+strcpy :: IsString a => IfRate -> a
+strcpy = \case
+  IfKr -> "strcpyk"
+  IfIr -> "strcpy"
 
 ppExp :: Doc -> Exp R.Var -> State TabDepth Doc
 ppExp res expr = case fmap ppPrimOrVar expr of
@@ -154,15 +160,38 @@ ppExp res expr = case fmap ppPrimOrVar expr of
     ConvertRate to from x           -> tab $ ppConvertRate res to from x
     If _ifRate info t e             -> tab $ ppIf res (ppCond info) t e
     ExpNum (PreInline op as)        -> tab $ res $= ppNumOp op as
-    WriteVar v a                    -> tab $ ppVar v $= a
+    WriteVar ifRate v a                    ->
+      case ifRate of
+        IfKr -> tab $ ppVar v $= a
+        IfIr -> tab $ ppVar v <+> "init" <+> a
     InitVar v a                     -> tab $ ppOpc (ppVar v) "init" [a]
-    ReadVar v                  -> tab $ res $= ppVar v
-    ReadVarTmp _tmp v                  -> tab $ res $= ppVar v
+    ReadVar ifRate v                  ->
+      case ifRate of
+        IfIr -> tab $ res <+> "init" <+> ppVar v
+        IfKr -> tab $ res $= ppVar v
+    ReadVarTmp ifRate _tmp v                  ->
+      case ifRate of
+        IfIr -> tab $ res <+> "init" <+> ppVar v
+        IfKr -> tab $ res $= ppVar v
 
     InitArr v as                    -> tab $ ppOpc (ppArrVar (length as) (ppVar v)) "init" as
-    ReadArr v as                    -> tab $ if (varRate v /= Sr) then res $= ppReadArr v as else res <+> text "strcpy" <+> ppReadArr v as
-    WriteArr v as b                 -> tab $ ppWriteArr v as b
-    WriteInitArr v as b             -> tab $ ppWriteInitArr v as b
+    ReadArr ifRate v as                    ->
+      tab $ if (varRate v /= Sr)
+        then
+          case ifRate of
+            IfKr -> res $= ppReadArr v as
+            IfIr -> res <+> "init" <+> ppReadArr v as
+        else res <+> strcpy ifRate <+> ppReadArr v as
+    ReadArrTmp ifRate _tmp v as                    ->
+      tab $
+        if (varRate v /= Sr)
+          then
+            case ifRate of
+              IfKr -> res $= ppReadArr v as
+              IfIr -> res <+> "init" <+> ppReadArr v as
+          else res <+> strcpy ifRate <+> ppReadArr v as
+    WriteArr ifRate v as b                 -> tab $ ppWriteArr ifRate v as b
+    WriteInitArr ifRate v as b             -> tab $ ppWriteInitArr ifRate v as b
     TfmArr isInit v op [a,b]| isInfix  op  -> tab $ ppTfmArrOut isInit v <+> binary (infoName op) a b
     TfmArr isInit v op args | isPrefix op  -> tab $ ppTfmArrOut isInit v <+> prefix (infoName op) args
     TfmArr isInit v op xs                  -> tab $ ppOpc (ppTfmArrOut isInit v) (infoName op) xs
@@ -229,13 +258,13 @@ ppReadArr v as = ppArrIndex v as
 ppReadPureArr :: Doc -> [Doc] -> Doc
 ppReadPureArr v as = v <> (hcat $ fmap brackets as)
 
-ppWriteArr :: Var -> ArrIndex Doc -> Doc -> Doc
-ppWriteArr v as b = ppArrIndex v as <+> equalsWord <+> b
-    where equalsWord = if (varRate v == Sr) then text "strcpy" else equals
+ppWriteArr :: IfRate -> Var -> ArrIndex Doc -> Doc -> Doc
+ppWriteArr ifRate v as b = ppArrIndex v as <+> equalsWord <+> b
+    where equalsWord = if (varRate v == Sr) then strcpy ifRate else equals
 
-ppWriteInitArr :: Var -> [Doc] -> Doc -> Doc
-ppWriteInitArr v as b = ppArrIndex v as <+> initWord <+> b
-    where initWord = text $ if (varRate v == Sr) then "strcpy" else "init"
+ppWriteInitArr :: IfRate -> Var -> [Doc] -> Doc -> Doc
+ppWriteInitArr ifRate v as b = ppArrIndex v as <+> initWord <+> b
+    where initWord = text $ if (varRate v == Sr) then (strcpy ifRate) else "init"
 
 -------------------------------------
 
@@ -419,6 +448,12 @@ ppE = foldFix go
 
     ppHash = textStrict . Text.take 4 . Text.decodeUtf8 . Base64.encode . unExpHash
 
+    ppIndex index = either ppPrim id (unPrimOr index)
+
+    ppSize sizes = parens ("Size" <+> hcat (fmap ppIndex sizes))
+
+    ppIfRate = ppRate . fromIfRate
+
     fromExp :: Doc -> RatedExp Doc -> Doc
     fromExp info RatedExp{..} = indent 2 $ post $
       case ratedExpExp of
@@ -432,19 +467,22 @@ ppE = foldFix go
         ExpBool args -> hsep ["some bool expr", pretty $ show args]
         ExpNum arg -> ppExpNum arg
         InitVar v a -> ppInitVar v a
-        ReadVar v -> "ReadVar" <+> ppVar v
-        ReadVarTmp tmp v -> hcat [ppTmpVar tmp, "=", "ReadVarTmp" <+> ppVar v]
-        WriteVar v a -> ppVar v $= pp a
+        ReadVar ifRate v -> "ReadVar" <+> ppIfRate ifRate <+> ppVar v
+        ReadVarTmp ifRate tmp v -> hcat [ppTmpVar tmp, "=", "ReadVarTmp" <+> ppIfRate ifRate <+> ppVar v]
+        WriteVar ifRate v a ->
+          case ifRate of
+            IfKr -> ppVar v $= pp a
+            IfIr -> ppVar v <+> "init" <+> pp a
 
-        -- TODO
-        InitArr _v _size -> undefined
-        ReadArr _v _index -> undefined
-        WriteArr _v _index _ -> undefined
-        WriteInitArr _v _index _ -> undefined
-        TfmArr _isInit _v _info _args -> undefined
+        InitArr v size -> "InitArr" <+> ppVar v <+> ppSize size
+        ReadArr ifRate v index -> "ReadArr" <+> ppIfRate ifRate <+> ppVar v <+> (hcat $ fmap ppIndex index)
+        ReadArrTmp ifRate tmp v index -> hcat [ppTmpVar tmp, "=", "ReadArrTmp", ppIfRate ifRate, ppVar v, (hcat $ fmap ppIndex index)]
+        WriteArr ifRate v index _ -> "WriteArr" <+> ppIfRate ifRate <+> ppVar v <+> (hcat $ fmap ppIndex index)
+        WriteInitArr ifRate v index _ -> "WriteInitArr" <+> ppIfRate ifRate <+> ppVar v <+> (hcat $ fmap ppIndex index)
+        TfmArr isInit v inf args -> "TfmArr" <+> bool isInit <+> ppVar v <+> ppTfm inf args
 
-        InitPureArr _outRate _procRate _vals -> undefined
-        ReadPureArr _outRate _procRate _arr _index -> undefined
+        InitPureArr outRate procRate vals -> "InitPureArr" <+> ppRate outRate <+> ppIfRate procRate <+> (hcat $ fmap ppIndex vals)
+        ReadPureArr outRate procRate arr index -> "ReadPureArr" <+> ppRate outRate <+> ppIfRate procRate <+> ppIndex arr <+> ppIndex index
 
         IfBegin rate cond -> hsep ["IF", ppRate $ fromIfRate rate, ppCond $ fmap pp cond, "\n"]
 

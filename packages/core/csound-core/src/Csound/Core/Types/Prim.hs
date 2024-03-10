@@ -97,7 +97,7 @@ getZeroDbfs :: D
 getZeroDbfs =  readConstant "0dbfs"
 
 readConstant :: Val a => Name -> a
-readConstant name = fromE $ pure $ Dynamic.readOnlyVar (Dynamic.VarVerbatim Ir name)
+readConstant name = fromE $ pure $ Dynamic.readOnlyVar Dynamic.IfIr (Dynamic.VarVerbatim Ir name)
 
 ceil', floor', int', round' :: SigOrD a => a -> a
 quot', rem', div', mod' :: SigOrD a => a -> a -> a

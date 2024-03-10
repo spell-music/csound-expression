@@ -174,7 +174,7 @@ toPrimOr :: E -> PrimOr E
 toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
     ExpPrim p  -> Left p
-    ReadVar v | noDeps -> Left (PrimVar (varRate v) v)
+    ReadVar _ v | noDeps -> Left (PrimVar (varRate v) v)
     _         -> Right a
     where
       noDeps = isNothing $ ratedExpDepends $ unFix a
@@ -186,7 +186,7 @@ toPrimOrTfm r a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
     ExpPrim p | (r == Ir || r == Sr) -> Left p
     ExpPrim (PrimTmpVar tmp) -> Left (PrimTmpVar tmp)
-    ReadVar v | noDeps -> Left (PrimVar (varRate v) v)
+    ReadVar _ v | noDeps -> Left (PrimVar (varRate v) v)
     _         -> Right a
     where
       noDeps = isNothing $ ratedExpDepends $ unFix a
@@ -218,14 +218,15 @@ data MainExp a
     | ExpNum !(NumExp a)
     -- | Reading/writing a named variable
     | InitVar !Var !a
-    | ReadVar !Var
-    | ReadVarTmp !TmpVar !Var
-    | WriteVar !Var !a
+    | ReadVar !IfRate !Var
+    | ReadVarTmp !IfRate !TmpVar !Var
+    | WriteVar !IfRate !Var !a
     -- | Arrays
     | InitArr !Var !(ArrSize a)
-    | ReadArr !Var !(ArrIndex a)
-    | WriteArr !Var !(ArrIndex a) !a
-    | WriteInitArr !Var !(ArrIndex a) !a
+    | ReadArr !IfRate !Var !(ArrIndex a)
+    | ReadArrTmp !IfRate !TmpVar !Var !(ArrIndex a)
+    | WriteArr !IfRate !Var !(ArrIndex a) !a
+    | WriteInitArr !IfRate !Var !(ArrIndex a) !a
     | TfmArr !IsArrInit !Var !Info ![a]
     -- | inits 1-dimensional read only array (uses fillaray)
     -- args: rateOfTheOutput processingRate initValues

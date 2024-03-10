@@ -140,26 +140,26 @@ newVar rate = DepT $ do
 
 -- generic funs
 
-writeVar :: Monad m => Var -> E -> DepT m ()
-writeVar v x = depT_ $ noRate $ WriteVar v $ toPrimOr x
+writeVar :: Monad m => IfRate -> Var -> E -> DepT m ()
+writeVar ifRate v x = depT_ $ noRate $ WriteVar ifRate v $ toPrimOr x
 
-readVar :: Monad m => Var -> DepT m E
-readVar v = do
+readVar :: Monad m => IfRate -> Var -> DepT m E
+readVar ifRate v = do
   tmp <- getNewTmpVar
-  depT_ $ noRate $ ReadVarTmp tmp v
+  depT_ $ noRate $ ReadVarTmp ifRate tmp v
   pure $ fromTmpVar tmp
 
 fromTmpVar :: TmpVar -> E
 fromTmpVar v = noRate $ ExpPrim $ PrimTmpVar v
 
-readOnlyVar :: Var -> E
-readOnlyVar v = noRate $ ReadVar v
+readOnlyVar :: IfRate -> Var -> E
+readOnlyVar ifRate v = noRate $ ReadVar ifRate v
 
 initVar :: Monad m => Var -> E -> DepT m ()
 initVar v x = depT_ $ noRate $ InitVar v $ toPrimOr $ setRate Ir x
 
-appendVarBy :: Monad m => (E -> E -> E) -> Var -> E -> DepT m ()
-appendVarBy op v x = writeVar v . op x =<< readVar v
+appendVarBy :: Monad m => (E -> E -> E) -> IfRate -> Var -> E -> DepT m ()
+appendVarBy op ifRate v x = writeVar ifRate v . op x =<< readVar ifRate v
 
 setRateDep :: Monad m => Rate -> E -> DepT m E
 setRateDep rate a = do
@@ -201,28 +201,26 @@ newTmpArrVar rate = newVar rate
 
 -- ops
 
-readArr :: Monad m => Var -> [E] -> DepT m E
-readArr v ixs = undefined
-  {-
-  tmp <- newTmpArrVar (varRate v)
-  depT_ $ noRate $ ReadArr tmp v (fmap toPrimOr ixs)
+readArr :: Monad m => IfRate -> Var -> [E] -> DepT m E
+readArr ifRate v ixs = do
+  tmp <- getNewTmpVar
+  depT_ $ noRate $ ReadArrTmp ifRate tmp v (fmap toPrimOr ixs)
   pure $ fromTmpVar tmp
--}
 
-readOnlyArr :: Var -> [E] -> E
-readOnlyArr v ixs = noRate $ ReadArr v (fmap toPrimOr ixs)
+readOnlyArr :: IfRate -> Var -> [E] -> E
+readOnlyArr ifRate v ixs = noRate $ ReadArr ifRate v (fmap toPrimOr ixs)
 
-writeArr :: Monad m => Var -> [E] -> E -> DepT m ()
-writeArr v ixs a = depT_ $ noRate $ WriteArr v (fmap toPrimOr ixs) (toPrimOr a)
+writeArr :: Monad m => IfRate -> Var -> [E] -> E -> DepT m ()
+writeArr ifRate v ixs a = depT_ $ noRate $ WriteArr ifRate v (fmap toPrimOr ixs) (toPrimOr a)
 
-writeInitArr :: Monad m => Var -> [E] -> E -> DepT m ()
-writeInitArr v ixs a = depT_ $ noRate $ WriteInitArr v (fmap toPrimOr ixs) (toPrimOr a)
+writeInitArr :: Monad m => IfRate -> Var -> [E] -> E -> DepT m ()
+writeInitArr ifRate v ixs a = depT_ $ noRate $ WriteInitArr ifRate v (fmap toPrimOr ixs) (toPrimOr a)
 
 initArr :: Monad m => Var -> [E] -> DepT m ()
 initArr v xs = depT_ $ noRate $ InitArr v $ fmap toPrimOr xs
 
-appendArrBy :: Monad m => (E -> E -> E) -> Var -> [E] -> E -> DepT m ()
-appendArrBy op v ixs x = writeArr v ixs . op x =<< readArr v ixs
+appendArrBy :: Monad m => (E -> E -> E) -> IfRate -> Var -> [E] -> E -> DepT m ()
+appendArrBy op ifRate v ixs x = writeArr ifRate v ixs . op x =<< readArr ifRate v ixs
 
 --------------------------------------------------
 -- read global macros arguments

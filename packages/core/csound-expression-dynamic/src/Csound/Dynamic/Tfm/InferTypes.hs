@@ -195,9 +195,9 @@ inferIter opts (Stmt lhs rhs) =
 
     -- | Reading/writing a named variable
     InitVar v arg -> onInitVar v arg
-    ReadVar v -> onReadVar (ratedExpRate rhs) v
-    ReadVarTmp tmp v -> onReadVarTmp (ratedExpRate rhs) tmp v
-    WriteVar v arg -> onWriteVar v arg
+    ReadVar ifRate v -> onReadVar ifRate (ratedExpRate rhs) v
+    ReadVarTmp ifRate tmp v -> onReadVarTmp ifRate (ratedExpRate rhs) tmp v
+    WriteVar ifRate v arg -> onWriteVar ifRate v arg
 
     -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
     -- | if-then-else
@@ -214,9 +214,10 @@ inferIter opts (Stmt lhs rhs) =
 
     -- | Arrays
     InitArr v arrSize -> onInitArr v arrSize
-    ReadArr v index -> onReadArr v index
-    WriteArr v index val -> onWriteArr v index val
-    WriteInitArr v arrSize initVal -> onWriteInitArr v arrSize initVal
+    ReadArr ifRate v index -> onReadArr ifRate v index
+    ReadArrTmp ifRate tmp v index -> onReadArrTmp ifRate tmp v index
+    WriteArr ifRate v index val -> onWriteArr ifRate v index val
+    WriteInitArr ifRate v arrSize initVal -> onWriteInitArr ifRate v arrSize initVal
     TfmArr isArrInit v info args -> onTfmArr isArrInit v info args
 
     -- | Pure arrays (read-only)
@@ -341,24 +342,27 @@ inferIter opts (Stmt lhs rhs) =
           argVar <- mapM (getVar Ir) arg
           pure (InitVar v argVar)
 
-    onReadVar mRate v =
+    onReadVar ifRate mRate v =
       save (fromMaybe varRate mRate) (withConvert v)
       where
         varRate = Exp.varRate v
 
         withConvert var =
           case mRate of
-            Nothing -> ReadVar var
-            Just target | target == varRate -> ReadVar var
+            Nothing -> ReadVar ifRate var
+            Just target | target == varRate -> ReadVar ifRate var
             Just target -> ExpPrim (PrimVar target var)
 
-    onReadVarTmp mRate tmp v = save (fromMaybe (Exp.varRate v) (tmpVarRate tmp <|> mRate)) (ReadVarTmp tmp v)
+    onReadVarTmp ifRate mRate tmp v =
+      save
+        (fromMaybe (Exp.varRate v) (tmpVarRate tmp <|> mRate <|> (if ifRate == IfIr then Just Ir else Nothing)))
+        (ReadVarTmp ifRate tmp v)
 
-    onWriteVar v arg = saveProcedure =<< typedRhs
+    onWriteVar ifRate v arg = saveProcedure =<< typedRhs
       where
         typedRhs = do
           argVar <- mapM (getVar (Exp.varRate v)) arg
-          pure $ WriteVar v argVar
+          pure $ WriteVar ifRate v argVar
 
     onExpNum args = do
       argVars <- mapM (mapM $ getVar Ir) args
@@ -437,22 +441,27 @@ inferIter opts (Stmt lhs rhs) =
       typedArrSize <- mapM (mapM (getVar Ir)) arrSize
       saveProcedure (InitArr v typedArrSize)
 
-    onReadArr v index = save (Exp.varRate v) . ReadArr v =<< typedIndex
+    onReadArr ifRate v index = save (Exp.varRate v) . ReadArr ifRate v =<< typedIndex
       where
         indexRate = getArrIndexRate v
         typedIndex = mapM (mapM (getVar indexRate)) index
 
-    onWriteArr v index arg = do
+    onReadArrTmp ifRate tmp v index = save (Exp.varRate v) . ReadArrTmp ifRate tmp v =<< typedIndex
+      where
+        indexRate = getArrIndexRate v
+        typedIndex = mapM (mapM (getVar indexRate)) index
+
+    onWriteArr ifRate v index arg = do
       typedIndex <- mapM (mapM (getVar indexRate)) index
       argVar <- mapM (getVar (Exp.varRate v)) arg
-      saveProcedure (WriteArr v typedIndex argVar)
+      saveProcedure (WriteArr ifRate v typedIndex argVar)
       where
         indexRate = getArrIndexRate v
 
-    onWriteInitArr v arrSize initVal = do
+    onWriteInitArr ifRate v arrSize initVal = do
       typedArrSize <- mapM (mapM (getVar Ir)) arrSize
       typedInitVal <- mapM (getVar (Exp.varRate v)) initVal
-      saveProcedure (WriteInitArr v typedArrSize typedInitVal)
+      saveProcedure (WriteInitArr ifRate v typedArrSize typedInitVal)
 
     getArrIndexRate v=
       case Exp.varRate v of

@@ -55,7 +55,7 @@ module Csound.Core
     -- ** Mutables
   , IsRef (..)
   , modifyRef
-  , readInitRef, writeInitRef, modifyInitRef
+  , modifyInitRef
   , Ref, newRef, newLocalRef, newCtrlRef, newLocalCtrlRef, newInitRef, newLocalInitRef
   , getInstrRefId
   , getInstrRefIdNum

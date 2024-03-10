@@ -11,8 +11,10 @@ import Csound.Dynamic (E, Var)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Dynamic (Rate (..))
 import Csound.Core.Types
-import Csound.Core.State (Dep)
+import Csound.Core.State (Dep, Run)
 import Control.Monad.Trans.Class (lift)
+import Csound.Core.State qualified as State
+import Data.Maybe
 
 newtype OscHandle = OscHandle D
   deriving (Val, Tuple, Arg)
@@ -24,8 +26,13 @@ oscInit port = pure $ OscHandle $ readOnlyVar $ liftOpc "OSCinit" [(Ir, [Ir])] p
 -- | We allocate references and inline them to OSCInit expression
 -- We need to do it because in this opcode Csound mutates the arguments
 rawOscListen :: E -> E -> E -> [Var] -> Dep E
-rawOscListen oscHandle addr oscType vars =
-  Dynamic.opcsDep "OSClisten" [(Kr, Ir:Sr:Sr: (Dynamic.varRate <$> vars))] (oscHandle : addr : oscType : fmap Dynamic.inlineVar vars)
+rawOscListen oscHandle addr oscType vars = do
+  ifRate <- getIfRate
+  Dynamic.opcsDep "OSClisten" [(Kr, Ir:Sr:Sr: (Dynamic.varRate <$> vars))] (oscHandle : addr : oscType : fmap (Dynamic.inlineVar ifRate) vars)
+
+getIfRate :: Dynamic.DepT Run Dynamic.IfRate
+getIfRate =
+  lift $ fromMaybe Dynamic.IfKr <$> State.getCurrentRate
 
 -- | Listens for the OSC-messages. The first argument is OSC-reference.
 -- We can create it with the function @initOsc@. The next two arguments are strings.

@@ -10,7 +10,7 @@ import Data.Maybe
 import Control.Monad
 -- import Debug.Trace
 
-import Csound.Dynamic.Types.Exp (RatedExp (..), TmpVar (..), MainExp (..), PrimOr (..), Prim (..), Rate (..), getTmpVars)
+import Csound.Dynamic.Types.Exp (RatedExp (..), TmpVar (..), MainExp (..), PrimOr (..), Prim (..), Rate (..), getTmpVars, IfRate (..))
 
 type Node f = (Int, f Int)
 type Dag f = [Node f]
@@ -36,15 +36,25 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
       mapM_ saveTmpVarRate $ getTmpVars $ ratedExpExp $ snd expr
       saveTmpVar expr
     -}
+    requestRate ifRate mRate =
+      case ifRate of
+        IfIr -> Just Ir
+        _ -> mRate
 
     saveTmpVar :: (Int, RatedExp Int) -> RemoveTmp (Int, RatedExp Int)
     saveTmpVar (resId, expr) = case ratedExpExp expr of
-      ReadVarTmp tmp v -> do
+      ReadVarTmp ifRate tmp v -> do
         mRate <- lookupRate tmp
         insertTmpVar tmp resId
         pure $
           -- (\x -> trace (unwords ["TMP VAR:", show $ratedExpRate $ snd x]) x) $
-          (resId, expr { ratedExpExp = ReadVar v, ratedExpRate = mRate })
+          (resId, expr { ratedExpExp = ReadVar ifRate v, ratedExpRate = requestRate ifRate mRate })
+
+      ReadArrTmp ifRate tmp v index -> do
+        mRate <- lookupRate tmp
+        insertTmpVar tmp resId
+        pure $ (resId, expr { ratedExpExp = ReadArr ifRate v index, ratedExpRate = requestRate ifRate mRate })
+
       TfmInit tmp info args -> do
         mRate <- lookupRate tmp
         insertTmpVar tmp resId

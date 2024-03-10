@@ -814,6 +814,15 @@ instance IsRef Chan where
   writeRef (Chan str) val = liftOpcDep_ "chnset" rates (val, str)
     where rates = [(Xr, [head (tupleRates @a), Sr])]
 
+  readInitRef :: forall a . (Tuple a, Tuple (InitType a)) => Chan a -> SE (InitType a)
+  readInitRef (Chan str) = SE $ fmap (toTuple . pure . pure) $ Dynamic.opcsDep "chnget" rates =<< lift (fromTuple str)
+    where rates = [(Ir, [Sr])]
+
+  writeInitRef :: forall a . (Tuple a, Tuple (InitType a)) => Chan a -> InitType a -> SE ()
+  writeInitRef (Chan str) val = liftOpcDep_ "chnseti" rates (val, str)
+    where rates = [(Xr, [Ir, Sr])]
+
+
 chnclear :: Chan Sig -> SE ()
 chnclear (Chan str) = liftOpcDep_ "chnclear" [(Xr, [Sr])] str
 

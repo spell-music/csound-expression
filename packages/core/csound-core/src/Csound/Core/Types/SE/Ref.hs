@@ -74,11 +74,19 @@ newRefBy rateFun initVars initVals =
   fmap Ref $ SE $ initVars (fmap rateFun $ tupleRates @a) (fromTuple initVals)
 
 instance IsRef Ref where
-  readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM Dynamic.readVar vars
+  readRef (Ref vars) = SE $ do
+    fmap (toTuple . return) $ mapM (Dynamic.readVar Dynamic.IfKr) vars
 
   writeRef (Ref vars) a = SE $ do
     vals <- lift $ fromTuple a
-    zipWithM_ Dynamic.writeVar vars vals
+    zipWithM_ (Dynamic.writeVar Dynamic.IfKr) vars vals
+
+  readInitRef (Ref vars) = SE $ do
+    fmap (toTuple . return) $ mapM (Dynamic.readVar Dynamic.IfIr) vars
+
+  writeInitRef (Ref vars) a = SE $ do
+    vals <- lift $ fromTuple a
+    zipWithM_ (Dynamic.writeVar Dynamic.IfIr) vars vals
 
 toCtrlRate :: Dynamic.Rate -> Dynamic.Rate
 toCtrlRate x = case x of
@@ -90,5 +98,3 @@ toInitRate x = case x of
     Dynamic.Ar -> Dynamic.Ir
     Dynamic.Kr -> Dynamic.Ir
     _  -> x
-
-
