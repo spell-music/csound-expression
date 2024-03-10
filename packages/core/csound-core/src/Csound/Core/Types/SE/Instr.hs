@@ -3,6 +3,8 @@ module Csound.Core.Types.SE.Instr
   ( iself
   , InstrRef
   , getInstrRefId
+  , getInstrRefIdNum
+  , instrRefFromNum
   , MixMode (..)
   , newProc
   , newNamedProc
@@ -41,6 +43,14 @@ getInstrRefId = \case
   StrRef pid -> Left $ fromE $ toE pid
   InstrRef (InstrId pid _ _) -> Right $ fromE $ toE pid
   EffRef (EffId pid _ _ _) -> Right $ fromE $ toE pid
+
+getInstrRefIdNum :: Arg a => InstrRef a -> D
+getInstrRefIdNum ref = case getInstrRefId ref of
+  Right n -> n
+  Left _ -> error "Instr ref is not a number"
+
+instrRefFromNum :: Arg a => D -> InstrRef a
+instrRefFromNum n = ProcRef (ProcId n)
 
 ------------------------------------------------------------
 -- procedures
@@ -221,7 +231,7 @@ play = \case
     -- | Adds port identifier as fraction to instrument id.
     -- It makes turn off of the self note safe.
     makeNoteUnique :: Val q => Port x -> q -> q
-    makeNoteUnique (Port port) instrId = setFractionD maxNotes  port instrId
+    makeNoteUnique (Port port) instrId = setFractionD maxNotes port instrId
 
     maxNotes = 10000
 

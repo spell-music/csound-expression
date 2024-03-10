@@ -12,7 +12,7 @@ module Csound.Core
   , module Csound.Core.Types.Gen
 
     -- ** Tuples
-  , Tuple, Arg, Sigs, makeTupleMethods
+  , Tuple (..), Arg, Sigs, makeTupleMethods
   , Sig2, Sig3, Sig4, Sig5, Sig6, Sig7, Sig8
   , D2, D3, D4, D5, D6
 
@@ -57,6 +57,9 @@ module Csound.Core
   , modifyRef
   , readInitRef, writeInitRef, modifyInitRef
   , Ref, newRef, newLocalRef, newCtrlRef, newLocalCtrlRef, newInitRef, newLocalInitRef
+  , getInstrRefId
+  , getInstrRefIdNum
+  , instrRefFromNum
   , Port, newPort
 
     -- * Instruments

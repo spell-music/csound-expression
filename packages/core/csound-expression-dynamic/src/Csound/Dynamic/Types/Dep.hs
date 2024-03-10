@@ -202,7 +202,12 @@ newTmpArrVar rate = newVar rate
 -- ops
 
 readArr :: Monad m => Var -> [E] -> DepT m E
-readArr _v _ixs = undefined -- depT $ noRate $ ReadArr v (fmap toPrimOr ixs)
+readArr v ixs = undefined
+  {-
+  tmp <- newTmpArrVar (varRate v)
+  depT_ $ noRate $ ReadArr tmp v (fmap toPrimOr ixs)
+  pure $ fromTmpVar tmp
+-}
 
 readOnlyArr :: Var -> [E] -> E
 readOnlyArr v ixs = noRate $ ReadArr v (fmap toPrimOr ixs)

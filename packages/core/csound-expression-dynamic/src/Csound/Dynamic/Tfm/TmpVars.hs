@@ -3,11 +3,11 @@ module Csound.Dynamic.Tfm.TmpVars
   ( removeTmpVars
   ) where
 
-import Control.Monad
 import Control.Monad.Trans.State.Strict
 import Data.IntMap.Strict (IntMap)
 import Data.IntMap.Strict qualified as IntMap
 import Data.Maybe
+import Control.Monad
 -- import Debug.Trace
 
 import Csound.Dynamic.Types.Exp (RatedExp (..), TmpVar (..), MainExp (..), PrimOr (..), Prim (..), Rate (..), getTmpVars)
@@ -28,7 +28,15 @@ removeTmpVars :: Dag RatedExp -> Dag RatedExp
 removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
   mapM_ (mapM_ saveTmpVarRate . getTmpVars . ratedExpExp .  snd) dag
   mapM (substArgs <=< saveTmpVar) dag
+  -- dag' <- mapM saveVars dag
+  -- mapM substArgs dag'
   where
+    {-
+    saveVars expr = do
+      mapM_ saveTmpVarRate $ getTmpVars $ ratedExpExp $ snd expr
+      saveTmpVar expr
+    -}
+
     saveTmpVar :: (Int, RatedExp Int) -> RemoveTmp (Int, RatedExp Int)
     saveTmpVar (resId, expr) = case ratedExpExp expr of
       ReadVarTmp tmp v -> do
@@ -61,7 +69,7 @@ insertTmpVar (TmpVar _ v) resId = modify' $ \st -> st { stIds = IntMap.insert v 
 lookupTmpVar :: Int -> TmpVar -> RemoveTmp Int
 lookupTmpVar resId (TmpVar _ n) = gets (fromMaybe err . IntMap.lookup n . stIds)
   where
-    err = error $ "TmpVar not found: " <> show n <> " on res: " <> show resId
+    err = error $ "TmpVar not found: " <> show n <> " on result id: " <> show resId
 
 saveTmpVarRate :: TmpVar -> RemoveTmp ()
 saveTmpVarRate (TmpVar mRate n) =
