@@ -1,4 +1,4 @@
--- | We collect all if-blocks under the if-the-else expressions and statements.
+-- | We collect all if-blocks under the if-then-else expressions and statements.
 --
 -- For a given if-block of code the taks is to agregate all expressions
 -- that can be used inside that block and don't affect external expressions
@@ -182,13 +182,21 @@ freshId = do
 ---------------------------------------------------------------------------
 -- working with DAG-graph
 
-traverseAccumDag :: forall s a . Show a => (Expr -> a -> Collect s a) -> a -> (Expr -> Collect s Bool) -> PrimOr Var -> Collect s a
+traverseAccumDag ::
+  forall s a .
+  Show a =>
+  (Expr -> a -> Collect s a) ->
+  a ->
+  (Expr -> Collect s Bool) ->
+  PrimOr Var ->
+  Collect s a
 traverseAccumDag update initSt getIsEnd (PrimOr root) = do
   case root of
     Left _    -> pure initSt
     Right var -> do
       ref <- lift $ newSTRef initSt
-      traverseDag var getIsEnd (go ref)
+      visitedRef <- lift $ newSTRef IntSet.empty
+      traverseDag visitedRef var getIsEnd (go ref)
       lift $ readSTRef ref
   where
     go :: STRef s a -> Expr -> Collect s ()
@@ -200,14 +208,16 @@ traverseAccumDag update initSt getIsEnd (PrimOr root) = do
         newVal
 
 -- | Breadth first traversal
-traverseDag :: Var -> (Expr -> Collect s Bool) -> (Expr -> Collect s ()) -> Collect s ()
-traverseDag root getIsEnd go =
-  withDag root $ \expr -> do
-    isTerminal <- getIsEnd expr
-    unless isTerminal $ do
-      go expr
-      mapM_ (\var -> traverseDag var getIsEnd go) (stmtRhs expr)
-
+traverseDag :: STRef s IntSet -> Var -> (Expr -> Collect s Bool) -> (Expr -> Collect s ()) -> Collect s ()
+traverseDag visitedRef root getIsEnd go = do
+  visited <- lift $ readSTRef visitedRef
+  unless (IntSet.member (varId root) visited) $ do
+    lift $ modifySTRef' visitedRef (IntSet.insert (varId root))
+    withDag root $ \expr -> do
+      isTerminal <- getIsEnd expr
+      unless isTerminal $ do
+        go expr
+        mapM_ (\var -> traverseDag visitedRef var getIsEnd go) (stmtRhs expr)
 
 -----------------------------------------------------------
 
@@ -507,6 +517,8 @@ getLocalVars localUsages ifRate root = toSet <$>
       | isParentLocal = do
           isLocal <- fullyInsideLocal lhs
           let tfm = if isLocal then id else onFalseLocal
+          -- when (varId lhs == 92)
+          --   $ trace (unwords ["IS 92:", show isLocal]) $ pure ()
           pure $ tfm $ IntMap.alter (Just . maybe isLocal (isLocal &&)) (varId lhs) localMarks
       | otherwise = pure $ onFalseLocal localMarks
       where
@@ -519,6 +531,9 @@ getLocalVars localUsages ifRate root = toSet <$>
     fullyInsideLocal lhs = do
       globalCount <- readGlobalUsages (varId lhs)
       let localCount = IntMap.lookup (varId lhs) localUsages
+      -- how to do node specific debug:
+      -- when (varId lhs == 92)
+      --  $ trace (unwords ["IS 92:", "global:", show globalCount, "local:", show localCount]) $ pure ()
       pure $ Just globalCount == localCount
 
     toSet :: LocalMarks -> LocalVars
