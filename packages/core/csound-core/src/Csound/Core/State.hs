@@ -19,6 +19,7 @@ module Csound.Core.State
   , getOptions
   , getFreshPort
   , getReadOnlyVar
+  , includeFile
   -- * Vco
   , VcoInit (..)
   , VcoShape (..)
@@ -31,6 +32,7 @@ module Csound.Core.State
 import Debug.Trace (trace)
 import Csound.Dynamic.Render.Pretty (ppE)
 
+import System.Directory (doesFileExist)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class (lift)
@@ -41,11 +43,14 @@ import Data.Map.Strict qualified as Map
 import Data.Maybe
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Set (Set)
+import Data.Set qualified as Set
 
 import Csound.Dynamic
 import Csound.Core.Render.Options (Options)
 import Csound.Core.Render.Options qualified as Options
 
+-- | Monad for dependency tracking augmented with internal state
 type Dep a = DepT Run a
 
 -- | Monad for typed Csound expressions
@@ -73,6 +78,7 @@ exec opts act = do
       , options = opts
       , readInit = ReadInit HashMap.empty
       , ftables = Ftables { ftableCache = FtableMap Map.empty, ftableFreshId = 1 }
+      , includeFiles = mempty
       }
 
     foreverTime = 100 * 604800.0
@@ -163,6 +169,19 @@ setupInstr0 opt = insertGlobalExpr =<< execDepT instr0
     instr0 = do
       globalConstants opt
       chnUpdateUdo
+      mapM_ insertIncludeFile =<< (lift $ Run $ gets (.includeFiles))
+
+insertIncludeFile :: FilePath -> Dep ()
+insertIncludeFile file = do
+  content <- readFileWithExistCheck file
+  verbatim $ Text.pack content <> "\n"
+
+readFileWithExistCheck :: FilePath -> Dep String
+readFileWithExistCheck file = lift $ liftIO $ do
+  isOk <- doesFileExist file
+  if isOk
+    then readFile file
+    else error $ "File to include in Csound file does not exist: " <> file
 
 -- | Creates expression with global constants
 globalConstants :: Options -> Dep ()
@@ -233,6 +252,7 @@ data St = St
   , options     :: Options           -- ^ Csound flags and initial options / settings
   , readInit    :: ReadInit          -- ^ read only global inits that are initialized only once
   , ftables     :: Ftables
+  , includeFiles :: Set FilePath       -- ^ files to include (used mostly for UDOs to inline them in the code)
   }
 
 -- | Global vars that are initialized only once and are read-only
@@ -389,6 +409,9 @@ vcoShapeId' = \case
 
 getFreshFtableId :: Run E
 getFreshFtableId = Run $ gets (ftableFreshId . (.ftables))
+
+includeFile :: FilePath -> Run ()
+includeFile file = Run $ modify' $ \st -> st { includeFiles = Set.insert file st.includeFiles }
 
 -------------------------------------------------------------------------------------
 -- update options

@@ -37,6 +37,7 @@ module Csound.Core.Opcodes
   , flooper, flooper2
   , filescal, mincer
   , filelen
+  , bbcutm, bbcuts
 
   -- * Audio I/O
   -- for outs and ins use functions writeOuts and readIns
@@ -81,6 +82,7 @@ module Csound.Core.Opcodes
 
   -- * MIDI
   , massign
+  , midiin
   , notnum, veloc, release
   , midictrl, ctrlinit, CtrlInit (..)
   , ctrl7, ctrl14
@@ -110,7 +112,7 @@ module Csound.Core.Opcodes
   , distort, distort1, powershape
 
   -- * Filter
-  , tone, atone, reson, butlp, buthp, butbp, butbr, mode, zdfLadder, moogvcf2
+  , tone, atone, reson, butlp, buthp, butbp, butbr, mode, zdfLadder, moogvcf2, k35_lpf
 
   -- * Level
   , rms, balance, balance2
@@ -1090,6 +1092,14 @@ moogvcf2 ::  Sig -> Sig -> Sig -> Sig
 moogvcf2 xfco xres asig = liftOpc "moogvcf2" rates (asig, xfco, xres)
   where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir])]
 
+-- |
+-- A digital emulation of Korg 35 filter
+--
+-- > ares k35_lpf asig, xcutoff, xresonance, [..]
+k35_lpf ::  Sig -> Sig -> Sig -> Sig
+k35_lpf xfco xres asig = liftOpc "K35_lpf" rates (asig, xfco, xres)
+  where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])]
+
 -------------------------------------------------------------------------------------
 -- Level
 
@@ -1379,6 +1389,17 @@ dbfs x = gainslider (x * 127)
 -------------------------------------------------------------------------------------
 -- MIDI
 
+-- |
+-- Returns a generic MIDI message received by the MIDI IN port.
+--
+-- Returns a generic MIDI message received by the MIDI IN port
+--
+-- > kstatus, kchan, kdata1, kdata2  midiin
+--
+-- csound doc: <http://csound.com/docs/manual/midiin.html>
+midiin :: SE (Sig,Sig,Sig,Sig)
+midiin  = pure $ liftMulti "midiin" ([Kr,Kr,Kr,Kr],[]) ()
+
 -- | massign — Assigns a MIDI channel number to a Csound instrument.
 --
 -- > massign ichnl, insnum[, ireset]
@@ -1488,4 +1509,29 @@ initc14 ::  CtrlInit -> SE ()
 initc14 b1  = liftOpcDep_ "initc14" rates b1
     where rates = [(Xr,[Ir,Ir,Ir])]
 
+-- |
+-- Generates breakbeat-style cut-ups of a mono audio stream.
+--
+-- The BreakBeat Cutter automatically generates cut-ups of a source audio stream in the style of drum and bass/jungle breakbeat manipulations.  There are two versions, for mono (bbcutm) or stereo (bbcuts) sources.  Whilst originally based on breakbeat cutting, the opcode can be applied to any type of source audio.
+--
+-- > a1  bbcutm  asource, ibps, isubdiv, ibarlength, iphrasebars, inumrepeats \
+-- >           [, istutterspeed] [, istutterchance] [, ienvchoice ]
+--
+-- csound doc: <http://csound.com/docs/manual/bbcutm.html>
+bbcutm ::  Sig -> D -> D -> D -> D -> D -> Sig
+bbcutm b1 b2 b3 b4 b5 b6 = liftOpc "bbcutm" rates (b1,b2,b3,b4,b5,b6)
+  where
+    rates = [(Ar,[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])]
 
+-- |
+-- Generates breakbeat-style cut-ups of a stereo audio stream.
+--
+-- The BreakBeat Cutter automatically generates cut-ups of a source audio stream in the style of drum and bass/jungle breakbeat manipulations.  There are two versions, for mono (bbcutm) or stereo (bbcuts) sources.  Whilst originally based on breakbeat cutting, the opcode can be applied to any type of source audio.
+--
+-- > a1,a2  bbcuts  asource1, asource2, ibps, isubdiv, ibarlength, iphrasebars, \
+-- >           inumrepeats [, istutterspeed] [, istutterchance] [, ienvchoice]
+--
+-- csound doc: <http://csound.com/docs/manual/bbcuts.html>
+bbcuts ::  Sig -> Sig -> D -> D -> D -> D -> D -> (Sig,Sig)
+bbcuts b1 b2 b3 b4 b5 b6 b7 =
+  liftMulti "bbcuts" ([Ar,Ar],[Ar,Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) (b1, b2, b3, b4, b5, b6, b7)

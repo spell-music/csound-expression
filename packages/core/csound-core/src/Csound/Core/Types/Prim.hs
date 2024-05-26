@@ -49,9 +49,14 @@ class
   , Floating a
   , OrdB a
   ) => SigOrD a where
+  -- | Constructs a number
+  double :: Double -> a
 
-instance SigOrD Sig
-instance SigOrD D
+instance SigOrD Sig where
+  double = PrimSig
+
+instance SigOrD D where
+  double = PrimD
 
 -------------------------------------------------------------------------------
 -- converters
@@ -67,11 +72,7 @@ toD = \case
   PrimSig a -> PrimD a
 
 int :: SigOrD a => Int -> a
-int = fromE . pure . Dynamic.int
-
--- | Constructs a number.
-double :: SigOrD a => Double -> a
-double = fromE . pure . Dynamic.double
+int = double . fromIntegral
 
 -- | Constructs a number.
 float :: SigOrD a => Float -> a
