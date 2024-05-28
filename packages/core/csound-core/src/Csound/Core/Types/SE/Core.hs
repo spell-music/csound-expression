@@ -33,6 +33,9 @@ module Csound.Core.Types.SE.Core
 
 import Control.Monad.IO.Class
 import Data.Kind
+import Data.Text (Text)
+import Data.Default
+import Control.Monad.Trans.Class (lift)
 
 import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
@@ -41,10 +44,6 @@ import Csound.Core.Render.Options (Options)
 import Csound.Core.State qualified as State
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.Val
-import Control.Monad.Trans.Class (lift)
-import Data.Default
-import Paths_csound_core (getDataFileName)
-import System.FilePath ((</>))
 
 newtype SE a = SE { unSE :: Dep a }
   deriving newtype (Functor, Applicative, Monad)
@@ -156,45 +155,41 @@ liftOpr1kDep name b1 = SE $ fmap (fromE . pure) $ Dynamic.opr1kDep name =<< lift
 
 liftUdo :: (Tuple a, Val b) => FilePath -> Name -> Spec1 -> a -> b
 liftUdo file name rates a = fromE $ do
-  State.includeFile file
+  State.includeUdoFile name file
   Dynamic.opcs name rates <$> fromTuple a
 
 liftMultiUdo :: forall a b . (Tuple a, Tuple b) => FilePath -> Name -> ([Rate], [Rate]) -> a -> b
 liftMultiUdo file name rates a = pureTuple $ do
-  State.includeFile file
+  State.includeUdoFile name file
   Dynamic.mopcs name rates <$> fromTuple a
   where
     pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs
 
 liftUdoDep :: (Tuple a, Val b) => FilePath -> Name -> Spec1 -> a -> SE b
 liftUdoDep file name rates a = SE $ fmap (fromE . pure) $ do
-  lift (State.includeFile file)
+  lift (State.includeUdoFile name file)
   Dynamic.opcsDep name rates =<< lift (fromTuple a)
 
 liftUdoDep_ :: (Tuple a) => FilePath -> Name -> Spec1 -> a -> SE ()
 liftUdoDep_ file name rates a = SE $ do
-  lift (State.includeFile file)
+  lift (State.includeUdoFile name file)
   Dynamic.opcsDep_ name rates =<< lift (fromTuple a)
 
 liftMultiUdoDep :: forall a b . (Tuple a, Tuple b) => FilePath -> Name -> ([Rate], [Rate]) -> a -> SE b
 liftMultiUdoDep file name rates a = SE $ do
-  lift (State.includeFile file)
+  lift (State.includeUdoFile name file)
   fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
 
 -- * Internal UDOs
 
-liftInternalUdo :: (Tuple a, Val b) => FilePath -> Name -> Spec1 -> a -> b
-liftInternalUdo file name rates a = fromE $ do
-  State.includeFile =<< getInternalUdoFile file
+liftInternalUdo :: (Tuple a, Val b) => Text -> Name -> Spec1 -> a -> b
+liftInternalUdo udoContent name rates a = fromE $ do
+  State.includeUdo name udoContent
   Dynamic.opcs name rates <$> fromTuple a
 
-liftInternalMultiUdo :: forall a b . (Tuple a, Tuple b) => FilePath -> Name -> ([Rate], [Rate]) -> a -> b
-liftInternalMultiUdo file name rates a = pureTuple $ do
-  State.includeFile =<< getInternalUdoFile file
+liftInternalMultiUdo :: forall a b . (Tuple a, Tuple b) => Text -> Name -> ([Rate], [Rate]) -> a -> b
+liftInternalMultiUdo udoContent name rates a = pureTuple $ do
+  State.includeUdo name udoContent
   Dynamic.mopcs name rates <$> fromTuple a
   where
     pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs
-
-getInternalUdoFile :: MonadIO m => FilePath -> m FilePath
-getInternalUdoFile file =
-  liftIO (getDataFileName $ "data" </> "opcodes" </> file)

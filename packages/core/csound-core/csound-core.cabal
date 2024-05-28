@@ -17,23 +17,6 @@ Source-repository head
     Type: git
     Location: https://github.com/anton-k/csound-expression-typed
 
-Data-Files:
-  data/opcodes/MultiFX/AnalogDelay.udo
-  data/opcodes/MultiFX/Distortion.udo
-  data/opcodes/MultiFX/EnvelopeFollower.udo
-  data/opcodes/MultiFX/Flanger.udo
-  data/opcodes/MultiFX/FreqShifter.udo
-  data/opcodes/MultiFX/LoFi.udo
-  data/opcodes/MultiFX/PanTrem.udo
-  data/opcodes/MultiFX/MonoTrem.udo
-  data/opcodes/MultiFX/Phaser.udo
-  data/opcodes/MultiFX/PitchShifter.udo
-  data/opcodes/MultiFX/Reverse.udo
-  data/opcodes/MultiFX/RingModulator.udo
-  data/opcodes/MultiFX/StChorus.udo
-  data/opcodes/MultiFX/StereoPingPongDelay.udo
-  data/opcodes/MultiFX/TapeEcho.udo
-
 Library
   Ghc-Options:    -Wall
   Build-Depends:
@@ -50,7 +33,8 @@ Library
     hashable,
     text,
     unordered-containers,
-    process
+    process,
+    file-embed
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:

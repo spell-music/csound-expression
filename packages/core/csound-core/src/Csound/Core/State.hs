@@ -19,7 +19,8 @@ module Csound.Core.State
   , getOptions
   , getFreshPort
   , getReadOnlyVar
-  , includeFile
+  , includeUdoFile
+  , includeUdo
   -- * Vco
   , VcoInit (..)
   , VcoShape (..)
@@ -33,6 +34,7 @@ import Debug.Trace (trace)
 import Csound.Dynamic.Render.Pretty (ppE)
 
 import System.Directory (doesFileExist)
+import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class (lift)
@@ -43,8 +45,6 @@ import Data.Map.Strict qualified as Map
 import Data.Maybe
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Set (Set)
-import Data.Set qualified as Set
 
 import Csound.Dynamic
 import Csound.Core.Render.Options (Options)
@@ -61,7 +61,7 @@ newtype Run a = Run { unRun :: StateT St IO a }
 -- for rendering to text.
 exec :: Options -> Run () -> IO Csd
 exec opts act = do
-  st <- execStateT (unRun $ setupInstr0 opts >> act) initSt
+  st <- execStateT (unRun $ setupInstr0 opts >> act >> setupUdos ) initSt
   pure $ st.csd { csdFlags = Options.csdFlags st.options }
   where
     initSt = St
@@ -78,7 +78,7 @@ exec opts act = do
       , options = opts
       , readInit = ReadInit HashMap.empty
       , ftables = Ftables { ftableCache = FtableMap Map.empty, ftableFreshId = 1 }
-      , includeFiles = mempty
+      , includeUdos = mempty
       }
 
     foreverTime = 100 * 604800.0
@@ -169,19 +169,20 @@ setupInstr0 opt = insertGlobalExpr =<< execDepT instr0
     instr0 = do
       globalConstants opt
       chnUpdateUdo
-      mapM_ insertIncludeFile =<< (lift $ Run $ gets (.includeFiles))
 
-insertIncludeFile :: FilePath -> Dep ()
-insertIncludeFile file = do
-  content <- readFileWithExistCheck file
-  verbatim $ Text.pack content <> "\n"
+setupUdos :: Run ()
+setupUdos = insertGlobalExpr =<< execDepT udos
+  where
+    udos :: Dep ()
+    udos = do
+      udoNames <- Map.keys <$> (lift $ Run $ gets (.includeUdos))
+      lift $ liftIO $ putStrLn $ "INCLUDE UDOS: " <> show udoNames
+      mapM_ insertUdo =<<
+       (lift $ Run $ gets (.includeUdos))
 
-readFileWithExistCheck :: FilePath -> Dep String
-readFileWithExistCheck file = lift $ liftIO $ do
-  isOk <- doesFileExist file
-  if isOk
-    then readFile file
-    else error $ "File to include in Csound file does not exist: " <> file
+    insertUdo :: Text -> Dep ()
+    insertUdo udoContent = do
+      verbatim $ udoContent <> "\n"
 
 -- | Creates expression with global constants
 globalConstants :: Options -> Dep ()
@@ -252,7 +253,7 @@ data St = St
   , options     :: Options           -- ^ Csound flags and initial options / settings
   , readInit    :: ReadInit          -- ^ read only global inits that are initialized only once
   , ftables     :: Ftables
-  , includeFiles :: Set FilePath       -- ^ files to include (used mostly for UDOs to inline them in the code)
+  , includeUdos :: Map Text Text -- ^ include UDOs (map from name to UDO-content)
   }
 
 -- | Global vars that are initialized only once and are read-only
@@ -410,8 +411,25 @@ vcoShapeId' = \case
 getFreshFtableId :: Run E
 getFreshFtableId = Run $ gets (ftableFreshId . (.ftables))
 
-includeFile :: FilePath -> Run ()
-includeFile file = Run $ modify' $ \st -> st { includeFiles = Set.insert file st.includeFiles }
+includeUdoFile :: Text -> FilePath -> Run ()
+includeUdoFile udoName file = do
+  udos <- Run $ gets (.includeUdos)
+  when (not $ Map.member udoName udos) $ do
+    udoContent <- Text.pack <$> readFileWithExistCheck file
+    Run $ modify' $ \st -> st { includeUdos = Map.insert udoName udoContent st.includeUdos }
+
+includeUdo :: Text -> Text -> Run ()
+includeUdo udoName udoContent = do
+  udos <- Run $ gets (.includeUdos)
+  when (not $ Map.member udoName udos) $ do
+    Run $ modify' $ \st -> st { includeUdos = Map.insert udoName udoContent st.includeUdos }
+
+readFileWithExistCheck :: FilePath -> Run String
+readFileWithExistCheck file = liftIO $ do
+  isOk <- doesFileExist file
+  if isOk
+    then readFile file
+    else error $ "File to include in Csound file does not exist: " <> file
 
 -------------------------------------------------------------------------------------
 -- update options
