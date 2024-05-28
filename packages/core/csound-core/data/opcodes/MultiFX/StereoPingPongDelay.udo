@@ -1,5 +1,7 @@
 opcode StereoPingPongDelay, aa, aaKKKKKi
     aInL, aInR, kdelayTime, kFeedback, kMix, kWidth, kDamp, iMaxDelayTime xin
+    kDamp	expcurve	kDamp,4				;CREATE AN EXPONENTIAL REMAPPING OF ktone
+    kDamp	scale	kDamp,12000,100				;RESCALE 0 - 1 VALUE
 
     iporttime   =       .1          ;PORTAMENTO TIME
     kporttime   linseg      0, .001, iporttime  ;USE OF AN ENVELOPE VALUE THAT QUICKLY RAMPS UP FROM ZERO TO THE REQUIRED VALUE. THIS PREVENTS VARIABLES GLIDING TO THEIR REQUIRED VALUES EACH TIME THE INSTRUMENT IS STARTED

@@ -118,7 +118,7 @@ module Csound.Core.Opcodes
   , rms, balance, balance2
 
   -- * Math / Conversion
-  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider
+  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider, expcurve, scale
 
   -- * Amplitude / Pitch Tracking
   , follow, follow2, ptrack
@@ -1535,3 +1535,31 @@ bbcutm b1 b2 b3 b4 b5 b6 = liftOpc "bbcutm" rates (b1,b2,b3,b4,b5,b6)
 bbcuts ::  Sig -> Sig -> D -> D -> D -> D -> D -> (Sig,Sig)
 bbcuts b1 b2 b3 b4 b5 b6 b7 =
   liftMulti "bbcuts" ([Ar,Ar],[Ar,Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) (b1, b2, b3, b4, b5, b6, b7)
+
+
+-- |
+-- This opcode implements a formula for generating a normalised exponential curve in range 0 - 1. It is based on the Max / MSP work of Eric Singer (c) 1994.
+--
+-- Generates an exponential curve in range 0 to 1 of arbitrary steepness.
+--       Steepness index equal to or lower than 1.0 will result in Not-a-Number
+--       errors and cause unstable behavior.
+--
+-- > kout  expcurve  kindex, ksteepness
+--
+-- csound doc: <http://csound.com/docs/manual/expcurve.html>
+expcurve ::  Sig -> Sig -> Sig
+expcurve b1 b2 = liftOpc "expcurve" rates (b1, b2)
+    where rates = [(Kr,[Kr,Kr])]
+
+-- |
+-- Arbitrary signal scaling.
+--
+-- Scales incoming value to user-definable range. Similar to scale object found in popular dataflow languages.
+--
+-- > kscl  scale  kinput, kmax, kmin
+--
+-- csound doc: <http://csound.com/docs/manual/scale.html>
+scale ::  Sig -> Sig -> Sig -> Sig
+scale b1 b2 b3 = liftOpc "scale" rates (b1, b2, b3)
+    where rates = [(Kr,[Kr,Kr,Kr])]
+
