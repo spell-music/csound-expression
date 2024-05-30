@@ -97,6 +97,9 @@ module Csound.Core.Opcodes
   -- * Reverb
   , freeverb, reverbsc
 
+  -- * Dynamic processing
+  , compress, compress2, dam
+
   -- * Spectral Processing
 
   -- * Convolution
@@ -1077,7 +1080,7 @@ mode xfreq xQ ain = liftOpc "mode" rates (ain, xfreq, xQ)
 --
 -- Note that first arguments goes last (as it convenient for Haskell)
 zdfLadder ::  Sig -> Sig -> Sig -> Sig
-zdfLadder xcf xQ ain = liftOpc "zdf_ladder" rates (ain, xcf, xQ)
+zdfLadder ain xcf xQ = liftOpc "zdf_ladder" rates (ain, xcf, xQ)
   where rates = [(Ar,[Ar,Xr,Xr,Ir])]
 
 -- |
@@ -1089,7 +1092,7 @@ zdfLadder xcf xQ ain = liftOpc "zdf_ladder" rates (ain, xcf, xQ)
 --
 -- Note that first arguments goes last (as it convenient for Haskell)
 moogvcf2 ::  Sig -> Sig -> Sig -> Sig
-moogvcf2 xfco xres asig = liftOpc "moogvcf2" rates (asig, xfco, xres)
+moogvcf2 asig xfco xres = liftOpc "moogvcf2" rates (asig, xfco, xres)
   where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir])]
 
 -- |
@@ -1097,7 +1100,7 @@ moogvcf2 xfco xres asig = liftOpc "moogvcf2" rates (asig, xfco, xres)
 --
 -- > ares k35_lpf asig, xcutoff, xresonance, [..]
 k35_lpf ::  Sig -> Sig -> Sig -> Sig
-k35_lpf xfco xres asig = liftOpc "K35_lpf" rates (asig, xfco, xres)
+k35_lpf asig xfco xres = liftOpc "K35_lpf" rates (asig, xfco, xres)
   where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])]
 
 -------------------------------------------------------------------------------------
@@ -1563,3 +1566,54 @@ scale ::  Sig -> Sig -> Sig -> Sig
 scale b1 b2 b3 = liftOpc "scale" rates (b1, b2, b3)
     where rates = [(Kr,[Kr,Kr,Kr])]
 
+
+-- |
+-- Compress, limit, expand, duck or gate an audio signal.
+--
+-- This unit functions as an audio
+--     compressor, limiter, expander, or noise gate, using either
+--     soft-knee or hard-knee mapping, and with dynamically variable
+--     performance characteristics.  It takes two audio input signals,
+--     aasig and acsig, the first of which is modified by a running
+--     analysis of the second. Both signals can be the same, or the first
+--     can be modified by a different controlling signal.
+--
+-- > ar  compress2  aasig, acsig, kthresh, kloknee, khiknee, kratio, katt, krel, ilook
+--
+-- csound doc: <http://csound.com/docs/manual/compress2.html>
+compress2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
+compress2 a1 a2 a3 a4 a5 a6 a7 a8 a9  = liftOpc "compress2" rates args
+  where
+    rates = [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])]
+    args = ((a1,a2,a3,a4),(a5,a6,a7,a8,a9))
+
+
+-- |
+-- A dynamic compressor/expander.
+--
+-- This opcode dynamically modifies a gain value applied to the input sound ain by comparing its power level to a given threshold level. The signal will be compressed/expanded with different factors regarding that it is over or under the threshold.
+--
+-- > ares  dam  asig, kthreshold, icomp1, icomp2, irtime, iftime
+--
+-- csound doc: <http://csound.com/docs/manual/dam.html>
+dam ::  Sig -> Sig -> D -> D -> D -> D -> Sig
+dam a1 a2 a3 a4 a5 a6 = liftOpc "dam" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir])] (a1,a2,a3,a4,a5,a6)
+
+
+-- |
+-- Compress, limit, expand, duck or gate an audio signal.
+--
+-- This unit functions as an audio
+--     compressor, limiter, expander, or noise gate, using either
+--     soft-knee or hard-knee mapping, and with dynamically variable
+--     performance characteristics.  It takes two audio input signals,
+--     aasig and acsig, the first of which is modified by a running
+--     analysis of the second. Both signals can be the same, or the first
+--     can be modified by a different controlling signal.
+--
+-- > ar  compress  aasig, acsig, kthresh, kloknee, khiknee, kratio, katt, krel, ilook
+--
+-- csound doc: <http://csound.com/docs/manual/compress.html>
+compress ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
+compress a1 a2 a3 a4 a5 a6 a7 a8 a9 =
+  liftOpc "compress" [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] ((a1,a2,a3,a4),(a5,a6,a7,a8,a9))
