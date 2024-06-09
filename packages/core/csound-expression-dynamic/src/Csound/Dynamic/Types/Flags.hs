@@ -54,14 +54,12 @@ data Flags = Flags
 instance Default Flags where
     def = Flags def def def def def def def def def def
 
-
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Flags where
   x <> y          = x `mappendFlags` y
 
 instance Monoid Flags where
     mempty  = def
-
 #else
 
 instance Monoid Flags where

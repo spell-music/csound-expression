@@ -31,6 +31,8 @@ module Csound.Core.Render.Options (
     setJacko,
     setVirtual,
     logTrace,
+    setVerbatimFlags,
+    setWriteCsd,
     -- * Save user options
     saveUserOptions,
     getUserOptions,
@@ -72,10 +74,17 @@ data Options = Options
     , csdJackConnect    :: Maybe [(Text, Text)] -- ^ list of jack connections to make after csound app is launched (Linux only)
     , csdTrace          :: Maybe Bool               -- ^ Do we need debug-trace, default is False
     , csdRender         :: Maybe RenderOptions
+    , csdWriteFile      :: Maybe FilePath            -- ^ write Csound text to file
     } deriving (Eq, Show, Read)
 
+setVerbatimFlags :: Text -> Options
+setVerbatimFlags flags = def { csdFlags = def { flagsVerbatim = Just flags } }
+
+setWriteCsd :: FilePath -> Options
+setWriteCsd file = def { csdWriteFile = Just file }
+
 instance Default Options where
-    def = Options def def def def def def def def def def def def
+    def = Options def def def def def def def def def def def def def
 
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Options where
@@ -106,6 +115,7 @@ mappendOptions a b = Options
     , csdJackConnect    = mappend (csdJackConnect a) (csdJackConnect b)
     , csdTrace          = csdTrace a <|> csdTrace b
     , csdRender         = csdRender a <|> csdRender b
+    , csdWriteFile      = csdWriteFile a <|> csdWriteFile b
     }
 
 defScaleUI :: Options -> (Double, Double)

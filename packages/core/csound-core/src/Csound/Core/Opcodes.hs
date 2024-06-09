@@ -36,7 +36,7 @@ module Csound.Core.Opcodes
   , loscil, loscil3, loscilx, lphasor, losc, losc1, loopWav, loopWav1, oscWav, oscWav1, oscMp3
   , flooper, flooper2
   , filescal, mincer
-  , filelen
+  , filelen, filesr
   , bbcutm, bbcuts
 
   -- * Audio I/O
@@ -44,6 +44,7 @@ module Csound.Core.Opcodes
   , monitor
   , inch
   , outch
+  , outs
 
   -- * Tables (Buffers)
   , table, tablei, table3
@@ -115,7 +116,7 @@ module Csound.Core.Opcodes
   , distort, distort1, powershape
 
   -- * Filter
-  , tone, atone, reson, butlp, buthp, butbp, butbr, mode, zdfLadder, moogvcf2, k35_lpf
+  , tone, atone, reson, butlp, buthp, butbp, butbr, mode, zdfLadder, moogvcf2, k35_lpf, pareq
 
   -- * Level
   , rms, balance, balance2
@@ -617,6 +618,15 @@ filelen b1 = liftOpc "filelen" rates b1
   where rates = [(Ir,[Sr,Ir])]
 
 -- |
+-- Returns the sample rate of a sound file.
+--
+-- > ir  filesr  ifilcod [, iallowraw]
+--
+-- csound doc: <http://csound.com/docs/manual/filesr.html>
+filesr ::  Str -> D
+filesr a1 = liftOpc "filesr" [(Ir,[Sr,Ir])] a1
+
+-- |
 -- Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.
 --
 -- filescal implements phase-locked vocoder
@@ -673,6 +683,15 @@ inch b1 = liftMultiDep "inch" ((repeat Ar),(repeat Kr)) b1
 -- User several invokations of outch to write to multiple channels
 outch :: Sig -> Sig -> SE ()
 outch index aout = liftOpcDep_ "outch" [(Xr, [Kr,Ar])] (index, aout)
+
+-- |
+-- Writes stereo audio data to an external device or stream.
+--
+-- >  outs  asig1, asig2
+--
+-- csound doc: <http://csound.com/docs/manual/outs.html>
+outs ::  Sig2 -> SE ()
+outs a = liftOpcDep_ "outs" [(Xr,[Ar,Ar])] a
 
 -------------------------------------------------------------------------------------
 -- Tables (Buffers)
@@ -1102,6 +1121,17 @@ moogvcf2 asig xfco xres = liftOpc "moogvcf2" rates (asig, xfco, xres)
 k35_lpf ::  Sig -> Sig -> Sig -> Sig
 k35_lpf asig xfco xres = liftOpc "K35_lpf" rates (asig, xfco, xres)
   where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])]
+
+-- |
+-- Implementation of Zoelzer's parametric equalizer filters.
+--
+-- Implementation of Zoelzer's parametric equalizer filters, with some modifications by the author.
+--
+-- > ares  pareq  asig, kc, kv, kq [, imode] [, iskip]
+--
+-- csound doc: <http://csound.com/docs/manual/pareq.html>
+pareq ::  Sig -> Sig -> Sig -> Sig -> Sig
+pareq a1 a2 a3 a4 = liftOpc "pareq" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir])] (a1,a2,a3,a4)
 
 -------------------------------------------------------------------------------------
 -- Level

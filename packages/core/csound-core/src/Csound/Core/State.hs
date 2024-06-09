@@ -30,9 +30,9 @@ module Csound.Core.State
   , setDefaultOption
   ) where
 
-import Debug.Trace (trace)
+import Data.Default (def)
 import Csound.Dynamic.Render.Pretty (ppE)
-
+import Csound.Dynamic.Debug (IsDebug, traceShowIf)
 import System.Directory (doesFileExist)
 import Control.Monad
 import Control.Monad.IO.Class
@@ -86,16 +86,23 @@ exec opts act = do
 -----------------------------------------------------------------------------
 -- basic functions
 
+readIsDebug :: Run IsDebug
+readIsDebug = Run $ do
+  opts <- gets (.options)
+  pure (fromMaybe def opts.csdRender).inferenceOptions.opcodeInferenceDebug
+
 -- | Inserts new instrument body.
 -- The instrument identifier is automatically allocated to fresh integer
 insertInstr :: E -> Run InstrId
-insertInstr expr = trace (show $ ppE expr) $ do
-  freshInstrId <- getFreshInstrId expr
-  case freshInstrId of
-    InstrExist instrId -> pure instrId
-    NewInstr instrId -> do
-      modifyCsd $ \csd -> csd { csdOrc = insertOrcInstrument (Instr instrId expr) (csdOrc csd) }
-      pure instrId
+insertInstr expr = do
+  isDebug <- readIsDebug
+  traceShowIf isDebug (ppE expr) $ do
+    freshInstrId <- getFreshInstrId expr
+    case freshInstrId of
+      InstrExist instrId -> pure instrId
+      NewInstr instrId -> do
+        modifyCsd $ \csd -> csd { csdOrc = insertOrcInstrument (Instr instrId expr) (csdOrc csd) }
+        pure instrId
 
 -- | Inserts new named instrument body.
 insertNamedInstr :: Text -> E -> Run InstrId
@@ -175,8 +182,6 @@ setupUdos = insertGlobalExpr =<< execDepT udos
   where
     udos :: Dep ()
     udos = do
-      udoNames <- Map.keys <$> (lift $ Run $ gets (.includeUdos))
-      lift $ liftIO $ putStrLn $ "INCLUDE UDOS: " <> show udoNames
       mapM_ insertUdo =<<
        (lift $ Run $ gets (.includeUdos))
 

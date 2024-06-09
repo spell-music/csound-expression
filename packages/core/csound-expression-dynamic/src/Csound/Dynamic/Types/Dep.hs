@@ -161,6 +161,7 @@ initVar v x = depT_ $ noRate $ InitVar v $ toPrimOr $ setRate Ir x
 appendVarBy :: Monad m => (E -> E -> E) -> IfRate -> Var -> E -> DepT m ()
 appendVarBy op ifRate v x = writeVar ifRate v . op x =<< readVar ifRate v
 
+{-
 setRateDep :: Monad m => Rate -> E -> DepT m E
 setRateDep rate a = do
   case ratedExpExp $ unFix a of
@@ -184,6 +185,7 @@ setLastDepRate rate = DepT $
                 wrapLast $ lastExpr { ratedExpRate = Just rate }
             _ -> arg
         _ -> arg
+-}
 
 --------------------------------------------------
 -- arrays

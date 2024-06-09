@@ -34,13 +34,14 @@ module Csound.Core.Types.SE.Core
 import Control.Monad.IO.Class
 import Data.Kind
 import Data.Text (Text)
+import Data.Text.IO qualified as Text
 import Data.Default
 import Control.Monad.Trans.Class (lift)
 
 import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Dep)
-import Csound.Core.Render.Options (Options)
+import Csound.Core.Render.Options (Options (..))
 import Csound.Core.State qualified as State
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.Val
@@ -59,11 +60,18 @@ setTotalDur duration (SE act) = SE $ do
   lift $ State.setTotalDur duration
   act
 
-renderSE :: Options -> SE () -> IO String
-renderSE config (SE act) = fmap (Dynamic.renderCsd def) $ State.exec config $ do
-  mainInstr <- Dynamic.execDepT act
-  instrId <- State.insertInstr mainInstr
-  State.insertNote instrId (0, -1, [])
+renderSE :: Options -> SE () -> IO Text
+renderSE config (SE act) = do
+  result <- fmap (Dynamic.renderCsd def) $ State.exec config $ do
+    mainInstr <- Dynamic.execDepT act
+    instrId <- State.insertInstr mainInstr
+    State.insertNote instrId (0, -1, [])
+  saveCsd result
+  pure result
+  where
+    saveCsd :: Text -> IO ()
+    saveCsd result =
+      mapM_ (\file -> Text.writeFile file result) config.csdWriteFile
 
 -- | Adds expression to the global scope.
 -- It is instrument 0 in csound terms.

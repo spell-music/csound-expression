@@ -142,10 +142,10 @@ chnset :: Monad m => E -> E -> DepT m ()
 chnset name value = depT_ $ opcs "chnset" [(Xr, [Ar, Sr])] [value, name]
 
 chnget :: Monad m => E -> DepT m E
-chnget name = depT $ opcs "chnget" [(Ar, [Sr])] [name]
+chnget name = opcsDep "chnget" [(Ar, [Sr])] [name]
 
 chngetK :: Monad m => E -> DepT m E
-chngetK name = depT $ opcs "chnget" [(Kr, [Sr])] [name]
+chngetK name = opcsDep "chnget" [(Kr, [Sr])] [name]
 
 chnsetK :: Monad m => E -> E -> DepT m ()
 chnsetK name val = depT_ $ opcsNoInlineArgs "chnset" [(Xr, [Kr, Sr])] [val, name]
@@ -166,7 +166,7 @@ chnUpdateOpcodeName :: Text
 chnUpdateOpcodeName = "FreePort"
 
 freeChn :: Monad m => DepT m E
-freeChn = depT $ opcs chnUpdateOpcodeName [(Ir, [])] []
+freeChn = opcsDep chnUpdateOpcodeName [(Ir, [])] []
 
 -- trigger
 
@@ -329,7 +329,7 @@ oscInit :: E -> E
 oscInit portExpr = opcs "OSCinit" [(Ir, [Ir])] [portExpr]
 
 oscListen :: Monad m => E -> E -> E -> [Var] -> DepT m E
-oscListen oscHandle addr oscType vars = depT $ opcs "OSClisten" [(Kr, Ir:Ir:Ir:repeat Xr)] (oscHandle : addr : oscType : fmap inlineVar vars)
+oscListen oscHandle addr oscType vars = opcsDep "OSClisten" [(Kr, Ir:Ir:Ir:repeat Xr)] (oscHandle : addr : oscType : fmap inlineVar vars)
 
 oscSend :: Monad m => [E] -> DepT m ()
 oscSend args = depT_ $ opcs "OSCsend" [(Xr, Kr:Ir:Ir:Ir:Ir:repeat Xr)] args
@@ -338,7 +338,7 @@ oscSend args = depT_ $ opcs "OSCsend" [(Xr, Kr:Ir:Ir:Ir:Ir:repeat Xr)] args
 -- Channel
 
 chnGet :: Monad m => Rate -> E -> DepT m E
-chnGet r chn = depT $ opcs "chnget" [(r, [Sr])] [chn]
+chnGet r chn = opcsDep "chnget" [(r, [Sr])] [chn]
 
 chnSet :: Monad m => Rate -> E -> E -> DepT m ()
 chnSet r val chn = depT_ $ opcs "chnset" [(Xr, [r, Sr])] [val, chn]
@@ -353,26 +353,26 @@ metro a = opcs "metro" [(Kr, [Kr])] [a]
 -- times
 
 times :: Monad m => DepT m E
-times = depT $ opcs "times" [(Ir, []), (Kr, [])] []
+times = opcsDep "times" [(Ir, []), (Kr, [])] []
 
 -----------------------------------------------------------
 -- fluid engine
 
 fluidEngine :: Monad m => DepT m E
-fluidEngine = depT $ opcs "fluidEngine" [(Ir, [])] []
+fluidEngine = opcsDep "fluidEngine" [(Ir, [])] []
 
 fluidLoad :: Monad m => String -> E -> DepT m E
-fluidLoad sfName engine = depT $ opcs "fluidLoad" [(Ir, [Sr, Ir, Ir])] [str sfName, engine, 1]
+fluidLoad sfName engine = opcsDep "fluidLoad" [(Ir, [Sr, Ir, Ir])] [str sfName, engine, 1]
 
 fluidProgramSelect :: Monad m => E -> E -> Int -> Int -> DepT m E
-fluidProgramSelect engine sfInstr bank prog = depT $ opcs "fluidProgramSelect"
+fluidProgramSelect engine sfInstr bank prog = opcsDep "fluidProgramSelect"
     [(Xr, replicate 5 Ir)] [engine, 1, sfInstr, int bank, int prog]
 
 -----------------------------------------------------------
 -- soundfonts
 
 sfload :: Monad m => Text -> DepT m E
-sfload fileName =  depT $ opcs "sfload" [(Ir, [Sr])] [prim $ PrimString fileName]
+sfload fileName =  opcsDep "sfload" [(Ir, [Sr])] [prim $ PrimString fileName]
 
 sfplist :: Monad m => E -> DepT m ()
 sfplist sf = depT_ $ opcs "sfplist" [(Xr, [Ir])] [sf]

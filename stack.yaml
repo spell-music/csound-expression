@@ -15,7 +15,8 @@ packages:
   - packages/core/csound-expression-dynamic
   - packages/core/csound-core
   - packages/extra/csound-expression-opcodes
-    # - csound-expression
+  - packages/legacy/csound-expression-typed
+  - packages/legacy/csound-expression
   - packages/batteries/csound-sampler
   - packages/batteries/csound-controllers
   - packages/batteries/csound-catalog

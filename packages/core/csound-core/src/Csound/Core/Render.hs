@@ -57,6 +57,8 @@ import System.Directory
 import System.FilePath
 import qualified Control.Exception as E
 import Data.Default
+import Data.Text (Text)
+import Data.Text.IO qualified as Text
 
 data CsdArity = CsdArity
   { csdArity'inputs  :: Int
@@ -64,7 +66,7 @@ data CsdArity = CsdArity
   } deriving (Show, Eq)
 
 class RenderCsd a where
-    renderCsdBy :: Options -> a -> IO String
+    renderCsdBy :: Options -> a -> IO Text
     csdArity :: CsdArity
 
 hasInputs :: forall a . RenderCsd a => Bool
@@ -75,10 +77,10 @@ hasOutputs :: forall a . RenderCsd a => Bool
 hasOutputs = csdArity'outputs (csdArity @a) > 0
 -}
 
-renderEff :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO String
+renderEff :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO Text
 renderEff opt instr = renderInstr opt (instr =<< readIns)
 
-renderInstr :: (Sigs a) => Options -> SE a -> IO String
+renderInstr :: (Sigs a) => Options -> SE a -> IO Text
 renderInstr opt instr = renderSE opt (writeOuts =<< instr)
 
 instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
@@ -104,7 +106,7 @@ instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> SE
     csdArity = CsdArity (tupleArity @a) (tupleArity @b)
 
 -- | Renders Csound file.
-renderCsd :: RenderCsd a => a -> IO String
+renderCsd :: RenderCsd a => a -> IO Text
 renderCsd = renderCsdBy def
 
 getTmpFile :: IO FilePath
@@ -112,11 +114,11 @@ getTmpFile = (</> "tmp.csd") <$> getTemporaryDirectory
 
 -- | Render Csound file and save it to the give file.
 writeCsd :: RenderCsd a => FilePath -> a -> IO ()
-writeCsd file a = writeFile file =<< renderCsd a
+writeCsd file a = Text.writeFile file =<< renderCsd a
 
 -- | Render Csound file with options and save it to the give file.
 writeCsdBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
-writeCsdBy opt file a = writeFile file =<< renderCsdBy opt a
+writeCsdBy opt file a = Text.writeFile file =<< renderCsdBy opt a
 
 -- | Render Csound file and print it on the screen
 printCsd :: RenderCsd a => a -> IO ()
@@ -124,7 +126,7 @@ printCsd a = printCsdBy def a
 
 -- | Render Csound file with options and print it on the screen
 printCsdBy :: RenderCsd a => Options -> a -> IO ()
-printCsdBy opt a = putStrLn =<< renderCsdBy opt a
+printCsdBy opt a = Text.putStrLn =<< renderCsdBy opt a
 
 -- | Render Csound file and save result sound to the wav-file.
 writeSnd :: RenderCsd a => FilePath -> a -> IO ()

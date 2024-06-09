@@ -9,8 +9,6 @@ import Csound.Dynamic (toCtrlRate, Rate (..))
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.Types.Prim.Val
 import Csound.Core.Types.Tuple
-import Csound.Dynamic.Render.Pretty(ppE)
-import Debug.Trace
 
 -- | Control rate signals or constants
 -- it can be used to create references or channels with control-rate.
@@ -39,4 +37,4 @@ ir :: Val a => a -> a
 ir = setRate Ir
 
 setRate :: Val a => Rate -> a -> a
-setRate rate = liftE (\expr -> trace (show $ unlines ["SET-RATE", show $ ppE expr]) $ Dynamic.setRate rate expr)
+setRate rate = liftE (\expr -> Dynamic.setRate rate expr)

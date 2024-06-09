@@ -58,6 +58,7 @@ Library
     Csound.Dynamic.Types.Dep
     Csound.Dynamic.Types.CsdFile
     Csound.Dynamic.Types.Flags
+    Csound.Dynamic.Debug
 
     Csound.Dynamic.Build
     Csound.Dynamic.Build.Numeric
@@ -89,3 +90,5 @@ Library
     ScopedTypeVariables
     TupleSections
     TypeApplications
+    OverloadedRecordDot
+    StrictData

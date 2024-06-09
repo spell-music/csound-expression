@@ -19,8 +19,8 @@ import Csound.Dynamic.Tfm.Liveness
 import Csound.Dynamic.Tfm.TmpVars
 
 import Csound.Dynamic.Types hiding (Var)
+import Csound.Dynamic.Debug
 import Csound.Dynamic.Render.Pretty
-import Debug.Trace
 
 type Dag f = [(Int, f Int)]
 
@@ -33,7 +33,7 @@ renderInstrBody opts a
   | otherwise = render dag
     where
       dag = toDag a
-      render = P.vcat . flip evalState 0 . mapM (uncurry ppStmt . clearEmptyResults) . collectRates opts . removeTmpVars . (\p -> trace (ppDag p) p)
+      render = P.vcat . flip evalState 0 . mapM (uncurry ppStmt . clearEmptyResults) . collectRates opts . removeTmpVars . (\p -> traceIf opts.opcodeInferenceDebug (ppDag p) p)
 
 -------------------------------------------------------------
 -- E -> Dag
@@ -65,7 +65,7 @@ collectRates opts dag = fmap (second ratedExpExp) res4
     inferRes2 = inferRes1 { Infer.typedProgram = filterDepCases $ Infer.typedProgram inferRes1 }
     inferRes1 = collectIfBlocks inferRes
     inferRes = Infer.inferTypes opts $ fmap (uncurry Infer.Stmt) $
-        (\a -> trace (ppDag a) a)
+        (\a -> traceIf opts.opcodeInferenceDebug (ppDag a) a)
         dag
 
 ppDag :: Dag RatedExp -> String

@@ -11,9 +11,12 @@ import Csound.Dynamic.Render.Pretty
 import Csound.Dynamic.Types
 import Csound.Dynamic.Tfm.InferTypes as X (InferenceOptions (..), OpcodeInferenceStrategy (..))
 import Data.Default
+import Text.PrettyPrint.Leijen.Text qualified as Pretty
+import Data.Text (Text)
+import Data.Text.Lazy qualified as Lazy.Text
 
 data RenderOptions = RenderOptions
-  { inferenceOptions :: !InferenceOptions
+  { inferenceOptions :: InferenceOptions
   }
   deriving (Eq, Ord, Show, Read)
 
@@ -22,8 +25,8 @@ instance Default RenderOptions where
           { inferenceOptions = def
           }
 
-renderCsd :: RenderOptions -> Csd -> String
-renderCsd opts a = show $ ppCsdFile
+renderCsd :: RenderOptions -> Csd -> Text
+renderCsd opts a = Lazy.Text.toStrict $ Pretty.displayT $ Pretty.renderPretty 0.4 80 $ ppCsdFile
     (renderFlags $ csdFlags a)
     (renderOrc (inferenceOptions opts) $ csdOrc a)
     (renderSco   $ csdSco a)

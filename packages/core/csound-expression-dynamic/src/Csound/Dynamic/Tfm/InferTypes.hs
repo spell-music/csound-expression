@@ -51,6 +51,7 @@ import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
 import Data.Text qualified as Text
 
+import Csound.Dynamic.Debug
 import Csound.Dynamic.Const qualified as Const
 import Csound.Dynamic.Types.Exp hiding (Var, varType)
 import Csound.Dynamic.Types.Exp qualified as Exp
@@ -83,6 +84,7 @@ data InferenceResult = InferenceResult
 data InferenceOptions = InferenceOptions
   { opcodeInferenceStrategy    :: !OpcodeInferenceStrategy
   , opcodeInferencePreference  :: !OpcodeInferencePreference
+  , opcodeInferenceDebug       :: !IsDebug
   }
   deriving (Eq, Ord, Show, Read)
 
@@ -148,7 +150,7 @@ data InferEnv s = InferEnv
 type OpcSignature = (Rate, [Rate])
 
 preferOpc :: InferenceOptions -> Name -> Map Rate [Rate] -> Either [OpcSignature] OpcSignature
-preferOpc (InferenceOptions strategy opcPrefs) name signatureMap
+preferOpc (InferenceOptions strategy opcPrefs _isDebug) name signatureMap
   | Just sig <- getControl = Right sig
   | Just sig <- getAudio   = Right sig
   | otherwise              = Left $
@@ -171,6 +173,7 @@ instance Default InferenceOptions where
           { preferControlOpcodes = Const.controlOpcodes
           , preferAudioOpcodes   = Const.audioOpcodes
           }
+    , opcodeInferenceDebug = def
     }
 
 -------------------------------------------------------------------------------------
