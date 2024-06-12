@@ -40,11 +40,21 @@ renderOpc x = case x of
 
 data Import = SimpleImport String | QualifiedImport String String
 
-imports :: PackageType -> Bool -> [Import]
-imports x needTrans = case x of
-    Typed    -> (if needTrans then (SimpleImport "Control.Monad.Trans.Class" : ) else id) $
+data ImportModuleSpec = ImportModuleSpec
+  { needsTrans :: Bool
+  , needsProxy :: Bool
+  , needsMonad :: Bool
+  }
+
+imports :: PackageType -> ImportModuleSpec -> [Import]
+imports x spec = case x of
+    Typed    ->
+      (if needsProxy spec then (SimpleImport "Data.Proxy" : ) else id) $
+      (if needsTrans spec then (SimpleImport "Control.Monad.Trans.Class" : ) else id) $
+      (if needsTrans spec then (SimpleImport "Control.Monad" : ) else id) $
         [ SimpleImport "Csound.Dynamic"
-        , SimpleImport "Csound.Typed" ]
+        , SimpleImport "Csound.Typed"
+        ]
 
 anAlias :: String
 anAlias = "D"
@@ -53,7 +63,14 @@ anAlias = "D"
 
 prettyModules :: PackageType -> [Chap] -> [(String, String)]
 prettyModules packageType =
-    fmap $ \x -> (nodeName x, pp (pChap packageType (imports packageType (chapNeedTrans x)) (renderOpc packageType) $ removeEmptySecs x))
+    fmap $ \x -> (nodeName x, pp (pChap packageType (imports packageType
+      (ImportModuleSpec
+        { needsTrans = chapNeedTrans x
+        , needsProxy = chapNeedProxy x
+        , needsMonad = chapNeedMonad x
+        }))
+      (renderOpc packageType)
+      $ removeEmptySecs x))
 
 pp a = displayS (renderPretty 0.5 200 a) ""
 
@@ -81,17 +98,23 @@ pSec renderOpc chapName a = vCat
 --
 
 instance Pretty Opc where
-    pretty a = vcat
-        [ pretty $ opcDoc a
-        , hsep [text (hsOpcName a), text "::",  opcTypedSignature a]
-        , prettyTyCons a
-        , hsep [ text "    where", prettyDynCons a ]]
+  pretty a = vcat
+    [ pretty $ opcDoc a
+    , hsep [text (hsOpcName a), text "::",  opcTypedSignature a]
+    , prettyTyCons a
+    , hsep [ text "  where"]
+    , hsep [ text "   ", prettyDynCons a ]
+    ]
 
 ---------------------------------------------------------------------------------------
 -- pretty typed constructor
 
 prettyTyCons :: Opc -> Doc
-prettyTyCons a = hsep [name, args, char '=', cons, maybeReturn, text "f", consArgs]
+prettyTyCons a =
+    vcat
+      [ hsep [name, args, char '=']
+      , hsep [text " ", cons, maybeReturn, text "f", consArgs]
+      ]
     where
         name = text $ hsOpcName a
 
@@ -119,10 +142,15 @@ prettyTyCons a = hsep [name, args, char '=', cons, maybeReturn, text "f", consAr
 
             err                 -> error $ "no pretty for: " ++ show err
 
-        dirtySingle x = hsep [text "fmap (", text x, text ". return) $ SE $ (depT =<<) $ lift"]
-        proc = text "SE $ (depT_ =<<) $ lift"
+        isSE = case outTypes $ types $ opcSignature a of
+          SE _ -> True
+          OutNone -> True
+          _ -> False
+
+        dirtySingle x = hsep [text "fmap (", text x, text ". return) $ SE $ join"]
+        proc = text "SE $ join"
         tup = text "pureTuple"
-        seTup = text "dirtyTuple"
+        seTup = text "fmap (toTuple . pure) $ SE $ join"
 
         args = onMidiArg $ hsep as
 
@@ -155,13 +183,18 @@ prettyTyCons a = hsep [name, args, char '=', cons, maybeReturn, text "f", consAr
             _               -> False
 
         mkUn arg x = case x of
-            TypeList y  -> hsep [text "mapM", (text $ getUn y), arg]
-            _           -> text (getUn x) <+> arg
+            TypeList y  -> hsep [text "mapM", getUn y, arg]
+            TypeList y  -> hsep [text "mapM", getUn y, arg]
+            _           -> getUn x <+> arg
             where
-                getUn x = case x of
+                getUn x = addSE $ case x of
                     TypeList y  -> getUn y
-                    SigOrD      -> "toGE"
-                    _           -> "un" ++ show x
+                    SigOrD      -> text "toGE"
+                    _           -> text $ "un" ++ show x
+
+                addSE x
+                  | isSE = parens (text "lift . " <> x)
+                  | otherwise = x
 
 ---------------------------------------------------------------------------------------
 -- pretty dynamic constructor
@@ -173,9 +206,37 @@ prettyDynCons a = case verbatimBody $ opcName a of
     Nothing | isOpcode  -> hsep [char 'f', args, char '=', cons, name, signature, consArgList]
     Nothing             -> ppOpr
     where
-        cons
-            | isMulti a = text "mopcs"
-            | otherwise = text "opcs"
+        cons :: Doc
+        cons =
+          case opcType a of
+            PureSingle      -> text "opcs"
+            DirtySingle     -> text "opcsDep"
+            PureMulti       -> text "mopcs"
+            DirtyMulti      -> text "mopcsDep " <> outsArity
+            Procedure       -> text "opcsDep_"
+
+        outsArity = case outTypes $ types $ opcSignature a of
+            SingleOut SigOrD    -> int 1
+            SE (SingleOut SigOrD) -> int 1
+
+            SingleOut ty        -> int 1
+            SE (SingleOut ty)   -> int 1
+
+            OutNone             -> int 0
+            SE OutNone          -> int 0
+
+            Tuple               -> tupleArity
+            SE Tuple            -> tupleArity
+            TheTuple outs       -> int (length outs)
+            SE (TheTuple outs)  -> int (length outs)
+
+            OutTuple            -> tupleArity
+            SE OutTuple         -> tupleArity
+
+            err                 -> error $ "no pretty for: " ++ show err
+            where
+              tupleArity = parens $ text "tupleArity (Proxy :: Proxy a)"
+
 
         args = hsep as
 
@@ -218,7 +279,15 @@ prettyDynCons a = case verbatimBody $ opcName a of
             Multi  _ _ -> True
             _          -> False
 
+        isSE = case outTypes $ types $ opcSignature a of
+          SE _ -> True
+          OutNone -> True
+          _ -> False
+
         ppOpr = case rates $ opcSignature a of
+            Opr1 | isSE    -> text $ "f a1 = opr1Dep \""  ++ opcName a ++ "\" a1"
+            Opr1k | isSE   -> text $ "f a1 = opr1kDep \"" ++ opcName a ++ "\" a1"
+            InfOpr | isSE -> text $ "f a1 a2 = infOprDep \""  ++ opcName a ++ "\" a1 a2"
             Opr1    -> text $ "f a1 = opr1 \""  ++ opcName a ++ "\" a1"
             Opr1k   -> text $ "f a1 = opr1k \"" ++ opcName a ++ "\" a1"
             InfOpr  -> text $ "f a1 a2 = infOpr \""  ++ opcName a ++ "\" a1 a2"
@@ -229,7 +298,7 @@ prettyDynCons a = case verbatimBody $ opcName a of
         verbatimTab :: M.Map String Doc
         verbatimTab = fmap text $ M.fromList $ concat
             [ by
-                (const $ "f a1 = oprBy \"urd\" [(Ar,[Kr]), (Kr,[Kr]), (Ir,[Ir])] [a1]")
+                (const $ "f a1 = oprByDep \"urd\" [(Ar,[Kr]), (Kr,[Kr]), (Ir,[Ir])] [a1]")
                 ["urd"]
             , by seg
                     ["linseg", "linsegb", "expseg"
@@ -441,8 +510,8 @@ instance Pretty Types where
     pretty a = hsep [pConstr (outTypes a), ins, pretty (outTypes a)]
         where
             pConstr x = case x of
-                OutTuple    -> text "Tuple a =>"
-                Tuple       -> text "Tuple a =>"
+                OutTuple    -> text "forall a . Tuple a =>"
+                Tuple       -> text "forall a . Tuple a =>"
                 -- assumption: SigOrD can be only in Single or SE output
                 SingleOut SigOrD -> text $ "SigOrD " ++ nameSigOrD ++ " =>"
                 SE a        -> pConstr a

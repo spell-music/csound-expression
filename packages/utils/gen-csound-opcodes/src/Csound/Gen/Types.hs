@@ -69,6 +69,26 @@ chapNeedTrans ch = any opcNeedTrans $ nodeItems =<< nodeItems ch
       Procedure   -> True
       _           -> False
 
+-- | Needs proxy module imported
+chapNeedProxy :: Chap -> Bool
+chapNeedProxy ch = any opcNeedProxy $ nodeItems =<< nodeItems ch
+  where
+    opcNeedProxy opc =
+      case outTypes $ types $ opcSignature opc of
+            SE Tuple            -> True
+            SE OutTuple         -> True
+            _ -> False
+
+-- | Needs proxy module imported
+chapNeedMonad :: Chap -> Bool
+chapNeedMonad ch = any opcNeedMonad $ nodeItems =<< nodeItems ch
+  where
+    opcNeedMonad opc = isSE
+      where
+        isSE = case outTypes $ types $ opcSignature opc of
+          SE _ -> True
+          OutNone -> True
+          _ -> False
 
 data Rate = Xr | Ar | Kr | Ir | Sr | Fr | Wr | Tvar
     deriving (Show, Eq)

@@ -29,7 +29,7 @@ Library
     NumInstances,
     filepath,
     directory,
-    csound-expression-dynamic >= 0.3.8,
+    csound-expression-dynamic >= 0.4.0.0,
     hashable,
     text,
     unordered-containers,
