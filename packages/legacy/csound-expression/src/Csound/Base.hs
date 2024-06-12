@@ -48,9 +48,9 @@ import Control.Applicative hiding ((<*))
 
 import Csound.Typed.Opcode hiding (
     button, display, space, lfo, initc7, ctrl7,
-    oscInit, oscListen, oscSend,
+    oscInit, oscSend,
     lpshold, loopseg, loopxseg,
     partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2,
     line, delay,
     metro, dust,
-    duserrnd, cuserrnd, urd)
+    duserrnd, cuserrnd, urd, tablew, tablewa, fmod, count)

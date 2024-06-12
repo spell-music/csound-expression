@@ -67,7 +67,7 @@ import Data.Boolean
 import Data.Default
 
 import Csound.Typed
-import Csound.Typed.Opcode hiding (gain)
+import Csound.Typed.Opcode hiding (gain, tablewa, tablew)
 import Csound.Tab
 
 import Csound.Air.Wave(Lfo, unipolar, oscBy, white, pink)
@@ -583,7 +583,7 @@ trackerSplice maxLength segLengthSeconds kmode asig = do
     let segLength = segLengthSeconds * sig getSampleRate
         andx = phasor (sig $ getSampleRate / ftlen buf)
         andx1 = delay andx 1
-    tabw asig (andx * sig (ftlen buf)) buf
+    tablew asig (andx * sig (ftlen buf)) buf
     ksamp <- readRef ksampRef
     let apos = samphold (andx1 * sig (ftlen buf)) (sig ksamp)
 

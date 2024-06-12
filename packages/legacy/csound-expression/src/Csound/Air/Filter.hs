@@ -63,6 +63,7 @@ module Csound.Air.Filter(
     -- resonant filters
     cheb1, cheb2, vcf,
     cheb1', cheb2', vcf',
+    mode,
 
     -- * Named resonant low pass filters
     plastic, wobble, trumpy, harsh,
@@ -85,6 +86,7 @@ import Csound.Typed
 
 import Csound.SigSpace(bat)
 import Csound.Typed.Opcode
+import Csound.Dynamic
 
 -- | Low-pass filter.
 --
@@ -449,6 +451,21 @@ vcf = cbp' 2
 
 vcf' :: D -> Sig -> Sig -> Sig -> Sig
 vcf' npoles = mkReson (clp' npoles) (chp' npoles)
+
+-- |
+-- A filter that simulates a mass-spring-damper system
+--
+-- Filters the incoming signal with the specified resonance frequency and
+--       quality factor. It can also be seen as a signal generator for high quality
+--       factor, with an impulse for the excitation. You can combine several modes
+--       to built complex instruments such as bells or guitar tables.
+--
+-- > aout  mode  ain, xfreq, xQ [, iskip]
+--
+-- csound doc: <http://csound.com/docs/manual/mode.html>
+mode ::  Sig -> Sig -> Sig -> Sig
+mode b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+    where f a1 a2 a3 = opcs "mode" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- moog ladder
 

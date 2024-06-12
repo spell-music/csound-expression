@@ -84,11 +84,13 @@ import Csound.Control.Gui
 
 import Csound.Options(setSilent, setDac, setAdc, setDacBy, setAdcBy, setCabbage)
 import Temporal.Class(Harmony(..))
+import Data.Text (Text)
+import Data.Text.IO qualified as Text
 
-render :: Sigs a => Options -> SE a -> IO String
+render :: Sigs a => Options -> SE a -> IO Text
 render = renderOutBy
 
-render_ :: Options -> SE () -> IO String
+render_ :: Options -> SE () -> IO Text
 render_ = renderOutBy_
 
 data CsdArity = CsdArity
@@ -97,7 +99,7 @@ data CsdArity = CsdArity
   } deriving (Show, Eq)
 
 class RenderCsd a where
-    renderCsdBy :: Options -> a -> IO String
+    renderCsdBy :: Options -> a -> IO Text
     csdArity :: Proxy a -> CsdArity
 
 hasInputs :: RenderCsd a => Proxy a -> Bool
@@ -167,7 +169,7 @@ instance {-# OVERLAPPING #-} RenderCsd (Source (SE ())) where
     csdArity _ = CsdArity 0 0
 
 -- | Renders Csound file.
-renderCsd :: RenderCsd a => a -> IO String
+renderCsd :: RenderCsd a => a -> IO Text
 renderCsd = renderCsdBy def
 
 getTmpFile :: IO FilePath
@@ -175,11 +177,11 @@ getTmpFile = (</> "tmp.csd") <$> getTemporaryDirectory
 
 -- | Render Csound file and save it to the give file.
 writeCsd :: RenderCsd a => FilePath -> a -> IO ()
-writeCsd file a = writeFile file =<< renderCsd a
+writeCsd file a = Text.writeFile file =<< renderCsd a
 
 -- | Render Csound file with options and save it to the give file.
 writeCsdBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
-writeCsdBy opt file a = writeFile file =<< renderCsdBy opt a
+writeCsdBy opt file a = Text.writeFile file =<< renderCsdBy opt a
 
 -- | Render Csound file and save result sound to the wav-file.
 writeSnd :: RenderCsd a => FilePath -> a -> IO ()

@@ -20,7 +20,7 @@ module Csound.Air.Granular.Morpheus(
 import Data.Default
 
 import Csound.Typed
-import Csound.Typed.Opcode
+import Csound.Typed.Opcode hiding (tablew)
 import Csound.Tab
 
 import Csound.Air.Granular(Pointer, csdPartikkel)
