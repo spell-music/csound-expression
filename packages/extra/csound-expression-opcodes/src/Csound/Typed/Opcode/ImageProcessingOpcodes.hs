@@ -18,7 +18,7 @@ import Csound.Typed
 --
 -- > iimagenum  imagecreate  iwidth, iheight
 --
--- csound doc: <http://csound.com/docs/manual/imagecreate.html>
+-- csound doc: <https://csound.com/docs/manual/imagecreate.html>
 imagecreate ::  D -> D -> SE D
 imagecreate b1 b2 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -30,7 +30,7 @@ imagecreate b1 b2 =
 --
 -- >  imagefree  iimagenum
 --
--- csound doc: <http://csound.com/docs/manual/imagefree.html>
+-- csound doc: <https://csound.com/docs/manual/imagefree.html>
 imagefree ::  D -> SE ()
 imagefree b1 =
   SE $ join $ f <$> (lift . unD) b1
@@ -45,7 +45,7 @@ imagefree b1 =
 -- > ared, agreen, ablue  imagegetpixel  iimagenum, ax, ay
 -- > kred, kgreen, kblue  imagegetpixel  iimagenum, kx, ky
 --
--- csound doc: <http://csound.com/docs/manual/imagegetpixel.html>
+-- csound doc: <https://csound.com/docs/manual/imagegetpixel.html>
 imagegetpixel ::  D -> Sig -> Sig -> (Sig,Sig,Sig)
 imagegetpixel b1 b2 b3 =
   pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
@@ -59,7 +59,7 @@ imagegetpixel b1 b2 b3 =
 --
 -- > iimagenum  imageload  filename
 --
--- csound doc: <http://csound.com/docs/manual/imageload.html>
+-- csound doc: <https://csound.com/docs/manual/imageload.html>
 imageload ::  Spec -> SE D
 imageload b1 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unSpec) b1
@@ -73,7 +73,7 @@ imageload b1 =
 --
 -- >  imagesave  iimagenum, filename
 --
--- csound doc: <http://csound.com/docs/manual/imagesave.html>
+-- csound doc: <https://csound.com/docs/manual/imagesave.html>
 imagesave ::  D -> Spec -> SE ()
 imagesave b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSpec) b2
@@ -88,7 +88,7 @@ imagesave b1 b2 =
 -- >  imagesetpixel  iimagenum, ax, ay, ared, agreen, ablue
 -- >  imagesetpixel  iimagenum, kx, ky, kred, kgreen, kblue
 --
--- csound doc: <http://csound.com/docs/manual/imagesetpixel.html>
+-- csound doc: <https://csound.com/docs/manual/imagesetpixel.html>
 imagesetpixel ::  D -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
 imagesetpixel b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
@@ -102,7 +102,7 @@ imagesetpixel b1 b2 b3 b4 b5 b6 =
 --
 -- > iwidth, iheight  imagesize  iimagenum
 --
--- csound doc: <http://csound.com/docs/manual/imagesize.html>
+-- csound doc: <https://csound.com/docs/manual/imagesize.html>
 imagesize ::  D -> (D,D)
 imagesize b1 =
   pureTuple $ f <$> unD b1

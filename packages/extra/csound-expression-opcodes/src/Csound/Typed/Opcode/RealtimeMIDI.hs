@@ -2,22 +2,22 @@ module Csound.Typed.Opcode.RealtimeMIDI (
     
     
     -- * Input.
-    aftouch, chanctrl, ctrl14, ctrl21, ctrl7, ctrlinit, initc14, initc21, initc7, massign, midic14, midic21, midic7, midictrl, notnum, pchbend, pgmassign, polyaft, veloc,
+    aftouch, chanctrl, ctrl14, ctrl21, ctrl7, ctrlinit, ctrlpreset, ctrlprint, ctrlprintpresets, ctrlsave, ctrlselect, initc14, initc21, initc7, massign, midic14, midic21, midic7, midictrl, notnum, pchbend, pgmassign, polyaft, veloc,
     
     -- * Output.
     nrpn, outiat, outic, outic14, outipat, outipb, outipc, outkat, outkc, outkc14, outkpat, outkpb, outkpc,
     
     -- * Converters.
-    ampmidi, ampmidid, cpsmidi, cpsmidib, cpstmid, octmidi, octmidib, pchmidi, pchmidib,
+    ampmidi, ampmidicurve, ampmidid, cpsmidi, cpsmidib, cpstmid, octmidi, octmidib, pchmidi, pchmidib,
     
     -- * Generic I/O.
     midiin, midiout, midiout_i,
     
     -- * Event Extenders.
-    release, xtratim,
+    lastcycle, release, xtratim,
     
     -- * Note Output.
-    midion, midion2, moscil, noteoff, noteon, noteondur, noteondur2,
+    midiarp, midion, midion2, moscil, noteoff, noteon, noteondur, noteondur2,
     
     -- * MIDI/Score Interoperability.
     midichannelaftertouch, midichn, midicontrolchange, mididefault, midinoteoff, midinoteoncps, midinoteonkey, midinoteonoct, midinoteonpch, midipitchbend, midipolyaftertouch, midiprogramchange,
@@ -37,7 +37,7 @@ import Csound.Typed
 --
 -- > kaft  aftouch  [imin] [, imax]
 --
--- csound doc: <http://csound.com/docs/manual/aftouch.html>
+-- csound doc: <https://csound.com/docs/manual/aftouch.html>
 aftouch ::   Sig
 aftouch  =
   Sig $ return $ f 
@@ -52,7 +52,7 @@ aftouch  =
 -- > ival  chanctrl  ichnl, ictlno [, ilow] [, ihigh]
 -- > kval  chanctrl  ichnl, ictlno [, ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/chanctrl.html>
+-- csound doc: <https://csound.com/docs/manual/chanctrl.html>
 chanctrl ::  D -> D -> Sig
 chanctrl b1 b2 =
   Sig $ f <$> unD b1 <*> unD b2
@@ -65,7 +65,7 @@ chanctrl b1 b2 =
 -- > idest  ctrl14  ichan, ictlno1, ictlno2, imin, imax [, ifn]
 -- > kdest  ctrl14  ichan, ictlno1, ictlno2, kmin, kmax [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/ctrl14.html>
+-- csound doc: <https://csound.com/docs/manual/ctrl14.html>
 ctrl14 ::  D -> D -> D -> D -> D -> Sig
 ctrl14 b1 b2 b3 b4 b5 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
@@ -82,7 +82,7 @@ ctrl14 b1 b2 b3 b4 b5 =
 -- > idest  ctrl21  ichan, ictlno1, ictlno2, ictlno3, imin, imax [, ifn]
 -- > kdest  ctrl21  ichan, ictlno1, ictlno2, ictlno3, kmin, kmax [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/ctrl21.html>
+-- csound doc: <https://csound.com/docs/manual/ctrl21.html>
 ctrl21 ::  D -> D -> D -> D -> D -> D -> Sig
 ctrl21 b1 b2 b3 b4 b5 b6 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
@@ -97,7 +97,7 @@ ctrl21 b1 b2 b3 b4 b5 b6 =
 -- > kdest  ctrl7  ichan, ictlno, kmin, kmax [, ifn]
 -- > adest  ctrl7  ichan, ictlno, kmin, kmax [, ifn] [, icutoff]
 --
--- csound doc: <http://csound.com/docs/manual/ctrl7.html>
+-- csound doc: <https://csound.com/docs/manual/ctrl7.html>
 ctrl7 ::  D -> D -> D -> D -> Sig
 ctrl7 b1 b2 b3 b4 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
@@ -112,7 +112,7 @@ ctrl7 b1 b2 b3 b4 =
 -- >  ctrlinit  ichnl, ictlno1, ival1 [, ictlno2] [, ival2] [, ictlno3] \
 -- >           [, ival3] [,...ival32]
 --
--- csound doc: <http://csound.com/docs/manual/ctrlinit.html>
+-- csound doc: <https://csound.com/docs/manual/ctrlinit.html>
 ctrlinit ::  [D] -> SE ()
 ctrlinit b1 =
   SE $ join $ f <$> mapM (lift . unD) b1
@@ -120,11 +120,71 @@ ctrlinit b1 =
     f a1 = opcsDep_ "ctrlinit" [(Xr,(repeat Ir))] a1
 
 -- | 
+
+--
+-- > kpreset  ctrlpreset  ktag, kchnl, kctlno1, [kctlno2] [, kctlno3] ...
+--
+-- csound doc: <https://csound.com/docs/manual/ctrlpreset.html>
+ctrlpreset ::  Sig -> Sig -> Sig -> Sig
+ctrlpreset b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "ctrlpreset" [(Kr,(repeat Kr))] [a1,a2,a3]
+
+-- | 
+
+--
+-- >   ctrlprint  kcont[][, Sfile]
+--
+-- csound doc: <https://csound.com/docs/manual/ctrlprint.html>
+ctrlprint ::  Sig -> SE ()
+ctrlprint b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "ctrlprint" [(Xr,[Kr,Sr])] [a1]
+
+-- | 
+
+--
+-- >   ctrlprintpresets  [Sfilenam]
+--
+-- csound doc: <https://csound.com/docs/manual/ctrlprintpresets.html>
+ctrlprintpresets ::   SE ()
+ctrlprintpresets  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "ctrlprintpresets" [(Xr,[Sr])] []
+
+-- | 
+
+--
+-- > kconnt[]  ctrlsave  ichnl, ictlno1, [ictlno2] [, ictlno3] ...
+--
+-- csound doc: <https://csound.com/docs/manual/ctrlsave.html>
+ctrlsave ::  D -> D -> Sig
+ctrlsave b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "ctrlsave" [(Kr,(repeat Ir))] [a1,a2]
+
+-- | 
+
+--
+-- >   ctrlselect  kpre
+--
+-- csound doc: <https://csound.com/docs/manual/ctrlselect.html>
+ctrlselect ::  Sig -> SE ()
+ctrlselect b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "ctrlselect" [(Xr,[Kr])] [a1]
+
+-- | 
 -- Initializes the controllers used to create a 14-bit MIDI value.
 --
 -- >  initc14  ichan, ictlno1, ictlno2, ivalue
 --
--- csound doc: <http://csound.com/docs/manual/initc14.html>
+-- csound doc: <https://csound.com/docs/manual/initc14.html>
 initc14 ::  D -> D -> D -> D -> SE ()
 initc14 b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -136,7 +196,7 @@ initc14 b1 b2 b3 b4 =
 --
 -- >  initc21  ichan, ictlno1, ictlno2, ictlno3, ivalue
 --
--- csound doc: <http://csound.com/docs/manual/initc21.html>
+-- csound doc: <https://csound.com/docs/manual/initc21.html>
 initc21 ::  D -> D -> D -> D -> D -> SE ()
 initc21 b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -150,7 +210,7 @@ initc21 b1 b2 b3 b4 b5 =
 --
 -- >  initc7  ichan, ictlno, ivalue
 --
--- csound doc: <http://csound.com/docs/manual/initc7.html>
+-- csound doc: <https://csound.com/docs/manual/initc7.html>
 initc7 ::  D -> D -> D -> SE ()
 initc7 b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -163,7 +223,7 @@ initc7 b1 b2 b3 =
 -- >  massign  ichnl, insnum[, ireset]
 -- >  massign  ichnl, "insname"[, ireset]
 --
--- csound doc: <http://csound.com/docs/manual/massign.html>
+-- csound doc: <https://csound.com/docs/manual/massign.html>
 massign ::  D -> D -> SE ()
 massign b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -176,7 +236,7 @@ massign b1 b2 =
 -- > idest  midic14  ictlno1, ictlno2, imin, imax [, ifn]
 -- > kdest  midic14  ictlno1, ictlno2, kmin, kmax [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/midic14.html>
+-- csound doc: <https://csound.com/docs/manual/midic14.html>
 midic14 ::  D -> D -> D -> D -> Sig
 midic14 b1 b2 b3 b4 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
@@ -189,7 +249,7 @@ midic14 b1 b2 b3 b4 =
 -- > idest  midic21  ictlno1, ictlno2, ictlno3, imin, imax [, ifn]
 -- > kdest  midic21  ictlno1, ictlno2, ictlno3, kmin, kmax [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/midic21.html>
+-- csound doc: <https://csound.com/docs/manual/midic21.html>
 midic21 ::  D -> D -> D -> D -> D -> Sig
 midic21 b1 b2 b3 b4 b5 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
@@ -206,7 +266,7 @@ midic21 b1 b2 b3 b4 b5 =
 -- > idest  midic7  ictlno, imin, imax [, ifn]
 -- > kdest  midic7  ictlno, kmin, kmax [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/midic7.html>
+-- csound doc: <https://csound.com/docs/manual/midic7.html>
 midic7 ::  D -> D -> D -> Sig
 midic7 b1 b2 b3 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
@@ -219,7 +279,7 @@ midic7 b1 b2 b3 =
 -- > ival  midictrl  inum [, imin] [, imax]
 -- > kval  midictrl  inum [, imin] [, imax]
 --
--- csound doc: <http://csound.com/docs/manual/midictrl.html>
+-- csound doc: <https://csound.com/docs/manual/midictrl.html>
 midictrl ::  D -> Sig
 midictrl b1 =
   Sig $ f <$> unD b1
@@ -231,7 +291,7 @@ midictrl b1 =
 --
 -- > ival  notnum 
 --
--- csound doc: <http://csound.com/docs/manual/notnum.html>
+-- csound doc: <https://csound.com/docs/manual/notnum.html>
 notnum ::  Msg -> D
 notnum _  =
   D $ return $ f 
@@ -244,7 +304,7 @@ notnum _  =
 -- > ibend  pchbend  [imin] [, imax]
 -- > kbend  pchbend  [imin] [, imax]
 --
--- csound doc: <http://csound.com/docs/manual/pchbend.html>
+-- csound doc: <https://csound.com/docs/manual/pchbend.html>
 pchbend ::  Msg -> Sig
 pchbend _  =
   Sig $ return $ f 
@@ -259,7 +319,7 @@ pchbend _  =
 -- >  pgmassign  ipgm, inst[, ichn]
 -- >  pgmassign  ipgm, "insname"[, ichn]
 --
--- csound doc: <http://csound.com/docs/manual/pgmassign.html>
+-- csound doc: <https://csound.com/docs/manual/pgmassign.html>
 pgmassign ::  D -> D -> SE ()
 pgmassign b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -274,7 +334,7 @@ pgmassign b1 b2 =
 -- > ires  polyaft  inote [, ilow] [, ihigh]
 -- > kres  polyaft  inote [, ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/polyaft.html>
+-- csound doc: <https://csound.com/docs/manual/polyaft.html>
 polyaft ::  D -> Sig
 polyaft b1 =
   Sig $ f <$> unD b1
@@ -286,7 +346,7 @@ polyaft b1 =
 --
 -- > ival  veloc  [ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/veloc.html>
+-- csound doc: <https://csound.com/docs/manual/veloc.html>
 veloc ::  Msg -> D
 veloc _  =
   D $ return $ f 
@@ -302,7 +362,7 @@ veloc _  =
 --
 -- >  nrpn  kchan, kparmnum, kparmvalue
 --
--- csound doc: <http://csound.com/docs/manual/nrpn.html>
+-- csound doc: <https://csound.com/docs/manual/nrpn.html>
 nrpn ::  Sig -> Sig -> Sig -> SE ()
 nrpn b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
@@ -314,7 +374,7 @@ nrpn b1 b2 b3 =
 --
 -- >  outiat  ichn, ivalue, imin, imax
 --
--- csound doc: <http://csound.com/docs/manual/outiat.html>
+-- csound doc: <https://csound.com/docs/manual/outiat.html>
 outiat ::  D -> D -> D -> D -> SE ()
 outiat b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -326,7 +386,7 @@ outiat b1 b2 b3 b4 =
 --
 -- >  outic  ichn, inum, ivalue, imin, imax
 --
--- csound doc: <http://csound.com/docs/manual/outic.html>
+-- csound doc: <https://csound.com/docs/manual/outic.html>
 outic ::  D -> D -> D -> D -> D -> SE ()
 outic b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -338,7 +398,7 @@ outic b1 b2 b3 b4 b5 =
 --
 -- >  outic14  ichn, imsb, ilsb, ivalue, imin, imax
 --
--- csound doc: <http://csound.com/docs/manual/outic14.html>
+-- csound doc: <https://csound.com/docs/manual/outic14.html>
 outic14 ::  D -> D -> D -> D -> D -> D -> SE ()
 outic14 b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
@@ -350,7 +410,7 @@ outic14 b1 b2 b3 b4 b5 b6 =
 --
 -- >  outipat  ichn, inotenum, ivalue, imin, imax
 --
--- csound doc: <http://csound.com/docs/manual/outipat.html>
+-- csound doc: <https://csound.com/docs/manual/outipat.html>
 outipat ::  D -> D -> D -> D -> D -> SE ()
 outipat b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -362,7 +422,7 @@ outipat b1 b2 b3 b4 b5 =
 --
 -- >  outipb  ichn, ivalue, imin, imax
 --
--- csound doc: <http://csound.com/docs/manual/outipb.html>
+-- csound doc: <https://csound.com/docs/manual/outipb.html>
 outipb ::  D -> D -> D -> D -> SE ()
 outipb b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -374,7 +434,7 @@ outipb b1 b2 b3 b4 =
 --
 -- >  outipc  ichn, iprog, imin, imax
 --
--- csound doc: <http://csound.com/docs/manual/outipc.html>
+-- csound doc: <https://csound.com/docs/manual/outipc.html>
 outipc ::  D -> D -> D -> D -> SE ()
 outipc b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -386,7 +446,7 @@ outipc b1 b2 b3 b4 =
 --
 -- >  outkat  kchn, kvalue, kmin, kmax
 --
--- csound doc: <http://csound.com/docs/manual/outkat.html>
+-- csound doc: <https://csound.com/docs/manual/outkat.html>
 outkat ::  Sig -> Sig -> Sig -> Sig -> SE ()
 outkat b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -398,7 +458,7 @@ outkat b1 b2 b3 b4 =
 --
 -- >  outkc  kchn, knum, kvalue, kmin, kmax
 --
--- csound doc: <http://csound.com/docs/manual/outkc.html>
+-- csound doc: <https://csound.com/docs/manual/outkc.html>
 outkc ::  Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
 outkc b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
@@ -410,7 +470,7 @@ outkc b1 b2 b3 b4 b5 =
 --
 -- >  outkc14  kchn, kmsb, klsb, kvalue, kmin, kmax
 --
--- csound doc: <http://csound.com/docs/manual/outkc14.html>
+-- csound doc: <https://csound.com/docs/manual/outkc14.html>
 outkc14 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
 outkc14 b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
@@ -422,7 +482,7 @@ outkc14 b1 b2 b3 b4 b5 b6 =
 --
 -- >  outkpat  kchn, knotenum, kvalue, kmin, kmax
 --
--- csound doc: <http://csound.com/docs/manual/outkpat.html>
+-- csound doc: <https://csound.com/docs/manual/outkpat.html>
 outkpat ::  Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
 outkpat b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
@@ -434,7 +494,7 @@ outkpat b1 b2 b3 b4 b5 =
 --
 -- >  outkpb  kchn, kvalue, kmin, kmax
 --
--- csound doc: <http://csound.com/docs/manual/outkpb.html>
+-- csound doc: <https://csound.com/docs/manual/outkpb.html>
 outkpb ::  Sig -> Sig -> Sig -> Sig -> SE ()
 outkpb b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -446,7 +506,7 @@ outkpb b1 b2 b3 b4 =
 --
 -- >  outkpc  kchn, kprog, kmin, kmax
 --
--- csound doc: <http://csound.com/docs/manual/outkpc.html>
+-- csound doc: <https://csound.com/docs/manual/outkpc.html>
 outkpc ::  Sig -> Sig -> Sig -> Sig -> SE ()
 outkpc b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -460,7 +520,7 @@ outkpc b1 b2 b3 b4 =
 --
 -- > iamp  ampmidi  iscal [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/ampmidi.html>
+-- csound doc: <https://csound.com/docs/manual/ampmidi.html>
 ampmidi ::  Msg -> D -> D
 ampmidi _ b1 =
   D $ f <$> unD b1
@@ -468,12 +528,25 @@ ampmidi _ b1 =
     f a1 = opcs "ampmidi" [(Ir,[Ir,Ir])] [a1]
 
 -- | 
+
+--
+-- > igain  ampmidicurve  ivelocity, idynamicrange, iexponent
+-- > kgain  ampmidicurve  kvelocity, kdynamicrange, kexponent
+--
+-- csound doc: <https://csound.com/docs/manual/ampmidicurve.html>
+ampmidicurve ::  D -> D -> D -> Sig
+ampmidicurve b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "ampmidicurve" [(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+
+-- | 
 -- Musically map MIDI velocity to peak amplitude within a specified dynamic range in decibels.
 --
 -- > iamplitude  ampmidid  ivelocity, idecibels
 -- > kamplitude  ampmidid  kvelocity, idecibels
 --
--- csound doc: <http://csound.com/docs/manual/ampmidid.html>
+-- csound doc: <https://csound.com/docs/manual/ampmidid.html>
 ampmidid ::  D -> D -> Sig
 ampmidid b1 b2 =
   Sig $ f <$> unD b1 <*> unD b2
@@ -485,7 +558,7 @@ ampmidid b1 b2 =
 --
 -- > icps  cpsmidi 
 --
--- csound doc: <http://csound.com/docs/manual/cpsmidi.html>
+-- csound doc: <https://csound.com/docs/manual/cpsmidi.html>
 cpsmidi ::  Msg -> D
 cpsmidi _  =
   D $ return $ f 
@@ -498,7 +571,7 @@ cpsmidi _  =
 -- > icps  cpsmidib  [irange]
 -- > kcps  cpsmidib  [irange]
 --
--- csound doc: <http://csound.com/docs/manual/cpsmidib.html>
+-- csound doc: <https://csound.com/docs/manual/cpsmidib.html>
 cpsmidib ::  Msg -> Sig
 cpsmidib _  =
   Sig $ return $ f 
@@ -512,7 +585,7 @@ cpsmidib _  =
 --
 -- > icps  cpstmid  ifn
 --
--- csound doc: <http://csound.com/docs/manual/cpstmid.html>
+-- csound doc: <https://csound.com/docs/manual/cpstmid.html>
 cpstmid ::  Msg -> Tab -> D
 cpstmid _ b1 =
   D $ f <$> unTab b1
@@ -524,7 +597,7 @@ cpstmid _ b1 =
 --
 -- > ioct  octmidi 
 --
--- csound doc: <http://csound.com/docs/manual/octmidi.html>
+-- csound doc: <https://csound.com/docs/manual/octmidi.html>
 octmidi ::  Msg -> D
 octmidi _  =
   D $ return $ f 
@@ -537,7 +610,7 @@ octmidi _  =
 -- > ioct  octmidib  [irange]
 -- > koct  octmidib  [irange]
 --
--- csound doc: <http://csound.com/docs/manual/octmidib.html>
+-- csound doc: <https://csound.com/docs/manual/octmidib.html>
 octmidib ::  Msg -> Sig
 octmidib _  =
   Sig $ return $ f 
@@ -549,7 +622,7 @@ octmidib _  =
 --
 -- > ipch  pchmidi 
 --
--- csound doc: <http://csound.com/docs/manual/pchmidi.html>
+-- csound doc: <https://csound.com/docs/manual/pchmidi.html>
 pchmidi ::  Msg -> D
 pchmidi _  =
   D $ return $ f 
@@ -562,7 +635,7 @@ pchmidi _  =
 -- > ipch  pchmidib  [irange]
 -- > kpch  pchmidib  [irange]
 --
--- csound doc: <http://csound.com/docs/manual/pchmidib.html>
+-- csound doc: <https://csound.com/docs/manual/pchmidib.html>
 pchmidib ::  Msg -> Sig
 pchmidib _  =
   Sig $ return $ f 
@@ -578,7 +651,7 @@ pchmidib _  =
 --
 -- > kstatus, kchan, kdata1, kdata2  midiin 
 --
--- csound doc: <http://csound.com/docs/manual/midiin.html>
+-- csound doc: <https://csound.com/docs/manual/midiin.html>
 midiin ::   (Sig,Sig,Sig,Sig)
 midiin  =
   pureTuple $ return $ f 
@@ -590,7 +663,7 @@ midiin  =
 --
 -- >  midiout  kstatus, kchan, kdata1, kdata2
 --
--- csound doc: <http://csound.com/docs/manual/midiout.html>
+-- csound doc: <https://csound.com/docs/manual/midiout.html>
 midiout ::  Sig -> Sig -> Sig -> Sig -> SE ()
 midiout b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -602,7 +675,7 @@ midiout b1 b2 b3 b4 =
 --
 -- >  midiout_i  istatus, ichan, idata1, idata2
 --
--- csound doc: <http://csound.com/docs/manual/midiout_i.html>
+-- csound doc: <https://csound.com/docs/manual/midiout_i.html>
 midiout_i ::  D -> D -> D -> D -> SE ()
 midiout_i b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -612,13 +685,25 @@ midiout_i b1 b2 b3 b4 =
 -- Event Extenders.
 
 -- | 
+
+--
+-- > kflag  lastcycle 
+--
+-- csound doc: <https://csound.com/docs/manual/lastcycle.html>
+lastcycle ::   Sig
+lastcycle  =
+  Sig $ return $ f 
+  where
+    f  = opcs "lastcycle" [(Kr,[])] []
+
+-- | 
 -- Indicates whether a note is in its âreleaseâ stage.
 --
 -- Provides a way of knowing when a note off message for the current note is received. Only a noteoff message with the same MIDI note number as the one which triggered the note will be reported by release.
 --
 -- > kflag  release 
 --
--- csound doc: <http://csound.com/docs/manual/release.html>
+-- csound doc: <https://csound.com/docs/manual/release.html>
 release ::   Sig
 release  =
   Sig $ return $ f 
@@ -632,7 +717,7 @@ release  =
 --
 -- >  xtratim  iextradur
 --
--- csound doc: <http://csound.com/docs/manual/xtratim.html>
+-- csound doc: <https://csound.com/docs/manual/xtratim.html>
 xtratim ::  D -> SE ()
 xtratim b1 =
   SE $ join $ f <$> (lift . unD) b1
@@ -642,11 +727,23 @@ xtratim b1 =
 -- Note Output.
 
 -- | 
+
+--
+-- > kMidiNoteNum, kTrigger  midiarp  kRate[, kMode]
+--
+-- csound doc: <https://csound.com/docs/manual/midiarp.html>
+midiarp ::  Sig -> (Sig,Sig)
+midiarp b1 =
+  pureTuple $ f <$> unSig b1
+  where
+    f a1 = mopcs "midiarp" ([Kr,Kr],[Kr,Kr]) [a1]
+
+-- | 
 -- Generates MIDI note messages at k-rate.
 --
 -- >  midion  kchn, knum, kvel
 --
--- csound doc: <http://csound.com/docs/manual/midion.html>
+-- csound doc: <https://csound.com/docs/manual/midion.html>
 midion ::  Sig -> Sig -> Sig -> SE ()
 midion b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
@@ -660,7 +757,7 @@ midion b1 b2 b3 =
 --
 -- >  midion2  kchn, knum, kvel, ktrig
 --
--- csound doc: <http://csound.com/docs/manual/midion2.html>
+-- csound doc: <https://csound.com/docs/manual/midion2.html>
 midion2 ::  Sig -> Sig -> Sig -> Sig -> SE ()
 midion2 b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -672,7 +769,7 @@ midion2 b1 b2 b3 b4 =
 --
 -- >  moscil  kchn, knum, kvel, kdur, kpause
 --
--- csound doc: <http://csound.com/docs/manual/moscil.html>
+-- csound doc: <https://csound.com/docs/manual/moscil.html>
 moscil ::  Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
 moscil b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
@@ -684,7 +781,7 @@ moscil b1 b2 b3 b4 b5 =
 --
 -- >  noteoff  ichn, inum, ivel
 --
--- csound doc: <http://csound.com/docs/manual/noteoff.html>
+-- csound doc: <https://csound.com/docs/manual/noteoff.html>
 noteoff ::  D -> D -> D -> SE ()
 noteoff b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -696,7 +793,7 @@ noteoff b1 b2 b3 =
 --
 -- >  noteon  ichn, inum, ivel
 --
--- csound doc: <http://csound.com/docs/manual/noteon.html>
+-- csound doc: <https://csound.com/docs/manual/noteon.html>
 noteon ::  D -> D -> D -> SE ()
 noteon b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -708,7 +805,7 @@ noteon b1 b2 b3 =
 --
 -- >  noteondur  ichn, inum, ivel, idur
 --
--- csound doc: <http://csound.com/docs/manual/noteondur.html>
+-- csound doc: <https://csound.com/docs/manual/noteondur.html>
 noteondur ::  D -> D -> D -> D -> SE ()
 noteondur b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -720,7 +817,7 @@ noteondur b1 b2 b3 b4 =
 --
 -- >  noteondur2  ichn, inum, ivel, idur
 --
--- csound doc: <http://csound.com/docs/manual/noteondur2.html>
+-- csound doc: <https://csound.com/docs/manual/noteondur2.html>
 noteondur2 ::  D -> D -> D -> D -> SE ()
 noteondur2 b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -736,7 +833,7 @@ noteondur2 b1 b2 b3 b4 =
 --
 -- >  midichannelaftertouch  xchannelaftertouch [, ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/midichannelaftertouch.html>
+-- csound doc: <https://csound.com/docs/manual/midichannelaftertouch.html>
 midichannelaftertouch ::  Sig -> SE ()
 midichannelaftertouch b1 =
   SE $ join $ f <$> (lift . unSig) b1
@@ -750,7 +847,7 @@ midichannelaftertouch b1 =
 --
 -- > ichn  midichn 
 --
--- csound doc: <http://csound.com/docs/manual/midichn.html>
+-- csound doc: <https://csound.com/docs/manual/midichn.html>
 midichn ::   D
 midichn  =
   D $ return $ f 
@@ -764,7 +861,7 @@ midichn  =
 --
 -- >  midicontrolchange  xcontroller, xcontrollervalue [, ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/midicontrolchange.html>
+-- csound doc: <https://csound.com/docs/manual/midicontrolchange.html>
 midicontrolchange ::  Sig -> Sig -> SE ()
 midicontrolchange b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -778,7 +875,7 @@ midicontrolchange b1 b2 =
 --
 -- >  mididefault  xdefault, xvalue
 --
--- csound doc: <http://csound.com/docs/manual/mididefault.html>
+-- csound doc: <https://csound.com/docs/manual/mididefault.html>
 mididefault ::  Sig -> Sig -> SE ()
 mididefault b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -792,7 +889,7 @@ mididefault b1 b2 =
 --
 -- >  midinoteoff  xkey, xvelocity
 --
--- csound doc: <http://csound.com/docs/manual/midinoteoff.html>
+-- csound doc: <https://csound.com/docs/manual/midinoteoff.html>
 midinoteoff ::  Sig -> Sig -> SE ()
 midinoteoff b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -806,7 +903,7 @@ midinoteoff b1 b2 =
 --
 -- >  midinoteoncps  xcps, xvelocity
 --
--- csound doc: <http://csound.com/docs/manual/midinoteoncps.html>
+-- csound doc: <https://csound.com/docs/manual/midinoteoncps.html>
 midinoteoncps ::  Sig -> Sig -> SE ()
 midinoteoncps b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -820,7 +917,7 @@ midinoteoncps b1 b2 =
 --
 -- >  midinoteonkey  xkey, xvelocity
 --
--- csound doc: <http://csound.com/docs/manual/midinoteonkey.html>
+-- csound doc: <https://csound.com/docs/manual/midinoteonkey.html>
 midinoteonkey ::  Sig -> Sig -> SE ()
 midinoteonkey b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -834,7 +931,7 @@ midinoteonkey b1 b2 =
 --
 -- >  midinoteonoct  xoct, xvelocity
 --
--- csound doc: <http://csound.com/docs/manual/midinoteonoct.html>
+-- csound doc: <https://csound.com/docs/manual/midinoteonoct.html>
 midinoteonoct ::  Sig -> Sig -> SE ()
 midinoteonoct b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -848,7 +945,7 @@ midinoteonoct b1 b2 =
 --
 -- >  midinoteonpch  xpch, xvelocity
 --
--- csound doc: <http://csound.com/docs/manual/midinoteonpch.html>
+-- csound doc: <https://csound.com/docs/manual/midinoteonpch.html>
 midinoteonpch ::  Sig -> Sig -> SE ()
 midinoteonpch b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -862,7 +959,7 @@ midinoteonpch b1 b2 =
 --
 -- >  midipitchbend  xpitchbend [, ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/midipitchbend.html>
+-- csound doc: <https://csound.com/docs/manual/midipitchbend.html>
 midipitchbend ::  Sig -> SE ()
 midipitchbend b1 =
   SE $ join $ f <$> (lift . unSig) b1
@@ -874,9 +971,9 @@ midipitchbend b1 =
 --
 -- midipolyaftertouch is designed to simplify writing instruments that can be used interchangeably for either score or MIDI input, and to make it easier to adapt instruments originally written for score input to work with MIDI input.
 --
--- >  midipolyaftertouch  xpolyaftertouch, xcontrollervalue [, ilow] [, ihigh]
+-- >  midipolyaftertouch  xpolyaftertouch, xkey [, ilow] [, ihigh]
 --
--- csound doc: <http://csound.com/docs/manual/midipolyaftertouch.html>
+-- csound doc: <https://csound.com/docs/manual/midipolyaftertouch.html>
 midipolyaftertouch ::  Sig -> Sig -> SE ()
 midipolyaftertouch b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -890,7 +987,7 @@ midipolyaftertouch b1 b2 =
 --
 -- >  midiprogramchange  xprogram
 --
--- csound doc: <http://csound.com/docs/manual/midiprogramchange.html>
+-- csound doc: <https://csound.com/docs/manual/midiprogramchange.html>
 midiprogramchange ::  Sig -> SE ()
 midiprogramchange b1 =
   SE $ join $ f <$> (lift . unSig) b1
@@ -904,7 +1001,7 @@ midiprogramchange b1 =
 --
 -- >  mclock  ifreq
 --
--- csound doc: <http://csound.com/docs/manual/mclock.html>
+-- csound doc: <https://csound.com/docs/manual/mclock.html>
 mclock ::  D -> SE ()
 mclock b1 =
   SE $ join $ f <$> (lift . unD) b1
@@ -916,7 +1013,7 @@ mclock b1 =
 --
 -- >  mrtmsg  imsgtype
 --
--- csound doc: <http://csound.com/docs/manual/mrtmsg.html>
+-- csound doc: <https://csound.com/docs/manual/mrtmsg.html>
 mrtmsg ::  D -> SE ()
 mrtmsg b1 =
   SE $ join $ f <$> (lift . unD) b1

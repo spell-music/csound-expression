@@ -18,7 +18,7 @@ import Csound.Typed
 --
 -- >  faustctl  idsp,Scontrol,kval 
 --
--- csound doc: <http://csound.com/docs/manual/faustctl.html>
+-- csound doc: <https://csound.com/docs/manual/faustctl.html>
 faustctl ::  D -> Str -> Sig -> SE ()
 faustctl b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unStr) b2 <*> (lift . unSig) b3

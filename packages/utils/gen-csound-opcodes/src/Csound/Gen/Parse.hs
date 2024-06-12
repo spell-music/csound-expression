@@ -66,10 +66,12 @@ getSecs = fmap (filterNode (not . isBlackOpcode)) .  reverse . findSec []
         formRes title linesSoFar chaps = (Node title $ reverse linesSoFar) : chaps
 
 isInBlackList :: String -> Bool
-isInBlackList = ( `elem` blackList) . splitTitle
+isInBlackList name =
+  (( `elem` blackList) . splitTitle) name
+  || (any (\black -> isPrefixOf black name) blackPrefixes)
 
 isBlackOpcode :: OpcLine -> Bool
-isBlackOpcode = (flip Set.member blackOpcodesList) . opcLineName
+isBlackOpcode opc = ((flip Set.member blackOpcodesList) . opcLineName) opc
 
 blackList = fmap splitTitle $
     [ "Array Opcodes."
@@ -89,6 +91,10 @@ blackList = fmap splitTitle $
     , "Mathematical Operations:Trigonometric Functions."
     , "Python Opcodes."
     , "Utilities." ]
+
+blackPrefixes =
+  [ "Array Operations"
+  ]
 
 -- do not render opcodes from this list
 blackOpcodesList = Set.fromList

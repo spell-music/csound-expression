@@ -39,7 +39,7 @@ import Csound.Typed
 --
 -- >  vtaba   andx, ifn, aout1 [, aout2, aout3, .... , aoutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtaba.html>
+-- csound doc: <https://csound.com/docs/manual/vtaba.html>
 vtaba ::  Sig -> Tab -> Sig -> SE ()
 vtaba b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -53,7 +53,7 @@ vtaba b1 b2 b3 =
 --
 -- >  vtabi   indx, ifn, iout1 [, iout2, iout3, .... , ioutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtabi.html>
+-- csound doc: <https://csound.com/docs/manual/vtabi.html>
 vtabi ::  D -> Tab -> D -> SE ()
 vtabi b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -67,7 +67,7 @@ vtabi b1 b2 b3 =
 --
 -- >  vtabk   kndx, ifn, kout1 [, kout2, kout3, .... , koutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtabk.html>
+-- csound doc: <https://csound.com/docs/manual/vtabk.html>
 vtabk ::  Sig -> Tab -> Sig -> SE ()
 vtabk b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -81,7 +81,7 @@ vtabk b1 b2 b3 =
 --
 -- >  vtable1k   kfn,kout1 [, kout2, kout3, .... , koutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtable1k.html>
+-- csound doc: <https://csound.com/docs/manual/vtable1k.html>
 vtable1k ::  Tab -> Sig -> SE ()
 vtable1k b1 b2 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2
@@ -95,7 +95,7 @@ vtable1k b1 b2 =
 --
 -- >  vtablea   andx, kfn, kinterp, ixmode, aout1 [, aout2, aout3, .... , aoutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtablea.html>
+-- csound doc: <https://csound.com/docs/manual/vtablea.html>
 vtablea ::  Sig -> Tab -> Sig -> D -> Sig -> SE ()
 vtablea b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4 <*> (lift . unSig) b5
@@ -109,7 +109,7 @@ vtablea b1 b2 b3 b4 b5 =
 --
 -- >  vtablei   indx, ifn, interp, ixmode, iout1 [, iout2, iout3, .... , ioutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtablei.html>
+-- csound doc: <https://csound.com/docs/manual/vtablei.html>
 vtablei ::  D -> Tab -> D -> D -> D -> SE ()
 vtablei b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -123,7 +123,7 @@ vtablei b1 b2 b3 b4 b5 =
 --
 -- >  vtablek   kndx, kfn, kinterp, ixmode, kout1 [, kout2, kout3, .... , koutN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtablek.html>
+-- csound doc: <https://csound.com/docs/manual/vtablek.html>
 vtablek ::  Sig -> Tab -> Sig -> D -> Sig -> SE ()
 vtablek b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4 <*> (lift . unSig) b5
@@ -137,7 +137,7 @@ vtablek b1 b2 b3 b4 b5 =
 --
 -- >  vtablewa   andx, kfn, ixmode, ainarg1 [, ainarg2, ainarg3 , .... , ainargN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtablewa.html>
+-- csound doc: <https://csound.com/docs/manual/vtablewa.html>
 vtablewa ::  Sig -> Tab -> D -> Sig -> SE ()
 vtablewa b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4
@@ -151,7 +151,7 @@ vtablewa b1 b2 b3 b4 =
 --
 -- >  vtablewi   indx, ifn, ixmode, inarg1 [, inarg2, inarg3 , .... , inargN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtablewi.html>
+-- csound doc: <https://csound.com/docs/manual/vtablewi.html>
 vtablewi ::  D -> Tab -> D -> D -> SE ()
 vtablewi b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -165,7 +165,7 @@ vtablewi b1 b2 b3 b4 =
 --
 -- >  vtablewk   kndx, kfn, ixmode, kinarg1 [, kinarg2, kinarg3 , .... , kinargN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtablewk.html>
+-- csound doc: <https://csound.com/docs/manual/vtablewk.html>
 vtablewk ::  Sig -> Tab -> D -> Sig -> SE ()
 vtablewk b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4
@@ -179,7 +179,7 @@ vtablewk b1 b2 b3 b4 =
 --
 -- >  vtabwa   andx, ifn, ainarg1 [, ainarg2, ainarg3 , .... , ainargN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtabwa.html>
+-- csound doc: <https://csound.com/docs/manual/vtabwa.html>
 vtabwa ::  Sig -> Tab -> Sig -> SE ()
 vtabwa b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -193,7 +193,7 @@ vtabwa b1 b2 b3 =
 --
 -- >  vtabwi   indx, ifn, inarg1 [, inarg2, inarg3 , .... , inargN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtabwi.html>
+-- csound doc: <https://csound.com/docs/manual/vtabwi.html>
 vtabwi ::  D -> Tab -> D -> SE ()
 vtabwi b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -207,7 +207,7 @@ vtabwi b1 b2 b3 =
 --
 -- >  vtabwk   kndx, ifn, kinarg1 [, kinarg2, kinarg3 , .... , kinargN ]
 --
--- csound doc: <http://csound.com/docs/manual/vtabwk.html>
+-- csound doc: <https://csound.com/docs/manual/vtabwk.html>
 vtabwk ::  Sig -> Tab -> Sig -> SE ()
 vtabwk b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -221,7 +221,7 @@ vtabwk b1 b2 b3 =
 --
 -- >  vadd   ifn, kval, kelements [, kdstoffset] [, kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vadd.html>
+-- csound doc: <https://csound.com/docs/manual/vadd.html>
 vadd ::  Tab -> Sig -> Sig -> SE ()
 vadd b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
@@ -233,7 +233,7 @@ vadd b1 b2 b3 =
 --
 -- >  vadd_i   ifn, ival, ielements [, idstoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vadd_i.html>
+-- csound doc: <https://csound.com/docs/manual/vadd_i.html>
 vadd_i ::  Tab -> D -> D -> SE ()
 vadd_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -245,7 +245,7 @@ vadd_i b1 b2 b3 =
 --
 -- >  vexp   ifn, kval, kelements [, kdstoffset] [, kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vexp.html>
+-- csound doc: <https://csound.com/docs/manual/vexp.html>
 vexp ::  Tab -> Sig -> Sig -> SE ()
 vexp b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
@@ -257,7 +257,7 @@ vexp b1 b2 b3 =
 --
 -- >  vexp_i   ifn, ival, ielements[, idstoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vexp_i.html>
+-- csound doc: <https://csound.com/docs/manual/vexp_i.html>
 vexp_i ::  Tab -> D -> D -> SE ()
 vexp_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -269,7 +269,7 @@ vexp_i b1 b2 b3 =
 --
 -- >  vmult   ifn, kval, kelements [, kdstoffset] [, kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vmult.html>
+-- csound doc: <https://csound.com/docs/manual/vmult.html>
 vmult ::  Tab -> Sig -> Sig -> SE ()
 vmult b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
@@ -281,7 +281,7 @@ vmult b1 b2 b3 =
 --
 -- >  vmult_i   ifn, ival, ielements [, idstoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vmult_i.html>
+-- csound doc: <https://csound.com/docs/manual/vmult_i.html>
 vmult_i ::  Tab -> D -> D -> SE ()
 vmult_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -293,7 +293,7 @@ vmult_i b1 b2 b3 =
 --
 -- >  vpow   ifn, kval, kelements [, kdstoffset] [, kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vpow.html>
+-- csound doc: <https://csound.com/docs/manual/vpow.html>
 vpow ::  Tab -> Sig -> Sig -> SE ()
 vpow b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
@@ -305,7 +305,7 @@ vpow b1 b2 b3 =
 --
 -- >  vpow_i   ifn, ival, ielements [, idstoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vpow_i.html>
+-- csound doc: <https://csound.com/docs/manual/vpow_i.html>
 vpow_i ::  Tab -> D -> D -> SE ()
 vpow_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -319,7 +319,7 @@ vpow_i b1 b2 b3 =
 --
 -- >  vaddv   ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vaddv.html>
+-- csound doc: <https://csound.com/docs/manual/vaddv.html>
 vaddv ::  Tab -> Tab -> Sig -> SE ()
 vaddv b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -331,7 +331,7 @@ vaddv b1 b2 b3 =
 --
 -- >  vaddv_i   ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vaddv_i.html>
+-- csound doc: <https://csound.com/docs/manual/vaddv_i.html>
 vaddv_i ::  Tab -> Tab -> D -> SE ()
 vaddv_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -343,7 +343,7 @@ vaddv_i b1 b2 b3 =
 --
 -- >  vcopy   ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [, kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vcopy.html>
+-- csound doc: <https://csound.com/docs/manual/vcopy.html>
 vcopy ::  Tab -> Tab -> Sig -> SE ()
 vcopy b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -355,7 +355,7 @@ vcopy b1 b2 b3 =
 --
 -- >  vcopy_i   ifn1, ifn2, ielements [,idstoffset, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vcopy_i.html>
+-- csound doc: <https://csound.com/docs/manual/vcopy_i.html>
 vcopy_i ::  Tab -> Tab -> D -> SE ()
 vcopy_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -367,7 +367,7 @@ vcopy_i b1 b2 b3 =
 --
 -- >  vdivv   ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vdivv.html>
+-- csound doc: <https://csound.com/docs/manual/vdivv.html>
 vdivv ::  Tab -> Tab -> Sig -> SE ()
 vdivv b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -379,7 +379,7 @@ vdivv b1 b2 b3 =
 --
 -- >  vdivv_i   ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vdivv_i.html>
+-- csound doc: <https://csound.com/docs/manual/vdivv_i.html>
 vdivv_i ::  Tab -> Tab -> D -> SE ()
 vdivv_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -391,7 +391,7 @@ vdivv_i b1 b2 b3 =
 --
 -- >  vexpv   ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vexpv.html>
+-- csound doc: <https://csound.com/docs/manual/vexpv.html>
 vexpv ::  Tab -> Tab -> Sig -> SE ()
 vexpv b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -403,7 +403,7 @@ vexpv b1 b2 b3 =
 --
 -- >  vexpv_i   ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vexpv_i.html>
+-- csound doc: <https://csound.com/docs/manual/vexpv_i.html>
 vexpv_i ::  Tab -> Tab -> D -> SE ()
 vexpv_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -417,7 +417,7 @@ vexpv_i b1 b2 b3 =
 --
 -- >  vmap   ifn1, ifn2, ielements [,idstoffset, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vmap.html>
+-- csound doc: <https://csound.com/docs/manual/vmap.html>
 vmap ::  Tab -> Tab -> D -> SE ()
 vmap b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -429,7 +429,7 @@ vmap b1 b2 b3 =
 --
 -- >  vmultv   ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vmultv.html>
+-- csound doc: <https://csound.com/docs/manual/vmultv.html>
 vmultv ::  Tab -> Tab -> Sig -> SE ()
 vmultv b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -441,7 +441,7 @@ vmultv b1 b2 b3 =
 --
 -- >  vmultv_i   ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vmultv_i.html>
+-- csound doc: <https://csound.com/docs/manual/vmultv_i.html>
 vmultv_i ::  Tab -> Tab -> D -> SE ()
 vmultv_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -453,7 +453,7 @@ vmultv_i b1 b2 b3 =
 --
 -- >  vpowv  ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vpowv.html>
+-- csound doc: <https://csound.com/docs/manual/vpowv.html>
 vpowv ::  Tab -> Tab -> Sig -> SE ()
 vpowv b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -465,7 +465,7 @@ vpowv b1 b2 b3 =
 --
 -- >  vpowv_i  ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vpowv_i.html>
+-- csound doc: <https://csound.com/docs/manual/vpowv_i.html>
 vpowv_i ::  Tab -> Tab -> D -> SE ()
 vpowv_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -477,7 +477,7 @@ vpowv_i b1 b2 b3 =
 --
 -- >  vsubv   ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]
 --
--- csound doc: <http://csound.com/docs/manual/vsubv.html>
+-- csound doc: <https://csound.com/docs/manual/vsubv.html>
 vsubv ::  Tab -> Tab -> Sig -> SE ()
 vsubv b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unSig) b3
@@ -489,7 +489,7 @@ vsubv b1 b2 b3 =
 --
 -- >  vsubv_i   ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]
 --
--- csound doc: <http://csound.com/docs/manual/vsubv_i.html>
+-- csound doc: <https://csound.com/docs/manual/vsubv_i.html>
 vsubv_i ::  Tab -> Tab -> D -> SE ()
 vsubv_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unD) b3
@@ -505,7 +505,7 @@ vsubv_i b1 b2 b3 =
 --
 -- >  vexpseg   ifnout, ielements, ifn1, idur1, ifn2 [, idur2, ifn3 [...]]
 --
--- csound doc: <http://csound.com/docs/manual/vexpseg.html>
+-- csound doc: <https://csound.com/docs/manual/vexpseg.html>
 vexpseg ::  Tab -> D -> Tab -> D -> Tab -> SE ()
 vexpseg b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3 <*> (lift . unD) b4 <*> (lift . unTab) b5
@@ -519,7 +519,7 @@ vexpseg b1 b2 b3 b4 b5 =
 --
 -- >  vlinseg   ifnout, ielements, ifn1, idur1, ifn2 [, idur2, ifn3 [...]]
 --
--- csound doc: <http://csound.com/docs/manual/vlinseg.html>
+-- csound doc: <https://csound.com/docs/manual/vlinseg.html>
 vlinseg ::  Tab -> D -> Tab -> D -> Tab -> SE ()
 vlinseg b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3 <*> (lift . unD) b4 <*> (lift . unTab) b5
@@ -535,7 +535,7 @@ vlinseg b1 b2 b3 b4 b5 =
 --
 -- >  vlimit   ifn, kmin, kmax, ielements
 --
--- csound doc: <http://csound.com/docs/manual/vlimit.html>
+-- csound doc: <https://csound.com/docs/manual/vlimit.html>
 vlimit ::  Tab -> Sig -> Sig -> D -> SE ()
 vlimit b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4
@@ -549,7 +549,7 @@ vlimit b1 b2 b3 b4 =
 --
 -- >  vmirror   ifn, kmin, kmax, ielements
 --
--- csound doc: <http://csound.com/docs/manual/vmirror.html>
+-- csound doc: <https://csound.com/docs/manual/vmirror.html>
 vmirror ::  Tab -> Sig -> Sig -> D -> SE ()
 vmirror b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4
@@ -563,7 +563,7 @@ vmirror b1 b2 b3 b4 =
 --
 -- >  vwrap   ifn, kmin, kmax, ielements
 --
--- csound doc: <http://csound.com/docs/manual/vwrap.html>
+-- csound doc: <https://csound.com/docs/manual/vwrap.html>
 vwrap ::  Tab -> Sig -> Sig -> D -> SE ()
 vwrap b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4
@@ -579,7 +579,7 @@ vwrap b1 b2 b3 b4 =
 --
 -- > kout  vdelayk   ksig, kdel, imaxdel [, iskip, imode]
 --
--- csound doc: <http://csound.com/docs/manual/vdelayk.html>
+-- csound doc: <https://csound.com/docs/manual/vdelayk.html>
 vdelayk ::  Sig -> Sig -> D -> Sig
 vdelayk b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
@@ -593,7 +593,7 @@ vdelayk b1 b2 b3 =
 --
 -- >  vecdelay   ifn, ifnIn, ifnDel, ielements, imaxdel [, iskip]
 --
--- csound doc: <http://csound.com/docs/manual/vecdelay.html>
+-- csound doc: <https://csound.com/docs/manual/vecdelay.html>
 vecdelay ::  Tab -> Tab -> Tab -> D -> D -> SE ()
 vecdelay b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unTab) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -607,7 +607,7 @@ vecdelay b1 b2 b3 b4 b5 =
 --
 -- >  vport  ifn, khtime, ielements [, ifnInit]
 --
--- csound doc: <http://csound.com/docs/manual/vport.html>
+-- csound doc: <https://csound.com/docs/manual/vport.html>
 vport ::  Tab -> Sig -> D -> SE ()
 vport b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
@@ -624,7 +624,7 @@ vport b1 b2 b3 =
 -- >  vrandh   ifn,  krange, kcps, ielements [, idstoffset] [, iseed] \
 -- >           [, isize] [, ioffset]
 --
--- csound doc: <http://csound.com/docs/manual/vrandh.html>
+-- csound doc: <https://csound.com/docs/manual/vrandh.html>
 vrandh ::  Tab -> Sig -> Sig -> D -> SE ()
 vrandh b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4
@@ -637,7 +637,7 @@ vrandh b1 b2 b3 b4 =
 -- >  vrandi   ifn,  krange, kcps, ielements [, idstoffset] [, iseed] \
 -- >           [, isize] [, ioffset]
 --
--- csound doc: <http://csound.com/docs/manual/vrandi.html>
+-- csound doc: <https://csound.com/docs/manual/vrandi.html>
 vrandi ::  Tab -> Sig -> Sig -> D -> SE ()
 vrandi b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4
@@ -654,7 +654,7 @@ vrandi b1 b2 b3 b4 =
 --
 -- >  cell  ktrig, kreinit, ioutFunc, initStateFunc, iRuleFunc, ielements
 --
--- csound doc: <http://csound.com/docs/manual/cell.html>
+-- csound doc: <https://csound.com/docs/manual/cell.html>
 cell ::  Sig -> Sig -> D -> D -> D -> D -> SE ()
 cell b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
@@ -669,7 +669,7 @@ cell b1 b2 b3 b4 b5 b6 =
 -- >  vcella  ktrig, kreinit, ioutFunc, initStateFunc, \
 -- >           iRuleFunc, ielements, irulelen [, iradius]
 --
--- csound doc: <http://csound.com/docs/manual/vcella.html>
+-- csound doc: <https://csound.com/docs/manual/vcella.html>
 vcella ::  Sig -> Sig -> D -> D -> D -> D -> D -> SE ()
 vcella b1 b2 b3 b4 b5 b6 b7 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7

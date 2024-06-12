@@ -14,14 +14,14 @@ import Csound.Typed
 -- | 
 -- Clears one or more variables in the za space.
 --
--- >  zacl  kfirst, klast
+-- >  zacl  kfirst [, klast]
 --
--- csound doc: <http://csound.com/docs/manual/zacl.html>
-zacl ::  Sig -> Sig -> SE ()
-zacl b1 b2 =
-  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+-- csound doc: <https://csound.com/docs/manual/zacl.html>
+zacl ::  Sig -> SE ()
+zacl b1 =
+  SE $ join $ f <$> (lift . unSig) b1
   where
-    f a1 a2 = opcsDep_ "zacl" [(Xr,[Kr,Kr])] [a1,a2]
+    f a1 = opcsDep_ "zacl" [(Xr,[Kr,Kr])] [a1]
 
 -- | 
 -- Establishes zak space.
@@ -30,7 +30,7 @@ zacl b1 b2 =
 --
 -- >  zakinit  isizea, isizek
 --
--- csound doc: <http://csound.com/docs/manual/zakinit.html>
+-- csound doc: <https://csound.com/docs/manual/zakinit.html>
 zakinit ::  D -> D -> SE ()
 zakinit b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -42,7 +42,7 @@ zakinit b1 b2 =
 --
 -- > ares  zamod  asig, kzamod
 --
--- csound doc: <http://csound.com/docs/manual/zamod.html>
+-- csound doc: <https://csound.com/docs/manual/zamod.html>
 zamod ::  Sig -> Sig -> Sig
 zamod b1 b2 =
   Sig $ f <$> unSig b1 <*> unSig b2
@@ -54,7 +54,7 @@ zamod b1 b2 =
 --
 -- > ares  zar  kndx
 --
--- csound doc: <http://csound.com/docs/manual/zar.html>
+-- csound doc: <https://csound.com/docs/manual/zar.html>
 zar ::  Sig -> Sig
 zar b1 =
   Sig $ f <$> unSig b1
@@ -66,7 +66,7 @@ zar b1 =
 --
 -- > ares  zarg  kndx, kgain
 --
--- csound doc: <http://csound.com/docs/manual/zarg.html>
+-- csound doc: <https://csound.com/docs/manual/zarg.html>
 zarg ::  Sig -> Sig -> Sig
 zarg b1 b2 =
   Sig $ f <$> unSig b1 <*> unSig b2
@@ -78,7 +78,7 @@ zarg b1 b2 =
 --
 -- >  zaw  asig, kndx
 --
--- csound doc: <http://csound.com/docs/manual/zaw.html>
+-- csound doc: <https://csound.com/docs/manual/zaw.html>
 zaw ::  Sig -> Sig -> SE ()
 zaw b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -90,7 +90,7 @@ zaw b1 b2 =
 --
 -- >  zawm  asig, kndx [, imix]
 --
--- csound doc: <http://csound.com/docs/manual/zawm.html>
+-- csound doc: <https://csound.com/docs/manual/zawm.html>
 zawm ::  Sig -> Sig -> SE ()
 zawm b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -102,7 +102,7 @@ zawm b1 b2 =
 --
 -- > ir  zir  indx
 --
--- csound doc: <http://csound.com/docs/manual/zir.html>
+-- csound doc: <https://csound.com/docs/manual/zir.html>
 zir ::  D -> D
 zir b1 =
   D $ f <$> unD b1
@@ -114,7 +114,7 @@ zir b1 =
 --
 -- >  ziw  isig, indx
 --
--- csound doc: <http://csound.com/docs/manual/ziw.html>
+-- csound doc: <https://csound.com/docs/manual/ziw.html>
 ziw ::  D -> D -> SE ()
 ziw b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -126,7 +126,7 @@ ziw b1 b2 =
 --
 -- >  ziwm  isig, indx [, imix]
 --
--- csound doc: <http://csound.com/docs/manual/ziwm.html>
+-- csound doc: <https://csound.com/docs/manual/ziwm.html>
 ziwm ::  D -> D -> SE ()
 ziwm b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -138,7 +138,7 @@ ziwm b1 b2 =
 --
 -- >  zkcl  kfirst, klast
 --
--- csound doc: <http://csound.com/docs/manual/zkcl.html>
+-- csound doc: <https://csound.com/docs/manual/zkcl.html>
 zkcl ::  Sig -> Sig -> SE ()
 zkcl b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -150,7 +150,7 @@ zkcl b1 b2 =
 --
 -- > kres  zkmod  ksig, kzkmod
 --
--- csound doc: <http://csound.com/docs/manual/zkmod.html>
+-- csound doc: <https://csound.com/docs/manual/zkmod.html>
 zkmod ::  Sig -> Sig -> Sig
 zkmod b1 b2 =
   Sig $ f <$> unSig b1 <*> unSig b2
@@ -162,7 +162,7 @@ zkmod b1 b2 =
 --
 -- > kres  zkr  kndx
 --
--- csound doc: <http://csound.com/docs/manual/zkr.html>
+-- csound doc: <https://csound.com/docs/manual/zkr.html>
 zkr ::  Sig -> Sig
 zkr b1 =
   Sig $ f <$> unSig b1
@@ -172,9 +172,9 @@ zkr b1 =
 -- | 
 -- Writes to a zk variable at k-rate without mixing.
 --
--- >  zkw  ksig, kndx
+-- >  zkw  kval, kndx
 --
--- csound doc: <http://csound.com/docs/manual/zkw.html>
+-- csound doc: <https://csound.com/docs/manual/zkw.html>
 zkw ::  Sig -> Sig -> SE ()
 zkw b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -186,7 +186,7 @@ zkw b1 b2 =
 --
 -- >  zkwm  ksig, kndx [, imix]
 --
--- csound doc: <http://csound.com/docs/manual/zkwm.html>
+-- csound doc: <https://csound.com/docs/manual/zkwm.html>
 zkwm ::  Sig -> Sig -> SE ()
 zkwm b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2

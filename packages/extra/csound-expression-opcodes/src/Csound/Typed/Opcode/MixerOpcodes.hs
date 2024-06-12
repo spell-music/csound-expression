@@ -16,7 +16,7 @@ import Csound.Typed
 --
 -- >  MixerClear 
 --
--- csound doc: <http://csound.com/docs/manual/MixerClear.html>
+-- csound doc: <https://csound.com/docs/manual/MixerClear.html>
 mixerClear ::   SE ()
 mixerClear  =
   SE $ join $ return $ f 
@@ -31,7 +31,7 @@ mixerClear  =
 --
 -- > kgain  MixerGetLevel  isend, ibuss
 --
--- csound doc: <http://csound.com/docs/manual/MixerGetLevel.html>
+-- csound doc: <https://csound.com/docs/manual/MixerGetLevel.html>
 mixerGetLevel ::  D -> D -> SE Sig
 mixerGetLevel b1 b2 =
   fmap ( Sig . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -45,7 +45,7 @@ mixerGetLevel b1 b2 =
 --
 -- > asignal  MixerReceive  ibuss, ichannel
 --
--- csound doc: <http://csound.com/docs/manual/MixerReceive.html>
+-- csound doc: <https://csound.com/docs/manual/MixerReceive.html>
 mixerReceive ::  D -> D -> SE Sig
 mixerReceive b1 b2 =
   fmap ( Sig . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -57,7 +57,7 @@ mixerReceive b1 b2 =
 --
 -- >  MixerSend  asignal, isend, ibuss, ichannel
 --
--- csound doc: <http://csound.com/docs/manual/MixerSend.html>
+-- csound doc: <https://csound.com/docs/manual/MixerSend.html>
 mixerSend ::  Sig -> D -> D -> D -> SE ()
 mixerSend b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -72,7 +72,7 @@ mixerSend b1 b2 b3 b4 =
 --
 -- >  MixerSetLevel  isend, ibuss, kgain
 --
--- csound doc: <http://csound.com/docs/manual/MixerSetLevel.html>
+-- csound doc: <https://csound.com/docs/manual/MixerSetLevel.html>
 mixerSetLevel ::  D -> D -> Sig -> SE ()
 mixerSetLevel b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unSig) b3
@@ -88,7 +88,7 @@ mixerSetLevel b1 b2 b3 =
 --
 -- >  MixerSetLevel_i  isend, ibuss, igain
 --
--- csound doc: <http://csound.com/docs/manual/MixerSetLevel_i.html>
+-- csound doc: <https://csound.com/docs/manual/MixerSetLevel_i.html>
 mixerSetLevel_i ::  D -> D -> D -> SE ()
 mixerSetLevel_i b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3

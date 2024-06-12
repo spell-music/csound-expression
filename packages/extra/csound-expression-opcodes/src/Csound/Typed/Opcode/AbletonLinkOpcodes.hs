@@ -18,7 +18,7 @@ import Csound.Typed
 --
 -- >  link_beat_force   i_peer, k_beat [, k_at_time_seconds  [, k_quantum ]] 
 --
--- csound doc: <http://csound.com/docs/manual/link_beat_force.html>
+-- csound doc: <https://csound.com/docs/manual/link_beat_force.html>
 link_beat_force ::  D -> Sig -> SE ()
 link_beat_force b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
@@ -32,7 +32,7 @@ link_beat_force b1 b2 =
 --
 -- > k_beat_number, k_phase, k_current_time_seconds  link_beat_get  i_peer [, k_quantum]
 --
--- csound doc: <http://csound.com/docs/manual/link_beat_get.html>
+-- csound doc: <https://csound.com/docs/manual/link_beat_get.html>
 link_beat_get ::  D -> (Sig,Sig,Sig)
 link_beat_get b1 =
   pureTuple $ f <$> unD b1
@@ -44,7 +44,7 @@ link_beat_get b1 =
 --
 -- >  link_beat_request   i_peer, k_beat [, k_at_time_seconds  [, k_quantum ]] 
 --
--- csound doc: <http://csound.com/docs/manual/link_beat_request.html>
+-- csound doc: <https://csound.com/docs/manual/link_beat_request.html>
 link_beat_request ::  D -> Sig -> SE ()
 link_beat_request b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
@@ -58,7 +58,7 @@ link_beat_request b1 b2 =
 --
 -- > i_peer  link_create  [i_bpm]
 --
--- csound doc: <http://csound.com/docs/manual/link_create.html>
+-- csound doc: <https://csound.com/docs/manual/link_create.html>
 link_create ::   D
 link_create  =
   D $ return $ f 
@@ -72,7 +72,7 @@ link_create  =
 --
 -- >   ableton_link_enable  i_peer [, k_enable]
 --
--- csound doc: <http://csound.com/docs/manual/link_enable.html>
+-- csound doc: <https://csound.com/docs/manual/link_enable.html>
 ableton_link_enable ::  D -> SE ()
 ableton_link_enable b1 =
   SE $ join $ f <$> (lift . unD) b1
@@ -86,7 +86,7 @@ ableton_link_enable b1 =
 --
 -- > k_is_enabled  link_is_enabled  i_peer
 --
--- csound doc: <http://csound.com/docs/manual/link_is_enabled.html>
+-- csound doc: <https://csound.com/docs/manual/link_is_enabled.html>
 link_is_enabled ::  D -> Sig
 link_is_enabled b1 =
   Sig $ f <$> unD b1
@@ -100,7 +100,7 @@ link_is_enabled b1 =
 --
 -- > k_trigger, k_beat, k_phase, k_current_time_seconds  link_metro  i_peer [, k_quantum]
 --
--- csound doc: <http://csound.com/docs/manual/link_metro.html>
+-- csound doc: <https://csound.com/docs/manual/link_metro.html>
 link_metro ::  D -> (Sig,Sig,Sig,Sig)
 link_metro b1 =
   pureTuple $ f <$> unD b1
@@ -114,7 +114,7 @@ link_metro b1 =
 --
 -- > k_count  link_peers  i_peer
 --
--- csound doc: <http://csound.com/docs/manual/link_peers.html>
+-- csound doc: <https://csound.com/docs/manual/link_peers.html>
 link_peers ::  D -> Sig
 link_peers b1 =
   Sig $ f <$> unD b1
@@ -126,7 +126,7 @@ link_peers b1 =
 --
 -- > k_bpm  link_tempo_get  i_peer
 --
--- csound doc: <http://csound.com/docs/manual/link_tempo_get.html>
+-- csound doc: <https://csound.com/docs/manual/link_tempo_get.html>
 link_tempo_get ::  D -> Sig
 link_tempo_get b1 =
   Sig $ f <$> unD b1
@@ -140,7 +140,7 @@ link_tempo_get b1 =
 --
 -- >  link_tempo_set  i_peer, k_bpm [, k_at_time_seconds]
 --
--- csound doc: <http://csound.com/docs/manual/link_tempo_set.html>
+-- csound doc: <https://csound.com/docs/manual/link_tempo_set.html>
 link_tempo_set ::  D -> Sig -> SE ()
 link_tempo_set b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2

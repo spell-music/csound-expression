@@ -19,7 +19,7 @@ import Csound.Typed
 --
 -- > ifno  ftgenonce  ip1, ip2dummy, isize, igen, iarga, iargb, ...
 --
--- csound doc: <http://csound.com/docs/manual/ftgenonce.html>
+-- csound doc: <https://csound.com/docs/manual/ftgenonce.html>
 ftgenonce ::  D -> D -> D -> D -> D -> [D] -> SE Tab
 ftgenonce b1 b2 b3 b4 b5 b6 =
   fmap ( Tab . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> mapM (lift . unD) b6
@@ -31,7 +31,7 @@ ftgenonce b1 b2 b3 b4 b5 b6 =
 --
 -- > asignal  inleta Sname
 --
--- csound doc: <http://csound.com/docs/manual/inleta.html>
+-- csound doc: <https://csound.com/docs/manual/inleta.html>
 inleta ::  Str -> Sig
 inleta b1 =
   Sig $ f <$> unStr b1
@@ -43,7 +43,7 @@ inleta b1 =
 --
 -- > fsignal  inletf Sname
 --
--- csound doc: <http://csound.com/docs/manual/inletf.html>
+-- csound doc: <https://csound.com/docs/manual/inletf.html>
 inletf ::  Str -> Spec
 inletf b1 =
   Spec $ f <$> unStr b1
@@ -55,7 +55,7 @@ inletf b1 =
 --
 -- > ksignal  inletk Sname
 --
--- csound doc: <http://csound.com/docs/manual/inletk.html>
+-- csound doc: <https://csound.com/docs/manual/inletk.html>
 inletk ::  Str -> Sig
 inletk b1 =
   Sig $ f <$> unStr b1
@@ -67,7 +67,7 @@ inletk b1 =
 --
 -- > ksignal  inletkid Sname, SinstanceID
 --
--- csound doc: <http://csound.com/docs/manual/inletkid.html>
+-- csound doc: <https://csound.com/docs/manual/inletkid.html>
 inletkid ::  Str -> Str -> Sig
 inletkid b1 b2 =
   Sig $ f <$> unStr b1 <*> unStr b2
@@ -79,7 +79,7 @@ inletkid b1 b2 =
 --
 -- > array  inletv Sname
 --
--- csound doc: <http://csound.com/docs/manual/inletv.html>
+-- csound doc: <https://csound.com/docs/manual/inletv.html>
 inletv ::  Str -> Sig
 inletv b1 =
   Sig $ f <$> unStr b1
@@ -91,7 +91,7 @@ inletv b1 =
 --
 -- >  outleta Sname, asignal
 --
--- csound doc: <http://csound.com/docs/manual/outleta.html>
+-- csound doc: <https://csound.com/docs/manual/outleta.html>
 outleta ::  Str -> Sig -> SE ()
 outleta b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
@@ -103,7 +103,7 @@ outleta b1 b2 =
 --
 -- >  outletf Sname, fsignal
 --
--- csound doc: <http://csound.com/docs/manual/outletf.html>
+-- csound doc: <https://csound.com/docs/manual/outletf.html>
 outletf ::  Str -> Spec -> SE ()
 outletf b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSpec) b2
@@ -115,7 +115,7 @@ outletf b1 b2 =
 --
 -- >  outletk Sname, ksignal
 --
--- csound doc: <http://csound.com/docs/manual/outletk.html>
+-- csound doc: <https://csound.com/docs/manual/outletk.html>
 outletk ::  Str -> Sig -> SE ()
 outletk b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
@@ -127,7 +127,7 @@ outletk b1 b2 =
 --
 -- >  outletkid Sname, SinstanceID, ksignal
 --
--- csound doc: <http://csound.com/docs/manual/outletkid.html>
+-- csound doc: <https://csound.com/docs/manual/outletkid.html>
 outletkid ::  Str -> Str -> Sig -> SE ()
 outletkid b1 b2 b3 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2 <*> (lift . unSig) b3
@@ -139,7 +139,7 @@ outletkid b1 b2 b3 =
 --
 -- >  outletv Sname, array
 --
--- csound doc: <http://csound.com/docs/manual/outletv.html>
+-- csound doc: <https://csound.com/docs/manual/outletv.html>
 outletv ::  Str -> Sig -> SE ()
 outletv b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2

@@ -5,7 +5,7 @@ module Csound.Typed.Opcode.Strings (
     strfromurl, strget, strset,
     
     -- * Manipulation.
-    puts, sprintf, sprintfk, strcat, strcatk, strcmp, strcmpk, strcpy, strcpyk, strindex, strindexk, strlen, strlenk, strrindex, strrindexk, strsub, strsubk,
+    puts, sprintf, sprintfk, strcat, strcatk, strcmp, strcmpk, strcpy, strcpyk, strindex, strindexk, strlen, strlenk, strrindex, strrindexk, strstrip, strsub, strsubk,
     
     -- * Conversion.
     strchar, strchark, strlower, strlowerk, strtod, strtodk, strtol, strtolk, strupper, strupperk) where
@@ -25,7 +25,7 @@ import Csound.Typed
 --
 -- > Sdst  strfromurl  StringURL
 --
--- csound doc: <http://csound.com/docs/manual/strfromurl.html>
+-- csound doc: <https://csound.com/docs/manual/strfromurl.html>
 strfromurl ::  Str -> Str
 strfromurl b1 =
   Str $ f <$> unStr b1
@@ -39,7 +39,7 @@ strfromurl b1 =
 --
 -- > Sdst  strget  indx
 --
--- csound doc: <http://csound.com/docs/manual/strget.html>
+-- csound doc: <https://csound.com/docs/manual/strget.html>
 strget ::  D -> Str
 strget b1 =
   Str $ f <$> unD b1
@@ -51,7 +51,7 @@ strget b1 =
 --
 -- >  strset  iarg, istring
 --
--- csound doc: <http://csound.com/docs/manual/strset.html>
+-- csound doc: <https://csound.com/docs/manual/strset.html>
 strset ::  D -> D -> SE ()
 strset b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -67,7 +67,7 @@ strset b1 b2 =
 --
 -- >  puts  Sstr, ktrig[, inonl]
 --
--- csound doc: <http://csound.com/docs/manual/puts.html>
+-- csound doc: <https://csound.com/docs/manual/puts.html>
 puts ::  Str -> Sig -> SE ()
 puts b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
@@ -81,7 +81,7 @@ puts b1 b2 =
 --
 -- > Sdst  sprintf  Sfmt, xarg1[, xarg2[, ... ]]
 --
--- csound doc: <http://csound.com/docs/manual/sprintf.html>
+-- csound doc: <https://csound.com/docs/manual/sprintf.html>
 sprintf ::  Str -> Sig -> Str
 sprintf b1 b2 =
   Str $ f <$> unStr b1 <*> unSig b2
@@ -95,7 +95,7 @@ sprintf b1 b2 =
 --
 -- > Sdst  sprintfk  Sfmt, xarg1[, xarg2[, ... ]]
 --
--- csound doc: <http://csound.com/docs/manual/sprintfk.html>
+-- csound doc: <https://csound.com/docs/manual/sprintfk.html>
 sprintfk ::  Str -> Sig -> Str
 sprintfk b1 b2 =
   Str $ f <$> unStr b1 <*> unSig b2
@@ -109,7 +109,7 @@ sprintfk b1 b2 =
 --
 -- > Sdst  strcat  Ssrc1, Ssrc2
 --
--- csound doc: <http://csound.com/docs/manual/strcat.html>
+-- csound doc: <https://csound.com/docs/manual/strcat.html>
 strcat ::  Str -> Str -> Str
 strcat b1 b2 =
   Str $ f <$> unStr b1 <*> unStr b2
@@ -123,7 +123,7 @@ strcat b1 b2 =
 --
 -- > Sdst  strcatk  Ssrc1, Ssrc2
 --
--- csound doc: <http://csound.com/docs/manual/strcatk.html>
+-- csound doc: <https://csound.com/docs/manual/strcatk.html>
 strcatk ::  Str -> Str -> Str
 strcatk b1 b2 =
   Str $ f <$> unStr b1 <*> unStr b2
@@ -137,7 +137,7 @@ strcatk b1 b2 =
 --
 -- > ires  strcmp  S1, S2
 --
--- csound doc: <http://csound.com/docs/manual/strcmp.html>
+-- csound doc: <https://csound.com/docs/manual/strcmp.html>
 strcmp ::  Str -> Str -> D
 strcmp b1 b2 =
   D $ f <$> unStr b1 <*> unStr b2
@@ -151,7 +151,7 @@ strcmp b1 b2 =
 --
 -- > kres  strcmpk  S1, S2
 --
--- csound doc: <http://csound.com/docs/manual/strcmpk.html>
+-- csound doc: <https://csound.com/docs/manual/strcmpk.html>
 strcmpk ::  Str -> Str -> Sig
 strcmpk b1 b2 =
   Sig $ f <$> unStr b1 <*> unStr b2
@@ -165,7 +165,7 @@ strcmpk b1 b2 =
 --
 -- > Sdst  strcpy  Ssrc
 --
--- csound doc: <http://csound.com/docs/manual/strcpy.html>
+-- csound doc: <https://csound.com/docs/manual/strcpy.html>
 strcpy ::  Str -> Str
 strcpy b1 =
   Str $ f <$> unStr b1
@@ -179,7 +179,7 @@ strcpy b1 =
 --
 -- > Sdst  strcpyk  Ssrc
 --
--- csound doc: <http://csound.com/docs/manual/strcpyk.html>
+-- csound doc: <https://csound.com/docs/manual/strcpyk.html>
 strcpyk ::  Str -> Str
 strcpyk b1 =
   Str $ f <$> unStr b1
@@ -194,7 +194,7 @@ strcpyk b1 =
 --
 -- > ipos  strindex  S1, S2
 --
--- csound doc: <http://csound.com/docs/manual/strindex.html>
+-- csound doc: <https://csound.com/docs/manual/strindex.html>
 strindex ::  Str -> Str -> D
 strindex b1 b2 =
   D $ f <$> unStr b1 <*> unStr b2
@@ -210,7 +210,7 @@ strindex b1 b2 =
 --
 -- > kpos  strindexk  S1, S2
 --
--- csound doc: <http://csound.com/docs/manual/strindexk.html>
+-- csound doc: <https://csound.com/docs/manual/strindexk.html>
 strindexk ::  Str -> Str -> Sig
 strindexk b1 b2 =
   Sig $ f <$> unStr b1 <*> unStr b2
@@ -224,7 +224,7 @@ strindexk b1 b2 =
 --
 -- > ilen  strlen  Sstr
 --
--- csound doc: <http://csound.com/docs/manual/strlen.html>
+-- csound doc: <https://csound.com/docs/manual/strlen.html>
 strlen ::  Str -> D
 strlen b1 =
   D $ f <$> unStr b1
@@ -238,7 +238,7 @@ strlen b1 =
 --
 -- > klen  strlenk  Sstr
 --
--- csound doc: <http://csound.com/docs/manual/strlenk.html>
+-- csound doc: <https://csound.com/docs/manual/strlenk.html>
 strlenk ::  Str -> Sig
 strlenk b1 =
   Sig $ f <$> unStr b1
@@ -254,7 +254,7 @@ strlenk b1 =
 --
 -- > ipos  strrindex  S1, S2
 --
--- csound doc: <http://csound.com/docs/manual/strrindex.html>
+-- csound doc: <https://csound.com/docs/manual/strrindex.html>
 strrindex ::  Str -> Str -> D
 strrindex b1 b2 =
   D $ f <$> unStr b1 <*> unStr b2
@@ -270,12 +270,24 @@ strrindex b1 b2 =
 --
 -- > kpos  strrindexk  S1, S2
 --
--- csound doc: <http://csound.com/docs/manual/strrindexk.html>
+-- csound doc: <https://csound.com/docs/manual/strrindexk.html>
 strrindexk ::  Str -> Str -> Sig
 strrindexk b1 b2 =
   Sig $ f <$> unStr b1 <*> unStr b2
   where
     f a1 a2 = opcs "strrindexk" [(Kr,[Sr,Sr])] [a1,a2]
+
+-- | 
+
+--
+-- > Sout  strstrip  Sin [, Smode]
+--
+-- csound doc: <https://csound.com/docs/manual/strstrip.html>
+strstrip ::  Str -> Str
+strstrip b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strstrip" [(Sr,[Sr,Sr])] [a1]
 
 -- | 
 -- Extract a substring
@@ -284,7 +296,7 @@ strrindexk b1 b2 =
 --
 -- > Sdst  strsub  Ssrc[, istart[, iend]]
 --
--- csound doc: <http://csound.com/docs/manual/strsub.html>
+-- csound doc: <https://csound.com/docs/manual/strsub.html>
 strsub ::  Str -> Str
 strsub b1 =
   Str $ f <$> unStr b1
@@ -299,7 +311,7 @@ strsub b1 =
 --
 -- > Sdst  strsubk  Ssrc, kstart, kend
 --
--- csound doc: <http://csound.com/docs/manual/strsubk.html>
+-- csound doc: <https://csound.com/docs/manual/strsubk.html>
 strsubk ::  Str -> Sig -> Sig -> Str
 strsubk b1 b2 b3 =
   Str $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
@@ -317,7 +329,7 @@ strsubk b1 b2 b3 =
 --
 -- > ichr  strchar  Sstr[, ipos]
 --
--- csound doc: <http://csound.com/docs/manual/strchar.html>
+-- csound doc: <https://csound.com/docs/manual/strchar.html>
 strchar ::  Str -> D
 strchar b1 =
   D $ f <$> unStr b1
@@ -333,7 +345,7 @@ strchar b1 =
 --
 -- > kchr  strchark  Sstr[, kpos]
 --
--- csound doc: <http://csound.com/docs/manual/strchark.html>
+-- csound doc: <https://csound.com/docs/manual/strchark.html>
 strchark ::  Str -> Sig
 strchark b1 =
   Sig $ f <$> unStr b1
@@ -348,7 +360,7 @@ strchark b1 =
 --
 -- > Sdst  strlower  Ssrc
 --
--- csound doc: <http://csound.com/docs/manual/strlower.html>
+-- csound doc: <https://csound.com/docs/manual/strlower.html>
 strlower ::  Str -> Str
 strlower b1 =
   Str $ f <$> unStr b1
@@ -363,7 +375,7 @@ strlower b1 =
 --
 -- > Sdst  strlowerk  Ssrc
 --
--- csound doc: <http://csound.com/docs/manual/strlowerk.html>
+-- csound doc: <https://csound.com/docs/manual/strlowerk.html>
 strlowerk ::  Str -> Str
 strlowerk b1 =
   Str $ f <$> unStr b1
@@ -380,7 +392,7 @@ strlowerk b1 =
 -- > ir  strtod  Sstr
 -- > ir  strtod  indx
 --
--- csound doc: <http://csound.com/docs/manual/strtod.html>
+-- csound doc: <https://csound.com/docs/manual/strtod.html>
 strtod ::  Str -> D
 strtod b1 =
   D $ f <$> unStr b1
@@ -396,7 +408,7 @@ strtod b1 =
 -- > kr  strtodk  Sstr
 -- > kr  strtodk  kndx
 --
--- csound doc: <http://csound.com/docs/manual/strtodk.html>
+-- csound doc: <https://csound.com/docs/manual/strtodk.html>
 strtodk ::  Str -> Sig
 strtodk b1 =
   Sig $ f <$> unStr b1
@@ -413,7 +425,7 @@ strtodk b1 =
 -- > ir  strtol  Sstr
 -- > ir  strtol  indx
 --
--- csound doc: <http://csound.com/docs/manual/strtol.html>
+-- csound doc: <https://csound.com/docs/manual/strtol.html>
 strtol ::  Str -> D
 strtol b1 =
   D $ f <$> unStr b1
@@ -429,7 +441,7 @@ strtol b1 =
 -- > kr  strtolk  Sstr
 -- > kr  strtolk  kndx
 --
--- csound doc: <http://csound.com/docs/manual/strtolk.html>
+-- csound doc: <https://csound.com/docs/manual/strtolk.html>
 strtolk ::  Str -> Sig
 strtolk b1 =
   Sig $ f <$> unStr b1
@@ -444,7 +456,7 @@ strtolk b1 =
 --
 -- > Sdst  strupper  Ssrc
 --
--- csound doc: <http://csound.com/docs/manual/strupper.html>
+-- csound doc: <https://csound.com/docs/manual/strupper.html>
 strupper ::  Str -> Str
 strupper b1 =
   Str $ f <$> unStr b1
@@ -459,7 +471,7 @@ strupper b1 =
 --
 -- > Sdst  strupperk  Ssrc
 --
--- csound doc: <http://csound.com/docs/manual/strupperk.html>
+-- csound doc: <https://csound.com/docs/manual/strupperk.html>
 strupperk ::  Str -> Str
 strupperk b1 =
   Str $ f <$> unStr b1

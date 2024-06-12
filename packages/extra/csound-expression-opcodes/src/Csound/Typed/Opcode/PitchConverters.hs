@@ -2,7 +2,7 @@ module Csound.Typed.Opcode.PitchConverters (
     
     
     -- * Functions.
-    cent, cpsmidinn, cpsoct, cpspch, ftom, mtof, mton, ntom, octave, octcps, octmidinn, octpch, pchmidinn, pchoct, pchtom, semitone,
+    cent, cpsmidinn, cpsoct, cpspch, ftom, mtof, mton, ntof, ntom, octave, octcps, octmidinn, octpch, pchmidinn, pchoct, pchtom, semitone,
     
     -- * Tuning Opcodes.
     cps2pch, cpstun, cpstuni, cpsxpch) where
@@ -17,7 +17,7 @@ import Csound.Typed
 --
 -- >  cent (x) 
 --
--- csound doc: <http://csound.com/docs/manual/cent.html>
+-- csound doc: <https://csound.com/docs/manual/cent.html>
 cent :: SigOrD a => a -> a
 cent b1 =
   fromGE $ f <$> toGE b1
@@ -29,7 +29,7 @@ cent b1 =
 --
 -- >  cpsmidinn  (MidiNoteNumber)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/cpsmidinn.html>
+-- csound doc: <https://csound.com/docs/manual/cpsmidinn.html>
 cpsmidinn :: SigOrD a => a -> a
 cpsmidinn b1 =
   fromGE $ f <$> toGE b1
@@ -41,7 +41,7 @@ cpsmidinn b1 =
 --
 -- >  cpsoct  (oct)  (no rate restriction)
 --
--- csound doc: <http://csound.com/docs/manual/cpsoct.html>
+-- csound doc: <https://csound.com/docs/manual/cpsoct.html>
 cpsoct :: SigOrD a => a -> a
 cpsoct b1 =
   fromGE $ f <$> toGE b1
@@ -53,7 +53,7 @@ cpsoct b1 =
 --
 -- >  cpspch  (pch)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/cpspch.html>
+-- csound doc: <https://csound.com/docs/manual/cpspch.html>
 cpspch :: SigOrD a => a -> a
 cpspch b1 =
   fromGE $ f <$> toGE b1
@@ -66,15 +66,17 @@ cpspch b1 =
 -- Convert frequency to midi note number, taking global value
 -- 	  of A4 into account.
 --
--- > imidi  ftom  ifreq
--- > kmidi  ftom  kfreq
+-- > imidi  ftom  ifreq [,irnd]
+-- > kmidi  ftom  kfreq [,irnd]
+-- > imidis[]  ftom  ifreqs[] [,irnd]
+-- > kmidis[]  ftom  kfreqs[] [,irnd]
 --
--- csound doc: <http://csound.com/docs/manual/ftom.html>
+-- csound doc: <https://csound.com/docs/manual/ftom.html>
 ftom ::  D -> Sig
 ftom b1 =
   Sig $ f <$> unD b1
   where
-    f a1 = opcs "ftom" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+    f a1 = opcs "ftom" [(Ir,[Ir,Ir]),(Kr,[Kr,Ir]),(Ir,[Ir,Ir]),(Kr,[Kr,Ir])] [a1]
 
 -- | 
 -- Convert a midi to frequency
@@ -84,13 +86,15 @@ ftom b1 =
 --
 -- > ifreq  mtof  imidi
 -- > kfreq  mtof  kmidi
+-- > ifreqs[]  mtof  imidis[]
+-- > kfreqs[]  mtof  kmidis[]
 --
--- csound doc: <http://csound.com/docs/manual/mtof.html>
+-- csound doc: <https://csound.com/docs/manual/mtof.html>
 mtof ::  D -> Sig
 mtof b1 =
   Sig $ f <$> unD b1
   where
-    f a1 = opcs "mtof" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+    f a1 = opcs "mtof" [(Ir,[Ir]),(Kr,[Kr]),(Ir,[Ir]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Convert midi note number to string note name
@@ -101,12 +105,25 @@ mtof b1 =
 -- > Snote  mton  kmidi
 -- > Snote  mton  imidi
 --
--- csound doc: <http://csound.com/docs/manual/mton.html>
+-- csound doc: <https://csound.com/docs/manual/mton.html>
 mton ::  Sig -> Str
 mton b1 =
   Str $ f <$> unSig b1
   where
     f a1 = opcs "mton" [(Sr,[Kr]),(Sr,[Ir])] [a1]
+
+-- | 
+
+--
+-- > kfreq  ntof  Snote
+-- > ifreq  ntof  Snote
+--
+-- csound doc: <https://csound.com/docs/manual/ntof.html>
+ntof ::  Str -> D
+ntof b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "ntof" [(Kr,[Sr]),(Ir,[Sr])] [a1]
 
 -- | 
 -- Convert note name to midi note number
@@ -117,7 +134,7 @@ mton b1 =
 -- > kmidi  ntom  Snote
 -- > imidi  ntom  Snote
 --
--- csound doc: <http://csound.com/docs/manual/ntom.html>
+-- csound doc: <https://csound.com/docs/manual/ntom.html>
 ntom ::  Str -> D
 ntom b1 =
   D $ f <$> unStr b1
@@ -129,7 +146,7 @@ ntom b1 =
 --
 -- >  octave (x)
 --
--- csound doc: <http://csound.com/docs/manual/octave.html>
+-- csound doc: <https://csound.com/docs/manual/octave.html>
 octave :: SigOrD a => a -> a
 octave b1 =
   fromGE $ f <$> toGE b1
@@ -141,7 +158,7 @@ octave b1 =
 --
 -- >  octcps  (cps)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/octcps.html>
+-- csound doc: <https://csound.com/docs/manual/octcps.html>
 octcps :: SigOrD a => a -> a
 octcps b1 =
   fromGE $ f <$> toGE b1
@@ -153,7 +170,7 @@ octcps b1 =
 --
 -- >  octmidinn  (MidiNoteNumber)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/octmidinn.html>
+-- csound doc: <https://csound.com/docs/manual/octmidinn.html>
 octmidinn :: SigOrD a => a -> a
 octmidinn b1 =
   fromGE $ f <$> toGE b1
@@ -165,7 +182,7 @@ octmidinn b1 =
 --
 -- >  octpch  (pch)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/octpch.html>
+-- csound doc: <https://csound.com/docs/manual/octpch.html>
 octpch :: SigOrD a => a -> a
 octpch b1 =
   fromGE $ f <$> toGE b1
@@ -177,7 +194,7 @@ octpch b1 =
 --
 -- >  pchmidinn  (MidiNoteNumber)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/pchmidinn.html>
+-- csound doc: <https://csound.com/docs/manual/pchmidinn.html>
 pchmidinn :: SigOrD a => a -> a
 pchmidinn b1 =
   fromGE $ f <$> toGE b1
@@ -189,7 +206,7 @@ pchmidinn b1 =
 --
 -- >  pchoct  (oct)  (init- or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/pchoct.html>
+-- csound doc: <https://csound.com/docs/manual/pchoct.html>
 pchoct :: SigOrD a => a -> a
 pchoct b1 =
   fromGE $ f <$> toGE b1
@@ -206,7 +223,7 @@ pchoct b1 =
 -- > imidi  pchtom  ipch
 -- > kmidi  pchtom  kpch
 --
--- csound doc: <http://csound.com/docs/manual/pchtom.html>
+-- csound doc: <https://csound.com/docs/manual/pchtom.html>
 pchtom ::  D -> Sig
 pchtom b1 =
   Sig $ f <$> unD b1
@@ -218,7 +235,7 @@ pchtom b1 =
 --
 -- >  semitone (x)
 --
--- csound doc: <http://csound.com/docs/manual/semitone.html>
+-- csound doc: <https://csound.com/docs/manual/semitone.html>
 semitone :: SigOrD a => a -> a
 semitone b1 =
   fromGE $ f <$> toGE b1
@@ -232,7 +249,7 @@ semitone b1 =
 --
 -- > icps  cps2pch  ipch, iequal
 --
--- csound doc: <http://csound.com/docs/manual/cps2pch.html>
+-- csound doc: <https://csound.com/docs/manual/cps2pch.html>
 cps2pch ::  D -> D -> D
 cps2pch b1 b2 =
   D $ f <$> unD b1 <*> unD b2
@@ -244,7 +261,7 @@ cps2pch b1 b2 =
 --
 -- > kcps  cpstun  ktrig, kindex, kfn
 --
--- csound doc: <http://csound.com/docs/manual/cpstun.html>
+-- csound doc: <https://csound.com/docs/manual/cpstun.html>
 cpstun ::  Sig -> Sig -> Tab -> Sig
 cpstun b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
@@ -256,7 +273,7 @@ cpstun b1 b2 b3 =
 --
 -- > icps  cpstuni  index, ifn
 --
--- csound doc: <http://csound.com/docs/manual/cpstuni.html>
+-- csound doc: <https://csound.com/docs/manual/cpstuni.html>
 cpstuni ::  D -> Tab -> D
 cpstuni b1 b2 =
   D $ f <$> unD b1 <*> unTab b2
@@ -270,7 +287,7 @@ cpstuni b1 b2 =
 --
 -- > icps  cpsxpch  ipch, iequal, irepeat, ibase
 --
--- csound doc: <http://csound.com/docs/manual/cpsxpch.html>
+-- csound doc: <https://csound.com/docs/manual/cpsxpch.html>
 cpsxpch ::  D -> D -> D -> D -> D
 cpsxpch b1 b2 b3 b4 =
   D $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4

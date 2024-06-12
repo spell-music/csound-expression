@@ -5,13 +5,13 @@ module Csound.Typed.Opcode.SpectralProcessing (
     ktableseg, pvadd, pvbufread, pvcross, pvinterp, pvoc, pvread, tableseg, tablexseg, vpvoc,
     
     -- * LPC.
-    lpfreson, lpinterp, lpread, lpreson, lpslot,
+    allpole, apoleparams, lpcanal, lpcfilter, lpfreson, lpinterp, lpread, lpreson, lpslot, pvslpc, resonbnk,
     
     -- * Non-Standard.
     specaddm, specdiff, specdisp, specfilt, spechist, specptrk, specscal, specsum, spectrum,
     
     -- * Streaming.
-    binit, cudanal, cudasliding, cudasynth, partials, pvsadsyn, pvsanal, pvsarp, pvsbandp, pvsbandr, pvsbin, pvsblur, pvsbuffer, pvsbufread, pvsbufread2, pvscale, pvscent, pvsceps, pvscross, pvsdemix, pvsdiskin, pvsdisp, pvsfilter, pvsfread, pvsfreeze, pvsftr, pvsftw, pvsfwrite, pvsgain, pvshift, pvsifd, pvsin, pvsinfo, pvsinit, pvslock, pvsmaska, pvsmix, pvsmooth, pvsmorph, pvsosc, pvsout, pvspitch, pvstanal, pvstencil, pvstrace, pvsvoc, pvswarp, pvsynth, resyn, sinsyn, tabifd, tradsyn, trcross, trfilter, trhighest, trlowest, trmix, trscale, trshift, trsplit,
+    binit, cudanal, cudasliding, cudasynth, part2txt, partials, pvs2array, pvsadsyn, pvsanal, pvsarp, pvsbandp, pvsbandr, pvsbandwidth, pvsbin, pvsblur, pvsbuffer, pvsbufread, pvsbufread2, pvscale, pvscent, pvsceps, pvscross, pvsdemix, pvsdiskin, pvsdisp, pvsfilter, pvsfread, pvsfreeze, pvsfromarray, pvsftr, pvsftw, pvsfwrite, pvsgain, pvshift, pvsifd, pvsin, pvsinfo, pvsinit, pvsmaska, pvsmix, pvsmooth, pvsmorph, pvsosc, pvsout, pvspitch, pvstanal, pvstencil, pvstrace, pvsvoc, pvswarp, pvsynth, resyn, sinsyn, tabifd, tradsyn, trcross, trfilter, trhighest, trlowest, trmix, trscale, trshift, trsplit,
     
     -- * ATS.
     atsAdd, atsAddnz, atsBufread, atsCross, atsInfo, atsInterpread, atsPartialtap, atsRead, atsReadnz, atsSinnoi,
@@ -36,7 +36,7 @@ import Csound.Typed
 --
 -- >  ktableseg  ifn1, idur1, ifn2 [, idur2] [, ifn3] [...]
 --
--- csound doc: <http://csound.com/docs/manual/ktableseg.html>
+-- csound doc: <https://csound.com/docs/manual/ktableseg.html>
 ktableseg ::  Tab -> D -> Tab -> SE ()
 ktableseg b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
@@ -51,7 +51,7 @@ ktableseg b1 b2 b3 =
 -- > ares  pvadd  ktimpnt, kfmod, ifilcod, ifn, ibins [, ibinoffset] \
 -- >           [, ibinincr] [, iextractmode] [, ifreqlim] [, igatefn]
 --
--- csound doc: <http://csound.com/docs/manual/pvadd.html>
+-- csound doc: <https://csound.com/docs/manual/pvadd.html>
 pvadd ::  Sig -> Sig -> Str -> Tab -> D -> Sig
 pvadd b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unTab b4 <*> unD b5
@@ -65,7 +65,7 @@ pvadd b1 b2 b3 b4 b5 =
 --
 -- >  pvbufread  ktimpnt, ifile
 --
--- csound doc: <http://csound.com/docs/manual/pvbufread.html>
+-- csound doc: <https://csound.com/docs/manual/pvbufread.html>
 pvbufread ::  Sig -> Str -> SE ()
 pvbufread b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2
@@ -79,7 +79,7 @@ pvbufread b1 b2 =
 --
 -- > ares  pvcross  ktimpnt, kfmod, ifile, kampscale1, kampscale2 [, ispecwp]
 --
--- csound doc: <http://csound.com/docs/manual/pvcross.html>
+-- csound doc: <https://csound.com/docs/manual/pvcross.html>
 pvcross ::  Sig -> Sig -> Str -> Sig -> Sig -> Sig
 pvcross b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSig b4 <*> unSig b5
@@ -94,7 +94,7 @@ pvcross b1 b2 b3 b4 b5 =
 -- > ares  pvinterp  ktimpnt, kfmod, ifile, kfreqscale1, kfreqscale2, \
 -- >           kampscale1, kampscale2, kfreqinterp, kampinterp
 --
--- csound doc: <http://csound.com/docs/manual/pvinterp.html>
+-- csound doc: <https://csound.com/docs/manual/pvinterp.html>
 pvinterp ::  Sig -> Sig -> Str -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 pvinterp b1 b2 b3 b4 b5 b6 b7 b8 b9 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
@@ -115,7 +115,7 @@ pvinterp b1 b2 b3 b4 b5 b6 b7 b8 b9 =
 -- > ares  pvoc  ktimpnt, kfmod, ifilcod [, ispecwp] [, iextractmode] \
 -- >           [, ifreqlim] [, igatefn]
 --
--- csound doc: <http://csound.com/docs/manual/pvoc.html>
+-- csound doc: <https://csound.com/docs/manual/pvoc.html>
 pvoc ::  Sig -> Sig -> Str -> Sig
 pvoc b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
@@ -129,7 +129,7 @@ pvoc b1 b2 b3 =
 --
 -- > kfreq, kamp  pvread  ktimpnt, ifile, ibin
 --
--- csound doc: <http://csound.com/docs/manual/pvread.html>
+-- csound doc: <https://csound.com/docs/manual/pvread.html>
 pvread ::  Sig -> Str -> D -> (Sig,Sig)
 pvread b1 b2 b3 =
   pureTuple $ f <$> unSig b1 <*> unStr b2 <*> unD b3
@@ -143,7 +143,7 @@ pvread b1 b2 b3 =
 --
 -- >  tableseg  ifn1, idur1, ifn2 [, idur2] [, ifn3] [...]
 --
--- csound doc: <http://csound.com/docs/manual/tableseg.html>
+-- csound doc: <https://csound.com/docs/manual/tableseg.html>
 tableseg ::  Tab -> D -> Tab -> SE ()
 tableseg b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
@@ -157,7 +157,7 @@ tableseg b1 b2 b3 =
 --
 -- >  tablexseg  ifn1, idur1, ifn2 [, idur2] [, ifn3] [...]
 --
--- csound doc: <http://csound.com/docs/manual/tablexseg.html>
+-- csound doc: <https://csound.com/docs/manual/tablexseg.html>
 tablexseg ::  Tab -> D -> Tab -> SE ()
 tablexseg b1 b2 b3 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
@@ -169,7 +169,7 @@ tablexseg b1 b2 b3 =
 --
 -- > ares  vpvoc  ktimpnt, kfmod, ifile [, ispecwp] [, ifn]
 --
--- csound doc: <http://csound.com/docs/manual/vpvoc.html>
+-- csound doc: <https://csound.com/docs/manual/vpvoc.html>
 vpvoc ::  Sig -> Sig -> Str -> Sig
 vpvoc b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
@@ -179,11 +179,68 @@ vpvoc b1 b2 b3 =
 -- LPC.
 
 -- | 
+
+--
+-- > ares  allpole  asig, kCoef[]
+--
+-- csound doc: <https://csound.com/docs/manual/allpole.html>
+allpole ::  Sig -> Sig -> Sig
+allpole b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "allpole" [(Ar,[Ar,Kr])] [a1,a2]
+
+-- | 
+
+--
+-- > kPar[] apoleparams  kCoef[] 
+--
+-- csound doc: <https://csound.com/docs/manual/apoleparams.html>
+apoleparams ::  Sig -> Sig
+apoleparams b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "apoleparams" [(Kr,[Kr])] [a1]
+
+-- | 
+
+--
+-- > kCoef[],krms,kerr,kcps  lpcanal  asrc, kflg,
+-- >         kprd, isiz, iord[,iwin] 
+-- > kCoef[],krms,kerr,kcps  lpcanal  koff, kflg,
+-- >         ifn, isiz, iord[,iwin] 
+-- > iCoef[],irms,ierr,icps  lpcanal  ioff, iflg,
+-- >         ifn, isiz, iord[,iwin] 
+--
+-- csound doc: <https://csound.com/docs/manual/lpcanal.html>
+lpcanal :: forall a . Tuple a => Sig -> Sig -> Sig -> D -> D -> a
+lpcanal b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "lpcanal" ([Ir,Ir,Ir,Ir],[Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+
+-- | 
+
+--
+-- > ares  lpcfilter  asig, asrc, kflg,
+-- >         kprd, isiz, iord[,iwin] 
+-- > ares  lpcfilter  asig, koff, kflg,
+-- >         ifn, isiz, iord[,iwin] 
+--
+-- csound doc: <https://csound.com/docs/manual/lpcfilter.html>
+lpcfilter ::  Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
+lpcfilter b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "lpcfilter" [(Ar,[Ar,Ar,Kr,Kr,Ir,Ir,Ir])
+                                           ,(Ar,[Ar,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+
+-- | 
 -- Resynthesises a signal from the data passed internally by a previous lpread, applying formant shifting.
 --
 -- > ares  lpfreson  asig, kfrqratio
 --
--- csound doc: <http://csound.com/docs/manual/lpfreson.html>
+-- csound doc: <https://csound.com/docs/manual/lpfreson.html>
 lpfreson ::  Sig -> Sig -> Sig
 lpfreson b1 b2 =
   Sig $ f <$> unSig b1 <*> unSig b2
@@ -195,7 +252,7 @@ lpfreson b1 b2 =
 --
 -- >  lpinterp  islot1, islot2, kmix
 --
--- csound doc: <http://csound.com/docs/manual/lpinterp.html>
+-- csound doc: <https://csound.com/docs/manual/lpinterp.html>
 lpinterp ::  D -> D -> Sig -> SE ()
 lpinterp b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unSig) b3
@@ -207,7 +264,7 @@ lpinterp b1 b2 b3 =
 --
 -- > krmsr, krmso, kerr, kcps  lpread  ktimpnt, ifilcod [, inpoles] [, ifrmrate]
 --
--- csound doc: <http://csound.com/docs/manual/lpread.html>
+-- csound doc: <https://csound.com/docs/manual/lpread.html>
 lpread ::  Sig -> Str -> (Sig,Sig,Sig,Sig)
 lpread b1 b2 =
   pureTuple $ f <$> unSig b1 <*> unStr b2
@@ -219,7 +276,7 @@ lpread b1 b2 =
 --
 -- > ares  lpreson  asig
 --
--- csound doc: <http://csound.com/docs/manual/lpreson.html>
+-- csound doc: <https://csound.com/docs/manual/lpreson.html>
 lpreson ::  Sig -> Sig
 lpreson b1 =
   Sig $ f <$> unSig b1
@@ -231,12 +288,37 @@ lpreson b1 =
 --
 -- >  lpslot  islot
 --
--- csound doc: <http://csound.com/docs/manual/lpslot.html>
+-- csound doc: <https://csound.com/docs/manual/lpslot.html>
 lpslot ::  D -> SE ()
 lpslot b1 =
   SE $ join $ f <$> (lift . unD) b1
   where
     f a1 = opcsDep_ "lpslot" [(Xr,[Ir])] [a1]
+
+-- | 
+
+--
+-- > fsig  pvslpc  asrc, idftsiz, ihop, iord[,iwin] 
+--
+-- csound doc: <https://csound.com/docs/manual/pvslpc.html>
+pvslpc ::  Sig -> D -> D -> D -> Spec
+pvslpc b1 b2 b3 b4 =
+  Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "pvslpc" [(Fr,[Ar,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+
+-- | 
+
+--
+-- > asig resonbnk  ain,
+-- >         kPar[],kmin,kmax,iper[,imode,iscal,iskip] 
+--
+-- csound doc: <https://csound.com/docs/manual/resonbnk.html>
+resonbnk ::  Sig -> Sig -> Sig
+resonbnk b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "resonbnk" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- Non-Standard.
 
@@ -245,7 +327,7 @@ lpslot b1 =
 --
 -- > wsig  specaddm  wsig1, wsig2 [, imul2]
 --
--- csound doc: <http://csound.com/docs/manual/specaddm.html>
+-- csound doc: <https://csound.com/docs/manual/specaddm.html>
 specaddm ::  Wspec -> Wspec -> Wspec
 specaddm b1 b2 =
   Wspec $ f <$> unWspec b1 <*> unWspec b2
@@ -257,7 +339,7 @@ specaddm b1 b2 =
 --
 -- > wsig  specdiff  wsigin
 --
--- csound doc: <http://csound.com/docs/manual/specdiff.html>
+-- csound doc: <https://csound.com/docs/manual/specdiff.html>
 specdiff ::  Wspec -> Wspec
 specdiff b1 =
   Wspec $ f <$> unWspec b1
@@ -269,7 +351,7 @@ specdiff b1 =
 --
 -- >  specdisp  wsig, iprd [, iwtflg]
 --
--- csound doc: <http://csound.com/docs/manual/specdisp.html>
+-- csound doc: <https://csound.com/docs/manual/specdisp.html>
 specdisp ::  Wspec -> D -> SE ()
 specdisp b1 b2 =
   SE $ join $ f <$> (lift . unWspec) b1 <*> (lift . unD) b2
@@ -281,7 +363,7 @@ specdisp b1 b2 =
 --
 -- > wsig  specfilt  wsigin, ifhtim
 --
--- csound doc: <http://csound.com/docs/manual/specfilt.html>
+-- csound doc: <https://csound.com/docs/manual/specfilt.html>
 specfilt ::  Wspec -> D -> Wspec
 specfilt b1 b2 =
   Wspec $ f <$> unWspec b1 <*> unD b2
@@ -293,7 +375,7 @@ specfilt b1 b2 =
 --
 -- > wsig  spechist  wsigin
 --
--- csound doc: <http://csound.com/docs/manual/spechist.html>
+-- csound doc: <https://csound.com/docs/manual/spechist.html>
 spechist ::  Wspec -> Wspec
 spechist b1 =
   Wspec $ f <$> unWspec b1
@@ -308,7 +390,7 @@ spechist b1 =
 -- > koct, kamp  specptrk  wsig, kvar, ilo, ihi, istr, idbthresh, inptls, \
 -- >           irolloff [, iodd] [, iconfs] [, interp] [, ifprd] [, iwtflg]
 --
--- csound doc: <http://csound.com/docs/manual/specptrk.html>
+-- csound doc: <https://csound.com/docs/manual/specptrk.html>
 specptrk ::  Wspec -> Sig -> D -> D -> D -> D -> D -> D -> (Sig,Sig)
 specptrk b1 b2 b3 b4 b5 b6 b7 b8 =
   pureTuple $ f <$> unWspec b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
@@ -321,7 +403,7 @@ specptrk b1 b2 b3 b4 b5 b6 b7 b8 =
 --
 -- > wsig  specscal  wsigin, ifscale, ifthresh
 --
--- csound doc: <http://csound.com/docs/manual/specscal.html>
+-- csound doc: <https://csound.com/docs/manual/specscal.html>
 specscal ::  Wspec -> D -> D -> Wspec
 specscal b1 b2 b3 =
   Wspec $ f <$> unWspec b1 <*> unD b2 <*> unD b3
@@ -333,7 +415,7 @@ specscal b1 b2 b3 =
 --
 -- > ksum  specsum  wsig [, interp]
 --
--- csound doc: <http://csound.com/docs/manual/specsum.html>
+-- csound doc: <https://csound.com/docs/manual/specsum.html>
 specsum ::  Wspec -> Sig
 specsum b1 =
   Sig $ f <$> unWspec b1
@@ -348,7 +430,7 @@ specsum b1 =
 -- > wsig  spectrum  xsig, iprd, iocts, ifrqa [, iq] [, ihann] [, idbout] \
 -- >           [, idsprd] [, idsinrs]
 --
--- csound doc: <http://csound.com/docs/manual/spectrum.html>
+-- csound doc: <https://csound.com/docs/manual/spectrum.html>
 spectrum ::  Sig -> D -> D -> D -> Wspec
 spectrum b1 b2 b3 b4 =
   Wspec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
@@ -371,7 +453,7 @@ spectrum b1 b2 b3 b4 =
 --
 -- > fsig  binit  fin, isize
 --
--- csound doc: <http://csound.com/docs/manual/binit.html>
+-- csound doc: <https://csound.com/docs/manual/binit.html>
 binit ::  Spec -> D -> Spec
 binit b1 b2 =
   Spec $ f <$> unSpec b1 <*> unD b2
@@ -387,7 +469,7 @@ binit b1 b2 =
 --
 -- > fsig  cudanal  ain, ifftsize, ioverlap, iwinsize, iwintype [, iformat] [, iinit]
 --
--- csound doc: <http://csound.com/docs/manual/cudanal.html>
+-- csound doc: <https://csound.com/docs/manual/cudanal.html>
 cudanal ::  Sig -> D -> D -> D -> D -> Spec
 cudanal b1 b2 b3 b4 b5 =
   Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
@@ -404,7 +486,7 @@ cudanal b1 b2 b3 b4 b5 =
 --
 -- > asig  cudasliding  ain, amod, iwinsize
 --
--- csound doc: <http://csound.com/docs/manual/cudasliding.html>
+-- csound doc: <https://csound.com/docs/manual/cudasliding.html>
 cudasliding ::  Sig -> Sig -> D -> Sig
 cudasliding b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
@@ -421,7 +503,7 @@ cudasliding b1 b2 b3 =
 -- > asig  cudasynth  fsig, kamp, kfreq[, inum]
 -- > asig  cudasynth  fsig
 --
--- csound doc: <http://csound.com/docs/manual/cudasynth.html>
+-- csound doc: <https://csound.com/docs/manual/cudasynth.html>
 cudasynth ::  Sig -> Sig -> Tab -> D -> D -> Sig
 cudasynth b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4 <*> unD b5
@@ -431,6 +513,18 @@ cudasynth b1 b2 b3 b4 b5 =
                                                                                                 ,a3
                                                                                                 ,a4
                                                                                                 ,a5]
+
+-- | 
+
+--
+-- >  part2txt  SFile,ftrks
+--
+-- csound doc: <https://csound.com/docs/manual/part2txt.html>
+part2txt ::  Str -> Spec -> SE ()
+part2txt b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSpec) b2
+  where
+    f a1 a2 = opcsDep_ "part2txt" [(Xr,[Sr,Fr])] [a1,a2]
 
 -- | 
 -- Partial track spectral analysis.
@@ -446,7 +540,7 @@ cudasynth b1 b2 b3 b4 b5 =
 --
 -- > ftrks  partials  ffr, fphs, kthresh, kminpts, kmaxgap, imaxtracks
 --
--- csound doc: <http://csound.com/docs/manual/partials.html>
+-- csound doc: <https://csound.com/docs/manual/partials.html>
 partials ::  Spec -> Spec -> Sig -> Sig -> Sig -> D -> Spec
 partials b1 b2 b3 b4 b5 b6 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6
@@ -454,11 +548,24 @@ partials b1 b2 b3 b4 b5 b6 =
     f a1 a2 a3 a4 a5 a6 = opcs "partials" [(Fr,[Fr,Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
+
+--
+-- > kframe  pvs2array  kvar[], fsig
+-- > kframe  pvs2array  kmags[], kfreqs[], fsig
+--
+-- csound doc: <https://csound.com/docs/manual/pvs2array.html>
+pvs2array ::  Sig -> Sig
+pvs2array b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "pvs2array" [(Kr,[Kr,Fr]),(Kr,[Kr,Kr,Fr])] [a1]
+
+-- | 
 -- Resynthesize using a fast oscillator-bank.
 --
 -- > ares  pvsadsyn  fsrc, inoscs, kfmod [, ibinoffset] [, ibinincr] [, iinit]
 --
--- csound doc: <http://csound.com/docs/manual/pvsadsyn.html>
+-- csound doc: <https://csound.com/docs/manual/pvsadsyn.html>
 pvsadsyn ::  Spec -> D -> Sig -> Sig
 pvsadsyn b1 b2 b3 =
   Sig $ f <$> unSpec b1 <*> unD b2 <*> unSig b3
@@ -470,7 +577,7 @@ pvsadsyn b1 b2 b3 =
 --
 -- > fsig  pvsanal  ain, ifftsize, ioverlap, iwinsize, iwintype [, iformat] [, iinit]
 --
--- csound doc: <http://csound.com/docs/manual/pvsanal.html>
+-- csound doc: <https://csound.com/docs/manual/pvsanal.html>
 pvsanal ::  Sig -> D -> D -> D -> D -> Spec
 pvsanal b1 b2 b3 b4 b5 =
   Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
@@ -486,7 +593,7 @@ pvsanal b1 b2 b3 b4 b5 =
 --
 -- > fsig  pvsarp  fsigin, kbin, kdepth, kgain
 --
--- csound doc: <http://csound.com/docs/manual/pvsarp.html>
+-- csound doc: <https://csound.com/docs/manual/pvsarp.html>
 pvsarp ::  Spec -> Sig -> Sig -> Sig -> Spec
 pvsarp b1 b2 b3 b4 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
@@ -502,7 +609,7 @@ pvsarp b1 b2 b3 b4 =
 -- > fsig  pvsbandp  fsigin, xlowcut, xlowfull, \
 -- >           xhighfull, xhighcut[, ktype]
 --
--- csound doc: <http://csound.com/docs/manual/pvsbandp.html>
+-- csound doc: <https://csound.com/docs/manual/pvsbandp.html>
 pvsbandp ::  Spec -> Sig -> Sig -> Sig -> Sig -> Spec
 pvsbandp b1 b2 b3 b4 b5 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
@@ -518,12 +625,24 @@ pvsbandp b1 b2 b3 b4 b5 =
 -- > fsig  pvsbandr  fsigin, xlowcut, xlowfull, \
 -- >           xhighfull, xhighcut[, ktype]
 --
--- csound doc: <http://csound.com/docs/manual/pvsbandr.html>
+-- csound doc: <https://csound.com/docs/manual/pvsbandr.html>
 pvsbandr ::  Spec -> Sig -> Sig -> Sig -> Sig -> Spec
 pvsbandr b1 b2 b3 b4 b5 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
   where
     f a1 a2 a3 a4 a5 = opcs "pvsbandr" [(Fr,[Fr,Xr,Xr,Xr,Xr,Kr])] [a1,a2,a3,a4,a5]
+
+-- | 
+
+--
+-- > kbnd  pvsbandwidth  fsig
+--
+-- csound doc: <https://csound.com/docs/manual/pvsbandwidth.html>
+pvsbandwidth ::  Spec -> Sig
+pvsbandwidth b1 =
+  Sig $ f <$> unSpec b1
+  where
+    f a1 = opcs "pvsbandwidth" [(Kr,[Fr])] [a1]
 
 -- | 
 -- Obtain the amp and freq values off a PVS signal bin.
@@ -532,7 +651,7 @@ pvsbandr b1 b2 b3 b4 b5 =
 --
 -- > kamp, kfr  pvsbin  fsig, kbin
 --
--- csound doc: <http://csound.com/docs/manual/pvsbin.html>
+-- csound doc: <https://csound.com/docs/manual/pvsbin.html>
 pvsbin ::  Spec -> Sig -> (Sig,Sig)
 pvsbin b1 b2 =
   pureTuple $ f <$> unSpec b1 <*> unSig b2
@@ -549,7 +668,7 @@ pvsbin b1 b2 =
 --
 -- > fsig  pvsblur  fsigin, kblurtime, imaxdel
 --
--- csound doc: <http://csound.com/docs/manual/pvsblur.html>
+-- csound doc: <https://csound.com/docs/manual/pvsblur.html>
 pvsblur ::  Spec -> Sig -> D -> Spec
 pvsblur b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unD b3
@@ -567,7 +686,7 @@ pvsblur b1 b2 b3 =
 --
 -- > ihandle, ktime   pvsbuffer  fsig, ilen 
 --
--- csound doc: <http://csound.com/docs/manual/pvsbuffer.html>
+-- csound doc: <https://csound.com/docs/manual/pvsbuffer.html>
 pvsbuffer ::  Spec -> D -> (D,Sig)
 pvsbuffer b1 b2 =
   pureTuple $ f <$> unSpec b1 <*> unD b2
@@ -585,7 +704,7 @@ pvsbuffer b1 b2 =
 --
 -- > fsig  pvsbufread   ktime, khandle[, ilo, ihi, iclear] 
 --
--- csound doc: <http://csound.com/docs/manual/pvsbufread.html>
+-- csound doc: <https://csound.com/docs/manual/pvsbufread.html>
 pvsbufread ::  Sig -> Sig -> Spec
 pvsbufread b1 b2 =
   Spec $ f <$> unSig b1 <*> unSig b2
@@ -603,7 +722,7 @@ pvsbufread b1 b2 =
 --
 -- > fsig  pvsbufread2   ktime, khandle, ift1, ift2 
 --
--- csound doc: <http://csound.com/docs/manual/pvsbufread2.html>
+-- csound doc: <https://csound.com/docs/manual/pvsbufread2.html>
 pvsbufread2 ::  Sig -> Sig -> D -> D -> Spec
 pvsbufread2 b1 b2 b3 b4 =
   Spec $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
@@ -619,7 +738,7 @@ pvsbufread2 b1 b2 b3 b4 =
 --
 -- > fsig  pvscale  fsigin, kscal[, kkeepform, kgain, kcoefs]
 --
--- csound doc: <http://csound.com/docs/manual/pvscale.html>
+-- csound doc: <https://csound.com/docs/manual/pvscale.html>
 pvscale ::  Spec -> Sig -> Spec
 pvscale b1 b2 =
   Spec $ f <$> unSpec b1 <*> unSig b2
@@ -632,13 +751,14 @@ pvscale b1 b2 =
 -- Calculate the spectral centroid of a signal from its discrete Fourier transform.
 --
 -- > kcent  pvscent  fsig
+-- > acent  pvscent  fsig
 --
--- csound doc: <http://csound.com/docs/manual/pvscent.html>
+-- csound doc: <https://csound.com/docs/manual/pvscent.html>
 pvscent ::  Spec -> Sig
 pvscent b1 =
   Sig $ f <$> unSpec b1
   where
-    f a1 = opcs "pvscent" [(Kr,[Fr])] [a1]
+    f a1 = opcs "pvscent" [(Kr,[Fr]),(Ar,[Fr])] [a1]
 
 -- | 
 -- Calculate the cepstrum of a pvs input, optionally liftering coefficients.
@@ -647,7 +767,7 @@ pvscent b1 =
 --
 -- > keps[]  pvsceps  fsig[, icoefs]
 --
--- csound doc: <http://csound.com/docs/manual/pvsceps.html>
+-- csound doc: <https://csound.com/docs/manual/pvsceps.html>
 pvsceps ::  Spec -> Sig
 pvsceps b1 =
   Sig $ f <$> unSpec b1
@@ -659,7 +779,7 @@ pvsceps b1 =
 --
 -- > fsig  pvscross  fsrc, fdest, kamp1, kamp2
 --
--- csound doc: <http://csound.com/docs/manual/pvscross.html>
+-- csound doc: <https://csound.com/docs/manual/pvscross.html>
 pvscross ::  Spec -> Spec -> Sig -> Sig -> Spec
 pvscross b1 b2 b3 b4 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
@@ -681,7 +801,7 @@ pvscross b1 b2 b3 b4 =
 --
 -- > fsig  pvsdemix  fleft, fright, kpos, kwidth, ipoints
 --
--- csound doc: <http://csound.com/docs/manual/pvsdemix.html>
+-- csound doc: <https://csound.com/docs/manual/pvsdemix.html>
 pvsdemix ::  Spec -> Spec -> Sig -> Sig -> D -> Spec
 pvsdemix b1 b2 b3 b4 b5 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4 <*> unD b5
@@ -695,7 +815,7 @@ pvsdemix b1 b2 b3 b4 b5 =
 --
 -- > fsig  pvsdiskin  SFname,ktscal,kgain[,ioffset, ichan]
 --
--- csound doc: <http://csound.com/docs/manual/pvsdiskin.html>
+-- csound doc: <https://csound.com/docs/manual/pvsdiskin.html>
 pvsdiskin ::  Str -> Sig -> Sig -> Spec
 pvsdiskin b1 b2 b3 =
   Spec $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
@@ -711,7 +831,7 @@ pvsdiskin b1 b2 b3 =
 --
 -- >  pvsdisp  fsig[, ibins, iwtflg] 
 --
--- csound doc: <http://csound.com/docs/manual/pvsdisp.html>
+-- csound doc: <https://csound.com/docs/manual/pvsdisp.html>
 pvsdisp ::  Spec -> SE ()
 pvsdisp b1 =
   SE $ join $ f <$> (lift . unSpec) b1
@@ -724,7 +844,7 @@ pvsdisp b1 =
 --
 -- > fsig  pvsfilter  fsigin, fsigfil, kdepth[, igain]
 --
--- csound doc: <http://csound.com/docs/manual/pvsfilter.html>
+-- csound doc: <https://csound.com/docs/manual/pvsfilter.html>
 pvsfilter ::  Spec -> Spec -> Sig -> Spec
 pvsfilter b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3
@@ -738,7 +858,7 @@ pvsfilter b1 b2 b3 =
 --
 -- > fsig  pvsfread  ktimpt, ifn [, ichan]
 --
--- csound doc: <http://csound.com/docs/manual/pvsfread.html>
+-- csound doc: <https://csound.com/docs/manual/pvsfread.html>
 pvsfread ::  Sig -> Tab -> Spec
 pvsfread b1 b2 =
   Spec $ f <$> unSig b1 <*> unTab b2
@@ -756,7 +876,7 @@ pvsfread b1 b2 =
 --
 -- > fsig  pvsfreeze  fsigin, kfreeza, kfreezf
 --
--- csound doc: <http://csound.com/docs/manual/pvsfreeze.html>
+-- csound doc: <https://csound.com/docs/manual/pvsfreeze.html>
 pvsfreeze ::  Spec -> Sig -> Sig -> Spec
 pvsfreeze b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
@@ -764,11 +884,24 @@ pvsfreeze b1 b2 b3 =
     f a1 a2 a3 = opcs "pvsfreeze" [(Fr,[Fr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
+
+--
+-- > fsig  pvsfromarray  karr[][,ihopsize, iwinsize, iwintype]
+-- > fsig  pvsfromarray  kmags[], kfreqs[][,ihopsize, iwinsize, iwintype]
+--
+-- csound doc: <https://csound.com/docs/manual/pvsfromarray.html>
+pvsfromarray ::  Sig -> Spec
+pvsfromarray b1 =
+  Spec $ f <$> unSig b1
+  where
+    f a1 = opcs "pvsfromarray" [(Fr,[Kr,Ir,Ir,Ir]),(Fr,[Kr,Kr,Ir,Ir,Ir])] [a1]
+
+-- | 
 -- Reads amplitude and/or frequency data from function tables.
 --
 -- >  pvsftr  fsrc, ifna [, ifnf]
 --
--- csound doc: <http://csound.com/docs/manual/pvsftr.html>
+-- csound doc: <https://csound.com/docs/manual/pvsftr.html>
 pvsftr ::  Spec -> Tab -> SE ()
 pvsftr b1 b2 =
   SE $ join $ f <$> (lift . unSpec) b1 <*> (lift . unTab) b2
@@ -780,7 +913,7 @@ pvsftr b1 b2 =
 --
 -- > kflag  pvsftw  fsrc, ifna [, ifnf]
 --
--- csound doc: <http://csound.com/docs/manual/pvsftw.html>
+-- csound doc: <https://csound.com/docs/manual/pvsftw.html>
 pvsftw ::  Spec -> Tab -> Sig
 pvsftw b1 b2 =
   Sig $ f <$> unSpec b1 <*> unTab b2
@@ -794,7 +927,7 @@ pvsftw b1 b2 =
 --
 -- >  pvsfwrite  fsig, ifile
 --
--- csound doc: <http://csound.com/docs/manual/pvsfwrite.html>
+-- csound doc: <https://csound.com/docs/manual/pvsfwrite.html>
 pvsfwrite ::  Spec -> Str -> SE ()
 pvsfwrite b1 b2 =
   SE $ join $ f <$> (lift . unSpec) b1 <*> (lift . unStr) b2
@@ -806,7 +939,7 @@ pvsfwrite b1 b2 =
 --
 -- > fsig  pvsgain  fsigin, kgain 
 --
--- csound doc: <http://csound.com/docs/manual/pvsgain.html>
+-- csound doc: <https://csound.com/docs/manual/pvsgain.html>
 pvsgain ::  Spec -> Sig -> Spec
 pvsgain b1 b2 =
   Spec $ f <$> unSpec b1 <*> unSig b2
@@ -819,7 +952,7 @@ pvsgain b1 b2 =
 --
 -- > fsig  pvshift  fsigin, kshift, klowest[, kkeepform, igain, kcoefs]
 --
--- csound doc: <http://csound.com/docs/manual/pvshift.html>
+-- csound doc: <https://csound.com/docs/manual/pvshift.html>
 pvshift ::  Spec -> Sig -> Sig -> Spec
 pvshift b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
@@ -838,7 +971,7 @@ pvshift b1 b2 b3 =
 --
 -- > ffr,fphs  pvsifd  ain, ifftsize, ihopsize, iwintype[,iscal]
 --
--- csound doc: <http://csound.com/docs/manual/pvsifd.html>
+-- csound doc: <https://csound.com/docs/manual/pvsifd.html>
 pvsifd ::  Sig -> D -> D -> D -> (Spec,Spec)
 pvsifd b1 b2 b3 b4 =
   pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
@@ -856,7 +989,7 @@ pvsifd b1 b2 b3 b4 =
 --
 -- > fsig  pvsin  kchan[, isize, iolap, iwinsize, iwintype, iformat]
 --
--- csound doc: <http://csound.com/docs/manual/pvsin.html>
+-- csound doc: <https://csound.com/docs/manual/pvsin.html>
 pvsin ::  Sig -> Spec
 pvsin b1 =
   Spec $ f <$> unSig b1
@@ -870,7 +1003,7 @@ pvsin b1 =
 --
 -- > ioverlap, inumbins, iwinsize, iformat  pvsinfo  fsrc
 --
--- csound doc: <http://csound.com/docs/manual/pvsinfo.html>
+-- csound doc: <https://csound.com/docs/manual/pvsinfo.html>
 pvsinfo ::  Spec -> (D,D,D,D)
 pvsinfo b1 =
   pureTuple $ f <$> unSpec b1
@@ -884,28 +1017,12 @@ pvsinfo b1 =
 --
 -- > fsig  pvsinit  isize[, iolap, iwinsize, iwintype, iformat]
 --
--- csound doc: <http://csound.com/docs/manual/pvsinit.html>
+-- csound doc: <https://csound.com/docs/manual/pvsinit.html>
 pvsinit ::  D -> Spec
 pvsinit b1 =
   Spec $ f <$> unD b1
   where
     f a1 = opcs "pvsinit" [(Fr,[Ir,Ir,Ir,Ir,Ir])] [a1]
-
--- | 
--- Frequency lock an input fsig
---
--- This opcode searches for spectral peaks and then locks the frequencies around those peaks. This is similar to
---       phase-locking in non-streaming PV processing. It can be used to improve timestretching and pitch-shifting quality in
---       PV processing.
---
--- > fsig  pvslock  fsigin, klock
---
--- csound doc: <http://csound.com/docs/manual/pvslock.html>
-pvslock ::  Spec -> Sig -> Spec
-pvslock b1 b2 =
-  Spec $ f <$> unSpec b1 <*> unSig b2
-  where
-    f a1 a2 = opcs "pvslock" [(Fr,[Fr,Kr])] [a1,a2]
 
 -- | 
 -- Modify amplitudes using a function table, with dynamic scaling.
@@ -914,7 +1031,7 @@ pvslock b1 b2 =
 --
 -- > fsig  pvsmaska  fsrc, ifn, kdepth
 --
--- csound doc: <http://csound.com/docs/manual/pvsmaska.html>
+-- csound doc: <https://csound.com/docs/manual/pvsmaska.html>
 pvsmaska ::  Spec -> Tab -> Sig -> Spec
 pvsmaska b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unTab b2 <*> unSig b3
@@ -930,7 +1047,7 @@ pvsmaska b1 b2 b3 =
 --
 -- > fsig  pvsmix  fsigin1, fsigin2
 --
--- csound doc: <http://csound.com/docs/manual/pvsmix.html>
+-- csound doc: <https://csound.com/docs/manual/pvsmix.html>
 pvsmix ::  Spec -> Spec -> Spec
 pvsmix b1 b2 =
   Spec $ f <$> unSpec b1 <*> unSpec b2
@@ -952,7 +1069,7 @@ pvsmix b1 b2 =
 --
 -- > fsig  pvsmooth  fsigin, kacf, kfcf
 --
--- csound doc: <http://csound.com/docs/manual/pvsmooth.html>
+-- csound doc: <https://csound.com/docs/manual/pvsmooth.html>
 pvsmooth ::  Spec -> Sig -> Sig -> Spec
 pvsmooth b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
@@ -966,7 +1083,7 @@ pvsmooth b1 b2 b3 =
 --
 -- > fsig  pvsmorph  fsig1, fsig2, kampint, kfrqint
 --
--- csound doc: <http://csound.com/docs/manual/pvsmorph.html>
+-- csound doc: <https://csound.com/docs/manual/pvsmorph.html>
 pvsmorph ::  Spec -> Spec -> Sig -> Sig -> Spec
 pvsmorph b1 b2 b3 b4 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
@@ -980,7 +1097,7 @@ pvsmorph b1 b2 b3 b4 =
 --
 -- > fsig  pvsosc  kamp, kfreq, ktype, isize [,ioverlap] [, iwinsize] [, iwintype] [, iformat]
 --
--- csound doc: <http://csound.com/docs/manual/pvsosc.html>
+-- csound doc: <https://csound.com/docs/manual/pvsosc.html>
 pvsosc ::  Sig -> Sig -> Sig -> D -> Spec
 pvsosc b1 b2 b3 b4 =
   Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
@@ -995,7 +1112,7 @@ pvsosc b1 b2 b3 b4 =
 --
 -- >  pvsout  fsig, kchan
 --
--- csound doc: <http://csound.com/docs/manual/pvsout.html>
+-- csound doc: <https://csound.com/docs/manual/pvsout.html>
 pvsout ::  Spec -> Sig -> SE ()
 pvsout b1 b2 =
   SE $ join $ f <$> (lift . unSpec) b1 <*> (lift . unSig) b2
@@ -1009,7 +1126,7 @@ pvsout b1 b2 =
 --
 -- > kfr, kamp  pvspitch  fsig, kthresh
 --
--- csound doc: <http://csound.com/docs/manual/pvspitch.html>
+-- csound doc: <https://csound.com/docs/manual/pvspitch.html>
 pvspitch ::  Spec -> Sig -> (Sig,Sig)
 pvspitch b1 b2 =
   pureTuple $ f <$> unSpec b1 <*> unSig b2
@@ -1026,7 +1143,7 @@ pvspitch b1 b2 =
 -- > fsig  pvstanal  ktimescal, kamp, kpitch, ktab, [kdetect, kwrap, ioffset,ifftsize, ihop, idbthresh]
 -- >           
 --
--- csound doc: <http://csound.com/docs/manual/pvstanal.html>
+-- csound doc: <https://csound.com/docs/manual/pvstanal.html>
 pvstanal ::  Sig -> Sig -> Sig -> Tab -> Spec
 pvstanal b1 b2 b3 b4 =
   Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
@@ -1042,7 +1159,7 @@ pvstanal b1 b2 b3 b4 =
 --
 -- > fsig  pvstencil  fsigin, kgain, klevel, iftable
 --
--- csound doc: <http://csound.com/docs/manual/pvstencil.html>
+-- csound doc: <https://csound.com/docs/manual/pvstencil.html>
 pvstencil ::  Spec -> Sig -> Sig -> D -> Spec
 pvstencil b1 b2 b3 b4 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unD b4
@@ -1056,13 +1173,15 @@ pvstencil b1 b2 b3 b4 =
 --       highest amplitude, zeroing the others.
 --
 -- > fsig  pvstrace  fsigin, kn 
+-- > fsig, kBins[]  pvstrace  fsigin, kn[,
+-- >          isort, imin, imax] 
 --
--- csound doc: <http://csound.com/docs/manual/pvstrace.html>
-pvstrace ::  Spec -> Sig -> Spec
+-- csound doc: <https://csound.com/docs/manual/pvstrace.html>
+pvstrace :: forall a . Tuple a => Spec -> Sig -> a
 pvstrace b1 b2 =
-  Spec $ f <$> unSpec b1 <*> unSig b2
+  pureTuple $ f <$> unSpec b1 <*> unSig b2
   where
-    f a1 a2 = opcs "pvstrace" [(Fr,[Fr,Kr])] [a1,a2]
+    f a1 a2 = mopcs "pvstrace" ([Fr,Kr],[Fr,Kr,Ir,Ir,Ir]) [a1,a2]
 
 -- | 
 -- Combine the spectral envelope of one fsig with the excitation (frequencies) of another.
@@ -1073,7 +1192,7 @@ pvstrace b1 b2 =
 --
 -- > fsig  pvsvoc  famp, fexc, kdepth, kgain [,kcoefs]
 --
--- csound doc: <http://csound.com/docs/manual/pvsvoc.html>
+-- csound doc: <https://csound.com/docs/manual/pvsvoc.html>
 pvsvoc ::  Spec -> Spec -> Sig -> Sig -> Spec
 pvsvoc b1 b2 b3 b4 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
@@ -1087,7 +1206,7 @@ pvsvoc b1 b2 b3 b4 =
 --
 -- > fsig  pvswarp  fsigin, kscal, kshift[, klowest, kmeth, kgain, kcoefs]
 --
--- csound doc: <http://csound.com/docs/manual/pvswarp.html>
+-- csound doc: <https://csound.com/docs/manual/pvswarp.html>
 pvswarp ::  Spec -> Sig -> Sig -> Spec
 pvswarp b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
@@ -1101,7 +1220,7 @@ pvswarp b1 b2 b3 =
 --
 -- > ares  pvsynth  fsrc, [iinit]
 --
--- csound doc: <http://csound.com/docs/manual/pvsynth.html>
+-- csound doc: <https://csound.com/docs/manual/pvsynth.html>
 pvsynth ::  Spec -> Sig
 pvsynth b1 =
   Sig $ f <$> unSpec b1
@@ -1119,7 +1238,7 @@ pvsynth b1 =
 --
 -- > asig  resyn  fin, kscal, kpitch, kmaxtracks, ifn
 --
--- csound doc: <http://csound.com/docs/manual/resyn.html>
+-- csound doc: <https://csound.com/docs/manual/resyn.html>
 resyn ::  Spec -> Sig -> Sig -> Sig -> Tab -> Sig
 resyn b1 b2 b3 b4 b5 =
   Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
@@ -1137,7 +1256,7 @@ resyn b1 b2 b3 b4 b5 =
 --
 -- > asig  sinsyn  fin, kscal, kmaxtracks, ifn
 --
--- csound doc: <http://csound.com/docs/manual/sinsyn.html>
+-- csound doc: <https://csound.com/docs/manual/sinsyn.html>
 sinsyn ::  Spec -> Sig -> Sig -> Tab -> Sig
 sinsyn b1 b2 b3 b4 =
   Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
@@ -1156,7 +1275,7 @@ sinsyn b1 b2 b3 b4 =
 --
 -- > ffr,fphs  tabifd  ktimpt, kamp, kpitch, ifftsize, ihopsize, iwintype,ifn
 --
--- csound doc: <http://csound.com/docs/manual/tabifd.html>
+-- csound doc: <https://csound.com/docs/manual/tabifd.html>
 tabifd ::  Sig -> Sig -> Sig -> D -> D -> D -> Tab -> (Spec,Spec)
 tabifd b1 b2 b3 b4 b5 b6 b7 =
   pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unTab b7
@@ -1173,7 +1292,7 @@ tabifd b1 b2 b3 b4 b5 b6 b7 =
 --
 -- > asig  tradsyn  fin, kscal, kpitch, kmaxtracks, ifn
 --
--- csound doc: <http://csound.com/docs/manual/tradsyn.html>
+-- csound doc: <https://csound.com/docs/manual/tradsyn.html>
 tradsyn ::  Spec -> Sig -> Sig -> Sig -> Tab -> Sig
 tradsyn b1 b2 b3 b4 b5 =
   Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
@@ -1195,7 +1314,7 @@ tradsyn b1 b2 b3 b4 b5 =
 --
 -- > fsig  trcross  fin1, fin2, ksearch, kdepth [, kmode] 
 --
--- csound doc: <http://csound.com/docs/manual/trcross.html>
+-- csound doc: <https://csound.com/docs/manual/trcross.html>
 trcross ::  Spec -> Spec -> Sig -> Sig -> Spec
 trcross b1 b2 b3 b4 =
   Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
@@ -1213,7 +1332,7 @@ trcross b1 b2 b3 b4 =
 --
 -- > fsig  trfilter  fin, kamnt, ifn
 --
--- csound doc: <http://csound.com/docs/manual/trfilter.html>
+-- csound doc: <https://csound.com/docs/manual/trfilter.html>
 trfilter ::  Spec -> Sig -> Tab -> Spec
 trfilter b1 b2 b3 =
   Spec $ f <$> unSpec b1 <*> unSig b2 <*> unTab b3
@@ -1230,7 +1349,7 @@ trfilter b1 b2 b3 =
 --
 -- > fsig, kfr, kamp  trhighest  fin1, kscal
 --
--- csound doc: <http://csound.com/docs/manual/trhighest.html>
+-- csound doc: <https://csound.com/docs/manual/trhighest.html>
 trhighest ::  Spec -> Sig -> (Spec,Sig,Sig)
 trhighest b1 b2 =
   pureTuple $ f <$> unSpec b1 <*> unSig b2
@@ -1247,7 +1366,7 @@ trhighest b1 b2 =
 --
 -- > fsig, kfr, kamp  trlowest  fin1, kscal
 --
--- csound doc: <http://csound.com/docs/manual/trlowest.html>
+-- csound doc: <https://csound.com/docs/manual/trlowest.html>
 trlowest ::  Spec -> Sig -> (Spec,Sig,Sig)
 trlowest b1 b2 =
   pureTuple $ f <$> unSpec b1 <*> unSig b2
@@ -1265,7 +1384,7 @@ trlowest b1 b2 =
 --
 -- > fsig  trmix  fin1, fin2 
 --
--- csound doc: <http://csound.com/docs/manual/trmix.html>
+-- csound doc: <https://csound.com/docs/manual/trmix.html>
 trmix ::  Spec -> Spec -> Spec
 trmix b1 b2 =
   Spec $ f <$> unSpec b1 <*> unSpec b2
@@ -1282,7 +1401,7 @@ trmix b1 b2 =
 --
 -- > fsig  trscale  fin, kpitch[, kgain]
 --
--- csound doc: <http://csound.com/docs/manual/trscale.html>
+-- csound doc: <https://csound.com/docs/manual/trscale.html>
 trscale ::  Spec -> Sig -> Spec
 trscale b1 b2 =
   Spec $ f <$> unSpec b1 <*> unSig b2
@@ -1299,7 +1418,7 @@ trscale b1 b2 =
 --
 -- > fsig  trshift  fin, kpshift[, kgain]
 --
--- csound doc: <http://csound.com/docs/manual/trshift.html>
+-- csound doc: <https://csound.com/docs/manual/trshift.html>
 trshift ::  Spec -> Sig -> Spec
 trshift b1 b2 =
   Spec $ f <$> unSpec b1 <*> unSig b2
@@ -1318,7 +1437,7 @@ trshift b1 b2 =
 --
 -- > fsiglow, fsighi  trsplit  fin, ksplit[, kgainlow, kgainhigh]
 --
--- csound doc: <http://csound.com/docs/manual/trsplit.html>
+-- csound doc: <https://csound.com/docs/manual/trsplit.html>
 trsplit ::  Spec -> Sig -> (Spec,Spec)
 trsplit b1 b2 =
   pureTuple $ f <$> unSpec b1 <*> unSig b2
@@ -1335,7 +1454,7 @@ trsplit b1 b2 =
 -- > ar  ATSadd  ktimepnt, kfmod, iatsfile, ifn, ipartials[, ipartialoffset, \
 -- >             ipartialincr, igatefn]
 --
--- csound doc: <http://csound.com/docs/manual/ATSadd.html>
+-- csound doc: <https://csound.com/docs/manual/ATSadd.html>
 atsAdd ::  Sig -> Sig -> D -> Tab -> D -> Sig
 atsAdd b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unD b5
@@ -1349,7 +1468,7 @@ atsAdd b1 b2 b3 b4 b5 =
 --
 -- > ar  ATSaddnz  ktimepnt, iatsfile, ibands[, ibandoffset, ibandincr]
 --
--- csound doc: <http://csound.com/docs/manual/ATSaddnz.html>
+-- csound doc: <https://csound.com/docs/manual/ATSaddnz.html>
 atsAddnz ::  Sig -> D -> D -> Sig
 atsAddnz b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
@@ -1364,7 +1483,7 @@ atsAddnz b1 b2 b3 =
 -- >  ATSbufread  ktimepnt, kfmod, iatsfile, ipartials[, ipartialoffset, \
 -- >               ipartialincr]
 --
--- csound doc: <http://csound.com/docs/manual/ATSbufread.html>
+-- csound doc: <https://csound.com/docs/manual/ATSbufread.html>
 atsBufread ::  Sig -> Sig -> D -> D -> SE ()
 atsBufread b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -1379,7 +1498,7 @@ atsBufread b1 b2 b3 b4 =
 -- > ar  ATScross  ktimepnt, kfmod, iatsfile, ifn, kmylev, kbuflev, ipartials \
 -- >               [, ipartialoffset, ipartialincr]
 --
--- csound doc: <http://csound.com/docs/manual/ATScross.html>
+-- csound doc: <https://csound.com/docs/manual/ATScross.html>
 atsCross ::  Sig -> Sig -> D -> Tab -> Sig -> Sig -> D -> Sig
 atsCross b1 b2 b3 b4 b5 b6 b7 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unSig b5 <*> unSig b6 <*> unD b7
@@ -1399,7 +1518,7 @@ atsCross b1 b2 b3 b4 b5 b6 b7 =
 --
 -- > idata  ATSinfo  iatsfile, ilocation
 --
--- csound doc: <http://csound.com/docs/manual/ATSinfo.html>
+-- csound doc: <https://csound.com/docs/manual/ATSinfo.html>
 atsInfo ::  D -> D -> D
 atsInfo b1 b2 =
   D $ f <$> unD b1 <*> unD b2
@@ -1413,7 +1532,7 @@ atsInfo b1 b2 =
 --
 -- > kamp  ATSinterpread  kfreq
 --
--- csound doc: <http://csound.com/docs/manual/ATSinterpread.html>
+-- csound doc: <https://csound.com/docs/manual/ATSinterpread.html>
 atsInterpread ::  Sig -> Sig
 atsInterpread b1 =
   Sig $ f <$> unSig b1
@@ -1427,7 +1546,7 @@ atsInterpread b1 =
 --
 -- > kfrq, kamp  ATSpartialtap  ipartialnum
 --
--- csound doc: <http://csound.com/docs/manual/ATSpartialtap.html>
+-- csound doc: <https://csound.com/docs/manual/ATSpartialtap.html>
 atsPartialtap ::  D -> (Sig,Sig)
 atsPartialtap b1 =
   pureTuple $ f <$> unD b1
@@ -1441,7 +1560,7 @@ atsPartialtap b1 =
 --
 -- > kfreq, kamp  ATSread  ktimepnt, iatsfile, ipartial
 --
--- csound doc: <http://csound.com/docs/manual/ATSread.html>
+-- csound doc: <https://csound.com/docs/manual/ATSread.html>
 atsRead ::  Sig -> D -> D -> (Sig,Sig)
 atsRead b1 b2 b3 =
   pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
@@ -1455,7 +1574,7 @@ atsRead b1 b2 b3 =
 --
 -- > kenergy  ATSreadnz  ktimepnt, iatsfile, iband
 --
--- csound doc: <http://csound.com/docs/manual/ATSreadnz.html>
+-- csound doc: <https://csound.com/docs/manual/ATSreadnz.html>
 atsReadnz ::  Sig -> D -> D -> Sig
 atsReadnz b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
@@ -1470,7 +1589,7 @@ atsReadnz b1 b2 b3 =
 -- > ar  ATSsinnoi  ktimepnt, ksinlev, knzlev, kfmod, iatsfile, ipartials \
 -- >               [, ipartialoffset, ipartialincr]
 --
--- csound doc: <http://csound.com/docs/manual/ATSsinnoi.html>
+-- csound doc: <https://csound.com/docs/manual/ATSsinnoi.html>
 atsSinnoi ::  Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
 atsSinnoi b1 b2 b3 b4 b5 b6 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
@@ -1498,7 +1617,7 @@ atsSinnoi b1 b2 b3 b4 b5 b6 =
 --
 -- >  lorismorph  isrcidx, itgtidx, istoreidx, kfreqmorphenv, kampmorphenv, kbwmorphenv
 --
--- csound doc: <http://csound.com/docs/manual/lorismorph.html>
+-- csound doc: <https://csound.com/docs/manual/lorismorph.html>
 lorismorph ::  D -> D -> D -> Sig -> Sig -> Sig -> SE ()
 lorismorph b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
@@ -1516,7 +1635,7 @@ lorismorph b1 b2 b3 b4 b5 b6 =
 --
 -- > ar  lorisplay  ireadidx, kfreqenv, kampenv, kbwenv
 --
--- csound doc: <http://csound.com/docs/manual/lorisplay.html>
+-- csound doc: <https://csound.com/docs/manual/lorisplay.html>
 lorisplay ::  D -> Sig -> Sig -> Sig -> Sig
 lorisplay b1 b2 b3 b4 =
   Sig $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
@@ -1533,7 +1652,7 @@ lorisplay b1 b2 b3 b4 =
 --
 -- >  lorisread  ktimpnt, ifilcod, istoreidx, kfreqenv, kampenv, kbwenv[, ifadetime]
 --
--- csound doc: <http://csound.com/docs/manual/lorisread.html>
+-- csound doc: <https://csound.com/docs/manual/lorisread.html>
 lorisread ::  Sig -> Str -> D -> Sig -> Sig -> Sig -> SE ()
 lorisread b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
@@ -1549,7 +1668,7 @@ lorisread b1 b2 b3 b4 b5 b6 =
 --
 -- > kcent  centroid  asig, ktrig, ifftsize
 --
--- csound doc: <http://csound.com/docs/manual/centroid.html>
+-- csound doc: <https://csound.com/docs/manual/centroid.html>
 centroid ::  Sig -> Sig -> D -> Sig
 centroid b1 b2 b3 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
@@ -1565,7 +1684,7 @@ centroid b1 b2 b3 =
 -- > asig[,asig2]  filescal  ktimescal, kamp, kpitch, Sfile, klock [,ifftsize, idecim, ithresh]
 -- >           
 --
--- csound doc: <http://csound.com/docs/manual/filescal.html>
+-- csound doc: <https://csound.com/docs/manual/filescal.html>
 filescal :: forall a . Tuple a => Sig -> Sig -> Sig -> Str -> Sig -> a
 filescal b1 b2 b3 b4 b5 =
   pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4 <*> unSig b5
@@ -1582,7 +1701,7 @@ filescal b1 b2 b3 b4 b5 =
 -- > asig  mincer  atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
 -- >           
 --
--- csound doc: <http://csound.com/docs/manual/mincer.html>
+-- csound doc: <https://csound.com/docs/manual/mincer.html>
 mincer ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
 mincer b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
@@ -1598,7 +1717,7 @@ mincer b1 b2 b3 b4 b5 =
 -- > asig, asig2, ktime  mp3scal  Sfile, ktimescal, kpitch, kamp[, iskip, ifftsize, idecim, ilock]
 -- >           
 --
--- csound doc: <http://csound.com/docs/manual/mp3scal.html>
+-- csound doc: <https://csound.com/docs/manual/mp3scal.html>
 mp3scal ::  Str -> Sig -> Sig -> Sig -> (Sig,Sig,Sig)
 mp3scal b1 b2 b3 b4 =
   pureTuple $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
@@ -1616,7 +1735,7 @@ mp3scal b1 b2 b3 b4 =
 -- > asig  paulstretch  istretch, iwindowsize, ift
 -- >         
 --
--- csound doc: <http://csound.com/docs/manual/paulstretch.html>
+-- csound doc: <https://csound.com/docs/manual/paulstretch.html>
 paulstretch ::  D -> D -> D -> Sig
 paulstretch b1 b2 b3 =
   Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
@@ -1633,7 +1752,7 @@ paulstretch b1 b2 b3 =
 -- > asig  temposcal  ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, ithresh]
 -- >           
 --
--- csound doc: <http://csound.com/docs/manual/temposcal.html>
+-- csound doc: <https://csound.com/docs/manual/temposcal.html>
 temposcal ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
 temposcal b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5

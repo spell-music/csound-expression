@@ -2,7 +2,7 @@ module Csound.Typed.Opcode.Miscellaneous (
     
     
     
-    directory, fareylen, fareyleni, modmatrix, pwd, select, system_i, system, tableshuffle, tableshufflei) where
+    directory, fareylen, fareyleni, framebuffer, modmatrix, nchnls_hw, olabuffer, pwd, select, system_i, system, tableshuffle, tableshufflei) where
 
 import Control.Monad.Trans.Class
 import Control.Monad
@@ -18,7 +18,7 @@ import Csound.Typed
 --
 -- > SFiles[]  directory  SDirectory[, SExtention]
 --
--- csound doc: <http://csound.com/docs/manual/directory.html>
+-- csound doc: <https://csound.com/docs/manual/directory.html>
 directory ::  Str -> Str
 directory b1 =
   Str $ f <$> unStr b1
@@ -35,7 +35,7 @@ directory b1 =
 --
 -- > kfl  fareylen  kfn
 --
--- csound doc: <http://csound.com/docs/manual/fareylen.html>
+-- csound doc: <https://csound.com/docs/manual/fareylen.html>
 fareylen ::  Tab -> Sig
 fareylen b1 =
   Sig $ f <$> unTab b1
@@ -52,12 +52,25 @@ fareylen b1 =
 --
 -- > ifl  fareyleni  ifn
 --
--- csound doc: <http://csound.com/docs/manual/fareyleni.html>
+-- csound doc: <https://csound.com/docs/manual/fareyleni.html>
 fareyleni ::  Tab -> D
 fareyleni b1 =
   D $ f <$> unTab b1
   where
     f a1 = opcs "fareyleni" [(Ir,[Ir])] [a1]
+
+-- | 
+
+--
+-- > kout[]  framebuffer  ain, isize
+-- > aout  framebuffer  kin, isize
+--
+-- csound doc: <https://csound.com/docs/manual/framebuffer.html>
+framebuffer ::  Sig -> D -> Sig
+framebuffer b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "framebuffer" [(Kr,[Ar,Ir]),(Ar,[Kr,Ir])] [a1,a2]
 
 -- | 
 -- Modulation matrix opcode with optimizations for sparse matrices.
@@ -72,7 +85,7 @@ fareyleni b1 =
 -- >  modmatrix  iresfn, isrcmodfn, isrcparmfn, imodscale, inum_mod, \\
 -- >     inum_parm, kupdate
 --
--- csound doc: <http://csound.com/docs/manual/modmatrix.html>
+-- csound doc: <https://csound.com/docs/manual/modmatrix.html>
 modmatrix ::  Tab -> Tab -> Tab -> D -> D -> D -> Sig -> SE ()
 modmatrix b1 b2 b3 b4 b5 b6 b7 =
   SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unTab) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unSig) b7
@@ -86,6 +99,30 @@ modmatrix b1 b2 b3 b4 b5 b6 b7 =
                                                                                 ,a7]
 
 -- | 
+
+--
+-- > idacc,iadcc  nchnls_hw 
+--
+-- csound doc: <https://csound.com/docs/manual/nchnls_hw.html>
+nchnls_hw ::   (D,D)
+nchnls_hw  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "nchnls_hw" ([Ir,Ir],[]) []
+
+-- | 
+
+--
+-- > aout  olabuffer  kin, ioverlap
+--
+-- csound doc: <https://csound.com/docs/manual/olabuffer.html>
+olabuffer ::  Sig -> D -> Sig
+olabuffer b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "olabuffer" [(Ar,[Kr,Ir])] [a1,a2]
+
+-- | 
 -- Asks the underlying operating system for the current directory
 --       name as a string.
 --
@@ -95,7 +132,7 @@ modmatrix b1 b2 b3 b4 b5 b6 b7 =
 --
 -- > Sres  pwd 
 --
--- csound doc: <http://csound.com/docs/manual/pwd.html>
+-- csound doc: <https://csound.com/docs/manual/pwd.html>
 pwd ::   Str
 pwd  =
   Str $ return $ f 
@@ -110,7 +147,7 @@ pwd  =
 --
 -- > aout  select  a1, a2, aless, aequal, amore
 --
--- csound doc: <http://csound.com/docs/manual/select.html>
+-- csound doc: <https://csound.com/docs/manual/select.html>
 select ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 select b1 b2 b3 b4 b5 =
   Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
@@ -129,7 +166,7 @@ select b1 b2 b3 b4 b5 =
 --
 -- > ires  system_i  itrig, Scmd, [inowait]
 --
--- csound doc: <http://csound.com/docs/manual/system.html>
+-- csound doc: <https://csound.com/docs/manual/system.html>
 system_i ::  D -> Str -> D
 system_i b1 b2 =
   D $ f <$> unD b1 <*> unStr b2
@@ -148,7 +185,7 @@ system_i b1 b2 =
 --
 -- > kres  system  ktrig, Scmd, [knowait]
 --
--- csound doc: <http://csound.com/docs/manual/system.html>
+-- csound doc: <https://csound.com/docs/manual/system.html>
 system ::  Sig -> Str -> Sig
 system b1 b2 =
   Sig $ f <$> unSig b1 <*> unStr b2
@@ -168,7 +205,7 @@ system b1 b2 =
 --
 -- >  tableshuffle  ktablenum
 --
--- csound doc: <http://csound.com/docs/manual/tableshuffle.html>
+-- csound doc: <https://csound.com/docs/manual/tableshuffle.html>
 tableshuffle ::  Sig -> SE ()
 tableshuffle b1 =
   SE $ join $ f <$> (lift . unSig) b1
@@ -188,7 +225,7 @@ tableshuffle b1 =
 --
 -- >  tableshufflei  itablenum
 --
--- csound doc: <http://csound.com/docs/manual/tableshuffle.html>
+-- csound doc: <https://csound.com/docs/manual/tableshuffle.html>
 tableshufflei ::  D -> SE ()
 tableshufflei b1 =
   SE $ join $ f <$> (lift . unD) b1

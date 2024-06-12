@@ -32,7 +32,7 @@ import Csound.Typed
 --
 -- >  insglobal  isource, instrnum [,instrnum...] 
 --
--- csound doc: <http://csound.com/docs/manual/insglobal.html>
+-- csound doc: <https://csound.com/docs/manual/insglobal.html>
 insglobal ::  D -> D -> SE ()
 insglobal b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -58,7 +58,7 @@ insglobal b1 b2 =
 --
 -- >  insremot  idestination, isource, instrnum [,instrnum...] 
 --
--- csound doc: <http://csound.com/docs/manual/insremot.html>
+-- csound doc: <https://csound.com/docs/manual/insremot.html>
 insremot ::  D -> D -> D -> SE ()
 insremot b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -72,7 +72,7 @@ insremot b1 b2 b3 =
 --
 -- >  midglobal  isource, instrnum [,instrnum...] 
 --
--- csound doc: <http://csound.com/docs/manual/midglobal.html>
+-- csound doc: <https://csound.com/docs/manual/midglobal.html>
 midglobal ::  D -> D -> SE ()
 midglobal b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -86,7 +86,7 @@ midglobal b1 b2 =
 --
 -- >  midremot  idestination, isource, instrnum [,instrnum...] 
 --
--- csound doc: <http://csound.com/docs/manual/midremot.html>
+-- csound doc: <https://csound.com/docs/manual/midremot.html>
 midremot ::  D -> D -> D -> SE ()
 midremot b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3

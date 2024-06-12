@@ -21,7 +21,7 @@ import Csound.Typed
 --
 -- > asignal  JackoAudioIn ScsoundPortName
 --
--- csound doc: <http://csound.com/docs/manual/JackoAudioIn.html>
+-- csound doc: <https://csound.com/docs/manual/JackoAudioIn.html>
 jackoAudioIn ::  Str -> SE Sig
 jackoAudioIn b1 =
   fmap ( Sig . return) $ SE $ join $ f <$> (lift . unStr) b1
@@ -37,7 +37,7 @@ jackoAudioIn b1 =
 --
 -- >  JackoAudioInConnect SexternalPortName, ScsoundPortName
 --
--- csound doc: <http://csound.com/docs/manual/JackoAudioInConnect.html>
+-- csound doc: <https://csound.com/docs/manual/JackoAudioInConnect.html>
 jackoAudioInConnect ::  Str -> Str -> SE ()
 jackoAudioInConnect b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2
@@ -53,7 +53,7 @@ jackoAudioInConnect b1 b2 =
 --
 -- >  JackoAudioOut  ScsoundPortName, asignal
 --
--- csound doc: <http://csound.com/docs/manual/JackoAudioOut.html>
+-- csound doc: <https://csound.com/docs/manual/JackoAudioOut.html>
 jackoAudioOut ::  Str -> Sig -> SE ()
 jackoAudioOut b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
@@ -69,7 +69,7 @@ jackoAudioOut b1 b2 =
 --
 -- >  JackoAudioOutConnect ScsoundPortName, SexternalPortName
 --
--- csound doc: <http://csound.com/docs/manual/JackoAudioOutConnect.html>
+-- csound doc: <https://csound.com/docs/manual/JackoAudioOutConnect.html>
 jackoAudioOutConnect ::  Str -> Str -> SE ()
 jackoAudioOutConnect b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2
@@ -83,7 +83,7 @@ jackoAudioOutConnect b1 b2 =
 --
 -- >  JackoInit ServerName, SclientName
 --
--- csound doc: <http://csound.com/docs/manual/JackoInit.html>
+-- csound doc: <https://csound.com/docs/manual/JackoInit.html>
 jackoInit ::  Str -> Str -> SE ()
 jackoInit b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2
@@ -98,7 +98,7 @@ jackoInit b1 b2 =
 --
 -- >  JackoMidiInConnect SexternalPortName, ScsoundPortName
 --
--- csound doc: <http://csound.com/docs/manual/JackoMidiInConnect.html>
+-- csound doc: <https://csound.com/docs/manual/JackoMidiInConnect.html>
 jackoMidiInConnect ::  Str -> Str -> SE ()
 jackoMidiInConnect b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2
@@ -114,7 +114,7 @@ jackoMidiInConnect b1 b2 =
 --
 -- >  JackoMidiOut  ScsoundPortName, kstatus, kchannel, kdata1[, kdata2]
 --
--- csound doc: <http://csound.com/docs/manual/JackoMidiOut.html>
+-- csound doc: <https://csound.com/docs/manual/JackoMidiOut.html>
 jackoMidiOut ::  Str -> Sig -> Sig -> Sig -> SE ()
 jackoMidiOut b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -130,7 +130,7 @@ jackoMidiOut b1 b2 b3 b4 =
 --
 -- >  JackoMidiOutConnect ScsoundPortName, SexternalPortName
 --
--- csound doc: <http://csound.com/docs/manual/JackoMidiOutConnect.html>
+-- csound doc: <https://csound.com/docs/manual/JackoMidiOutConnect.html>
 jackoMidiOutConnect ::  Str -> Str -> SE ()
 jackoMidiOutConnect b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2
@@ -146,7 +146,7 @@ jackoMidiOutConnect b1 b2 =
 --
 -- >  JackoNoteOut  ScsoundPortName, kstatus, kchannel, kdata1[, kdata2]
 --
--- csound doc: <http://csound.com/docs/manual/JackoNoteOut.html>
+-- csound doc: <https://csound.com/docs/manual/JackoNoteOut.html>
 jackoNoteOut ::  Str -> Sig -> Sig -> Sig -> SE ()
 jackoNoteOut b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
@@ -162,7 +162,7 @@ jackoNoteOut b1 b2 b3 b4 =
 --
 -- >  JackoOn [iactive] 
 --
--- csound doc: <http://csound.com/docs/manual/JackoOn.html>
+-- csound doc: <https://csound.com/docs/manual/JackoOn.html>
 jackoOn ::   SE ()
 jackoOn  =
   SE $ join $ return $ f 
@@ -178,7 +178,7 @@ jackoOn  =
 --
 -- >  JackoTransport  kcommand, [kposition]
 --
--- csound doc: <http://csound.com/docs/manual/JackoTransport.html>
+-- csound doc: <https://csound.com/docs/manual/JackoTransport.html>
 jackoTransport ::  Sig -> SE ()
 jackoTransport b1 =
   SE $ join $ f <$> (lift . unSig) b1

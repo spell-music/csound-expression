@@ -1,6 +1,9 @@
 module Csound.Typed.Opcode.MathematicalOperations (
     
     
+    -- * Arrays.
+    cbrt, fmax, fmin, fmod, hypot, limit1,
+    
     -- * Comparators and Accumulators.
     clear, vincr,
     
@@ -18,6 +21,92 @@ import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
+-- Arrays.
+
+-- | 
+
+--
+-- > ires[]  cbrt  iarg
+-- > kres[]  cbrt  karg
+--
+-- csound doc: <https://csound.com/docs/manual/cbrt.html>
+cbrt ::  D -> Sig
+cbrt b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "cbrt" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+
+-- | 
+
+--
+-- > ires[]  fmax  iarg1[], iarg2[] 
+-- > kres[]  fmax  karg1[], karg2[]
+-- > ires[]  fmax  iarg1[], iarg2 
+-- > kres[]  fmax  karg[], karg2 
+--
+-- csound doc: <https://csound.com/docs/manual/fmax.html>
+fmax ::  D -> Sig
+fmax b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "fmax" [(Ir,[Ir,Ir]),(Kr,[Kr,Kr]),(Ir,[Ir,Ir]),(Kr,[Kr,Kr])] [a1]
+
+-- | 
+
+--
+-- > ires[]  fmin  iarg1[], iarg2[] 
+-- > kres[]  fmin  karg1[], karg2[]
+-- > ires[]  fmin  iarg1[], iarg2 
+-- > kres[]  fmin  karg[], karg2 
+--
+-- csound doc: <https://csound.com/docs/manual/fmin.html>
+fmin ::  D -> Sig
+fmin b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "fmin" [(Ir,[Ir,Ir]),(Kr,[Kr,Kr]),(Ir,[Ir,Ir]),(Kr,[Kr,Kr])] [a1]
+
+-- | 
+
+--
+-- > ires[]  fmod  iarg1[], iarg2[] 
+-- > kres[]  fmod  karg1[], karg2[]
+-- > ires[]  fmod  iarg1[], iarg2 
+-- > kres[]  fmod  karg[], karg2 
+--
+-- csound doc: <https://csound.com/docs/manual/fmod.html>
+fmod ::  D -> Sig
+fmod b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "fmod" [(Ir,[Ir,Ir]),(Kr,[Kr,Kr]),(Ir,[Ir,Ir]),(Kr,[Kr,Kr])] [a1]
+
+-- | 
+
+--
+-- > ires[]  hypot  iarg1[], iarg2[] 
+-- > kres[]  hypot  karg1[], karg2[]
+--
+-- csound doc: <https://csound.com/docs/manual/hypot.html>
+hypot ::  D -> Sig
+hypot b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "hypot" [(Ir,[Ir,Ir]),(Kr,[Kr,Kr])] [a1]
+
+-- | 
+
+--
+-- > ires[]  limit1  iarg
+-- > kres[]  limit1  karg
+--
+-- csound doc: <https://csound.com/docs/manual/limit1.html>
+limit1 ::  D -> Sig
+limit1 b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "limit1" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+
 -- Comparators and Accumulators.
 
 -- | 
@@ -26,8 +115,9 @@ import Csound.Typed
 -- clear zeroes a list of audio signals.
 --
 -- >  clear  avar1 [, avar2] [, avar3] [...]
+-- >  clear  avar[]
 --
--- csound doc: <http://csound.com/docs/manual/clear.html>
+-- csound doc: <https://csound.com/docs/manual/clear.html>
 clear ::  [Sig] -> SE ()
 clear b1 =
   SE $ join $ f <$> mapM (lift . unSig) b1
@@ -41,7 +131,7 @@ clear b1 =
 --
 -- >  vincr  accum, aincr
 --
--- csound doc: <http://csound.com/docs/manual/vincr.html>
+-- csound doc: <https://csound.com/docs/manual/vincr.html>
 vincr ::  Sig -> Sig -> SE ()
 vincr b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
@@ -57,7 +147,7 @@ vincr b1 b2 =
 --
 -- >  ampdb (x)  (no rate restriction)
 --
--- csound doc: <http://csound.com/docs/manual/ampdb.html>
+-- csound doc: <https://csound.com/docs/manual/ampdb.html>
 ampdb :: SigOrD a => a -> a
 ampdb b1 =
   fromGE $ f <$> toGE b1
@@ -71,7 +161,7 @@ ampdb b1 =
 --
 -- >  ampdbfs (x)  (no rate restriction)
 --
--- csound doc: <http://csound.com/docs/manual/ampdbfs.html>
+-- csound doc: <https://csound.com/docs/manual/ampdbfs.html>
 ampdbfs :: SigOrD a => a -> a
 ampdbfs b1 =
   fromGE $ f <$> toGE b1
@@ -83,7 +173,7 @@ ampdbfs b1 =
 --
 -- >  dbamp (x)  (init-rate or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/dbamp.html>
+-- csound doc: <https://csound.com/docs/manual/dbamp.html>
 dbamp :: SigOrD a => a -> a
 dbamp b1 =
   fromGE $ f <$> toGE b1
@@ -97,7 +187,7 @@ dbamp b1 =
 --
 -- >  dbfsamp (x)  (init-rate or control-rate args only)
 --
--- csound doc: <http://csound.com/docs/manual/dbfsamp.html>
+-- csound doc: <https://csound.com/docs/manual/dbfsamp.html>
 dbfsamp :: SigOrD a => a -> a
 dbfsamp b1 =
   fromGE $ f <$> toGE b1
@@ -111,7 +201,7 @@ dbfsamp b1 =
 --
 -- >  birnd (x) (init- or control-rate only)
 --
--- csound doc: <http://csound.com/docs/manual/birnd.html>
+-- csound doc: <https://csound.com/docs/manual/birnd.html>
 birnd :: SigOrD a => a -> SE a
 birnd b1 =
   fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
@@ -123,7 +213,7 @@ birnd b1 =
 --
 -- >  rnd (x) (init- or control-rate only)
 --
--- csound doc: <http://csound.com/docs/manual/rnd.html>
+-- csound doc: <https://csound.com/docs/manual/rnd.html>
 rnd :: SigOrD a => a -> SE a
 rnd b1 =
   fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
@@ -140,7 +230,7 @@ rnd b1 =
 -- > kres  divz  ka, kb, ksubst
 -- > ... divz (ka, kb, ksubst)... (no rate restriction)
 --
--- csound doc: <http://csound.com/docs/manual/divz.html>
+-- csound doc: <https://csound.com/docs/manual/divz.html>
 divz :: SigOrD a => a -> a -> a
 divz b1 b2 =
   fromGE $ f <$> toGE b1 <*> toGE b2
@@ -152,7 +242,7 @@ divz b1 b2 =
 --
 -- > ares  mac  ksig1, asig1 [, ksig2] [, asig2] [, ksig3] [, asig3] [...]
 --
--- csound doc: <http://csound.com/docs/manual/mac.html>
+-- csound doc: <https://csound.com/docs/manual/mac.html>
 mac ::  [Sig] -> Sig
 mac b1 =
   Sig $ f <$> mapM unSig b1
@@ -164,7 +254,7 @@ mac b1 =
 --
 -- > ares  maca  asig1 , asig2 [, asig3] [, asig4] [, asig5] [...]
 --
--- csound doc: <http://csound.com/docs/manual/maca.html>
+-- csound doc: <https://csound.com/docs/manual/maca.html>
 maca ::  [Sig] -> Sig
 maca b1 =
   Sig $ f <$> mapM unSig b1
@@ -178,7 +268,7 @@ maca b1 =
 --
 -- > aout  polynomial  ain, k0 [, k1 [, k2 [...]]]
 --
--- csound doc: <http://csound.com/docs/manual/polynomial.html>
+-- csound doc: <https://csound.com/docs/manual/polynomial.html>
 polynomial ::  Sig -> [Sig] -> Sig
 polynomial b1 b2 =
   Sig $ f <$> unSig b1 <*> mapM unSig b2
@@ -192,14 +282,13 @@ polynomial b1 b2 =
 --
 -- > ares  pow  aarg, kpow [, inorm]
 -- > ires  pow  iarg, ipow [, inorm]
--- > kres  pow  karg, kpow [,
--- >         inorm]
+-- > kres  pow  karg, kpow [, inorm]
 -- > ires[]  pow  iarg[], ipow[] 
 -- > kres[]  pow  karg[], kpow[]
 -- > ires[]  pow  iarg[], ipow 
 -- > kres[]  pow  karg[], kpow 
 --
--- csound doc: <http://csound.com/docs/manual/pow.html>
+-- csound doc: <https://csound.com/docs/manual/pow.html>
 pow ::  Sig -> Sig -> Sig
 pow b1 b2 =
   Sig $ f <$> unSig b1 <*> unSig b2
@@ -217,7 +306,7 @@ pow b1 b2 =
 --
 -- > ares  product  asig1, asig2 [, asig3] [...]
 --
--- csound doc: <http://csound.com/docs/manual/product.html>
+-- csound doc: <https://csound.com/docs/manual/product.html>
 product' ::  [Sig] -> Sig
 product' b1 =
   Sig $ f <$> mapM unSig b1
@@ -231,7 +320,7 @@ product' b1 =
 -- > kres  sum  karr
 -- > ires  sum  iarr
 --
--- csound doc: <http://csound.com/docs/manual/sum.html>
+-- csound doc: <https://csound.com/docs/manual/sum.html>
 sum' ::  [Sig] -> Sig
 sum' b1 =
   Sig $ f <$> mapM unSig b1
@@ -248,7 +337,7 @@ sum' b1 =
 -- > kres  taninv2  ky, kx
 -- > ... taninv2 (ky, kx)... (no rate restriction)
 --
--- csound doc: <http://csound.com/docs/manual/taninv2.html>
+-- csound doc: <https://csound.com/docs/manual/taninv2.html>
 taninv2 :: SigOrD a => a -> a -> a
 taninv2 b1 b2 =
   fromGE $ f <$> toGE b1 <*> toGE b2

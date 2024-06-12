@@ -26,7 +26,7 @@ import Csound.Typed
 --
 -- >  FLgroup  "label", iwidth, iheight, ix, iy [, iborder] [, image]
 --
--- csound doc: <http://csound.com/docs/manual/FLgroup.html>
+-- csound doc: <https://csound.com/docs/manual/FLgroup.html>
 flGroup ::  Str -> D -> D -> D -> D -> SE ()
 flGroup b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -38,7 +38,7 @@ flGroup b1 b2 b3 b4 b5 =
 --
 -- >  FLgroupEnd 
 --
--- csound doc: <http://csound.com/docs/manual/FLgroupEnd.html>
+-- csound doc: <https://csound.com/docs/manual/FLgroupEnd.html>
 flGroupEnd ::   SE ()
 flGroupEnd  =
   SE $ join $ return $ f 
@@ -52,7 +52,7 @@ flGroupEnd  =
 --
 -- >  FLpack  iwidth, iheight, ix, iy, itype, ispace, iborder
 --
--- csound doc: <http://csound.com/docs/manual/FLpack.html>
+-- csound doc: <https://csound.com/docs/manual/FLpack.html>
 flPack ::  D -> D -> D -> D -> D -> D -> D -> SE ()
 flPack b1 b2 b3 b4 b5 b6 b7 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7
@@ -64,7 +64,7 @@ flPack b1 b2 b3 b4 b5 b6 b7 =
 --
 -- >  FLpackEnd 
 --
--- csound doc: <http://csound.com/docs/manual/FLpackEnd.html>
+-- csound doc: <https://csound.com/docs/manual/FLpackEnd.html>
 flPackEnd ::   SE ()
 flPackEnd  =
   SE $ join $ return $ f 
@@ -76,7 +76,7 @@ flPackEnd  =
 --
 -- >  FLpanel  "label", iwidth, iheight [, ix] [, iy] [, iborder] [, ikbdcapture] [, iclose]
 --
--- csound doc: <http://csound.com/docs/manual/FLpanel.html>
+-- csound doc: <https://csound.com/docs/manual/FLpanel.html>
 flPanel ::  Str -> D -> D -> SE ()
 flPanel b1 b2 b3 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -88,7 +88,7 @@ flPanel b1 b2 b3 =
 --
 -- >  FLpanelEnd 
 --
--- csound doc: <http://csound.com/docs/manual/FLpanelEnd.html>
+-- csound doc: <https://csound.com/docs/manual/FLpanelEnd.html>
 flPanelEnd ::   SE ()
 flPanelEnd  =
   SE $ join $ return $ f 
@@ -102,7 +102,7 @@ flPanelEnd  =
 --
 -- >  FLscroll  iwidth, iheight [, ix] [, iy]
 --
--- csound doc: <http://csound.com/docs/manual/FLscroll.html>
+-- csound doc: <https://csound.com/docs/manual/FLscroll.html>
 flScroll ::  D -> D -> SE ()
 flScroll b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -114,7 +114,7 @@ flScroll b1 b2 =
 --
 -- >  FLscrollEnd 
 --
--- csound doc: <http://csound.com/docs/manual/FLscrollEnd.html>
+-- csound doc: <https://csound.com/docs/manual/FLscrollEnd.html>
 flScrollEnd ::   SE ()
 flScrollEnd  =
   SE $ join $ return $ f 
@@ -128,7 +128,7 @@ flScrollEnd  =
 --
 -- >  FLtabs  iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLtabs.html>
+-- csound doc: <https://csound.com/docs/manual/FLtabs.html>
 flTabs ::  D -> D -> D -> D -> SE ()
 flTabs b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -140,7 +140,7 @@ flTabs b1 b2 b3 b4 =
 --
 -- >  FLtabsEnd 
 --
--- csound doc: <http://csound.com/docs/manual/FLtabsEnd.html>
+-- csound doc: <https://csound.com/docs/manual/FLtabsEnd.html>
 flTabsEnd ::   SE ()
 flTabsEnd  =
   SE $ join $ return $ f 
@@ -157,7 +157,7 @@ flTabsEnd  =
 -- > kout, ihandle  FLcount  "label", imin, imax, istep1, istep2, itype, \
 -- >           iwidth, iheight, ix, iy, iopcode [, kp1] [, kp2] [, kp3] [...] [, kpN]
 --
--- csound doc: <http://csound.com/docs/manual/FLcount.html>
+-- csound doc: <https://csound.com/docs/manual/FLcount.html>
 flCount ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flCount b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10 <*> (lift . unD) b11
@@ -173,7 +173,7 @@ flCount b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
 -- > koutx, kouty, ihandlex, ihandley  FLjoy  "label", iminx, imaxx, iminy, \
 -- >           imaxy, iexpx, iexpy, idispx, idispy, iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLjoy.html>
+-- csound doc: <https://csound.com/docs/manual/FLjoy.html>
 flJoy ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,Sig,D,D)
 flJoy b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10 <*> (lift . unD) b11 <*> (lift . unD) b12 <*> (lift . unD) b13
@@ -187,7 +187,7 @@ flJoy b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 =
 -- > kout, ihandle  FLknob  "label", imin, imax, iexp, itype, idisp, iwidth, \
 -- >           ix, iy [, icursorsize]
 --
--- csound doc: <http://csound.com/docs/manual/FLknob.html>
+-- csound doc: <https://csound.com/docs/manual/FLknob.html>
 flKnob ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flKnob b1 b2 b3 b4 b5 b6 b7 b8 b9 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9
@@ -210,7 +210,7 @@ flKnob b1 b2 b3 b4 b5 b6 b7 b8 b9 =
 -- > kout, ihandle  FLroller  "label", imin, imax, istep, iexp, itype, idisp, \
 -- >           iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLroller.html>
+-- csound doc: <https://csound.com/docs/manual/FLroller.html>
 flRoller ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flRoller b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10 <*> (lift . unD) b11
@@ -226,7 +226,7 @@ flRoller b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
 -- > kout, ihandle  FLslider  "label", imin, imax, iexp, itype, idisp, iwidth, \
 -- >           iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLslider.html>
+-- csound doc: <https://csound.com/docs/manual/FLslider.html>
 flSlider ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flSlider b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10
@@ -242,7 +242,7 @@ flSlider b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
 -- > kout, ihandle  FLtext  "label", imin, imax, istep, itype, iwidth, \
 -- >           iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLtext.html>
+-- csound doc: <https://csound.com/docs/manual/FLtext.html>
 flText ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flText b1 b2 b3 b4 b5 b6 b7 b8 b9 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9
@@ -265,7 +265,7 @@ flText b1 b2 b3 b4 b5 b6 b7 b8 b9 =
 -- > ihandle  FLbox  "label", itype, ifont, isize, iwidth, iheight, ix, iy [, image]
 -- > ihandle  FLbox  istr, itype, ifont, isize, iwidth, iheight, ix, iy [, image]
 --
--- csound doc: <http://csound.com/docs/manual/FLbox.html>
+-- csound doc: <https://csound.com/docs/manual/FLbox.html>
 flBox ::  Str -> D -> D -> D -> D -> D -> D -> D -> SE D
 flBox b1 b2 b3 b4 b5 b6 b7 b8 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
@@ -279,7 +279,7 @@ flBox b1 b2 b3 b4 b5 b6 b7 b8 =
 -- > kout, ihandle  FLbutBank  itype, inumx, inumy, iwidth, iheight, ix, iy, \
 -- >           iopcode [, kp1] [, kp2] [, kp3] [, kp4] [, kp5] [....] [, kpN]
 --
--- csound doc: <http://csound.com/docs/manual/FLbutBank.html>
+-- csound doc: <https://csound.com/docs/manual/FLbutBank.html>
 flButBank ::  D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flButBank b1 b2 b3 b4 b5 b6 b7 b8 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
@@ -293,7 +293,7 @@ flButBank b1 b2 b3 b4 b5 b6 b7 b8 =
 -- > kout, ihandle  FLbutton  "label", ion, ioff, itype, iwidth, iheight, ix, \
 -- >           iy, iopcode [, kp1] [, kp2] [, kp3] [, kp4] [, kp5] [....] [, kpN]
 --
--- csound doc: <http://csound.com/docs/manual/FLbutton.html>
+-- csound doc: <https://csound.com/docs/manual/FLbutton.html>
 flButton ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
 flButton b1 b2 b3 b4 b5 b6 b7 b8 b9 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9
@@ -307,7 +307,7 @@ flButton b1 b2 b3 b4 b5 b6 b7 b8 b9 =
 --
 -- > ihandle  FLcloseButton  "label", iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLcloseButton.html>
+-- csound doc: <https://csound.com/docs/manual/FLcloseButton.html>
 flCloseButton ::  Str -> D -> D -> D -> D -> SE D
 flCloseButton b1 b2 b3 b4 b5 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -323,7 +323,7 @@ flCloseButton b1 b2 b3 b4 b5 =
 --
 -- > ihandle  FLexecButton  "command", iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLexecButton.html>
+-- csound doc: <https://csound.com/docs/manual/FLexecButton.html>
 flExecButton ::  Str -> D -> D -> D -> D -> SE D
 flExecButton b1 b2 b3 b4 b5 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -337,7 +337,7 @@ flExecButton b1 b2 b3 b4 b5 =
 --
 -- > inumsnap  FLgetsnap  index [, igroup]
 --
--- csound doc: <http://csound.com/docs/manual/FLgetsnap.html>
+-- csound doc: <https://csound.com/docs/manual/FLgetsnap.html>
 flGetsnap ::  D -> SE D
 flGetsnap b1 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1
@@ -351,7 +351,7 @@ flGetsnap b1 =
 --
 -- > ihandle  FLhvsBox  inumlinesX, inumlinesY, iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLhvsBox.html>
+-- csound doc: <https://csound.com/docs/manual/FLhvsBox.html>
 flHvsBox ::  D -> D -> D -> D -> D -> D -> SE D
 flHvsBox b1 b2 b3 b4 b5 b6 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
@@ -365,7 +365,7 @@ flHvsBox b1 b2 b3 b4 b5 b6 =
 --
 -- >  FLhvsBoxSetValue  kx, ky, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLhvsBoxSetValue.html>
+-- csound doc: <https://csound.com/docs/manual/FLhvsBoxSetValue.html>
 flHvsBoxSetValue ::  Sig -> Sig -> D -> SE ()
 flHvsBoxSetValue b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
@@ -379,7 +379,7 @@ flHvsBoxSetValue b1 b2 b3 =
 --
 -- > kascii  FLkeyIn  [ifn]
 --
--- csound doc: <http://csound.com/docs/manual/FLkeyIn.html>
+-- csound doc: <https://csound.com/docs/manual/FLkeyIn.html>
 flKeyIn ::   SE Sig
 flKeyIn  =
   fmap ( Sig . return) $ SE $ join $ return $ f 
@@ -393,7 +393,7 @@ flKeyIn  =
 --
 -- >  FLloadsnap  "filename" [, igroup]
 --
--- csound doc: <http://csound.com/docs/manual/FLloadsnap.html>
+-- csound doc: <https://csound.com/docs/manual/FLloadsnap.html>
 flLoadsnap ::  Str -> SE ()
 flLoadsnap b1 =
   SE $ join $ f <$> (lift . unStr) b1
@@ -407,7 +407,7 @@ flLoadsnap b1 =
 --
 -- > kx, ky, kb1, kb2, kb3  FLmouse  [imode]
 --
--- csound doc: <http://csound.com/docs/manual/FLmouse.html>
+-- csound doc: <https://csound.com/docs/manual/FLmouse.html>
 flMouse :: forall a . Tuple a =>  SE a
 flMouse  =
   fmap (toTuple . pure) $ SE $ join $ return $ f 
@@ -421,7 +421,7 @@ flMouse  =
 --
 -- >  FLprintk  itime, kval, idisp
 --
--- csound doc: <http://csound.com/docs/manual/FLprintk.html>
+-- csound doc: <https://csound.com/docs/manual/FLprintk.html>
 flPrintk ::  D -> Sig -> D -> SE ()
 flPrintk b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
@@ -435,7 +435,7 @@ flPrintk b1 b2 b3 =
 --
 -- >  FLprintk2  kval, idisp
 --
--- csound doc: <http://csound.com/docs/manual/FLprintk2.html>
+-- csound doc: <https://csound.com/docs/manual/FLprintk2.html>
 flPrintk2 ::  Sig -> D -> SE ()
 flPrintk2 b1 b2 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2
@@ -447,7 +447,7 @@ flPrintk2 b1 b2 =
 --
 -- >  FLrun 
 --
--- csound doc: <http://csound.com/docs/manual/FLrun.html>
+-- csound doc: <https://csound.com/docs/manual/FLrun.html>
 flRun ::   SE ()
 flRun  =
   SE $ join $ return $ f 
@@ -461,7 +461,7 @@ flRun  =
 --
 -- >  FLsavesnap  "filename" [, igroup]
 --
--- csound doc: <http://csound.com/docs/manual/FLsavesnap.html>
+-- csound doc: <https://csound.com/docs/manual/FLsavesnap.html>
 flSavesnap ::  Str -> SE ()
 flSavesnap b1 =
   SE $ join $ f <$> (lift . unStr) b1
@@ -475,7 +475,7 @@ flSavesnap b1 =
 --
 -- > inumsnap, inumval  FLsetsnap  index [, ifn, igroup]
 --
--- csound doc: <http://csound.com/docs/manual/FLsetsnap.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetsnap.html>
 flSetsnap ::  D -> SE (D,D)
 flSetsnap b1 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unD) b1
@@ -489,7 +489,7 @@ flSetsnap b1 =
 --
 -- >  FLsetSnapGroup  igroup
 --
--- csound doc: <http://csound.com/docs/manual/FLsetSnapGroup.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetSnapGroup.html>
 flSetSnapGroup ::  D -> SE ()
 flSetSnapGroup b1 =
   SE $ join $ f <$> (lift . unD) b1
@@ -503,7 +503,7 @@ flSetSnapGroup b1 =
 --
 -- >  FLsetVal  ktrig, kvalue, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetVal.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetVal.html>
 flSetVal ::  Sig -> Sig -> D -> SE ()
 flSetVal b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
@@ -517,7 +517,7 @@ flSetVal b1 b2 b3 =
 --
 -- >  FLsetVal_i  ivalue, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetVal_i.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetVal_i.html>
 flSetVal_i ::  D -> D -> SE ()
 flSetVal_i b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -532,7 +532,7 @@ flSetVal_i b1 b2 =
 -- >  FLslidBnk  "names", inumsliders [, ioutable] [, iwidth] [, iheight] [, ix] \
 -- >           [, iy] [, itypetable] [, iexptable] [, istart_index] [, iminmaxtable]
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnk.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnk.html>
 flSlidBnk ::  Str -> D -> SE ()
 flSlidBnk b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
@@ -547,7 +547,7 @@ flSlidBnk b1 b2 =
 -- >  FLslidBnk2  "names", inumsliders, ioutable, iconfigtable [,iwidth, iheight, ix, iy, istart_index] 
 -- >  FLslidBnk2  istring, inumsliders, ioutable, iconfigtable [,iwidth, iheight, ix, iy, istart_index] 
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnk2.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnk2.html>
 flSlidBnk2 ::  Str -> D -> D -> D -> SE ()
 flSlidBnk2 b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -561,7 +561,7 @@ flSlidBnk2 b1 b2 b3 b4 =
 --
 -- >  FLslidBnk2Set  ihandle, ifn [, istartIndex, istartSlid, inumSlid]
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnk2Set.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnk2Set.html>
 flSlidBnk2Set ::  D -> Tab -> SE ()
 flSlidBnk2Set b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2
@@ -575,7 +575,7 @@ flSlidBnk2Set b1 b2 =
 --
 -- >  FLslidBnk2Setk   ktrig, ihandle, ifn [, istartIndex, istartSlid, inumSlid]
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnk2Setk.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnk2Setk.html>
 flSlidBnk2Setk ::  Sig -> D -> Tab -> SE ()
 flSlidBnk2Setk b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
@@ -589,7 +589,7 @@ flSlidBnk2Setk b1 b2 b3 =
 --
 -- > ihandle  FLslidBnkGetHandle 
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnkGetHandle.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnkGetHandle.html>
 flSlidBnkGetHandle ::   SE D
 flSlidBnkGetHandle  =
   fmap ( D . return) $ SE $ join $ return $ f 
@@ -603,7 +603,7 @@ flSlidBnkGetHandle  =
 --
 -- >  FLslidBnkSet  ihandle, ifn [, istartIndex, istartSlid, inumSlid]
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnkSet.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnkSet.html>
 flSlidBnkSet ::  D -> Tab -> SE ()
 flSlidBnkSet b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2
@@ -617,7 +617,7 @@ flSlidBnkSet b1 b2 =
 --
 -- >  FLslidBnkSetk   ktrig, ihandle, ifn [, istartIndex, istartSlid, inumSlid]
 --
--- csound doc: <http://csound.com/docs/manual/FLslidBnkSetk.html>
+-- csound doc: <https://csound.com/docs/manual/FLslidBnkSetk.html>
 flSlidBnkSetk ::  Sig -> D -> Tab -> SE ()
 flSlidBnkSetk b1 b2 b3 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
@@ -629,7 +629,7 @@ flSlidBnkSetk b1 b2 b3 =
 --
 -- >  FLupdate 
 --
--- csound doc: <http://csound.com/docs/manual/FLupdate.html>
+-- csound doc: <https://csound.com/docs/manual/FLupdate.html>
 flUpdate ::   SE ()
 flUpdate  =
   SE $ join $ return $ f 
@@ -643,7 +643,7 @@ flUpdate  =
 --
 -- > ihandle  FLvalue  "label", iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLvalue.html>
+-- csound doc: <https://csound.com/docs/manual/FLvalue.html>
 flValue ::  Str -> D -> D -> D -> D -> SE D
 flValue b1 b2 b3 b4 b5 =
   fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -661,7 +661,7 @@ flValue b1 b2 b3 b4 b5 =
 --
 -- >  FLvkeybd  "keyboard.map", iwidth, iheight, ix, iy
 --
--- csound doc: <http://csound.com/docs/manual/FLvkeybd.html>
+-- csound doc: <https://csound.com/docs/manual/FLvkeybd.html>
 flVkeybd ::  Str -> D -> D -> D -> D -> SE ()
 flVkeybd b1 b2 b3 b4 b5 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
@@ -676,7 +676,7 @@ flVkeybd b1 b2 b3 b4 b5 =
 -- >  FLvslidBnk  "names", inumsliders [, ioutable] [, iwidth] [, iheight] [, ix] \
 -- >           [, iy] [, itypetable] [, iexptable] [, istart_index] [, iminmaxtable]
 --
--- csound doc: <http://csound.com/docs/manual/FLvslidBnk.html>
+-- csound doc: <https://csound.com/docs/manual/FLvslidBnk.html>
 flVslidBnk ::  Str -> D -> SE ()
 flVslidBnk b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
@@ -690,7 +690,7 @@ flVslidBnk b1 b2 =
 --
 -- >  FLvslidBnk2  "names", inumsliders, ioutable, iconfigtable [,iwidth, iheight, ix, iy, istart_index]
 --
--- csound doc: <http://csound.com/docs/manual/FLvslidBnk2.html>
+-- csound doc: <https://csound.com/docs/manual/FLvslidBnk2.html>
 flVslidBnk2 ::  Str -> D -> D -> D -> SE ()
 flVslidBnk2 b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -705,7 +705,7 @@ flVslidBnk2 b1 b2 b3 b4 =
 -- > koutx, kouty, kinside   FLxyin  ioutx_min, ioutx_max, iouty_min, iouty_max, \
 -- >           iwindx_min, iwindx_max, iwindy_min, iwindy_max [, iexpx, iexpy, ioutx, iouty]
 --
--- csound doc: <http://csound.com/docs/manual/FLxyin.html>
+-- csound doc: <https://csound.com/docs/manual/FLxyin.html>
 flXyin ::  D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,Sig,Sig)
 flXyin b1 b2 b3 b4 b5 b6 b7 b8 =
   fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
@@ -721,7 +721,7 @@ flXyin b1 b2 b3 b4 b5 b6 b7 b8 =
 -- >  vphaseseg  kphase, ioutab, ielems, itab1,idist1,itab2 \
 -- >           [,idist2,itab3, ... ,idistN-1,itabN]
 --
--- csound doc: <http://csound.com/docs/manual/vphaseseg.html>
+-- csound doc: <https://csound.com/docs/manual/vphaseseg.html>
 vphaseseg ::  Sig -> D -> D -> [D] -> SE ()
 vphaseseg b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unD) b4
@@ -737,7 +737,7 @@ vphaseseg b1 b2 b3 b4 =
 --
 -- >  FLcolor  ired, igreen, iblue [, ired2, igreen2, iblue2]
 --
--- csound doc: <http://csound.com/docs/manual/FLcolor.html>
+-- csound doc: <https://csound.com/docs/manual/FLcolor.html>
 flColor ::  D -> D -> D -> SE ()
 flColor b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -751,7 +751,7 @@ flColor b1 b2 b3 =
 --
 -- >  FLcolor2  ired, igreen, iblue
 --
--- csound doc: <http://csound.com/docs/manual/FLcolor2.html>
+-- csound doc: <https://csound.com/docs/manual/FLcolor2.html>
 flColor2 ::  D -> D -> D -> SE ()
 flColor2 b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -765,7 +765,7 @@ flColor2 b1 b2 b3 =
 --
 -- >  FLhide  ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLhide.html>
+-- csound doc: <https://csound.com/docs/manual/FLhide.html>
 flHide ::  D -> SE ()
 flHide b1 =
   SE $ join $ f <$> (lift . unD) b1
@@ -779,7 +779,7 @@ flHide b1 =
 --
 -- >  FLlabel  isize, ifont, ialign, ired, igreen, iblue
 --
--- csound doc: <http://csound.com/docs/manual/FLlabel.html>
+-- csound doc: <https://csound.com/docs/manual/FLlabel.html>
 flLabel ::  D -> D -> D -> D -> D -> D -> SE ()
 flLabel b1 b2 b3 b4 b5 b6 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
@@ -793,7 +793,7 @@ flLabel b1 b2 b3 b4 b5 b6 =
 --
 -- >  FLsetAlign  ialign, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetAlign.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetAlign.html>
 flSetAlign ::  D -> D -> SE ()
 flSetAlign b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -807,7 +807,7 @@ flSetAlign b1 b2 =
 --
 -- >  FLsetBox  itype, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetBox.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetBox.html>
 flSetBox ::  D -> D -> SE ()
 flSetBox b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -821,7 +821,7 @@ flSetBox b1 b2 =
 --
 -- >  FLsetColor  ired, igreen, iblue, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetColor.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetColor.html>
 flSetColor ::  D -> D -> D -> D -> SE ()
 flSetColor b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -835,7 +835,7 @@ flSetColor b1 b2 b3 b4 =
 --
 -- >  FLsetColor2  ired, igreen, iblue, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetColor2.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetColor2.html>
 flSetColor2 ::  D -> D -> D -> D -> SE ()
 flSetColor2 b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -849,7 +849,7 @@ flSetColor2 b1 b2 b3 b4 =
 --
 -- >  FLsetFont  ifont, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetFont.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetFont.html>
 flSetFont ::  D -> D -> SE ()
 flSetFont b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -863,7 +863,7 @@ flSetFont b1 b2 =
 --
 -- >  FLsetPosition  ix, iy, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetPosition.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetPosition.html>
 flSetPosition ::  D -> D -> D -> SE ()
 flSetPosition b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -877,7 +877,7 @@ flSetPosition b1 b2 b3 =
 --
 -- >  FLsetSize  iwidth, iheight, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetSize.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetSize.html>
 flSetSize ::  D -> D -> D -> SE ()
 flSetSize b1 b2 b3 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
@@ -892,7 +892,7 @@ flSetSize b1 b2 b3 =
 -- >  FLsetText  "itext", ihandle
 -- >  FLsetText  istr, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetText.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetText.html>
 flSetText ::  Str -> D -> SE ()
 flSetText b1 b2 =
   SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
@@ -906,7 +906,7 @@ flSetText b1 b2 =
 --
 -- >  FLsetTextColor  ired, iblue, igreen, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetTextColor.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetTextColor.html>
 flSetTextColor ::  D -> D -> D -> D -> SE ()
 flSetTextColor b1 b2 b3 b4 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
@@ -920,7 +920,7 @@ flSetTextColor b1 b2 b3 b4 =
 --
 -- >  FLsetTextSize  isize, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetTextSize.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetTextSize.html>
 flSetTextSize ::  D -> D -> SE ()
 flSetTextSize b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -934,7 +934,7 @@ flSetTextSize b1 b2 =
 --
 -- >  FLsetTextType  itype, ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLsetTextType.html>
+-- csound doc: <https://csound.com/docs/manual/FLsetTextType.html>
 flSetTextType ::  D -> D -> SE ()
 flSetTextType b1 b2 =
   SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
@@ -948,7 +948,7 @@ flSetTextType b1 b2 =
 --
 -- >  FLshow  ihandle
 --
--- csound doc: <http://csound.com/docs/manual/FLshow.html>
+-- csound doc: <https://csound.com/docs/manual/FLshow.html>
 flShow ::  D -> SE ()
 flShow b1 =
   SE $ join $ f <$> (lift . unD) b1
