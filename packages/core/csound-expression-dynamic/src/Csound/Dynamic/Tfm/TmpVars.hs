@@ -10,7 +10,19 @@ import Data.Maybe
 import Control.Monad
 -- import Debug.Trace
 
-import Csound.Dynamic.Types.Exp (RatedExp (..), TmpVar (..), MainExp (..), PrimOr (..), Prim (..), Rate (..), getTmpVars, IfRate (..))
+import Csound.Dynamic.Types.Exp
+  ( RatedExp (..),
+    TmpVar (..),
+    MainExp (..),
+    PrimOr (..),
+    Prim (..),
+    Rate (..),
+    getTmpVars,
+    IfRate (..),
+    Info (..),
+    TmpVarRate (..),
+    getSingleTmpRate,
+  )
 
 type Node f = (Int, f Int)
 type Dag f = [Node f]
@@ -20,22 +32,17 @@ type RemoveTmp a = State St a
 data St = St
   { stIds :: IntMap Int
     -- ^ ids of tmp vars LHS in equations
-  , stRates :: IntMap Rate
+  , stRates :: IntMap (Maybe TmpVarRate, Maybe Info)
     -- ^ rates if requested for TmpVar's
   }
+  deriving (Show)
 
 removeTmpVars :: Dag RatedExp -> Dag RatedExp
 removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
   mapM_ (mapM_ saveTmpVarRate . getTmpVars . ratedExpExp .  snd) dag
   mapM (substArgs <=< saveTmpVar) dag
-  -- dag' <- mapM saveVars dag
-  -- mapM substArgs dag'
+
   where
-    {-
-    saveVars expr = do
-      mapM_ saveTmpVarRate $ getTmpVars $ ratedExpExp $ snd expr
-      saveTmpVar expr
-    -}
     requestRate ifRate mRate =
       case ifRate of
         IfIr -> Just Ir
@@ -56,9 +63,22 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
         pure $ (resId, expr { ratedExpExp = ReadArr ifRate v index, ratedExpRate = requestRate ifRate mRate })
 
       TfmInit tmp info args -> do
-        mRate <- lookupRate tmp
-        insertTmpVar tmp resId
-        pure (resId, expr { ratedExpExp = Tfm info args, ratedExpRate = mRate })
+        mTmpRate <- lookupTmpRate tmp
+        let
+          onSingleRate mRate = do
+            insertTmpVar tmp resId
+            pure (resId, expr { ratedExpExp = Tfm info args, ratedExpRate = mRate })
+
+          onMultiRate = do
+            insertTmpVar tmp resId
+            pure (resId, expr { ratedExpExp = Tfm info args, ratedExpRate = Nothing })
+        case mTmpRate of
+          Just tmpRate ->
+            case tmpRate of
+              SingleTmpRate rate -> onSingleRate (Just rate)
+              MultiTmpRate _rates -> onMultiRate
+          Nothing -> onSingleRate Nothing
+
       _ -> pure (resId, expr)
 
     substArgs :: (Int, RatedExp Int) -> RemoveTmp (Int, RatedExp Int)
@@ -74,18 +94,22 @@ removeTmpVars dag = flip evalState (St IntMap.empty IntMap.empty) $ do
         _              -> pure $ Left p
 
 insertTmpVar :: TmpVar -> Int -> RemoveTmp ()
-insertTmpVar (TmpVar _ v) resId = modify' $ \st -> st { stIds = IntMap.insert v resId (stIds st) }
+insertTmpVar (TmpVar _ _ v) resId =
+  modify' $ \st -> st { stIds = IntMap.insert v resId (stIds st) }
 
 lookupTmpVar :: Int -> TmpVar -> RemoveTmp Int
-lookupTmpVar resId (TmpVar _ n) = gets (fromMaybe err . IntMap.lookup n . stIds)
+lookupTmpVar resId (TmpVar _ _ n) = gets (fromMaybe err . IntMap.lookup n . stIds)
   where
     err = error $ "TmpVar not found: " <> show n <> " on result id: " <> show resId
 
 saveTmpVarRate :: TmpVar -> RemoveTmp ()
-saveTmpVarRate (TmpVar mRate n) =
-  mapM_
-    (\rate -> modify' $ \st -> st { stRates = IntMap.insert n rate $ stRates st })
-    mRate
+saveTmpVarRate (TmpVar mRate mInfo n) = do
+  modify' $ \st -> st { stRates = IntMap.insert n (mRate, mInfo) (stRates st)}
 
 lookupRate :: TmpVar -> RemoveTmp (Maybe Rate)
-lookupRate (TmpVar _ n) = gets (IntMap.lookup n . stRates)
+lookupRate var =
+  fmap (getSingleTmpRate =<<) (lookupTmpRate var)
+
+lookupTmpRate :: TmpVar -> RemoveTmp (Maybe TmpVarRate)
+lookupTmpRate (TmpVar _ _ n) = gets (fst <=< (IntMap.lookup n . stRates))
+

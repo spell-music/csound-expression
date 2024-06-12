@@ -7,5 +7,5 @@ bench:
 	stack build csound-expression:bench:csound-expression-benchmark  # --profile
 
 run:
-	stack runhaskell tutorial/core/live/02-play-notes.hs # scripts/Core.hs
+	stack runhaskell scripts/Oscils.hs
 #	csound -odac ./csound-expression-typed-core/tmp.csd

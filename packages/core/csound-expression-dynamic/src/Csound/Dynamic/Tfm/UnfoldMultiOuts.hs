@@ -12,11 +12,15 @@ import Data.Either (partitionEithers)
 import Csound.Dynamic.Tfm.InferTypes(Var(..), Stmt(..), InferenceResult(..))
 import Csound.Dynamic.Types.Exp hiding (Var (..))
 import Csound.Dynamic.Build(getRates, isMultiOutSignature)
+import Debug.Trace
 
 type ChildrenMap = IM.IntMap [Port]
 
 lookupChildren :: ChildrenMap -> Var -> [Port]
-lookupChildren m parentVar = m IM.! varId parentVar
+lookupChildren m parentVar =
+  case IM.lookup (varId parentVar) m of
+    Just ports -> ports
+    Nothing -> error $ "Invalid children map for id: " <> (show $ varId parentVar)
 
 mkChildrenMap :: [(Var, Selector)] -> ChildrenMap
 mkChildrenMap = IM.fromListWith (++) . fmap extract
@@ -45,7 +49,7 @@ unfoldMultiOuts InferenceResult{..} = runState st programLastFreshId
 unfoldStmt :: ChildrenMap -> SingleStmt -> State Int MultiStmt
 unfoldStmt childrenMap (Stmt lhs rhs) = case getParentTypes rhs of
     Nothing    -> return ([lhs], rhs)
-    Just types -> fmap (,rhs) $ formLhs (lookupChildren childrenMap lhs) types
+    Just types -> traceShow (lhs, rhs, childrenMap) $ fmap (,rhs) $ formLhs (lookupChildren childrenMap lhs) types
 
 formLhs :: [Port] -> [Rate] -> State Int [Var]
 formLhs ports types = fmap (zipWith Var types) (getPorts ports)
@@ -80,7 +84,11 @@ getSelector x =
 getParentTypes :: RatedExp Var -> Maybe [Rate]
 getParentTypes x =
   case ratedExpExp x of
-    Tfm i _ -> if (isMultiOutSignature $ infoSignature i)
+    Tfm i _ -> fromInfo i
+    ExpPrim (PrimTmpVar v) -> (\rates -> traceShow rates rates) $ fromInfo =<< tmpVarInfo v
+    _ -> Nothing
+  where
+  fromInfo i =
+    if (isMultiOutSignature $ infoSignature i)
                 then Just (getRates $ ratedExpExp x)
                 else Nothing
-    _ -> Nothing

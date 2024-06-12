@@ -1431,7 +1431,7 @@ dbfs x = gainslider (x * 127)
 --
 -- csound doc: <http://csound.com/docs/manual/midiin.html>
 midiin :: SE (Sig,Sig,Sig,Sig)
-midiin  = pure $ liftMulti "midiin" ([Kr,Kr,Kr,Kr],[]) ()
+midiin = liftMultiDep "midiin" ([Kr,Kr,Kr,Kr],[]) ()
 
 -- | massign — Assigns a MIDI channel number to a Csound instrument.
 --

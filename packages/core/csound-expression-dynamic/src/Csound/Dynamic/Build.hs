@@ -171,33 +171,61 @@ specs :: Specs -> Signature
 specs = uncurry MultiRate
 
 mopcs :: Name -> Specs -> [E] -> MultiOut [E]
-mopcs name signature as = \numOfOuts -> mo numOfOuts $ tfm (opcPrefix name $ specs signature) as
+mopcs name signature as =
+  \numOfOuts ->
+    mo (
+      take numOfOuts $ fst signature) $
+      tfm (opcPrefix name $ limitMultiRateSignature numOfOuts signature) as
+
+limitMultiRateSignature :: Int -> Specs -> Signature
+limitMultiRateSignature size (outRates, inRates) =
+  MultiRate (take size outRates) inRates
 
 mopcsDep :: Monad m => Int -> Name -> Specs -> [E] -> DepT m [E]
-mopcsDep numOfOuts name signature as = mo numOfOuts <$> tfmDep (opcPrefix name $ specs signature) as
-
-mo :: Int -> E -> [E]
-mo n e = zipWith (\cellId r -> select cellId r e') [0 ..] outRates
+mopcsDep numOfOuts name signature as =
+  moDep rates <$> tfmDepVar (opcPrefix name (limitMultiRateSignature numOfOuts signature)) as
   where
-    outRates = take n $ getRates $ toExp e
-    e' = onExp (setMultiRate outRates) e
+    rates = take numOfOuts $ fst signature
 
-    setMultiRate rates (Tfm info xs) = Tfm (info{ infoSignature = MultiRate rates ins }) xs
-        where
-          ins = case infoSignature info of
-              MultiRate _ a -> a
-              _ -> error "Tuple.hs: multiOutsSection -- should be multiOut expression"
-    setMultiRate _ _ = error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"
+mo :: [Rate] -> E -> [E]
+mo outRates e = zipWith (\cellId r -> select cellId r e) [0 ..] outRates
+  where
+    {-
+    e' = onExp setMultiRate e
 
+    setInfo info = info{ infoSignature = MultiRate outRates ins }
+      where
+        ins = case infoSignature info of
+            MultiRate _ a -> a
+            _ -> error "Tuple.hs: multiOutsSection -- should be multiOut expression"
+
+    setMultiRate  = \case
+      Tfm info xs -> Tfm (setInfo info) xs
+      ExpPrim (PrimTmpVar v) -> ExpPrim (PrimTmpVar $ v { tmpVarInfo = setInfo <$> tmpVarInfo v })
+      other -> other -- error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"
+    -}
     select cellId rate expr = withRate rate $ Select rate cellId (PrimOr $ Right expr)
 
 
-getRates :: MainExp a -> [Rate]
-getRates (Tfm info _) =
-  case infoSignature info of
-    MultiRate outs _ -> outs
-    _ -> error "Build.hs:getRates - argument should be multiOut"
-getRates _ = error "Build.hs:getRates - argument should be Tfm-expression"
+moDep :: [Rate] -> TmpVar -> [E]
+moDep outRates e = zipWith (\cellId r -> select cellId r e) [0 ..] outRates
+  where
+    select cellId rate tmpVar =
+      withRate rate $ Select rate cellId (PrimOr $ Left (PrimTmpVar tmpVar))
+
+getRates :: Show a => MainExp a -> [Rate]
+getRates = \case
+  Tfm info _ -> fromInfo info
+  ExpPrim (PrimTmpVar v) ->
+    case tmpVarInfo v of
+      Just info -> fromInfo info
+      Nothing -> error "Build.hs:getRates - no info for tmpVar"
+  other -> error $ "Build.hs:getRates - argument should be Tfm-expression. But got " <> show other
+  where
+    fromInfo info =
+      case infoSignature info of
+        MultiRate outs _ -> outs
+        _ -> error "Build.hs:getRates - argument should be multiOut"
 
 
 isMultiOutSignature :: Signature -> Bool

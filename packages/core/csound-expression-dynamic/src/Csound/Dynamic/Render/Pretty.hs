@@ -92,7 +92,14 @@ ppPrim x = case x of
                 i = tfm 'i'
 
 ppTmpVar :: TmpVar -> Doc
-ppTmpVar (TmpVar mRate n) = "tmp_var_" <> int n <> (maybe mempty (\r -> "_" <> ppRate r) mRate)
+ppTmpVar (TmpVar mRate _mInfo n) =
+  "tmp_var_"
+  <> int n
+  <> maybe mempty (\r -> "_" <> ppTmpRate r) mRate
+  where
+    ppTmpRate = \case
+      SingleTmpRate r -> ppRate r
+      MultiTmpRate rs -> "multi_rate_" <> hcat (punctuate "_" (fmap ppRate rs))
 
 ppGen :: Int -> Gen -> Doc
 ppGen tabId ft = char 'f'

@@ -80,7 +80,7 @@ global (SE expr) = SE $ lift $ do
   ge <- Dynamic.execDepT expr
   State.insertGlobalExpr ge
 
--- | forces set of the option option to new value
+-- | forces set of the option to new value
 setOption :: Options -> SE ()
 setOption opt = SE $ lift $ State.setOption opt
 
@@ -154,7 +154,8 @@ liftOpcDep_ name rates a = SE $ Dynamic.opcsDep_ name rates =<< lift (fromTuple 
 
 -- | TODO: Multi+dep produces bug
 liftMultiDep :: forall a b . (Tuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> SE b
-liftMultiDep name rates a = SE $ fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
+liftMultiDep name rates a =
+  SE $ fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
 
 liftOpr1kDep :: (Val a, Val b) => Name -> a -> SE b
 liftOpr1kDep name b1 = SE $ fmap (fromE . pure) $ Dynamic.opr1kDep name =<< lift (toE b1)

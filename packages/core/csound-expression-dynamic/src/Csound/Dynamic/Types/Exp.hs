@@ -16,7 +16,7 @@ module Csound.Dynamic.Types.Exp(
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
     CodeBlock (..),
     Signature(..), isInfix, isPrefix,
-    Prim(..), TmpVar (..), Gen(..), GenId(..),
+    Prim(..), TmpVar (..), TmpVarRate (..), getSingleTmpRate, Gen(..), GenId(..),
     Inline(..), InlineExp(..), PreInline(..),
     BoolExp, CondInfo, CondOp(..), isTrue, isFalse,
     NumExp, NumOp(..), Note,
@@ -138,7 +138,7 @@ setRate r a = rehashE $
     Tfm _ _    -> Fix $ (unFix a) { ratedExpRate = Just r }
     -- conversion set's the rate for constants
     -- ExpPrim _  -> a
-    ExpPrim (PrimTmpVar v) -> Fix $ (unFix a) { ratedExpExp = ExpPrim (PrimTmpVar $ v { tmpVarRate = Just r}), ratedExpRate = Just r }
+    ExpPrim (PrimTmpVar v) -> Fix $ (unFix a) { ratedExpExp = ExpPrim (PrimTmpVar $ v { tmpVarRate = Just (SingleTmpRate r)}), ratedExpRate = Just r }
     ExpPrim _  -> Fix $ (unFix a) { ratedExpRate = Just r }
     -- don't convert rate twice
     ConvertRate _ b arg -> withRate r $ ConvertRate r b arg
@@ -268,10 +268,13 @@ data IfRate = IfIr | IfKr
   deriving (Show, Eq, Ord, Generic)
 
 getTmpVars :: Exp a -> [TmpVar]
-getTmpVars = foldMap $ \(PrimOr e) ->
-  case e of
-    Left (PrimTmpVar tmp) -> [tmp]
-    _ -> []
+getTmpVars = \case
+  ExpPrim (PrimTmpVar tmp) -> [tmp]
+  other ->
+    flip foldMap other $ \(PrimOr e) ->
+      case e of
+        Left (PrimTmpVar tmp) -> [tmp]
+        _ -> []
 
 fromIfRate :: IfRate -> Rate
 fromIfRate = \case
@@ -292,6 +295,7 @@ instance Cereal.Serialize OpcFixity
 instance Cereal.Serialize InstrId
 instance Cereal.Serialize CondOp
 instance Cereal.Serialize NumOp
+instance Cereal.Serialize TmpVarRate
 instance Cereal.Serialize TmpVar
 instance Cereal.Serialize Var
 instance Cereal.Serialize VarType
@@ -417,10 +421,19 @@ data Prim
 
 -- | temporary var
 data TmpVar = TmpVar
-  { tmpVarRate :: Maybe Rate
+  { tmpVarRate :: Maybe TmpVarRate
+  , tmpVarInfo :: Maybe Info
   , tmpVarId :: Int
   }
   deriving (Show, Eq, Ord, Generic)
+
+data TmpVarRate = SingleTmpRate Rate | MultiTmpRate [Rate]
+  deriving (Show, Eq, Ord, Generic)
+
+getSingleTmpRate :: TmpVarRate -> Maybe Rate
+getSingleTmpRate = \case
+  SingleTmpRate rate -> Just rate
+  MultiTmpRate _ -> Nothing
 
 -- Gen routine.
 data Gen = Gen

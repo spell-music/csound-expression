@@ -4,7 +4,7 @@ module Csound.Dynamic.Types.Dep(
     DepT(..), LocalHistory(..), runDepT, execDepT, evalDepT,
     -- * Dependencies
     {-depT, -} depT_, {- mdepT, -} stripDepT, stmtOnlyT, depends,
-    tfmDep,
+    tfmDep, tfmDepVar,
 
     -- * Variables
     newLocalVar, newLocalVars,
@@ -81,10 +81,13 @@ depends a1 a2 =
         _      -> noRate $ Seq (toPrimOr a1) (toPrimOr a2)
 
 tfmDep :: Monad m => Info -> [E] -> DepT m E
-tfmDep info args = do
-  v <- getNewTmpVar
+tfmDep info args = fmap fromTmpVar $ tfmDepVar info args
+
+tfmDepVar :: Monad m => Info -> [E] -> DepT m TmpVar
+tfmDepVar info args = do
+  v <- getNewTmpVar (Just info)
   depT_ $ tfmInit v info args
-  pure $ fromTmpVar v
+  pure v
 
 tfmInit:: TmpVar -> Info -> [E] -> E
 tfmInit v info args = noRate $ TfmInit v info $ toArgs (getInfoRates info) args
@@ -92,11 +95,11 @@ tfmInit v info args = noRate $ TfmInit v info $ toArgs (getInfoRates info) args
 toArgs :: [Rate] -> [E] -> [PrimOr E]
 toArgs = zipWith toPrimOrTfm
 
-getNewTmpVar :: Monad m => DepT m TmpVar
-getNewTmpVar = DepT $ do
+getNewTmpVar :: Monad m => Maybe Info -> DepT m TmpVar
+getNewTmpVar mInfo = DepT $ do
   n <- gets newTmpVarNum
   modify' $ \s -> s { newTmpVarNum = n + 1 }
-  pure (TmpVar Nothing n)
+  pure (TmpVar Nothing mInfo n)
 
 depT_ :: (Monad m) => E -> DepT m ()
 depT_ a = -- fmap (const ()) . depT
@@ -145,7 +148,7 @@ writeVar ifRate v x = depT_ $ noRate $ WriteVar ifRate v $ toPrimOr x
 
 readVar :: Monad m => IfRate -> Var -> DepT m E
 readVar ifRate v = do
-  tmp <- getNewTmpVar
+  tmp <- getNewTmpVar Nothing
   depT_ $ noRate $ ReadVarTmp ifRate tmp v
   pure $ fromTmpVar tmp
 
@@ -205,7 +208,7 @@ newTmpArrVar rate = newVar rate
 
 readArr :: Monad m => IfRate -> Var -> [E] -> DepT m E
 readArr ifRate v ixs = do
-  tmp <- getNewTmpVar
+  tmp <- getNewTmpVar Nothing
   depT_ $ noRate $ ReadArrTmp ifRate tmp v (fmap toPrimOr ixs)
   pure $ fromTmpVar tmp
 

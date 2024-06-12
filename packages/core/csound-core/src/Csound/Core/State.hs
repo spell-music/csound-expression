@@ -343,7 +343,21 @@ insertFtableMap ft newId x = x { ftableCache = FtableMap $ Map.insert ft newId $
 lookupFtable :: Ftable -> Run (Maybe E)
 lookupFtable ft = Run $ do
   FtableMap ftMap <- gets (ftableCache . (.ftables))
-  pure $ Map.lookup ft ftMap
+  pure $ case ft of
+    GenTable _table -> Map.lookup ft ftMap
+    VcoTable vcoInit ->
+      if Map.member ft ftMap
+        then
+          case vcoInit.vcoShape of
+            Saw -> Just 0
+            Pulse -> Just 2
+            Square -> Just 3
+            Triangle -> Just 4
+            IntegratedSaw -> Just 1
+            UserGen gen -> fmap negate $ Map.lookup (GenTable gen) ftMap
+        else Nothing
+
+
 
 saveGen :: Gen -> Run E
 saveGen gen = do

@@ -33,6 +33,7 @@ module Csound.Core.Render.Options (
     logTrace,
     setVerbatimFlags,
     setWriteCsd,
+    setDebugTrace,
     -- * Save user options
     saveUserOptions,
     getUserOptions,
@@ -49,6 +50,7 @@ import Data.Text qualified as Text
 import Text.Read
 
 import Csound.Dynamic hiding (csdFlags)
+import Csound.Dynamic.Debug (IsDebug (..))
 import System.Directory
 import System.FilePath
 
@@ -82,6 +84,12 @@ setVerbatimFlags flags = def { csdFlags = def { flagsVerbatim = Just flags } }
 
 setWriteCsd :: FilePath -> Options
 setWriteCsd file = def { csdWriteFile = Just file }
+
+setDebugTrace :: Options
+setDebugTrace =
+  def { csdRender =
+    Just $ RenderOptions {
+      inferenceOptions = def { opcodeInferenceDebug = IsDebug True } } }
 
 instance Default Options where
     def = Options def def def def def def def def def def def def def

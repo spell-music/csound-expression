@@ -358,7 +358,7 @@ inferIter opts (Stmt lhs rhs) =
 
     onReadVarTmp ifRate mRate tmp v =
       save
-        (fromMaybe (Exp.varRate v) ((if ifRate == IfIr then Just Ir else Nothing) <|> mRate <|> tmpVarRate tmp))
+        (fromMaybe (Exp.varRate v) ((if ifRate == IfIr then Just Ir else Nothing) <|> mRate <|> (getSingleTmpRate =<< tmpVarRate tmp)))
         (ReadVarTmp ifRate tmp v)
 
     onWriteVar ifRate v arg = saveProcedure =<< typedRhs
