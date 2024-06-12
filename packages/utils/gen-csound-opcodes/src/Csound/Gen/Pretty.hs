@@ -349,42 +349,6 @@ opcDynamicSignature a = context <+> ins <+> outs
             | isPure a              = empty
             | otherwise             = text "Monad m =>"
 
-opcDynamicBody :: Opc -> Doc
-opcDynamicBody a = case verbatimBody (opcName a) of
-    Just res -> res
-    Nothing  | isOpcode  -> hsep [cons, name, signature, mConst]
-    Nothing              -> ppOpr
-    where
-        cons = text $ case opcType a of
-            PureSingle      -> "opcs"
-            DirtySingle     -> "depT . opcs"
-            PureMulti       -> "mopcs"
-            DirtyMulti      -> "mdepT . mopcs"
-            Procedure       -> "depT_ . opcs"
-
-        name = dquotes $ text $ opcName a
-
-        signature = pretty $ rates $ opcSignature a
-
-        mConst
-            | isConstant a  = text "$ []"
-            | otherwise     = empty
-
-        isOpcode = case rates $ opcSignature a of
-            Single _   -> True
-            Multi  _ _ -> True
-            _          -> False
-
-        ppOpr = case rates $ opcSignature a of
-            Opr1    -> text $ "\\xs -> opr1 \""  ++ opcName a ++ "\" (head xs)"
-            Opr1k   -> text $ "\\xs -> opr1k \"" ++ opcName a ++ "\" (head xs)"
-            InfOpr  -> text $ "\\xs -> infOpr \""  ++ opcName a ++ "\" (head xs) (head $ tail xs)"
-
-        verbatimBody :: String -> Maybe Doc
-        verbatimBody x = case x of
-            "urd"   -> Just $ text $ "depT . oprBy \"urd\" [(Ar,[Kr]), (Kr,[Kr]), (Ir,[Ir])]"
-            _       -> Nothing
-
 
 ---------------------------------------------------------------------------------------
 -- pretty typed opcode

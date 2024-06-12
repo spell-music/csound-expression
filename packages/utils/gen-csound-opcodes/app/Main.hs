@@ -11,6 +11,7 @@ import Shelly
 import Csound.Gen.Types
 import Csound.Gen.Parse
 import Csound.Gen.Pretty
+import Text.Show.Pretty
 
 import Paths_gen_csound_opcodes
 

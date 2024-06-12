@@ -40,7 +40,9 @@ Library
       split,
       http-conduit,
       filepath,
-      lifted-base
+      lifted-base,
+      pretty-show,
+      extra
 
   Exposed-modules:
         Csound.Gen.Types
@@ -64,7 +66,8 @@ Executable gen-csound-opcodes
     lifted-base,
     filepath,
     http-conduit,
-    gen-csound-opcodes
+    gen-csound-opcodes,
+    pretty-show
   Other-modules:
         Paths_gen_csound_opcodes
 

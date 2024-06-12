@@ -12,9 +12,9 @@ allow-newer: true
 
 packages:
   - packages/utils/gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
-  - packages/core/csound-expression-dynamic
-  - packages/core/csound-core
   - csound-expression-opcodes
+  - packages/core/csound-expression-dynamic
+    # - packages/core/csound-core
     #- packages/extra/csound-expression-opcodes
   - packages/legacy/csound-expression-typed
     #- packages/legacy/csound-expression

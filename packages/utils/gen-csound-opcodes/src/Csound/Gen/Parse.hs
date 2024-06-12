@@ -25,6 +25,9 @@ import Control.Exception.Lifted(catch)
 import System.FilePath
 
 import Csound.Gen.Types
+import Debug.Trace
+import Text.Show.Pretty (ppShow)
+import qualified Data.List.Extra as List
 
 type Unparsed = (String, String, String)
 type DocTab = M.Map String (String, String)
@@ -94,7 +97,8 @@ blackOpcodesList = Set.fromList
     , "JackoInfo"
     , "pvs2tab"
     , "return"
-    , "tab2pvs" ]
+    , "tab2pvs"
+    , "OSClisten"]
 
 -------------------------------------------------------------------------
 -- groups
@@ -114,7 +118,8 @@ toOpc :: DocTab -> String -> String -> [OpcLine] -> Writer [Unparsed] [Opc]
 toOpc docTab chapName secName = fmap catMaybes . mapM (fromOpcLines docTab chapName secName) . groupBy ((==) `on` opcLineName)
 
 fromOpcLines :: DocTab -> String -> String -> [OpcLine] -> Writer [Unparsed] (Maybe Opc)
-fromOpcLines docTab chapName secName as = case (rateHint echo <|> getRates echo as, typeHint echo <|> getTypes) of
+fromOpcLines docTab chapName secName as =
+  case (rateHint echo <|> getRates echo as,  typeHint echo <|> getTypes) of
     (Just rs, Just ts)  -> return $ Just $ Opc name (Signature rs ts) doc
     _                   -> tell unparsed >> return Nothing
     where
@@ -237,7 +242,7 @@ squashStr = go False
             a   : rest -> a : go flag rest
 
 getRate :: Echo -> String -> Maybe Rate
-getRate echo x = case x of
+getRate echo x = case List.trim x of
     -- files, and not ir-numbers
     "ifilname" -> Just Sr
     "ifilename" -> Just Sr
@@ -276,6 +281,7 @@ getRate echo x = case x of
     "csound" -> Nothing
     "het_file" -> Nothing
     "cstext_file" -> Nothing
+    "/iarr1" -> Nothing
     _ -> error $ "unexpected rate: " ++ show echo ++ " " ++ x
 
 -------------------------------------------------------------------------
@@ -427,7 +433,7 @@ rateTab = M.fromList $ concat
 -- types
 
 typeHint :: String -> Maybe Types
-typeHint = flip M.lookup typeTab
+typeHint = flip M.lookup typeTab . List.trim
 
 typeTab = M.fromList $ concat
             [ by osc ["oscil", "oscili", "oscil3", "poscil", "poscil3"]
