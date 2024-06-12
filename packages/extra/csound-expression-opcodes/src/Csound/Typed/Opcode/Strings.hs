@@ -11,6 +11,7 @@ module Csound.Typed.Opcode.Strings (
     strchar, strchark, strlower, strlowerk, strtod, strtodk, strtol, strtolk, strupper, strupperk) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -26,8 +27,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/strfromurl.html>
 strfromurl ::  Str -> Str
-strfromurl b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strfromurl" [(Sr,[Sr])] [a1]
+strfromurl b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strfromurl" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Set string variable to value from strset table or string p-field
@@ -38,8 +41,10 @@ strfromurl b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strget.html>
 strget ::  D -> Str
-strget b1 = Str $ f <$> unD b1
-    where f a1 = opcs "strget" [(Sr,[Ir])] [a1]
+strget b1 =
+  Str $ f <$> unD b1
+  where
+    f a1 = opcs "strget" [(Sr,[Ir])] [a1]
 
 -- | 
 -- Allows a string to be linked with a numeric value.
@@ -48,8 +53,10 @@ strget b1 = Str $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/strset.html>
 strset ::  D -> D -> SE ()
-strset b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "strset" [(Xr,[Ir,Ir])] [a1,a2]
+strset b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "strset" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- Manipulation.
 
@@ -62,8 +69,10 @@ strset b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/puts.html>
 puts ::  Str -> Sig -> SE ()
-puts b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
-    where f a1 a2 = opcs "puts" [(Xr,[Sr,Kr,Ir])] [a1,a2]
+puts b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "puts" [(Xr,[Sr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- printf-style formatted output to a string variable.
@@ -74,8 +83,10 @@ puts b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/sprintf.html>
 sprintf ::  Str -> Sig -> Str
-sprintf b1 b2 = Str $ f <$> unStr b1 <*> unSig b2
-    where f a1 a2 = opcs "sprintf" [(Sr,[Sr] ++ (repeat Xr))] [a1,a2]
+sprintf b1 b2 =
+  Str $ f <$> unStr b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "sprintf" [(Sr,[Sr] ++ (repeat Xr))] [a1,a2]
 
 -- | 
 -- printf-style formatted output to a string variable at k-rate.
@@ -86,8 +97,10 @@ sprintf b1 b2 = Str $ f <$> unStr b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/sprintfk.html>
 sprintfk ::  Str -> Sig -> Str
-sprintfk b1 b2 = Str $ f <$> unStr b1 <*> unSig b2
-    where f a1 a2 = opcs "sprintfk" [(Sr,[Sr] ++ (repeat Xr))] [a1,a2]
+sprintfk b1 b2 =
+  Str $ f <$> unStr b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "sprintfk" [(Sr,[Sr] ++ (repeat Xr))] [a1,a2]
 
 -- | 
 -- Concatenate strings
@@ -98,8 +111,10 @@ sprintfk b1 b2 = Str $ f <$> unStr b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/strcat.html>
 strcat ::  Str -> Str -> Str
-strcat b1 b2 = Str $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strcat" [(Sr,[Sr,Sr])] [a1,a2]
+strcat b1 b2 =
+  Str $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strcat" [(Sr,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Concatenate strings (k-rate)
@@ -110,8 +125,10 @@ strcat b1 b2 = Str $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strcatk.html>
 strcatk ::  Str -> Str -> Str
-strcatk b1 b2 = Str $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strcatk" [(Sr,[Sr,Sr])] [a1,a2]
+strcatk b1 b2 =
+  Str $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strcatk" [(Sr,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Compare strings
@@ -122,8 +139,10 @@ strcatk b1 b2 = Str $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strcmp.html>
 strcmp ::  Str -> Str -> D
-strcmp b1 b2 = D $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strcmp" [(Ir,[Sr,Sr])] [a1,a2]
+strcmp b1 b2 =
+  D $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strcmp" [(Ir,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Compare strings
@@ -134,8 +153,10 @@ strcmp b1 b2 = D $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strcmpk.html>
 strcmpk ::  Str -> Str -> Sig
-strcmpk b1 b2 = Sig $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strcmpk" [(Kr,[Sr,Sr])] [a1,a2]
+strcmpk b1 b2 =
+  Sig $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strcmpk" [(Kr,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Assign value to a string variable
@@ -146,8 +167,10 @@ strcmpk b1 b2 = Sig $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strcpy.html>
 strcpy ::  Str -> Str
-strcpy b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strcpy" [(Sr,[Sr])] [a1]
+strcpy b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strcpy" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Assign value to a string variable (k-rate)
@@ -158,8 +181,10 @@ strcpy b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strcpyk.html>
 strcpyk ::  Str -> Str
-strcpyk b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strcpyk" [(Sr,[Sr])] [a1]
+strcpyk b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strcpyk" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Return the position of the first occurence of a string in another string
@@ -171,8 +196,10 @@ strcpyk b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strindex.html>
 strindex ::  Str -> Str -> D
-strindex b1 b2 = D $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strindex" [(Ir,[Sr,Sr])] [a1,a2]
+strindex b1 b2 =
+  D $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strindex" [(Ir,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Return the position of the first occurence of a string in another string
@@ -185,8 +212,10 @@ strindex b1 b2 = D $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strindexk.html>
 strindexk ::  Str -> Str -> Sig
-strindexk b1 b2 = Sig $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strindexk" [(Kr,[Sr,Sr])] [a1,a2]
+strindexk b1 b2 =
+  Sig $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strindexk" [(Kr,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Return the length of a string
@@ -197,8 +226,10 @@ strindexk b1 b2 = Sig $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strlen.html>
 strlen ::  Str -> D
-strlen b1 = D $ f <$> unStr b1
-    where f a1 = opcs "strlen" [(Ir,[Sr])] [a1]
+strlen b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "strlen" [(Ir,[Sr])] [a1]
 
 -- | 
 -- Return the length of a string
@@ -209,8 +240,10 @@ strlen b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strlenk.html>
 strlenk ::  Str -> Sig
-strlenk b1 = Sig $ f <$> unStr b1
-    where f a1 = opcs "strlenk" [(Kr,[Sr])] [a1]
+strlenk b1 =
+  Sig $ f <$> unStr b1
+  where
+    f a1 = opcs "strlenk" [(Kr,[Sr])] [a1]
 
 -- | 
 -- Return the position of the last occurence of a string in another string
@@ -223,8 +256,10 @@ strlenk b1 = Sig $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strrindex.html>
 strrindex ::  Str -> Str -> D
-strrindex b1 b2 = D $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strrindex" [(Ir,[Sr,Sr])] [a1,a2]
+strrindex b1 b2 =
+  D $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strrindex" [(Ir,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Return the position of the last occurence of a string in another string
@@ -237,8 +272,10 @@ strrindex b1 b2 = D $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strrindexk.html>
 strrindexk ::  Str -> Str -> Sig
-strrindexk b1 b2 = Sig $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "strrindexk" [(Kr,[Sr,Sr])] [a1,a2]
+strrindexk b1 b2 =
+  Sig $ f <$> unStr b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "strrindexk" [(Kr,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Extract a substring
@@ -249,8 +286,10 @@ strrindexk b1 b2 = Sig $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/strsub.html>
 strsub ::  Str -> Str
-strsub b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strsub" [(Sr,[Sr,Ir,Ir])] [a1]
+strsub b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strsub" [(Sr,[Sr,Ir,Ir])] [a1]
 
 -- | 
 -- Extract a substring
@@ -262,8 +301,10 @@ strsub b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strsubk.html>
 strsubk ::  Str -> Sig -> Sig -> Str
-strsubk b1 b2 b3 = Str $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "strsubk" [(Sr,[Sr,Kr,Kr])] [a1,a2,a3]
+strsubk b1 b2 b3 =
+  Str $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "strsubk" [(Sr,[Sr,Kr,Kr])] [a1,a2,a3]
 
 -- Conversion.
 
@@ -278,8 +319,10 @@ strsubk b1 b2 b3 = Str $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/strchar.html>
 strchar ::  Str -> D
-strchar b1 = D $ f <$> unStr b1
-    where f a1 = opcs "strchar" [(Ir,[Sr,Ir])] [a1]
+strchar b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "strchar" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Return the ASCII code of a character in a string
@@ -292,8 +335,10 @@ strchar b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strchark.html>
 strchark ::  Str -> Sig
-strchark b1 = Sig $ f <$> unStr b1
-    where f a1 = opcs "strchark" [(Kr,[Sr,Kr])] [a1]
+strchark b1 =
+  Sig $ f <$> unStr b1
+  where
+    f a1 = opcs "strchark" [(Kr,[Sr,Kr])] [a1]
 
 -- | 
 -- Convert a string to lower case
@@ -305,8 +350,10 @@ strchark b1 = Sig $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strlower.html>
 strlower ::  Str -> Str
-strlower b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strlower" [(Sr,[Sr])] [a1]
+strlower b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strlower" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Convert a string to lower case
@@ -318,8 +365,10 @@ strlower b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strlowerk.html>
 strlowerk ::  Str -> Str
-strlowerk b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strlowerk" [(Sr,[Sr])] [a1]
+strlowerk b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strlowerk" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Converts a string to a float (i-rate).
@@ -333,8 +382,10 @@ strlowerk b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strtod.html>
 strtod ::  Str -> D
-strtod b1 = D $ f <$> unStr b1
-    where f a1 = opcs "strtod" [(Ir,[Sr]),(Ir,[Ir])] [a1]
+strtod b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "strtod" [(Ir,[Sr]),(Ir,[Ir])] [a1]
 
 -- | 
 -- Converts a string to a float (k-rate).
@@ -347,8 +398,10 @@ strtod b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strtodk.html>
 strtodk ::  Str -> Sig
-strtodk b1 = Sig $ f <$> unStr b1
-    where f a1 = opcs "strtodk" [(Kr,[Sr]),(Kr,[Kr])] [a1]
+strtodk b1 =
+  Sig $ f <$> unStr b1
+  where
+    f a1 = opcs "strtodk" [(Kr,[Sr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Converts a string to a signed integer (i-rate).
@@ -362,8 +415,10 @@ strtodk b1 = Sig $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strtol.html>
 strtol ::  Str -> D
-strtol b1 = D $ f <$> unStr b1
-    where f a1 = opcs "strtol" [(Ir,[Sr]),(Ir,[Ir])] [a1]
+strtol b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "strtol" [(Ir,[Sr]),(Ir,[Ir])] [a1]
 
 -- | 
 -- Converts a string to a signed integer (k-rate).
@@ -376,8 +431,10 @@ strtol b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strtolk.html>
 strtolk ::  Str -> Sig
-strtolk b1 = Sig $ f <$> unStr b1
-    where f a1 = opcs "strtolk" [(Kr,[Sr]),(Kr,[Kr])] [a1]
+strtolk b1 =
+  Sig $ f <$> unStr b1
+  where
+    f a1 = opcs "strtolk" [(Kr,[Sr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Convert a string to upper case
@@ -389,8 +446,10 @@ strtolk b1 = Sig $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strupper.html>
 strupper ::  Str -> Str
-strupper b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strupper" [(Sr,[Sr])] [a1]
+strupper b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strupper" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Convert a string to upper case
@@ -402,5 +461,7 @@ strupper b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/strupperk.html>
 strupperk ::  Str -> Str
-strupperk b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "strupperk" [(Sr,[Sr])] [a1]
+strupperk b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "strupperk" [(Sr,[Sr])] [a1]

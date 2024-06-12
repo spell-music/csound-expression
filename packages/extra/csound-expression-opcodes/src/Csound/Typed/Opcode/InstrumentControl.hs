@@ -29,6 +29,7 @@ module Csound.Typed.Opcode.InstrumentControl (
     date, dates, readclock, rtclock, timeinstk, timeinsts, timek, times) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -41,8 +42,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/clockoff.html>
 clockoff ::  D -> SE ()
-clockoff b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "clockoff" [(Xr,[Ir])] [a1]
+clockoff b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "clockoff" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Starts one of a number of internal clocks.
@@ -51,8 +54,10 @@ clockoff b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/clockon.html>
 clockon ::  D -> SE ()
-clockon b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "clockon" [(Xr,[Ir])] [a1]
+clockon b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "clockon" [(Xr,[Ir])] [a1]
 
 -- Compilation.
 
@@ -65,8 +70,10 @@ clockon b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/compilecsd.html>
 compilecsd ::  Str -> D
-compilecsd b1 = D $ f <$> unStr b1
-    where f a1 = opcs "compilecsd" [(Ir,[Sr])] [a1]
+compilecsd b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "compilecsd" [(Ir,[Sr])] [a1]
 
 -- | 
 -- compiles a new orchestra from an ASCII file
@@ -79,8 +86,10 @@ compilecsd b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/compileorc.html>
 compileorc ::  Str -> D
-compileorc b1 = D $ f <$> unStr b1
-    where f a1 = opcs "compileorc" [(Ir,[Sr])] [a1]
+compileorc b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "compileorc" [(Ir,[Sr])] [a1]
 
 -- | 
 -- compiles a new orchestra passed in as an ASCII string
@@ -94,8 +103,10 @@ compileorc b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/compilestr.html>
 compilestr ::  Str -> D
-compilestr b1 = D $ f <$> unStr b1
-    where f a1 = opcs "compilestr" [(Ir,[Sr])] [a1]
+compilestr b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "compilestr" [(Ir,[Sr])] [a1]
 
 -- | 
 -- Evalstrs evaluates a string containing Csound code, returning a value.
@@ -108,8 +119,10 @@ compilestr b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/evalstr.html>
 evalstr ::  Str -> Sig
-evalstr b1 = Sig $ f <$> unStr b1
-    where f a1 = opcs "evalstr" [(Ir,[Sr]),(Kr,[Sr,Kr])] [a1]
+evalstr b1 =
+  Sig $ f <$> unStr b1
+  where
+    f a1 = opcs "evalstr" [(Ir,[Sr]),(Kr,[Sr,Kr])] [a1]
 
 -- Duration Control.
 
@@ -122,8 +135,10 @@ evalstr b1 = Sig $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/ihold.html>
 ihold ::   SE ()
-ihold  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "ihold" [(Xr,[])] []
+ihold  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "ihold" [(Xr,[])] []
 
 -- | 
 -- Enables an instrument to turn itself off or to turn an instance of another instrument off.
@@ -134,8 +149,10 @@ ihold  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/turnoff.html>
 turnoff ::   SE ()
-turnoff  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "turnoff" [(Xr,[])] []
+turnoff  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "turnoff" [(Xr,[])] []
 
 -- | 
 -- Activate an instrument for an indefinite time.
@@ -144,8 +161,10 @@ turnoff  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/turnon.html>
 turnon ::  D -> SE ()
-turnon b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "turnon" [(Xr,[Ir,Ir])] [a1]
+turnon b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "turnon" [(Xr,[Ir,Ir])] [a1]
 
 -- Invocation.
 
@@ -157,8 +176,10 @@ turnon b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/event.html>
 event ::  Str -> Sig -> Sig -> Sig -> [Sig] -> SE ()
-event b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> mapM unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "event" [(Xr,[Sr] ++ (repeat Kr))] ([a1,a2,a3,a4] ++ a5)
+event b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> mapM (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "event" [(Xr,[Sr] ++ (repeat Kr))] ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Generates a score event from an instrument.
@@ -168,8 +189,10 @@ event b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/event_i.html>
 event_i ::  Str -> D -> D -> D -> [D] -> SE ()
-event_i b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = opcs "event_i" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
+event_i b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> mapM (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "event_i" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Mutes/unmutes new instances of a given instrument.
@@ -179,8 +202,10 @@ event_i b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/mute.html>
 mute ::  D -> SE ()
-mute b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "mute" [(Xr,[Ir,Ir])] [a1]
+mute b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "mute" [(Xr,[Ir,Ir])] [a1]
 
 -- | 
 -- Schedules a new instrument instance, storing the instance handle in a variable.
@@ -194,8 +219,10 @@ mute b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/nstance.html>
 nstance ::  D -> D -> D -> D
-nstance b1 b2 b3 = D $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "nstance" [(Ir,(repeat Ir)),(Ir,[Sr] ++ (repeat Ir))] [a1,a2,a3]
+nstance b1 b2 b3 =
+  D $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "nstance" [(Ir,(repeat Ir)),(Ir,[Sr] ++ (repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- Read, preprocess and schedule a score from an input string.
@@ -209,8 +236,10 @@ nstance b1 b2 b3 = D $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/readscore.html>
 readscore ::  Str -> SE ()
-readscore b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "readscore" [(Xr,[Sr])] [a1]
+readscore b1 =
+  SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep_ "readscore" [(Xr,[Sr])] [a1]
 
 -- | 
 -- Removes the definition of an instrument.
@@ -221,8 +250,10 @@ readscore b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/remove.html>
 remove ::  D -> SE ()
-remove b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "remove" [(Xr,[Ir])] [a1]
+remove b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "remove" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Adds a new score event generated by a k-rate trigger.
@@ -234,13 +265,15 @@ remove b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/schedkwhen.html>
 schedkwhen ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-schedkwhen b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "schedkwhen" [(Xr,[Kr,Kr,Kr,Kr,Kr,Kr] ++ (repeat Ir))] [a1
-                                                                                            ,a2
-                                                                                            ,a3
-                                                                                            ,a4
-                                                                                            ,a5
-                                                                                            ,a6]
+schedkwhen b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "schedkwhen" [(Xr,[Kr,Kr,Kr,Kr,Kr,Kr] ++ (repeat Ir))] [a1
+                                                                                          ,a2
+                                                                                          ,a3
+                                                                                          ,a4
+                                                                                          ,a5
+                                                                                          ,a6]
 
 -- | 
 -- Similar to schedkwhen but uses a named instrument at init-time.
@@ -250,13 +283,15 @@ schedkwhen b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/schedkwhennamed.html>
 schedkwhennamed ::  Sig -> Sig -> Sig -> Str -> Sig -> Sig -> SE ()
-schedkwhennamed b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "schedkwhennamed" [(Xr,[Kr,Kr,Kr,Sr,Kr,Kr] ++ (repeat Ir))] [a1
-                                                                                                 ,a2
-                                                                                                 ,a3
-                                                                                                 ,a4
-                                                                                                 ,a5
-                                                                                                 ,a6]
+schedkwhennamed b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unStr) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "schedkwhennamed" [(Xr,[Kr,Kr,Kr,Sr,Kr,Kr] ++ (repeat Ir))] [a1
+                                                                                               ,a2
+                                                                                               ,a3
+                                                                                               ,a4
+                                                                                               ,a5
+                                                                                               ,a6]
 
 -- | 
 -- Adds a new score event.
@@ -266,8 +301,10 @@ schedkwhennamed b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/schedule.html>
 schedule ::  D -> D -> D -> SE ()
-schedule b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "schedule" [(Xr,(repeat Ir))] [a1,a2,a3]
+schedule b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "schedule" [(Xr,(repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- Adds a new score event.
@@ -277,8 +314,10 @@ schedule b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/schedwhen.html>
 schedwhen ::  Sig -> Sig -> Sig -> Sig -> SE ()
-schedwhen b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "schedwhen" [(Xr,[Kr,Kr,Kr,Kr] ++ (repeat Ir))] [a1,a2,a3,a4]
+schedwhen b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "schedwhen" [(Xr,[Kr,Kr,Kr,Kr] ++ (repeat Ir))] [a1,a2,a3,a4]
 
 -- | 
 -- Issues one or more score line events from an instrument.
@@ -291,8 +330,10 @@ schedwhen b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/scoreline.html>
 scoreline ::  Str -> Sig -> SE ()
-scoreline b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
-    where f a1 a2 = opcs "scoreline" [(Xr,[Sr,Kr])] [a1,a2]
+scoreline b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "scoreline" [(Xr,[Sr,Kr])] [a1,a2]
 
 -- | 
 -- Issues one or more score line events from an instrument at i-time.
@@ -303,8 +344,10 @@ scoreline b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/scoreline_i.html>
 scoreline_i ::  Str -> SE ()
-scoreline_i b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "scoreline_i" [(Xr,[Sr])] [a1]
+scoreline_i b1 =
+  SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep_ "scoreline_i" [(Xr,[Sr])] [a1]
 
 -- Realtime Performance Control.
 
@@ -320,8 +363,10 @@ scoreline_i b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/active.html>
 active ::  D -> Sig
-active b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "active" [(Ir,[Ir,Ir,Ir]),(Ir,[Sr,Ir,Ir]),(Kr,[Kr,Ir,Ir])] [a1]
+active b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "active" [(Ir,[Ir,Ir,Ir]),(Ir,[Sr,Ir,Ir]),(Kr,[Kr,Ir,Ir])] [a1]
 
 -- | 
 -- Reports the usage of cpu either total or per core.
@@ -332,9 +377,11 @@ active b1 = Sig $ f <$> unD b1
 -- > ktot[,kcpu1, kcpu2,...] cpumeter  ifreq
 --
 -- csound doc: <http://csound.com/docs/manual/cpumeter.html>
-cpumeter :: Tuple a => D -> a
-cpumeter b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "cpumeter" ((repeat Kr),[Ir]) [a1]
+cpumeter :: forall a . Tuple a => D -> a
+cpumeter b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "cpumeter" ((repeat Kr),[Ir]) [a1]
 
 -- | 
 -- Control allocation of cpu resources on a per-instrument basis, to optimize realtime output.
@@ -344,8 +391,10 @@ cpumeter b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/cpuprc.html>
 cpuprc ::  D -> D -> SE ()
-cpuprc b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "cpuprc" [(Xr,[Ir,Ir])] [a1,a2]
+cpuprc b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "cpuprc" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Exit Csound as fast as possible, with no cleaning up.
@@ -357,8 +406,10 @@ cpuprc b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/exitnow.html>
 exitnow ::   SE ()
-exitnow  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "exitnow" [(Xr,[Ir])] []
+exitnow  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "exitnow" [(Xr,[Ir])] []
 
 -- | 
 -- Start/stop jack_transport and can optionally relocate the playback head.
@@ -367,8 +418,10 @@ exitnow  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/jacktransport.html>
 jacktransport ::  D -> SE ()
-jacktransport b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "jacktransport" [(Xr,[Ir,Ir])] [a1]
+jacktransport b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "jacktransport" [(Xr,[Ir,Ir])] [a1]
 
 -- | 
 -- Limits the number of allocations of an instrument.
@@ -378,8 +431,10 @@ jacktransport b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/maxalloc.html>
 maxalloc ::  D -> D -> SE ()
-maxalloc b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "maxalloc" [(Xr,[Ir,Ir])] [a1,a2]
+maxalloc b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "maxalloc" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Creates space for instruments but does not run them.
@@ -389,8 +444,10 @@ maxalloc b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/prealloc.html>
 prealloc ::  D -> D -> SE ()
-prealloc b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "prealloc" [(Xr,[Ir,Ir])] [a1,a2]
+prealloc b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "prealloc" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- Sensing and Control.
 
@@ -403,8 +460,10 @@ prealloc b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/button.html>
 button ::  Sig -> Sig
-button b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "button" [(Kr,[Kr])] [a1]
+button b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "button" [(Kr,[Kr])] [a1]
 
 -- | 
 -- k-rate signal change detector.
@@ -415,8 +474,10 @@ button b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/changed.html>
 changed ::  [Sig] -> Sig
-changed b1 = Sig $ f <$> mapM unSig b1
-    where f a1 = opcs "changed" [(Kr,(repeat Kr))] a1
+changed b1 =
+  Sig $ f <$> mapM unSig b1
+  where
+    f a1 = opcs "changed" [(Kr,(repeat Kr))] a1
 
 -- | 
 -- k-rate signal change detector.
@@ -430,8 +491,10 @@ changed b1 = Sig $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/changed2.html>
 changed2 ::  Sig -> Sig
-changed2 b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "changed2" [(Kr,(repeat Kr)),(Kr,[Kr]),(Kr,[Ar])] [a1]
+changed2 b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "changed2" [(Kr,(repeat Kr)),(Kr,[Kr]),(Kr,[Ar])] [a1]
 
 -- | 
 -- Sense on-screen controls.
@@ -442,8 +505,10 @@ changed2 b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/checkbox.html>
 checkbox ::  Sig -> Sig
-checkbox b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "checkbox" [(Kr,[Kr])] [a1]
+checkbox b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "checkbox" [(Kr,[Kr])] [a1]
 
 -- | 
 -- Configurable slider controls for realtime user input.
@@ -454,8 +519,10 @@ checkbox b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/control.html>
 control ::  Sig -> Sig
-control b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "control" [(Kr,[Kr])] [a1]
+control b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "control" [(Kr,[Kr])] [a1]
 
 -- | 
 -- Envelope follower unit generator.
@@ -464,8 +531,10 @@ control b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/follow.html>
 follow ::  Sig -> D -> Sig
-follow b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "follow" [(Ar,[Ar,Ir])] [a1,a2]
+follow b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "follow" [(Ar,[Ar,Ir])] [a1,a2]
 
 -- | 
 -- Another controllable envelope extractor.
@@ -476,8 +545,10 @@ follow b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/follow2.html>
 follow2 ::  Sig -> Sig -> Sig -> Sig
-follow2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "follow2" [(Ar,[Ar,Kr,Kr])] [a1,a2,a3]
+follow2 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "follow2" [(Ar,[Ar,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Return Csound settings.
@@ -488,8 +559,10 @@ follow2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/getcfg.html>
 getcfg ::  D -> Str
-getcfg b1 = Str $ f <$> unD b1
-    where f a1 = opcs "getcfg" [(Sr,[Ir])] [a1]
+getcfg b1 =
+  Str $ f <$> unD b1
+  where
+    f a1 = opcs "getcfg" [(Sr,[Ir])] [a1]
 
 -- | 
 -- Reads data from a joystick controller.
@@ -500,8 +573,10 @@ getcfg b1 = Str $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/joystick.html>
 joystick ::  Sig -> Tab -> Sig
-joystick b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "joystick" [(Kr,[Kr,Kr])] [a1,a2]
+joystick b1 b2 =
+  Sig $ f <$> unSig b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "joystick" [(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Trigger Metronome
@@ -512,8 +587,10 @@ joystick b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/metro.html>
 metro ::  Sig -> Sig
-metro b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "metro" [(Kr,[Kr,Ir])] [a1]
+metro b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "metro" [(Kr,[Kr,Ir])] [a1]
 
 -- | 
 -- Returns the playback status of MIDI file input.
@@ -525,8 +602,10 @@ metro b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/midifilestatus.html>
 midifilestatus ::   Sig
-midifilestatus  = Sig $ return $ f 
-    where f  = opcs "midifilestatus" [(Kr,[])] []
+midifilestatus  =
+  Sig $ return $ f 
+  where
+    f  = opcs "midifilestatus" [(Kr,[])] []
 
 -- | 
 -- Returns the current tempo at k-rate, of either the MIDI file (if available) or the score
@@ -535,8 +614,10 @@ midifilestatus  = Sig $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/miditempo.html>
 miditempo ::   Sig
-miditempo  = Sig $ return $ f 
-    where f  = opcs "miditempo" [(Kr,[])] []
+miditempo  =
+  Sig $ return $ f 
+  where
+    f  = opcs "miditempo" [(Kr,[])] []
 
 -- | 
 -- Reads data from a P5 Glove controller.
@@ -547,8 +628,10 @@ miditempo  = Sig $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/p5gconnect.html>
 p5gconnect ::   SE ()
-p5gconnect  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "p5gconnect" [(Xr,[])] []
+p5gconnect  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "p5gconnect" [(Xr,[])] []
 
 -- | 
 -- Reads data fields from an external P5 Glove.
@@ -559,8 +642,10 @@ p5gconnect  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/p5gdata.html>
 p5gdata ::  Sig -> Sig
-p5gdata b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "p5gdata" [(Kr,[Kr])] [a1]
+p5gdata b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "p5gdata" [(Kr,[Kr])] [a1]
 
 -- | 
 -- Returns the number of pfields belonging to a note event.
@@ -571,8 +656,10 @@ p5gdata b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/pcount.html>
 pcount ::   D
-pcount  = D $ return $ f 
-    where f  = opcs "pcount" [(Ir,[])] []
+pcount  =
+  D $ return $ f 
+  where
+    f  = opcs "pcount" [(Ir,[])] []
 
 -- | 
 -- Maintains the output equal to the highest absolute value received.
@@ -584,8 +671,10 @@ pcount  = D $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/peak.html>
 peak ::  Sig -> Sig
-peak b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "peak" [(Kr,[Ar]),(Kr,[Kr])] [a1]
+peak b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "peak" [(Kr,[Ar]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Returns the value of a specified pfield.
@@ -596,8 +685,10 @@ peak b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/pindex.html>
 pindex ::  D -> D
-pindex b1 = D $ f <$> unD b1
-    where f a1 = opcs "pindex" [(Ir,[Ir])] [a1]
+pindex b1 =
+  D $ f <$> unD b1
+  where
+    f a1 = opcs "pindex" [(Ir,[Ir])] [a1]
 
 -- | 
 -- Tracks the pitch of a signal.
@@ -609,12 +700,14 @@ pindex b1 = D $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/pitch.html>
 pitch ::  Sig -> D -> D -> D -> D -> (Sig,Sig)
-pitch b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "pitch" ([Kr,Kr],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                              ,a2
-                                                                                              ,a3
-                                                                                              ,a4
-                                                                                              ,a5]
+pitch b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "pitch" ([Kr,Kr],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                        ,a2
+                                                                                        ,a3
+                                                                                        ,a4
+                                                                                        ,a5]
 
 -- | 
 -- Follows the pitch of a signal based on the AMDF method.
@@ -626,8 +719,10 @@ pitch b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/pitchamdf.html>
 pitchamdf ::  Sig -> D -> D -> (Sig,Sig)
-pitchamdf b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "pitchamdf" ([Kr,Kr],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
+pitchamdf b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "pitchamdf" ([Kr,Kr],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Tracks the pitch of a signal.
@@ -638,8 +733,10 @@ pitchamdf b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/plltrack.html>
 plltrack ::  Sig -> Sig -> (Sig,Sig)
-plltrack b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "plltrack" ([Ar,Ar],[Ar,Kr,Kr,Kr,Kr,Kr,Kr]) [a1,a2]
+plltrack b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "plltrack" ([Ar,Ar],[Ar,Kr,Kr,Kr,Kr,Kr,Kr]) [a1,a2]
 
 -- | 
 -- Tracks the pitch of a signal.
@@ -650,8 +747,10 @@ plltrack b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/ptrack.html>
 ptrack ::  Sig -> D -> (Sig,Sig)
-ptrack b1 b2 = pureTuple $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = mopcs "ptrack" ([Kr,Kr],[Ar,Ir,Ir]) [a1,a2]
+ptrack b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = mopcs "ptrack" ([Kr,Kr],[Ar,Ir,Ir]) [a1,a2]
 
 -- | 
 -- returns a value stored in the instance of an instrument.
@@ -663,8 +762,10 @@ ptrack b1 b2 = pureTuple $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/readscratch.html>
 readscratch ::   D
-readscratch  = D $ return $ f 
-    where f  = opcs "readscratch" [(Ir,[Ir])] []
+readscratch  =
+  D $ return $ f 
+  where
+    f  = opcs "readscratch" [(Ir,[Ir])] []
 
 -- | 
 -- Rewinds the playback position of the current score performance.
@@ -675,8 +776,10 @@ readscratch  = D $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/rewindscore.html>
 rewindscore ::   SE ()
-rewindscore  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "rewindscore" [(Xr,[])] []
+rewindscore  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "rewindscore" [(Xr,[])] []
 
 -- | 
 -- Determines the root-mean-square amplitude of an audio signal.
@@ -687,8 +790,10 @@ rewindscore  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/rms.html>
 rms ::  Sig -> Sig
-rms b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "rms" [(Kr,[Ar,Ir,Ir])] [a1]
+rms b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "rms" [(Kr,[Ar,Ir,Ir])] [a1]
 
 -- | 
 -- Returns the ASCII code of a key that has been pressed.
@@ -698,9 +803,11 @@ rms b1 = Sig $ f <$> unSig b1
 -- > kres[, kkeydown]  sensekey 
 --
 -- csound doc: <http://csound.com/docs/manual/sensekey.html>
-sensekey :: Tuple a =>  a
-sensekey  = pureTuple $ return $ f 
-    where f  = mopcs "sensekey" ([Kr,Kr],[]) []
+sensekey :: forall a . Tuple a =>  a
+sensekey  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "sensekey" ([Kr,Kr],[]) []
 
 -- | 
 -- Generates a trigger signal according to the values stored in a table.
@@ -709,8 +816,10 @@ sensekey  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/seqtime.html>
 seqtime ::  Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-seqtime b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
-    where f a1 a2 a3 a4 a5 = opcs "seqtime" [(Kr,[Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
+seqtime b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "seqtime" [(Kr,[Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Generates a trigger signal according to the values stored in a table.
@@ -719,8 +828,10 @@ seqtime b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/seqtime2.html>
 seqtime2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-seqtime2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "seqtime2" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
+seqtime2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "seqtime2" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Configurable slider controls for realtime user input.
@@ -731,8 +842,10 @@ seqtime2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/setctrl.html>
 setctrl ::  D -> D -> D -> SE ()
-setctrl b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "setctrl" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
+setctrl b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "setctrl" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Sets the playback position of the current score performance to a given position.
@@ -741,8 +854,10 @@ setctrl b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/setscorepos.html>
 setscorepos ::  D -> SE ()
-setscorepos b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "setscorepos" [(Xr,[Ir])] [a1]
+setscorepos b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "setscorepos" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Split a trigger signal
@@ -753,11 +868,10 @@ setscorepos b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/splitrig.html>
 splitrig ::  Sig -> Sig -> D -> Tab -> [Sig] -> SE ()
-splitrig b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> mapM unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "splitrig" [(Xr,[Kr,Kr,Ir,Ir] ++ (repeat Kr))] ([a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4] ++ a5)
+splitrig b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unTab) b4 <*> mapM (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "splitrig" [(Xr,[Kr,Kr,Ir,Ir] ++ (repeat Kr))] ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Estimate the tempo of beat patterns in a control signal.
@@ -767,9 +881,11 @@ splitrig b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 
 --
 -- csound doc: <http://csound.com/docs/manual/tempest.html>
 tempest ::  Sig -> D -> D -> D -> D -> D -> D -> D -> D -> Tab -> Sig
-tempest b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unTab b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcs "tempest" [(Kr
-                                                             ,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+tempest b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unTab b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcs "tempest" [(Kr
+                                                       ,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
 -- | 
 -- Apply tempo control to an uninterpreted score.
@@ -778,8 +894,10 @@ tempest b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/tempo.html>
 tempo ::  Sig -> D -> SE ()
-tempo b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "tempo" [(Xr,[Kr,Ir])] [a1,a2]
+tempo b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "tempo" [(Xr,[Kr,Ir])] [a1,a2]
 
 -- | 
 -- Reads the current value of the tempo.
@@ -788,8 +906,10 @@ tempo b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/tempoval.html>
 tempoval ::   Sig
-tempoval  = Sig $ return $ f 
-    where f  = opcs "tempoval" [(Kr,[])] []
+tempoval  =
+  Sig $ return $ f 
+  where
+    f  = opcs "tempoval" [(Kr,[])] []
 
 -- | 
 -- Time Variant Sequencer
@@ -801,8 +921,10 @@ tempoval  = Sig $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/timedseq.html>
 timedseq ::  Sig -> Tab -> [Sig] -> Sig
-timedseq b1 b2 b3 = Sig $ f <$> unSig b1 <*> unTab b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "timedseq" [(Kr,[Kr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
+timedseq b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unTab b2 <*> mapM unSig b3
+  where
+    f a1 a2 a3 = opcs "timedseq" [(Kr,[Kr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Informs when a krate signal crosses a threshold.
@@ -811,8 +933,10 @@ timedseq b1 b2 b3 = Sig $ f <$> unSig b1 <*> unTab b2 <*> mapM unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/trigger.html>
 trigger ::  Sig -> Sig -> Sig -> Sig
-trigger b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "trigger" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+trigger b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "trigger" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Accepts a trigger signal as input and outputs a group of values.
@@ -821,8 +945,10 @@ trigger b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/trigseq.html>
 trigseq ::  Sig -> Sig -> Sig -> Sig -> Tab -> [Sig] -> SE ()
-trigseq b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5 <*> mapM unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "trigseq" [(Xr,(repeat Kr))] ([a1,a2,a3,a4,a5] ++ a6)
+trigseq b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unTab) b5 <*> mapM (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "trigseq" [(Xr,(repeat Kr))] ([a1,a2,a3,a4,a5] ++ a6)
 
 -- | 
 -- Envelope follower unit generator.
@@ -834,8 +960,10 @@ trigseq b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/vactrol.html>
 vactrol ::  Sig -> Sig
-vactrol b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "vactrol" [(Ar,[Ar,Ir,Ir])] [a1]
+vactrol b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "vactrol" [(Ar,[Ar,Ir,Ir])] [a1]
 
 -- | 
 -- Reads data from a number of external Nintendo Wiimote controllers.
@@ -846,8 +974,10 @@ vactrol b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/wiiconnect.html>
 wiiconnect ::   D
-wiiconnect  = D $ return $ f 
-    where f  = opcs "wiiconnect" [(Ir,[Ir,Ir])] []
+wiiconnect  =
+  D $ return $ f 
+  where
+    f  = opcs "wiiconnect" [(Ir,[Ir,Ir])] []
 
 -- | 
 -- Reads data fields from a number of external Nintendo Wiimote controllers.
@@ -858,8 +988,10 @@ wiiconnect  = D $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/wiidata.html>
 wiidata ::  Sig -> Sig
-wiidata b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "wiidata" [(Kr,[Kr,Kr])] [a1]
+wiidata b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "wiidata" [(Kr,[Kr,Kr])] [a1]
 
 -- | 
 -- Sets scaling and range limits for certain Wiimote fields.
@@ -868,8 +1000,10 @@ wiidata b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/wiirange.html>
 wiirange ::  D -> D -> D -> SE ()
-wiirange b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "wiirange" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3]
+wiirange b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "wiirange" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Sends data to one of a number of external Nintendo Wiimote controllers.
@@ -878,8 +1012,10 @@ wiirange b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/wiisend.html>
 wiisend ::  Sig -> Sig -> Sig
-wiisend b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "wiisend" [(Kr,[Kr,Kr,Kr])] [a1,a2]
+wiisend b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "wiisend" [(Kr,[Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- writes a value into the scratchpad of the instance of an instrument.
@@ -891,8 +1027,10 @@ wiisend b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/writescratch.html>
 writescratch ::  D -> SE ()
-writescratch b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "writescratch" [(Xr,[Ir,Ir])] [a1]
+writescratch b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "writescratch" [(Xr,[Ir,Ir])] [a1]
 
 -- | 
 -- Sense the cursor position in an output window
@@ -903,8 +1041,10 @@ writescratch b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/xyin.html>
 xyin ::  D -> D -> D -> D -> D -> (Sig,Sig)
-xyin b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "xyin" ([Kr,Kr],[Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+xyin b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "xyin" ([Kr,Kr],[Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- Stacks.
 
@@ -917,9 +1057,11 @@ xyin b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 
 -- > ival1, [ival2, ... , ival31]  pop 
 --
 -- csound doc: <http://csound.com/docs/manual/pop.html>
-pop :: Tuple a =>  a
-pop  = pureTuple $ return $ f 
-    where f  = mopcs "pop" ((repeat Ir),[]) []
+pop :: forall a . Tuple a =>  a
+pop  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "pop" ((repeat Ir),[]) []
 
 -- | 
 -- Pops an f-sig frame from the global stack.  Deprecated.
@@ -930,8 +1072,10 @@ pop  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/pop_f.html>
 pop_f ::   Spec
-pop_f  = Spec $ return $ f 
-    where f  = opcs "pop_f" [(Fr,[])] []
+pop_f  =
+  Spec $ return $ f 
+  where
+    f  = opcs "pop_f" [(Fr,[])] []
 
 -- | 
 -- Pushes a value into the global stack.  Deprecated.
@@ -943,8 +1087,10 @@ pop_f  = Spec $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/push.html>
 push ::  [Sig] -> SE ()
-push b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
-    where f a1 = opcs "push" [(Xr,(repeat Xr))] a1
+push b1 =
+  SE $ join $ f <$> mapM (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "push" [(Xr,(repeat Xr))] a1
 
 -- | 
 -- Pushes an f-sig frame into the global stack.  Deprecated.
@@ -955,8 +1101,10 @@ push b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/push_f.html>
 push_f ::  Spec -> SE ()
-push_f b1 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1
-    where f a1 = opcs "push_f" [(Xr,[Fr])] [a1]
+push_f b1 =
+  SE $ join $ f <$> (lift . unSpec) b1
+  where
+    f a1 = opcsDep_ "push_f" [(Xr,[Fr])] [a1]
 
 -- | 
 -- Initializes the stack.  Deprecated.
@@ -967,8 +1115,10 @@ push_f b1 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/stack.html>
 stack ::  D -> SE ()
-stack b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "stack" [(Xr,[Ir])] [a1]
+stack b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "stack" [(Xr,[Ir])] [a1]
 
 -- Subinstrument Control.
 
@@ -981,9 +1131,11 @@ stack b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 -- > a1, [...] [, a8]  subinstr  "insname" [, p4] [, p5] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/subinstr.html>
-subinstr :: Tuple a => D -> [D] -> a
-subinstr b1 b2 = pureTuple $ f <$> unD b1 <*> mapM unD b2
-    where f a1 a2 = mopcs "subinstr" ((repeat Ar),[Sr] ++ (repeat Ir)) ([a1] ++ a2)
+subinstr :: forall a . Tuple a => D -> [D] -> a
+subinstr b1 b2 =
+  pureTuple $ f <$> unD b1 <*> mapM unD b2
+  where
+    f a1 a2 = mopcs "subinstr" ((repeat Ar),[Sr] ++ (repeat Ir)) ([a1] ++ a2)
 
 -- | 
 -- Creates and runs a numbered instrument instance at init-time.
@@ -995,8 +1147,10 @@ subinstr b1 b2 = pureTuple $ f <$> unD b1 <*> mapM unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/subinstrinit.html>
 subinstrinit ::  D -> [D] -> SE ()
-subinstrinit b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> mapM unD b2
-    where f a1 a2 = opcs "subinstrinit" [(Xr,(repeat Ir))] ([a1] ++ a2)
+subinstrinit b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> mapM (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "subinstrinit" [(Xr,(repeat Ir))] ([a1] ++ a2)
 
 -- Time Reading.
 
@@ -1013,9 +1167,11 @@ subinstrinit b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> mapM unD b2
 -- > kr[, knano]  date 
 --
 -- csound doc: <http://csound.com/docs/manual/date.html>
-date :: Tuple a =>  a
-date  = pureTuple $ return $ f 
-    where f  = mopcs "date" ([Kr,Kr],[]) []
+date :: forall a . Tuple a =>  a
+date  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "date" ([Kr,Kr],[]) []
 
 -- | 
 -- Returns as a string the date and time specified.
@@ -1024,8 +1180,10 @@ date  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/dates.html>
 dates ::   Str
-dates  = Str $ return $ f 
-    where f  = opcs "dates" [(Sr,[Ir])] []
+dates  =
+  Str $ return $ f 
+  where
+    f  = opcs "dates" [(Sr,[Ir])] []
 
 -- | 
 -- Reads the value of an internal clock.
@@ -1034,8 +1192,10 @@ dates  = Str $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/readclock.html>
 readclock ::  D -> D
-readclock b1 = D $ f <$> unD b1
-    where f a1 = opcs "readclock" [(Ir,[Ir])] [a1]
+readclock b1 =
+  D $ f <$> unD b1
+  where
+    f a1 = opcs "readclock" [(Ir,[Ir])] [a1]
 
 -- | 
 -- Read the real time clock from the operating system.
@@ -1047,8 +1207,10 @@ readclock b1 = D $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/rtclock.html>
 rtclock ::   Sig
-rtclock  = Sig $ return $ f 
-    where f  = opcs "rtclock" [(Ir,[]),(Kr,[])] []
+rtclock  =
+  Sig $ return $ f 
+  where
+    f  = opcs "rtclock" [(Ir,[]),(Kr,[])] []
 
 -- | 
 -- Read absolute time in k-rate cycles.
@@ -1061,8 +1223,10 @@ rtclock  = Sig $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/timeinstk.html>
 timeinstk ::   Sig
-timeinstk  = Sig $ return $ f 
-    where f  = opcs "timeinstk" [(Kr,[])] []
+timeinstk  =
+  Sig $ return $ f 
+  where
+    f  = opcs "timeinstk" [(Kr,[])] []
 
 -- | 
 -- Read absolute time in seconds.
@@ -1073,8 +1237,10 @@ timeinstk  = Sig $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/timeinsts.html>
 timeinsts ::   Sig
-timeinsts  = Sig $ return $ f 
-    where f  = opcs "timeinsts" [(Kr,[])] []
+timeinsts  =
+  Sig $ return $ f 
+  where
+    f  = opcs "timeinsts" [(Kr,[])] []
 
 -- | 
 -- Read absolute time in k-rate cycles.
@@ -1086,8 +1252,10 @@ timeinsts  = Sig $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/timek.html>
 timek ::   SE Sig
-timek  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "timek" [(Ir,[]),(Kr,[])] []
+timek  =
+  fmap ( Sig . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "timek" [(Ir,[]),(Kr,[])] []
 
 -- | 
 -- Read absolute time in seconds.
@@ -1099,5 +1267,7 @@ timek  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/times.html>
 times ::   SE Sig
-times  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "times" [(Ir,[]),(Kr,[])] []
+times  =
+  fmap ( Sig . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "times" [(Ir,[]),(Kr,[])] []

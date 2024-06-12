@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.Miscellaneous (
     directory, fareylen, fareyleni, modmatrix, pwd, select, system_i, system, tableshuffle, tableshufflei) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -19,8 +20,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/directory.html>
 directory ::  Str -> Str
-directory b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "directory" [(Sr,[Sr,Sr])] [a1]
+directory b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "directory" [(Sr,[Sr,Sr])] [a1]
 
 -- | 
 -- returns the length of a Farey Sequence.
@@ -34,8 +37,10 @@ directory b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/fareylen.html>
 fareylen ::  Tab -> Sig
-fareylen b1 = Sig $ f <$> unTab b1
-    where f a1 = opcs "fareylen" [(Kr,[Kr])] [a1]
+fareylen b1 =
+  Sig $ f <$> unTab b1
+  where
+    f a1 = opcs "fareylen" [(Kr,[Kr])] [a1]
 
 -- | 
 -- returns the length of a Farey Sequence.
@@ -49,8 +54,10 @@ fareylen b1 = Sig $ f <$> unTab b1
 --
 -- csound doc: <http://csound.com/docs/manual/fareyleni.html>
 fareyleni ::  Tab -> D
-fareyleni b1 = D $ f <$> unTab b1
-    where f a1 = opcs "fareyleni" [(Ir,[Ir])] [a1]
+fareyleni b1 =
+  D $ f <$> unTab b1
+  where
+    f a1 = opcs "fareyleni" [(Ir,[Ir])] [a1]
 
 -- | 
 -- Modulation matrix opcode with optimizations for sparse matrices.
@@ -67,14 +74,16 @@ fareyleni b1 = D $ f <$> unTab b1
 --
 -- csound doc: <http://csound.com/docs/manual/modmatrix.html>
 modmatrix ::  Tab -> Tab -> Tab -> D -> D -> D -> Sig -> SE ()
-modmatrix b1 b2 b3 b4 b5 b6 b7 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unTab b2 <*> unTab b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "modmatrix" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir,Kr])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6
-                                                                                  ,a7]
+modmatrix b1 b2 b3 b4 b5 b6 b7 =
+  SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unTab) b2 <*> (lift . unTab) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unSig) b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcsDep_ "modmatrix" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir,Kr])] [a1
+                                                                                ,a2
+                                                                                ,a3
+                                                                                ,a4
+                                                                                ,a5
+                                                                                ,a6
+                                                                                ,a7]
 
 -- | 
 -- Asks the underlying operating system for the current directory
@@ -88,8 +97,10 @@ modmatrix b1 b2 b3 b4 b5 b6 b7 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/pwd.html>
 pwd ::   Str
-pwd  = Str $ return $ f 
-    where f  = opcs "pwd" [(Sr,[])] []
+pwd  =
+  Str $ return $ f 
+  where
+    f  = opcs "pwd" [(Sr,[])] []
 
 -- | 
 -- Select sample value based on audio-rate comparisons.
@@ -101,8 +112,10 @@ pwd  = Str $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/select.html>
 select ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-select b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "select" [(Ar,[Ar,Ar,Ar,Ar,Ar])] [a1,a2,a3,a4,a5]
+select b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "select" [(Ar,[Ar,Ar,Ar,Ar,Ar])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Call an external program via the system call
@@ -118,8 +131,10 @@ select b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/system.html>
 system_i ::  D -> Str -> D
-system_i b1 b2 = D $ f <$> unD b1 <*> unStr b2
-    where f a1 a2 = opcs "system_i" [(Ir,[Ir,Sr,Ir])] [a1,a2]
+system_i b1 b2 =
+  D $ f <$> unD b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "system_i" [(Ir,[Ir,Sr,Ir])] [a1,a2]
 
 -- | 
 -- Call an external program via the system call
@@ -135,8 +150,10 @@ system_i b1 b2 = D $ f <$> unD b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/system.html>
 system ::  Sig -> Str -> Sig
-system b1 b2 = Sig $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = opcs "system" [(Kr,[Kr,Sr,Kr])] [a1,a2]
+system b1 b2 =
+  Sig $ f <$> unSig b1 <*> unStr b2
+  where
+    f a1 a2 = opcs "system" [(Kr,[Kr,Sr,Kr])] [a1,a2]
 
 -- | 
 -- shuffles the content of a function table so that each element of the source
@@ -153,8 +170,10 @@ system b1 b2 = Sig $ f <$> unSig b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/tableshuffle.html>
 tableshuffle ::  Sig -> SE ()
-tableshuffle b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "tableshuffle" [(Xr,[Kr])] [a1]
+tableshuffle b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "tableshuffle" [(Xr,[Kr])] [a1]
 
 -- | 
 -- shuffles the content of a function table so that each element of the source
@@ -171,5 +190,7 @@ tableshuffle b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/tableshuffle.html>
 tableshufflei ::  D -> SE ()
-tableshufflei b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "tableshufflei" [(Xr,[Ir])] [a1]
+tableshufflei b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "tableshufflei" [(Xr,[Ir])] [a1]

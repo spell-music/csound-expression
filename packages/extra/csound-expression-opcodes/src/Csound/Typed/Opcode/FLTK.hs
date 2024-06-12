@@ -13,7 +13,9 @@ module Csound.Typed.Opcode.FLTK (
     -- * Appearance.
     flColor, flColor2, flHide, flLabel, flSetAlign, flSetBox, flSetColor, flSetColor2, flSetFont, flSetPosition, flSetSize, flSetText, flSetTextColor, flSetTextSize, flSetTextType, flShow) where
 
+import Data.Proxy
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -26,8 +28,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/FLgroup.html>
 flGroup ::  Str -> D -> D -> D -> D -> SE ()
-flGroup b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "FLgroup" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+flGroup b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "FLgroup" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Marks the end of a group of FLTK child widgets.
@@ -36,8 +40,10 @@ flGroup b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/FLgroupEnd.html>
 flGroupEnd ::   SE ()
-flGroupEnd  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLgroupEnd" [(Xr,[])] []
+flGroupEnd  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLgroupEnd" [(Xr,[])] []
 
 -- | 
 -- Provides the functionality of compressing and aligning FLTK widgets.
@@ -48,14 +54,10 @@ flGroupEnd  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLpack.html>
 flPack ::  D -> D -> D -> D -> D -> D -> D -> SE ()
-flPack b1 b2 b3 b4 b5 b6 b7 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "FLpack" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                               ,a2
-                                                                               ,a3
-                                                                               ,a4
-                                                                               ,a5
-                                                                               ,a6
-                                                                               ,a7]
+flPack b1 b2 b3 b4 b5 b6 b7 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcsDep_ "FLpack" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Marks the end of a group of compressed or aligned FLTK widgets.
@@ -64,8 +66,10 @@ flPack b1 b2 b3 b4 b5 b6 b7 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 
 --
 -- csound doc: <http://csound.com/docs/manual/FLpackEnd.html>
 flPackEnd ::   SE ()
-flPackEnd  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLpackEnd" [(Xr,[])] []
+flPackEnd  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLpackEnd" [(Xr,[])] []
 
 -- | 
 -- Creates a window that contains FLTK widgets.
@@ -74,8 +78,10 @@ flPackEnd  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLpanel.html>
 flPanel ::  Str -> D -> D -> SE ()
-flPanel b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLpanel" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+flPanel b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLpanel" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Marks the end of a group of FLTK widgets contained inside of a window (panel).
@@ -84,8 +90,10 @@ flPanel b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/FLpanelEnd.html>
 flPanelEnd ::   SE ()
-flPanelEnd  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLpanelEnd" [(Xr,[])] []
+flPanelEnd  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLpanelEnd" [(Xr,[])] []
 
 -- | 
 -- A FLTK opcode that adds scroll bars to an area.
@@ -96,8 +104,10 @@ flPanelEnd  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLscroll.html>
 flScroll ::  D -> D -> SE ()
-flScroll b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLscroll" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2]
+flScroll b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLscroll" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- A FLTK opcode that marks the end of an area with scrollbars.
@@ -106,8 +116,10 @@ flScroll b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLscrollEnd.html>
 flScrollEnd ::   SE ()
-flScrollEnd  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLscrollEnd" [(Xr,[])] []
+flScrollEnd  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLscrollEnd" [(Xr,[])] []
 
 -- | 
 -- Creates a tabbed FLTK interface.
@@ -118,8 +130,10 @@ flScrollEnd  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLtabs.html>
 flTabs ::  D -> D -> D -> D -> SE ()
-flTabs b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "FLtabs" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+flTabs b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "FLtabs" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Marks the end of a tabbed FLTK interface.
@@ -128,8 +142,10 @@ flTabs b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/FLtabsEnd.html>
 flTabsEnd ::   SE ()
-flTabsEnd  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLtabsEnd" [(Xr,[])] []
+flTabsEnd  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLtabsEnd" [(Xr,[])] []
 
 -- Valuators.
 
@@ -143,9 +159,11 @@ flTabsEnd  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLcount.html>
 flCount ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flCount b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10 <*> unD b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = mopcs "FLcount" ([Kr,Ir]
-                                                                 ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir] ++ (repeat Kr)) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+flCount b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10 <*> (lift . unD) b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = mopcsDep 2 "FLcount" ([Kr,Ir]
+                                                                ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir] ++ (repeat Kr)) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- A FLTK opcode that acts like a joystick.
@@ -157,9 +175,11 @@ flCount b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = dirtyTuple $ f <$> unStr b1 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/FLjoy.html>
 flJoy ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,Sig,D,D)
-flJoy b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10 <*> unD b11 <*> unD b12 <*> unD b13
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 = mopcs "FLjoy" ([Kr,Kr,Ir,Ir]
-                                                                       ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13]
+flJoy b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10 <*> (lift . unD) b11 <*> (lift . unD) b12 <*> (lift . unD) b13
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 = mopcsDep 4 "FLjoy" ([Kr,Kr,Ir,Ir]
+                                                                      ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13]
 
 -- | 
 -- A FLTK widget opcode that creates a knob.
@@ -169,9 +189,18 @@ flJoy b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 = dirtyTuple $ f <$> unStr b1 <
 --
 -- csound doc: <http://csound.com/docs/manual/FLknob.html>
 flKnob ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flKnob b1 b2 b3 b4 b5 b6 b7 b8 b9 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcs "FLknob" ([Kr,Ir]
-                                                        ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9]
+flKnob b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcsDep 2 "FLknob" ([Kr,Ir],[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                                 ,a2
+                                                                                                 ,a3
+                                                                                                 ,a4
+                                                                                                 ,a5
+                                                                                                 ,a6
+                                                                                                 ,a7
+                                                                                                 ,a8
+                                                                                                 ,a9]
 
 -- | 
 -- A FLTK widget that creates a transversal knob.
@@ -183,9 +212,11 @@ flKnob b1 b2 b3 b4 b5 b6 b7 b8 b9 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/FLroller.html>
 flRoller ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flRoller b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10 <*> unD b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = mopcs "FLroller" ([Kr,Ir]
-                                                                  ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+flRoller b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10 <*> (lift . unD) b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = mopcsDep 2 "FLroller" ([Kr,Ir]
+                                                                 ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- Puts a slider into the corresponding FLTK container.
@@ -197,9 +228,11 @@ flRoller b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = dirtyTuple $ f <$> unStr b1 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/FLslider.html>
 flSlider ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flSlider b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "FLslider" ([Kr,Ir]
-                                                              ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+flSlider b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcsDep 2 "FLslider" ([Kr,Ir]
+                                                             ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
 -- | 
 -- A FLTK widget opcode that creates a textbox.
@@ -211,16 +244,18 @@ flSlider b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = dirtyTuple $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLtext.html>
 flText ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flText b1 b2 b3 b4 b5 b6 b7 b8 b9 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcs "FLtext" ([Kr,Ir],[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                               ,a2
-                                                                                               ,a3
-                                                                                               ,a4
-                                                                                               ,a5
-                                                                                               ,a6
-                                                                                               ,a7
-                                                                                               ,a8
-                                                                                               ,a9]
+flText b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcsDep 2 "FLtext" ([Kr,Ir],[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                              ,a2
+                                                                                              ,a3
+                                                                                              ,a4
+                                                                                              ,a5
+                                                                                              ,a6
+                                                                                              ,a7
+                                                                                              ,a8
+                                                                                              ,a9]
 
 -- Other.
 
@@ -232,9 +267,11 @@ flText b1 b2 b3 b4 b5 b6 b7 b8 b9 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/FLbox.html>
 flBox ::  Str -> D -> D -> D -> D -> D -> D -> D -> SE D
-flBox b1 b2 b3 b4 b5 b6 b7 b8 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "FLbox" [(Ir,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
-                                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8]
+flBox b1 b2 b3 b4 b5 b6 b7 b8 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcsDep "FLbox" [(Ir,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+                                                ,(Ir,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8]
 
 -- | 
 -- A FLTK widget opcode that creates a bank of buttons.
@@ -244,9 +281,11 @@ flBox b1 b2 b3 b4 b5 b6 b7 b8 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f 
 --
 -- csound doc: <http://csound.com/docs/manual/FLbutBank.html>
 flButBank ::  D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flButBank b1 b2 b3 b4 b5 b6 b7 b8 = dirtyTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "FLbutBank" ([Kr,Ir]
-                                                        ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir] ++ (repeat Kr)) [a1,a2,a3,a4,a5,a6,a7,a8]
+flButBank b1 b2 b3 b4 b5 b6 b7 b8 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = mopcsDep 2 "FLbutBank" ([Kr,Ir]
+                                                       ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir] ++ (repeat Kr)) [a1,a2,a3,a4,a5,a6,a7,a8]
 
 -- | 
 -- A FLTK widget opcode that creates a button.
@@ -256,9 +295,11 @@ flButBank b1 b2 b3 b4 b5 b6 b7 b8 = dirtyTuple $ f <$> unD b1 <*> unD b2 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/FLbutton.html>
 flButton ::  Str -> D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,D)
-flButton b1 b2 b3 b4 b5 b6 b7 b8 b9 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcs "FLbutton" ([Kr,Ir]
-                                                          ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir] ++ (repeat Kr)) [a1,a2,a3,a4,a5,a6,a7,a8,a9]
+flButton b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcsDep 2 "FLbutton" ([Kr,Ir]
+                                                         ,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir] ++ (repeat Kr)) [a1,a2,a3,a4,a5,a6,a7,a8,a9]
 
 -- | 
 -- A FLTK widget opcode that creates a button that will close the panel
@@ -268,8 +309,10 @@ flButton b1 b2 b3 b4 b5 b6 b7 b8 b9 = dirtyTuple $ f <$> unStr b1 <*> unD b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/FLcloseButton.html>
 flCloseButton ::  Str -> D -> D -> D -> D -> SE D
-flCloseButton b1 b2 b3 b4 b5 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "FLcloseButton" [(Ir,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+flCloseButton b1 b2 b3 b4 b5 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep "FLcloseButton" [(Ir,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A FLTK widget opcode that creates a button that executes a command.
@@ -282,8 +325,10 @@ flCloseButton b1 b2 b3 b4 b5 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <
 --
 -- csound doc: <http://csound.com/docs/manual/FLexecButton.html>
 flExecButton ::  Str -> D -> D -> D -> D -> SE D
-flExecButton b1 b2 b3 b4 b5 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "FLexecButton" [(Ir,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+flExecButton b1 b2 b3 b4 b5 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep "FLexecButton" [(Ir,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Retrieves a previously stored FLTK snapshot.
@@ -294,8 +339,10 @@ flExecButton b1 b2 b3 b4 b5 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$
 --
 -- csound doc: <http://csound.com/docs/manual/FLgetsnap.html>
 flGetsnap ::  D -> SE D
-flGetsnap b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "FLgetsnap" [(Ir,[Ir,Ir])] [a1]
+flGetsnap b1 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep "FLgetsnap" [(Ir,[Ir,Ir])] [a1]
 
 -- | 
 -- Displays a box with a grid useful for visualizing two-dimensional Hyper Vectorial Synthesis.
@@ -306,8 +353,10 @@ flGetsnap b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/FLhvsBox.html>
 flHvsBox ::  D -> D -> D -> D -> D -> D -> SE D
-flHvsBox b1 b2 b3 b4 b5 b6 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "FLhvsBox" [(Ir,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+flHvsBox b1 b2 b3 b4 b5 b6 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep "FLhvsBox" [(Ir,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Sets the cursor position of a previously-declared FLhvsBox widget.
@@ -318,8 +367,10 @@ flHvsBox b1 b2 b3 b4 b5 b6 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$>
 --
 -- csound doc: <http://csound.com/docs/manual/FLhvsBoxSetValue.html>
 flHvsBoxSetValue ::  Sig -> Sig -> D -> SE ()
-flHvsBoxSetValue b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLhvsBoxSetValue" [(Xr,[Kr,Kr,Ir])] [a1,a2,a3]
+flHvsBoxSetValue b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLhvsBoxSetValue" [(Xr,[Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Reports keys pressed (on alphanumeric keyboard) when an FLTK panel has focus.
@@ -330,8 +381,10 @@ flHvsBoxSetValue b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/FLkeyIn.html>
 flKeyIn ::   SE Sig
-flKeyIn  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "FLkeyIn" [(Kr,[Ir])] []
+flKeyIn  =
+  fmap ( Sig . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "FLkeyIn" [(Kr,[Ir])] []
 
 -- | 
 -- Loads all snapshots into the memory bank of the current orchestra.
@@ -342,8 +395,10 @@ flKeyIn  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLloadsnap.html>
 flLoadsnap ::  Str -> SE ()
-flLoadsnap b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "FLloadsnap" [(Xr,[Sr,Ir])] [a1]
+flLoadsnap b1 =
+  SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep_ "FLloadsnap" [(Xr,[Sr,Ir])] [a1]
 
 -- | 
 -- Returns the mouse position and the state of the three mouse buttons.
@@ -353,9 +408,11 @@ flLoadsnap b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
 -- > kx, ky, kb1, kb2, kb3  FLmouse  [imode]
 --
 -- csound doc: <http://csound.com/docs/manual/FLmouse.html>
-flMouse :: Tuple a =>  SE a
-flMouse  = dirtyTuple $ return $ f 
-    where f  = mopcs "FLmouse" ([Kr,Kr,Kr,Kr,Kr],[Ir]) []
+flMouse :: forall a . Tuple a =>  SE a
+flMouse  =
+  fmap (toTuple . pure) $ SE $ join $ return $ f 
+  where
+    f  = mopcsDep (tupleArity (Proxy :: Proxy a)) "FLmouse" ([Kr,Kr,Kr,Kr,Kr],[Ir]) []
 
 -- | 
 -- A FLTK opcode that prints a k-rate value at specified intervals.
@@ -366,8 +423,10 @@ flMouse  = dirtyTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLprintk.html>
 flPrintk ::  D -> Sig -> D -> SE ()
-flPrintk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLprintk" [(Xr,[Ir,Kr,Ir])] [a1,a2,a3]
+flPrintk b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLprintk" [(Xr,[Ir,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- A FLTK opcode that prints a new value every time a control-rate variable changes.
@@ -378,8 +437,10 @@ flPrintk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/FLprintk2.html>
 flPrintk2 ::  Sig -> D -> SE ()
-flPrintk2 b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "FLprintk2" [(Xr,[Kr,Ir])] [a1,a2]
+flPrintk2 b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLprintk2" [(Xr,[Kr,Ir])] [a1,a2]
 
 -- | 
 -- Starts the FLTK widget thread.
@@ -388,8 +449,10 @@ flPrintk2 b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLrun.html>
 flRun ::   SE ()
-flRun  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLrun" [(Xr,[])] []
+flRun  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLrun" [(Xr,[])] []
 
 -- | 
 -- Saves all snapshots currently created into a file.
@@ -400,8 +463,10 @@ flRun  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLsavesnap.html>
 flSavesnap ::  Str -> SE ()
-flSavesnap b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "FLsavesnap" [(Xr,[Sr,Ir])] [a1]
+flSavesnap b1 =
+  SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep_ "FLsavesnap" [(Xr,[Sr,Ir])] [a1]
 
 -- | 
 -- Stores the current status of all FLTK valuators into a snapshot location.
@@ -412,8 +477,10 @@ flSavesnap b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetsnap.html>
 flSetsnap ::  D -> SE (D,D)
-flSetsnap b1 = dirtyTuple $ f <$> unD b1
-    where f a1 = mopcs "FLsetsnap" ([Ir,Ir],[Ir,Ir,Ir]) [a1]
+flSetsnap b1 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = mopcsDep 2 "FLsetsnap" ([Ir,Ir],[Ir,Ir,Ir]) [a1]
 
 -- | 
 -- Determines the snapshot group for FL valuators.
@@ -424,8 +491,10 @@ flSetsnap b1 = dirtyTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetSnapGroup.html>
 flSetSnapGroup ::  D -> SE ()
-flSetSnapGroup b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "FLsetSnapGroup" [(Xr,[Ir])] [a1]
+flSetSnapGroup b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "FLsetSnapGroup" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Sets the value of a FLTK valuator at control-rate.
@@ -436,8 +505,10 @@ flSetSnapGroup b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetVal.html>
 flSetVal ::  Sig -> Sig -> D -> SE ()
-flSetVal b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLsetVal" [(Xr,[Kr,Kr,Ir])] [a1,a2,a3]
+flSetVal b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLsetVal" [(Xr,[Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Sets the value of a FLTK valuator to a number provided by the user.
@@ -448,8 +519,10 @@ flSetVal b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetVal_i.html>
 flSetVal_i ::  D -> D -> SE ()
-flSetVal_i b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetVal_i" [(Xr,[Ir,Ir])] [a1,a2]
+flSetVal_i b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetVal_i" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- A FLTK widget containing a bank of horizontal sliders.
@@ -461,8 +534,10 @@ flSetVal_i b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnk.html>
 flSlidBnk ::  Str -> D -> SE ()
-flSlidBnk b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "FLslidBnk" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+flSlidBnk b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLslidBnk" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- A FLTK widget containing a bank of horizontal sliders.
@@ -474,8 +549,10 @@ flSlidBnk b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnk2.html>
 flSlidBnk2 ::  Str -> D -> D -> D -> SE ()
-flSlidBnk2 b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "FLslidBnk2" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+flSlidBnk2 b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "FLslidBnk2" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- modify the values of a slider bank.
@@ -486,8 +563,10 @@ flSlidBnk2 b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnk2Set.html>
 flSlidBnk2Set ::  D -> Tab -> SE ()
-flSlidBnk2Set b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unTab b2
-    where f a1 a2 = opcs "FLslidBnk2Set" [(Xr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+flSlidBnk2Set b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2
+  where
+    f a1 a2 = opcsDep_ "FLslidBnk2Set" [(Xr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- modify the values of a slider bank.
@@ -498,8 +577,10 @@ flSlidBnk2Set b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnk2Setk.html>
 flSlidBnk2Setk ::  Sig -> D -> Tab -> SE ()
-flSlidBnk2Setk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "FLslidBnk2Setk" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+flSlidBnk2Setk b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLslidBnk2Setk" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- gets the handle of last slider bank created.
@@ -510,8 +591,10 @@ flSlidBnk2Setk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnkGetHandle.html>
 flSlidBnkGetHandle ::   SE D
-flSlidBnkGetHandle  = fmap ( D . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "FLslidBnkGetHandle" [(Ir,[])] []
+flSlidBnkGetHandle  =
+  fmap ( D . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "FLslidBnkGetHandle" [(Ir,[])] []
 
 -- | 
 -- modify the values of a slider bank.
@@ -522,8 +605,10 @@ flSlidBnkGetHandle  = fmap ( D . return) $ SE $ (depT =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnkSet.html>
 flSlidBnkSet ::  D -> Tab -> SE ()
-flSlidBnkSet b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unTab b2
-    where f a1 a2 = opcs "FLslidBnkSet" [(Xr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+flSlidBnkSet b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unTab) b2
+  where
+    f a1 a2 = opcsDep_ "FLslidBnkSet" [(Xr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- modify the values of a slider bank.
@@ -534,8 +619,10 @@ flSlidBnkSet b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLslidBnkSetk.html>
 flSlidBnkSetk ::  Sig -> D -> Tab -> SE ()
-flSlidBnkSetk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "FLslidBnkSetk" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+flSlidBnkSetk b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLslidBnkSetk" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Same as the FLrun opcode.
@@ -544,8 +631,10 @@ flSlidBnkSetk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/FLupdate.html>
 flUpdate ::   SE ()
-flUpdate  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "FLupdate" [(Xr,[])] []
+flUpdate  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "FLupdate" [(Xr,[])] []
 
 -- | 
 -- Shows the current value of a FLTK valuator.
@@ -556,8 +645,10 @@ flUpdate  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/FLvalue.html>
 flValue ::  Str -> D -> D -> D -> D -> SE D
-flValue b1 b2 b3 b4 b5 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "FLvalue" [(Ir,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+flValue b1 b2 b3 b4 b5 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep "FLvalue" [(Ir,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- An FLTK widget opcode that creates a virtual keyboard widget.
@@ -572,8 +663,10 @@ flValue b1 b2 b3 b4 b5 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unS
 --
 -- csound doc: <http://csound.com/docs/manual/FLvkeybd.html>
 flVkeybd ::  Str -> D -> D -> D -> D -> SE ()
-flVkeybd b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "FLvkeybd" [(Xr,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+flVkeybd b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "FLvkeybd" [(Xr,[Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A FLTK widget containing a bank of vertical sliders.
@@ -585,8 +678,10 @@ flVkeybd b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/FLvslidBnk.html>
 flVslidBnk ::  Str -> D -> SE ()
-flVslidBnk b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "FLvslidBnk" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+flVslidBnk b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLvslidBnk" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- A FLTK widget containing a bank of vertical sliders.
@@ -597,8 +692,10 @@ flVslidBnk b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLvslidBnk2.html>
 flVslidBnk2 ::  Str -> D -> D -> D -> SE ()
-flVslidBnk2 b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "FLvslidBnk2" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+flVslidBnk2 b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "FLvslidBnk2" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Senses the mouse cursor position in a user-defined area inside an FLpanel.
@@ -610,9 +707,11 @@ flVslidBnk2 b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/FLxyin.html>
 flXyin ::  D -> D -> D -> D -> D -> D -> D -> D -> SE (Sig,Sig,Sig)
-flXyin b1 b2 b3 b4 b5 b6 b7 b8 = dirtyTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "FLxyin" ([Kr,Kr,Kr]
-                                                     ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8]
+flXyin b1 b2 b3 b4 b5 b6 b7 b8 =
+  fmap (toTuple . pure) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = mopcsDep 3 "FLxyin" ([Kr,Kr,Kr]
+                                                    ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8]
 
 -- | 
 -- Allows one-dimensional HVS (Hyper-Vectorial Synthesis).
@@ -624,8 +723,10 @@ flXyin b1 b2 b3 b4 b5 b6 b7 b8 = dirtyTuple $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/vphaseseg.html>
 vphaseseg ::  Sig -> D -> D -> [D] -> SE ()
-vphaseseg b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
-    where f a1 a2 a3 a4 = opcs "vphaseseg" [(Xr,[Kr] ++ (repeat Ir))] ([a1,a2,a3] ++ a4)
+vphaseseg b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "vphaseseg" [(Xr,[Kr] ++ (repeat Ir))] ([a1,a2,a3] ++ a4)
 
 -- Appearance.
 
@@ -638,8 +739,10 @@ vphaseseg b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/FLcolor.html>
 flColor ::  D -> D -> D -> SE ()
-flColor b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLcolor" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+flColor b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLcolor" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A FLTK opcode that sets the secondary (selection) color.
@@ -650,8 +753,10 @@ flColor b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/FLcolor2.html>
 flColor2 ::  D -> D -> D -> SE ()
-flColor2 b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLcolor2" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
+flColor2 b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLcolor2" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Hides the target FLTK widget.
@@ -662,8 +767,10 @@ flColor2 b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/FLhide.html>
 flHide ::  D -> SE ()
-flHide b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "FLhide" [(Xr,[Ir])] [a1]
+flHide b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "FLhide" [(Xr,[Ir])] [a1]
 
 -- | 
 -- A FLTK opcode that modifies the appearance of a text label.
@@ -674,8 +781,10 @@ flHide b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/FLlabel.html>
 flLabel ::  D -> D -> D -> D -> D -> D -> SE ()
-flLabel b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "FLlabel" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+flLabel b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "FLlabel" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Sets the text alignment of a label of a FLTK widget.
@@ -686,8 +795,10 @@ flLabel b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetAlign.html>
 flSetAlign ::  D -> D -> SE ()
-flSetAlign b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetAlign" [(Xr,[Ir,Ir])] [a1,a2]
+flSetAlign b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetAlign" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Sets the appearance of a box surrounding a FLTK widget.
@@ -698,8 +809,10 @@ flSetAlign b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetBox.html>
 flSetBox ::  D -> D -> SE ()
-flSetBox b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetBox" [(Xr,[Ir,Ir])] [a1,a2]
+flSetBox b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetBox" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Sets the primary color of a FLTK widget.
@@ -710,8 +823,10 @@ flSetBox b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetColor.html>
 flSetColor ::  D -> D -> D -> D -> SE ()
-flSetColor b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "FLsetColor" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+flSetColor b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "FLsetColor" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Sets the secondary (or selection) color of a FLTK widget.
@@ -722,8 +837,10 @@ flSetColor b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetColor2.html>
 flSetColor2 ::  D -> D -> D -> D -> SE ()
-flSetColor2 b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "FLsetColor2" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+flSetColor2 b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "FLsetColor2" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Sets the font type of a FLTK widget.
@@ -734,8 +851,10 @@ flSetColor2 b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetFont.html>
 flSetFont ::  D -> D -> SE ()
-flSetFont b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetFont" [(Xr,[Ir,Ir])] [a1,a2]
+flSetFont b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetFont" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Sets the position of a FLTK widget.
@@ -746,8 +865,10 @@ flSetFont b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetPosition.html>
 flSetPosition ::  D -> D -> D -> SE ()
-flSetPosition b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLsetPosition" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
+flSetPosition b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLsetPosition" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Resizes a FLTK widget.
@@ -758,8 +879,10 @@ flSetPosition b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetSize.html>
 flSetSize ::  D -> D -> D -> SE ()
-flSetSize b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "FLsetSize" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
+flSetSize b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "FLsetSize" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Sets the label of a FLTK widget.
@@ -771,8 +894,10 @@ flSetSize b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetText.html>
 flSetText ::  Str -> D -> SE ()
-flSetText b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetText" [(Xr,[Sr,Ir])] [a1,a2]
+flSetText b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetText" [(Xr,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Sets the color of the text label of a FLTK widget.
@@ -783,8 +908,10 @@ flSetText b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetTextColor.html>
 flSetTextColor ::  D -> D -> D -> D -> SE ()
-flSetTextColor b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "FLsetTextColor" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+flSetTextColor b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "FLsetTextColor" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Sets the size of the text label of a FLTK widget.
@@ -795,8 +922,10 @@ flSetTextColor b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetTextSize.html>
 flSetTextSize ::  D -> D -> SE ()
-flSetTextSize b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetTextSize" [(Xr,[Ir,Ir])] [a1,a2]
+flSetTextSize b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetTextSize" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Sets some font attributes of the text label of a FLTK widget.
@@ -807,8 +936,10 @@ flSetTextSize b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLsetTextType.html>
 flSetTextType ::  D -> D -> SE ()
-flSetTextType b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "FLsetTextType" [(Xr,[Ir,Ir])] [a1,a2]
+flSetTextType b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "FLsetTextType" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Restores the visibility of a previously hidden FLTK widget.
@@ -819,5 +950,7 @@ flSetTextType b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/FLshow.html>
 flShow ::  D -> SE ()
-flShow b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "FLshow" [(Xr,[Ir])] [a1]
+flShow b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "FLshow" [(Xr,[Ir])] [a1]

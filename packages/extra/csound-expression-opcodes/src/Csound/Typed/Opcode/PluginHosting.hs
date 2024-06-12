@@ -8,6 +8,7 @@ module Csound.Typed.Opcode.PluginHosting (
     vstaudio, vstaudiog, vstbankload, vstedit, vstinfo, vstinit, vstmidiout, vstnote, vstparamset, vstparamget, vstprogset) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -22,8 +23,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/dssiactivate.html>
 dssiactivate ::  D -> Sig -> SE ()
-dssiactivate b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "dssiactivate" [(Xr,[Ir,Kr])] [a1,a2]
+dssiactivate b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "dssiactivate" [(Xr,[Ir,Kr])] [a1,a2]
 
 -- | 
 -- Processes audio using a LADSPA or DSSI plugin.
@@ -33,9 +36,11 @@ dssiactivate b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
 -- > [aout1, aout2, ..., aout9]  dssiaudio  ihandle, [ain1, ain2, ..., ain9]
 --
 -- csound doc: <http://csound.com/docs/manual/dssiaudio.html>
-dssiaudio :: Tuple a => D -> [Sig] -> a
-dssiaudio b1 b2 = pureTuple $ f <$> unD b1 <*> mapM unSig b2
-    where f a1 a2 = mopcs "dssiaudio" ((repeat Ar),[Ir] ++ (repeat Ar)) ([a1] ++ a2)
+dssiaudio :: forall a . Tuple a => D -> [Sig] -> a
+dssiaudio b1 b2 =
+  pureTuple $ f <$> unD b1 <*> mapM unSig b2
+  where
+    f a1 a2 = mopcs "dssiaudio" ((repeat Ar),[Ir] ++ (repeat Ar)) ([a1] ++ a2)
 
 -- | 
 -- Send control information to a LADSPA or DSSI plugin.
@@ -46,8 +51,10 @@ dssiaudio b1 b2 = pureTuple $ f <$> unD b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/dssictls.html>
 dssictls ::  D -> D -> Sig -> Sig -> SE ()
-dssictls b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "dssictls" [(Xr,[Ir,Ir,Kr,Kr])] [a1,a2,a3,a4]
+dssictls b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "dssictls" [(Xr,[Ir,Ir,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Loads a DSSI or LADSPA plugin.
@@ -59,8 +66,10 @@ dssictls b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/dssiinit.html>
 dssiinit ::  D -> D -> SE D
-dssiinit b1 b2 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "dssiinit" [(Ir,[Ir,Ir,Ir])] [a1,a2]
+dssiinit b1 b2 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep "dssiinit" [(Ir,[Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Lists all available DSSI and LADSPA plugins.
@@ -71,8 +80,10 @@ dssiinit b1 b2 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/dssilist.html>
 dssilist ::   SE ()
-dssilist  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "dssilist" [(Xr,[])] []
+dssilist  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "dssilist" [(Xr,[])] []
 
 -- VST.
 
@@ -86,8 +97,10 @@ dssilist  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/vstaudio.html>
 vstaudio ::  D -> (Sig,Sig)
-vstaudio b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "vstaudio" ([Ar,Ar],[Ir,Ar,Ar]) [a1]
+vstaudio b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "vstaudio" ([Ar,Ar],[Ir,Ar,Ar]) [a1]
 
 -- | 
 -- VST audio output.
@@ -99,8 +112,10 @@ vstaudio b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/vstaudio.html>
 vstaudiog ::  D -> (Sig,Sig)
-vstaudiog b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "vstaudiog" ([Ar,Ar],[Ir,Ar,Ar]) [a1]
+vstaudiog b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "vstaudiog" ([Ar,Ar],[Ir,Ar,Ar]) [a1]
 
 -- | 
 -- Loads parameter banks to a VST plugin.
@@ -112,8 +127,10 @@ vstaudiog b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/vstbankload.html>
 vstbankload ::  D -> D -> SE ()
-vstbankload b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "vstbankload" [(Xr,[Ir,Ir])] [a1,a2]
+vstbankload b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "vstbankload" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Opens the GUI editor window for a VST plugin.
@@ -127,8 +144,10 @@ vstbankload b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/vstedit.html>
 vstedit ::  D -> SE ()
-vstedit b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "vstedit" [(Xr,[Ir])] [a1]
+vstedit b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "vstedit" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Displays the parameters and the programs of a VST plugin.
@@ -140,8 +159,10 @@ vstedit b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/vstinfo.html>
 vstinfo ::  D -> SE ()
-vstinfo b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "vstinfo" [(Xr,[Ir])] [a1]
+vstinfo b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "vstinfo" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Load a VST plugin into memory for use with the other vst4cs opcodes.
@@ -154,8 +175,10 @@ vstinfo b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/vstinit.html>
 vstinit ::  D -> SE D
-vstinit b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "vstinit" [(Ir,[Ir,Ir])] [a1]
+vstinit b1 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep "vstinit" [(Ir,[Ir,Ir])] [a1]
 
 -- | 
 -- Sends MIDI information to a VST plugin.
@@ -166,8 +189,10 @@ vstinit b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/vstmidiout.html>
 vstmidiout ::  D -> Sig -> Sig -> Sig -> Sig -> SE ()
-vstmidiout b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "vstmidiout" [(Xr,[Ir,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
+vstmidiout b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "vstmidiout" [(Xr,[Ir,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Sends a MIDI note with definite duration to a VST plugin.
@@ -179,8 +204,10 @@ vstmidiout b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 
 --
 -- csound doc: <http://csound.com/docs/manual/vstnote.html>
 vstnote ::  D -> Sig -> Sig -> Sig -> Sig -> SE ()
-vstnote b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "vstnote" [(Xr,[Ir,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
+vstnote b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "vstnote" [(Xr,[Ir,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Used for parameter comunication to and from a VST plugin.
@@ -191,8 +218,10 @@ vstnote b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/vstparamset.html>
 vstparamset ::  D -> Sig -> Sig -> SE ()
-vstparamset b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "vstparamset" [(Xr,[Ir,Kr,Kr])] [a1,a2,a3]
+vstparamset b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "vstparamset" [(Xr,[Ir,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Used for parameter comunication to and from a VST plugin.
@@ -203,8 +232,10 @@ vstparamset b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/vstparamset.html>
 vstparamget ::  D -> Sig -> Sig
-vstparamget b1 b2 = Sig $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "vstparamget" [(Kr,[Ir,Kr])] [a1,a2]
+vstparamget b1 b2 =
+  Sig $ f <$> unD b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "vstparamget" [(Kr,[Ir,Kr])] [a1,a2]
 
 -- | 
 -- Loads parameter banks to a VST plugin.
@@ -216,5 +247,7 @@ vstparamget b1 b2 = Sig $ f <$> unD b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/vstprogset.html>
 vstprogset ::  D -> Sig -> SE ()
-vstprogset b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "vstprogset" [(Xr,[Ir,Kr])] [a1,a2]
+vstprogset b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "vstprogset" [(Xr,[Ir,Kr])] [a1,a2]

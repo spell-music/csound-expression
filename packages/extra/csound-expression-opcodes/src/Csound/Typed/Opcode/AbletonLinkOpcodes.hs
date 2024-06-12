@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.AbletonLinkOpcodes (
     link_beat_force, link_beat_get, link_beat_request, link_create, ableton_link_enable, link_is_enabled, link_metro, link_peers, link_tempo_get, link_tempo_set) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -19,8 +20,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/link_beat_force.html>
 link_beat_force ::  D -> Sig -> SE ()
-link_beat_force b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "link_beat_force" [(Xr,[Ir,Kr,Kr,Kr])] [a1,a2]
+link_beat_force b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "link_beat_force" [(Xr,[Ir,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- Returns the beat, phase with respect to the local quantum, and current time for the session.
@@ -31,8 +34,10 @@ link_beat_force b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/link_beat_get.html>
 link_beat_get ::  D -> (Sig,Sig,Sig)
-link_beat_get b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "link_beat_get" ([Kr,Kr,Kr],[Ir,Kr]) [a1]
+link_beat_get b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "link_beat_get" ([Kr,Kr,Kr],[Ir,Kr]) [a1]
 
 -- | 
 -- Requests the global network Ableton Link session to adopt a specific beat number and time.
@@ -41,8 +46,10 @@ link_beat_get b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/link_beat_request.html>
 link_beat_request ::  D -> Sig -> SE ()
-link_beat_request b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "link_beat_request" [(Xr,[Ir,Kr,Kr,Kr])] [a1,a2]
+link_beat_request b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "link_beat_request" [(Xr,[Ir,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- Creates a peer in an Ableton Link network session.
@@ -53,8 +60,10 @@ link_beat_request b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/link_create.html>
 link_create ::   D
-link_create  = D $ return $ f 
-    where f  = opcs "link_create" [(Ir,[Ir])] []
+link_create  =
+  D $ return $ f 
+  where
+    f  = opcs "link_create" [(Ir,[Ir])] []
 
 -- | 
 -- Enable or disable synchronization with the Ableton Link session.
@@ -65,8 +74,10 @@ link_create  = D $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/link_enable.html>
 ableton_link_enable ::  D -> SE ()
-ableton_link_enable b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "ableton_link_enable" [(Xr,[Ir,Kr])] [a1]
+ableton_link_enable b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "ableton_link_enable" [(Xr,[Ir,Kr])] [a1]
 
 -- | 
 -- Returns whether or not this peer is synchronized with the global network Ableton Link session.
@@ -77,8 +88,10 @@ ableton_link_enable b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/link_is_enabled.html>
 link_is_enabled ::  D -> Sig
-link_is_enabled b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "link_is_enabled" [(Kr,[Ir])] [a1]
+link_is_enabled b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "link_is_enabled" [(Kr,[Ir])] [a1]
 
 -- | 
 -- Returns a trigger that is 1 on the beat and 0 otherwise along with beat, phase, and time for this session of Ableton Link.
@@ -89,8 +102,10 @@ link_is_enabled b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/link_metro.html>
 link_metro ::  D -> (Sig,Sig,Sig,Sig)
-link_metro b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "link_metro" ([Kr,Kr,Kr,Kr],[Ir,Kr]) [a1]
+link_metro b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "link_metro" ([Kr,Kr,Kr,Kr],[Ir,Kr]) [a1]
 
 -- | 
 -- Returns the number of peers in the session.
@@ -101,8 +116,10 @@ link_metro b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/link_peers.html>
 link_peers ::  D -> Sig
-link_peers b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "link_peers" [(Kr,[Ir])] [a1]
+link_peers b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "link_peers" [(Kr,[Ir])] [a1]
 
 -- | 
 -- Returns the current tempo of the global network Ableton Link session.
@@ -111,8 +128,10 @@ link_peers b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/link_tempo_get.html>
 link_tempo_get ::  D -> Sig
-link_tempo_get b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "link_tempo_get" [(Kr,[Ir])] [a1]
+link_tempo_get b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "link_tempo_get" [(Kr,[Ir])] [a1]
 
 -- | 
 -- Sets the tempo.
@@ -123,5 +142,7 @@ link_tempo_get b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/link_tempo_set.html>
 link_tempo_set ::  D -> Sig -> SE ()
-link_tempo_set b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "link_tempo_set" [(Xr,[Ir,Kr,Kr])] [a1,a2]
+link_tempo_set b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "link_tempo_set" [(Xr,[Ir,Kr,Kr])] [a1,a2]

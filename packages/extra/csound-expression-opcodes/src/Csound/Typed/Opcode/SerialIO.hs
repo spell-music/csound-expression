@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.SerialIO (
     serialBegin, serialEnd, serialFlush, serialPrint, serialRead, serialWrite, serialWrite_i) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -19,8 +20,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/serialBegin.html>
 serialBegin ::  Str -> SE D
-serialBegin b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "serialBegin" [(Ir,[Sr,Ir])] [a1]
+serialBegin b1 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep "serialBegin" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Close a serial port.
@@ -31,8 +34,10 @@ serialBegin b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/serialEnd.html>
 serialEnd ::  D -> SE ()
-serialEnd b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "serialEnd" [(Xr,[Ir])] [a1]
+serialEnd b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "serialEnd" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Flush data from a serial port.
@@ -48,8 +53,10 @@ serialEnd b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/serialFlush.html>
 serialFlush ::  D -> SE ()
-serialFlush b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "serialFlush" [(Xr,[Ir])] [a1]
+serialFlush b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "serialFlush" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Print data from a serial port.
@@ -65,8 +72,10 @@ serialFlush b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/serialPrint.html>
 serialPrint ::  D -> SE ()
-serialPrint b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "serialPrint" [(Xr,[Ir])] [a1]
+serialPrint b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "serialPrint" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Read data from a serial port.
@@ -77,8 +86,10 @@ serialPrint b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/serialRead.html>
 serialRead ::  D -> Sig
-serialRead b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "serialRead" [(Kr,[Ir])] [a1]
+serialRead b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "serialRead" [(Kr,[Ir])] [a1]
 
 -- | 
 -- Write data to a serial port.
@@ -91,8 +102,10 @@ serialRead b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/serialWrite.html>
 serialWrite ::  D -> D -> SE ()
-serialWrite b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "serialWrite" [(Xr,[Ir,Ir])] [a1,a2]
+serialWrite b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "serialWrite" [(Xr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Write data to a serial port.
@@ -104,5 +117,7 @@ serialWrite b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/serialWrite_i.html>
 serialWrite_i ::  D -> D -> SE ()
-serialWrite_i b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "serialWrite_i" [(Xr,[Ir,Ir])] [a1,a2]
+serialWrite_i b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "serialWrite_i" [(Xr,[Ir,Ir])] [a1,a2]

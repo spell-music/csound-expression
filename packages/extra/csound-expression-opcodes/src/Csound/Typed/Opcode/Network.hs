@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.Network (
     remoteport, sockrecv, sockrecvs, strecv, socksend, socksends, stsend) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -21,8 +22,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/remoteport.html>
 remoteport ::  D -> SE ()
-remoteport b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "remoteport" [(Xr,[Ir])] [a1]
+remoteport b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "remoteport" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Receives data from other processes using the low-level UDP or TCP protocols
@@ -38,8 +41,10 @@ remoteport b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/sockrecv.html>
 sockrecv ::  D -> D -> Sig
-sockrecv b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "sockrecv" [(Ar,[Ir,Ir]),(Kr,[Ir,Ir])] [a1,a2]
+sockrecv b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "sockrecv" [(Ar,[Ir,Ir]),(Kr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Receives data from other processes using the low-level UDP or TCP protocols
@@ -54,8 +59,10 @@ sockrecv b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/sockrecv.html>
 sockrecvs ::  D -> D -> (Sig,Sig)
-sockrecvs b1 b2 = pureTuple $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = mopcs "sockrecvs" ([Ar,Ar],[Ir,Ir]) [a1,a2]
+sockrecvs b1 b2 =
+  pureTuple $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = mopcs "sockrecvs" ([Ar,Ar],[Ir,Ir]) [a1,a2]
 
 -- | 
 -- Receives data from other processes using the low-level UDP or TCP protocols
@@ -70,8 +77,10 @@ sockrecvs b1 b2 = pureTuple $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/sockrecv.html>
 strecv ::  Str -> D -> Sig
-strecv b1 b2 = Sig $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "strecv" [(Ar,[Sr,Ir])] [a1,a2]
+strecv b1 b2 =
+  Sig $ f <$> unStr b1 <*> unD b2
+  where
+    f a1 a2 = opcs "strecv" [(Ar,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Sends data to other processes using the low-level UDP or TCP protocols
@@ -86,8 +95,10 @@ strecv b1 b2 = Sig $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/socksend.html>
 socksend ::  Sig -> Str -> D -> D -> SE ()
-socksend b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "socksend" [(Xr,[Ar,Sr,Ir,Ir])] [a1,a2,a3,a4]
+socksend b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "socksend" [(Xr,[Ar,Sr,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Sends data to other processes using the low-level UDP or TCP protocols
@@ -102,8 +113,10 @@ socksend b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/socksend.html>
 socksends ::  Sig -> Sig -> Str -> D -> D -> SE ()
-socksends b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "socksends" [(Xr,[Ar,Ar,Sr,Ir,Ir])] [a1,a2,a3,a4,a5]
+socksends b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unStr) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "socksends" [(Xr,[Ar,Ar,Sr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Sends data to other processes using the low-level UDP or TCP protocols
@@ -117,5 +130,7 @@ socksends b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/socksend.html>
 stsend ::  Sig -> Str -> D -> SE ()
-stsend b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2 <*> unD b3
-    where f a1 a2 a3 = opcs "stsend" [(Xr,[Ar,Sr,Ir])] [a1,a2,a3]
+stsend b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "stsend" [(Xr,[Ar,Sr,Ir])] [a1,a2,a3]

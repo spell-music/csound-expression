@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.MixerOpcodes (
     mixerClear, mixerGetLevel, mixerReceive, mixerSend, mixerSetLevel, mixerSetLevel_i) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -17,8 +18,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/MixerClear.html>
 mixerClear ::   SE ()
-mixerClear  = SE $ (depT_ =<<) $ lift $ return $ f 
-    where f  = opcs "MixerClear" [(Xr,[])] []
+mixerClear  =
+  SE $ join $ return $ f 
+  where
+    f  = opcsDep_ "MixerClear" [(Xr,[])] []
 
 -- | 
 -- Gets the level of a send to a buss.
@@ -30,8 +33,10 @@ mixerClear  = SE $ (depT_ =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/MixerGetLevel.html>
 mixerGetLevel ::  D -> D -> SE Sig
-mixerGetLevel b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "MixerGetLevel" [(Kr,[Ir,Ir])] [a1,a2]
+mixerGetLevel b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep "MixerGetLevel" [(Kr,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Receives an arate signal from a channel of a buss.
@@ -42,8 +47,10 @@ mixerGetLevel b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/MixerReceive.html>
 mixerReceive ::  D -> D -> SE Sig
-mixerReceive b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "MixerReceive" [(Ar,[Ir,Ir])] [a1,a2]
+mixerReceive b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep "MixerReceive" [(Ar,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Mixes an arate signal into a channel of a buss.
@@ -52,8 +59,10 @@ mixerReceive b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/MixerSend.html>
 mixerSend ::  Sig -> D -> D -> D -> SE ()
-mixerSend b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "MixerSend" [(Xr,[Ar,Ir,Ir,Ir])] [a1,a2,a3,a4]
+mixerSend b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "MixerSend" [(Xr,[Ar,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Sets the level of a send to a buss.
@@ -65,8 +74,10 @@ mixerSend b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/MixerSetLevel.html>
 mixerSetLevel ::  D -> D -> Sig -> SE ()
-mixerSetLevel b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "MixerSetLevel" [(Xr,[Ir,Ir,Kr])] [a1,a2,a3]
+mixerSetLevel b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "MixerSetLevel" [(Xr,[Ir,Ir,Kr])] [a1,a2,a3]
 
 -- | 
 -- Sets the level of a send to a buss.
@@ -79,5 +90,7 @@ mixerSetLevel b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/MixerSetLevel_i.html>
 mixerSetLevel_i ::  D -> D -> D -> SE ()
-mixerSetLevel_i b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "MixerSetLevel_i" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
+mixerSetLevel_i b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "MixerSetLevel_i" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]

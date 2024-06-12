@@ -20,6 +20,7 @@ module Csound.Typed.Opcode.SignalIO (
     filebit, filelen, filenchnls, filepeak, filesr, filevalid, mp3len) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -34,8 +35,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/dumpk.html>
 dumpk ::  Sig -> Str -> D -> D -> SE ()
-dumpk b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "dumpk" [(Xr,[Kr,Sr,Ir,Ir])] [a1,a2,a3,a4]
+dumpk b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "dumpk" [(Xr,[Kr,Sr,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Periodically writes two orchestra control-signal values to an external file.
@@ -46,8 +49,10 @@ dumpk b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/dumpk2.html>
 dumpk2 ::  Sig -> Sig -> Str -> D -> D -> SE ()
-dumpk2 b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "dumpk2" [(Xr,[Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3,a4,a5]
+dumpk2 b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unStr) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "dumpk2" [(Xr,[Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Periodically writes three orchestra control-signal values to an external file.
@@ -58,8 +63,10 @@ dumpk2 b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/dumpk3.html>
 dumpk3 ::  Sig -> Sig -> Sig -> Str -> D -> D -> SE ()
-dumpk3 b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "dumpk3" [(Xr,[Kr,Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+dumpk3 b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unStr) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "dumpk3" [(Xr,[Kr,Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Periodically writes four orchestra control-signal values to an external file.
@@ -70,14 +77,10 @@ dumpk3 b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/dumpk4.html>
 dumpk4 ::  Sig -> Sig -> Sig -> Sig -> Str -> D -> D -> SE ()
-dumpk4 b1 b2 b3 b4 b5 b6 b7 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unStr b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "dumpk4" [(Xr,[Kr,Kr,Kr,Kr,Sr,Ir,Ir])] [a1
-                                                                               ,a2
-                                                                               ,a3
-                                                                               ,a4
-                                                                               ,a5
-                                                                               ,a6
-                                                                               ,a7]
+dumpk4 b1 b2 b3 b4 b5 b6 b7 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unStr) b5 <*> (lift . unD) b6 <*> (lift . unD) b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcsDep_ "dumpk4" [(Xr,[Kr,Kr,Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Closes a previously opened file.
@@ -89,8 +92,10 @@ dumpk4 b1 b2 b3 b4 b5 b6 b7 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/ficlose.html>
 ficlose ::  D -> SE ()
-ficlose b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "ficlose" [(Xr,[Ir])] [a1]
+ficlose b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "ficlose" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Read signals from a file at a-rate.
@@ -100,8 +105,10 @@ ficlose b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/fin.html>
 fin ::  Str -> D -> D -> [Sig] -> SE ()
-fin b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> mapM unSig b4
-    where f a1 a2 a3 a4 = opcs "fin" [(Xr,[Sr,Ir,Ir] ++ (repeat Ar))] ([a1,a2,a3] ++ a4)
+fin b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fin" [(Xr,[Sr,Ir,Ir] ++ (repeat Ar))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Read signals from a file at i-rate.
@@ -110,8 +117,10 @@ fin b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/fini.html>
 fini ::  Str -> D -> D -> [D] -> SE ()
-fini b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
-    where f a1 a2 a3 a4 = opcs "fini" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2,a3] ++ a4)
+fini b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fini" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Read signals from a file at k-rate.
@@ -120,8 +129,10 @@ fini b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/fink.html>
 fink ::  Str -> D -> D -> [Sig] -> SE ()
-fink b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> mapM unSig b4
-    where f a1 a2 a3 a4 = opcs "fink" [(Xr,[Sr,Ir,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
+fink b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fink" [(Xr,[Sr,Ir,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Opens a file in a specific mode.
@@ -132,8 +143,10 @@ fink b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/fiopen.html>
 fiopen ::  Str -> D -> SE D
-fiopen b1 b2 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "fiopen" [(Ir,[Sr,Ir])] [a1,a2]
+fiopen b1 b2 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep "fiopen" [(Ir,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Outputs a-rate signals to an arbitrary number of channels.
@@ -145,8 +158,10 @@ fiopen b1 b2 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/fout.html>
 fout ::  Str -> D -> [Sig] -> SE ()
-fout b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "fout" [(Xr,[Sr,Ir] ++ (repeat Ar))] ([a1,a2] ++ a3)
+fout b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> mapM (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "fout" [(Xr,[Sr,Ir] ++ (repeat Ar))] ([a1,a2] ++ a3)
 
 -- | 
 -- Outputs i-rate signals of an arbitrary number of channels to a specified file.
@@ -157,8 +172,10 @@ fout b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM unS
 --
 -- csound doc: <http://csound.com/docs/manual/fouti.html>
 fouti ::  Str -> D -> D -> [D] -> SE ()
-fouti b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
-    where f a1 a2 a3 a4 = opcs "fouti" [(Xr,(repeat Ir))] ([a1,a2,a3] ++ a4)
+fouti b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fouti" [(Xr,(repeat Ir))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Outputs i-rate signals from an arbitrary number of channels to a specified file.
@@ -169,8 +186,10 @@ fouti b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/foutir.html>
 foutir ::  Str -> D -> D -> [D] -> SE ()
-foutir b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
-    where f a1 a2 a3 a4 = opcs "foutir" [(Xr,(repeat Ir))] ([a1,a2,a3] ++ a4)
+foutir b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> mapM (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "foutir" [(Xr,(repeat Ir))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Outputs k-rate signals of an arbitrary number of channels to a specified file, in raw (headerless) format.
@@ -181,8 +200,10 @@ foutir b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/foutk.html>
 foutk ::  Str -> D -> [Sig] -> SE ()
-foutk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "foutk" [(Xr,[Sr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
+foutk b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> mapM (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "foutk" [(Xr,[Sr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Similar to printks but prints to a file.
@@ -191,8 +212,10 @@ foutk b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM un
 --
 -- csound doc: <http://csound.com/docs/manual/fprintks.html>
 fprintks ::  Str -> Str -> [Sig] -> SE ()
-fprintks b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unStr b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "fprintks" [(Xr,[Sr,Sr] ++ (repeat Kr))] ([a1,a2] ++ a3)
+fprintks b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2 <*> mapM (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "fprintks" [(Xr,[Sr,Sr] ++ (repeat Kr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Similar to prints but prints to a file.
@@ -201,8 +224,10 @@ fprintks b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unStr b2 <*> ma
 --
 -- csound doc: <http://csound.com/docs/manual/fprints.html>
 fprints ::  Str -> Str -> [D] -> SE ()
-fprints b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unStr b2 <*> mapM unD b3
-    where f a1 a2 a3 = opcs "fprints" [(Xr,[Sr,Sr] ++ (repeat Ir))] ([a1,a2] ++ a3)
+fprints b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2 <*> mapM (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "fprints" [(Xr,[Sr,Sr] ++ (repeat Ir))] ([a1,a2] ++ a3)
 
 -- | 
 -- Read signals and arrays from an hdf5 file.
@@ -212,9 +237,11 @@ fprints b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unStr b2 <*> map
 -- > xout1[, xout2, xout3, ..., xoutN]  hdf5read  ifilename, ivariablename1[, ivariablename2, ivariablename3, ..., ivariablenameN]
 --
 -- csound doc: <http://csound.com/docs/manual/hdf5read.html>
-hdf5read :: Tuple a => Str -> D -> a
-hdf5read b1 b2 = pureTuple $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = mopcs "hdf5read" ((repeat Xr),[Sr] ++ (repeat Ir)) [a1,a2]
+hdf5read :: forall a . Tuple a => Str -> D -> a
+hdf5read b1 b2 =
+  pureTuple $ f <$> unStr b1 <*> unD b2
+  where
+    f a1 a2 = mopcs "hdf5read" ((repeat Xr),[Sr] ++ (repeat Ir)) [a1,a2]
 
 -- | 
 -- Write signals and arrays to an hdf5 file.
@@ -225,8 +252,10 @@ hdf5read b1 b2 = pureTuple $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/hdf5write.html>
 hdf5write ::  Str -> Sig -> SE ()
-hdf5write b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
-    where f a1 a2 = opcs "hdf5write" [(Xr,[Sr] ++ (repeat Xr))] [a1,a2]
+hdf5write b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "hdf5write" [(Xr,[Sr] ++ (repeat Xr))] [a1,a2]
 
 -- | 
 -- Read a line of text from an external file.
@@ -237,8 +266,10 @@ hdf5write b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/readf.html>
 readf ::  Str -> (Str,Sig)
-readf b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "readf" ([Sr,Kr],[Sr]) [a1]
+readf b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "readf" ([Sr,Kr],[Sr]) [a1]
 
 -- | 
 -- Read a line of text from an external file.
@@ -249,8 +280,10 @@ readf b1 = pureTuple $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/readfi.html>
 readfi ::  Str -> (Str,D)
-readfi b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "readfi" ([Sr,Ir],[Sr]) [a1]
+readfi b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "readfi" ([Sr,Ir],[Sr]) [a1]
 
 -- | 
 -- Periodically reads an orchestra control-signal value from an external file.
@@ -261,8 +294,10 @@ readfi b1 = pureTuple $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/readk.html>
 readk ::  Str -> D -> D -> Sig
-readk b1 b2 b3 = Sig $ f <$> unStr b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "readk" [(Kr,[Sr,Ir,Ir])] [a1,a2,a3]
+readk b1 b2 b3 =
+  Sig $ f <$> unStr b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "readk" [(Kr,[Sr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Periodically reads two orchestra control-signal values from an external file.
@@ -271,8 +306,10 @@ readk b1 b2 b3 = Sig $ f <$> unStr b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/readk2.html>
 readk2 ::  Str -> D -> D -> (Sig,Sig)
-readk2 b1 b2 b3 = pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "readk2" ([Kr,Kr],[Sr,Ir,Ir]) [a1,a2,a3]
+readk2 b1 b2 b3 =
+  pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "readk2" ([Kr,Kr],[Sr,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Periodically reads three orchestra control-signal values from an external file.
@@ -281,8 +318,10 @@ readk2 b1 b2 b3 = pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/readk3.html>
 readk3 ::  Str -> D -> D -> (Sig,Sig,Sig)
-readk3 b1 b2 b3 = pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "readk3" ([Kr,Kr,Kr],[Sr,Ir,Ir]) [a1,a2,a3]
+readk3 b1 b2 b3 =
+  pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "readk3" ([Kr,Kr,Kr],[Sr,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Periodically reads four orchestra control-signal values from an external file.
@@ -291,8 +330,10 @@ readk3 b1 b2 b3 = pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/readk4.html>
 readk4 ::  Str -> D -> D -> (Sig,Sig,Sig,Sig)
-readk4 b1 b2 b3 = pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "readk4" ([Kr,Kr,Kr,Kr],[Sr,Ir,Ir]) [a1,a2,a3]
+readk4 b1 b2 b3 =
+  pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "readk4" ([Kr,Kr,Kr,Kr],[Sr,Ir,Ir]) [a1,a2,a3]
 
 -- Signal Input.
 
@@ -305,9 +346,11 @@ readk4 b1 b2 b3 = pureTuple $ f <$> unStr b1 <*> unD b2 <*> unD b3
 -- >           [, iwraparound[, iformat[, iskipinit]]]]]
 --
 -- csound doc: <http://csound.com/docs/manual/diskin.html>
-diskin :: Tuple a => Str -> a
-diskin b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "diskin" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir]) [a1]
+diskin :: forall a . Tuple a => Str -> a
+diskin b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "diskin" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir]) [a1]
 
 -- | 
 -- Reads audio data from a file, and can alter its pitch using one of several
@@ -327,9 +370,11 @@ diskin b1 = pureTuple $ f <$> unStr b1
 -- >           [, iwrap[, iformat[, iwsize[, ibufsize[, iskipinit]]]]]]]
 --
 -- csound doc: <http://csound.com/docs/manual/diskin2.html>
-diskin2 :: Tuple a => Str -> a
-diskin2 b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1]
+diskin2 :: forall a . Tuple a => Str -> a
+diskin2 b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "diskin2" ((repeat Ar),[Sr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1]
 
 -- | 
 -- Reads mono audio data from an external device or stream.
@@ -341,8 +386,10 @@ diskin2 b1 = pureTuple $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/in.html>
 in' ::   Sig
-in'  = Sig $ return $ f 
-    where f  = opcs "in" [(Ar,[]),(Ar,[])] []
+in'  =
+  Sig $ return $ f 
+  where
+    f  = opcs "in" [(Ar,[]),(Ar,[])] []
 
 -- | 
 -- Reads a 32-channel audio signal from an external device or stream.
@@ -352,41 +399,43 @@ in'  = Sig $ return $ f
 -- >           ar27, ar28, ar29, ar30, ar31, ar32  in32 
 --
 -- csound doc: <http://csound.com/docs/manual/in32.html>
-in32 :: Tuple a =>  a
-in32  = pureTuple $ return $ f 
-    where f  = mopcs "in32" ([Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar
-                             ,Ar]
-                            ,[]) []
+in32 :: forall a . Tuple a =>  a
+in32  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "in32" ([Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar
+                       ,Ar]
+                      ,[]) []
 
 -- | 
 -- Reads from numbered channels in an external audio signal or stream.
@@ -394,9 +443,11 @@ in32  = pureTuple $ return $ f
 -- > ain1[, ...]  inch  kchan1[,...]
 --
 -- csound doc: <http://csound.com/docs/manual/inch.html>
-inch :: Tuple a => [Sig] -> a
-inch b1 = pureTuple $ f <$> mapM unSig b1
-    where f a1 = mopcs "inch" ((repeat Ar),(repeat Kr)) a1
+inch :: forall a . Tuple a => [Sig] -> a
+inch b1 =
+  pureTuple $ f <$> mapM unSig b1
+  where
+    f a1 = mopcs "inch" ((repeat Ar),(repeat Kr)) a1
 
 -- | 
 -- Reads six-channel audio data from an external device or stream.
@@ -404,9 +455,11 @@ inch b1 = pureTuple $ f <$> mapM unSig b1
 -- > ar1, ar2, ar3, ar4, ar5, ar6  inh 
 --
 -- csound doc: <http://csound.com/docs/manual/inh.html>
-inh :: Tuple a =>  a
-inh  = pureTuple $ return $ f 
-    where f  = mopcs "inh" ([Ar,Ar,Ar,Ar,Ar,Ar],[]) []
+inh :: forall a . Tuple a =>  a
+inh  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "inh" ([Ar,Ar,Ar,Ar,Ar,Ar],[]) []
 
 -- | 
 -- Reads eight-channel audio data from an external device or stream.
@@ -414,9 +467,11 @@ inh  = pureTuple $ return $ f
 -- > ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8  ino 
 --
 -- csound doc: <http://csound.com/docs/manual/ino.html>
-ino :: Tuple a =>  a
-ino  = pureTuple $ return $ f 
-    where f  = mopcs "ino" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar],[]) []
+ino :: forall a . Tuple a =>  a
+ino  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "ino" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar],[]) []
 
 -- | 
 -- Reads quad audio data from an external device or stream.
@@ -425,8 +480,10 @@ ino  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/inq.html>
 inq ::   (Sig,Sig,Sig,Sig)
-inq  = pureTuple $ return $ f 
-    where f  = mopcs "inq" ([Ar,Ar,Ar,Ar],[]) []
+inq  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "inq" ([Ar,Ar,Ar,Ar],[]) []
 
 -- | 
 -- Allow input from a range of adjacent audio channels from the audio input device
@@ -437,8 +494,10 @@ inq  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/inrg.html>
 inrg ::  Sig -> [Sig] -> SE ()
-inrg b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> mapM unSig b2
-    where f a1 a2 = opcs "inrg" [(Xr,[Kr] ++ (repeat Ar))] ([a1] ++ a2)
+inrg b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> mapM (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "inrg" [(Xr,[Kr] ++ (repeat Ar))] ([a1] ++ a2)
 
 -- | 
 -- Reads stereo audio data from an external device or stream.
@@ -447,8 +506,10 @@ inrg b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/ins.html>
 ins ::   (Sig,Sig)
-ins  = pureTuple $ return $ f 
-    where f  = mopcs "ins" ([Ar,Ar],[]) []
+ins  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "ins" ([Ar,Ar],[]) []
 
 -- | 
 -- Reads a k-rate signal from a user-defined channel.
@@ -461,8 +522,10 @@ ins  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/invalue.html>
 invalue ::  Str -> Str
-invalue b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "invalue" [(Ir,[Sr]),(Kr,[Sr]),(Sr,[Sr])] [a1]
+invalue b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "invalue" [(Ir,[Sr]),(Kr,[Sr]),(Sr,[Sr])] [a1]
 
 -- | 
 -- Reads a 16-channel audio signal from an external device or stream.
@@ -471,9 +534,11 @@ invalue b1 = Str $ f <$> unStr b1
 -- >           ar13, ar14, ar15, ar16  inx 
 --
 -- csound doc: <http://csound.com/docs/manual/inx.html>
-inx :: Tuple a =>  a
-inx  = pureTuple $ return $ f 
-    where f  = mopcs "inx" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar],[]) []
+inx :: forall a . Tuple a =>  a
+inx  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "inx" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar],[]) []
 
 -- | 
 -- Reads multi-channel audio samples into a ZAK array from an external device or stream.
@@ -482,8 +547,10 @@ inx  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/inz.html>
 inz ::  Sig -> SE ()
-inz b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "inz" [(Xr,[Kr])] [a1]
+inz b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "inz" [(Xr,[Kr])] [a1]
 
 -- | 
 -- Reads mono or stereo audio data from an external MP3 file.
@@ -493,8 +560,10 @@ inz b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/mp3in.html>
 mp3in ::  Str -> (Sig,Sig)
-mp3in b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "mp3in" ([Ar,Ar],[Sr,Ir,Ir,Ir,Ir]) [a1]
+mp3in b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "mp3in" ([Ar,Ar],[Sr,Ir,Ir,Ir,Ir]) [a1]
 
 -- | 
 -- Reads audio data from an external device or stream.
@@ -506,9 +575,11 @@ mp3in b1 = pureTuple $ f <$> unStr b1
 -- >           [, iskipinit] [, ibufsize]
 --
 -- csound doc: <http://csound.com/docs/manual/soundin.html>
-soundin :: Tuple a => Str -> a
-soundin b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "soundin" ((repeat Ar),[Sr,Ir,Ir,Ir,Ir]) [a1]
+soundin :: forall a . Tuple a => Str -> a
+soundin b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "soundin" ((repeat Ar),[Sr,Ir,Ir,Ir,Ir]) [a1]
 
 -- Signal Output.
 
@@ -519,8 +590,10 @@ soundin b1 = pureTuple $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/mdelay.html>
 mdelay ::  Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-mdelay b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "mdelay" [(Xr,[Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
+mdelay b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "mdelay" [(Xr,[Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Returns the audio spout frame.
@@ -531,9 +604,11 @@ mdelay b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*
 -- > aarra  monitor 
 --
 -- csound doc: <http://csound.com/docs/manual/monitor.html>
-monitor :: Tuple a =>  a
-monitor  = pureTuple $ return $ f 
-    where f  = mopcs "monitor" ((repeat Ar),[]) []
+monitor :: forall a . Tuple a =>  a
+monitor  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "monitor" ((repeat Ar),[]) []
 
 -- | 
 -- Writes audio data to an external device or stream.
@@ -546,8 +621,10 @@ monitor  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/out.html>
 out ::  Sig -> SE ()
-out b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "out" [(Xr,(repeat Ar))] [a1]
+out b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "out" [(Xr,(repeat Ar))] [a1]
 
 -- | 
 -- Writes 32-channel audio data to an external device or stream.
@@ -559,69 +636,71 @@ out b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/out32.html>
 out32 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-out32 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 b20 b21 b22 b23 b24 b25 b26 b27 b28 b29 b30 b31 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unSig b11 <*> unSig b12 <*> unSig b13 <*> unSig b14 <*> unSig b15 <*> unSig b16 <*> unSig b17 <*> unSig b18 <*> unSig b19 <*> unSig b20 <*> unSig b21 <*> unSig b22 <*> unSig b23 <*> unSig b24 <*> unSig b25 <*> unSig b26 <*> unSig b27 <*> unSig b28 <*> unSig b29 <*> unSig b30 <*> unSig b31
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28 a29 a30 a31 = opcs "out32" [(Xr
-                                                                                                                                               ,[Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar
-                                                                                                                                                ,Ar])] [a1
-                                                                                                                                                       ,a2
-                                                                                                                                                       ,a3
-                                                                                                                                                       ,a4
-                                                                                                                                                       ,a5
-                                                                                                                                                       ,a6
-                                                                                                                                                       ,a7
-                                                                                                                                                       ,a8
-                                                                                                                                                       ,a9
-                                                                                                                                                       ,a10
-                                                                                                                                                       ,a11
-                                                                                                                                                       ,a12
-                                                                                                                                                       ,a13
-                                                                                                                                                       ,a14
-                                                                                                                                                       ,a15
-                                                                                                                                                       ,a16
-                                                                                                                                                       ,a17
-                                                                                                                                                       ,a18
-                                                                                                                                                       ,a19
-                                                                                                                                                       ,a20
-                                                                                                                                                       ,a21
-                                                                                                                                                       ,a22
-                                                                                                                                                       ,a23
-                                                                                                                                                       ,a24
-                                                                                                                                                       ,a25
-                                                                                                                                                       ,a26
-                                                                                                                                                       ,a27
-                                                                                                                                                       ,a28
-                                                                                                                                                       ,a29
-                                                                                                                                                       ,a30
-                                                                                                                                                       ,a31]
+out32 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 b20 b21 b22 b23 b24 b25 b26 b27 b28 b29 b30 b31 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6 <*> (lift . unSig) b7 <*> (lift . unSig) b8 <*> (lift . unSig) b9 <*> (lift . unSig) b10 <*> (lift . unSig) b11 <*> (lift . unSig) b12 <*> (lift . unSig) b13 <*> (lift . unSig) b14 <*> (lift . unSig) b15 <*> (lift . unSig) b16 <*> (lift . unSig) b17 <*> (lift . unSig) b18 <*> (lift . unSig) b19 <*> (lift . unSig) b20 <*> (lift . unSig) b21 <*> (lift . unSig) b22 <*> (lift . unSig) b23 <*> (lift . unSig) b24 <*> (lift . unSig) b25 <*> (lift . unSig) b26 <*> (lift . unSig) b27 <*> (lift . unSig) b28 <*> (lift . unSig) b29 <*> (lift . unSig) b30 <*> (lift . unSig) b31
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28 a29 a30 a31 = opcsDep_ "out32" [(Xr
+                                                                                                                                             ,[Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar
+                                                                                                                                              ,Ar])] [a1
+                                                                                                                                                     ,a2
+                                                                                                                                                     ,a3
+                                                                                                                                                     ,a4
+                                                                                                                                                     ,a5
+                                                                                                                                                     ,a6
+                                                                                                                                                     ,a7
+                                                                                                                                                     ,a8
+                                                                                                                                                     ,a9
+                                                                                                                                                     ,a10
+                                                                                                                                                     ,a11
+                                                                                                                                                     ,a12
+                                                                                                                                                     ,a13
+                                                                                                                                                     ,a14
+                                                                                                                                                     ,a15
+                                                                                                                                                     ,a16
+                                                                                                                                                     ,a17
+                                                                                                                                                     ,a18
+                                                                                                                                                     ,a19
+                                                                                                                                                     ,a20
+                                                                                                                                                     ,a21
+                                                                                                                                                     ,a22
+                                                                                                                                                     ,a23
+                                                                                                                                                     ,a24
+                                                                                                                                                     ,a25
+                                                                                                                                                     ,a26
+                                                                                                                                                     ,a27
+                                                                                                                                                     ,a28
+                                                                                                                                                     ,a29
+                                                                                                                                                     ,a30
+                                                                                                                                                     ,a31]
 
 -- | 
 -- Writes audio data with an arbitrary number of channels to an external device or stream.
@@ -630,8 +709,10 @@ out32 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 b20 b21
 --
 -- csound doc: <http://csound.com/docs/manual/outc.html>
 outc ::  [Sig] -> SE ()
-outc b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
-    where f a1 = opcs "outc" [(Xr,(repeat Ar))] a1
+outc b1 =
+  SE $ join $ f <$> mapM (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outc" [(Xr,(repeat Ar))] a1
 
 -- | 
 -- Writes multi-channel audio data, with user-controllable channels, to an external device or stream.
@@ -640,8 +721,10 @@ outc b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outch.html>
 outch ::  Sig -> [Sig] -> SE ()
-outch b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> mapM unSig b2
-    where f a1 a2 = opcs "outch" [(Xr,[Kr,Ar,Kr] ++ (repeat Ar))] ([a1] ++ a2)
+outch b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> mapM (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "outch" [(Xr,[Kr,Ar,Kr] ++ (repeat Ar))] ([a1] ++ a2)
 
 -- | 
 -- Writes 6-channel audio data to an external device or stream.
@@ -650,8 +733,10 @@ outch b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/outh.html>
 outh ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-outh b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "outh" [(Xr,[Ar,Ar,Ar,Ar,Ar,Ar])] [a1,a2,a3,a4,a5,a6]
+outh b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "outh" [(Xr,[Ar,Ar,Ar,Ar,Ar,Ar])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Writes 8-channel audio data to an external device or stream.
@@ -660,15 +745,17 @@ outh b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/outo.html>
 outo ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-outo b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "outo" [(Xr,[Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar])] [a1
-                                                                                   ,a2
-                                                                                   ,a3
-                                                                                   ,a4
-                                                                                   ,a5
-                                                                                   ,a6
-                                                                                   ,a7
-                                                                                   ,a8]
+outo b1 b2 b3 b4 b5 b6 b7 b8 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6 <*> (lift . unSig) b7 <*> (lift . unSig) b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcsDep_ "outo" [(Xr,[Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar])] [a1
+                                                                                 ,a2
+                                                                                 ,a3
+                                                                                 ,a4
+                                                                                 ,a5
+                                                                                 ,a6
+                                                                                 ,a7
+                                                                                 ,a8]
 
 -- | 
 -- Writes 4-channel audio data to an external device or stream.
@@ -677,8 +764,10 @@ outo b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/outq.html>
 outq ::  Sig -> Sig -> Sig -> Sig -> SE ()
-outq b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "outq" [(Xr,[Ar,Ar,Ar,Ar])] [a1,a2,a3,a4]
+outq b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "outq" [(Xr,[Ar,Ar,Ar,Ar])] [a1,a2,a3,a4]
 
 -- | 
 -- Writes samples to quad channel 1 of an external device or stream.
@@ -687,8 +776,10 @@ outq b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/outq1.html>
 outq1 ::  Sig -> SE ()
-outq1 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outq1" [(Xr,[Ar])] [a1]
+outq1 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outq1" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Writes samples to quad channel 2 of an external device or stream.
@@ -697,8 +788,10 @@ outq1 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outq2.html>
 outq2 ::  Sig -> SE ()
-outq2 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outq2" [(Xr,[Ar])] [a1]
+outq2 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outq2" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Writes samples to quad channel 3 of an external device or stream.
@@ -707,8 +800,10 @@ outq2 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outq3.html>
 outq3 ::  Sig -> SE ()
-outq3 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outq3" [(Xr,[Ar])] [a1]
+outq3 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outq3" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Writes samples to quad channel 4 of an external device or stream.
@@ -717,8 +812,10 @@ outq3 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outq4.html>
 outq4 ::  Sig -> SE ()
-outq4 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outq4" [(Xr,[Ar])] [a1]
+outq4 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outq4" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Allow output to a range of adjacent audio channels on the audio output device
@@ -729,8 +826,10 @@ outq4 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outrg.html>
 outrg ::  Sig -> [Sig] -> SE ()
-outrg b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> mapM unSig b2
-    where f a1 a2 = opcs "outrg" [(Xr,[Kr] ++ (repeat Ar))] ([a1] ++ a2)
+outrg b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> mapM (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "outrg" [(Xr,[Kr] ++ (repeat Ar))] ([a1] ++ a2)
 
 -- | 
 -- Writes stereo audio data to an external device or stream.
@@ -739,8 +838,10 @@ outrg b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/outs.html>
 outs ::  Sig -> Sig -> SE ()
-outs b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "outs" [(Xr,[Ar,Ar])] [a1,a2]
+outs b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "outs" [(Xr,[Ar,Ar])] [a1,a2]
 
 -- | 
 -- Writes samples to stereo channel 1 of an external device or stream.
@@ -749,8 +850,10 @@ outs b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/outs1.html>
 outs1 ::  Sig -> SE ()
-outs1 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outs1" [(Xr,[Ar])] [a1]
+outs1 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outs1" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Writes samples to stereo channel 2 of an external device or stream.
@@ -759,8 +862,10 @@ outs1 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outs2.html>
 outs2 ::  Sig -> SE ()
-outs2 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outs2" [(Xr,[Ar])] [a1]
+outs2 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outs2" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Sends an i-rate or k-rate signal or string to a user-defined channel.
@@ -773,8 +878,10 @@ outs2 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/outvalue.html>
 outvalue ::  Str -> D -> SE ()
-outvalue b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "outvalue" [(Xr,[Sr,Ir])] [a1,a2]
+outvalue b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "outvalue" [(Xr,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Writes 16-channel audio data to an external device or stream.
@@ -784,24 +891,26 @@ outvalue b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/outx.html>
 outx ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-outx b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unSig b11 <*> unSig b12 <*> unSig b13 <*> unSig b14 <*> unSig b15 <*> unSig b16
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 = opcs "outx" [(Xr
-                                                                                  ,[Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar])] [a1
-                                                                                                                                       ,a2
-                                                                                                                                       ,a3
-                                                                                                                                       ,a4
-                                                                                                                                       ,a5
-                                                                                                                                       ,a6
-                                                                                                                                       ,a7
-                                                                                                                                       ,a8
-                                                                                                                                       ,a9
-                                                                                                                                       ,a10
-                                                                                                                                       ,a11
-                                                                                                                                       ,a12
-                                                                                                                                       ,a13
-                                                                                                                                       ,a14
-                                                                                                                                       ,a15
-                                                                                                                                       ,a16]
+outx b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6 <*> (lift . unSig) b7 <*> (lift . unSig) b8 <*> (lift . unSig) b9 <*> (lift . unSig) b10 <*> (lift . unSig) b11 <*> (lift . unSig) b12 <*> (lift . unSig) b13 <*> (lift . unSig) b14 <*> (lift . unSig) b15 <*> (lift . unSig) b16
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 = opcsDep_ "outx" [(Xr
+                                                                                ,[Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar])] [a1
+                                                                                                                                     ,a2
+                                                                                                                                     ,a3
+                                                                                                                                     ,a4
+                                                                                                                                     ,a5
+                                                                                                                                     ,a6
+                                                                                                                                     ,a7
+                                                                                                                                     ,a8
+                                                                                                                                     ,a9
+                                                                                                                                     ,a10
+                                                                                                                                     ,a11
+                                                                                                                                     ,a12
+                                                                                                                                     ,a13
+                                                                                                                                     ,a14
+                                                                                                                                     ,a15
+                                                                                                                                     ,a16]
 
 -- | 
 -- Writes multi-channel audio data from a ZAK array to an external device or stream.
@@ -810,8 +919,10 @@ outx b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 = SE $ (depT_ =<<) $
 --
 -- csound doc: <http://csound.com/docs/manual/outz.html>
 outz ::  Sig -> SE ()
-outz b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "outz" [(Xr,[Kr])] [a1]
+outz b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "outz" [(Xr,[Kr])] [a1]
 
 -- | 
 -- Deprecated. Writes audio output to a disk file.
@@ -822,8 +933,10 @@ outz b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/soundout.html>
 soundout ::  Sig -> Str -> SE ()
-soundout b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = opcs "soundout" [(Xr,[Ar,Sr,Ir])] [a1,a2]
+soundout b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "soundout" [(Xr,[Ar,Sr,Ir])] [a1,a2]
 
 -- | 
 -- Deprecated. Writes audio output to a disk file.
@@ -834,8 +947,10 @@ soundout b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/soundouts.html>
 soundouts ::  Sig -> Sig -> Str -> SE ()
-soundouts b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
-    where f a1 a2 a3 = opcs "soundouts" [(Xr,[Ar,Ar,Sr,Ir])] [a1,a2,a3]
+soundouts b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unStr) b3
+  where
+    f a1 a2 a3 = opcsDep_ "soundouts" [(Xr,[Ar,Ar,Sr,Ir])] [a1,a2,a3]
 
 -- Software Bus.
 
@@ -849,8 +964,10 @@ soundouts b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/chani.html>
 chani ::  Sig -> SE Sig
-chani b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "chani" [(Kr,[Kr]),(Ar,[Kr])] [a1]
+chani b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "chani" [(Kr,[Kr]),(Ar,[Kr])] [a1]
 
 -- | 
 -- Send data to the outwards software bus
@@ -862,8 +979,10 @@ chani b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/chano.html>
 chano ::  Sig -> Sig -> SE ()
-chano b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "chano" [(Xr,[Kr,Kr])] [a1,a2]
+chano b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "chano" [(Xr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Declare a channel of the named software bus.
@@ -880,8 +999,10 @@ chano b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/chn.html>
 chn_k ::  Str -> D -> SE ()
-chn_k b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "chn_k" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Sr])] [a1,a2]
+chn_k b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "chn_k" [(Xr,[Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Sr])] [a1,a2]
 
 -- | 
 -- Declare a channel of the named software bus.
@@ -898,8 +1019,10 @@ chn_k b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/chn.html>
 chn_a ::  Str -> D -> SE ()
-chn_a b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "chn_a" [(Xr,[Sr,Ir])] [a1,a2]
+chn_a b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "chn_a" [(Xr,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Declare a channel of the named software bus.
@@ -916,8 +1039,10 @@ chn_a b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/chn.html>
 chn_S ::  Str -> D -> SE ()
-chn_S b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "chn_S" [(Xr,[Sr,Ir])] [a1,a2]
+chn_S b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "chn_S" [(Xr,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Clears an audio output channel of the named software bus.
@@ -930,8 +1055,10 @@ chn_S b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/chnclear.html>
 chnclear ::  Str -> SE ()
-chnclear b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "chnclear" [(Xr,[Sr])] [a1]
+chnclear b1 =
+  SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep_ "chnclear" [(Xr,[Sr])] [a1]
 
 -- | 
 -- Export a global variable as a channel of the bus.
@@ -951,11 +1078,13 @@ chnclear b1 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/chnexport.html>
 chnexport ::  Str -> D -> Str
-chnexport b1 b2 = Str $ f <$> unStr b1 <*> unD b2
-    where f a1 a2 = opcs "chnexport" [(Ir,[Sr,Ir,Ir,Ir,Ir,Ir])
-                                     ,(Kr,[Sr,Ir,Ir,Ir,Ir,Ir])
-                                     ,(Ar,[Sr,Ir])
-                                     ,(Sr,[Sr,Ir])] [a1,a2]
+chnexport b1 b2 =
+  Str $ f <$> unStr b1 <*> unD b2
+  where
+    f a1 a2 = opcs "chnexport" [(Ir,[Sr,Ir,Ir,Ir,Ir,Ir])
+                               ,(Kr,[Sr,Ir,Ir,Ir,Ir,Ir])
+                               ,(Ar,[Sr,Ir])
+                               ,(Sr,[Sr,Ir])] [a1,a2]
 
 -- | 
 -- Reads data from the software bus.
@@ -971,8 +1100,10 @@ chnexport b1 b2 = Str $ f <$> unStr b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/chnget.html>
 chnget ::  Str -> SE Str
-chnget b1 = fmap ( Str . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1
-    where f a1 = opcs "chnget" [(Ir,[Sr]),(Kr,[Sr]),(Ar,[Sr]),(Sr,[Sr])] [a1]
+chnget b1 =
+  fmap ( Str . return) $ SE $ join $ f <$> (lift . unStr) b1
+  where
+    f a1 = opcsDep "chnget" [(Ir,[Sr]),(Kr,[Sr]),(Ar,[Sr]),(Sr,[Sr])] [a1]
 
 -- | 
 -- Reads data from the software bus.
@@ -985,8 +1116,10 @@ chnget b1 = fmap ( Str . return) $ SE $ (depT =<<) $ lift $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/chnget.html>
 chngetks ::  Str -> Str
-chngetks b1 = Str $ f <$> unStr b1
-    where f a1 = opcs "chngetks" [(Sr,[Sr])] [a1]
+chngetks b1 =
+  Str $ f <$> unStr b1
+  where
+    f a1 = opcs "chngetks" [(Sr,[Sr])] [a1]
 
 -- | 
 -- Writes audio data to the named software bus, mixing to the previous
@@ -1000,8 +1133,10 @@ chngetks b1 = Str $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/chnmix.html>
 chnmix ::  Sig -> Str -> SE ()
-chnmix b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = opcs "chnmix" [(Xr,[Ar,Sr])] [a1,a2]
+chnmix b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "chnmix" [(Xr,[Ar,Sr])] [a1,a2]
 
 -- | 
 -- Query parameters of a channel.
@@ -1012,9 +1147,11 @@ chnmix b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2
 -- > itype, imode, ictltype, idflt, imin, imax  chnparams  Sname
 --
 -- csound doc: <http://csound.com/docs/manual/chnparams.html>
-chnparams :: Tuple a => Str -> a
-chnparams b1 = pureTuple $ f <$> unStr b1
-    where f a1 = mopcs "chnparams" ([Ir,Ir,Ir,Ir,Ir,Ir],[Sr]) [a1]
+chnparams :: forall a . Tuple a => Str -> a
+chnparams b1 =
+  pureTuple $ f <$> unStr b1
+  where
+    f a1 = mopcs "chnparams" ([Ir,Ir,Ir,Ir,Ir,Ir],[Sr]) [a1]
 
 -- | 
 -- Writes data to the named software bus.
@@ -1030,8 +1167,10 @@ chnparams b1 = pureTuple $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/chnset.html>
 chnset ::  D -> Str -> SE ()
-chnset b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unStr b2
-    where f a1 a2 = opcs "chnset" [(Xr,[Ir,Sr])] [a1,a2]
+chnset b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "chnset" [(Xr,[Ir,Sr])] [a1,a2]
 
 -- | 
 -- Writes data to the named software bus.
@@ -1044,8 +1183,10 @@ chnset b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/chnset.html>
 chnsetks ::  Str -> Str -> SE ()
-chnsetks b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unStr b2
-    where f a1 a2 = opcs "chnsetks" [(Xr,[Sr,Sr])] [a1,a2]
+chnsetks b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "chnsetks" [(Xr,[Sr,Sr])] [a1,a2]
 
 -- | 
 -- Sets the local ksmps value in an instrument or user-defined opcode block
@@ -1056,8 +1197,10 @@ chnsetks b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/setksmps.html>
 setksmps ::  D -> SE ()
-setksmps b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "setksmps" [(Xr,[Ir])] [a1]
+setksmps b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "setksmps" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Passes variables to a user-defined opcode block,
@@ -1067,9 +1210,11 @@ setksmps b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 -- > xinarg1 [, xinarg2] ... [xinargN]  xin 
 --
 -- csound doc: <http://csound.com/docs/manual/xin.html>
-xin :: Tuple a =>  a
-xin  = pureTuple $ return $ f 
-    where f  = mopcs "xin" ((repeat Xr),[]) []
+xin :: forall a . Tuple a =>  a
+xin  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "xin" ((repeat Xr),[]) []
 
 -- | 
 -- Retrieves variables from a user-defined opcode block,
@@ -1080,8 +1225,10 @@ xin  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/xout.html>
 xout ::  [Sig] -> SE ()
-xout b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
-    where f a1 = opcs "xout" [(Xr,(repeat Xr))] a1
+xout b1 =
+  SE $ join $ f <$> mapM (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "xout" [(Xr,(repeat Xr))] a1
 
 -- Printing and Display.
 
@@ -1094,8 +1241,10 @@ xout b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/dispfft.html>
 dispfft ::  Sig -> D -> D -> SE ()
-dispfft b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "dispfft" [(Xr,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+dispfft b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "dispfft" [(Xr,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Displays the audio or control signals as an amplitude vs. time graph.
@@ -1106,8 +1255,10 @@ dispfft b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/display.html>
 display ::  Sig -> D -> SE ()
-display b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "display" [(Xr,[Xr,Ir,Ir,Ir])] [a1,a2]
+display b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "display" [(Xr,[Xr,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Allows text to be displayed from instruments like sliders
@@ -1118,8 +1269,10 @@ display b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/flashtxt.html>
 flashtxt ::  D -> Str -> SE ()
-flashtxt b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unStr b2
-    where f a1 a2 = opcs "flashtxt" [(Xr,[Ir,Sr])] [a1,a2]
+flashtxt b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "flashtxt" [(Xr,[Ir,Sr])] [a1,a2]
 
 -- | 
 -- Displays the values init (i-rate) variables.
@@ -1130,8 +1283,10 @@ flashtxt b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/print.html>
 print' ::  [D] -> SE ()
-print' b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unD b1
-    where f a1 = opcs "print" [(Xr,(repeat Ir))] a1
+print' b1 =
+  SE $ join $ f <$> mapM (lift . unD) b1
+  where
+    f a1 = opcsDep_ "print" [(Xr,(repeat Ir))] a1
 
 -- | 
 -- printf-style formatted output
@@ -1146,8 +1301,10 @@ print' b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/printf.html>
 printf_i ::  Str -> D -> [D] -> SE ()
-printf_i b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM unD b3
-    where f a1 a2 a3 = opcs "printf_i" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2] ++ a3)
+printf_i b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> mapM (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "printf_i" [(Xr,[Sr] ++ (repeat Ir))] ([a1,a2] ++ a3)
 
 -- | 
 -- printf-style formatted output
@@ -1162,8 +1319,10 @@ printf_i b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM
 --
 -- csound doc: <http://csound.com/docs/manual/printf.html>
 printf ::  Str -> Sig -> [Sig] -> SE ()
-printf b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "printf" [(Xr,[Sr,Kr] ++ (repeat Xr))] ([a1,a2] ++ a3)
+printf b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2 <*> mapM (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "printf" [(Xr,[Sr,Kr] ++ (repeat Xr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Prints one k-rate value at specified intervals.
@@ -1172,8 +1331,10 @@ printf b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2 <*> mapM
 --
 -- csound doc: <http://csound.com/docs/manual/printk.html>
 printk ::  D -> Sig -> SE ()
-printk b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
-    where f a1 a2 = opcs "printk" [(Xr,[Ir,Kr,Ir])] [a1,a2]
+printk b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "printk" [(Xr,[Ir,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Prints a new value every time a control variable changes.
@@ -1182,8 +1343,10 @@ printk b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/printk2.html>
 printk2 ::  Sig -> SE ()
-printk2 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "printk2" [(Xr,[Kr,Ir])] [a1]
+printk2 b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "printk2" [(Xr,[Kr,Ir])] [a1]
 
 -- | 
 -- Prints at k-rate using a printf() style syntax.
@@ -1192,8 +1355,10 @@ printk2 b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/printks.html>
 printks ::  Str -> D -> [Sig] -> SE ()
-printks b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "printks" [(Xr,[Sr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
+printks b1 b2 b3 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unD) b2 <*> mapM (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "printks" [(Xr,[Sr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Prints a new value every time a control variable changes using a
@@ -1203,8 +1368,10 @@ printks b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unD b2 <*> mapM 
 --
 -- csound doc: <http://csound.com/docs/manual/printks2.html>
 printks2 ::  Str -> Sig -> SE ()
-printks2 b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
-    where f a1 a2 = opcs "printks2" [(Xr,[Sr,Kr])] [a1,a2]
+printks2 b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "printks2" [(Xr,[Sr,Kr])] [a1,a2]
 
 -- | 
 -- Prints at init-time using a printf() style syntax.
@@ -1213,8 +1380,10 @@ printks2 b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/prints.html>
 prints ::  Str -> [Sig] -> SE ()
-prints b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> mapM unSig b2
-    where f a1 a2 = opcs "prints" [(Xr,[Sr] ++ (repeat Kr))] ([a1] ++ a2)
+prints b1 b2 =
+  SE $ join $ f <$> (lift . unStr) b1 <*> mapM (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "prints" [(Xr,[Sr] ++ (repeat Kr))] ([a1] ++ a2)
 
 -- Soundfile Queries.
 
@@ -1225,8 +1394,10 @@ prints b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unStr b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/filebit.html>
 filebit ::  Str -> D
-filebit b1 = D $ f <$> unStr b1
-    where f a1 = opcs "filebit" [(Ir,[Sr,Ir])] [a1]
+filebit b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "filebit" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Returns the length of a sound file.
@@ -1235,8 +1406,10 @@ filebit b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/filelen.html>
 filelen ::  Str -> D
-filelen b1 = D $ f <$> unStr b1
-    where f a1 = opcs "filelen" [(Ir,[Sr,Ir])] [a1]
+filelen b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "filelen" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Returns the number of channels in a sound file.
@@ -1245,8 +1418,10 @@ filelen b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/filenchnls.html>
 filenchnls ::  Str -> D
-filenchnls b1 = D $ f <$> unStr b1
-    where f a1 = opcs "filenchnls" [(Ir,[Sr,Ir])] [a1]
+filenchnls b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "filenchnls" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Returns the peak absolute value of a sound file.
@@ -1255,8 +1430,10 @@ filenchnls b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/filepeak.html>
 filepeak ::  Str -> D
-filepeak b1 = D $ f <$> unStr b1
-    where f a1 = opcs "filepeak" [(Ir,[Sr,Ir])] [a1]
+filepeak b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "filepeak" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Returns the sample rate of a sound file.
@@ -1265,8 +1442,10 @@ filepeak b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/filesr.html>
 filesr ::  Str -> D
-filesr b1 = D $ f <$> unStr b1
-    where f a1 = opcs "filesr" [(Ir,[Sr,Ir])] [a1]
+filesr b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "filesr" [(Ir,[Sr,Ir])] [a1]
 
 -- | 
 -- Checks that a file can be used.
@@ -1277,8 +1456,10 @@ filesr b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/filevalid.html>
 filevalid ::  Str -> D
-filevalid b1 = D $ f <$> unStr b1
-    where f a1 = opcs "filevalid" [(Ir,[Sr])] [a1]
+filevalid b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "filevalid" [(Ir,[Sr])] [a1]
 
 -- | 
 -- Returns the length of an MP3 sound file.
@@ -1287,5 +1468,7 @@ filevalid b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/mp3len.html>
 mp3len ::  Str -> D
-mp3len b1 = D $ f <$> unStr b1
-    where f a1 = opcs "mp3len" [(Ir,[Sr])] [a1]
+mp3len b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "mp3len" [(Ir,[Sr])] [a1]

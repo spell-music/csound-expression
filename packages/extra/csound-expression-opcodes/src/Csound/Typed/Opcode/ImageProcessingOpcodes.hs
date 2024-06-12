@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.ImageProcessingOpcodes (
     imagecreate, imagefree, imagegetpixel, imageload, imagesave, imagesetpixel, imagesize) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -19,8 +20,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/imagecreate.html>
 imagecreate ::  D -> D -> SE D
-imagecreate b1 b2 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "imagecreate" [(Ir,[Ir,Ir])] [a1,a2]
+imagecreate b1 b2 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep "imagecreate" [(Ir,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Frees memory allocated for a previously loaded or created image.
@@ -29,8 +32,10 @@ imagecreate b1 b2 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <
 --
 -- csound doc: <http://csound.com/docs/manual/imagefree.html>
 imagefree ::  D -> SE ()
-imagefree b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "imagefree" [(Xr,[Ir])] [a1]
+imagefree b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "imagefree" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Return the RGB pixel values of a previously opened or created image.
@@ -42,8 +47,10 @@ imagefree b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/imagegetpixel.html>
 imagegetpixel ::  D -> Sig -> Sig -> (Sig,Sig,Sig)
-imagegetpixel b1 b2 b3 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "imagegetpixel" ([Kr,Kr,Kr],[Ir,Kr,Kr]) [a1,a2,a3]
+imagegetpixel b1 b2 b3 =
+  pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "imagegetpixel" ([Kr,Kr,Kr],[Ir,Kr,Kr]) [a1,a2,a3]
 
 -- | 
 -- Load an image.
@@ -54,8 +61,10 @@ imagegetpixel b1 b2 b3 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/imageload.html>
 imageload ::  Spec -> SE D
-imageload b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unSpec b1
-    where f a1 = opcs "imageload" [(Ir,[Fr])] [a1]
+imageload b1 =
+  fmap ( D . return) $ SE $ join $ f <$> (lift . unSpec) b1
+  where
+    f a1 = opcsDep "imageload" [(Ir,[Fr])] [a1]
 
 -- | 
 -- Save a previously created image.
@@ -66,8 +75,10 @@ imageload b1 = fmap ( D . return) $ SE $ (depT =<<) $ lift $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/imagesave.html>
 imagesave ::  D -> Spec -> SE ()
-imagesave b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSpec b2
-    where f a1 a2 = opcs "imagesave" [(Xr,[Ir,Fr])] [a1,a2]
+imagesave b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSpec) b2
+  where
+    f a1 a2 = opcsDep_ "imagesave" [(Xr,[Ir,Fr])] [a1,a2]
 
 -- | 
 -- Set the RGB value of a pixel inside a previously opened or created image.
@@ -79,8 +90,10 @@ imagesave b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSpec b2
 --
 -- csound doc: <http://csound.com/docs/manual/imagesetpixel.html>
 imagesetpixel ::  D -> Sig -> Sig -> Sig -> Sig -> Sig -> SE ()
-imagesetpixel b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "imagesetpixel" [(Xr,[Ir,Ar,Ar,Ar,Ar,Ar])] [a1,a2,a3,a4,a5,a6]
+imagesetpixel b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "imagesetpixel" [(Xr,[Ir,Ar,Ar,Ar,Ar,Ar])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Return the width and height of a previously opened or created image.
@@ -91,5 +104,7 @@ imagesetpixel b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/imagesize.html>
 imagesize ::  D -> (D,D)
-imagesize b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "imagesize" ([Ir,Ir],[Ir]) [a1]
+imagesize b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "imagesize" ([Ir,Ir],[Ir]) [a1]

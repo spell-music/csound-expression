@@ -23,6 +23,7 @@ module Csound.Typed.Opcode.SpectralProcessing (
     centroid, filescal, mincer, mp3scal, paulstretch, temposcal) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -37,8 +38,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/ktableseg.html>
 ktableseg ::  Tab -> D -> Tab -> SE ()
-ktableseg b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "ktableseg" [(Xr,(repeat Ir))] [a1,a2,a3]
+ktableseg b1 b2 b3 =
+  SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "ktableseg" [(Xr,(repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- Reads from a pvoc file and uses the data to perform additive synthesis.
@@ -50,8 +53,10 @@ ktableseg b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unD b2 <*> unT
 --
 -- csound doc: <http://csound.com/docs/manual/pvadd.html>
 pvadd ::  Sig -> Sig -> Str -> Tab -> D -> Sig
-pvadd b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unTab b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "pvadd" [(Ar,[Kr,Kr,Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+pvadd b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unTab b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pvadd" [(Ar,[Kr,Kr,Sr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Reads from a phase vocoder analysis file and makes the retrieved data available.
@@ -62,8 +67,10 @@ pvadd b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unTab 
 --
 -- csound doc: <http://csound.com/docs/manual/pvbufread.html>
 pvbufread ::  Sig -> Str -> SE ()
-pvbufread b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = opcs "pvbufread" [(Xr,[Kr,Sr])] [a1,a2]
+pvbufread b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "pvbufread" [(Xr,[Kr,Sr])] [a1,a2]
 
 -- | 
 -- Applies the amplitudes from one phase vocoder analysis file to the data from a second file.
@@ -74,8 +81,10 @@ pvbufread b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvcross.html>
 pvcross ::  Sig -> Sig -> Str -> Sig -> Sig -> Sig
-pvcross b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "pvcross" [(Ar,[Kr,Kr,Sr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+pvcross b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pvcross" [(Ar,[Kr,Kr,Sr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Interpolates between the amplitudes and frequencies of two phase vocoder analysis files.
@@ -87,16 +96,18 @@ pvcross b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/pvinterp.html>
 pvinterp ::  Sig -> Sig -> Str -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-pvinterp b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "pvinterp" [(Ar,[Kr,Kr,Sr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1
-                                                                                             ,a2
-                                                                                             ,a3
-                                                                                             ,a4
-                                                                                             ,a5
-                                                                                             ,a6
-                                                                                             ,a7
-                                                                                             ,a8
-                                                                                             ,a9]
+pvinterp b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "pvinterp" [(Ar,[Kr,Kr,Sr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7
+                                                                                       ,a8
+                                                                                       ,a9]
 
 -- | 
 -- Implements signal reconstruction using an fft-based phase vocoder.
@@ -106,8 +117,10 @@ pvinterp b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSt
 --
 -- csound doc: <http://csound.com/docs/manual/pvoc.html>
 pvoc ::  Sig -> Sig -> Str -> Sig
-pvoc b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
-    where f a1 a2 a3 = opcs "pvoc" [(Ar,[Kr,Kr,Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+pvoc b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
+  where
+    f a1 a2 a3 = opcs "pvoc" [(Ar,[Kr,Kr,Sr,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Reads from a phase vocoder analysis file and returns the frequency and amplitude from a single analysis channel or bin.
@@ -118,8 +131,10 @@ pvoc b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvread.html>
 pvread ::  Sig -> Str -> D -> (Sig,Sig)
-pvread b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unStr b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "pvread" ([Kr,Kr],[Kr,Sr,Ir]) [a1,a2,a3]
+pvread b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unStr b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "pvread" ([Kr,Kr],[Kr,Sr,Ir]) [a1,a2,a3]
 
 -- | 
 -- Creates a new function table by making linear segments between values in stored function tables.
@@ -130,8 +145,10 @@ pvread b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unStr b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/tableseg.html>
 tableseg ::  Tab -> D -> Tab -> SE ()
-tableseg b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "tableseg" [(Xr,(repeat Ir))] [a1,a2,a3]
+tableseg b1 b2 b3 =
+  SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "tableseg" [(Xr,(repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- Creates a new function table by making exponential segments between values in stored function tables.
@@ -142,8 +159,10 @@ tableseg b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unD b2 <*> unTa
 --
 -- csound doc: <http://csound.com/docs/manual/tablexseg.html>
 tablexseg ::  Tab -> D -> Tab -> SE ()
-tablexseg b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "tablexseg" [(Xr,(repeat Ir))] [a1,a2,a3]
+tablexseg b1 b2 b3 =
+  SE $ join $ f <$> (lift . unTab) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "tablexseg" [(Xr,(repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- Implements signal reconstruction using an fft-based phase vocoder and an extra envelope.
@@ -152,8 +171,10 @@ tablexseg b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unTab b1 <*> unD b2 <*> unT
 --
 -- csound doc: <http://csound.com/docs/manual/vpvoc.html>
 vpvoc ::  Sig -> Sig -> Str -> Sig
-vpvoc b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
-    where f a1 a2 a3 = opcs "vpvoc" [(Ar,[Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3]
+vpvoc b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
+  where
+    f a1 a2 a3 = opcs "vpvoc" [(Ar,[Kr,Kr,Sr,Ir,Ir])] [a1,a2,a3]
 
 -- LPC.
 
@@ -164,8 +185,10 @@ vpvoc b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unStr b3
 --
 -- csound doc: <http://csound.com/docs/manual/lpfreson.html>
 lpfreson ::  Sig -> Sig -> Sig
-lpfreson b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "lpfreson" [(Ar,[Ar,Kr])] [a1,a2]
+lpfreson b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "lpfreson" [(Ar,[Ar,Kr])] [a1,a2]
 
 -- | 
 -- Computes a new set of poles from the interpolation between two analysis.
@@ -174,8 +197,10 @@ lpfreson b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/lpinterp.html>
 lpinterp ::  D -> D -> Sig -> SE ()
-lpinterp b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "lpinterp" [(Xr,[Ir,Ir,Kr])] [a1,a2,a3]
+lpinterp b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "lpinterp" [(Xr,[Ir,Ir,Kr])] [a1,a2,a3]
 
 -- | 
 -- Reads a control file of time-ordered information frames.
@@ -184,8 +209,10 @@ lpinterp b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/lpread.html>
 lpread ::  Sig -> Str -> (Sig,Sig,Sig,Sig)
-lpread b1 b2 = pureTuple $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = mopcs "lpread" ([Kr,Kr,Kr,Kr],[Kr,Sr,Ir,Ir]) [a1,a2]
+lpread b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unStr b2
+  where
+    f a1 a2 = mopcs "lpread" ([Kr,Kr,Kr,Kr],[Kr,Sr,Ir,Ir]) [a1,a2]
 
 -- | 
 -- Resynthesises a signal from the data passed internally by a previous lpread.
@@ -194,8 +221,10 @@ lpread b1 b2 = pureTuple $ f <$> unSig b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/lpreson.html>
 lpreson ::  Sig -> Sig
-lpreson b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "lpreson" [(Ar,[Ar])] [a1]
+lpreson b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "lpreson" [(Ar,[Ar])] [a1]
 
 -- | 
 -- Selects the slot to be use by further lp opcodes.
@@ -204,8 +233,10 @@ lpreson b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/lpslot.html>
 lpslot ::  D -> SE ()
-lpslot b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "lpslot" [(Xr,[Ir])] [a1]
+lpslot b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "lpslot" [(Xr,[Ir])] [a1]
 
 -- Non-Standard.
 
@@ -216,8 +247,10 @@ lpslot b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/specaddm.html>
 specaddm ::  Wspec -> Wspec -> Wspec
-specaddm b1 b2 = Wspec $ f <$> unWspec b1 <*> unWspec b2
-    where f a1 a2 = opcs "specaddm" [(Wr,[Wr,Wr,Ir])] [a1,a2]
+specaddm b1 b2 =
+  Wspec $ f <$> unWspec b1 <*> unWspec b2
+  where
+    f a1 a2 = opcs "specaddm" [(Wr,[Wr,Wr,Ir])] [a1,a2]
 
 -- | 
 -- Finds the positive difference values between consecutive spectral frames.
@@ -226,8 +259,10 @@ specaddm b1 b2 = Wspec $ f <$> unWspec b1 <*> unWspec b2
 --
 -- csound doc: <http://csound.com/docs/manual/specdiff.html>
 specdiff ::  Wspec -> Wspec
-specdiff b1 = Wspec $ f <$> unWspec b1
-    where f a1 = opcs "specdiff" [(Wr,[Wr])] [a1]
+specdiff b1 =
+  Wspec $ f <$> unWspec b1
+  where
+    f a1 = opcs "specdiff" [(Wr,[Wr])] [a1]
 
 -- | 
 -- Displays the magnitude values of the spectrum.
@@ -236,8 +271,10 @@ specdiff b1 = Wspec $ f <$> unWspec b1
 --
 -- csound doc: <http://csound.com/docs/manual/specdisp.html>
 specdisp ::  Wspec -> D -> SE ()
-specdisp b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unWspec b1 <*> unD b2
-    where f a1 a2 = opcs "specdisp" [(Xr,[Wr,Ir,Ir])] [a1,a2]
+specdisp b1 b2 =
+  SE $ join $ f <$> (lift . unWspec) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "specdisp" [(Xr,[Wr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Filters each channel of an input spectrum.
@@ -246,8 +283,10 @@ specdisp b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unWspec b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/specfilt.html>
 specfilt ::  Wspec -> D -> Wspec
-specfilt b1 b2 = Wspec $ f <$> unWspec b1 <*> unD b2
-    where f a1 a2 = opcs "specfilt" [(Wr,[Wr,Ir])] [a1,a2]
+specfilt b1 b2 =
+  Wspec $ f <$> unWspec b1 <*> unD b2
+  where
+    f a1 a2 = opcs "specfilt" [(Wr,[Wr,Ir])] [a1,a2]
 
 -- | 
 -- Accumulates the values of successive spectral frames.
@@ -256,8 +295,10 @@ specfilt b1 b2 = Wspec $ f <$> unWspec b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/spechist.html>
 spechist ::  Wspec -> Wspec
-spechist b1 = Wspec $ f <$> unWspec b1
-    where f a1 = opcs "spechist" [(Wr,[Wr])] [a1]
+spechist b1 =
+  Wspec $ f <$> unWspec b1
+  where
+    f a1 = opcs "spechist" [(Wr,[Wr])] [a1]
 
 -- | 
 -- Estimates the pitch of the most prominent complex tone in the spectrum.
@@ -269,9 +310,11 @@ spechist b1 = Wspec $ f <$> unWspec b1
 --
 -- csound doc: <http://csound.com/docs/manual/specptrk.html>
 specptrk ::  Wspec -> Sig -> D -> D -> D -> D -> D -> D -> (Sig,Sig)
-specptrk b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unWspec b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "specptrk" ([Kr,Kr]
-                                                       ,[Wr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8]
+specptrk b1 b2 b3 b4 b5 b6 b7 b8 =
+  pureTuple $ f <$> unWspec b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "specptrk" ([Kr,Kr]
+                                                 ,[Wr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8]
 
 -- | 
 -- Scales an input spectral datablock with spectral envelopes.
@@ -280,8 +323,10 @@ specptrk b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unWspec b1 <*> unSig b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/specscal.html>
 specscal ::  Wspec -> D -> D -> Wspec
-specscal b1 b2 b3 = Wspec $ f <$> unWspec b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "specscal" [(Wr,[Wr,Ir,Ir])] [a1,a2,a3]
+specscal b1 b2 b3 =
+  Wspec $ f <$> unWspec b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "specscal" [(Wr,[Wr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Sums the magnitudes across all channels of the spectrum.
@@ -290,8 +335,10 @@ specscal b1 b2 b3 = Wspec $ f <$> unWspec b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/specsum.html>
 specsum ::  Wspec -> Sig
-specsum b1 = Sig $ f <$> unWspec b1
-    where f a1 = opcs "specsum" [(Kr,[Wr,Ir])] [a1]
+specsum b1 =
+  Sig $ f <$> unWspec b1
+  where
+    f a1 = opcs "specsum" [(Kr,[Wr,Ir])] [a1]
 
 -- | 
 -- Generate a constant-Q, exponentially-spaced DFT.
@@ -303,8 +350,10 @@ specsum b1 = Sig $ f <$> unWspec b1
 --
 -- csound doc: <http://csound.com/docs/manual/spectrum.html>
 spectrum ::  Sig -> D -> D -> D -> Wspec
-spectrum b1 b2 b3 b4 = Wspec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "spectrum" [(Wr,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+spectrum b1 b2 b3 b4 =
+  Wspec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "spectrum" [(Wr,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- Streaming.
 
@@ -324,8 +373,10 @@ spectrum b1 b2 b3 b4 = Wspec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/binit.html>
 binit ::  Spec -> D -> Spec
-binit b1 b2 = Spec $ f <$> unSpec b1 <*> unD b2
-    where f a1 a2 = opcs "binit" [(Fr,[Fr,Ir])] [a1,a2]
+binit b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unD b2
+  where
+    f a1 a2 = opcs "binit" [(Fr,[Fr,Ir])] [a1,a2]
 
 -- | 
 -- Generate an fsig from a mono audio source ain, using phase
@@ -338,8 +389,10 @@ binit b1 b2 = Spec $ f <$> unSpec b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/cudanal.html>
 cudanal ::  Sig -> D -> D -> D -> D -> Spec
-cudanal b1 b2 b3 b4 b5 = Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "cudanal" [(Fr,[Ar,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+cudanal b1 b2 b3 b4 b5 =
+  Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "cudanal" [(Fr,[Ar,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Perform sliding phase vocoder algorithm with simplified
@@ -353,8 +406,10 @@ cudanal b1 b2 b3 b4 b5 = Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 
 --
 -- csound doc: <http://csound.com/docs/manual/cudasliding.html>
 cudasliding ::  Sig -> Sig -> D -> Sig
-cudasliding b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "cudasliding" [(Ar,[Ar,Ar,Ir])] [a1,a2,a3]
+cudasliding b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "cudasliding" [(Ar,[Ar,Ar,Ir])] [a1,a2,a3]
 
 -- | 
 -- Synthesis by additive synthesis and inverse FFT. Experimental and
@@ -368,10 +423,14 @@ cudasliding b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/cudasynth.html>
 cudasynth ::  Sig -> Sig -> Tab -> D -> D -> Sig
-cudasynth b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "cudasynth" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir])
-                                              ,(Ar,[Fr,Kr,Kr,Ir])
-                                              ,(Ar,[Fr])] [a1,a2,a3,a4,a5]
+cudasynth b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "cudasynth" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir]),(Ar,[Fr,Kr,Kr,Ir]),(Ar,[Fr])] [a1
+                                                                                                ,a2
+                                                                                                ,a3
+                                                                                                ,a4
+                                                                                                ,a5]
 
 -- | 
 -- Partial track spectral analysis.
@@ -389,8 +448,10 @@ cudasynth b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/partials.html>
 partials ::  Spec -> Spec -> Sig -> Sig -> Sig -> D -> Spec
-partials b1 b2 b3 b4 b5 b6 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "partials" [(Fr,[Fr,Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6]
+partials b1 b2 b3 b4 b5 b6 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "partials" [(Fr,[Fr,Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Resynthesize using a fast oscillator-bank.
@@ -399,8 +460,10 @@ partials b1 b2 b3 b4 b5 b6 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/pvsadsyn.html>
 pvsadsyn ::  Spec -> D -> Sig -> Sig
-pvsadsyn b1 b2 b3 = Sig $ f <$> unSpec b1 <*> unD b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvsadsyn" [(Ar,[Fr,Ir,Kr,Ir,Ir,Ir])] [a1,a2,a3]
+pvsadsyn b1 b2 b3 =
+  Sig $ f <$> unSpec b1 <*> unD b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvsadsyn" [(Ar,[Fr,Ir,Kr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Generate an fsig from a mono audio source ain, using phase vocoder overlap-add analysis.
@@ -409,8 +472,10 @@ pvsadsyn b1 b2 b3 = Sig $ f <$> unSpec b1 <*> unD b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsanal.html>
 pvsanal ::  Sig -> D -> D -> D -> D -> Spec
-pvsanal b1 b2 b3 b4 b5 = Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "pvsanal" [(Fr,[Ar,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+pvsanal b1 b2 b3 b4 b5 =
+  Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pvsanal" [(Fr,[Ar,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Arpeggiate the spectral components of a streaming pv signal.
@@ -423,8 +488,10 @@ pvsanal b1 b2 b3 b4 b5 = Spec $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 
 --
 -- csound doc: <http://csound.com/docs/manual/pvsarp.html>
 pvsarp ::  Spec -> Sig -> Sig -> Sig -> Spec
-pvsarp b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "pvsarp" [(Fr,[Fr,Kr,Kr,Kr])] [a1,a2,a3,a4]
+pvsarp b1 b2 b3 b4 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "pvsarp" [(Fr,[Fr,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- A band pass filter working in the spectral domain.
@@ -437,8 +504,10 @@ pvsarp b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/pvsbandp.html>
 pvsbandp ::  Spec -> Sig -> Sig -> Sig -> Sig -> Spec
-pvsbandp b1 b2 b3 b4 b5 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "pvsbandp" [(Fr,[Fr,Xr,Xr,Xr,Xr,Kr])] [a1,a2,a3,a4,a5]
+pvsbandp b1 b2 b3 b4 b5 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pvsbandp" [(Fr,[Fr,Xr,Xr,Xr,Xr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A band reject filter working in the spectral domain.
@@ -451,8 +520,10 @@ pvsbandp b1 b2 b3 b4 b5 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/pvsbandr.html>
 pvsbandr ::  Spec -> Sig -> Sig -> Sig -> Sig -> Spec
-pvsbandr b1 b2 b3 b4 b5 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "pvsbandr" [(Fr,[Fr,Xr,Xr,Xr,Xr,Kr])] [a1,a2,a3,a4,a5]
+pvsbandr b1 b2 b3 b4 b5 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pvsbandr" [(Fr,[Fr,Xr,Xr,Xr,Xr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Obtain the amp and freq values off a PVS signal bin.
@@ -463,8 +534,10 @@ pvsbandr b1 b2 b3 b4 b5 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/pvsbin.html>
 pvsbin ::  Spec -> Sig -> (Sig,Sig)
-pvsbin b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = mopcs "pvsbin" ([Kr,Kr],[Fr,Kr]) [a1,a2]
+pvsbin b1 b2 =
+  pureTuple $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "pvsbin" ([Kr,Kr],[Fr,Kr]) [a1,a2]
 
 -- | 
 -- Average the amp/freq time functions of each analysis channel for
@@ -478,8 +551,10 @@ pvsbin b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsblur.html>
 pvsblur ::  Spec -> Sig -> D -> Spec
-pvsblur b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "pvsblur" [(Fr,[Fr,Kr,Ir])] [a1,a2,a3]
+pvsblur b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "pvsblur" [(Fr,[Fr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- This opcode creates and writes to a circular buffer for f-signals (streaming PV signals).
@@ -494,8 +569,10 @@ pvsblur b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsbuffer.html>
 pvsbuffer ::  Spec -> D -> (D,Sig)
-pvsbuffer b1 b2 = pureTuple $ f <$> unSpec b1 <*> unD b2
-    where f a1 a2 = mopcs "pvsbuffer" ([Ir,Kr],[Fr,Ir]) [a1,a2]
+pvsbuffer b1 b2 =
+  pureTuple $ f <$> unSpec b1 <*> unD b2
+  where
+    f a1 a2 = mopcs "pvsbuffer" ([Ir,Kr],[Fr,Ir]) [a1,a2]
 
 -- | 
 -- This opcode reads a circular buffer of f-signals (streaming PV signals).
@@ -510,8 +587,10 @@ pvsbuffer b1 b2 = pureTuple $ f <$> unSpec b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsbufread.html>
 pvsbufread ::  Sig -> Sig -> Spec
-pvsbufread b1 b2 = Spec $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "pvsbufread" [(Fr,[Kr,Kr,Ir,Ir,Ir])] [a1,a2]
+pvsbufread b1 b2 =
+  Spec $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pvsbufread" [(Fr,[Kr,Kr,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- This opcode reads a circular buffer of f-signals (streaming PV signals), with binwise additional delays.
@@ -526,8 +605,10 @@ pvsbufread b1 b2 = Spec $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsbufread2.html>
 pvsbufread2 ::  Sig -> Sig -> D -> D -> Spec
-pvsbufread2 b1 b2 b3 b4 = Spec $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "pvsbufread2" [(Fr,[Kr,Kr,Ir,Ir])] [a1,a2,a3,a4]
+pvsbufread2 b1 b2 b3 b4 =
+  Spec $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "pvsbufread2" [(Fr,[Kr,Kr,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Scale the frequency components of a pv stream.
@@ -540,8 +621,10 @@ pvsbufread2 b1 b2 b3 b4 = Spec $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/pvscale.html>
 pvscale ::  Spec -> Sig -> Spec
-pvscale b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "pvscale" [(Fr,[Fr,Kr,Kr,Kr,Kr])] [a1,a2]
+pvscale b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pvscale" [(Fr,[Fr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- Calculate the spectral centroid of a signal.
@@ -552,8 +635,10 @@ pvscale b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvscent.html>
 pvscent ::  Spec -> Sig
-pvscent b1 = Sig $ f <$> unSpec b1
-    where f a1 = opcs "pvscent" [(Kr,[Fr])] [a1]
+pvscent b1 =
+  Sig $ f <$> unSpec b1
+  where
+    f a1 = opcs "pvscent" [(Kr,[Fr])] [a1]
 
 -- | 
 -- Calculate the cepstrum of a pvs input, optionally liftering coefficients.
@@ -564,8 +649,10 @@ pvscent b1 = Sig $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/pvsceps.html>
 pvsceps ::  Spec -> Sig
-pvsceps b1 = Sig $ f <$> unSpec b1
-    where f a1 = opcs "pvsceps" [(Kr,[Fr,Ir])] [a1]
+pvsceps b1 =
+  Sig $ f <$> unSpec b1
+  where
+    f a1 = opcs "pvsceps" [(Kr,[Fr,Ir])] [a1]
 
 -- | 
 -- Performs cross-synthesis between two source fsigs.
@@ -574,8 +661,10 @@ pvsceps b1 = Sig $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/pvscross.html>
 pvscross ::  Spec -> Spec -> Sig -> Sig -> Spec
-pvscross b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "pvscross" [(Fr,[Fr,Fr,Kr,Kr])] [a1,a2,a3,a4]
+pvscross b1 b2 b3 b4 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "pvscross" [(Fr,[Fr,Fr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Spectral azimuth-based de-mixing of stereo sources.
@@ -594,8 +683,10 @@ pvscross b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/pvsdemix.html>
 pvsdemix ::  Spec -> Spec -> Sig -> Sig -> D -> Spec
-pvsdemix b1 b2 b3 b4 b5 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "pvsdemix" [(Fr,[Fr,Fr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+pvsdemix b1 b2 b3 b4 b5 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pvsdemix" [(Fr,[Fr,Fr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Read a selected channel from a PVOC-EX analysis file.
@@ -606,8 +697,10 @@ pvsdemix b1 b2 b3 b4 b5 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/pvsdiskin.html>
 pvsdiskin ::  Str -> Sig -> Sig -> Spec
-pvsdiskin b1 b2 b3 = Spec $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvsdiskin" [(Fr,[Sr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+pvsdiskin b1 b2 b3 =
+  Spec $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvsdiskin" [(Fr,[Sr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Displays a PVS signal as an amplitude vs. freq graph.
@@ -620,8 +713,10 @@ pvsdiskin b1 b2 b3 = Spec $ f <$> unStr b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsdisp.html>
 pvsdisp ::  Spec -> SE ()
-pvsdisp b1 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1
-    where f a1 = opcs "pvsdisp" [(Xr,[Fr,Ir,Ir])] [a1]
+pvsdisp b1 =
+  SE $ join $ f <$> (lift . unSpec) b1
+  where
+    f a1 = opcsDep_ "pvsdisp" [(Xr,[Fr,Ir,Ir])] [a1]
 
 -- | 
 -- Multiply amplitudes of a pvoc stream by those of a second
@@ -631,8 +726,10 @@ pvsdisp b1 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/pvsfilter.html>
 pvsfilter ::  Spec -> Spec -> Sig -> Spec
-pvsfilter b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvsfilter" [(Fr,[Fr,Fr,Kr,Ir])] [a1,a2,a3]
+pvsfilter b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvsfilter" [(Fr,[Fr,Fr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Read a selected channel from a PVOC-EX analysis file.
@@ -643,8 +740,10 @@ pvsfilter b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsfread.html>
 pvsfread ::  Sig -> Tab -> Spec
-pvsfread b1 b2 = Spec $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "pvsfread" [(Fr,[Kr,Ir,Ir])] [a1,a2]
+pvsfread b1 b2 =
+  Spec $ f <$> unSig b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "pvsfread" [(Fr,[Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Freeze the amplitude and frequency time functions of a pv stream according to a control-rate
@@ -659,8 +758,10 @@ pvsfread b1 b2 = Spec $ f <$> unSig b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsfreeze.html>
 pvsfreeze ::  Spec -> Sig -> Sig -> Spec
-pvsfreeze b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvsfreeze" [(Fr,[Fr,Kr,Kr])] [a1,a2,a3]
+pvsfreeze b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvsfreeze" [(Fr,[Fr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Reads amplitude and/or frequency data from function tables.
@@ -669,8 +770,10 @@ pvsfreeze b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsftr.html>
 pvsftr ::  Spec -> Tab -> SE ()
-pvsftr b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1 <*> unTab b2
-    where f a1 a2 = opcs "pvsftr" [(Xr,[Fr,Ir,Ir])] [a1,a2]
+pvsftr b1 b2 =
+  SE $ join $ f <$> (lift . unSpec) b1 <*> (lift . unTab) b2
+  where
+    f a1 a2 = opcsDep_ "pvsftr" [(Xr,[Fr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Writes amplitude and/or frequency data to function tables.
@@ -679,8 +782,10 @@ pvsftr b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsftw.html>
 pvsftw ::  Spec -> Tab -> Sig
-pvsftw b1 b2 = Sig $ f <$> unSpec b1 <*> unTab b2
-    where f a1 a2 = opcs "pvsftw" [(Kr,[Fr,Ir,Ir])] [a1,a2]
+pvsftw b1 b2 =
+  Sig $ f <$> unSpec b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "pvsftw" [(Kr,[Fr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Write a fsig to a PVOCEX file.
@@ -691,8 +796,10 @@ pvsftw b1 b2 = Sig $ f <$> unSpec b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsfwrite.html>
 pvsfwrite ::  Spec -> Str -> SE ()
-pvsfwrite b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1 <*> unStr b2
-    where f a1 a2 = opcs "pvsfwrite" [(Xr,[Fr,Sr])] [a1,a2]
+pvsfwrite b1 b2 =
+  SE $ join $ f <$> (lift . unSpec) b1 <*> (lift . unStr) b2
+  where
+    f a1 a2 = opcsDep_ "pvsfwrite" [(Xr,[Fr,Sr])] [a1,a2]
 
 -- | 
 -- Scale the amplitude of a pv stream.
@@ -701,8 +808,10 @@ pvsfwrite b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsgain.html>
 pvsgain ::  Spec -> Sig -> Spec
-pvsgain b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "pvsgain" [(Fr,[Fr,Kr])] [a1,a2]
+pvsgain b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pvsgain" [(Fr,[Fr,Kr])] [a1,a2]
 
 -- | 
 -- Shift the frequency components of a pv stream, stretching/compressing
@@ -712,8 +821,10 @@ pvsgain b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvshift.html>
 pvshift ::  Spec -> Sig -> Sig -> Spec
-pvshift b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvshift" [(Fr,[Fr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3]
+pvshift b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvshift" [(Fr,[Fr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3]
 
 -- | 
 -- Instantaneous Frequency Distribution, magnitude and phase analysis.
@@ -729,8 +840,10 @@ pvshift b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsifd.html>
 pvsifd ::  Sig -> D -> D -> D -> (Spec,Spec)
-pvsifd b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = mopcs "pvsifd" ([Fr,Fr],[Ar,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4]
+pvsifd b1 b2 b3 b4 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = mopcs "pvsifd" ([Fr,Fr],[Ar,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4]
 
 -- | 
 -- Retrieve an fsig from the input software bus; a pvs equivalent to chani.
@@ -745,8 +858,10 @@ pvsifd b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/pvsin.html>
 pvsin ::  Sig -> Spec
-pvsin b1 = Spec $ f <$> unSig b1
-    where f a1 = opcs "pvsin" [(Fr,[Kr,Ir,Ir,Ir,Ir,Ir])] [a1]
+pvsin b1 =
+  Spec $ f <$> unSig b1
+  where
+    f a1 = opcs "pvsin" [(Fr,[Kr,Ir,Ir,Ir,Ir,Ir])] [a1]
 
 -- | 
 -- Get information from a PVOC-EX formatted source.
@@ -757,8 +872,10 @@ pvsin b1 = Spec $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/pvsinfo.html>
 pvsinfo ::  Spec -> (D,D,D,D)
-pvsinfo b1 = pureTuple $ f <$> unSpec b1
-    where f a1 = mopcs "pvsinfo" ([Ir,Ir,Ir,Ir],[Fr]) [a1]
+pvsinfo b1 =
+  pureTuple $ f <$> unSpec b1
+  where
+    f a1 = mopcs "pvsinfo" ([Ir,Ir,Ir,Ir],[Fr]) [a1]
 
 -- | 
 -- Initialise a spectral (f) variable to zero.
@@ -769,8 +886,10 @@ pvsinfo b1 = pureTuple $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/pvsinit.html>
 pvsinit ::  D -> Spec
-pvsinit b1 = Spec $ f <$> unD b1
-    where f a1 = opcs "pvsinit" [(Fr,[Ir,Ir,Ir,Ir,Ir])] [a1]
+pvsinit b1 =
+  Spec $ f <$> unD b1
+  where
+    f a1 = opcs "pvsinit" [(Fr,[Ir,Ir,Ir,Ir,Ir])] [a1]
 
 -- | 
 -- Frequency lock an input fsig
@@ -783,8 +902,10 @@ pvsinit b1 = Spec $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/pvslock.html>
 pvslock ::  Spec -> Sig -> Spec
-pvslock b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "pvslock" [(Fr,[Fr,Kr])] [a1,a2]
+pvslock b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pvslock" [(Fr,[Fr,Kr])] [a1,a2]
 
 -- | 
 -- Modify amplitudes using a function table, with dynamic scaling.
@@ -795,8 +916,10 @@ pvslock b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsmaska.html>
 pvsmaska ::  Spec -> Tab -> Sig -> Spec
-pvsmaska b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unTab b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvsmaska" [(Fr,[Fr,Ir,Kr])] [a1,a2,a3]
+pvsmaska b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unTab b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvsmaska" [(Fr,[Fr,Ir,Kr])] [a1,a2,a3]
 
 -- | 
 -- Mix 'seamlessly' two pv signals.
@@ -809,8 +932,10 @@ pvsmaska b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unTab b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsmix.html>
 pvsmix ::  Spec -> Spec -> Spec
-pvsmix b1 b2 = Spec $ f <$> unSpec b1 <*> unSpec b2
-    where f a1 a2 = opcs "pvsmix" [(Fr,[Fr,Fr])] [a1,a2]
+pvsmix b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2
+  where
+    f a1 a2 = opcs "pvsmix" [(Fr,[Fr,Fr])] [a1,a2]
 
 -- | 
 -- Smooth the amplitude and frequency time functions of a pv stream using parallel 1st order
@@ -829,8 +954,10 @@ pvsmix b1 b2 = Spec $ f <$> unSpec b1 <*> unSpec b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsmooth.html>
 pvsmooth ::  Spec -> Sig -> Sig -> Spec
-pvsmooth b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvsmooth" [(Fr,[Fr,Kr,Kr])] [a1,a2,a3]
+pvsmooth b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvsmooth" [(Fr,[Fr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Performs morphing (or interpolation) between two source fsigs.
@@ -841,8 +968,10 @@ pvsmooth b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsmorph.html>
 pvsmorph ::  Spec -> Spec -> Sig -> Sig -> Spec
-pvsmorph b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "pvsmorph" [(Fr,[Fr,Fr,Kr,Kr])] [a1,a2,a3,a4]
+pvsmorph b1 b2 b3 b4 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "pvsmorph" [(Fr,[Fr,Fr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- PVS-based oscillator simulator.
@@ -853,8 +982,10 @@ pvsmorph b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/pvsosc.html>
 pvsosc ::  Sig -> Sig -> Sig -> D -> Spec
-pvsosc b1 b2 b3 b4 = Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "pvsosc" [(Fr,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+pvsosc b1 b2 b3 b4 =
+  Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "pvsosc" [(Fr,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Write a fsig to the pvs output bus.
@@ -866,8 +997,10 @@ pvsosc b1 b2 b3 b4 = Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/pvsout.html>
 pvsout ::  Spec -> Sig -> SE ()
-pvsout b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "pvsout" [(Xr,[Fr,Kr])] [a1,a2]
+pvsout b1 b2 =
+  SE $ join $ f <$> (lift . unSpec) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "pvsout" [(Xr,[Fr,Kr])] [a1,a2]
 
 -- | 
 -- Track the pitch and amplitude of a PVS signal.
@@ -878,8 +1011,10 @@ pvsout b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvspitch.html>
 pvspitch ::  Spec -> Sig -> (Sig,Sig)
-pvspitch b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = mopcs "pvspitch" ([Kr,Kr],[Fr,Kr]) [a1,a2]
+pvspitch b1 b2 =
+  pureTuple $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "pvspitch" ([Kr,Kr],[Fr,Kr]) [a1,a2]
 
 -- | 
 -- Phase vocoder analysis processing with onset detection/processing.
@@ -893,8 +1028,10 @@ pvspitch b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvstanal.html>
 pvstanal ::  Sig -> Sig -> Sig -> Tab -> Spec
-pvstanal b1 b2 b3 b4 = Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
-    where f a1 a2 a3 a4 = opcs "pvstanal" [(Fr,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+pvstanal b1 b2 b3 b4 =
+  Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
+  where
+    f a1 a2 a3 a4 = opcs "pvstanal" [(Fr,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Transforms a pvoc stream according to a masking function table.
@@ -907,8 +1044,10 @@ pvstanal b1 b2 b3 b4 = Spec $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab
 --
 -- csound doc: <http://csound.com/docs/manual/pvstencil.html>
 pvstencil ::  Spec -> Sig -> Sig -> D -> Spec
-pvstencil b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "pvstencil" [(Fr,[Fr,Kr,Kr,Ir])] [a1,a2,a3,a4]
+pvstencil b1 b2 b3 b4 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "pvstencil" [(Fr,[Fr,Kr,Kr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Retain only the N loudest bins.
@@ -920,8 +1059,10 @@ pvstencil b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/pvstrace.html>
 pvstrace ::  Spec -> Sig -> Spec
-pvstrace b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "pvstrace" [(Fr,[Fr,Kr])] [a1,a2]
+pvstrace b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pvstrace" [(Fr,[Fr,Kr])] [a1,a2]
 
 -- | 
 -- Combine the spectral envelope of one fsig with the excitation (frequencies) of another.
@@ -934,8 +1075,10 @@ pvstrace b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pvsvoc.html>
 pvsvoc ::  Spec -> Spec -> Sig -> Sig -> Spec
-pvsvoc b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "pvsvoc" [(Fr,[Fr,Fr,Kr,Kr,Kr])] [a1,a2,a3,a4]
+pvsvoc b1 b2 b3 b4 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "pvsvoc" [(Fr,[Fr,Fr,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Warp the spectral envelope of a PVS signal
@@ -946,8 +1089,10 @@ pvsvoc b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/pvswarp.html>
 pvswarp ::  Spec -> Sig -> Sig -> Spec
-pvswarp b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pvswarp" [(Fr,[Fr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3]
+pvswarp b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pvswarp" [(Fr,[Fr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Resynthesise using a FFT overlap-add.
@@ -958,8 +1103,10 @@ pvswarp b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pvsynth.html>
 pvsynth ::  Spec -> Sig
-pvsynth b1 = Sig $ f <$> unSpec b1
-    where f a1 = opcs "pvsynth" [(Ar,[Fr,Ir])] [a1]
+pvsynth b1 =
+  Sig $ f <$> unSpec b1
+  where
+    f a1 = opcs "pvsynth" [(Ar,[Fr,Ir])] [a1]
 
 -- | 
 -- Streaming partial track additive synthesis with cubic phase interpolation with
@@ -974,8 +1121,10 @@ pvsynth b1 = Sig $ f <$> unSpec b1
 --
 -- csound doc: <http://csound.com/docs/manual/resyn.html>
 resyn ::  Spec -> Sig -> Sig -> Sig -> Tab -> Sig
-resyn b1 b2 b3 b4 b5 = Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
-    where f a1 a2 a3 a4 a5 = opcs "resyn" [(Ar,[Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+resyn b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "resyn" [(Ar,[Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Streaming partial track additive synthesis with cubic phase interpolation
@@ -990,8 +1139,10 @@ resyn b1 b2 b3 b4 b5 = Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/sinsyn.html>
 sinsyn ::  Spec -> Sig -> Sig -> Tab -> Sig
-sinsyn b1 b2 b3 b4 = Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
-    where f a1 a2 a3 a4 = opcs "sinsyn" [(Ar,[Fr,Kr,Kr,Ir])] [a1,a2,a3,a4]
+sinsyn b1 b2 b3 b4 =
+  Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
+  where
+    f a1 a2 a3 a4 = opcs "sinsyn" [(Ar,[Fr,Kr,Kr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Instantaneous Frequency Distribution, magnitude and phase analysis.
@@ -1007,14 +1158,10 @@ sinsyn b1 b2 b3 b4 = Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unTab b
 --
 -- csound doc: <http://csound.com/docs/manual/tabifd.html>
 tabifd ::  Sig -> Sig -> Sig -> D -> D -> D -> Tab -> (Spec,Spec)
-tabifd b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "tabifd" ([Fr,Fr],[Kr,Kr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                   ,a2
-                                                                                   ,a3
-                                                                                   ,a4
-                                                                                   ,a5
-                                                                                   ,a6
-                                                                                   ,a7]
+tabifd b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "tabifd" ([Fr,Fr],[Kr,Kr,Kr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Streaming partial track additive synthesis
@@ -1028,8 +1175,10 @@ tabifd b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/tradsyn.html>
 tradsyn ::  Spec -> Sig -> Sig -> Sig -> Tab -> Sig
-tradsyn b1 b2 b3 b4 b5 = Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
-    where f a1 a2 a3 a4 a5 = opcs "tradsyn" [(Ar,[Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+tradsyn b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "tradsyn" [(Ar,[Fr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Streaming partial track cross-synthesis.
@@ -1048,8 +1197,10 @@ tradsyn b1 b2 b3 b4 b5 = Sig $ f <$> unSpec b1 <*> unSig b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/trcross.html>
 trcross ::  Spec -> Spec -> Sig -> Sig -> Spec
-trcross b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "trcross" [(Fr,[Fr,Fr,Kr,Kr,Kr])] [a1,a2,a3,a4]
+trcross b1 b2 b3 b4 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "trcross" [(Fr,[Fr,Fr,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Streaming partial track filtering.
@@ -1064,8 +1215,10 @@ trcross b1 b2 b3 b4 = Spec $ f <$> unSpec b1 <*> unSpec b2 <*> unSig b3 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/trfilter.html>
 trfilter ::  Spec -> Sig -> Tab -> Spec
-trfilter b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "trfilter" [(Fr,[Fr,Kr,Ir])] [a1,a2,a3]
+trfilter b1 b2 b3 =
+  Spec $ f <$> unSpec b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "trfilter" [(Fr,[Fr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Extracts the highest-frequency track from a streaming track input signal.
@@ -1079,8 +1232,10 @@ trfilter b1 b2 b3 = Spec $ f <$> unSpec b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/trhighest.html>
 trhighest ::  Spec -> Sig -> (Spec,Sig,Sig)
-trhighest b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = mopcs "trhighest" ([Fr,Kr,Kr],[Fr,Kr]) [a1,a2]
+trhighest b1 b2 =
+  pureTuple $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "trhighest" ([Fr,Kr,Kr],[Fr,Kr]) [a1,a2]
 
 -- | 
 -- Extracts the lowest-frequency track from a streaming track input signal.
@@ -1094,8 +1249,10 @@ trhighest b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/trlowest.html>
 trlowest ::  Spec -> Sig -> (Spec,Sig,Sig)
-trlowest b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = mopcs "trlowest" ([Fr,Kr,Kr],[Fr,Kr]) [a1,a2]
+trlowest b1 b2 =
+  pureTuple $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "trlowest" ([Fr,Kr,Kr],[Fr,Kr]) [a1,a2]
 
 -- | 
 -- Streaming partial track mixing.
@@ -1110,8 +1267,10 @@ trlowest b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/trmix.html>
 trmix ::  Spec -> Spec -> Spec
-trmix b1 b2 = Spec $ f <$> unSpec b1 <*> unSpec b2
-    where f a1 a2 = opcs "trmix" [(Fr,[Fr,Fr])] [a1,a2]
+trmix b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSpec b2
+  where
+    f a1 a2 = opcs "trmix" [(Fr,[Fr,Fr])] [a1,a2]
 
 -- | 
 -- Streaming partial track frequency scaling.
@@ -1125,8 +1284,10 @@ trmix b1 b2 = Spec $ f <$> unSpec b1 <*> unSpec b2
 --
 -- csound doc: <http://csound.com/docs/manual/trscale.html>
 trscale ::  Spec -> Sig -> Spec
-trscale b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "trscale" [(Fr,[Fr,Kr,Kr])] [a1,a2]
+trscale b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "trscale" [(Fr,[Fr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- Streaming partial track frequency scaling.
@@ -1140,8 +1301,10 @@ trscale b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/trshift.html>
 trshift ::  Spec -> Sig -> Spec
-trshift b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = opcs "trshift" [(Fr,[Fr,Kr,Kr])] [a1,a2]
+trshift b1 b2 =
+  Spec $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "trshift" [(Fr,[Fr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- Streaming partial track frequency splitting.
@@ -1157,8 +1320,10 @@ trshift b1 b2 = Spec $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/trsplit.html>
 trsplit ::  Spec -> Sig -> (Spec,Spec)
-trsplit b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
-    where f a1 a2 = mopcs "trsplit" ([Fr,Fr],[Fr,Kr,Kr,Kr]) [a1,a2]
+trsplit b1 b2 =
+  pureTuple $ f <$> unSpec b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "trsplit" ([Fr,Fr],[Fr,Kr,Kr,Kr]) [a1,a2]
 
 -- ATS.
 
@@ -1172,8 +1337,10 @@ trsplit b1 b2 = pureTuple $ f <$> unSpec b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/ATSadd.html>
 atsAdd ::  Sig -> Sig -> D -> Tab -> D -> Sig
-atsAdd b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "ATSadd" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+atsAdd b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "ATSadd" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- uses the data from an ATS analysis file to perform noise resynthesis.
@@ -1184,8 +1351,10 @@ atsAdd b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b
 --
 -- csound doc: <http://csound.com/docs/manual/ATSaddnz.html>
 atsAddnz ::  Sig -> D -> D -> Sig
-atsAddnz b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "ATSaddnz" [(Ar,[Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+atsAddnz b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "ATSaddnz" [(Ar,[Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- reads data from and ATS data file and stores it in an internal data table of frequency, amplitude pairs.
@@ -1197,8 +1366,10 @@ atsAddnz b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/ATSbufread.html>
 atsBufread ::  Sig -> Sig -> D -> D -> SE ()
-atsBufread b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "ATSbufread" [(Xr,[Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+atsBufread b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "ATSbufread" [(Xr,[Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- perform cross synthesis from ATS analysis files.
@@ -1210,14 +1381,16 @@ atsBufread b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/ATScross.html>
 atsCross ::  Sig -> Sig -> D -> Tab -> Sig -> Sig -> D -> Sig
-atsCross b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unSig b5 <*> unSig b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "ATScross" [(Ar,[Kr,Kr,Ir,Ir,Kr,Kr,Ir,Ir,Ir])] [a1
-                                                                                       ,a2
-                                                                                       ,a3
-                                                                                       ,a4
-                                                                                       ,a5
-                                                                                       ,a6
-                                                                                       ,a7]
+atsCross b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unSig b5 <*> unSig b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "ATScross" [(Ar,[Kr,Kr,Ir,Ir,Kr,Kr,Ir,Ir,Ir])] [a1
+                                                                                 ,a2
+                                                                                 ,a3
+                                                                                 ,a4
+                                                                                 ,a5
+                                                                                 ,a6
+                                                                                 ,a7]
 
 -- | 
 -- reads data out of the header of an ATS file.
@@ -1228,8 +1401,10 @@ atsCross b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/ATSinfo.html>
 atsInfo ::  D -> D -> D
-atsInfo b1 b2 = D $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "ATSinfo" [(Ir,[Ir,Ir])] [a1,a2]
+atsInfo b1 b2 =
+  D $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "ATSinfo" [(Ir,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- allows a user to determine the frequency envelope of any ATSbufread.
@@ -1240,8 +1415,10 @@ atsInfo b1 b2 = D $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/ATSinterpread.html>
 atsInterpread ::  Sig -> Sig
-atsInterpread b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "ATSinterpread" [(Kr,[Kr])] [a1]
+atsInterpread b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "ATSinterpread" [(Kr,[Kr])] [a1]
 
 -- | 
 -- returns a frequency, amplitude pair from an ATSbufread opcode.
@@ -1252,8 +1429,10 @@ atsInterpread b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/ATSpartialtap.html>
 atsPartialtap ::  D -> (Sig,Sig)
-atsPartialtap b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "ATSpartialtap" ([Kr,Kr],[Ir]) [a1]
+atsPartialtap b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "ATSpartialtap" ([Kr,Kr],[Ir]) [a1]
 
 -- | 
 -- reads data from an ATS file.
@@ -1264,8 +1443,10 @@ atsPartialtap b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/ATSread.html>
 atsRead ::  Sig -> D -> D -> (Sig,Sig)
-atsRead b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "ATSread" ([Kr,Kr],[Kr,Ir,Ir]) [a1,a2,a3]
+atsRead b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "ATSread" ([Kr,Kr],[Kr,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- reads data from an ATS file.
@@ -1276,8 +1457,10 @@ atsRead b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/ATSreadnz.html>
 atsReadnz ::  Sig -> D -> D -> Sig
-atsReadnz b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "ATSreadnz" [(Kr,[Kr,Ir,Ir])] [a1,a2,a3]
+atsReadnz b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "ATSreadnz" [(Kr,[Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- uses the data from an ATS analysis file to perform resynthesis.
@@ -1289,13 +1472,10 @@ atsReadnz b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/ATSsinnoi.html>
 atsSinnoi ::  Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-atsSinnoi b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "ATSsinnoi" [(Ar,[Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6]
+atsSinnoi b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "ATSsinnoi" [(Ar,[Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- Loris.
 
@@ -1320,8 +1500,10 @@ atsSinnoi b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/lorismorph.html>
 lorismorph ::  D -> D -> D -> Sig -> Sig -> Sig -> SE ()
-lorismorph b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "lorismorph" [(Xr,[Ir,Ir,Ir,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
+lorismorph b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "lorismorph" [(Xr,[Ir,Ir,Ir,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- renders a stored set of bandwidth-enhanced partials using the method of Bandwidth-Enhanced Additive Synthesis implemented in the Loris software, applying control-rate frequency, amplitude, and bandwidth scaling envelopes.
@@ -1336,8 +1518,10 @@ lorismorph b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/lorisplay.html>
 lorisplay ::  D -> Sig -> Sig -> Sig -> Sig
-lorisplay b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "lorisplay" [(Ar,[Ir,Kr,Kr,Kr])] [a1,a2,a3,a4]
+lorisplay b1 b2 b3 b4 =
+  Sig $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "lorisplay" [(Ar,[Ir,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Imports a set of bandwidth-enhanced partials from a SDIF-format
@@ -1351,8 +1535,10 @@ lorisplay b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/lorisread.html>
 lorisread ::  Sig -> Str -> D -> Sig -> Sig -> Sig -> SE ()
-lorisread b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr b2 <*> unD b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "lorisread" [(Xr,[Kr,Sr,Ir,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6]
+lorisread b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unStr) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "lorisread" [(Xr,[Kr,Sr,Ir,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- Other.
 
@@ -1365,8 +1551,10 @@ lorisread b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unStr
 --
 -- csound doc: <http://csound.com/docs/manual/centroid.html>
 centroid ::  Sig -> Sig -> D -> Sig
-centroid b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "centroid" [(Kr,[Ar,Kr,Ir])] [a1,a2,a3]
+centroid b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "centroid" [(Kr,[Ar,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.
@@ -1378,9 +1566,11 @@ centroid b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 -- >           
 --
 -- csound doc: <http://csound.com/docs/manual/filescal.html>
-filescal :: Tuple a => Sig -> Sig -> Sig -> Str -> Sig -> a
-filescal b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = mopcs "filescal" ([Ar,Ar],[Kr,Kr,Kr,Sr,Kr,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+filescal :: forall a . Tuple a => Sig -> Sig -> Sig -> Str -> Sig -> a
+filescal b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "filescal" ([Ar,Ar],[Kr,Kr,Kr,Sr,Kr,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Phase-locked vocoder processing.
@@ -1394,8 +1584,10 @@ filescal b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/mincer.html>
 mincer ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
-mincer b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "mincer" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
+mincer b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "mincer" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.
@@ -1408,8 +1600,10 @@ mincer b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab
 --
 -- csound doc: <http://csound.com/docs/manual/mp3scal.html>
 mp3scal ::  Str -> Sig -> Sig -> Sig -> (Sig,Sig,Sig)
-mp3scal b1 b2 b3 b4 = pureTuple $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = mopcs "mp3scal" ([Ar,Ar,Kr],[Sr,Kr,Kr,Kr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4]
+mp3scal b1 b2 b3 b4 =
+  pureTuple $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = mopcs "mp3scal" ([Ar,Ar,Kr],[Sr,Kr,Kr,Kr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4]
 
 -- | 
 -- Extreme time-stretching algorithm by Nasca Octavian Paul.
@@ -1424,8 +1618,10 @@ mp3scal b1 b2 b3 b4 = pureTuple $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/paulstretch.html>
 paulstretch ::  D -> D -> D -> Sig
-paulstretch b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "paulstretch" [(Ar,[Ir,Ir,Ir])] [a1,a2,a3]
+paulstretch b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "paulstretch" [(Ar,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.
@@ -1439,5 +1635,7 @@ paulstretch b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/temposcal.html>
 temposcal ::  Sig -> Sig -> Sig -> Tab -> Sig -> Sig
-temposcal b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "temposcal" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+temposcal b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "temposcal" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]

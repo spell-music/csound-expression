@@ -47,6 +47,7 @@ module Csound.Typed.Opcode.SignalModifiers (
     cmp, max', max_k, maxabs, maxabsaccum, maxaccum, min', minabs, minabsaccum, minaccum) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -61,8 +62,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/balance.html>
 balance ::  Sig -> Sig -> Sig
-balance b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "balance" [(Ar,[Ar,Ar,Ir,Ir])] [a1,a2]
+balance b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "balance" [(Ar,[Ar,Ar,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Clips a signal to a predefined limit.
@@ -73,8 +76,10 @@ balance b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/clip.html>
 clip ::  Sig -> D -> D -> Sig
-clip b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "clip" [(Ar,[Ar,Ir,Ir,Ir])] [a1,a2,a3]
+clip b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "clip" [(Ar,[Ar,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Compress, limit, expand, duck or gate an audio signal.
@@ -91,16 +96,18 @@ clip b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/compress.html>
 compress ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
-compress b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "compress" [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
-                                                                                             ,a2
-                                                                                             ,a3
-                                                                                             ,a4
-                                                                                             ,a5
-                                                                                             ,a6
-                                                                                             ,a7
-                                                                                             ,a8
-                                                                                             ,a9]
+compress b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "compress" [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7
+                                                                                       ,a8
+                                                                                       ,a9]
 
 -- | 
 -- Compress, limit, expand, duck or gate an audio signal.
@@ -117,16 +124,18 @@ compress b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/compress2.html>
 compress2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
-compress2 b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "compress2" [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
-                                                                                              ,a2
-                                                                                              ,a3
-                                                                                              ,a4
-                                                                                              ,a5
-                                                                                              ,a6
-                                                                                              ,a7
-                                                                                              ,a8
-                                                                                              ,a9]
+compress2 b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "compress2" [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
+                                                                                        ,a2
+                                                                                        ,a3
+                                                                                        ,a4
+                                                                                        ,a5
+                                                                                        ,a6
+                                                                                        ,a7
+                                                                                        ,a8
+                                                                                        ,a9]
 
 -- | 
 -- A dynamic compressor/expander.
@@ -137,8 +146,10 @@ compress2 b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/dam.html>
 dam ::  Sig -> Sig -> D -> D -> D -> D -> Sig
-dam b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "dam" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+dam b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "dam" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Adjusts the amplitude audio signal according to a root-mean-square value.
@@ -147,8 +158,10 @@ dam b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 
 --
 -- csound doc: <http://csound.com/docs/manual/gain.html>
 gain ::  Sig -> Sig -> Sig
-gain b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "gain" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2]
+gain b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "gain" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2]
 
 -- Convolution and Morphing.
 
@@ -160,9 +173,11 @@ gain b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 -- > ar1 [, ar2] [, ar3] [, ar4]  convolve  ain, ifilcod [, ichannel]
 --
 -- csound doc: <http://csound.com/docs/manual/convolve.html>
-convolve :: Tuple a => Sig -> Str -> a
-convolve b1 b2 = pureTuple $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = mopcs "convolve" ([Ar,Ar,Ar,Ar],[Ar,Sr,Ir]) [a1,a2]
+convolve :: forall a . Tuple a => Sig -> Str -> a
+convolve b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unStr b2
+  where
+    f a1 a2 = mopcs "convolve" ([Ar,Ar,Ar,Ar],[Ar,Sr,Ir]) [a1,a2]
 
 -- | 
 -- Cross synthesis using FFT's.
@@ -173,8 +188,10 @@ convolve b1 b2 = pureTuple $ f <$> unSig b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/cross2.html>
 cross2 ::  Sig -> Sig -> D -> D -> D -> Sig -> Sig
-cross2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "cross2" [(Ar,[Ar,Ar,Ir,Ir,Ir,Kr])] [a1,a2,a3,a4,a5,a6]
+cross2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "cross2" [(Ar,[Ar,Ar,Ir,Ir,Ir,Kr])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- A direct convolution opcode.
@@ -183,8 +200,10 @@ cross2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/dconv.html>
 dconv ::  Sig -> D -> Tab -> Sig
-dconv b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "dconv" [(Ar,[Ar,Ir,Ir])] [a1,a2,a3]
+dconv b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "dconv" [(Ar,[Ar,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Low latency multichannel convolution, using a function table as impulse
@@ -202,9 +221,11 @@ dconv b1 b2 b3 = Sig $ f <$> unSig b1 <*> unD b2 <*> unTab b3
 -- >           [, iirlen[, iskipinit]]]
 --
 -- csound doc: <http://csound.com/docs/manual/ftconv.html>
-ftconv :: Tuple a => Sig -> D -> D -> a
-ftconv b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "ftconv" ((repeat Ar),[Ar,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
+ftconv :: forall a . Tuple a => Sig -> D -> D -> a
+ftconv b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "ftconv" ((repeat Ar),[Ar,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Morphs between multiple ftables as specified in a list.
@@ -215,8 +236,10 @@ ftconv b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/ftmorf.html>
 ftmorf ::  Sig -> Tab -> Tab -> SE ()
-ftmorf b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unTab b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "ftmorf" [(Xr,[Kr,Ir,Ir])] [a1,a2,a3]
+ftmorf b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unTab) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "ftmorf" [(Xr,[Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Partitioned convolution with dynamically reloadable impulse response
@@ -231,8 +254,10 @@ ftmorf b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unTab b2 <*> unTa
 --
 -- csound doc: <http://csound.com/docs/manual/liveconv.html>
 liveconv ::  Sig -> D -> D -> Sig -> Sig -> Sig
-liveconv b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "liveconv" [(Ar,[Ar,Ir,Ir,Kr,Kr])] [a1,a2,a3,a4,a5]
+liveconv b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "liveconv" [(Ar,[Ar,Ir,Ir,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Convolution based on a uniformly partitioned overlap-save algorithm
@@ -242,9 +267,11 @@ liveconv b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unSig b
 -- > ar1 [, ar2] [, ar3] [, ar4]  pconvolve  ain, ifilcod [, ipartitionsize, ichannel]
 --
 -- csound doc: <http://csound.com/docs/manual/pconvolve.html>
-pconvolve :: Tuple a => Sig -> Str -> a
-pconvolve b1 b2 = pureTuple $ f <$> unSig b1 <*> unStr b2
-    where f a1 a2 = mopcs "pconvolve" ([Ar,Ar,Ar,Ar],[Ar,Sr,Ir,Ir]) [a1,a2]
+pconvolve :: forall a . Tuple a => Sig -> Str -> a
+pconvolve b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unStr b2
+  where
+    f a1 a2 = mopcs "pconvolve" ([Ar,Ar,Ar,Ar],[Ar,Sr,Ir,Ir]) [a1,a2]
 
 -- | 
 -- A time-varying convolution (FIR filter) opcode.
@@ -262,8 +289,10 @@ pconvolve b1 b2 = pureTuple $ f <$> unSig b1 <*> unStr b2
 --
 -- csound doc: <http://csound.com/docs/manual/tvconv.html>
 tvconv ::  Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-tvconv b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "tvconv" [(Ar,[Ar,Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+tvconv b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "tvconv" [(Ar,[Ar,Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- Delay.
 
@@ -276,8 +305,10 @@ tvconv b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/delay.html>
 delay ::  Sig -> D -> Sig
-delay b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "delay" [(Ar,[Ar,Ir,Ir])] [a1,a2]
+delay b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "delay" [(Ar,[Ar,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Delays an input signal by one sample.
@@ -286,8 +317,10 @@ delay b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/delay1.html>
 delay1 ::  Sig -> Sig
-delay1 b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "delay1" [(Ar,[Ar,Ir])] [a1]
+delay1 b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "delay1" [(Ar,[Ar,Ir])] [a1]
 
 -- | 
 -- Delays an input signal by some time interval.
@@ -298,8 +331,10 @@ delay1 b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/delayk.html>
 delayk ::  Sig -> D -> Sig
-delayk b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "delayk" [(Kr,[Kr,Ir,Ir])] [a1,a2]
+delayk b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "delayk" [(Kr,[Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Delays an input signal by some time interval.
@@ -310,8 +345,10 @@ delayk b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/delayk.html>
 vdel_k ::  Sig -> Sig -> D -> Sig
-vdel_k b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "vdel_k" [(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+vdel_k b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "vdel_k" [(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Reads from an automatically established digital delay line.
@@ -320,8 +357,10 @@ vdel_k b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/delayr.html>
 delayr ::  D -> SE Sig
-delayr b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "delayr" [(Ar,[Ir,Ir])] [a1]
+delayr b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep "delayr" [(Ar,[Ir,Ir])] [a1]
 
 -- | 
 -- Writes the audio signal to a digital delay line.
@@ -330,8 +369,10 @@ delayr b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/delayw.html>
 delayw ::  Sig -> SE ()
-delayw b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "delayw" [(Xr,[Ar])] [a1]
+delayw b1 =
+  SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "delayw" [(Xr,[Ar])] [a1]
 
 -- | 
 -- Taps a delay line at variable offset times.
@@ -342,8 +383,10 @@ delayw b1 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/deltap.html>
 deltap ::  Sig -> SE Sig
-deltap b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "deltap" [(Ar,[Kr])] [a1]
+deltap b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "deltap" [(Ar,[Kr])] [a1]
 
 -- | 
 -- Taps a delay line at variable offset times, uses cubic interpolation.
@@ -352,8 +395,10 @@ deltap b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/deltap3.html>
 deltap3 ::  Sig -> SE Sig
-deltap3 b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "deltap3" [(Ar,[Xr])] [a1]
+deltap3 b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "deltap3" [(Ar,[Xr])] [a1]
 
 -- | 
 -- Taps a delay line at variable offset times, uses interpolation.
@@ -362,8 +407,10 @@ deltap3 b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/deltapi.html>
 deltapi ::  Sig -> SE Sig
-deltapi b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "deltapi" [(Ar,[Xr])] [a1]
+deltapi b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "deltapi" [(Ar,[Xr])] [a1]
 
 -- | 
 -- Taps a delay line at variable offset times.
@@ -374,8 +421,10 @@ deltapi b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/deltapn.html>
 deltapn ::  Sig -> Sig
-deltapn b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "deltapn" [(Ar,[Xr])] [a1]
+deltapn b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "deltapn" [(Ar,[Xr])] [a1]
 
 -- | 
 -- Read from or write to a delay line with interpolation.
@@ -386,8 +435,10 @@ deltapn b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/deltapx.html>
 deltapx ::  Sig -> D -> SE Sig
-deltapx b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "deltapx" [(Ar,[Ar,Ir])] [a1,a2]
+deltapx b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep "deltapx" [(Ar,[Ar,Ir])] [a1,a2]
 
 -- | 
 -- Mixes the input signal to a delay line.
@@ -398,8 +449,10 @@ deltapx b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <
 --
 -- csound doc: <http://csound.com/docs/manual/deltapxw.html>
 deltapxw ::  Sig -> Sig -> D -> SE ()
-deltapxw b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "deltapxw" [(Xr,[Ar,Ar,Ir])] [a1,a2,a3]
+deltapxw b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "deltapxw" [(Xr,[Ar,Ar,Ir])] [a1,a2,a3]
 
 -- | 
 -- Multitap delay line implementation.
@@ -408,8 +461,10 @@ deltapxw b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/multitap.html>
 multitap ::  Sig -> [D] -> Sig
-multitap b1 b2 = Sig $ f <$> unSig b1 <*> mapM unD b2
-    where f a1 a2 = opcs "multitap" [(Ar,[Ar] ++ (repeat Ir))] ([a1] ++ a2)
+multitap b1 b2 =
+  Sig $ f <$> unSig b1 <*> mapM unD b2
+  where
+    f a1 a2 = opcs "multitap" [(Ar,[Ar] ++ (repeat Ir))] ([a1] ++ a2)
 
 -- | 
 -- An interpolating variable time delay.
@@ -420,8 +475,10 @@ multitap b1 b2 = Sig $ f <$> unSig b1 <*> mapM unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/vdelay.html>
 vdelay ::  Sig -> Sig -> D -> Sig
-vdelay b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "vdelay" [(Ar,[Ar,Ar,Ir,Ir])] [a1,a2,a3]
+vdelay b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "vdelay" [(Ar,[Ar,Ar,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A variable time delay with cubic interpolation.
@@ -432,8 +489,10 @@ vdelay b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/vdelay3.html>
 vdelay3 ::  Sig -> Sig -> D -> Sig
-vdelay3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "vdelay3" [(Ar,[Ar,Ar,Ir,Ir])] [a1,a2,a3]
+vdelay3 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "vdelay3" [(Ar,[Ar,Ar,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A variable delay opcode with high quality interpolation.
@@ -442,8 +501,10 @@ vdelay3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/vdelayx.html>
 vdelayx ::  Sig -> Sig -> D -> D -> Sig
-vdelayx b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "vdelayx" [(Ar,[Ar,Ar,Ir,Ir,Ir])] [a1,a2,a3,a4]
+vdelayx b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "vdelayx" [(Ar,[Ar,Ar,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- A 4-channel variable delay opcode with high quality interpolation.
@@ -452,14 +513,16 @@ vdelayx b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/vdelayxq.html>
 vdelayxq ::  Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> (Sig,Sig,Sig,Sig)
-vdelayxq b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "vdelayxq" ([Ar,Ar,Ar,Ar],[Ar,Ar,Ar,Ar,Ar,Ir,Ir,Ir]) [a1
-                                                                                              ,a2
-                                                                                              ,a3
-                                                                                              ,a4
-                                                                                              ,a5
-                                                                                              ,a6
-                                                                                              ,a7]
+vdelayxq b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "vdelayxq" ([Ar,Ar,Ar,Ar],[Ar,Ar,Ar,Ar,Ar,Ir,Ir,Ir]) [a1
+                                                                                        ,a2
+                                                                                        ,a3
+                                                                                        ,a4
+                                                                                        ,a5
+                                                                                        ,a6
+                                                                                        ,a7]
 
 -- | 
 -- A stereo variable delay opcode with high quality interpolation.
@@ -468,8 +531,10 @@ vdelayxq b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/vdelayxs.html>
 vdelayxs ::  Sig -> Sig -> Sig -> D -> D -> (Sig,Sig)
-vdelayxs b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "vdelayxs" ([Ar,Ar],[Ar,Ar,Ar,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+vdelayxs b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "vdelayxs" ([Ar,Ar],[Ar,Ar,Ar,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Variable delay opcodes with high quality interpolation.
@@ -478,8 +543,10 @@ vdelayxs b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/vdelayxw.html>
 vdelayxw ::  Sig -> Sig -> D -> D -> Sig
-vdelayxw b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "vdelayxw" [(Ar,[Ar,Ar,Ir,Ir,Ir])] [a1,a2,a3,a4]
+vdelayxw b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "vdelayxw" [(Ar,[Ar,Ar,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Variable delay opcodes with high quality interpolation.
@@ -489,14 +556,16 @@ vdelayxw b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/vdelayxwq.html>
 vdelayxwq ::  Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> (Sig,Sig,Sig,Sig)
-vdelayxwq b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "vdelayxwq" ([Ar,Ar,Ar,Ar],[Ar,Ar,Ar,Ar,Ar,Ir,Ir,Ir]) [a1
-                                                                                               ,a2
-                                                                                               ,a3
-                                                                                               ,a4
-                                                                                               ,a5
-                                                                                               ,a6
-                                                                                               ,a7]
+vdelayxwq b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "vdelayxwq" ([Ar,Ar,Ar,Ar],[Ar,Ar,Ar,Ar,Ar,Ir,Ir,Ir]) [a1
+                                                                                         ,a2
+                                                                                         ,a3
+                                                                                         ,a4
+                                                                                         ,a5
+                                                                                         ,a6
+                                                                                         ,a7]
 
 -- | 
 -- Variable delay opcodes with high quality interpolation.
@@ -505,8 +574,10 @@ vdelayxwq b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/vdelayxws.html>
 vdelayxws ::  Sig -> Sig -> Sig -> D -> D -> (Sig,Sig)
-vdelayxws b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "vdelayxws" ([Ar,Ar],[Ar,Ar,Ar,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+vdelayxws b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "vdelayxws" ([Ar,Ar],[Ar,Ar,Ar,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- Panning and Spatialization.
 
@@ -528,10 +599,12 @@ vdelayxws b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 
 -- >           [, ar, as, at, au, av [, abk, al, am, an, ao, ap, aq]]]
 --
 -- csound doc: <http://csound.com/docs/manual/bformdec.html>
-bformdec :: Tuple a => D -> Sig -> Sig -> Sig -> Sig -> a
-bformdec b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = mopcs "bformdec" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
-                                              ,[Ir,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]) [a1,a2,a3,a4,a5]
+bformdec :: forall a . Tuple a => D -> Sig -> Sig -> Sig -> Sig -> a
+bformdec b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "bformdec" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
+                                        ,[Ir,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Decodes an ambisonic B format signal
@@ -550,10 +623,12 @@ bformdec b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*>
 -- > aout[]  bformdec1  isetup, abform[]
 --
 -- csound doc: <http://csound.com/docs/manual/bformdec1.html>
-bformdec1 :: Tuple a => D -> Sig -> Sig -> Sig -> Sig -> a
-bformdec1 b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = mopcs "bformdec1" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
-                                               ,[Ir,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]) [a1,a2,a3,a4,a5]
+bformdec1 :: forall a . Tuple a => D -> Sig -> Sig -> Sig -> Sig -> a
+bformdec1 b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "bformdec1" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
+                                         ,[Ir,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Deprecated. Codes a signal into the ambisonic B format.
@@ -572,10 +647,12 @@ bformdec1 b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*
 -- >           asig, kalpha, kbeta, kord0, kord1, kord2, kord3
 --
 -- csound doc: <http://csound.com/docs/manual/bformenc.html>
-bformenc :: Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> a
-bformenc b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = mopcs "bformenc" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
-                                              ,[Ar,Kr,Kr,Kr,Kr,Kr,Kr]) [a1,a2,a3,a4,a5]
+bformenc :: forall a . Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> a
+bformenc b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "bformenc" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
+                                        ,[Ar,Kr,Kr,Kr,Kr,Kr,Kr]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Codes a signal into the ambisonic B format.
@@ -589,10 +666,12 @@ bformenc b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <
 -- > aarray[]  bformenc1  asig, kalpha, kbeta
 --
 -- csound doc: <http://csound.com/docs/manual/bformenc1.html>
-bformenc1 :: Tuple a => Sig -> Sig -> Sig -> a
-bformenc1 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "bformenc1" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
-                                         ,[Ar,Kr,Kr]) [a1,a2,a3]
+bformenc1 :: forall a . Tuple a => Sig -> Sig -> Sig -> a
+bformenc1 b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "bformenc1" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
+                                   ,[Ar,Kr,Kr]) [a1,a2,a3]
 
 -- | 
 -- Generates 3D binaural audio with high-fidelity early reflections in a parametric room using a Phase Truncation algorithm.
@@ -605,42 +684,44 @@ bformenc1 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 -- >           ifloorgain3, iceilinghigh, iceilinglow, iceilinggain1, iceilinggain2, iceilinggain3]
 --
 -- csound doc: <http://csound.com/docs/manual/hrtfearly.html>
-hrtfearly :: Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> D -> a
-hrtfearly b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unD b8 <*> unD b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "hrtfearly" ([Ar,Ar,Ir,Ir,Ir]
-                                                               ,[Ar
-                                                                ,Kr
-                                                                ,Kr
-                                                                ,Kr
-                                                                ,Kr
-                                                                ,Kr
-                                                                ,Kr
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Kr
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir
-                                                                ,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+hrtfearly :: forall a . Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> D -> a
+hrtfearly b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unD b8 <*> unD b9 <*> unD b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "hrtfearly" ([Ar,Ar,Ir,Ir,Ir]
+                                                         ,[Ar
+                                                          ,Kr
+                                                          ,Kr
+                                                          ,Kr
+                                                          ,Kr
+                                                          ,Kr
+                                                          ,Kr
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Kr
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir
+                                                          ,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
 -- | 
 -- Generates dynamic 3d binaural audio for headphones using magnitude interpolation and phase truncation.
@@ -652,8 +733,10 @@ hrtfearly b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/hrtfmove.html>
 hrtfmove ::  Sig -> Sig -> Sig -> D -> D -> (Sig,Sig)
-hrtfmove b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "hrtfmove" ([Ar,Ar],[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+hrtfmove b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "hrtfmove" ([Ar,Ar],[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Generates dynamic 3d binaural audio for headphones using a Woodworth based spherical head model
@@ -666,8 +749,10 @@ hrtfmove b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/hrtfmove2.html>
 hrtfmove2 ::  Sig -> Sig -> Sig -> D -> D -> (Sig,Sig)
-hrtfmove2 b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "hrtfmove2" ([Ar,Ar],[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+hrtfmove2 b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "hrtfmove2" ([Ar,Ar],[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- A binaural, dynamic FDN based diffuse-field reverberator. The opcode works independently as an efficient, flexible reverberator.
@@ -678,12 +763,10 @@ hrtfmove2 b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 
 --
 -- csound doc: <http://csound.com/docs/manual/hrtfreverb.html>
 hrtfreverb ::  Sig -> D -> D -> D -> D -> (Sig,Sig,D)
-hrtfreverb b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "hrtfreverb" ([Ar,Ar,Ir],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                       ,a2
-                                                                                       ,a3
-                                                                                       ,a4
-                                                                                       ,a5]
+hrtfreverb b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "hrtfreverb" ([Ar,Ar,Ir],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Generates static 3d binaural audio for headphones using a
@@ -697,8 +780,10 @@ hrtfreverb b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/hrtfstat.html>
 hrtfstat ::  Sig -> D -> D -> D -> D -> (Sig,Sig)
-hrtfstat b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "hrtfstat" ([Ar,Ar],[Ar,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+hrtfstat b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "hrtfstat" ([Ar,Ar],[Ar,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Distributes the audio signals of a previous locsig opcode.
@@ -710,8 +795,10 @@ hrtfstat b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/locsend.html>
 locsend ::   (Sig,Sig,Sig,Sig)
-locsend  = pureTuple $ return $ f 
-    where f  = mopcs "locsend" ([Ar,Ar,Ar,Ar],[]) []
+locsend  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "locsend" ([Ar,Ar,Ar,Ar],[]) []
 
 -- | 
 -- Takes an input signal and distributes between 2 or 4 channels.
@@ -723,8 +810,10 @@ locsend  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/locsig.html>
 locsig ::  Sig -> Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
-locsig b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = mopcs "locsig" ([Ar,Ar,Ar,Ar],[Ar,Kr,Kr,Kr]) [a1,a2,a3,a4]
+locsig b1 b2 b3 b4 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = mopcs "locsig" ([Ar,Ar,Ar,Ar],[Ar,Kr,Kr,Kr]) [a1,a2,a3,a4]
 
 -- | 
 -- Distribute an audio signal amongst four channels.
@@ -735,8 +824,10 @@ locsig b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/pan.html>
 pan ::  Sig -> Sig -> Sig -> Tab -> (Sig,Sig,Sig,Sig)
-pan b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
-    where f a1 a2 a3 a4 = mopcs "pan" ([Ar,Ar,Ar,Ar],[Ar,Kr,Kr,Ir,Ir,Ir]) [a1,a2,a3,a4]
+pan b1 b2 b3 b4 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
+  where
+    f a1 a2 a3 a4 = mopcs "pan" ([Ar,Ar,Ar,Ar],[Ar,Kr,Kr,Ir,Ir,Ir]) [a1,a2,a3,a4]
 
 -- | 
 -- Distribute an audio signal across two channels.
@@ -747,8 +838,10 @@ pan b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab
 --
 -- csound doc: <http://csound.com/docs/manual/pan2.html>
 pan2 ::  Sig -> Sig -> (Sig,Sig)
-pan2 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "pan2" ([Ar,Ar],[Ar,Xr,Ir]) [a1,a2]
+pan2 b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "pan2" ([Ar,Ar],[Ar,Xr,Ir]) [a1,a2]
 
 -- | 
 -- Distributes an input signal among 4 channels using cartesian coordinates.
@@ -759,13 +852,10 @@ pan2 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/space.html>
 space ::  Sig -> Tab -> Sig -> Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
-space b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = mopcs "space" ([Ar,Ar,Ar,Ar],[Ar,Ir,Kr,Kr,Kr,Kr]) [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6]
+space b1 b2 b3 b4 b5 b6 =
+  pureTuple $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = mopcs "space" ([Ar,Ar,Ar,Ar],[Ar,Ir,Kr,Kr,Kr,Kr]) [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Positions the input sound in a 3D space and allows moving the sound at k-rate.
@@ -776,9 +866,11 @@ space b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unSig b1 <*> unTab b2 <*> unSig b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/spat3d.html>
 spat3d ::  Sig -> Sig -> Sig -> Sig -> D -> D -> D -> D -> D -> (Sig,Sig,Sig,Sig)
-spat3d b1 b2 b3 b4 b5 b6 b7 b8 b9 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcs "spat3d" ([Ar,Ar,Ar,Ar]
-                                                        ,[Ar,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9]
+spat3d b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = mopcs "spat3d" ([Ar,Ar,Ar,Ar]
+                                                  ,[Ar,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9]
 
 -- | 
 -- Positions the input sound in a 3D space with the sound source position set at i-time.
@@ -789,14 +881,16 @@ spat3d b1 b2 b3 b4 b5 b6 b7 b8 b9 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/spat3di.html>
 spat3di ::  Sig -> D -> D -> D -> D -> D -> D -> (Sig,Sig,Sig,Sig)
-spat3di b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "spat3di" ([Ar,Ar,Ar,Ar],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                             ,a2
-                                                                                             ,a3
-                                                                                             ,a4
-                                                                                             ,a5
-                                                                                             ,a6
-                                                                                             ,a7]
+spat3di b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "spat3di" ([Ar,Ar,Ar,Ar],[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7]
 
 -- | 
 -- Can be used to render an impulse response for a 3D space at i-time.
@@ -807,15 +901,17 @@ spat3di b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 
 --
 -- csound doc: <http://csound.com/docs/manual/spat3dt.html>
 spat3dt ::  D -> D -> D -> D -> D -> D -> D -> D -> SE ()
-spat3dt b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "spat3dt" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                         ,a2
-                                                                                         ,a3
-                                                                                         ,a4
-                                                                                         ,a5
-                                                                                         ,a6
-                                                                                         ,a7
-                                                                                         ,a8]
+spat3dt b1 b2 b3 b4 b5 b6 b7 b8 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcsDep_ "spat3dt" [(Xr,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7
+                                                                                       ,a8]
 
 -- | 
 -- Calculates distance values from xy coordinates.
@@ -826,8 +922,10 @@ spat3dt b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/spdist.html>
 spdist ::  Tab -> Sig -> Sig -> Sig -> Sig
-spdist b1 b2 b3 b4 = Sig $ f <$> unTab b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "spdist" [(Kr,[Ir,Kr,Kr,Kr])] [a1,a2,a3,a4]
+spdist b1 b2 b3 b4 =
+  Sig $ f <$> unTab b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "spdist" [(Kr,[Ir,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Generates output signals based on a previously defined space opcode.
@@ -838,8 +936,10 @@ spdist b1 b2 b3 b4 = Sig $ f <$> unTab b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
 --
 -- csound doc: <http://csound.com/docs/manual/spsend.html>
 spsend ::   (Sig,Sig,Sig,Sig)
-spsend  = pureTuple $ return $ f 
-    where f  = mopcs "spsend" ([Ar,Ar,Ar,Ar],[]) []
+spsend  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "spsend" ([Ar,Ar,Ar,Ar],[]) []
 
 -- | 
 -- Distributes an audio signal among many channels.
@@ -853,9 +953,11 @@ spsend  = pureTuple $ return $ f
 -- >         kelev] [, kspread] [, ilayout]
 --
 -- csound doc: <http://csound.com/docs/manual/vbap.html>
-vbap :: Tuple a => Sig -> Sig -> a
-vbap b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "vbap" ((repeat Ar),[Ar,Kr,Kr,Kr,Ir]) [a1,a2]
+vbap :: forall a . Tuple a => Sig -> Sig -> a
+vbap b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "vbap" ((repeat Ar),[Ar,Kr,Kr,Kr,Ir]) [a1,a2]
 
 -- | 
 -- Distributes an audio signal among 16 channels.
@@ -863,9 +965,11 @@ vbap b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 -- > ar1, ..., ar16  vbap16  asig, kazim [, kelev] [, kspread]
 --
 -- csound doc: <http://csound.com/docs/manual/vbap16.html>
-vbap16 :: Tuple a => Sig -> Sig -> a
-vbap16 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "vbap16" ((repeat Ar),[Ar,Kr,Kr,Kr]) [a1,a2]
+vbap16 :: forall a . Tuple a => Sig -> Sig -> a
+vbap16 b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "vbap16" ((repeat Ar),[Ar,Kr,Kr,Kr]) [a1,a2]
 
 -- | 
 -- Distribute an audio signal among 16 channels with moving virtual sources.
@@ -874,12 +978,11 @@ vbap16 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 -- >           [, ifld2] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/vbap16move.html>
-vbap16move :: Tuple a => Sig -> D -> D -> D -> [D] -> a
-vbap16move b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "vbap16move" ((repeat Ar),[Ar] ++ (repeat Ir)) ([a1
-                                                                                   ,a2
-                                                                                   ,a3
-                                                                                   ,a4] ++ a5)
+vbap16move :: forall a . Tuple a => Sig -> D -> D -> D -> [D] -> a
+vbap16move b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "vbap16move" ((repeat Ar),[Ar] ++ (repeat Ir)) ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Distributes an audio signal among 4 channels.
@@ -888,8 +991,10 @@ vbap16move b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/vbap4.html>
 vbap4 ::  Sig -> Sig -> (Sig,Sig,Sig,Sig)
-vbap4 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "vbap4" ([Ar,Ar,Ar,Ar],[Ar,Kr,Kr,Kr]) [a1,a2]
+vbap4 b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "vbap4" ([Ar,Ar,Ar,Ar],[Ar,Kr,Kr,Kr]) [a1,a2]
 
 -- | 
 -- Distributes an audio signal among 4 channels with moving virtual sources.
@@ -898,12 +1003,11 @@ vbap4 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 -- >           [, ifld2] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/vbap4move.html>
-vbap4move :: Tuple a => Sig -> D -> D -> D -> [D] -> a
-vbap4move b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "vbap4move" ([Ar,Ar,Ar,Ar],[Ar] ++ (repeat Ir)) ([a1
-                                                                                    ,a2
-                                                                                    ,a3
-                                                                                    ,a4] ++ a5)
+vbap4move :: forall a . Tuple a => Sig -> D -> D -> D -> [D] -> a
+vbap4move b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "vbap4move" ([Ar,Ar,Ar,Ar],[Ar] ++ (repeat Ir)) ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Distributes an audio signal among 8 channels.
@@ -911,9 +1015,11 @@ vbap4move b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> 
 -- > ar1, ..., ar8  vbap8  asig, kazim [, kelev] [, kspread]
 --
 -- csound doc: <http://csound.com/docs/manual/vbap8.html>
-vbap8 :: Tuple a => Sig -> Sig -> a
-vbap8 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "vbap8" ((repeat Ar),[Ar,Kr,Kr,Kr]) [a1,a2]
+vbap8 :: forall a . Tuple a => Sig -> Sig -> a
+vbap8 b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "vbap8" ((repeat Ar),[Ar,Kr,Kr,Kr]) [a1,a2]
 
 -- | 
 -- Distributes an audio signal among 8 channels with moving virtual sources.
@@ -922,12 +1028,11 @@ vbap8 b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 -- >           [, ifld2] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/vbap8move.html>
-vbap8move :: Tuple a => Sig -> D -> D -> D -> [D] -> a
-vbap8move b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "vbap8move" ((repeat Ar),[Ar] ++ (repeat Ir)) ([a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4] ++ a5)
+vbap8move :: forall a . Tuple a => Sig -> D -> D -> D -> [D] -> a
+vbap8move b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "vbap8move" ((repeat Ar),[Ar] ++ (repeat Ir)) ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Calculates the gains for a sound location between multiple channels.
@@ -938,9 +1043,11 @@ vbap8move b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> 
 -- > karray[]  vbapg  kazim [,kelev] [, kspread] [, ilayout]
 --
 -- csound doc: <http://csound.com/docs/manual/vbapg.html>
-vbapg :: Tuple a => Sig -> a
-vbapg b1 = pureTuple $ f <$> unSig b1
-    where f a1 = mopcs "vbapg" ((repeat Kr),[Kr,Kr,Kr,Ir]) [a1]
+vbapg :: forall a . Tuple a => Sig -> a
+vbapg b1 =
+  pureTuple $ f <$> unSig b1
+  where
+    f a1 = mopcs "vbapg" ((repeat Kr),[Kr,Kr,Kr,Ir]) [a1]
 
 -- | 
 -- Calculates the gains for a sound location between multiple
@@ -952,9 +1059,11 @@ vbapg b1 = pureTuple $ f <$> unSig b1
 -- >           [, ifld2] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/vbapgmove.html>
-vbapgmove :: Tuple a => D -> D -> D -> D -> a
-vbapgmove b1 b2 b3 b4 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = mopcs "vbapgmove" ((repeat Kr),(repeat Ir)) [a1,a2,a3,a4]
+vbapgmove :: forall a . Tuple a => D -> D -> D -> D -> a
+vbapgmove b1 b2 b3 b4 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = mopcs "vbapgmove" ((repeat Kr),(repeat Ir)) [a1,a2,a3,a4]
 
 -- | 
 -- Configures VBAP output according to loudspeaker parameters.
@@ -964,8 +1073,10 @@ vbapgmove b1 b2 b3 b4 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/vbaplsinit.html>
 vbaplsinit ::  D -> D -> SE ()
-vbaplsinit b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "vbaplsinit" [(Xr,(repeat Ir))] [a1,a2]
+vbaplsinit b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "vbaplsinit" [(Xr,(repeat Ir))] [a1,a2]
 
 -- | 
 -- Distributes an audio signal among many channels with moving virtual sources.
@@ -979,12 +1090,11 @@ vbaplsinit b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 -- >           [, ifld2] [...]
 --
 -- csound doc: <http://csound.com/docs/manual/vbapmove.html>
-vbapmove :: Tuple a => Sig -> D -> D -> D -> [D] -> a
-vbapmove b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "vbapmove" ((repeat Ar),[Ar] ++ (repeat Ir)) ([a1
-                                                                                 ,a2
-                                                                                 ,a3
-                                                                                 ,a4] ++ a5)
+vbapmove :: forall a . Tuple a => Sig -> D -> D -> D -> [D] -> a
+vbapmove b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "vbapmove" ((repeat Ar),[Ar] ++ (repeat Ir)) ([a1,a2,a3,a4] ++ a5)
 
 -- | 
 -- Writes a multi-channel audio signal to a ZAK array.
@@ -993,8 +1103,10 @@ vbapmove b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/vbapz.html>
 vbapz ::  D -> D -> Sig -> Sig -> SE ()
-vbapz b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "vbapz" [(Xr,[Ir,Ir,Ar,Kr,Kr,Kr])] [a1,a2,a3,a4]
+vbapz b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "vbapz" [(Xr,[Ir,Ir,Ar,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Writes a multi-channel audio signal to a ZAK array with moving virtual sources.
@@ -1004,8 +1116,10 @@ vbapz b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/vbapzmove.html>
 vbapzmove ::  Sig -> D -> D -> D -> [D] -> SE ()
-vbapzmove b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> mapM unD b5
-    where f a1 a2 a3 a4 a5 = opcs "vbapzmove" [(Xr,[Ir,Ir,Ar] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
+vbapzmove b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> mapM (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "vbapzmove" [(Xr,[Ir,Ir,Ar] ++ (repeat Ir))] ([a1,a2,a3,a4] ++ a5)
 
 -- Reverberation.
 
@@ -1016,8 +1130,10 @@ vbapzmove b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/alpass.html>
 alpass ::  Sig -> Sig -> D -> Sig
-alpass b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "alpass" [(Ar,[Ar,Xr,Ir,Ir,Ir])] [a1,a2,a3]
+alpass b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "alpass" [(Ar,[Ar,Xr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A physical model reverberator.
@@ -1028,14 +1144,16 @@ alpass b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/babo.html>
 babo ::  Sig -> Sig -> Sig -> Sig -> D -> D -> D -> (Sig,Sig)
-babo b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "babo" ([Ar,Ar],[Ar,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                       ,a2
-                                                                                       ,a3
-                                                                                       ,a4
-                                                                                       ,a5
-                                                                                       ,a6
-                                                                                       ,a7]
+babo b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "babo" ([Ar,Ar],[Ar,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                 ,a2
+                                                                                 ,a3
+                                                                                 ,a4
+                                                                                 ,a5
+                                                                                 ,a6
+                                                                                 ,a7]
 
 -- | 
 -- Reverberates an input signal with a âcoloredâ frequency response.
@@ -1044,8 +1162,10 @@ babo b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/comb.html>
 comb ::  Sig -> Sig -> D -> Sig
-comb b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "comb" [(Ar,[Ar,Kr,Ir,Ir,Ir])] [a1,a2,a3]
+comb b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "comb" [(Ar,[Ar,Kr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Reverberates an input signal with a âcoloredâ frequency response.
@@ -1057,8 +1177,10 @@ comb b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/combinv.html>
 combinv ::  Sig -> Sig -> D -> Sig
-combinv b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "combinv" [(Ar,[Ar,Kr,Ir,Ir,Ir])] [a1,a2,a3]
+combinv b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "combinv" [(Ar,[Ar,Kr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Opcode version of Jezar's Freeverb
@@ -1073,8 +1195,10 @@ combinv b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/freeverb.html>
 freeverb ::  Sig -> Sig -> Sig -> Sig -> (Sig,Sig)
-freeverb b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = mopcs "freeverb" ([Ar,Ar],[Ar,Ar,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4]
+freeverb b1 b2 b3 b4 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = mopcs "freeverb" ([Ar,Ar],[Ar,Ar,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4]
 
 -- | 
 -- Three different nested all-pass filters.
@@ -1086,8 +1210,10 @@ freeverb b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/nestedap.html>
 nestedap ::  Sig -> D -> D -> D -> D -> Sig
-nestedap b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "nestedap" [(Ar,[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+nestedap b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "nestedap" [(Ar,[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A reverberator consisting of 6 parallel comb-lowpass filters.
@@ -1099,8 +1225,10 @@ nestedap b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 
 --
 -- csound doc: <http://csound.com/docs/manual/nreverb.html>
 nreverb ::  Sig -> Sig -> Sig -> Sig
-nreverb b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "nreverb" [(Ar,[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+nreverb b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "nreverb" [(Ar,[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Models the reverberation of a metal plate.
@@ -1111,10 +1239,12 @@ nreverb b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 -- > a1[, a2, ...]  platerev  itabexcite. itabouts, kbndry, iaspect, istiff, idecay, iloss, aexcite1[, aexcite2, ...]
 --
 -- csound doc: <http://csound.com/docs/manual/platerev.html>
-platerev :: Tuple a => D -> D -> Sig -> D -> D -> D -> D -> [Sig] -> a
-platerev b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> mapM unSig b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "platerev" ((repeat Ar)
-                                                       ,[Ir,Ir,Kr,Ir,Ir,Ir,Ir] ++ (repeat Ar)) ([a1,a2,a3,a4,a5,a6,a7] ++ a8)
+platerev :: forall a . Tuple a => D -> D -> Sig -> D -> D -> D -> D -> [Sig] -> a
+platerev b1 b2 b3 b4 b5 b6 b7 b8 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> mapM unSig b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "platerev" ((repeat Ar)
+                                                 ,[Ir,Ir,Kr,Ir,Ir,Ir,Ir] ++ (repeat Ar)) ([a1,a2,a3,a4,a5,a6,a7] ++ a8)
 
 -- | 
 -- Reverberates an input signal with a ânatural roomâ frequency response.
@@ -1123,8 +1253,10 @@ platerev b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/reverb.html>
 reverb ::  Sig -> Sig -> Sig
-reverb b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "reverb" [(Ar,[Ar,Kr,Ir])] [a1,a2]
+reverb b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "reverb" [(Ar,[Ar,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Same as the nreverb opcode.
@@ -1134,8 +1266,10 @@ reverb b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/reverb2.html>
 reverb2 ::  Sig -> Sig -> Sig -> Sig
-reverb2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "reverb2" [(Ar,[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
+reverb2 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "reverb2" [(Ar,[Ar,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- 8 delay line stereo FDN reverb, based on work by Sean Costello
@@ -1148,8 +1282,10 @@ reverb2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/reverbsc.html>
 reverbsc ::  Sig -> Sig -> Sig -> Sig -> (Sig,Sig)
-reverbsc b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = mopcs "reverbsc" ([Ar,Ar],[Ar,Ar,Kr,Kr,Ir,Ir,Ir]) [a1,a2,a3,a4]
+reverbsc b1 b2 b3 b4 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = mopcs "reverbsc" ([Ar,Ar],[Ar,Ar,Kr,Kr,Ir,Ir,Ir]) [a1,a2,a3,a4]
 
 -- | 
 -- Variably reverberates an input signal with a flat frequency response.
@@ -1158,8 +1294,10 @@ reverbsc b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/valpass.html>
 valpass ::  Sig -> Sig -> Sig -> D -> Sig
-valpass b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "valpass" [(Ar,[Ar,Kr,Xr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+valpass b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "valpass" [(Ar,[Ar,Kr,Xr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Variably reverberates an input signal with a âcoloredâ frequency response.
@@ -1168,8 +1306,10 @@ valpass b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/vcomb.html>
 vcomb ::  Sig -> Sig -> Sig -> D -> Sig
-vcomb b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "vcomb" [(Ar,[Ar,Kr,Xr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+vcomb b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "vcomb" [(Ar,[Ar,Kr,Xr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- Sample Level Operators.
 
@@ -1185,8 +1325,10 @@ vcomb b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/denorm.html>
 denorm ::  [Sig] -> SE ()
-denorm b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
-    where f a1 = opcs "denorm" [(Xr,(repeat Ar))] a1
+denorm b1 =
+  SE $ join $ f <$> mapM (lift . unSig) b1
+  where
+    f a1 = opcsDep_ "denorm" [(Xr,(repeat Ar))] a1
 
 -- | 
 -- Modify a signal by differentiation.
@@ -1196,8 +1338,10 @@ denorm b1 = SE $ (depT_ =<<) $ lift $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/diff.html>
 diff ::  Sig -> Sig
-diff b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "diff" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] [a1]
+diff b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "diff" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] [a1]
 
 -- | 
 -- Modify a signal by down-sampling.
@@ -1206,8 +1350,10 @@ diff b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/downsamp.html>
 downsamp ::  Sig -> Sig
-downsamp b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "downsamp" [(Kr,[Ar,Ir])] [a1]
+downsamp b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "downsamp" [(Kr,[Ar,Ir])] [a1]
 
 -- | 
 -- Adds artificial foldover to an audio signal.
@@ -1216,8 +1362,10 @@ downsamp b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/fold.html>
 fold ::  Sig -> Sig -> Sig
-fold b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "fold" [(Ar,[Ar,Kr])] [a1,a2]
+fold b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "fold" [(Ar,[Ar,Kr])] [a1,a2]
 
 -- | 
 -- Modify a signal by integration.
@@ -1227,8 +1375,10 @@ fold b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/integ.html>
 integ ::  Sig -> Sig
-integ b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "integ" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] [a1]
+integ b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "integ" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] [a1]
 
 -- | 
 -- Converts a control signal to an audio signal using linear interpolation.
@@ -1238,8 +1388,10 @@ integ b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/interp.html>
 interp ::  Sig -> Sig
-interp b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "interp" [(Ar,[Kr,Ir,Ir,Ir])] [a1]
+interp b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "interp" [(Ar,[Kr,Ir,Ir,Ir])] [a1]
 
 -- | 
 -- Calculates the weighted mean value of two input signals.
@@ -1252,10 +1404,12 @@ interp b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/ntrpol.html>
 ntrpol ::  Sig -> Sig -> Sig -> Sig
-ntrpol b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "ntrpol" [(Ar,[Ar,Ar,Kr,Ir,Ir])
-                                     ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                     ,(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+ntrpol b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "ntrpol" [(Ar,[Ar,Ar,Kr,Ir,Ir])
+                               ,(Ir,[Ir,Ir,Ir,Ir,Ir])
+                               ,(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Performs a sample-and-hold operation on its input.
@@ -1265,8 +1419,10 @@ ntrpol b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/samphold.html>
 samphold ::  Sig -> Sig -> Sig
-samphold b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "samphold" [(Ar,[Ar,Ar,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2]
+samphold b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "samphold" [(Ar,[Ar,Ar,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Modify a signal by up-sampling.
@@ -1275,8 +1431,10 @@ samphold b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/upsamp.html>
 upsamp ::  Sig -> Sig
-upsamp b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "upsamp" [(Ar,[Kr])] [a1]
+upsamp b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "upsamp" [(Ar,[Kr])] [a1]
 
 -- | 
 -- Access values of the current buffer of an a-rate variable by indexing.
@@ -1289,8 +1447,10 @@ upsamp b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/vaget.html>
 vaget ::  Sig -> Sig -> Sig
-vaget b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "vaget" [(Kr,[Kr,Ar])] [a1,a2]
+vaget b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "vaget" [(Kr,[Kr,Ar])] [a1,a2]
 
 -- | 
 -- Write value of into the current buffer of an a-rate variable by index.
@@ -1303,8 +1463,10 @@ vaget b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/vaset.html>
 vaset ::  Sig -> Sig -> Sig -> SE ()
-vaset b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "vaset" [(Xr,[Kr,Kr,Ar])] [a1,a2,a3]
+vaset b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep_ "vaset" [(Xr,[Kr,Kr,Ar])] [a1,a2,a3]
 
 -- Signal Limiters.
 
@@ -1319,12 +1481,14 @@ vaset b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/limit.html>
 limit ::  Sig -> Sig -> Sig -> Sig
-limit b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "limit" [(Ar,[Ar,Kr,Kr])
-                                    ,(Ir,[Ir,Ir,Ir])
-                                    ,(Kr,[Kr,Kr,Kr])
-                                    ,(Ir,[Ir,Ir,Ir])
-                                    ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+limit b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "limit" [(Ar,[Ar,Kr,Kr])
+                              ,(Ir,[Ir,Ir,Ir])
+                              ,(Kr,[Kr,Kr,Kr])
+                              ,(Ir,[Ir,Ir,Ir])
+                              ,(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Reflects the signal that exceeds the low and high thresholds.
@@ -1335,8 +1499,10 @@ limit b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/mirror.html>
 mirror ::  Sig -> Sig -> Sig -> Sig
-mirror b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "mirror" [(Ar,[Ar,Kr,Kr]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+mirror b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "mirror" [(Ar,[Ar,Kr,Kr]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Wraps-around the signal that exceeds the low and high thresholds.
@@ -1347,8 +1513,10 @@ mirror b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/wrap.html>
 wrap ::  Sig -> Sig -> Sig -> Sig
-wrap b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "wrap" [(Ar,[Ar,Kr,Kr]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+wrap b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "wrap" [(Ar,[Ar,Kr,Kr]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- Special Effects.
 
@@ -1359,8 +1527,10 @@ wrap b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/distort.html>
 distort ::  Sig -> Sig -> Tab -> Sig
-distort b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "distort" [(Ar,[Ar,Kr,Ir,Ir,Ir])] [a1,a2,a3]
+distort b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "distort" [(Ar,[Ar,Kr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Modified hyperbolic tangent distortion.
@@ -1371,8 +1541,10 @@ distort b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/distort1.html>
 distort1 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-distort1 b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "distort1" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+distort1 b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "distort1" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A user controlled flanger.
@@ -1381,8 +1553,10 @@ distort1 b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/flanger.html>
 flanger ::  Sig -> Sig -> Sig -> Sig
-flanger b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "flanger" [(Ar,[Ar,Ar,Kr,Ir])] [a1,a2,a3]
+flanger b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "flanger" [(Ar,[Ar,Ar,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Analyze an audio input and generate harmonizing voices in synchrony.
@@ -1392,15 +1566,17 @@ flanger b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/harmon.html>
 harmon ::  Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> D -> Sig
-harmon b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "harmon" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
-                                                                                     ,a2
-                                                                                     ,a3
-                                                                                     ,a4
-                                                                                     ,a5
-                                                                                     ,a6
-                                                                                     ,a7
-                                                                                     ,a8]
+harmon b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "harmon" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
+                                                                               ,a2
+                                                                               ,a3
+                                                                               ,a4
+                                                                               ,a5
+                                                                               ,a6
+                                                                               ,a7
+                                                                               ,a8]
 
 -- | 
 -- Analyze an audio input and generate harmonizing voices in
@@ -1412,8 +1588,10 @@ harmon b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 
 --
 -- csound doc: <http://csound.com/docs/manual/harmon2.html>
 harmon2 ::  Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-harmon2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "harmon2" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+harmon2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "harmon2" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Analyze an audio input and generate harmonizing voices in
@@ -1426,14 +1604,10 @@ harmon2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/harmon2.html>
 harmon3 ::  Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-harmon3 b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "harmon3" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
-                                                                                   ,a2
-                                                                                   ,a3
-                                                                                   ,a4
-                                                                                   ,a5
-                                                                                   ,a6
-                                                                                   ,a7]
+harmon3 b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "harmon3" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Analyze an audio input and generate harmonizing voices in
@@ -1446,15 +1620,17 @@ harmon3 b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/harmon2.html>
 harmon4 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-harmon4 b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "harmon4" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
-                                                                                         ,a2
-                                                                                         ,a3
-                                                                                         ,a4
-                                                                                         ,a5
-                                                                                         ,a6
-                                                                                         ,a7
-                                                                                         ,a8]
+harmon4 b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "harmon4" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
+                                                                                   ,a2
+                                                                                   ,a3
+                                                                                   ,a4
+                                                                                   ,a5
+                                                                                   ,a6
+                                                                                   ,a7
+                                                                                   ,a8]
 
 -- | 
 -- First-order allpass filters arranged in a series.
@@ -1465,8 +1641,10 @@ harmon4 b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/phaser1.html>
 phaser1 ::  Sig -> Sig -> Sig -> Sig -> Sig
-phaser1 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "phaser1" [(Ar,[Ar,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4]
+phaser1 b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "phaser1" [(Ar,[Ar,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Second-order allpass filters arranged in a series.
@@ -1477,14 +1655,10 @@ phaser1 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/phaser2.html>
 phaser2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-phaser2 b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "phaser2" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr,Kr])] [a1
-                                                                                ,a2
-                                                                                ,a3
-                                                                                ,a4
-                                                                                ,a5
-                                                                                ,a6
-                                                                                ,a7]
+phaser2 b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "phaser2" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- Standard Filters.
 
@@ -1495,8 +1669,10 @@ phaser2 b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/atone.html>
 atone ::  Sig -> Sig -> Sig
-atone b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "atone" [(Ar,[Ar,Kr,Ir])] [a1,a2]
+atone b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "atone" [(Ar,[Ar,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Emulates a stack of filters using the atone opcode.
@@ -1508,8 +1684,10 @@ atone b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/atonex.html>
 atonex ::  Sig -> Sig -> Sig
-atonex b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "atonex" [(Ar,[Ar,Kr,Ir,Ir]),(Ar,[Ar,Ar,Ir,Ir])] [a1,a2]
+atonex b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "atonex" [(Ar,[Ar,Kr,Ir,Ir]),(Ar,[Ar,Ar,Ir,Ir])] [a1,a2]
 
 -- | 
 -- A sweepable general purpose biquadratic digital filter.
@@ -1518,14 +1696,10 @@ atonex b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/biquad.html>
 biquad ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-biquad b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "biquad" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6
-                                                                                  ,a7]
+biquad b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "biquad" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- A sweepable general purpose biquadratic digital filter with a-rate parameters.
@@ -1536,14 +1710,10 @@ biquad b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/biquada.html>
 biquada ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-biquada b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "biquada" [(Ar,[Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ir])] [a1
-                                                                                   ,a2
-                                                                                   ,a3
-                                                                                   ,a4
-                                                                                   ,a5
-                                                                                   ,a6
-                                                                                   ,a7]
+biquada b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "biquada" [(Ar,[Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Same as the butterbp opcode.
@@ -1552,8 +1722,10 @@ biquada b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/butbp.html>
 butbp ::  Sig -> Sig -> Sig -> Sig
-butbp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "butbp" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
+butbp b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "butbp" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Same as the butterbr opcode.
@@ -1562,8 +1734,10 @@ butbp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/butbr.html>
 butbr ::  Sig -> Sig -> Sig -> Sig
-butbr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "butbr" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
+butbr b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "butbr" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Same as the butterhp opcode.
@@ -1573,8 +1747,10 @@ butbr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/buthp.html>
 buthp ::  Sig -> Sig -> Sig
-buthp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "buthp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
+buthp b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "buthp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
 
 -- | 
 -- Same as the butterlp opcode.
@@ -1584,8 +1760,10 @@ buthp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/butlp.html>
 butlp ::  Sig -> Sig -> Sig
-butlp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "butlp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
+butlp b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "butlp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
 
 -- | 
 -- A band-pass Butterworth filter.
@@ -1596,8 +1774,10 @@ butlp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/butterbp.html>
 butterbp ::  Sig -> Sig -> Sig -> Sig
-butterbp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "butterbp" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+butterbp b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "butterbp" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- | 
 -- A band-reject Butterworth filter.
@@ -1608,8 +1788,10 @@ butterbp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/butterbr.html>
 butterbr ::  Sig -> Sig -> Sig -> Sig
-butterbr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "butterbr" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+butterbr b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "butterbr" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- | 
 -- A high-pass Butterworth filter.
@@ -1621,8 +1803,10 @@ butterbr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/butterhp.html>
 butterhp ::  Sig -> Sig -> Sig
-butterhp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "butterhp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
+butterhp b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "butterhp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
 
 -- | 
 -- A low-pass Butterworth filter.
@@ -1634,8 +1818,10 @@ butterhp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/butterlp.html>
 butterlp ::  Sig -> Sig -> Sig
-butterlp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "butterlp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
+butterlp b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "butterlp" [(Ar,[Ar,Kr,Ir]),(Ar,[Ar,Ar,Ir])] [a1,a2]
 
 -- | 
 -- Implements low-pass and high-pass filters of different styles.
@@ -1646,8 +1832,10 @@ butterlp b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/clfilt.html>
 clfilt ::  Sig -> Sig -> D -> D -> Sig
-clfilt b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "clfilt" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+clfilt b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "clfilt" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Zero-delay feedback implementation of 4 pole diode ladder filter.
@@ -1658,8 +1846,10 @@ clfilt b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/diode_ladder.html>
 diode_ladder ::  Sig -> Sig -> Sig -> Sig
-diode_ladder b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "diode_ladder" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
+diode_ladder b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "diode_ladder" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A fast and robust method for approximating sound propagation, achieving convincing Doppler shifts without having to solve equations.
@@ -1670,8 +1860,10 @@ diode_ladder b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/doppler.html>
 doppler ::  Sig -> Sig -> Sig -> Sig
-doppler b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "doppler" [(Ar,[Ar,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+doppler b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "doppler" [(Ar,[Ar,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Zero-delay feedback implementation of Korg35 resonant high-pass filter.
@@ -1682,8 +1874,10 @@ doppler b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/k35_hpf.html>
 k35_hpf ::  Sig -> Sig -> Sig -> Sig
-k35_hpf b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "K35_hpf" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
+k35_hpf b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "K35_hpf" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Zero-delay feedback implementation of Korg35 resonant low-pass filter.
@@ -1694,8 +1888,10 @@ k35_hpf b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/k35_lpf.html>
 k35_lpf ::  Sig -> Sig -> Sig -> Sig
-k35_lpf b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "K35_lpf" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
+k35_lpf b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "K35_lpf" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A median filter, a variant FIR lowpass filter.
@@ -1706,8 +1902,10 @@ k35_lpf b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/median.html>
 median ::  Sig -> Sig -> D -> Sig
-median b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "median" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2,a3]
+median b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "median" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A median filter, a variant FIR lowpass filter.
@@ -1718,8 +1916,10 @@ median b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/mediank.html>
 mediank ::  Sig -> Sig -> D -> Sig
-mediank b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "mediank" [(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+mediank b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "mediank" [(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A filter that simulates a mass-spring-damper system
@@ -1733,8 +1933,10 @@ mediank b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/mode.html>
 mode ::  Sig -> Sig -> Sig -> Sig
-mode b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "mode" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+mode b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "mode" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- | 
 -- A first-order recursive low-pass filter with variable frequency response.
@@ -1743,8 +1945,10 @@ mode b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/tone.html>
 tone ::  Sig -> Sig -> Sig
-tone b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "tone" [(Ar,[Ar,Kr,Ir])] [a1,a2]
+tone b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "tone" [(Ar,[Ar,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Emulates a stack of filters using the tone opcode.
@@ -1756,8 +1960,10 @@ tone b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/tonex.html>
 tonex ::  Sig -> Sig -> Sig
-tonex b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "tonex" [(Ar,[Ar,Kr,Ir,Ir]),(Ar,[Ar,Ar,Ir,Ir])] [a1,a2]
+tonex b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "tonex" [(Ar,[Ar,Kr,Ir,Ir]),(Ar,[Ar,Ar,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Zero-delay feedback implementation of 1 pole filter.
@@ -1768,8 +1974,10 @@ tonex b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/zdf_1pole.html>
 zdf_1pole ::  Sig -> Sig -> Sig
-zdf_1pole b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "zdf_1pole" [(Ar,[Ar,Xr,Kr,Ir])] [a1,a2]
+zdf_1pole b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "zdf_1pole" [(Ar,[Ar,Xr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Zero-delay feedback implementation of 1 pole filter with multimode output.
@@ -1780,8 +1988,10 @@ zdf_1pole b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/zdf_1pole_mode.html>
 zdf_1pole_mode ::  Sig -> Sig -> (Sig,Sig)
-zdf_1pole_mode b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "zdf_1pole_mode" ([Ar,Ar],[Ar,Xr,Ir]) [a1,a2]
+zdf_1pole_mode b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "zdf_1pole_mode" ([Ar,Ar],[Ar,Xr,Ir]) [a1,a2]
 
 -- | 
 -- Zero-delay feedback implementation of 2 pole filter.
@@ -1792,8 +2002,10 @@ zdf_1pole_mode b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/zdf_2pole.html>
 zdf_2pole ::  Sig -> Sig -> Sig -> Sig
-zdf_2pole b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "zdf_2pole" [(Ar,[Ar,Xr,Xr,Kr,Ir])] [a1,a2,a3]
+zdf_2pole b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "zdf_2pole" [(Ar,[Ar,Xr,Xr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Zero-delay feedback implementation of 2 pole filter with multimode output.
@@ -1805,8 +2017,10 @@ zdf_2pole b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/zdf_2pole_mode.html>
 zdf_2pole_mode ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig)
-zdf_2pole_mode b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "zdf_2pole_mode" ([Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) [a1,a2,a3]
+zdf_2pole_mode b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "zdf_2pole_mode" ([Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) [a1,a2,a3]
 
 -- | 
 -- Zero-delay feedback implementation of 4 pole ladder filter.
@@ -1817,8 +2031,10 @@ zdf_2pole_mode b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/zdf_ladder.html>
 zdf_ladder ::  Sig -> Sig -> Sig -> Sig
-zdf_ladder b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "zdf_ladder" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+zdf_ladder b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "zdf_ladder" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- Standard Filters:Resonant.
 
@@ -1833,11 +2049,13 @@ zdf_ladder b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/areson.html>
 areson ::  Sig -> Sig -> Sig -> Sig
-areson b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "areson" [(Ar,[Ar,Kr,Kr,Ir,Ir])
-                                     ,(Ar,[Ar,Ar,Kr,Ir,Ir])
-                                     ,(Ar,[Ar,Kr,Ar,Ir,Ir])
-                                     ,(Ar,[Ar,Ar,Ar,Ir,Ir])] [a1,a2,a3]
+areson b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "areson" [(Ar,[Ar,Kr,Kr,Ir,Ir])
+                               ,(Ar,[Ar,Ar,Kr,Ir,Ir])
+                               ,(Ar,[Ar,Kr,Ar,Ir,Ir])
+                               ,(Ar,[Ar,Ar,Ar,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A second-order multi-mode filter.
@@ -1846,8 +2064,10 @@ areson b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/bqrez.html>
 bqrez ::  Sig -> Sig -> Sig -> Sig
-bqrez b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "bqrez" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+bqrez b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "bqrez" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A resonant lowpass filter.
@@ -1858,8 +2078,10 @@ bqrez b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/lowpass2.html>
 lowpass2 ::  Sig -> Sig -> Sig -> Sig
-lowpass2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "lowpass2" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
+lowpass2 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "lowpass2" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Another resonant lowpass filter.
@@ -1870,8 +2092,10 @@ lowpass2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/lowres.html>
 lowres ::  Sig -> Sig -> Sig -> Sig
-lowres b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "lowres" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
+lowres b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "lowres" [(Ar,[Ar,Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Simulates layers of serially connected resonant lowpass filters.
@@ -1882,8 +2106,10 @@ lowres b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/lowresx.html>
 lowresx ::  Sig -> Sig -> Sig -> Sig
-lowresx b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "lowresx" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+lowresx b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "lowresx" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A 3-pole sweepable resonant lowpass filter.
@@ -1894,8 +2120,10 @@ lowresx b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/lpf18.html>
 lpf18 ::  Sig -> Sig -> Sig -> Sig -> Sig
-lpf18 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "lpf18" [(Ar,[Ar,Xr,Xr,Xr,Ir])] [a1,a2,a3,a4]
+lpf18 b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "lpf18" [(Ar,[Ar,Xr,Xr,Xr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Moog ladder lowpass filter.
@@ -1913,11 +2141,13 @@ lpf18 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
 --
 -- csound doc: <http://csound.com/docs/manual/moogladder.html>
 moogladder ::  Sig -> Sig -> Sig -> Sig
-moogladder b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "moogladder" [(Ar,[Ar,Kr,Kr,Ir])
-                                         ,(Ar,[Ar,Ar,Kr,Ir])
-                                         ,(Ar,[Ar,Kr,Ar,Ir])
-                                         ,(Ar,[Ar,Ar,Ar,Ir])] [a1,a2,a3]
+moogladder b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "moogladder" [(Ar,[Ar,Kr,Kr,Ir])
+                                   ,(Ar,[Ar,Ar,Kr,Ir])
+                                   ,(Ar,[Ar,Kr,Ar,Ir])
+                                   ,(Ar,[Ar,Ar,Ar,Ir])] [a1,a2,a3]
 
 -- | 
 -- Moog ladder lowpass filter.
@@ -1935,11 +2165,13 @@ moogladder b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/moogladder2.html>
 moogladder2 ::  Sig -> Sig -> Sig -> Sig
-moogladder2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "moogladder2" [(Ar,[Ar,Kr,Kr,Ir])
-                                          ,(Ar,[Ar,Ar,Kr,Ir])
-                                          ,(Ar,[Ar,Kr,Ar,Ir])
-                                          ,(Ar,[Ar,Ar,Ar,Ir])] [a1,a2,a3]
+moogladder2 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "moogladder2" [(Ar,[Ar,Kr,Kr,Ir])
+                                    ,(Ar,[Ar,Ar,Kr,Ir])
+                                    ,(Ar,[Ar,Kr,Ar,Ir])
+                                    ,(Ar,[Ar,Ar,Ar,Ir])] [a1,a2,a3]
 
 -- | 
 -- A digital emulation of the Moog diode ladder filter configuration.
@@ -1948,8 +2180,10 @@ moogladder2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/moogvcf.html>
 moogvcf ::  Sig -> Sig -> Sig -> Sig
-moogvcf b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "moogvcf" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+moogvcf b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "moogvcf" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A digital emulation of the Moog diode ladder filter configuration.
@@ -1958,8 +2192,10 @@ moogvcf b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/moogvcf2.html>
 moogvcf2 ::  Sig -> Sig -> Sig -> Sig
-moogvcf2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "moogvcf2" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+moogvcf2 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "moogvcf2" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Moog voltage-controlled highpass filter emulation.
@@ -1973,8 +2209,10 @@ moogvcf2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/mvchpf.html>
 mvchpf ::  Sig -> Sig -> Sig
-mvchpf b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "mvchpf" [(Ar,[Ar,Xr,Ir])] [a1,a2]
+mvchpf b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "mvchpf" [(Ar,[Ar,Xr,Ir])] [a1,a2]
 
 -- | 
 -- Moog voltage-controlled lowpass filter emulation.
@@ -1991,8 +2229,10 @@ mvchpf b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/mvclpf1.html>
 mvclpf1 ::  Sig -> Sig -> Sig -> Sig
-mvclpf1 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "mvclpf1" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+mvclpf1 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "mvclpf1" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Moog voltage-controlled lowpass filter emulation.
@@ -2009,8 +2249,10 @@ mvclpf1 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/mvclpf2.html>
 mvclpf2 ::  Sig -> Sig -> Sig -> Sig
-mvclpf2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "mvclpf2" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+mvclpf2 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "mvclpf2" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Moog voltage-controlled lowpass filter emulation.
@@ -2030,8 +2272,10 @@ mvclpf2 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/mvclpf3.html>
 mvclpf3 ::  Sig -> Sig -> Sig -> Sig
-mvclpf3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "mvclpf3" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
+mvclpf3 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "mvclpf3" [(Ar,[Ar,Xr,Xr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Moog voltage-controlled lowpass filter emulation.
@@ -2045,8 +2289,10 @@ mvclpf3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/mvclpf4.html>
 mvclpf4 ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
-mvclpf4 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "mvclpf4" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) [a1,a2,a3]
+mvclpf4 b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "mvclpf4" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) [a1,a2,a3]
 
 -- | 
 -- A second-order resonant filter.
@@ -2055,8 +2301,10 @@ mvclpf4 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/reson.html>
 reson ::  Sig -> Sig -> Sig -> Sig
-reson b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "reson" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+reson b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "reson" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A bandpass filter with variable frequency response.
@@ -2067,8 +2315,10 @@ reson b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/resonr.html>
 resonr ::  Sig -> Sig -> Sig -> Sig
-resonr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "resonr" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+resonr b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "resonr" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Emulates a stack of filters using the reson opcode.
@@ -2079,8 +2329,10 @@ resonr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/resonx.html>
 resonx ::  Sig -> Sig -> Sig -> Sig
-resonx b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "resonx" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
+resonx b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "resonx" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A bank of second-order bandpass filters, connected in parallel.
@@ -2089,8 +2341,10 @@ resonx b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/resony.html>
 resony ::  Sig -> Sig -> Sig -> D -> Sig -> Sig
-resony b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "resony" [(Ar,[Ar,Kr,Kr,Ir,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+resony b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "resony" [(Ar,[Ar,Kr,Kr,Ir,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A bandpass filter with variable frequency response.
@@ -2101,8 +2355,10 @@ resony b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/resonz.html>
 resonz ::  Sig -> Sig -> Sig -> Sig
-resonz b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "resonz" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+resonz b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "resonz" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A resonant low-pass filter.
@@ -2111,8 +2367,10 @@ resonz b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/rezzy.html>
 rezzy ::  Sig -> Sig -> Sig -> Sig
-rezzy b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "rezzy" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
+rezzy b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "rezzy" [(Ar,[Ar,Xr,Xr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- State-variable filter.
@@ -2127,8 +2385,10 @@ rezzy b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/statevar.html>
 statevar ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
-statevar b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "statevar" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir,Ir]) [a1,a2,a3]
+statevar b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "statevar" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- A resonant second order filter, with simultaneous lowpass, highpass and bandpass outputs.
@@ -2139,8 +2399,10 @@ statevar b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/svfilter.html>
 svfilter ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig)
-svfilter b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "svfilter" ([Ar,Ar,Ar],[Ar,Kr,Kr,Ir,Ir]) [a1,a2,a3]
+svfilter b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "svfilter" ([Ar,Ar,Ar],[Ar,Kr,Kr,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Models some of the filter characteristics of a Roland TB303 voltage-controlled filter.
@@ -2151,8 +2413,10 @@ svfilter b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/tbvcf.html>
 tbvcf ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-tbvcf b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "tbvcf" [(Ar,[Ar,Xr,Xr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+tbvcf b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "tbvcf" [(Ar,[Ar,Xr,Xr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- A bank of filters in which the cutoff frequency can be separated under user control.
@@ -2163,8 +2427,10 @@ tbvcf b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/vlowres.html>
 vlowres ::  Sig -> Sig -> Sig -> D -> Sig -> Sig
-vlowres b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "vlowres" [(Ar,[Ar,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5]
+vlowres b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "vlowres" [(Ar,[Ar,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5]
 
 -- Standard Filters:Control.
 
@@ -2175,8 +2441,10 @@ vlowres b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/aresonk.html>
 aresonk ::  Sig -> Sig -> Sig -> Sig
-aresonk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "aresonk" [(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+aresonk b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "aresonk" [(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A hi-pass filter whose transfer functions are the complements of the tonek opcode.
@@ -2185,8 +2453,10 @@ aresonk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/atonek.html>
 atonek ::  Sig -> Sig -> Sig
-atonek b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "atonek" [(Kr,[Kr,Kr,Ir])] [a1,a2]
+atonek b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "atonek" [(Kr,[Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Generate glissandos starting from a control signal.
@@ -2195,8 +2465,10 @@ atonek b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/lineto.html>
 lineto ::  Sig -> Sig -> Sig
-lineto b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "lineto" [(Kr,[Kr,Kr])] [a1,a2]
+lineto b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "lineto" [(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Applies portamento to a step-valued control signal.
@@ -2205,8 +2477,10 @@ lineto b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/port.html>
 port ::  Sig -> D -> Sig
-port b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "port" [(Kr,[Kr,Ir,Ir])] [a1,a2]
+port b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "port" [(Kr,[Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Applies portamento to a step-valued control signal.
@@ -2215,8 +2489,10 @@ port b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/portk.html>
 portk ::  Sig -> Sig -> Sig
-portk b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "portk" [(Kr,[Kr,Kr,Ir])] [a1,a2]
+portk b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "portk" [(Kr,[Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- A second-order resonant filter.
@@ -2225,8 +2501,10 @@ portk b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/resonk.html>
 resonk ::  Sig -> Sig -> Sig -> Sig
-resonk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "resonk" [(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+resonk b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "resonk" [(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Control signal resonant filter stack.
@@ -2237,8 +2515,10 @@ resonk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/resonxk.html>
 resonxk ::  Sig -> Sig -> Sig -> Sig
-resonxk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "resonxk" [(Kr,[Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3]
+resonxk b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "resonxk" [(Kr,[Kr,Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Exponential Lag
@@ -2250,8 +2530,10 @@ resonxk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/sc_lag.html>
 sc_lag ::  Sig -> Sig -> Sig
-sc_lag b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "sc_lag" [(Ar,[Ar,Kr,Ir]),(Kr,[Kr,Kr,Ir])] [a1,a2]
+sc_lag b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "sc_lag" [(Ar,[Ar,Kr,Ir]),(Kr,[Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Exponential Lag
@@ -2264,8 +2546,10 @@ sc_lag b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/sc_lagud.html>
 sc_lagud ::  Sig -> Sig -> Sig -> Sig
-sc_lagud b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "sc_lagud" [(Ar,[Ar,Kr,Kr]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+sc_lagud b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "sc_lagud" [(Ar,[Ar,Kr,Kr]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Timed trigger
@@ -2277,8 +2561,10 @@ sc_lagud b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/sc_trig.html>
 sc_trig ::  Sig -> Sig -> Sig
-sc_trig b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "sc_trig" [(Ar,[Ar,Kr]),(Kr,[Kr,Kr])] [a1,a2]
+sc_trig b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "sc_trig" [(Ar,[Ar,Kr]),(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Generate glissandos starting from a control signal.
@@ -2289,8 +2575,10 @@ sc_trig b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/tlineto.html>
 tlineto ::  Sig -> Sig -> Sig -> Sig
-tlineto b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "tlineto" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+tlineto b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "tlineto" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- A first-order recursive low-pass filter with variable frequency response.
@@ -2299,8 +2587,10 @@ tlineto b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/tonek.html>
 tonek ::  Sig -> Sig -> Sig
-tonek b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "tonek" [(Kr,[Kr,Kr,Ir])] [a1,a2]
+tonek b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "tonek" [(Kr,[Kr,Kr,Ir])] [a1,a2]
 
 -- Specialized Filters.
 
@@ -2313,8 +2603,10 @@ tonek b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/dcblock.html>
 dcblock ::  Sig -> Sig
-dcblock b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "dcblock" [(Ar,[Ar,Ir])] [a1]
+dcblock b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "dcblock" [(Ar,[Ar,Ir])] [a1]
 
 -- | 
 -- A DC blocking filter.
@@ -2325,8 +2617,10 @@ dcblock b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/dcblock2.html>
 dcblock2 ::  Sig -> Sig
-dcblock2 b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "dcblock2" [(Ar,[Ar,Ir,Ir])] [a1]
+dcblock2 b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "dcblock2" [(Ar,[Ar,Ir,Ir])] [a1]
 
 -- | 
 -- Equalizer filter
@@ -2340,8 +2634,10 @@ dcblock2 b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/eqfil.html>
 eqfil ::  Sig -> Sig -> Sig -> Sig -> Sig
-eqfil b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "eqfil" [(Ar,[Ar,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4]
+eqfil b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "eqfil" [(Ar,[Ar,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Performs filtering using a transposed form-II digital filter lattice with no time-varying control.
@@ -2353,10 +2649,12 @@ eqfil b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
 --
 -- csound doc: <http://csound.com/docs/manual/filter2.html>
 filter2 ::  Sig -> D -> D -> [D] -> Sig
-filter2 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
-    where f a1 a2 a3 a4 = opcs "filter2" [(Ar,[Ar] ++ (repeat Ir)),(Kr,[Kr] ++ (repeat Ir))] ([a1
-                                                                                              ,a2
-                                                                                              ,a3] ++ a4)
+filter2 b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
+  where
+    f a1 a2 a3 a4 = opcs "filter2" [(Ar,[Ar] ++ (repeat Ir)),(Kr,[Kr] ++ (repeat Ir))] ([a1
+                                                                                        ,a2
+                                                                                        ,a3] ++ a4)
 
 -- | 
 -- AM/FM analysis from quadrature signal.
@@ -2368,8 +2666,10 @@ filter2 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> mapM unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/fmanal.html>
 fmanal ::  Sig -> Sig -> (Sig,Sig)
-fmanal b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "fmanal" ([Ar,Ar],[Ar,Ar]) [a1,a2]
+fmanal b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "fmanal" ([Ar,Ar],[Ar,Ar]) [a1,a2]
 
 -- | 
 -- Formant filter.
@@ -2387,8 +2687,10 @@ fmanal b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/fofilter.html>
 fofilter ::  Sig -> Sig -> Sig -> Sig -> Sig
-fofilter b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "fofilter" [(Ar,[Ar,Xr,Xr,Xr,Ir])] [a1,a2,a3,a4]
+fofilter b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "fofilter" [(Ar,[Ar,Xr,Xr,Xr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- A Hilbert transformer.
@@ -2399,8 +2701,10 @@ fofilter b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/hilbert.html>
 hilbert ::  Sig -> (Sig,Sig)
-hilbert b1 = pureTuple $ f <$> unSig b1
-    where f a1 = mopcs "hilbert" ([Ar,Ar],[Ar]) [a1]
+hilbert b1 =
+  pureTuple $ f <$> unSig b1
+  where
+    f a1 = mopcs "hilbert" ([Ar,Ar],[Ar]) [a1]
 
 -- | 
 -- A Hilbert rransformer.
@@ -2411,8 +2715,10 @@ hilbert b1 = pureTuple $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/hilbert2.html>
 hilbert2 ::  Sig -> D -> D -> (Sig,Sig)
-hilbert2 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = mopcs "hilbert2" ([Ar,Ar],[Ar,Ir,Ir]) [a1,a2,a3]
+hilbert2 b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = mopcs "hilbert2" ([Ar,Ar],[Ar,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- A filter with a non-linear effect.
@@ -2423,8 +2729,10 @@ hilbert2 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/nlfilt.html>
 nlfilt ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-nlfilt b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "nlfilt" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
+nlfilt b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "nlfilt" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- A filter with a non-linear effect and blowup protection.
@@ -2435,8 +2743,10 @@ nlfilt b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/nlfilt2.html>
 nlfilt2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-nlfilt2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "nlfilt2" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
+nlfilt2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "nlfilt2" [(Ar,[Ar,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Implementation of Zoelzer's parametric equalizer filters.
@@ -2447,8 +2757,10 @@ nlfilt2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/pareq.html>
 pareq ::  Sig -> Sig -> Sig -> Sig -> Sig
-pareq b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "pareq" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4]
+pareq b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "pareq" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Parametric equalizer and filter opcode with 7 filter types, based
@@ -2461,8 +2773,10 @@ pareq b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
 --
 -- csound doc: <http://csound.com/docs/manual/rbjeq.html>
 rbjeq ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-rbjeq b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "rbjeq" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+rbjeq b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "rbjeq" [(Ar,[Ar,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Performs filtering using a transposed form-II digital filter lattice with radial pole-shearing and angular pole-warping.
@@ -2474,12 +2788,10 @@ rbjeq b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/zfilter2.html>
 zfilter2 ::  Sig -> Sig -> Sig -> D -> D -> [D] -> Sig
-zfilter2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> mapM unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "zfilter2" [(Ar,[Ar,Kr,Kr] ++ (repeat Ir))] ([a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5] ++ a6)
+zfilter2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> mapM unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "zfilter2" [(Ar,[Ar,Kr,Kr] ++ (repeat Ir))] ([a1,a2,a3,a4,a5] ++ a6)
 
 -- Waveguides.
 
@@ -2490,8 +2802,10 @@ zfilter2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/wguide1.html>
 wguide1 ::  Sig -> Sig -> Sig -> Sig -> Sig
-wguide1 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "wguide1" [(Ar,[Ar,Xr,Kr,Kr])] [a1,a2,a3,a4]
+wguide1 b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "wguide1" [(Ar,[Ar,Xr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- A model of beaten plate consisting of two parallel delay-lines and two first-order lowpass filters.
@@ -2501,14 +2815,10 @@ wguide1 b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/wguide2.html>
 wguide2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-wguide2 b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "wguide2" [(Ar,[Ar,Xr,Xr,Kr,Kr,Kr,Kr])] [a1
-                                                                                ,a2
-                                                                                ,a3
-                                                                                ,a4
-                                                                                ,a5
-                                                                                ,a6
-                                                                                ,a7]
+wguide2 b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "wguide2" [(Ar,[Ar,Xr,Xr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- Waveshaping.
 
@@ -2521,8 +2831,10 @@ wguide2 b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/chebyshevpoly.html>
 chebyshevpoly ::  Sig -> [Sig] -> Sig
-chebyshevpoly b1 b2 = Sig $ f <$> unSig b1 <*> mapM unSig b2
-    where f a1 a2 = opcs "chebyshevpoly" [(Ar,[Ar] ++ (repeat Kr))] ([a1] ++ a2)
+chebyshevpoly b1 b2 =
+  Sig $ f <$> unSig b1 <*> mapM unSig b2
+  where
+    f a1 a2 = opcs "chebyshevpoly" [(Ar,[Ar] ++ (repeat Kr))] ([a1] ++ a2)
 
 -- | 
 -- Performs linear clipping on an audio signal or a phasor.
@@ -2533,8 +2845,10 @@ chebyshevpoly b1 b2 = Sig $ f <$> unSig b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pdclip.html>
 pdclip ::  Sig -> Sig -> Sig -> Sig
-pdclip b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "pdclip" [(Ar,[Ar,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+pdclip b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "pdclip" [(Ar,[Ar,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Distorts a phasor for reading the two halves of a table at different rates.
@@ -2545,8 +2859,10 @@ pdclip b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/pdhalf.html>
 pdhalf ::  Sig -> Sig -> Sig
-pdhalf b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "pdhalf" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2]
+pdhalf b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pdhalf" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Distorts a phasor for reading two unequal portions of a table in equal periods.
@@ -2557,8 +2873,10 @@ pdhalf b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/pdhalfy.html>
 pdhalfy ::  Sig -> Sig -> Sig
-pdhalfy b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "pdhalfy" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2]
+pdhalfy b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "pdhalfy" [(Ar,[Ar,Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Waveshapes a signal by raising it to a variable exponent.
@@ -2569,8 +2887,10 @@ pdhalfy b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/powershape.html>
 powershape ::  Sig -> Sig -> Sig
-powershape b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "powershape" [(Ar,[Ar,Kr,Ir])] [a1,a2]
+powershape b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "powershape" [(Ar,[Ar,Kr,Ir])] [a1,a2]
 
 -- Comparators and Accumulators.
 
@@ -2583,8 +2903,10 @@ powershape b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/cmp.html>
 cmp ::  Sig -> Str -> Sig -> Sig
-cmp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unStr b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "cmp" [(Ar,[Ar,Sr,Ar])] [a1,a2,a3]
+cmp b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unStr b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "cmp" [(Ar,[Ar,Sr,Ar])] [a1,a2,a3]
 
 -- | 
 -- Produces a signal that is the maximum of any number of input signals.
@@ -2598,8 +2920,10 @@ cmp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unStr b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/max.html>
 max' ::  [Sig] -> Sig
-max' b1 = Sig $ f <$> mapM unSig b1
-    where f a1 = opcs "max" [(Ar,(repeat Ar)),(Kr,(repeat Kr)),(Ir,(repeat Ir))] a1
+max' b1 =
+  Sig $ f <$> mapM unSig b1
+  where
+    f a1 = opcs "max" [(Ar,(repeat Ar)),(Kr,(repeat Kr)),(Ir,(repeat Ir))] a1
 
 -- | 
 -- Local maximum (or minimum) value of an incoming asig signal
@@ -2610,8 +2934,10 @@ max' b1 = Sig $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/max_k.html>
 max_k ::  Sig -> Sig -> D -> Sig
-max_k b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "max_k" [(Kr,[Ar,Kr,Ir])] [a1,a2,a3]
+max_k b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "max_k" [(Kr,[Ar,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Produces a signal that is the maximum of the absolute values of any number of input signals.
@@ -2623,8 +2949,10 @@ max_k b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/maxabs.html>
 maxabs ::  [Sig] -> Sig
-maxabs b1 = Sig $ f <$> mapM unSig b1
-    where f a1 = opcs "maxabs" [(Ar,(repeat Ar)),(Kr,(repeat Kr))] a1
+maxabs b1 =
+  Sig $ f <$> mapM unSig b1
+  where
+    f a1 = opcs "maxabs" [(Ar,(repeat Ar)),(Kr,(repeat Kr))] a1
 
 -- | 
 -- Accumulates the maximum of the absolute values of audio signals.
@@ -2635,8 +2963,10 @@ maxabs b1 = Sig $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/maxabsaccum.html>
 maxabsaccum ::  Sig -> Sig -> SE ()
-maxabsaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "maxabsaccum" [(Xr,[Ar,Ar])] [a1,a2]
+maxabsaccum b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "maxabsaccum" [(Xr,[Ar,Ar])] [a1,a2]
 
 -- | 
 -- Accumulates the maximum value of audio signals.
@@ -2647,8 +2977,10 @@ maxabsaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/maxaccum.html>
 maxaccum ::  Sig -> Sig -> SE ()
-maxaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "maxaccum" [(Xr,[Ar,Ar])] [a1,a2]
+maxaccum b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "maxaccum" [(Xr,[Ar,Ar])] [a1,a2]
 
 -- | 
 -- Produces a signal that is the minimum of any number of input signals.
@@ -2662,8 +2994,10 @@ maxaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/min.html>
 min' ::  [Sig] -> Sig
-min' b1 = Sig $ f <$> mapM unSig b1
-    where f a1 = opcs "min" [(Ar,(repeat Ar)),(Kr,(repeat Kr)),(Ir,(repeat Ir))] a1
+min' b1 =
+  Sig $ f <$> mapM unSig b1
+  where
+    f a1 = opcs "min" [(Ar,(repeat Ar)),(Kr,(repeat Kr)),(Ir,(repeat Ir))] a1
 
 -- | 
 -- Produces a signal that is the minimum of the absolute values of any number of input signals.
@@ -2675,8 +3009,10 @@ min' b1 = Sig $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/minabs.html>
 minabs ::  [Sig] -> Sig
-minabs b1 = Sig $ f <$> mapM unSig b1
-    where f a1 = opcs "minabs" [(Ar,(repeat Ar)),(Kr,(repeat Kr))] a1
+minabs b1 =
+  Sig $ f <$> mapM unSig b1
+  where
+    f a1 = opcs "minabs" [(Ar,(repeat Ar)),(Kr,(repeat Kr))] a1
 
 -- | 
 -- Accumulates the minimum of the absolute values of audio signals.
@@ -2687,8 +3023,10 @@ minabs b1 = Sig $ f <$> mapM unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/minabsaccum.html>
 minabsaccum ::  Sig -> Sig -> SE ()
-minabsaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "minabsaccum" [(Xr,[Ar,Ar])] [a1,a2]
+minabsaccum b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "minabsaccum" [(Xr,[Ar,Ar])] [a1,a2]
 
 -- | 
 -- Accumulates the minimum value of audio signals.
@@ -2699,5 +3037,7 @@ minabsaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/minaccum.html>
 minaccum ::  Sig -> Sig -> SE ()
-minaccum b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "minaccum" [(Xr,[Ar,Ar])] [a1,a2]
+minaccum b1 b2 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep_ "minaccum" [(Xr,[Ar,Ar])] [a1,a2]

@@ -19,8 +19,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/cent.html>
 cent :: SigOrD a => a -> a
-cent b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1 "cent" a1
+cent b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1 "cent" a1
 
 -- | 
 -- Converts a Midi note number value to cycles-per-second.
@@ -29,8 +31,10 @@ cent b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/cpsmidinn.html>
 cpsmidinn :: SigOrD a => a -> a
-cpsmidinn b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "cpsmidinn" a1
+cpsmidinn b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "cpsmidinn" a1
 
 -- | 
 -- Converts an octave-point-decimal value to cycles-per-second.
@@ -39,8 +43,10 @@ cpsmidinn b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/cpsoct.html>
 cpsoct :: SigOrD a => a -> a
-cpsoct b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1 "cpsoct" a1
+cpsoct b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1 "cpsoct" a1
 
 -- | 
 -- Converts a pitch-class value to cycles-per-second.
@@ -49,8 +55,10 @@ cpsoct b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/cpspch.html>
 cpspch :: SigOrD a => a -> a
-cpspch b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "cpspch" a1
+cpspch b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "cpspch" a1
 
 -- | 
 -- Convert frequency to midi
@@ -63,8 +71,10 @@ cpspch b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/ftom.html>
 ftom ::  D -> Sig
-ftom b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "ftom" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+ftom b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "ftom" [(Ir,[Ir]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Convert a midi to frequency
@@ -77,8 +87,10 @@ ftom b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/mtof.html>
 mtof ::  D -> Sig
-mtof b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "mtof" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+mtof b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "mtof" [(Ir,[Ir]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Convert midi note number to string note name
@@ -91,8 +103,10 @@ mtof b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/mton.html>
 mton ::  Sig -> Str
-mton b1 = Str $ f <$> unSig b1
-    where f a1 = opcs "mton" [(Sr,[Kr]),(Sr,[Ir])] [a1]
+mton b1 =
+  Str $ f <$> unSig b1
+  where
+    f a1 = opcs "mton" [(Sr,[Kr]),(Sr,[Ir])] [a1]
 
 -- | 
 -- Convert note name to midi note number
@@ -105,8 +119,10 @@ mton b1 = Str $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/ntom.html>
 ntom ::  Str -> D
-ntom b1 = D $ f <$> unStr b1
-    where f a1 = opcs "ntom" [(Kr,[Sr]),(Ir,[Sr])] [a1]
+ntom b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "ntom" [(Kr,[Sr]),(Ir,[Sr])] [a1]
 
 -- | 
 -- Calculates a factor to raise/lower a frequency by a given amount of octaves.
@@ -115,8 +131,10 @@ ntom b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/octave.html>
 octave :: SigOrD a => a -> a
-octave b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1 "octave" a1
+octave b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1 "octave" a1
 
 -- | 
 -- Converts a cycles-per-second value to octave-point-decimal.
@@ -125,8 +143,10 @@ octave b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/octcps.html>
 octcps :: SigOrD a => a -> a
-octcps b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "octcps" a1
+octcps b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "octcps" a1
 
 -- | 
 -- Converts a Midi note number value to octave-point-decimal.
@@ -135,8 +155,10 @@ octcps b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/octmidinn.html>
 octmidinn :: SigOrD a => a -> a
-octmidinn b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "octmidinn" a1
+octmidinn b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "octmidinn" a1
 
 -- | 
 -- Converts a pitch-class value to octave-point-decimal.
@@ -145,8 +167,10 @@ octmidinn b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/octpch.html>
 octpch :: SigOrD a => a -> a
-octpch b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "octpch" a1
+octpch b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "octpch" a1
 
 -- | 
 -- Converts a Midi note number value to octave point pitch-class units.
@@ -155,8 +179,10 @@ octpch b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/pchmidinn.html>
 pchmidinn :: SigOrD a => a -> a
-pchmidinn b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "pchmidinn" a1
+pchmidinn b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "pchmidinn" a1
 
 -- | 
 -- Converts an octave-point-decimal value to pitch-class.
@@ -165,8 +191,10 @@ pchmidinn b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/pchoct.html>
 pchoct :: SigOrD a => a -> a
-pchoct b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1k "pchoct" a1
+pchoct b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1k "pchoct" a1
 
 -- | 
 -- Convert pch to midi note number
@@ -180,8 +208,10 @@ pchoct b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/pchtom.html>
 pchtom ::  D -> Sig
-pchtom b1 = Sig $ f <$> unD b1
-    where f a1 = opcs "pchtom" [(Ir,[Ir]),(Kr,[Kr])] [a1]
+pchtom b1 =
+  Sig $ f <$> unD b1
+  where
+    f a1 = opcs "pchtom" [(Ir,[Ir]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Calculates a factor to raise/lower a frequency by a given amount of semitones.
@@ -190,8 +220,10 @@ pchtom b1 = Sig $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/semitone.html>
 semitone :: SigOrD a => a -> a
-semitone b1 = fromGE $ f <$> toGE b1
-    where f a1 = opr1 "semitone" a1
+semitone b1 =
+  fromGE $ f <$> toGE b1
+  where
+    f a1 = opr1 "semitone" a1
 
 -- Tuning Opcodes.
 
@@ -202,8 +234,10 @@ semitone b1 = fromGE $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/cps2pch.html>
 cps2pch ::  D -> D -> D
-cps2pch b1 b2 = D $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "cps2pch" [(Ir,[Ir,Ir])] [a1,a2]
+cps2pch b1 b2 =
+  D $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "cps2pch" [(Ir,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Returns micro-tuning values at k-rate.
@@ -212,8 +246,10 @@ cps2pch b1 b2 = D $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/cpstun.html>
 cpstun ::  Sig -> Sig -> Tab -> Sig
-cpstun b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "cpstun" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+cpstun b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "cpstun" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Returns micro-tuning values at init-rate.
@@ -222,8 +258,10 @@ cpstun b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/cpstuni.html>
 cpstuni ::  D -> Tab -> D
-cpstuni b1 b2 = D $ f <$> unD b1 <*> unTab b2
-    where f a1 a2 = opcs "cpstuni" [(Ir,[Ir,Ir])] [a1,a2]
+cpstuni b1 b2 =
+  D $ f <$> unD b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "cpstuni" [(Ir,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- Converts a pitch-class value into cycles-per-second (Hz) for equal divisions of any interval.
@@ -234,5 +272,7 @@ cpstuni b1 b2 = D $ f <$> unD b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/cpsxpch.html>
 cpsxpch ::  D -> D -> D -> D -> D
-cpsxpch b1 b2 b3 b4 = D $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "cpsxpch" [(Ir,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+cpsxpch b1 b2 b3 b4 =
+  D $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "cpsxpch" [(Ir,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]

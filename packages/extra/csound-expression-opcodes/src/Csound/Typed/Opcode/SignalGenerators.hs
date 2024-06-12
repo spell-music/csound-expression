@@ -53,6 +53,7 @@ module Csound.Typed.Opcode.SignalGenerators (
     pluck, repluck, streson, wgbow, wgbowedbar, wgbrass, wgclar, wgflute, wgpluck, wgpluck2) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -65,8 +66,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/adsyn.html>
 adsyn ::  Sig -> Sig -> Sig -> Str -> Sig
-adsyn b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4
-    where f a1 a2 a3 a4 = opcs "adsyn" [(Ar,[Kr,Kr,Kr,Sr])] [a1,a2,a3,a4]
+adsyn b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4
+  where
+    f a1 a2 a3 a4 = opcs "adsyn" [(Ar,[Kr,Kr,Kr,Sr])] [a1,a2,a3,a4]
 
 -- | 
 -- Performs additive synthesis with an arbitrary number of partials, not necessarily harmonic.
@@ -75,8 +78,10 @@ adsyn b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unStr b4
 --
 -- csound doc: <http://csound.com/docs/manual/adsynt.html>
 adsynt ::  Sig -> Sig -> Tab -> Tab -> Tab -> D -> Sig
-adsynt b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unTab b4 <*> unTab b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "adsynt" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+adsynt b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unTab b4 <*> unTab b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "adsynt" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Performs additive synthesis with an arbitrary number of partials -not necessarily harmonic- with interpolation.
@@ -87,8 +92,10 @@ adsynt b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/adsynt2.html>
 adsynt2 ::  Sig -> Sig -> Tab -> Tab -> Tab -> D -> Sig
-adsynt2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unTab b4 <*> unTab b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "adsynt2" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+adsynt2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unTab b4 <*> unTab b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "adsynt2" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- An oscillator which takes tonality and brightness as arguments.
@@ -100,8 +107,10 @@ adsynt2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/hsboscil.html>
 hsboscil ::  Sig -> Sig -> Sig -> D -> Tab -> Tab -> Sig
-hsboscil b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unTab b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "hsboscil" [(Ar,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+hsboscil b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unTab b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "hsboscil" [(Ar,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- Basic Oscillators.
 
@@ -113,8 +122,10 @@ hsboscil b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/lfo.html>
 lfo ::  Sig -> Sig -> Sig
-lfo b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "lfo" [(Kr,[Kr,Kr,Ir]),(Ar,[Kr,Kr,Ir])] [a1,a2]
+lfo b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "lfo" [(Kr,[Kr,Kr,Ir]),(Ar,[Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Mixes the output of any number of oscillators.
@@ -128,27 +139,29 @@ lfo b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/oscbnk.html>
 oscbnk ::  Sig -> Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Sig
-oscbnk b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unD b11 <*> unSig b12 <*> unSig b13 <*> unSig b14 <*> unSig b15 <*> unSig b16 <*> unSig b17 <*> unD b18 <*> unTab b19
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 = opcs "oscbnk" [(Ar
-                                                                                                ,[Kr,Kr,Kr,Kr,Ir,Ir,Kr,Kr,Kr,Kr,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                                                                                                                   ,a2
-                                                                                                                                                                                   ,a3
-                                                                                                                                                                                   ,a4
-                                                                                                                                                                                   ,a5
-                                                                                                                                                                                   ,a6
-                                                                                                                                                                                   ,a7
-                                                                                                                                                                                   ,a8
-                                                                                                                                                                                   ,a9
-                                                                                                                                                                                   ,a10
-                                                                                                                                                                                   ,a11
-                                                                                                                                                                                   ,a12
-                                                                                                                                                                                   ,a13
-                                                                                                                                                                                   ,a14
-                                                                                                                                                                                   ,a15
-                                                                                                                                                                                   ,a16
-                                                                                                                                                                                   ,a17
-                                                                                                                                                                                   ,a18
-                                                                                                                                                                                   ,a19]
+oscbnk b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unD b11 <*> unSig b12 <*> unSig b13 <*> unSig b14 <*> unSig b15 <*> unSig b16 <*> unSig b17 <*> unD b18 <*> unTab b19
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 = opcs "oscbnk" [(Ar
+                                                                                          ,[Kr,Kr,Kr,Kr,Ir,Ir,Kr,Kr,Kr,Kr,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                                                                                                             ,a2
+                                                                                                                                                                             ,a3
+                                                                                                                                                                             ,a4
+                                                                                                                                                                             ,a5
+                                                                                                                                                                             ,a6
+                                                                                                                                                                             ,a7
+                                                                                                                                                                             ,a8
+                                                                                                                                                                             ,a9
+                                                                                                                                                                             ,a10
+                                                                                                                                                                             ,a11
+                                                                                                                                                                             ,a12
+                                                                                                                                                                             ,a13
+                                                                                                                                                                             ,a14
+                                                                                                                                                                             ,a15
+                                                                                                                                                                             ,a16
+                                                                                                                                                                             ,a17
+                                                                                                                                                                             ,a18
+                                                                                                                                                                             ,a19]
 
 -- | 
 -- A simple oscillator.
@@ -160,8 +173,10 @@ oscbnk b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 = Sig 
 --
 -- csound doc: <http://csound.com/docs/manual/oscil.html>
 oscil ::  Sig -> Sig -> Tab -> Sig
-oscil b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "oscil" [(Ar,[Xr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+oscil b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "oscil" [(Ar,[Xr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A simple oscillator with cubic interpolation.
@@ -173,8 +188,10 @@ oscil b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/oscil3.html>
 oscil3 ::  Sig -> Sig -> Tab -> Sig
-oscil3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "oscil3" [(Ar,[Xr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+oscil3 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "oscil3" [(Ar,[Xr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A simple oscillator with linear interpolation.
@@ -186,8 +203,10 @@ oscil3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/oscili.html>
 oscili ::  Sig -> Sig -> Tab -> Sig
-oscili b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "oscili" [(Ar,[Xr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+oscili b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "oscili" [(Ar,[Xr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A linearly interpolated oscillator that allows changing the table number at k-rate.
@@ -199,8 +218,10 @@ oscili b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/oscilikt.html>
 oscilikt ::  Sig -> Sig -> Tab -> Sig
-oscilikt b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "oscilikt" [(Ar,[Xr,Xr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+oscilikt b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "oscilikt" [(Ar,[Xr,Xr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A linearly interpolated oscillator that allows allows phase modulation.
@@ -211,8 +232,10 @@ oscilikt b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/osciliktp.html>
 osciliktp ::  Sig -> Tab -> Sig -> Sig
-osciliktp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "osciliktp" [(Ar,[Kr,Kr,Kr,Ir])] [a1,a2,a3]
+osciliktp b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "osciliktp" [(Ar,[Kr,Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- A linearly interpolated oscillator with sync status that allows changing the table number at k-rate.
@@ -223,8 +246,10 @@ osciliktp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unTab b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/oscilikts.html>
 oscilikts ::  Sig -> Sig -> Tab -> Sig -> Sig -> Sig
-oscilikts b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "oscilikts" [(Ar,[Xr,Xr,Kr,Ar,Kr,Ir])] [a1,a2,a3,a4,a5]
+oscilikts b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "oscilikts" [(Ar,[Xr,Xr,Kr,Ar,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Accesses table values at a user-defined frequency.
@@ -235,8 +260,10 @@ oscilikts b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/osciln.html>
 osciln ::  Sig -> D -> Tab -> D -> Sig
-osciln b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unTab b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "osciln" [(Ar,[Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+osciln b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unTab b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "osciln" [(Ar,[Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- A simple, fast sine oscillator
@@ -247,8 +274,10 @@ osciln b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unTab b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/oscils.html>
 oscils ::  D -> D -> D -> Sig
-oscils b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "oscils" [(Ar,[Ir,Ir,Ir,Ir])] [a1,a2,a3]
+oscils b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "oscils" [(Ar,[Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- High precision oscillator.
@@ -262,13 +291,15 @@ oscils b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/poscil.html>
 poscil ::  Sig -> Sig -> Tab -> Sig
-poscil b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "poscil" [(Ar,[Ar,Ar,Ir,Ir])
-                                     ,(Ar,[Ar,Kr,Ir,Ir])
-                                     ,(Ar,[Kr,Ar,Ir,Ir])
-                                     ,(Ar,[Kr,Kr,Ir,Ir])
-                                     ,(Ir,[Kr,Kr,Ir,Ir])
-                                     ,(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+poscil b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "poscil" [(Ar,[Ar,Ar,Ir,Ir])
+                               ,(Ar,[Ar,Kr,Ir,Ir])
+                               ,(Ar,[Kr,Ar,Ir,Ir])
+                               ,(Ar,[Kr,Kr,Ir,Ir])
+                               ,(Ir,[Kr,Kr,Ir,Ir])
+                               ,(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- High precision oscillator with cubic interpolation.
@@ -282,13 +313,15 @@ poscil b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/poscil3.html>
 poscil3 ::  Sig -> Sig -> Tab -> Sig
-poscil3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "poscil3" [(Ar,[Ar,Ar,Ir,Ir])
-                                      ,(Ar,[Ar,Kr,Ir,Ir])
-                                      ,(Ar,[Kr,Ar,Ir,Ir])
-                                      ,(Ar,[Kr,Kr,Ir,Ir])
-                                      ,(Ir,[Kr,Kr,Ir,Ir])
-                                      ,(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+poscil3 b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "poscil3" [(Ar,[Ar,Ar,Ir,Ir])
+                                ,(Ar,[Ar,Kr,Ir,Ir])
+                                ,(Ar,[Kr,Ar,Ir,Ir])
+                                ,(Ar,[Kr,Kr,Ir,Ir])
+                                ,(Ir,[Kr,Kr,Ir,Ir])
+                                ,(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Easier-to-use user-controllable vibrato.
@@ -297,8 +330,10 @@ poscil3 b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/vibr.html>
 vibr ::  Sig -> Sig -> Tab -> Sig
-vibr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "vibr" [(Kr,[Kr,Kr,Ir])] [a1,a2,a3]
+vibr b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = opcs "vibr" [(Kr,[Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Generates a natural-sounding user-controllable vibrato.
@@ -307,16 +342,18 @@ vibr b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/vibrato.html>
 vibrato ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-vibrato b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unTab b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "vibrato" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
-                                                                                               ,a2
-                                                                                               ,a3
-                                                                                               ,a4
-                                                                                               ,a5
-                                                                                               ,a6
-                                                                                               ,a7
-                                                                                               ,a8
-                                                                                               ,a9]
+vibrato b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unTab b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "vibrato" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
+                                                                                         ,a2
+                                                                                         ,a3
+                                                                                         ,a4
+                                                                                         ,a5
+                                                                                         ,a6
+                                                                                         ,a7
+                                                                                         ,a8
+                                                                                         ,a9]
 
 -- Dynamic Spectrum Oscillators.
 
@@ -327,8 +364,10 @@ vibrato b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/buzz.html>
 buzz ::  Sig -> Sig -> Sig -> Tab -> Sig
-buzz b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
-    where f a1 a2 a3 a4 = opcs "buzz" [(Ar,[Xr,Xr,Kr,Ir,Ir])] [a1,a2,a3,a4]
+buzz b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
+  where
+    f a1 a2 a3 a4 = opcs "buzz" [(Ar,[Xr,Xr,Kr,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Output is a set of harmonically related cosine partials.
@@ -337,8 +376,10 @@ buzz b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4
 --
 -- csound doc: <http://csound.com/docs/manual/gbuzz.html>
 gbuzz ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-gbuzz b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "gbuzz" [(Ar,[Xr,Xr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+gbuzz b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "gbuzz" [(Ar,[Xr,Xr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Generates a set of impulses.
@@ -349,8 +390,10 @@ gbuzz b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/mpulse.html>
 mpulse ::  Sig -> Sig -> Sig
-mpulse b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "mpulse" [(Ar,[Kr,Kr,Ir])] [a1,a2]
+mpulse b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "mpulse" [(Ar,[Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- A mostly bandlimited shape-shifting square-pulse-saw-sinewave oscillator with hardsync.
@@ -364,9 +407,11 @@ mpulse b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 -- > aout [, asyncout]  squinewave  acps, aClip, aSkew [, asyncin] [, iMinSweep] [, iphase]
 --
 -- csound doc: <http://csound.com/docs/manual/squinewave.html>
-squinewave :: Tuple a => Sig -> Sig -> Sig -> a
-squinewave b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "squinewave" ([Ar,Ar],[Ar,Ar,Ar,Ar,Ir,Ir]) [a1,a2,a3]
+squinewave :: forall a . Tuple a => Sig -> Sig -> Sig -> a
+squinewave b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "squinewave" ([Ar,Ar],[Ar,Ar,Ar,Ar,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Implementation of a band limited, analog modeled oscillator.
@@ -378,8 +423,10 @@ squinewave b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/vco.html>
 vco ::  Sig -> Sig -> D -> Sig -> Sig
-vco b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "vco" [(Ar,[Xr,Xr,Ir,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+vco b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "vco" [(Ar,[Xr,Xr,Ir,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Implementation of a band-limited oscillator using pre-calculated tables.
@@ -390,8 +437,10 @@ vco b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unSig b4
 --
 -- csound doc: <http://csound.com/docs/manual/vco2.html>
 vco2 ::  Sig -> Sig -> Sig
-vco2 b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "vco2" [(Ar,[Kr,Kr,Ir,Kr,Kr,Ir])] [a1,a2]
+vco2 b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "vco2" [(Ar,[Kr,Kr,Ir,Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Returns a table number at k-time for a given oscillator frequency and wavform.
@@ -402,8 +451,10 @@ vco2 b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/vco2ft.html>
 vco2ft ::  Sig -> D -> Tab
-vco2ft b1 b2 = Tab $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "vco2ft" [(Kr,[Kr,Ir,Ir])] [a1,a2]
+vco2ft b1 b2 =
+  Tab $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "vco2ft" [(Kr,[Kr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Returns a table number at i-time for a given oscillator frequency and wavform.
@@ -414,8 +465,10 @@ vco2ft b1 b2 = Tab $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/vco2ift.html>
 vco2ift ::  D -> D -> Tab
-vco2ift b1 b2 = Tab $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "vco2ift" [(Ir,[Ir,Ir,Ir])] [a1,a2]
+vco2ift b1 b2 =
+  Tab $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "vco2ift" [(Ir,[Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Calculates tables for use by vco2 opcode.
@@ -426,8 +479,10 @@ vco2ift b1 b2 = Tab $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/vco2init.html>
 vco2init ::  D -> SE Tab
-vco2init b1 = fmap ( Tab . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "vco2init" [(Ir,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1]
+vco2init b1 =
+  fmap ( Tab . return) $ SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep "vco2init" [(Ir,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1]
 
 -- FM Synthesis.
 
@@ -440,14 +495,16 @@ vco2init b1 = fmap ( Tab . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/crossfm.html>
 crossfm ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig,Sig)
-crossfm b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfm" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                          ,a2
-                                                                                          ,a3
-                                                                                          ,a4
-                                                                                          ,a5
-                                                                                          ,a6
-                                                                                          ,a7]
+crossfm b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfm" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                    ,a2
+                                                                                    ,a3
+                                                                                    ,a4
+                                                                                    ,a5
+                                                                                    ,a6
+                                                                                    ,a7]
 
 -- | 
 -- Two mutually frequency and/or phase modulated oscillators.
@@ -458,14 +515,16 @@ crossfm b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/crossfm.html>
 crossfmi ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig,Sig)
-crossfmi b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfmi" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                           ,a2
-                                                                                           ,a3
-                                                                                           ,a4
-                                                                                           ,a5
-                                                                                           ,a6
-                                                                                           ,a7]
+crossfmi b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfmi" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                     ,a2
+                                                                                     ,a3
+                                                                                     ,a4
+                                                                                     ,a5
+                                                                                     ,a6
+                                                                                     ,a7]
 
 -- | 
 -- Two mutually frequency and/or phase modulated oscillators.
@@ -476,14 +535,16 @@ crossfmi b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/crossfm.html>
 crosspm ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig,Sig)
-crosspm b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "crosspm" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                          ,a2
-                                                                                          ,a3
-                                                                                          ,a4
-                                                                                          ,a5
-                                                                                          ,a6
-                                                                                          ,a7]
+crosspm b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "crosspm" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                    ,a2
+                                                                                    ,a3
+                                                                                    ,a4
+                                                                                    ,a5
+                                                                                    ,a6
+                                                                                    ,a7]
 
 -- | 
 -- Two mutually frequency and/or phase modulated oscillators.
@@ -494,14 +555,16 @@ crosspm b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/crossfm.html>
 crosspmi ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig,Sig)
-crosspmi b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "crosspmi" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                           ,a2
-                                                                                           ,a3
-                                                                                           ,a4
-                                                                                           ,a5
-                                                                                           ,a6
-                                                                                           ,a7]
+crosspmi b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "crosspmi" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                     ,a2
+                                                                                     ,a3
+                                                                                     ,a4
+                                                                                     ,a5
+                                                                                     ,a6
+                                                                                     ,a7]
 
 -- | 
 -- Two mutually frequency and/or phase modulated oscillators.
@@ -512,14 +575,16 @@ crosspmi b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/crossfm.html>
 crossfmpm ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig,Sig)
-crossfmpm b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfmpm" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                            ,a2
-                                                                                            ,a3
-                                                                                            ,a4
-                                                                                            ,a5
-                                                                                            ,a6
-                                                                                            ,a7]
+crossfmpm b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfmpm" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                      ,a2
+                                                                                      ,a3
+                                                                                      ,a4
+                                                                                      ,a5
+                                                                                      ,a6
+                                                                                      ,a7]
 
 -- | 
 -- Two mutually frequency and/or phase modulated oscillators.
@@ -530,14 +595,16 @@ crossfmpm b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/crossfm.html>
 crossfmpmi ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> (Sig,Sig)
-crossfmpmi b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfmpmi" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
-                                                                                             ,a2
-                                                                                             ,a3
-                                                                                             ,a4
-                                                                                             ,a5
-                                                                                             ,a6
-                                                                                             ,a7]
+crossfmpmi b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "crossfmpmi" ([Ar,Ar],[Xr,Xr,Xr,Xr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7]
 
 -- | 
 -- Uses FM synthesis to create a Hammond B3 organ sound.
@@ -549,13 +616,10 @@ crossfmpmi b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/fmb3.html>
 fmb3 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-fmb3 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "fmb3" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                      ,a2
-                                                                                      ,a3
-                                                                                      ,a4
-                                                                                      ,a5
-                                                                                      ,a6]
+fmb3 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "fmb3" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Uses FM synthesis to create a tublar bell sound.
@@ -567,13 +631,15 @@ fmb3 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/fmbell.html>
 fmbell ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-fmbell b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "fmbell" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                           ,a2
-                                                                                           ,a3
-                                                                                           ,a4
-                                                                                           ,a5
-                                                                                           ,a6]
+fmbell b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "fmbell" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                     ,a2
+                                                                                     ,a3
+                                                                                     ,a4
+                                                                                     ,a5
+                                                                                     ,a6]
 
 -- | 
 -- Uses FM synthesis to create a âHeavy Metalâ sound.
@@ -585,9 +651,11 @@ fmbell b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/fmmetal.html>
 fmmetal ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
-fmmetal b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9 <*> unTab b10 <*> unTab b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "fmmetal" [(Ar
-                                                                 ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+fmmetal b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9 <*> unTab b10 <*> unTab b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "fmmetal" [(Ar
+                                                           ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- Uses FM synthesis to create a percussive flute sound.
@@ -599,13 +667,15 @@ fmmetal b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/fmpercfl.html>
 fmpercfl ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-fmpercfl b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "fmpercfl" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                          ,a2
-                                                                                          ,a3
-                                                                                          ,a4
-                                                                                          ,a5
-                                                                                          ,a6]
+fmpercfl b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "fmpercfl" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                    ,a2
+                                                                                    ,a3
+                                                                                    ,a4
+                                                                                    ,a5
+                                                                                    ,a6]
 
 -- | 
 -- Uses FM synthesis to create a Fender Rhodes electric piano sound.
@@ -617,9 +687,11 @@ fmpercfl b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/fmrhode.html>
 fmrhode ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
-fmrhode b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9 <*> unTab b10 <*> unTab b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "fmrhode" [(Ar
-                                                                 ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+fmrhode b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9 <*> unTab b10 <*> unTab b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "fmrhode" [(Ar
+                                                           ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- FM Singing Voice Synthesis
@@ -629,13 +701,15 @@ fmrhode b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/fmvoice.html>
 fmvoice ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-fmvoice b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "fmvoice" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                         ,a2
-                                                                                         ,a3
-                                                                                         ,a4
-                                                                                         ,a5
-                                                                                         ,a6]
+fmvoice b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "fmvoice" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                   ,a2
+                                                                                   ,a3
+                                                                                   ,a4
+                                                                                   ,a5
+                                                                                   ,a6]
 
 -- | 
 -- Uses FM synthesis to create a Wurlitzer electric piano sound.
@@ -647,9 +721,11 @@ fmvoice b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/fmwurlie.html>
 fmwurlie ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig
-fmwurlie b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9 <*> unTab b10 <*> unTab b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "fmwurlie" [(Ar
-                                                                  ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+fmwurlie b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9 <*> unTab b10 <*> unTab b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "fmwurlie" [(Ar
+                                                            ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- A basic frequency modulated oscillator.
@@ -658,8 +734,10 @@ fmwurlie b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 
 --
 -- csound doc: <http://csound.com/docs/manual/foscil.html>
 foscil ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-foscil b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "foscil" [(Ar,[Xr,Kr,Xr,Xr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+foscil b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "foscil" [(Ar,[Xr,Kr,Xr,Xr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Basic frequency modulated oscillator with linear interpolation.
@@ -668,8 +746,10 @@ foscil b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/foscili.html>
 foscili ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-foscili b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "foscili" [(Ar,[Xr,Kr,Xr,Xr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+foscili b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "foscili" [(Ar,[Xr,Kr,Xr,Xr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- Granular Synthesis.
 
@@ -683,15 +763,17 @@ foscili b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/diskgrain.html>
 diskgrain ::  Str -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-diskgrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "diskgrain" [(Ar,[Sr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
-                                                                                              ,a2
-                                                                                              ,a3
-                                                                                              ,a4
-                                                                                              ,a5
-                                                                                              ,a6
-                                                                                              ,a7
-                                                                                              ,a8]
+diskgrain b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unStr b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "diskgrain" [(Ar,[Sr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                        ,a2
+                                                                                        ,a3
+                                                                                        ,a4
+                                                                                        ,a5
+                                                                                        ,a6
+                                                                                        ,a7
+                                                                                        ,a8]
 
 -- | 
 -- Produces sinusoid bursts useful for formant and granular synthesis.
@@ -703,9 +785,11 @@ diskgrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unStr b1 <*> unSig b2 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/fof.html>
 fof ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> D -> Sig
-fof b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unTab b10 <*> unTab b11 <*> unD b12
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = opcs "fof" [(Ar
-                                                                 ,[Xr,Xr,Xr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12]
+fof b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unTab b10 <*> unTab b11 <*> unD b12
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = opcs "fof" [(Ar
+                                                           ,[Xr,Xr,Xr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12]
 
 -- | 
 -- Produces sinusoid bursts including k-rate incremental indexing with each successive burst.
@@ -717,9 +801,11 @@ fof b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 = Sig $ f <$> unSig b1 <*> unSig b2 <
 --
 -- csound doc: <http://csound.com/docs/manual/fof2.html>
 fof2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> D -> Sig -> Sig -> Sig
-fof2 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unTab b10 <*> unTab b11 <*> unD b12 <*> unSig b13 <*> unSig b14
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 = opcs "fof2" [(Ar
-                                                                          ,[Xr,Xr,Xr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14]
+fof2 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unTab b10 <*> unTab b11 <*> unD b12 <*> unSig b13 <*> unSig b14
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 = opcs "fof2" [(Ar
+                                                                    ,[Xr,Xr,Xr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Kr,Kr,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14]
 
 -- | 
 -- Audio output is a succession of grains derived from data in a stored function table
@@ -731,9 +817,11 @@ fof2 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 = Sig $ f <$> unSig b1 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/fog.html>
 fog ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> D -> Sig
-fog b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unD b10 <*> unTab b11 <*> unTab b12 <*> unD b13
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 = opcs "fog" [(Ar
-                                                                     ,[Xr,Xr,Xr,Ar,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13]
+fog b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unD b10 <*> unTab b11 <*> unTab b12 <*> unD b13
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 = opcs "fog" [(Ar
+                                                               ,[Xr,Xr,Xr,Ar,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13]
 
 -- | 
 -- Generates granular synthesis textures.
@@ -743,16 +831,18 @@ fog b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 = Sig $ f <$> unSig b1 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/grain.html>
 grain ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> D -> Sig
-grain b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "grain" [(Ar,[Xr,Xr,Xr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
-                                                                                             ,a2
-                                                                                             ,a3
-                                                                                             ,a4
-                                                                                             ,a5
-                                                                                             ,a6
-                                                                                             ,a7
-                                                                                             ,a8
-                                                                                             ,a9]
+grain b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "grain" [(Ar,[Xr,Xr,Xr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7
+                                                                                       ,a8
+                                                                                       ,a9]
 
 -- | 
 -- Easy-to-use granular synthesis texture generator.
@@ -764,13 +854,10 @@ grain b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/grain2.html>
 grain2 ::  Sig -> Sig -> Sig -> D -> Tab -> Tab -> Sig
-grain2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unTab b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "grain2" [(Ar,[Kr,Kr,Kr,Ir,Kr,Ir,Ir,Ir,Ir])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6]
+grain2 b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unTab b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "grain2" [(Ar,[Kr,Kr,Kr,Ir,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Generate granular synthesis textures with more user control.
@@ -782,9 +869,11 @@ grain2 b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/grain3.html>
 grain3 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Tab -> Tab -> Sig -> Sig -> Sig
-grain3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unTab b8 <*> unTab b9 <*> unSig b10 <*> unSig b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "grain3" [(Ar
-                                                                ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr,Ir,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+grain3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unTab b8 <*> unTab b9 <*> unSig b10 <*> unSig b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "grain3" [(Ar
+                                                          ,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr,Ir,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- A more complex granular synthesis texture generator.
@@ -797,24 +886,26 @@ grain3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/granule.html>
 granule ::  Sig -> D -> D -> D -> D -> Tab -> D -> D -> D -> D -> Sig -> D -> Sig -> D -> D -> D -> Sig
-granule b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unTab b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10 <*> unSig b11 <*> unD b12 <*> unSig b13 <*> unD b14 <*> unD b15 <*> unD b16
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 = opcs "granule" [(Ar
-                                                                                     ,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Kr,Ir,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                                                                                            ,a2
-                                                                                                                                                            ,a3
-                                                                                                                                                            ,a4
-                                                                                                                                                            ,a5
-                                                                                                                                                            ,a6
-                                                                                                                                                            ,a7
-                                                                                                                                                            ,a8
-                                                                                                                                                            ,a9
-                                                                                                                                                            ,a10
-                                                                                                                                                            ,a11
-                                                                                                                                                            ,a12
-                                                                                                                                                            ,a13
-                                                                                                                                                            ,a14
-                                                                                                                                                            ,a15
-                                                                                                                                                            ,a16]
+granule b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unTab b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10 <*> unSig b11 <*> unD b12 <*> unSig b13 <*> unD b14 <*> unD b15 <*> unD b16
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 = opcs "granule" [(Ar
+                                                                               ,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Kr,Ir,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                                                                                      ,a2
+                                                                                                                                                      ,a3
+                                                                                                                                                      ,a4
+                                                                                                                                                      ,a5
+                                                                                                                                                      ,a6
+                                                                                                                                                      ,a7
+                                                                                                                                                      ,a8
+                                                                                                                                                      ,a9
+                                                                                                                                                      ,a10
+                                                                                                                                                      ,a11
+                                                                                                                                                      ,a12
+                                                                                                                                                      ,a13
+                                                                                                                                                      ,a14
+                                                                                                                                                      ,a15
+                                                                                                                                                      ,a16]
 
 -- | 
 -- Granular synthesizer with "per grain" control
@@ -843,97 +934,99 @@ granule b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 = Sig $ f <$> unS
 -- >                   [, iopcode_id, ipanlaws]
 --
 -- csound doc: <http://csound.com/docs/manual/partikkel.html>
-partikkel :: Tuple a => Sig -> Sig -> D -> Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> D -> D -> Sig -> D -> Sig -> D -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> a
-partikkel b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 b20 b21 b22 b23 b24 b25 b26 b27 b28 b29 b30 b31 b32 b33 b34 b35 b36 b37 b38 b39 b40 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unSig b9 <*> unSig b10 <*> unSig b11 <*> unSig b12 <*> unD b13 <*> unSig b14 <*> unSig b15 <*> unD b16 <*> unD b17 <*> unSig b18 <*> unD b19 <*> unSig b20 <*> unD b21 <*> unSig b22 <*> unSig b23 <*> unSig b24 <*> unD b25 <*> unSig b26 <*> unSig b27 <*> unSig b28 <*> unSig b29 <*> unSig b30 <*> unD b31 <*> unSig b32 <*> unSig b33 <*> unSig b34 <*> unSig b35 <*> unSig b36 <*> unSig b37 <*> unSig b38 <*> unSig b39 <*> unD b40
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28 a29 a30 a31 a32 a33 a34 a35 a36 a37 a38 a39 a40 = mopcs "partikkel" ([Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar]
-                                                                                                                                                                                       ,[Ar
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Ar
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Kr
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ir
-                                                                                                                                                                                        ,Ir]) [a1
-                                                                                                                                                                                              ,a2
-                                                                                                                                                                                              ,a3
-                                                                                                                                                                                              ,a4
-                                                                                                                                                                                              ,a5
-                                                                                                                                                                                              ,a6
-                                                                                                                                                                                              ,a7
-                                                                                                                                                                                              ,a8
-                                                                                                                                                                                              ,a9
-                                                                                                                                                                                              ,a10
-                                                                                                                                                                                              ,a11
-                                                                                                                                                                                              ,a12
-                                                                                                                                                                                              ,a13
-                                                                                                                                                                                              ,a14
-                                                                                                                                                                                              ,a15
-                                                                                                                                                                                              ,a16
-                                                                                                                                                                                              ,a17
-                                                                                                                                                                                              ,a18
-                                                                                                                                                                                              ,a19
-                                                                                                                                                                                              ,a20
-                                                                                                                                                                                              ,a21
-                                                                                                                                                                                              ,a22
-                                                                                                                                                                                              ,a23
-                                                                                                                                                                                              ,a24
-                                                                                                                                                                                              ,a25
-                                                                                                                                                                                              ,a26
-                                                                                                                                                                                              ,a27
-                                                                                                                                                                                              ,a28
-                                                                                                                                                                                              ,a29
-                                                                                                                                                                                              ,a30
-                                                                                                                                                                                              ,a31
-                                                                                                                                                                                              ,a32
-                                                                                                                                                                                              ,a33
-                                                                                                                                                                                              ,a34
-                                                                                                                                                                                              ,a35
-                                                                                                                                                                                              ,a36
-                                                                                                                                                                                              ,a37
-                                                                                                                                                                                              ,a38
-                                                                                                                                                                                              ,a39
-                                                                                                                                                                                              ,a40]
+partikkel :: forall a . Tuple a => Sig -> Sig -> D -> Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> D -> D -> Sig -> D -> Sig -> D -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> a
+partikkel b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 b20 b21 b22 b23 b24 b25 b26 b27 b28 b29 b30 b31 b32 b33 b34 b35 b36 b37 b38 b39 b40 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unSig b9 <*> unSig b10 <*> unSig b11 <*> unSig b12 <*> unD b13 <*> unSig b14 <*> unSig b15 <*> unD b16 <*> unD b17 <*> unSig b18 <*> unD b19 <*> unSig b20 <*> unD b21 <*> unSig b22 <*> unSig b23 <*> unSig b24 <*> unD b25 <*> unSig b26 <*> unSig b27 <*> unSig b28 <*> unSig b29 <*> unSig b30 <*> unD b31 <*> unSig b32 <*> unSig b33 <*> unSig b34 <*> unSig b35 <*> unSig b36 <*> unSig b37 <*> unSig b38 <*> unSig b39 <*> unD b40
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28 a29 a30 a31 a32 a33 a34 a35 a36 a37 a38 a39 a40 = mopcs "partikkel" ([Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar]
+                                                                                                                                                                                 ,[Ar
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Ar
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Kr
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ir
+                                                                                                                                                                                  ,Ir]) [a1
+                                                                                                                                                                                        ,a2
+                                                                                                                                                                                        ,a3
+                                                                                                                                                                                        ,a4
+                                                                                                                                                                                        ,a5
+                                                                                                                                                                                        ,a6
+                                                                                                                                                                                        ,a7
+                                                                                                                                                                                        ,a8
+                                                                                                                                                                                        ,a9
+                                                                                                                                                                                        ,a10
+                                                                                                                                                                                        ,a11
+                                                                                                                                                                                        ,a12
+                                                                                                                                                                                        ,a13
+                                                                                                                                                                                        ,a14
+                                                                                                                                                                                        ,a15
+                                                                                                                                                                                        ,a16
+                                                                                                                                                                                        ,a17
+                                                                                                                                                                                        ,a18
+                                                                                                                                                                                        ,a19
+                                                                                                                                                                                        ,a20
+                                                                                                                                                                                        ,a21
+                                                                                                                                                                                        ,a22
+                                                                                                                                                                                        ,a23
+                                                                                                                                                                                        ,a24
+                                                                                                                                                                                        ,a25
+                                                                                                                                                                                        ,a26
+                                                                                                                                                                                        ,a27
+                                                                                                                                                                                        ,a28
+                                                                                                                                                                                        ,a29
+                                                                                                                                                                                        ,a30
+                                                                                                                                                                                        ,a31
+                                                                                                                                                                                        ,a32
+                                                                                                                                                                                        ,a33
+                                                                                                                                                                                        ,a34
+                                                                                                                                                                                        ,a35
+                                                                                                                                                                                        ,a36
+                                                                                                                                                                                        ,a37
+                                                                                                                                                                                        ,a38
+                                                                                                                                                                                        ,a39
+                                                                                                                                                                                        ,a40]
 
 -- | 
 -- Get mask index for a specific mask parameter of a running partikkel instance.
@@ -946,8 +1039,10 @@ partikkel b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 b19 b20
 --
 -- csound doc: <http://csound.com/docs/manual/partikkelget.html>
 partikkelget ::  Sig -> D -> Sig
-partikkelget b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "partikkelget" [(Kr,[Kr,Ir])] [a1,a2]
+partikkelget b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "partikkelget" [(Kr,[Kr,Ir])] [a1,a2]
 
 -- | 
 -- Set mask index for a specific mask parameter of a running partikkel instance.
@@ -960,8 +1055,10 @@ partikkelget b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/partikkelset.html>
 partikkelset ::  Sig -> Sig -> D -> SE ()
-partikkelset b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "partikkelset" [(Xr,[Kr,Kr,Ir])] [a1,a2,a3]
+partikkelset b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "partikkelset" [(Xr,[Kr,Kr,Ir])] [a1,a2,a3]
 
 -- | 
 -- Outputs partikkel's grain
@@ -973,9 +1070,11 @@ partikkelset b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*
 -- > async [,aphase]  partikkelsync  iopcode_id
 --
 -- csound doc: <http://csound.com/docs/manual/partikkelsync.html>
-partikkelsync :: Tuple a => D -> a
-partikkelsync b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "partikkelsync" ([Ar,Ar],[Ir]) [a1]
+partikkelsync :: forall a . Tuple a => D -> a
+partikkelsync b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "partikkelsync" ([Ar,Ar],[Ir]) [a1]
 
 -- | 
 -- Reads a mono sound sample from a table and applies time-stretching and/or pitch modification.
@@ -986,10 +1085,20 @@ partikkelsync b1 = pureTuple $ f <$> unD b1
 -- >           irandw, ioverlap, ifn2, itimemode
 --
 -- csound doc: <http://csound.com/docs/manual/sndwarp.html>
-sndwarp :: Tuple a => Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> a
-sndwarp b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unTab b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "sndwarp" ([Ar,Ar]
-                                                             ,[Xr,Xr,Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+sndwarp :: forall a . Tuple a => Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> a
+sndwarp b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unTab b9 <*> unD b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "sndwarp" ([Ar,Ar],[Xr,Xr,Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                                 ,a2
+                                                                                                 ,a3
+                                                                                                 ,a4
+                                                                                                 ,a5
+                                                                                                 ,a6
+                                                                                                 ,a7
+                                                                                                 ,a8
+                                                                                                 ,a9
+                                                                                                 ,a10]
 
 -- | 
 -- Reads a stereo sound sample from a table and applies time-stretching and/or pitch modification.
@@ -1000,10 +1109,12 @@ sndwarp b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig b2
 -- >           ibeg, iwsize, irandw, ioverlap, ifn2, itimemode
 --
 -- csound doc: <http://csound.com/docs/manual/sndwarpst.html>
-sndwarpst :: Tuple a => Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> a
-sndwarpst b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unTab b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "sndwarpst" ([Ar,Ar,Ar,Ar]
-                                                               ,[Xr,Xr,Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+sndwarpst :: forall a . Tuple a => Sig -> Sig -> Sig -> Tab -> D -> D -> D -> D -> Tab -> D -> a
+sndwarpst b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unTab b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unTab b9 <*> unD b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "sndwarpst" ([Ar,Ar,Ar,Ar]
+                                                         ,[Xr,Xr,Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
 -- | 
 -- Synchronous granular synthesis.
@@ -1018,15 +1129,17 @@ sndwarpst b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/syncgrain.html>
 syncgrain ::  Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> D -> Sig
-syncgrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "syncgrain" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
-                                                                                        ,a2
-                                                                                        ,a3
-                                                                                        ,a4
-                                                                                        ,a5
-                                                                                        ,a6
-                                                                                        ,a7
-                                                                                        ,a8]
+syncgrain b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "syncgrain" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
+                                                                                  ,a2
+                                                                                  ,a3
+                                                                                  ,a4
+                                                                                  ,a5
+                                                                                  ,a6
+                                                                                  ,a7
+                                                                                  ,a8]
 
 -- | 
 -- Synchronous granular synthesis.
@@ -1044,9 +1157,11 @@ syncgrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/syncloop.html>
 syncloop ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> D -> Sig
-syncloop b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unD b8 <*> unD b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcs "syncloop" [(Ar
-                                                              ,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+syncloop b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unD b8 <*> unD b9 <*> unD b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcs "syncloop" [(Ar
+                                                        ,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
 -- | 
 -- Simple vocal simulation based on glottal pulses with formant characteristics.
@@ -1059,14 +1174,10 @@ syncloop b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = Sig $ f <$> unSig b1 <*> unSig b2 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/vosim.html>
 vosim ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-vosim b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "vosim" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
-                                                                                 ,a2
-                                                                                 ,a3
-                                                                                 ,a4
-                                                                                 ,a5
-                                                                                 ,a6
-                                                                                 ,a7]
+vosim b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "vosim" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- Hyper Vectorial Synthesis.
 
@@ -1079,8 +1190,10 @@ vosim b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/hvs1.html>
 hvs1 ::  Sig -> D -> D -> D -> D -> D -> SE ()
-hvs1 b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "hvs1" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+hvs1 b1 b2 b3 b4 b5 b6 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcsDep_ "hvs1" [(Xr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Allows two-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
@@ -1091,15 +1204,17 @@ hvs1 b1 b2 b3 b4 b5 b6 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unD b2 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/hvs2.html>
 hvs2 ::  Sig -> Sig -> D -> D -> D -> D -> D -> D -> SE ()
-hvs2 b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "hvs2" [(Xr,[Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                      ,a2
-                                                                                      ,a3
-                                                                                      ,a4
-                                                                                      ,a5
-                                                                                      ,a6
-                                                                                      ,a7
-                                                                                      ,a8]
+hvs2 b1 b2 b3 b4 b5 b6 b7 b8 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcsDep_ "hvs2" [(Xr,[Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                    ,a2
+                                                                                    ,a3
+                                                                                    ,a4
+                                                                                    ,a5
+                                                                                    ,a6
+                                                                                    ,a7
+                                                                                    ,a8]
 
 -- | 
 -- Allows three-dimensional Hyper Vectorial Synthesis (HVS) controlled by externally-updated k-variables.
@@ -1110,9 +1225,19 @@ hvs2 b1 b2 b3 b4 b5 b6 b7 b8 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/hvs3.html>
 hvs3 ::  Sig -> Sig -> Sig -> D -> D -> D -> D -> D -> D -> D -> SE ()
-hvs3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcs "hvs3" [(Xr
-                                                          ,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+hvs3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unD) b4 <*> (lift . unD) b5 <*> (lift . unD) b6 <*> (lift . unD) b7 <*> (lift . unD) b8 <*> (lift . unD) b9 <*> (lift . unD) b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = opcsDep_ "hvs3" [(Xr,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
+                                                                                                 ,a2
+                                                                                                 ,a3
+                                                                                                 ,a4
+                                                                                                 ,a5
+                                                                                                 ,a6
+                                                                                                 ,a7
+                                                                                                 ,a8
+                                                                                                 ,a9
+                                                                                                 ,a10]
 
 -- Linear and Exponential Generators.
 
@@ -1127,8 +1252,10 @@ hvs3 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <
 --
 -- csound doc: <http://csound.com/docs/manual/bpf.html>
 bpf ::  Sig -> Sig -> Sig -> [Sig] -> Sig
-bpf b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> mapM unSig b4
-    where f a1 a2 a3 a4 = opcs "bpf" [(Kr,(repeat Kr))] ([a1,a2,a3] ++ a4)
+bpf b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> mapM unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "bpf" [(Kr,(repeat Kr))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Trace a series of line segments between specified points with
@@ -1139,8 +1266,10 @@ bpf b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> mapM unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/cosseg.html>
 cosseg ::  [D] -> Sig
-cosseg b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "cosseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+cosseg b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "cosseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- Trace a series of line segments between specified absolute points with
@@ -1151,8 +1280,10 @@ cosseg b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/cossegb.html>
 cossegb ::  [D] -> Sig
-cossegb b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "cossegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+cossegb b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "cossegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- Trace a series of line segments between specified points with
@@ -1163,8 +1294,10 @@ cossegb b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/cossegr.html>
 cossegr ::  [D] -> D -> D -> Sig
-cossegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = setRate Kr $ opcs "cossegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+cossegr b1 b2 b3 =
+  Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = setRate Kr $ opcs "cossegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
 
 -- | 
 -- This opcode implements a formula for generating a normalised exponential curve in range 0 - 1. It is based on the Max / MSP work of Eric Singer (c) 1994.
@@ -1177,8 +1310,10 @@ cossegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/expcurve.html>
 expcurve ::  Sig -> Sig -> Sig
-expcurve b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "expcurve" [(Kr,[Kr,Kr])] [a1,a2]
+expcurve b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "expcurve" [(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Trace an exponential curve between specified points.
@@ -1188,8 +1323,10 @@ expcurve b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/expon.html>
 expon ::  D -> D -> D -> Sig
-expon b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "expon" [(Ar,[Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir])] [a1,a2,a3]
+expon b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "expon" [(Ar,[Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Trace a series of exponential segments between specified points.
@@ -1199,8 +1336,10 @@ expon b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/expseg.html>
 expseg ::  [D] -> Sig
-expseg b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "expseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+expseg b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "expseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- An exponential segment generator operating at a-rate.
@@ -1211,8 +1350,10 @@ expseg b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/expsega.html>
 expsega ::  [D] -> Sig
-expsega b1 = Sig $ f <$> mapM unD b1
-    where f a1 = opcs "expsega" [(Ar, repeat Ir)] (a1 ++ [1, last a1])
+expsega b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = opcs "expsega" [(Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- Trace a series of exponential segments between specified
@@ -1223,8 +1364,10 @@ expsega b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/expsegb.html>
 expsegb ::  [D] -> Sig
-expsegb b1 = Sig $ f <$> mapM unD b1
-    where f a1 = opcs "expsegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+expsegb b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = opcs "expsegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- An exponential segment generator operating at a-rate with
@@ -1239,8 +1382,10 @@ expsegb b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/expsegba.html>
 expsegba ::  D -> D -> D -> Sig
-expsegba b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "expsegba" [(Ar,(repeat Ir))] [a1,a2,a3]
+expsegba b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "expsegba" [(Ar,(repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- Trace a series of exponential segments between specified points including a release segment.
@@ -1250,8 +1395,10 @@ expsegba b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/expsegr.html>
 expsegr ::  [D] -> D -> D -> Sig
-expsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = setRate Kr $ opcs "expsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+expsegr b1 b2 b3 =
+  Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = setRate Kr $ opcs "expsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
 
 -- | 
 -- An implementation of a logarithmic gain curve which is similar to the gainslider~ object from Cycling 74 Max / MSP.
@@ -1263,8 +1410,10 @@ expsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/gainslider.html>
 gainslider ::  Sig -> Sig
-gainslider b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "gainslider" [(Kr,[Kr])] [a1]
+gainslider b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "gainslider" [(Kr,[Kr])] [a1]
 
 -- | 
 -- Trace a straight line between specified points.
@@ -1274,8 +1423,10 @@ gainslider b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/line.html>
 line ::  D -> D -> D -> Sig
-line b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "line" [(Ar,[Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir])] [a1,a2,a3]
+line b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "line" [(Ar,[Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Linear to linear interpolation
@@ -1286,8 +1437,10 @@ line b1 b2 b3 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/linlin.html>
 linlin ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-linlin b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "linlin" [(Kr,[Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
+linlin b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "linlin" [(Kr,[Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Trace a series of line segments between specified points.
@@ -1297,8 +1450,10 @@ linlin b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/linseg.html>
 linseg ::  [D] -> Sig
-linseg b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "linseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+linseg b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "linseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- Trace a series of line segments between specified absolute points.
@@ -1308,8 +1463,10 @@ linseg b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/linsegb.html>
 linsegb ::  [D] -> Sig
-linsegb b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "linsegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+linsegb b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "linsegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
 
 -- | 
 -- Trace a series of line segments between specified points including a release segment.
@@ -1319,8 +1476,10 @@ linsegb b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/linsegr.html>
 linsegr ::  [D] -> D -> D -> Sig
-linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = setRate Kr $ opcs "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+linsegr b1 b2 b3 =
+  Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
+  where
+    f a1 a2 a3 = setRate Kr $ opcs "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
 
 -- | 
 -- This opcode implements a formula for generating a normalised logarithmic curve in range 0 - 1. It is based on the Max / MSP work of Eric Singer (c) 1994.
@@ -1333,8 +1492,10 @@ linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/logcurve.html>
 logcurve ::  Sig -> Sig -> Sig
-logcurve b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "logcurve" [(Kr,[Kr,Kr])] [a1,a2]
+logcurve b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "logcurve" [(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Generate control signal consisting of linear segments delimited by two or more specified points.
@@ -1346,8 +1507,10 @@ logcurve b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/loopseg.html>
 loopseg ::  Sig -> Sig -> D -> [Sig] -> Sig
-loopseg b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSig b4
-    where f a1 a2 a3 a4 = opcs "loopseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
+loopseg b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "loopseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Control signals based on linear segments.
@@ -1362,8 +1525,10 @@ loopseg b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSi
 --
 -- csound doc: <http://csound.com/docs/manual/loopsegp.html>
 loopsegp ::  Sig -> [Sig] -> Sig
-loopsegp b1 b2 = Sig $ f <$> unSig b1 <*> mapM unSig b2
-    where f a1 a2 = opcs "loopsegp" [(Kr,(repeat Kr))] ([a1] ++ a2)
+loopsegp b1 b2 =
+  Sig $ f <$> unSig b1 <*> mapM unSig b2
+  where
+    f a1 a2 = opcs "loopsegp" [(Kr,(repeat Kr))] ([a1] ++ a2)
 
 -- | 
 -- Generate control signal consisting of exponential or linear segments delimited by two or more specified points.
@@ -1375,8 +1540,10 @@ loopsegp b1 b2 = Sig $ f <$> unSig b1 <*> mapM unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/looptseg.html>
 looptseg ::  Sig -> Sig -> [Sig] -> Sig
-looptseg b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "looptseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
+looptseg b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> mapM unSig b3
+  where
+    f a1 a2 a3 = opcs "looptseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Generate control signal consisting of exponential segments delimited by two or more specified points.
@@ -1388,8 +1555,10 @@ looptseg b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> mapM unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/loopxseg.html>
 loopxseg ::  Sig -> Sig -> D -> [Sig] -> Sig
-loopxseg b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSig b4
-    where f a1 a2 a3 a4 = opcs "loopxseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
+loopxseg b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "loopxseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Generate control signal consisting of held segments.
@@ -1400,8 +1569,10 @@ loopxseg b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unS
 --
 -- csound doc: <http://csound.com/docs/manual/lpshold.html>
 lpshold ::  Sig -> Sig -> D -> [Sig] -> Sig
-lpshold b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSig b4
-    where f a1 a2 a3 a4 = opcs "lpshold" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
+lpshold b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "lpshold" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] ([a1,a2,a3] ++ a4)
 
 -- | 
 -- Control signals based on held segments.
@@ -1416,8 +1587,10 @@ lpshold b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> mapM unSi
 --
 -- csound doc: <http://csound.com/docs/manual/lpsholdp.html>
 lpsholdp ::  Sig -> Sig -> [Sig] -> Sig
-lpsholdp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> mapM unSig b3
-    where f a1 a2 a3 = opcs "lpsholdp" [(Kr,(repeat Kr))] ([a1,a2] ++ a3)
+lpsholdp b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> mapM unSig b3
+  where
+    f a1 a2 a3 = opcs "lpsholdp" [(Kr,(repeat Kr))] ([a1,a2] ++ a3)
 
 -- | 
 -- Arbitrary signal scaling.
@@ -1428,8 +1601,10 @@ lpsholdp b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> mapM unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/scale.html>
 scale ::  Sig -> Sig -> Sig -> Sig
-scale b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "scale" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+scale b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "scale" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Constructs a user-definable envelope.
@@ -1439,8 +1614,10 @@ scale b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/transeg.html>
 transeg ::  [D] -> Sig
-transeg b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "transeg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, 0, last a1])
+transeg b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "transeg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, 0, last a1])
 
 -- | 
 -- Constructs a user-definable envelope in absolute time.
@@ -1450,8 +1627,10 @@ transeg b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/transegb.html>
 transegb ::  [D] -> Sig
-transegb b1 = Sig $ f <$> mapM unD b1
-    where f a1 = setRate Kr $ opcs "transegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, 0, last a1])
+transegb b1 =
+  Sig $ f <$> mapM unD b1
+  where
+    f a1 = setRate Kr $ opcs "transegb" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, 0, last a1])
 
 -- | 
 -- Constructs a user-definable envelope with extended release segment.
@@ -1465,8 +1644,10 @@ transegb b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/transegr.html>
 transegr ::  [D] -> D -> D -> D -> Sig
-transegr b1 b2 b3 b4 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = setRate Kr $ opcs "transegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, 0, last a1, a2, a3, a4])
+transegr b1 b2 b3 b4 =
+  Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = setRate Kr $ opcs "transegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, 0, last a1, a2, a3, a4])
 
 -- | 
 -- 2D linear interpolation
@@ -1478,8 +1659,10 @@ transegr b1 b2 b3 b4 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/xyscale.html>
 xyscale ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-xyscale b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "xyscale" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
+xyscale b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "xyscale" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5,a6]
 
 -- Envelope Generators.
 
@@ -1491,8 +1674,10 @@ xyscale b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/adsr.html>
 adsr ::  D -> D -> D -> D -> Sig
-adsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "adsr" [(Ar,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+adsr b1 b2 b3 b4 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "adsr" [(Ar,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Applies an envelope consisting of 3 segments.
@@ -1504,9 +1689,11 @@ adsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/envlpx.html>
 envlpx ::  Sig -> D -> D -> D -> Tab -> D -> D -> Sig
-envlpx b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unTab b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "envlpx" [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
-                                                 ,(Kr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
+envlpx b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unTab b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "envlpx" [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+                                           ,(Kr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- The envlpx opcode with a final release segment.
@@ -1518,9 +1705,11 @@ envlpx b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/envlpxr.html>
 envlpxr ::  Sig -> D -> D -> Tab -> D -> D -> Sig
-envlpxr b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unTab b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "envlpxr" [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
-                                               ,(Kr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+envlpxr b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unTab b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "envlpxr" [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
+                                         ,(Kr,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Applies a straight line rise and decay pattern to an input amp signal.
@@ -1532,8 +1721,10 @@ envlpxr b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unTab
 --
 -- csound doc: <http://csound.com/docs/manual/linen.html>
 linen ::  Sig -> D -> D -> D -> Sig
-linen b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "linen" [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+linen b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "linen" [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- The linen opcode extended with a final release segment.
@@ -1545,8 +1736,10 @@ linen b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/linenr.html>
 linenr ::  Sig -> D -> D -> D -> Sig
-linenr b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "linenr" [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+linenr b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "linenr" [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Calculates the classical ADSR envelope using the linsegr mechanism.
@@ -1556,11 +1749,10 @@ linenr b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/madsr.html>
 madsr ::  D -> D -> D -> D -> Sig
-madsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "madsr" [(Ar,[Ir,Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                           ,a2
-                                                                                           ,a3
-                                                                                           ,a4]
+madsr b1 b2 b3 b4 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "madsr" [(Ar,[Ir,Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Calculates the classical ADSR envelope using the expsegr mechanism.
@@ -1570,11 +1762,10 @@ madsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/mxadsr.html>
 mxadsr ::  D -> D -> D -> D -> Sig
-mxadsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "mxadsr" [(Ar,[Ir,Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                            ,a2
-                                                                                            ,a3
-                                                                                            ,a4]
+mxadsr b1 b2 b3 b4 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "mxadsr" [(Ar,[Ir,Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Calculates the classical ADSR envelope.
@@ -1586,8 +1777,10 @@ mxadsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/xadsr.html>
 xadsr ::  D -> D -> D -> D -> Sig
-xadsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "xadsr" [(Ar,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+xadsr b1 b2 b3 b4 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "xadsr" [(Ar,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- Models and Emulations.
 
@@ -1601,8 +1794,10 @@ xadsr b1 b2 b3 b4 = Sig $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/bamboo.html>
 bamboo ::  Sig -> D -> Sig
-bamboo b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "bamboo" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+bamboo b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "bamboo" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Creates a tone similar to a struck metal bar.
@@ -1616,16 +1811,18 @@ bamboo b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/barmodel.html>
 barmodel ::  Sig -> Sig -> D -> D -> Sig -> D -> D -> D -> D -> Sig
-barmodel b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "barmodel" [(Ar,[Kr,Kr,Ir,Ir,Kr,Ir,Ir,Ir,Ir])] [a1
-                                                                                             ,a2
-                                                                                             ,a3
-                                                                                             ,a4
-                                                                                             ,a5
-                                                                                             ,a6
-                                                                                             ,a7
-                                                                                             ,a8
-                                                                                             ,a9]
+barmodel b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unSig b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "barmodel" [(Ar,[Kr,Kr,Ir,Ir,Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                       ,a2
+                                                                                       ,a3
+                                                                                       ,a4
+                                                                                       ,a5
+                                                                                       ,a6
+                                                                                       ,a7
+                                                                                       ,a8
+                                                                                       ,a9]
 
 -- | 
 -- Semi-physical model of a cabasa sound.
@@ -1636,8 +1833,10 @@ barmodel b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD 
 --
 -- csound doc: <http://csound.com/docs/manual/cabasa.html>
 cabasa ::  D -> D -> Sig
-cabasa b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "cabasa" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+cabasa b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "cabasa" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Simulates Chua's oscillator, an LRC oscillator with an active resistor, proved capable of bifurcation and chaotic attractors, with k-rate control of circuit elements.
@@ -1648,9 +1847,11 @@ cabasa b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 chuap ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> D -> Sig -> (Sig
                                                                                         ,Sig
                                                                                         ,Sig)
-chuap b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unD b10 <*> unD b11 <*> unSig b12
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = mopcs "chuap" ([Ar,Ar,Ar]
-                                                                   ,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Kr]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12]
+chuap b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unD b10 <*> unD b11 <*> unSig b12
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 = mopcs "chuap" ([Ar,Ar,Ar]
+                                                             ,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Kr]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12]
 
 -- | 
 -- Semi-physical model of a crunch sound.
@@ -1661,8 +1862,10 @@ chuap b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 = pureTuple $ f <$> unSig b1 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/crunch.html>
 crunch ::  D -> D -> Sig
-crunch b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "crunch" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+crunch b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "crunch" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Semi-physical model of a water drop.
@@ -1674,8 +1877,10 @@ crunch b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/dripwater.html>
 dripwater ::  Sig -> D -> Sig
-dripwater b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "dripwater" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+dripwater b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "dripwater" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Dynamic stochastic approach to waveform synthesis conceived by Iannis Xenakis.
@@ -1691,9 +1896,11 @@ dripwater b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/gendy.html>
 gendy ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-gendy b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "gendy" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])
-                                                      ,(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5,a6,a7,a8,a9]
+gendy b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "gendy" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])
+                                                ,(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5,a6,a7,a8,a9]
 
 -- | 
 -- Dynamic stochastic approach to waveform synthesis using cubic interpolation.
@@ -1710,9 +1917,11 @@ gendy b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/gendyc.html>
 gendyc ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-gendyc b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "gendyc" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])
-                                                       ,(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5,a6,a7,a8,a9]
+gendyc b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "gendyc" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])
+                                                 ,(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5,a6,a7,a8,a9]
 
 -- | 
 -- Variation of the dynamic stochastic approach to waveform
@@ -1730,10 +1939,12 @@ gendyc b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig 
 --
 -- csound doc: <http://csound.com/docs/manual/gendyx.html>
 gendyx ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-gendyx b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unSig b11
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "gendyx" [(Ar
-                                                                ,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])
-                                                               ,(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
+gendyx b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unSig b11
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 = opcs "gendyx" [(Ar
+                                                          ,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])
+                                                         ,(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir,Kr])] [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11]
 
 -- | 
 -- Audio output is a tone related to the striking of a cow bell or similar.
@@ -1744,15 +1955,17 @@ gendyx b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 = Sig $ f <$> unSig b1 <*> unSig b2 <*
 --
 -- csound doc: <http://csound.com/docs/manual/gogobel.html>
 gogobel ::  Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Tab -> Sig
-gogobel b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unTab b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "gogobel" [(Ar,[Kr,Kr,Ir,Ir,Ir,Kr,Kr,Ir])] [a1
-                                                                                      ,a2
-                                                                                      ,a3
-                                                                                      ,a4
-                                                                                      ,a5
-                                                                                      ,a6
-                                                                                      ,a7
-                                                                                      ,a8]
+gogobel b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unTab b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "gogobel" [(Ar,[Kr,Kr,Ir,Ir,Ir,Kr,Kr,Ir])] [a1
+                                                                                ,a2
+                                                                                ,a3
+                                                                                ,a4
+                                                                                ,a5
+                                                                                ,a6
+                                                                                ,a7
+                                                                                ,a8]
 
 -- | 
 -- Semi-physical model of a guiro sound.
@@ -1763,8 +1976,10 @@ gogobel b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/guiro.html>
 guiro ::  Sig -> D -> Sig
-guiro b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "guiro" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+guiro b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "guiro" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Implements the Lorenz system of equations.
@@ -1775,15 +1990,17 @@ guiro b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/lorenz.html>
 lorenz ::  Sig -> Sig -> Sig -> Sig -> D -> D -> D -> D -> (Sig,Sig,Sig)
-lorenz b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "lorenz" ([Ar,Ar,Ar],[Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                               ,a2
-                                                                                               ,a3
-                                                                                               ,a4
-                                                                                               ,a5
-                                                                                               ,a6
-                                                                                               ,a7
-                                                                                               ,a8]
+lorenz b1 b2 b3 b4 b5 b6 b7 b8 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "lorenz" ([Ar,Ar,Ar],[Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                         ,a2
+                                                                                         ,a3
+                                                                                         ,a4
+                                                                                         ,a5
+                                                                                         ,a6
+                                                                                         ,a7
+                                                                                         ,a8]
 
 -- | 
 -- Mandelbrot set
@@ -1794,8 +2011,10 @@ lorenz b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/mandel.html>
 mandel ::  Sig -> Sig -> Sig -> Sig -> (Sig,Sig)
-mandel b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = mopcs "mandel" ([Kr,Kr],[Kr,Kr,Kr,Kr]) [a1,a2,a3,a4]
+mandel b1 b2 b3 b4 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = mopcs "mandel" ([Kr,Kr],[Kr,Kr,Kr,Kr]) [a1,a2,a3,a4]
 
 -- | 
 -- An emulation of a mandolin.
@@ -1805,8 +2024,10 @@ mandel b1 b2 b3 b4 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/mandol.html>
 mandol ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-mandol b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "mandol" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+mandol b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "mandol" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Physical model related to the striking of a wooden block.
@@ -1818,9 +2039,18 @@ mandol b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/marimba.html>
 marimba ::  Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Tab -> D -> Sig
-marimba b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unTab b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "marimba" [(Ar
-                                                         ,[Kr,Kr,Ir,Ir,Ir,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8,a9]
+marimba b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unTab b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "marimba" [(Ar,[Kr,Kr,Ir,Ir,Ir,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                            ,a2
+                                                                                            ,a3
+                                                                                            ,a4
+                                                                                            ,a5
+                                                                                            ,a6
+                                                                                            ,a7
+                                                                                            ,a8
+                                                                                            ,a9]
 
 -- | 
 -- An emulation of a mini-Moog synthesizer.
@@ -1829,16 +2059,18 @@ marimba b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b
 --
 -- csound doc: <http://csound.com/docs/manual/moog.html>
 moog ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Tab -> Sig
-moog b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "moog" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
-                                                                                         ,a2
-                                                                                         ,a3
-                                                                                         ,a4
-                                                                                         ,a5
-                                                                                         ,a6
-                                                                                         ,a7
-                                                                                         ,a8
-                                                                                         ,a9]
+moog b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8 <*> unTab b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "moog" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir])] [a1
+                                                                                   ,a2
+                                                                                   ,a3
+                                                                                   ,a4
+                                                                                   ,a5
+                                                                                   ,a6
+                                                                                   ,a7
+                                                                                   ,a8
+                                                                                   ,a9]
 
 -- | 
 -- Simulates a planet orbiting in a binary star system.
@@ -1850,9 +2082,11 @@ moog b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/planet.html>
 planet ::  Sig -> Sig -> Sig -> D -> D -> D -> D -> D -> D -> D -> (Sig,Sig,Sig)
-planet b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "planet" ([Ar,Ar,Ar]
-                                                            ,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
+planet b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7 <*> unD b8 <*> unD b9 <*> unD b10
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 = mopcs "planet" ([Ar,Ar,Ar]
+                                                      ,[Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8,a9,a10]
 
 -- | 
 -- Creates a tone similar to a piano string prepared in a Cageian fashion.
@@ -1872,23 +2106,25 @@ planet b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 = pureTuple $ f <$> unSig b1 <*> unSig b2 
 -- csound doc: <http://csound.com/docs/manual/prepiano.html>
 prepiano ::  D -> D -> D -> D -> D -> D -> Sig -> Sig -> D -> D -> D -> D -> D -> D -> D -> (Sig
                                                                                             ,Sig)
-prepiano b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unD b10 <*> unD b11 <*> unD b12 <*> unD b13 <*> unD b14 <*> unD b15
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 = mopcs "prepiano" ([Ar,Ar]
-                                                                                  ,[Ir,Ir,Ir,Ir,Ir,Ir,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                                                                         ,a2
-                                                                                                                                         ,a3
-                                                                                                                                         ,a4
-                                                                                                                                         ,a5
-                                                                                                                                         ,a6
-                                                                                                                                         ,a7
-                                                                                                                                         ,a8
-                                                                                                                                         ,a9
-                                                                                                                                         ,a10
-                                                                                                                                         ,a11
-                                                                                                                                         ,a12
-                                                                                                                                         ,a13
-                                                                                                                                         ,a14
-                                                                                                                                         ,a15]
+prepiano b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unSig b7 <*> unSig b8 <*> unD b9 <*> unD b10 <*> unD b11 <*> unD b12 <*> unD b13 <*> unD b14 <*> unD b15
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 = mopcs "prepiano" ([Ar,Ar]
+                                                                            ,[Ir,Ir,Ir,Ir,Ir,Ir,Kr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                                                                   ,a2
+                                                                                                                                   ,a3
+                                                                                                                                   ,a4
+                                                                                                                                   ,a5
+                                                                                                                                   ,a6
+                                                                                                                                   ,a7
+                                                                                                                                   ,a8
+                                                                                                                                   ,a9
+                                                                                                                                   ,a10
+                                                                                                                                   ,a11
+                                                                                                                                   ,a12
+                                                                                                                                   ,a13
+                                                                                                                                   ,a14
+                                                                                                                                   ,a15]
 
 -- | 
 -- Semi-physical model of a sandpaper sound.
@@ -1899,8 +2135,10 @@ prepiano b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 = pureTuple $ f <$> 
 --
 -- csound doc: <http://csound.com/docs/manual/sandpaper.html>
 sandpaper ::  D -> D -> Sig
-sandpaper b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "sandpaper" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+sandpaper b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "sandpaper" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Semi-physical model of a sekere sound.
@@ -1911,8 +2149,10 @@ sandpaper b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/sekere.html>
 sekere ::  D -> D -> Sig
-sekere b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "sekere" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+sekere b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "sekere" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Sounds like the shaking of a maraca or similar gourd instrument.
@@ -1923,8 +2163,10 @@ sekere b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/shaker.html>
 shaker ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-shaker b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "shaker" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+shaker b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "shaker" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Semi-physical model of a sleighbell sound.
@@ -1936,8 +2178,10 @@ shaker b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/sleighbells.html>
 sleighbells ::  Sig -> D -> Sig
-sleighbells b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "sleighbells" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+sleighbells b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "sleighbells" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Semi-physical model of a stick sound.
@@ -1948,8 +2192,10 @@ sleighbells b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/stix.html>
 stix ::  D -> D -> Sig
-stix b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "stix" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+stix b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "stix" [(Ar,[Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Semi-physical model of a tambourine sound.
@@ -1961,8 +2207,10 @@ stix b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/tambourine.html>
 tambourine ::  Sig -> D -> Sig
-tambourine b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
-    where f a1 a2 = opcs "tambourine" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
+tambourine b1 b2 =
+  Sig $ f <$> unSig b1 <*> unD b2
+  where
+    f a1 a2 = opcs "tambourine" [(Ar,[Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Physical model related to the striking of a metal block.
@@ -1973,16 +2221,18 @@ tambourine b1 b2 = Sig $ f <$> unSig b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/vibes.html>
 vibes ::  Sig -> Sig -> D -> D -> D -> Sig -> Sig -> Tab -> D -> Sig
-vibes b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unTab b8 <*> unD b9
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "vibes" [(Ar,[Kr,Kr,Ir,Ir,Ir,Kr,Kr,Ir,Ir])] [a1
-                                                                                          ,a2
-                                                                                          ,a3
-                                                                                          ,a4
-                                                                                          ,a5
-                                                                                          ,a6
-                                                                                          ,a7
-                                                                                          ,a8
-                                                                                          ,a9]
+vibes b1 b2 b3 b4 b5 b6 b7 b8 b9 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unTab b8 <*> unD b9
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 = opcs "vibes" [(Ar,[Kr,Kr,Ir,Ir,Ir,Kr,Kr,Ir,Ir])] [a1
+                                                                                    ,a2
+                                                                                    ,a3
+                                                                                    ,a4
+                                                                                    ,a5
+                                                                                    ,a6
+                                                                                    ,a7
+                                                                                    ,a8
+                                                                                    ,a9]
 
 -- | 
 -- An emulation of a human voice.
@@ -1991,15 +2241,17 @@ vibes b1 b2 b3 b4 b5 b6 b7 b8 b9 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 
 --
 -- csound doc: <http://csound.com/docs/manual/voice.html>
 voice ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Tab -> Sig
-voice b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "voice" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
-                                                                                    ,a2
-                                                                                    ,a3
-                                                                                    ,a4
-                                                                                    ,a5
-                                                                                    ,a6
-                                                                                    ,a7
-                                                                                    ,a8]
+voice b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unTab b7 <*> unTab b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "voice" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
+                                                                              ,a2
+                                                                              ,a3
+                                                                              ,a4
+                                                                              ,a5
+                                                                              ,a6
+                                                                              ,a7
+                                                                              ,a8]
 
 -- Phasors.
 
@@ -2011,8 +2263,10 @@ voice b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <
 --
 -- csound doc: <http://csound.com/docs/manual/phasor.html>
 phasor ::  Sig -> Sig
-phasor b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "phasor" [(Ar,[Xr,Ir]),(Kr,[Kr,Ir])] [a1]
+phasor b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "phasor" [(Ar,[Xr,Ir]),(Kr,[Kr,Ir])] [a1]
 
 -- | 
 -- Produce an arbitrary number of normalized moving phase values.
@@ -2024,8 +2278,10 @@ phasor b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/phasorbnk.html>
 phasorbnk ::  Sig -> Sig -> D -> Sig
-phasorbnk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "phasorbnk" [(Ar,[Xr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+phasorbnk b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "phasorbnk" [(Ar,[Xr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- A resettable linear ramp between two levels
@@ -2038,11 +2294,10 @@ phasorbnk b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/sc_phasor.html>
 sc_phasor ::  Sig -> Sig -> Sig -> Sig -> Sig
-sc_phasor b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "sc_phasor" [(Ar,[Xr,Xr,Kr,Kr,Kr]),(Kr,[Xr,Xr,Kr,Kr,Kr])] [a1
-                                                                                         ,a2
-                                                                                         ,a3
-                                                                                         ,a4]
+sc_phasor b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
+  where
+    f a1 a2 a3 a4 = opcs "sc_phasor" [(Ar,[Xr,Xr,Kr,Kr,Kr]),(Kr,[Xr,Xr,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Produces a normalized moving phase value with sync input and output.
@@ -2053,8 +2308,10 @@ sc_phasor b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/syncphasor.html>
 syncphasor ::  Sig -> Sig -> (Sig,Sig)
-syncphasor b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = mopcs "syncphasor" ([Ar,Ar],[Xr,Ar,Ir]) [a1,a2]
+syncphasor b1 b2 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = mopcs "syncphasor" ([Ar,Ar],[Xr,Ar,Ir]) [a1,a2]
 
 -- Random (Noise) Generators.
 
@@ -2069,8 +2326,10 @@ syncphasor b1 b2 = pureTuple $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/betarand.html>
 betarand :: SigOrD a => a -> a -> a -> SE a
-betarand b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> toGE b3
-    where f a1 a2 a3 = opcs "betarand" [(Ar,[Kr,Kr,Kr]),(Ir,[Kr,Kr,Kr]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+betarand b1 b2 b3 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2 <*> (lift . toGE) b3
+  where
+    f a1 a2 a3 = opcsDep "betarand" [(Ar,[Kr,Kr,Kr]),(Ir,[Kr,Kr,Kr]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Exponential distribution random number generator.
@@ -2083,8 +2342,10 @@ betarand b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toG
 --
 -- csound doc: <http://csound.com/docs/manual/bexprnd.html>
 bexprnd :: SigOrD a => a -> SE a
-bexprnd b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "bexprnd" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+bexprnd b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "bexprnd" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Cauchy distribution random number generator.
@@ -2097,8 +2358,10 @@ bexprnd b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/cauchy.html>
 cauchy :: SigOrD a => a -> SE a
-cauchy b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "cauchy" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+cauchy b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "cauchy" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Cauchy distribution random number generator with
@@ -2114,8 +2377,10 @@ cauchy b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/cauchyi.html>
 cauchyi :: SigOrD a => a -> a -> a -> SE a
-cauchyi b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> toGE b3
-    where f a1 a2 a3 = opcs "cauchyi" [(Ar,[Kr,Xr,Xr]),(Ir,[Kr,Xr,Xr]),(Kr,[Kr,Xr,Xr])] [a1,a2,a3]
+cauchyi b1 b2 b3 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2 <*> (lift . toGE) b3
+  where
+    f a1 a2 a3 = opcsDep "cauchyi" [(Ar,[Kr,Xr,Xr]),(Ir,[Kr,Xr,Xr]),(Kr,[Kr,Xr,Xr])] [a1,a2,a3]
 
 -- | 
 -- Continuous USER-defined-distribution RaNDom generator.
@@ -2126,8 +2391,10 @@ cauchyi b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE
 --
 -- csound doc: <http://csound.com/docs/manual/cuserrnd.html>
 cuserrnd :: SigOrD a => a -> a -> a -> SE a
-cuserrnd b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> toGE b3
-    where f a1 a2 a3 = opcs "cuserrnd" [(Ar,[Kr,Kr,Kr]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+cuserrnd b1 b2 b3 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2 <*> (lift . toGE) b3
+  where
+    f a1 a2 a3 = opcsDep "cuserrnd" [(Ar,[Kr,Kr,Kr]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Discrete USER-defined-distribution RaNDom generator.
@@ -2138,8 +2405,10 @@ cuserrnd b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toG
 --
 -- csound doc: <http://csound.com/docs/manual/duserrnd.html>
 duserrnd :: SigOrD a => a -> SE a
-duserrnd b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "duserrnd" [(Ar,[Kr]),(Ir,[Ir]),(Kr,[Kr])] [a1]
+duserrnd b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "duserrnd" [(Ar,[Kr]),(Ir,[Ir]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Random impulses.
@@ -2151,8 +2420,10 @@ duserrnd b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/dust.html>
 dust ::  Sig -> Sig -> SE Sig
-dust b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "dust" [(Ar,[Kr,Kr]),(Kr,[Kr,Kr])] [a1,a2]
+dust b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep "dust" [(Ar,[Kr,Kr]),(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Random impulses.
@@ -2164,8 +2435,10 @@ dust b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> 
 --
 -- csound doc: <http://csound.com/docs/manual/dust2.html>
 dust2 ::  Sig -> Sig -> SE Sig
-dust2 b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "dust2" [(Ar,[Kr,Kr]),(Kr,[Kr,Kr])] [a1,a2]
+dust2 b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep "dust2" [(Ar,[Kr,Kr]),(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Exponential distribution random number generator (positive values only).
@@ -2178,8 +2451,10 @@ dust2 b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/exprand.html>
 exprand :: SigOrD a => a -> SE a
-exprand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "exprand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+exprand b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "exprand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Exponential distribution random number generator with
@@ -2195,8 +2470,10 @@ exprand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/exprandi.html>
 exprandi :: SigOrD a => a -> a -> a -> SE a
-exprandi b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> toGE b3
-    where f a1 a2 a3 = opcs "exprandi" [(Ar,[Kr,Xr,Xr]),(Ir,[Kr,Xr,Xr]),(Kr,[Kr,Xr,Xr])] [a1,a2,a3]
+exprandi b1 b2 b3 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2 <*> (lift . toGE) b3
+  where
+    f a1 a2 a3 = opcsDep "exprandi" [(Ar,[Kr,Xr,Xr]),(Ir,[Kr,Xr,Xr]),(Kr,[Kr,Xr,Xr])] [a1,a2,a3]
 
 -- | 
 -- A fractal noise generator.
@@ -2208,8 +2485,10 @@ exprandi b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toG
 --
 -- csound doc: <http://csound.com/docs/manual/fractalnoise.html>
 fractalnoise ::  Sig -> Sig -> SE Sig
-fractalnoise b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "fractalnoise" [(Ar,[Kr,Kr])] [a1,a2]
+fractalnoise b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep "fractalnoise" [(Ar,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Gaussian distribution random number generator.
@@ -2222,8 +2501,10 @@ fractalnoise b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/gauss.html>
 gauss ::  Sig -> SE Sig
-gauss b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "gauss" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+gauss b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "gauss" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Gaussian distribution random number generator with
@@ -2239,8 +2520,10 @@ gauss b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/gaussi.html>
 gaussi :: SigOrD a => a -> a -> a -> SE a
-gaussi b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2 <*> toGE b3
-    where f a1 a2 a3 = opcs "gaussi" [(Ar,[Kr,Xr,Xr]),(Ir,[Kr,Xr,Xr]),(Kr,[Kr,Xr,Xr])] [a1,a2,a3]
+gaussi b1 b2 b3 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2 <*> (lift . toGE) b3
+  where
+    f a1 a2 a3 = opcsDep "gaussi" [(Ar,[Kr,Xr,Xr]),(Ir,[Kr,Xr,Xr]),(Kr,[Kr,Xr,Xr])] [a1,a2,a3]
 
 -- | 
 -- Random impulses around a certain frequency.
@@ -2252,8 +2535,10 @@ gaussi b1 b2 b3 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE 
 --
 -- csound doc: <http://csound.com/docs/manual/gausstrig.html>
 gausstrig ::  Sig -> Sig -> Sig -> SE Sig
-gausstrig b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "gausstrig" [(Ar,[Kr,Kr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+gausstrig b1 b2 b3 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep "gausstrig" [(Ar,[Kr,Kr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Reads the global seed value.
@@ -2266,8 +2551,10 @@ gausstrig b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/getseed.html>
 getseed ::   SE Sig
-getseed  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "getseed" [(Ir,[]),(Kr,[])] []
+getseed  =
+  fmap ( Sig . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "getseed" [(Ir,[]),(Kr,[])] []
 
 -- | 
 -- Generates a segmented line whose segments are randomly generated.
@@ -2276,8 +2563,10 @@ getseed  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/jitter.html>
 jitter ::  Sig -> Sig -> Sig -> SE Sig
-jitter b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "jitter" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+jitter b1 b2 b3 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep "jitter" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Generates a segmented line with user-controllable random segments.
@@ -2287,14 +2576,16 @@ jitter b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/jitter2.html>
 jitter2 ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> SE Sig
-jitter2 b1 b2 b3 b4 b5 b6 b7 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "jitter2" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
-                                                                                   ,a2
-                                                                                   ,a3
-                                                                                   ,a4
-                                                                                   ,a5
-                                                                                   ,a6
-                                                                                   ,a7]
+jitter2 b1 b2 b3 b4 b5 b6 b7 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5 <*> (lift . unSig) b6 <*> (lift . unSig) b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcsDep "jitter2" [(Kr,[Kr,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] [a1
+                                                                                ,a2
+                                                                                ,a3
+                                                                                ,a4
+                                                                                ,a5
+                                                                                ,a6
+                                                                                ,a7]
 
 -- | 
 -- A jitter-spline generator.
@@ -2304,8 +2595,10 @@ jitter2 b1 b2 b3 b4 b5 b6 b7 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f
 --
 -- csound doc: <http://csound.com/docs/manual/jspline.html>
 jspline ::  Sig -> Sig -> Sig -> SE Sig
-jspline b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "jspline" [(Ar,[Xr,Kr,Kr]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+jspline b1 b2 b3 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep "jspline" [(Ar,[Xr,Kr,Kr]),(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Linear distribution random number generator (positive values only).
@@ -2318,8 +2611,10 @@ jspline b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/linrand.html>
 linrand :: SigOrD a => a -> SE a
-linrand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "linrand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+linrand b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "linrand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- A white noise generator with an IIR lowpass filter.
@@ -2328,8 +2623,10 @@ linrand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/noise.html>
 noise ::  Sig -> Sig -> SE Sig
-noise b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "noise" [(Ar,[Xr,Kr])] [a1,a2]
+noise b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep "noise" [(Ar,[Xr,Kr])] [a1,a2]
 
 -- | 
 -- Cauchy distribution random number generator (positive values only).
@@ -2342,8 +2639,10 @@ noise b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/pcauchy.html>
 pcauchy :: SigOrD a => a -> SE a
-pcauchy b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "pcauchy" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+pcauchy b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "pcauchy" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Generates pink noise.
@@ -2355,8 +2654,10 @@ pcauchy b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/pinker.html>
 pinker ::   SE Sig
-pinker  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "pinker" [(Ar,[])] []
+pinker  =
+  fmap ( Sig . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "pinker" [(Ar,[])] []
 
 -- | 
 -- Generates approximate pink noise.
@@ -2367,8 +2668,10 @@ pinker  = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/pinkish.html>
 pinkish ::  Sig -> SE Sig
-pinkish b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "pinkish" [(Ar,[Xr,Ir,Ir,Ir,Ir])] [a1]
+pinkish b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "pinkish" [(Ar,[Xr,Ir,Ir,Ir,Ir])] [a1]
 
 -- | 
 -- Poisson distribution random number generator (positive values only).
@@ -2381,8 +2684,10 @@ pinkish b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/poisson.html>
 poisson :: SigOrD a => a -> SE a
-poisson b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "poisson" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+poisson b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "poisson" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Generates a controlled random number series.
@@ -2394,8 +2699,10 @@ poisson b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/rand.html>
 rand ::  Sig -> SE Sig
-rand b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
-    where f a1 = opcs "rand" [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Xr,Ir,Ir,Ir])] [a1]
+rand b1 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1
+  where
+    f a1 = opcsDep "rand" [(Ar,[Xr,Ir,Ir,Ir]),(Kr,[Xr,Ir,Ir,Ir])] [a1]
 
 -- | 
 -- Generates random numbers and holds them for a period of time.
@@ -2405,8 +2712,10 @@ rand b1 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/randh.html>
 randh ::  Sig -> Sig -> SE Sig
-randh b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "randh" [(Ar,[Xr,Xr,Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir,Ir])] [a1,a2]
+randh b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep "randh" [(Ar,[Xr,Xr,Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Generates a controlled random number series with interpolation between each new number.
@@ -2416,8 +2725,10 @@ randh b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/randi.html>
 randi ::  Sig -> Sig -> SE Sig
-randi b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "randi" [(Ar,[Xr,Xr,Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir,Ir])] [a1,a2]
+randi b1 b2 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2
+  where
+    f a1 a2 = opcsDep "randi" [(Ar,[Xr,Xr,Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Generates a controlled pseudo-random number series between min and max values.
@@ -2430,8 +2741,10 @@ randi b1 b2 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/random.html>
 random :: SigOrD a => a -> a -> SE a
-random b1 b2 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2
-    where f a1 a2 = opcs "random" [(Ar,[Kr,Kr]),(Ir,[Ir,Ir]),(Kr,[Kr,Kr])] [a1,a2]
+random b1 b2 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2
+  where
+    f a1 a2 = opcsDep "random" [(Ar,[Kr,Kr]),(Ir,[Ir,Ir]),(Kr,[Kr,Kr])] [a1,a2]
 
 -- | 
 -- Generates random numbers with a user-defined limit and holds them for a period of time.
@@ -2441,8 +2754,10 @@ random b1 b2 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 
 --
 -- csound doc: <http://csound.com/docs/manual/randomh.html>
 randomh ::  Sig -> Sig -> Sig -> SE Sig
-randomh b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "randomh" [(Ar,[Kr,Kr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+randomh b1 b2 b3 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep "randomh" [(Ar,[Kr,Kr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Generates a user-controlled random number series with interpolation between each new number.
@@ -2452,8 +2767,10 @@ randomh b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/randomi.html>
 randomi ::  Sig -> Sig -> Sig -> SE Sig
-randomi b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "randomi" [(Ar,[Kr,Kr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
+randomi b1 b2 b3 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep "randomi" [(Ar,[Kr,Kr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- 31-bit bipolar random opcodes with controllable distribution.
@@ -2466,8 +2783,10 @@ randomi b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/rnd31.html>
 rnd31 :: SigOrD a => a -> a -> SE a
-rnd31 b1 b2 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2
-    where f a1 a2 = opcs "rnd31" [(Ar,[Kr,Kr,Ir]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir])] [a1,a2]
+rnd31 b1 b2 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2
+  where
+    f a1 a2 = opcsDep "rnd31" [(Ar,[Kr,Kr,Ir]),(Ir,[Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir])] [a1,a2]
 
 -- | 
 -- Generate random spline curves.
@@ -2477,8 +2796,10 @@ rnd31 b1 b2 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <
 --
 -- csound doc: <http://csound.com/docs/manual/rspline.html>
 rspline ::  Sig -> Sig -> Sig -> Sig -> SE Sig
-rspline b1 b2 b3 b4 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "rspline" [(Ar,[Xr,Xr,Kr,Kr]),(Kr,[Kr,Kr,Kr,Kr])] [a1,a2,a3,a4]
+rspline b1 b2 b3 b4 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep "rspline" [(Ar,[Xr,Xr,Kr,Kr]),(Kr,[Kr,Kr,Kr,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Sets the global seed value.
@@ -2489,8 +2810,10 @@ rspline b1 b2 b3 b4 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/seed.html>
 seed ::  D -> SE ()
-seed b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
-    where f a1 = opcs "seed" [(Xr,[Ir])] [a1]
+seed b1 =
+  SE $ join $ f <$> (lift . unD) b1
+  where
+    f a1 = opcsDep_ "seed" [(Xr,[Ir])] [a1]
 
 -- | 
 -- Generates a controlled pseudo-random number series between min and max values according to a trigger.
@@ -2501,8 +2824,10 @@ seed b1 = SE $ (depT_ =<<) $ lift $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/trandom.html>
 trandom ::  Sig -> Sig -> Sig -> SE Sig
-trandom b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "trandom" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
+trandom b1 b2 b3 =
+  fmap ( Sig . return) $ SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3
+  where
+    f a1 a2 a3 = opcsDep "trandom" [(Kr,[Kr,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Triangular distribution random number generator
@@ -2515,8 +2840,10 @@ trandom b1 b2 b3 = fmap ( Sig . return) $ SE $ (depT =<<) $ lift $ f <$> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/trirand.html>
 trirand :: SigOrD a => a -> SE a
-trirand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "trirand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+trirand b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "trirand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- Uniform distribution random number generator (positive values only).
@@ -2529,8 +2856,10 @@ trirand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/unirand.html>
 unirand :: SigOrD a => a -> SE a
-unirand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = opcs "unirand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
+unirand b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = opcsDep "unirand" [(Ar,[Kr]),(Ir,[Kr]),(Kr,[Kr])] [a1]
 
 -- | 
 -- truly random opcodes with controllable range.
@@ -2545,8 +2874,10 @@ unirand b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/urandom.html>
 urandom :: SigOrD a =>  SE a
-urandom  = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ return $ f 
-    where f  = opcs "urandom" [(Ar,[Ir,Ir]),(Ir,[Ir,Ir]),(Kr,[Ir,Ir])] []
+urandom  =
+  fmap ( fromGE . return) $ SE $ join $ return $ f 
+  where
+    f  = opcsDep "urandom" [(Ar,[Ir,Ir]),(Ir,[Ir,Ir]),(Kr,[Ir,Ir])] []
 
 -- | 
 -- A discrete user-defined-distribution random generator that can be used as a function.
@@ -2557,8 +2888,10 @@ urandom  = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/urd.html>
 urd :: SigOrD a => a -> SE a
-urd b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
-    where f a1 = oprBy "urd" [(Ar,[Kr]), (Kr,[Kr]), (Ir,[Ir])] [a1]
+urd b1 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1
+  where
+    f a1 = oprByDep "urd" [(Ar,[Kr]), (Kr,[Kr]), (Ir,[Ir])] [a1]
 
 -- | 
 -- Weibull distribution random number generator (positive values only).
@@ -2571,8 +2904,10 @@ urd b1 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/weibull.html>
 weibull :: SigOrD a => a -> a -> SE a
-weibull b1 b2 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1 <*> toGE b2
-    where f a1 a2 = opcs "weibull" [(Ar,[Kr,Kr]),(Ir,[Kr,Kr]),(Kr,[Kr,Kr])] [a1,a2]
+weibull b1 b2 =
+  fmap ( fromGE . return) $ SE $ join $ f <$> (lift . toGE) b1 <*> (lift . toGE) b2
+  where
+    f a1 a2 = opcsDep "weibull" [(Ar,[Kr,Kr]),(Ir,[Kr,Kr]),(Kr,[Kr,Kr])] [a1,a2]
 
 -- Sample Playback.
 
@@ -2586,13 +2921,10 @@ weibull b1 b2 = fmap ( fromGE . return) $ SE $ (depT =<<) $ lift $ f <$> toGE b1
 --
 -- csound doc: <http://csound.com/docs/manual/bbcutm.html>
 bbcutm ::  Sig -> D -> D -> D -> D -> D -> Sig
-bbcutm b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "bbcutm" [(Ar,[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6]
+bbcutm b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "bbcutm" [(Ar,[Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Generates breakbeat-style cut-ups of a stereo audio stream.
@@ -2604,14 +2936,16 @@ bbcutm b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unD b2 <*> unD b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/bbcuts.html>
 bbcuts ::  Sig -> Sig -> D -> D -> D -> D -> D -> (Sig,Sig)
-bbcuts b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = mopcs "bbcuts" ([Ar,Ar],[Ar,Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                            ,a2
-                                                                                            ,a3
-                                                                                            ,a4
-                                                                                            ,a5
-                                                                                            ,a6
-                                                                                            ,a7]
+bbcuts b1 b2 b3 b4 b5 b6 b7 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = mopcs "bbcuts" ([Ar,Ar],[Ar,Ar,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                      ,a2
+                                                                                      ,a3
+                                                                                      ,a4
+                                                                                      ,a5
+                                                                                      ,a6
+                                                                                      ,a7]
 
 -- | 
 -- Function-table-based crossfading looper.
@@ -2624,9 +2958,11 @@ bbcuts b1 b2 b3 b4 b5 b6 b7 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3
 -- > asig1[, asig2]  flooper  kamp, kpitch, istart, idur, ifad, ifn
 --
 -- csound doc: <http://csound.com/docs/manual/flooper.html>
-flooper :: Tuple a => Sig -> Sig -> D -> D -> D -> Tab -> a
-flooper b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = mopcs "flooper" ([Ar,Ar],[Kr,Kr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6]
+flooper :: forall a . Tuple a => Sig -> Sig -> D -> D -> D -> Tab -> a
+flooper b1 b2 b3 b4 b5 b6 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = mopcs "flooper" ([Ar,Ar],[Kr,Kr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Function-table-based crossfading looper.
@@ -2640,14 +2976,16 @@ flooper b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <
 -- >           [, istart, imode, ifenv, iskip]
 --
 -- csound doc: <http://csound.com/docs/manual/flooper2.html>
-flooper2 :: Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> a
-flooper2 b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
-    where f a1 a2 a3 a4 a5 a6 = mopcs "flooper2" ([Ar,Ar],[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1
-                                                                                           ,a2
-                                                                                           ,a3
-                                                                                           ,a4
-                                                                                           ,a5
-                                                                                           ,a6]
+flooper2 :: forall a . Tuple a => Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> a
+flooper2 b1 b2 b3 b4 b5 b6 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unTab b6
+  where
+    f a1 a2 a3 a4 a5 a6 = mopcs "flooper2" ([Ar,Ar],[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir,Ir]) [a1
+                                                                                     ,a2
+                                                                                     ,a3
+                                                                                     ,a4
+                                                                                     ,a5
+                                                                                     ,a6]
 
 -- | 
 -- Collects all audio from all Fluidsynth engines in a performance
@@ -2656,8 +2994,10 @@ flooper2 b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/fluidAllOut.html>
 fluidAllOut ::   (Sig,Sig)
-fluidAllOut  = pureTuple $ return $ f 
-    where f  = mopcs "fluidAllOut" ([Ar,Ar],[]) []
+fluidAllOut  =
+  pureTuple $ return $ f 
+  where
+    f  = mopcs "fluidAllOut" ([Ar,Ar],[]) []
 
 -- | 
 -- Sends a MIDI controller data message to fluid.
@@ -2669,8 +3009,10 @@ fluidAllOut  = pureTuple $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/fluidCCi.html>
 fluidCCi ::  D -> D -> D -> D -> SE ()
-fluidCCi b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "fluidCCi" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+fluidCCi b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fluidCCi" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Sends a MIDI controller data message to fluid.
@@ -2682,8 +3024,10 @@ fluidCCi b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/fluidCCk.html>
 fluidCCk ::  D -> D -> D -> Sig -> SE ()
-fluidCCk b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unSig b4
-    where f a1 a2 a3 a4 = opcs "fluidCCk" [(Xr,[Ir,Ir,Ir,Kr])] [a1,a2,a3,a4]
+fluidCCk b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fluidCCk" [(Xr,[Ir,Ir,Ir,Kr])] [a1,a2,a3,a4]
 
 -- | 
 -- Sends MIDI note on, note off, and other messages to a SoundFont preset.
@@ -2700,8 +3044,10 @@ fluidCCk b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD
 --
 -- csound doc: <http://csound.com/docs/manual/fluidControl.html>
 fluidControl ::  D -> Sig -> Sig -> Sig -> Sig -> SE ()
-fluidControl b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "fluidControl" [(Xr,[Ir,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
+fluidControl b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSig) b2 <*> (lift . unSig) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "fluidControl" [(Xr,[Ir,Kr,Kr,Kr,Kr])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Instantiates a fluidsynth engine.
@@ -2714,8 +3060,10 @@ fluidControl b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/fluidEngine.html>
 fluidEngine ::   D
-fluidEngine  = D $ return $ f 
-    where f  = opcs "fluidEngine" [(Ir,[Ir,Ir,Ir,Ir])] []
+fluidEngine  =
+  D $ return $ f 
+  where
+    f  = opcs "fluidEngine" [(Ir,[Ir,Ir,Ir,Ir])] []
 
 -- | 
 -- Loads a SoundFont into a fluidEngine, optionally listing SoundFont contents.
@@ -2727,8 +3075,10 @@ fluidEngine  = D $ return $ f
 --
 -- csound doc: <http://csound.com/docs/manual/fluidLoad.html>
 fluidLoad ::  D -> D -> Tab
-fluidLoad b1 b2 = Tab $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "fluidLoad" [(Ir,[Ir,Ir,Ir])] [a1,a2]
+fluidLoad b1 b2 =
+  Tab $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "fluidLoad" [(Ir,[Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Plays a note on a channel in a fluidSynth engine.
@@ -2740,8 +3090,10 @@ fluidLoad b1 b2 = Tab $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/fluidNote.html>
 fluidNote ::  D -> D -> D -> D -> SE ()
-fluidNote b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "fluidNote" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+fluidNote b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "fluidNote" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Outputs sound from a given fluidEngine
@@ -2752,8 +3104,10 @@ fluidNote b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/fluidOut.html>
 fluidOut ::  D -> (Sig,Sig)
-fluidOut b1 = pureTuple $ f <$> unD b1
-    where f a1 = mopcs "fluidOut" ([Ar,Ar],[Ir]) [a1]
+fluidOut b1 =
+  pureTuple $ f <$> unD b1
+  where
+    f a1 = mopcs "fluidOut" ([Ar,Ar],[Ir]) [a1]
 
 -- | 
 -- Assigns a preset from a SoundFont to a channel on a fluidEngine.
@@ -2762,8 +3116,10 @@ fluidOut b1 = pureTuple $ f <$> unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/fluidProgramSelect.html>
 fluidProgramSelect ::  D -> D -> Tab -> D -> D -> SE ()
-fluidProgramSelect b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unTab b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "fluidProgramSelect" [(Xr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+fluidProgramSelect b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3 <*> (lift . unD) b4 <*> (lift . unD) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "fluidProgramSelect" [(Xr,[Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Set interpolation method for channel in Fluid Engine
@@ -2777,8 +3133,10 @@ fluidProgramSelect b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/fluidSetInterpMethod.html>
 fluidSetInterpMethod ::  D -> D -> D -> SE ()
-fluidSetInterpMethod b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "fluidSetInterpMethod" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
+fluidSetInterpMethod b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "fluidSetInterpMethod" [(Xr,[Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Read sampled sound from a table.
@@ -2789,9 +3147,11 @@ fluidSetInterpMethod b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b
 -- >           [, imod2] [, ibeg2] [, iend2]
 --
 -- csound doc: <http://csound.com/docs/manual/loscil.html>
-loscil :: Tuple a => Sig -> Sig -> Tab -> a
-loscil b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = mopcs "loscil" ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
+loscil :: forall a . Tuple a => Sig -> Sig -> Tab -> a
+loscil b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = mopcs "loscil" ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Read sampled sound from a table using cubic interpolation.
@@ -2802,9 +3162,11 @@ loscil b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 -- >           [, imod2] [, ibeg2] [, iend2]
 --
 -- csound doc: <http://csound.com/docs/manual/loscil3.html>
-loscil3 :: Tuple a => Sig -> Sig -> Tab -> a
-loscil3 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = mopcs "loscil3" ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
+loscil3 :: forall a . Tuple a => Sig -> Sig -> Tab -> a
+loscil3 b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = mopcs "loscil3" ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Read multi-channel sampled sound from a table.
@@ -2817,10 +3179,12 @@ loscil3 b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 -- >           [, iwsize, ibas, istrt, imod, ibeg, iend]
 --
 -- csound doc: <http://csound.com/docs/manual/loscilx.html>
-loscilx :: Tuple a => Sig -> Sig -> Tab -> a
-loscilx b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = mopcs "loscilx" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
-                                       ,[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
+loscilx :: forall a . Tuple a => Sig -> Sig -> Tab -> a
+loscilx b1 b2 b3 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
+  where
+    f a1 a2 a3 = mopcs "loscilx" ([Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar,Ar]
+                                 ,[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir]) [a1,a2,a3]
 
 -- | 
 -- Generates a table index for sample playback
@@ -2831,8 +3195,10 @@ loscilx b1 b2 b3 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/lphasor.html>
 lphasor ::  Sig -> Sig
-lphasor b1 = Sig $ f <$> unSig b1
-    where f a1 = opcs "lphasor" [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir])] [a1]
+lphasor b1 =
+  Sig $ f <$> unSig b1
+  where
+    f a1 = opcs "lphasor" [(Ar,[Xr,Ir,Ir,Ir,Ir,Ir])] [a1]
 
 -- | 
 -- Read sampled sound from a table with looping and high precision.
@@ -2843,8 +3209,10 @@ lphasor b1 = Sig $ f <$> unSig b1
 --
 -- csound doc: <http://csound.com/docs/manual/lposcil.html>
 lposcil ::  Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-lposcil b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
-    where f a1 a2 a3 a4 a5 = opcs "lposcil" [(Ar,[Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
+lposcil b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "lposcil" [(Ar,[Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Read sampled sound from a table with high precision and cubic interpolation.
@@ -2855,8 +3223,10 @@ lposcil b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/lposcil3.html>
 lposcil3 ::  Sig -> Sig -> Sig -> Sig -> Tab -> Sig
-lposcil3 b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
-    where f a1 a2 a3 a4 a5 = opcs "lposcil3" [(Ar,[Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
+lposcil3 b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unTab b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "lposcil3" [(Ar,[Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Read sampled sound from a table with looping and high precision.
@@ -2867,8 +3237,10 @@ lposcil3 b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/lposcila.html>
 lposcila ::  Sig -> Sig -> Sig -> Sig -> D -> Sig
-lposcila b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "lposcila" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
+lposcila b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "lposcila" [(Ar,[Ar,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Read stereo sampled sound from a table with looping and high precision.
@@ -2879,8 +3251,10 @@ lposcila b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/lposcilsa.html>
 lposcilsa ::  Sig -> Sig -> Sig -> Sig -> D -> (Sig,Sig)
-lposcilsa b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "lposcilsa" ([Ar,Ar],[Ar,Kr,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4,a5]
+lposcilsa b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "lposcilsa" ([Ar,Ar],[Ar,Kr,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Read stereo sampled sound from a table with looping and high precision.
@@ -2891,8 +3265,10 @@ lposcilsa b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 
 --
 -- csound doc: <http://csound.com/docs/manual/lposcilsa2.html>
 lposcilsa2 ::  Sig -> Sig -> Sig -> Sig -> D -> (Sig,Sig)
-lposcilsa2 b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "lposcilsa2" ([Ar,Ar],[Ar,Kr,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4,a5]
+lposcilsa2 b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "lposcilsa2" ([Ar,Ar],[Ar,Kr,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Prints a list of all instruments of a previously loaded SoundFont2 (SF2) file.
@@ -2903,8 +3279,10 @@ lposcilsa2 b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/sfilist.html>
 sfilist ::  Sf -> SE ()
-sfilist b1 = SE $ (depT_ =<<) $ lift $ f <$> unSf b1
-    where f a1 = opcs "sfilist" [(Xr,[Sr])] [a1]
+sfilist b1 =
+  SE $ join $ f <$> (lift . unSf) b1
+  where
+    f a1 = opcsDep_ "sfilist" [(Xr,[Sr])] [a1]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample instrument, generating a stereo sound.
@@ -2916,13 +3294,10 @@ sfilist b1 = SE $ (depT_ =<<) $ lift $ f <$> unSf b1
 --
 -- csound doc: <http://csound.com/docs/manual/sfinstr.html>
 sfinstr ::  D -> D -> Sig -> Sig -> D -> Sf -> (Sig,Sig)
-sfinstr b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
-    where f a1 a2 a3 a4 a5 a6 = mopcs "sfinstr" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir]) [a1
-                                                                                    ,a2
-                                                                                    ,a3
-                                                                                    ,a4
-                                                                                    ,a5
-                                                                                    ,a6]
+sfinstr b1 b2 b3 b4 b5 b6 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
+  where
+    f a1 a2 a3 a4 a5 a6 = mopcs "sfinstr" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir]) [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample instrument, generating a stereo sound with cubic interpolation.
@@ -2934,13 +3309,10 @@ sfinstr b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*>
 --
 -- csound doc: <http://csound.com/docs/manual/sfinstr3.html>
 sfinstr3 ::  D -> D -> Sig -> Sig -> D -> Sf -> (Sig,Sig)
-sfinstr3 b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
-    where f a1 a2 a3 a4 a5 a6 = mopcs "sfinstr3" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir]) [a1
-                                                                                     ,a2
-                                                                                     ,a3
-                                                                                     ,a4
-                                                                                     ,a5
-                                                                                     ,a6]
+sfinstr3 b1 b2 b3 b4 b5 b6 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
+  where
+    f a1 a2 a3 a4 a5 a6 = mopcs "sfinstr3" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir]) [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample instrument, generating a mono sound with cubic interpolation.
@@ -2952,13 +3324,10 @@ sfinstr3 b1 b2 b3 b4 b5 b6 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/sfinstr3m.html>
 sfinstr3m ::  D -> D -> Sig -> Sig -> D -> Sf -> Sig
-sfinstr3m b1 b2 b3 b4 b5 b6 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "sfinstr3m" [(Ar,[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6]
+sfinstr3m b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "sfinstr3m" [(Ar,[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample instrument, generating a mono sound.
@@ -2970,8 +3339,10 @@ sfinstr3m b1 b2 b3 b4 b5 b6 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/sfinstrm.html>
 sfinstrm ::  D -> D -> Sig -> Sig -> D -> Sf -> Sig
-sfinstrm b1 b2 b3 b4 b5 b6 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "sfinstrm" [(Ar,[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+sfinstrm b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unD b5 <*> unSf b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "sfinstrm" [(Ar,[Ir,Ir,Xr,Xr,Ir,Sr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Loads an entire SoundFont2 (SF2) sample file into memory.
@@ -2982,8 +3353,10 @@ sfinstrm b1 b2 b3 b4 b5 b6 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSi
 --
 -- csound doc: <http://csound.com/docs/manual/sfload.html>
 sfload ::  Str -> D
-sfload b1 = D $ f <$> unStr b1
-    where f a1 = opcs "sfload" [(Ir,[Sr])] [a1]
+sfload b1 =
+  D $ f <$> unStr b1
+  where
+    f a1 = opcs "sfload" [(Ir,[Sr])] [a1]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample preset, generating a stereo sound, with user-defined
@@ -2999,9 +3372,17 @@ sfload b1 = D $ f <$> unStr b1
 --
 -- csound doc: <http://csound.com/docs/manual/sflooper.html>
 sflooper ::  D -> D -> Sig -> Sig -> Sf -> Sig -> Sig -> Sig -> (Sig,Sig)
-sflooper b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "sflooper" ([Ar,Ar]
-                                                       ,[Ir,Ir,Kr,Kr,Ir,Kr,Kr,Kr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5,a6,a7,a8]
+sflooper b1 b2 b3 b4 b5 b6 b7 b8 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = mopcs "sflooper" ([Ar,Ar],[Ir,Ir,Kr,Kr,Ir,Kr,Kr,Kr,Ir,Ir,Ir,Ir]) [a1
+                                                                                                 ,a2
+                                                                                                 ,a3
+                                                                                                 ,a4
+                                                                                                 ,a5
+                                                                                                 ,a6
+                                                                                                 ,a7
+                                                                                                 ,a8]
 
 -- | 
 -- Assigns all presets of a SoundFont2 (SF2) sample file to a sequence of progressive index numbers.
@@ -3019,8 +3400,10 @@ sflooper b1 b2 b3 b4 b5 b6 b7 b8 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/sfpassign.html>
 sfpassign ::  D -> Sf -> SE ()
-sfpassign b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSf b2
-    where f a1 a2 = opcs "sfpassign" [(Xr,[Ir,Sr,Ir])] [a1,a2]
+sfpassign b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unSf) b2
+  where
+    f a1 a2 = opcsDep_ "sfpassign" [(Xr,[Ir,Sr,Ir])] [a1,a2]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample preset, generating a stereo sound.
@@ -3031,8 +3414,10 @@ sfpassign b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unSf b2
 --
 -- csound doc: <http://csound.com/docs/manual/sfplay.html>
 sfplay ::  D -> D -> Sig -> Sig -> Sf -> (Sig,Sig)
-sfplay b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
-    where f a1 a2 a3 a4 a5 = mopcs "sfplay" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+sfplay b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "sfplay" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample preset, generating a stereo sound with cubic interpolation.
@@ -3043,8 +3428,10 @@ sfplay b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/sfplay3.html>
 sfplay3 ::  D -> D -> Sig -> Sig -> Sf -> (Sig,Sig)
-sfplay3 b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
-    where f a1 a2 a3 a4 a5 = mopcs "sfplay3" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
+sfplay3 b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "sfplay3" ([Ar,Ar],[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample preset, generating a mono sound with cubic interpolation.
@@ -3055,8 +3442,10 @@ sfplay3 b1 b2 b3 b4 b5 = pureTuple $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/sfplay3m.html>
 sfplay3m ::  D -> D -> Sig -> Sig -> Sf -> Sig
-sfplay3m b1 b2 b3 b4 b5 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
-    where f a1 a2 a3 a4 a5 = opcs "sfplay3m" [(Ar,[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+sfplay3m b1 b2 b3 b4 b5 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "sfplay3m" [(Ar,[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Plays a SoundFont2 (SF2) sample preset, generating a mono sound.
@@ -3067,8 +3456,10 @@ sfplay3m b1 b2 b3 b4 b5 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/sfplaym.html>
 sfplaym ::  D -> D -> Sig -> Sig -> Sf -> Sig
-sfplaym b1 b2 b3 b4 b5 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
-    where f a1 a2 a3 a4 a5 = opcs "sfplaym" [(Ar,[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+sfplaym b1 b2 b3 b4 b5 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4 <*> unSf b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "sfplaym" [(Ar,[Ir,Ir,Xr,Xr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Prints a list of all presets of a SoundFont2 (SF2) sample file.
@@ -3079,8 +3470,10 @@ sfplaym b1 b2 b3 b4 b5 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unSig b4
 --
 -- csound doc: <http://csound.com/docs/manual/sfplist.html>
 sfplist ::  Sf -> SE ()
-sfplist b1 = SE $ (depT_ =<<) $ lift $ f <$> unSf b1
-    where f a1 = opcs "sfplist" [(Xr,[Sr])] [a1]
+sfplist b1 =
+  SE $ join $ f <$> (lift . unSf) b1
+  where
+    f a1 = opcsDep_ "sfplist" [(Xr,[Sr])] [a1]
 
 -- | 
 -- Assigns an existing preset of a SoundFont2 (SF2) sample file to an index number.
@@ -3091,8 +3484,10 @@ sfplist b1 = SE $ (depT_ =<<) $ lift $ f <$> unSf b1
 --
 -- csound doc: <http://csound.com/docs/manual/sfpreset.html>
 sfpreset ::  D -> D -> Sf -> Sf -> D
-sfpreset b1 b2 b3 b4 = D $ f <$> unD b1 <*> unD b2 <*> unSf b3 <*> unSf b4
-    where f a1 a2 a3 a4 = opcs "sfpreset" [(Ir,[Ir,Ir,Sr,Ir])] [a1,a2,a3,a4]
+sfpreset b1 b2 b3 b4 =
+  D $ f <$> unD b1 <*> unD b2 <*> unSf b3 <*> unSf b4
+  where
+    f a1 a2 a3 a4 = opcs "sfpreset" [(Ir,[Ir,Ir,Sr,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- A sound looper with pitch control.
@@ -3105,8 +3500,10 @@ sfpreset b1 b2 b3 b4 = D $ f <$> unD b1 <*> unD b2 <*> unSf b3 <*> unSf b4
 --
 -- csound doc: <http://csound.com/docs/manual/sndloop.html>
 sndloop ::  Sig -> Sig -> Sig -> D -> D -> (Sig,Sig)
-sndloop b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = mopcs "sndloop" ([Ar,Kr],[Ar,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4,a5]
+sndloop b1 b2 b3 b4 b5 =
+  pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = mopcs "sndloop" ([Ar,Kr],[Ar,Kr,Kr,Ir,Ir]) [a1,a2,a3,a4,a5]
 
 -- | 
 -- A simple time stretch by repeating cycles.
@@ -3115,8 +3512,10 @@ sndloop b1 b2 b3 b4 b5 = pureTuple $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/waveset.html>
 waveset ::  Sig -> Sig -> Sig
-waveset b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
-    where f a1 a2 = opcs "waveset" [(Ar,[Ar,Kr,Ir])] [a1,a2]
+waveset b1 b2 =
+  Sig $ f <$> unSig b1 <*> unSig b2
+  where
+    f a1 a2 = opcs "waveset" [(Ar,[Ar,Kr,Ir])] [a1,a2]
 
 -- Scanned Synthesis.
 
@@ -3129,8 +3528,10 @@ waveset b1 b2 = Sig $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/scanhammer.html>
 scanhammer ::  D -> D -> D -> D -> SE ()
-scanhammer b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "scanhammer" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
+scanhammer b1 b2 b3 b4 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3 <*> (lift . unD) b4
+  where
+    f a1 a2 a3 a4 = opcsDep_ "scanhammer" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Generate audio output using scanned synthesis.
@@ -3139,8 +3540,10 @@ scanhammer b1 b2 b3 b4 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/scans.html>
 scans ::  Sig -> Sig -> Tab -> D -> Sig
-scans b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "scans" [(Ar,[Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+scans b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "scans" [(Ar,[Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- A simpler scanned synthesis implementation.
@@ -3151,14 +3554,10 @@ scans b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/scantable.html>
 scantable ::  Sig -> Sig -> D -> D -> D -> D -> D -> Sig
-scantable b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "scantable" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1
-                                                                                  ,a2
-                                                                                  ,a3
-                                                                                  ,a4
-                                                                                  ,a5
-                                                                                  ,a6
-                                                                                  ,a7]
+scantable b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unD b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "scantable" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Compute the waveform and the wavetable for use in scanned synthesis.
@@ -3168,26 +3567,28 @@ scantable b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*
 --
 -- csound doc: <http://csound.com/docs/manual/scanu.html>
 scanu ::  D -> D -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig -> Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> D -> D -> SE ()
-scanu b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unTab b3 <*> unTab b4 <*> unTab b5 <*> unTab b6 <*> unTab b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unSig b11 <*> unD b12 <*> unD b13 <*> unSig b14 <*> unSig b15 <*> unSig b16 <*> unD b17 <*> unD b18
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 = opcs "scanu" [(Xr
-                                                                                           ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Kr,Kr,Kr,Kr,Ir,Ir,Kr,Kr,Ar,Ir,Ir])] [a1
-                                                                                                                                                      ,a2
-                                                                                                                                                      ,a3
-                                                                                                                                                      ,a4
-                                                                                                                                                      ,a5
-                                                                                                                                                      ,a6
-                                                                                                                                                      ,a7
-                                                                                                                                                      ,a8
-                                                                                                                                                      ,a9
-                                                                                                                                                      ,a10
-                                                                                                                                                      ,a11
-                                                                                                                                                      ,a12
-                                                                                                                                                      ,a13
-                                                                                                                                                      ,a14
-                                                                                                                                                      ,a15
-                                                                                                                                                      ,a16
-                                                                                                                                                      ,a17
-                                                                                                                                                      ,a18]
+scanu b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3 <*> (lift . unTab) b4 <*> (lift . unTab) b5 <*> (lift . unTab) b6 <*> (lift . unTab) b7 <*> (lift . unSig) b8 <*> (lift . unSig) b9 <*> (lift . unSig) b10 <*> (lift . unSig) b11 <*> (lift . unD) b12 <*> (lift . unD) b13 <*> (lift . unSig) b14 <*> (lift . unSig) b15 <*> (lift . unSig) b16 <*> (lift . unD) b17 <*> (lift . unD) b18
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 = opcsDep_ "scanu" [(Xr
+                                                                                         ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Kr,Kr,Kr,Kr,Ir,Ir,Kr,Kr,Ar,Ir,Ir])] [a1
+                                                                                                                                                    ,a2
+                                                                                                                                                    ,a3
+                                                                                                                                                    ,a4
+                                                                                                                                                    ,a5
+                                                                                                                                                    ,a6
+                                                                                                                                                    ,a7
+                                                                                                                                                    ,a8
+                                                                                                                                                    ,a9
+                                                                                                                                                    ,a10
+                                                                                                                                                    ,a11
+                                                                                                                                                    ,a12
+                                                                                                                                                    ,a13
+                                                                                                                                                    ,a14
+                                                                                                                                                    ,a15
+                                                                                                                                                    ,a16
+                                                                                                                                                    ,a17
+                                                                                                                                                    ,a18]
 
 -- | 
 -- Allows the position and velocity of a node in a scanned process to be read.
@@ -3196,8 +3597,10 @@ scanu b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 = SE $ (dep
 --
 -- csound doc: <http://csound.com/docs/manual/xscanmap.html>
 xscanmap ::  D -> Sig -> Sig -> (Sig,Sig)
-xscanmap b1 b2 b3 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = mopcs "xscanmap" ([Kr,Kr],[Ir,Kr,Kr,Ir]) [a1,a2,a3]
+xscanmap b1 b2 b3 =
+  pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = mopcs "xscanmap" ([Kr,Kr],[Ir,Kr,Kr,Ir]) [a1,a2,a3]
 
 -- | 
 -- Fast scanned synthesis waveform and the wavetable generator.
@@ -3208,8 +3611,10 @@ xscanmap b1 b2 b3 = pureTuple $ f <$> unD b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/xscans.html>
 xscans ::  Sig -> Sig -> Tab -> D -> Sig
-xscans b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4
-    where f a1 a2 a3 a4 = opcs "xscans" [(Ar,[Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
+xscans b1 b2 b3 b4 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4
+  where
+    f a1 a2 a3 a4 = opcs "xscans" [(Ar,[Kr,Kr,Ir,Ir,Ir])] [a1,a2,a3,a4]
 
 -- | 
 -- Allows the position and velocity of a node in a scanned process to be read.
@@ -3218,8 +3623,10 @@ xscans b1 b2 b3 b4 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unTab b3 <*> unD b4
 --
 -- csound doc: <http://csound.com/docs/manual/xscansmap.html>
 xscansmap ::  Sig -> Sig -> D -> Sig -> Sig -> SE ()
-xscansmap b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "xscansmap" [(Xr,[Kr,Kr,Ir,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
+xscansmap b1 b2 b3 b4 b5 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unD) b3 <*> (lift . unSig) b4 <*> (lift . unSig) b5
+  where
+    f a1 a2 a3 a4 a5 = opcsDep_ "xscansmap" [(Xr,[Kr,Kr,Ir,Kr,Kr,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Compute the waveform and the wavetable for use in scanned synthesis.
@@ -3231,26 +3638,28 @@ xscansmap b1 b2 b3 b4 b5 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2
 --
 -- csound doc: <http://csound.com/docs/manual/xscanu.html>
 xscanu ::  D -> D -> Tab -> Tab -> Tab -> Tab -> Tab -> Sig -> Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> D -> D -> SE ()
-xscanu b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unTab b3 <*> unTab b4 <*> unTab b5 <*> unTab b6 <*> unTab b7 <*> unSig b8 <*> unSig b9 <*> unSig b10 <*> unSig b11 <*> unD b12 <*> unD b13 <*> unSig b14 <*> unSig b15 <*> unSig b16 <*> unD b17 <*> unD b18
-    where f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 = opcs "xscanu" [(Xr
-                                                                                            ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Kr,Kr,Kr,Kr,Ir,Ir,Kr,Kr,Ar,Ir,Ir])] [a1
-                                                                                                                                                       ,a2
-                                                                                                                                                       ,a3
-                                                                                                                                                       ,a4
-                                                                                                                                                       ,a5
-                                                                                                                                                       ,a6
-                                                                                                                                                       ,a7
-                                                                                                                                                       ,a8
-                                                                                                                                                       ,a9
-                                                                                                                                                       ,a10
-                                                                                                                                                       ,a11
-                                                                                                                                                       ,a12
-                                                                                                                                                       ,a13
-                                                                                                                                                       ,a14
-                                                                                                                                                       ,a15
-                                                                                                                                                       ,a16
-                                                                                                                                                       ,a17
-                                                                                                                                                       ,a18]
+xscanu b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3 <*> (lift . unTab) b4 <*> (lift . unTab) b5 <*> (lift . unTab) b6 <*> (lift . unTab) b7 <*> (lift . unSig) b8 <*> (lift . unSig) b9 <*> (lift . unSig) b10 <*> (lift . unSig) b11 <*> (lift . unD) b12 <*> (lift . unD) b13 <*> (lift . unSig) b14 <*> (lift . unSig) b15 <*> (lift . unSig) b16 <*> (lift . unD) b17 <*> (lift . unD) b18
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 = opcsDep_ "xscanu" [(Xr
+                                                                                          ,[Ir,Ir,Ir,Ir,Ir,Ir,Ir,Kr,Kr,Kr,Kr,Ir,Ir,Kr,Kr,Ar,Ir,Ir])] [a1
+                                                                                                                                                     ,a2
+                                                                                                                                                     ,a3
+                                                                                                                                                     ,a4
+                                                                                                                                                     ,a5
+                                                                                                                                                     ,a6
+                                                                                                                                                     ,a7
+                                                                                                                                                     ,a8
+                                                                                                                                                     ,a9
+                                                                                                                                                     ,a10
+                                                                                                                                                     ,a11
+                                                                                                                                                     ,a12
+                                                                                                                                                     ,a13
+                                                                                                                                                     ,a14
+                                                                                                                                                     ,a15
+                                                                                                                                                     ,a16
+                                                                                                                                                     ,a17
+                                                                                                                                                     ,a18]
 
 -- STK Opcodes.
 
@@ -3263,9 +3672,10 @@ xscanu b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15 b16 b17 b18 = SE $ (de
 --
 -- csound doc: <http://csound.com/docs/manual/STKBandedWG.html>
 stkBandedWG ::  D -> D -> Sig
-stkBandedWG b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKBandedWG" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1
-                                                                                                ,a2]
+stkBandedWG b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKBandedWG" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STK Hammond-oid organ-like FM synthesis instrument.
@@ -3274,8 +3684,10 @@ stkBandedWG b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKBeeThree.html>
 stkBeeThree ::  D -> D -> Sig
-stkBeeThree b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKBeeThree" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkBeeThree b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKBeeThree" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKBlowBotl uses a helmholtz resonator (biquad filter) with a polynomial jet excitation.
@@ -3286,8 +3698,10 @@ stkBeeThree b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKBlowBotl.html>
 stkBlowBotl ::  D -> D -> Sig
-stkBlowBotl b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKBlowBotl" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkBlowBotl b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKBlowBotl" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STK clarinet physical model with one register hole and one tonehole.
@@ -3298,8 +3712,10 @@ stkBlowBotl b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKBlowHole.html>
 stkBlowHole ::  D -> D -> Sig
-stkBlowHole b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKBlowHole" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkBlowHole b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKBlowHole" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKBowed is a bowed string instrument.
@@ -3310,8 +3726,10 @@ stkBlowHole b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKBowed.html>
 stkBowed ::  D -> D -> Sig
-stkBowed b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKBowed" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkBowed b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKBowed" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKBrass is a simple brass instrument.
@@ -3322,8 +3740,10 @@ stkBowed b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKBrass.html>
 stkBrass ::  D -> D -> Sig
-stkBrass b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKBrass" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkBrass b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKBrass" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKClarinet uses a simple clarinet physical model.
@@ -3332,8 +3752,10 @@ stkBrass b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKClarinet.html>
 stkClarinet ::  D -> D -> Sig
-stkClarinet b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKClarinet" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkClarinet b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKClarinet" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKDrummer is a drum sampling synthesizer.
@@ -3345,8 +3767,10 @@ stkClarinet b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKDrummer.html>
 stkDrummer ::  D -> D -> Sig
-stkDrummer b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKDrummer" [(Ar,[Ir,Ir])] [a1,a2]
+stkDrummer b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKDrummer" [(Ar,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- STKFMVoices is a singing FM synthesis instrument.
@@ -3357,8 +3781,10 @@ stkDrummer b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKFMVoices.html>
 stkFMVoices ::  D -> D -> Sig
-stkFMVoices b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKFMVoices" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkFMVoices b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKFMVoices" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKFlute uses a simple flute physical model.
@@ -3369,8 +3795,10 @@ stkFMVoices b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKFlute.html>
 stkFlute ::  D -> D -> Sig
-stkFlute b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKFlute" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkFlute b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKFlute" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKHevyMetl produces metal sounds.
@@ -3382,8 +3810,10 @@ stkFlute b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKHevyMetl.html>
 stkHevyMetl ::  D -> D -> Sig
-stkHevyMetl b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKHevyMetl" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkHevyMetl b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKHevyMetl" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKMandolin produces mamdolin-like sounds.
@@ -3394,8 +3824,10 @@ stkHevyMetl b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKMandolin.html>
 stkMandolin ::  D -> D -> Sig
-stkMandolin b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKMandolin" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkMandolin b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKMandolin" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKModalBar is a resonant bar instrument.
@@ -3406,9 +3838,10 @@ stkMandolin b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKModalBar.html>
 stkModalBar ::  D -> D -> Sig
-stkModalBar b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKModalBar" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1
-                                                                                                ,a2]
+stkModalBar b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKModalBar" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKMoog produces moog-like swept filter sounds.
@@ -3419,8 +3852,10 @@ stkModalBar b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKMoog.html>
 stkMoog ::  D -> D -> Sig
-stkMoog b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKMoog" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkMoog b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKMoog" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKPercFlut is a percussive flute FM synthesis instrument.
@@ -3431,8 +3866,10 @@ stkMoog b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKPercFlut.html>
 stkPercFlut ::  D -> D -> Sig
-stkPercFlut b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKPercFlut" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkPercFlut b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKPercFlut" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKPlucked uses a plucked string physical model.
@@ -3443,8 +3880,10 @@ stkPercFlut b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKPlucked.html>
 stkPlucked ::  D -> D -> Sig
-stkPlucked b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKPlucked" [(Ar,[Ir,Ir])] [a1,a2]
+stkPlucked b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKPlucked" [(Ar,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- STKResonate is a noise driven formant filter.
@@ -3455,8 +3894,10 @@ stkPlucked b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKResonate.html>
 stkResonate ::  D -> D -> Sig
-stkResonate b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKResonate" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkResonate b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKResonate" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STK Fender Rhodes-like electric piano FM synthesis instrument.
@@ -3465,8 +3906,10 @@ stkResonate b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKRhodey.html>
 stkRhodey ::  D -> D -> Sig
-stkRhodey b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKRhodey" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkRhodey b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKRhodey" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKSaxofony is a faux conical bore reed instrument.
@@ -3483,9 +3926,10 @@ stkRhodey b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKSaxofony.html>
 stkSaxofony ::  D -> D -> Sig
-stkSaxofony b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKSaxofony" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1
-                                                                                                ,a2]
+stkSaxofony b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKSaxofony" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKShakers is an instrument that simulates environmental sounds or collisions of multiple independent sound producing objects.
@@ -3500,8 +3944,10 @@ stkSaxofony b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKShakers.html>
 stkShakers ::  D -> D -> Sig
-stkShakers b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKShakers" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkShakers b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKShakers" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKSimple is a wavetable/noise instrument.
@@ -3513,8 +3959,10 @@ stkShakers b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKSimple.html>
 stkSimple ::  D -> D -> Sig
-stkSimple b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKSimple" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkSimple b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKSimple" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKSitar uses a plucked string physical model.
@@ -3525,8 +3973,10 @@ stkSimple b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKSitar.html>
 stkSitar ::  D -> D -> Sig
-stkSitar b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKSitar" [(Ar,[Ir,Ir])] [a1,a2]
+stkSitar b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKSitar" [(Ar,[Ir,Ir])] [a1,a2]
 
 -- | 
 -- STKStifKarp is a plucked stiff string instrument.
@@ -3538,8 +3988,10 @@ stkSitar b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKStifKarp.html>
 stkStifKarp ::  D -> D -> Sig
-stkStifKarp b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKStifKarp" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkStifKarp b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKStifKarp" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKTubeBell is a  tubular bell (orchestral chime) FM synthesis instrument.
@@ -3551,8 +4003,10 @@ stkStifKarp b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKTubeBell.html>
 stkTubeBell ::  D -> D -> Sig
-stkTubeBell b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKTubeBell" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkTubeBell b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKTubeBell" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKVoicForm is a  four formant synthesis instrument.
@@ -3565,8 +4019,10 @@ stkTubeBell b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKVoicForm.html>
 stkVoicForm ::  D -> D -> Sig
-stkVoicForm b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKVoicForm" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkVoicForm b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKVoicForm" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKWhistle produces whistle sounds.
@@ -3577,8 +4033,10 @@ stkVoicForm b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKWhistle.html>
 stkWhistle ::  D -> D -> Sig
-stkWhistle b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKWhistle" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkWhistle b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKWhistle" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- | 
 -- STKWurley simulates a Wurlitzer electric piano FM synthesis instrument.
@@ -3590,8 +4048,10 @@ stkWhistle b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/STKWurley.html>
 stkWurley ::  D -> D -> Sig
-stkWurley b1 b2 = Sig $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "STKWurley" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
+stkWurley b1 b2 =
+  Sig $ f <$> unD b1 <*> unD b2
+  where
+    f a1 a2 = opcs "STKWurley" [(Ar,[Ir,Ir,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr,Kr])] [a1,a2]
 
 -- Table Access.
 
@@ -3602,8 +4062,10 @@ stkWurley b1 b2 = Sig $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/oscil1.html>
 oscil1 ::  D -> Sig -> D -> Sig
-oscil1 b1 b2 b3 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "oscil1" [(Kr,[Ir,Kr,Ir,Ir])] [a1,a2,a3]
+oscil1 b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "oscil1" [(Kr,[Ir,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Accesses table values by incremental sampling with linear interpolation.
@@ -3612,8 +4074,10 @@ oscil1 b1 b2 b3 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/oscil1i.html>
 oscil1i ::  D -> Sig -> D -> Sig
-oscil1i b1 b2 b3 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3
-    where f a1 a2 a3 = opcs "oscil1i" [(Kr,[Ir,Kr,Ir,Ir])] [a1,a2,a3]
+oscil1i b1 b2 b3 =
+  Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3
+  where
+    f a1 a2 a3 = opcs "oscil1i" [(Kr,[Ir,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Accesses table values by direct indexing.
@@ -3624,10 +4088,11 @@ oscil1i b1 b2 b3 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/ptable.html>
 ptable ::  Sig -> Tab -> Sig
-ptable b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "ptable" [(Ar,[Ar,Ir,Ir,Ir,Ir])
-                                  ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                  ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
+ptable b1 b2 =
+  Sig $ f <$> unSig b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "ptable" [(Ar,[Ar,Ir,Ir,Ir,Ir]),(Ir,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                                ,a2]
 
 -- | 
 -- Accesses table values by direct indexing with cubic interpolation.
@@ -3638,10 +4103,11 @@ ptable b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/ptable3.html>
 ptable3 ::  Sig -> Tab -> Sig
-ptable3 b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "ptable3" [(Ar,[Ar,Ir,Ir,Ir,Ir])
-                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
+ptable3 b1 b2 =
+  Sig $ f <$> unSig b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "ptable3" [(Ar,[Ar,Ir,Ir,Ir,Ir]),(Ir,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                                 ,a2]
 
 -- | 
 -- Accesses table values by direct indexing with linear interpolation.
@@ -3652,10 +4118,11 @@ ptable3 b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/ptablei.html>
 ptablei ::  Sig -> Tab -> Sig
-ptablei b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "ptablei" [(Ar,[Ar,Ir,Ir,Ir,Ir])
-                                   ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                   ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
+ptablei b1 b2 =
+  Sig $ f <$> unSig b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "ptablei" [(Ar,[Ar,Ir,Ir,Ir,Ir]),(Ir,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                                 ,a2]
 
 -- | 
 -- Fast table opcodes.
@@ -3672,8 +4139,10 @@ ptablei b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/tab.html>
 tab_i ::  D -> Tab -> D
-tab_i b1 b2 = D $ f <$> unD b1 <*> unTab b2
-    where f a1 a2 = opcs "tab_i" [(Ir,[Ir,Ir,Ir])] [a1,a2]
+tab_i b1 b2 =
+  D $ f <$> unD b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "tab_i" [(Ir,[Ir,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Fast table opcodes.
@@ -3691,8 +4160,10 @@ tab_i b1 b2 = D $ f <$> unD b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/tab.html>
 tab ::  Sig -> Tab -> Sig
-tab b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
-    where f a1 a2 = opcs "tab" [(Kr,[Kr,Ir,Ir]),(Ar,[Xr,Ir,Ir])] [a1,a2]
+tab b1 b2 =
+  Sig $ f <$> unSig b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "tab" [(Kr,[Kr,Ir,Ir]),(Ar,[Xr,Ir,Ir])] [a1,a2]
 
 -- | 
 -- Fast table opcodes.
@@ -3709,8 +4180,10 @@ tab b1 b2 = Sig $ f <$> unSig b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/tab.html>
 tabw_i ::  D -> D -> Tab -> SE ()
-tabw_i b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "tabw_i" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3]
+tabw_i b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "tabw_i" [(Xr,[Ir,Ir,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Fast table opcodes.
@@ -3728,8 +4201,10 @@ tabw_i b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unTab b3
 --
 -- csound doc: <http://csound.com/docs/manual/tab.html>
 tabw ::  Sig -> Sig -> Tab -> SE ()
-tabw b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTab b3
-    where f a1 a2 a3 = opcs "tabw" [(Xr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
+tabw b1 b2 b3 =
+  SE $ join $ f <$> (lift . unSig) b1 <*> (lift . unSig) b2 <*> (lift . unTab) b3
+  where
+    f a1 a2 a3 = opcsDep_ "tabw" [(Xr,[Kr,Kr,Ir,Ir])] [a1,a2,a3]
 
 -- | 
 -- Accesses table values by direct indexing.
@@ -3740,10 +4215,11 @@ tabw b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unSig b1 <*> unSig b2 <*> unTab 
 --
 -- csound doc: <http://csound.com/docs/manual/table.html>
 table :: SigOrD a => a -> Tab -> a
-table b1 b2 = fromGE $ f <$> toGE b1 <*> unTab b2
-    where f a1 a2 = opcs "table" [(Ar,[Ar,Ir,Ir,Ir,Ir])
-                                 ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                 ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
+table b1 b2 =
+  fromGE $ f <$> toGE b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "table" [(Ar,[Ar,Ir,Ir,Ir,Ir]),(Ir,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                               ,a2]
 
 -- | 
 -- Accesses table values by direct indexing with cubic interpolation.
@@ -3754,10 +4230,11 @@ table b1 b2 = fromGE $ f <$> toGE b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/table3.html>
 table3 :: SigOrD a => a -> Tab -> a
-table3 b1 b2 = fromGE $ f <$> toGE b1 <*> unTab b2
-    where f a1 a2 = opcs "table3" [(Ar,[Ar,Ir,Ir,Ir,Ir])
-                                  ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                  ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
+table3 b1 b2 =
+  fromGE $ f <$> toGE b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "table3" [(Ar,[Ar,Ir,Ir,Ir,Ir]),(Ir,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                                ,a2]
 
 -- | 
 -- Accesses table values by direct indexing with linear interpolation.
@@ -3768,10 +4245,11 @@ table3 b1 b2 = fromGE $ f <$> toGE b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/tablei.html>
 tablei :: SigOrD a => a -> Tab -> a
-tablei b1 b2 = fromGE $ f <$> toGE b1 <*> unTab b2
-    where f a1 a2 = opcs "tablei" [(Ar,[Ar,Ir,Ir,Ir,Ir])
-                                  ,(Ir,[Ir,Ir,Ir,Ir,Ir])
-                                  ,(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1,a2]
+tablei b1 b2 =
+  fromGE $ f <$> toGE b1 <*> unTab b2
+  where
+    f a1 a2 = opcs "tablei" [(Ar,[Ar,Ir,Ir,Ir,Ir]),(Ir,[Ir,Ir,Ir,Ir,Ir]),(Kr,[Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                                ,a2]
 
 -- Wave Terrain Synthesis.
 
@@ -3783,15 +4261,17 @@ tablei b1 b2 = fromGE $ f <$> toGE b1 <*> unTab b2
 --
 -- csound doc: <http://csound.com/docs/manual/wterrain.html>
 wterrain ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> D -> Sig
-wterrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unD b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "wterrain" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
-                                                                                       ,a2
-                                                                                       ,a3
-                                                                                       ,a4
-                                                                                       ,a5
-                                                                                       ,a6
-                                                                                       ,a7
-                                                                                       ,a8]
+wterrain b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6 <*> unD b7 <*> unD b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "wterrain" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1
+                                                                                 ,a2
+                                                                                 ,a3
+                                                                                 ,a4
+                                                                                 ,a5
+                                                                                 ,a6
+                                                                                 ,a7
+                                                                                 ,a8]
 
 -- Waveguide Physical Modeling.
 
@@ -3804,8 +4284,10 @@ wterrain b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b
 --
 -- csound doc: <http://csound.com/docs/manual/pluck.html>
 pluck ::  Sig -> Sig -> D -> Tab -> D -> Sig
-pluck b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unD b5
-    where f a1 a2 a3 a4 a5 = opcs "pluck" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+pluck b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4 <*> unD b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "pluck" [(Ar,[Kr,Kr,Ir,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Physical model of the plucked string.
@@ -3816,8 +4298,10 @@ pluck b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unD b3 <*> unTab b4
 --
 -- csound doc: <http://csound.com/docs/manual/repluck.html>
 repluck ::  D -> Sig -> D -> Sig -> Sig -> Sig -> Sig
-repluck b1 b2 b3 b4 b5 b6 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "repluck" [(Ar,[Ir,Kr,Ir,Kr,Kr,Ar])] [a1,a2,a3,a4,a5,a6]
+repluck b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "repluck" [(Ar,[Ir,Kr,Ir,Kr,Kr,Ar])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- A string resonator with variable fundamental frequency.
@@ -3828,8 +4312,10 @@ repluck b1 b2 b3 b4 b5 b6 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3 <*> unSig
 --
 -- csound doc: <http://csound.com/docs/manual/streson.html>
 streson ::  Sig -> Sig -> Sig -> Sig
-streson b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
-    where f a1 a2 a3 = opcs "streson" [(Ar,[Ar,Kr,Kr])] [a1,a2,a3]
+streson b1 b2 b3 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
+  where
+    f a1 a2 a3 = opcs "streson" [(Ar,[Ar,Kr,Kr])] [a1,a2,a3]
 
 -- | 
 -- Creates a tone similar to a bowed string.
@@ -3841,8 +4327,10 @@ streson b1 b2 b3 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/wgbow.html>
 wgbow ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-wgbow b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "wgbow" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+wgbow b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "wgbow" [(Ar,[Kr,Kr,Kr,Kr,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- A physical model of a bowed bar.
@@ -3854,8 +4342,10 @@ wgbow b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unS
 --
 -- csound doc: <http://csound.com/docs/manual/wgbowedbar.html>
 wgbowedbar ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-wgbowedbar b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "wgbowedbar" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
+wgbowedbar b1 b2 b3 b4 b5 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "wgbowedbar" [(Ar,[Kr,Kr,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5]
 
 -- | 
 -- Creates a tone related to a brass instrument.
@@ -3867,8 +4357,10 @@ wgbowedbar b1 b2 b3 b4 b5 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/wgbrass.html>
 wgbrass ::  Sig -> Sig -> Sig -> D -> Sig -> Sig -> Sig
-wgbrass b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unSig b5 <*> unSig b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "wgbrass" [(Ar,[Kr,Kr,Kr,Ir,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
+wgbrass b1 b2 b3 b4 b5 b6 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unSig b5 <*> unSig b6
+  where
+    f a1 a2 a3 a4 a5 a6 = opcs "wgbrass" [(Ar,[Kr,Kr,Kr,Ir,Kr,Kr,Ir,Ir])] [a1,a2,a3,a4,a5,a6]
 
 -- | 
 -- Creates a tone similar to a clarinet.
@@ -3880,15 +4372,17 @@ wgbrass b1 b2 b3 b4 b5 b6 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> u
 --
 -- csound doc: <http://csound.com/docs/manual/wgclar.html>
 wgclar ::  Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Sig
-wgclar b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "wgclar" [(Ar,[Kr,Kr,Kr,Ir,Ir,Kr,Kr,Kr,Ir,Ir])] [a1
-                                                                                           ,a2
-                                                                                           ,a3
-                                                                                           ,a4
-                                                                                           ,a5
-                                                                                           ,a6
-                                                                                           ,a7
-                                                                                           ,a8]
+wgclar b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "wgclar" [(Ar,[Kr,Kr,Kr,Ir,Ir,Kr,Kr,Kr,Ir,Ir])] [a1
+                                                                                     ,a2
+                                                                                     ,a3
+                                                                                     ,a4
+                                                                                     ,a5
+                                                                                     ,a6
+                                                                                     ,a7
+                                                                                     ,a8]
 
 -- | 
 -- Creates a tone similar to a flute.
@@ -3900,9 +4394,17 @@ wgclar b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 
 --
 -- csound doc: <http://csound.com/docs/manual/wgflute.html>
 wgflute ::  Sig -> Sig -> Sig -> D -> D -> Sig -> Sig -> Sig -> Sig
-wgflute b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
-    where f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "wgflute" [(Ar
-                                                      ,[Kr,Kr,Kr,Ir,Ir,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1,a2,a3,a4,a5,a6,a7,a8]
+wgflute b1 b2 b3 b4 b5 b6 b7 b8 =
+  Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unSig b6 <*> unSig b7 <*> unSig b8
+  where
+    f a1 a2 a3 a4 a5 a6 a7 a8 = opcs "wgflute" [(Ar,[Kr,Kr,Kr,Ir,Ir,Kr,Kr,Kr,Ir,Ir,Ir,Ir])] [a1
+                                                                                            ,a2
+                                                                                            ,a3
+                                                                                            ,a4
+                                                                                            ,a5
+                                                                                            ,a6
+                                                                                            ,a7
+                                                                                            ,a8]
 
 -- | 
 -- A high fidelity simulation of a plucked string.
@@ -3913,14 +4415,10 @@ wgflute b1 b2 b3 b4 b5 b6 b7 b8 = Sig $ f <$> unSig b1 <*> unSig b2 <*> unSig b3
 --
 -- csound doc: <http://csound.com/docs/manual/wgpluck.html>
 wgpluck ::  D -> D -> Sig -> D -> D -> D -> Sig -> Sig
-wgpluck b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unSig b7
-    where f a1 a2 a3 a4 a5 a6 a7 = opcs "wgpluck" [(Ar,[Ir,Ir,Kr,Ir,Ir,Ir,Ar])] [a1
-                                                                                ,a2
-                                                                                ,a3
-                                                                                ,a4
-                                                                                ,a5
-                                                                                ,a6
-                                                                                ,a7]
+wgpluck b1 b2 b3 b4 b5 b6 b7 =
+  Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> unD b4 <*> unD b5 <*> unD b6 <*> unSig b7
+  where
+    f a1 a2 a3 a4 a5 a6 a7 = opcs "wgpluck" [(Ar,[Ir,Ir,Kr,Ir,Ir,Ir,Ar])] [a1,a2,a3,a4,a5,a6,a7]
 
 -- | 
 -- Physical model of the plucked string.
@@ -3931,5 +4429,7 @@ wgpluck b1 b2 b3 b4 b5 b6 b7 = Sig $ f <$> unD b1 <*> unD b2 <*> unSig b3 <*> un
 --
 -- csound doc: <http://csound.com/docs/manual/wgpluck2.html>
 wgpluck2 ::  D -> Sig -> D -> Sig -> Sig -> Sig
-wgpluck2 b1 b2 b3 b4 b5 = Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5
-    where f a1 a2 a3 a4 a5 = opcs "wgpluck2" [(Ar,[Ir,Kr,Ir,Kr,Kr])] [a1,a2,a3,a4,a5]
+wgpluck2 b1 b2 b3 b4 b5 =
+  Sig $ f <$> unD b1 <*> unSig b2 <*> unD b3 <*> unSig b4 <*> unSig b5
+  where
+    f a1 a2 a3 a4 a5 = opcs "wgpluck2" [(Ar,[Ir,Kr,Ir,Kr,Kr])] [a1,a2,a3,a4,a5]

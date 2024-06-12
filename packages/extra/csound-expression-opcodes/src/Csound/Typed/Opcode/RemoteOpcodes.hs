@@ -5,6 +5,7 @@ module Csound.Typed.Opcode.RemoteOpcodes (
     insglobal, insremot, midglobal, midremot) where
 
 import Control.Monad.Trans.Class
+import Control.Monad
 import Csound.Dynamic
 import Csound.Typed
 
@@ -33,8 +34,10 @@ import Csound.Typed
 --
 -- csound doc: <http://csound.com/docs/manual/insglobal.html>
 insglobal ::  D -> D -> SE ()
-insglobal b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "insglobal" [(Xr,(repeat Ir))] [a1,a2]
+insglobal b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "insglobal" [(Xr,(repeat Ir))] [a1,a2]
 
 -- | 
 -- An opcode which can be used to implement a remote
@@ -57,8 +60,10 @@ insglobal b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/insremot.html>
 insremot ::  D -> D -> D -> SE ()
-insremot b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "insremot" [(Xr,(repeat Ir))] [a1,a2,a3]
+insremot b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "insremot" [(Xr,(repeat Ir))] [a1,a2,a3]
 
 -- | 
 -- An opcode which can be used to implement a remote midi orchestra. This opcode will broadcast the midi events to all the machines involved in the remote concert.
@@ -69,8 +74,10 @@ insremot b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/midglobal.html>
 midglobal ::  D -> D -> SE ()
-midglobal b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
-    where f a1 a2 = opcs "midglobal" [(Xr,(repeat Ir))] [a1,a2]
+midglobal b1 b2 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2
+  where
+    f a1 a2 = opcsDep_ "midglobal" [(Xr,(repeat Ir))] [a1,a2]
 
 -- | 
 -- An opcode which can be used to implement a remote midi orchestra. This opcode will send midi events from a source machine to one destination.
@@ -81,5 +88,7 @@ midglobal b1 b2 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2
 --
 -- csound doc: <http://csound.com/docs/manual/midremot.html>
 midremot ::  D -> D -> D -> SE ()
-midremot b1 b2 b3 = SE $ (depT_ =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = opcs "midremot" [(Xr,(repeat Ir))] [a1,a2,a3]
+midremot b1 b2 b3 =
+  SE $ join $ f <$> (lift . unD) b1 <*> (lift . unD) b2 <*> (lift . unD) b3
+  where
+    f a1 a2 a3 = opcsDep_ "midremot" [(Xr,(repeat Ir))] [a1,a2,a3]
