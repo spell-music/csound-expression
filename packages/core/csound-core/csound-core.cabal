@@ -50,9 +50,9 @@ Library
     Csound.Core.Types.Tuple
     Csound.Core.Render
     Csound.Core.Render.Options
-    Csound.Core.State
 
   Other-Modules:
+    Csound.Core.State
     Csound.Core.Types.Prim.Bool
     Csound.Core.Types.Prim.InstrId
     Csound.Core.Types.Prim.D
