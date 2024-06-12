@@ -16,11 +16,12 @@ module Csound.Typed.GlobalState.Options (
     idRandHist, idRandPairs, idRandRanges, idPvocex, idTuning, idMultichannel,
     -- *** String identifiers
     idPadsynth, idTanh, idExp, idSone, idFarey, idWave,
-    setDebugTrace,
     -- * Jacko
     Jacko(..), JackoConnect, renderJacko,
     -- * Debug trace
-    csdNeedTrace
+    csdNeedTrace,
+    setDebugTrace,
+    setVerbatimFlags
 ) where
 
 import Control.Applicative
@@ -267,3 +268,5 @@ setDebugTrace =
     Just $ RenderOptions {
       inferenceOptions = def { opcodeInferenceDebug = IsDebug True } } }
 
+setVerbatimFlags :: Text -> Options
+setVerbatimFlags flags = def { csdFlags = def { flagsVerbatim = Just flags } }

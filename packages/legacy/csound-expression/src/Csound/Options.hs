@@ -12,6 +12,7 @@ module Csound.Options(
     setCabbage,
     setJacko,
     setDebugTrace,
+    setVerbatimFlags,
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for
