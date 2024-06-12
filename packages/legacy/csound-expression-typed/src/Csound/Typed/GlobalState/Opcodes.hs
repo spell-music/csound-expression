@@ -53,7 +53,7 @@ data ChnRef = ChnRef
     , chnRefNames   :: [E] }
 
 chnRefFromParg :: Int -> Int -> ChnRef
-chnRefFromParg pargId arity = ChnRef (pn pargId) $ fmap (flip chnName (pn pargId)) [1 .. arity]
+chnRefFromParg pargId arity = ChnRef (pn Ir pargId) $ fmap (flip chnName (pn Ir pargId)) [1 .. arity]
 
 chnRefAlloc :: Monad m => Int -> DepT m ChnRef
 chnRefAlloc arity = do
@@ -89,26 +89,26 @@ masterUpdateChnRetrig ref count = chnsetK (chnRetrigName $ chnRefId ref) count
 
 servantUpdateChnAlive :: Monad m => Int -> DepT m ()
 servantUpdateChnAlive pargId = do
-    let sName = chnAliveName (pn pargId)
+    let sName = chnAliveName (pn Ir pargId)
     kAlive <- chngetK sName
     when1 IfKr (kAlive <* -10) $ do
-        toBlock turnoff
+        turnoff
     chnsetK sName (kAlive - 1)
 
 getRetrigVal :: Int -> E
-getRetrigVal pargId = pn $ pargId + 1
+getRetrigVal pargId = pn Ir $ pargId + 1
 
 servantUpdateChnRetrig :: Monad m => Int -> DepT m ()
 servantUpdateChnRetrig pargId = do
-    let sName = chnRetrigName (pn pargId)
-    let retrigVal = pn $ pargId + 1
+    let sName = chnRetrigName (pn Ir pargId)
+    let retrigVal = pn Ir $ pargId + 1
     kRetrig <- chngetK sName
     when1 IfKr (kRetrig /=* retrigVal) $ do
-        toBlock turnoff
+        turnoff
 
 servantUpdateChnEvtLoop :: Monad m => Int -> DepT m ()
 servantUpdateChnEvtLoop pargId = do
-    let sName = chnEvtLoopName (pn pargId)
+    let sName = chnEvtLoopName (pn Ir pargId)
     kEvtLoop <- chngetK sName
     chnsetK sName (ifExp IfKr (kEvtLoop ==* 0) 1 0)
     turnoff
@@ -134,8 +134,8 @@ sprintf a as = opcs "sprintf" [(Sr, Sr:repeat Ir)] (a:as)
 chnmix :: Monad m => E -> E -> DepT m ()
 chnmix asig name = do
     var <- newLocalVar Ar (return 0)
-    writeVar var asig
-    val <- readVar var
+    writeVar IfKr var asig
+    val <- readVar IfKr var
     depT_ $ opcsNoInlineArgs "chnmix" [(Xr, [Ar, Sr])] [val, name]
 
 chnset :: Monad m => E -> E -> DepT m ()
@@ -235,7 +235,7 @@ autoOff :: Monad m => E -> [E] -> DepT m [E]
 autoOff dt a = do
     ihold
     when1 IfKr (trig a) $
-        toBlock turnoff
+        turnoff
     return a
     where
         trig = (<* eps) . (env + ) . setRate Kr . flip follow dt . l2
@@ -329,7 +329,7 @@ oscInit :: E -> E
 oscInit portExpr = opcs "OSCinit" [(Ir, [Ir])] [portExpr]
 
 oscListen :: Monad m => E -> E -> E -> [Var] -> DepT m E
-oscListen oscHandle addr oscType vars = opcsDep "OSClisten" [(Kr, Ir:Ir:Ir:repeat Xr)] (oscHandle : addr : oscType : fmap inlineVar vars)
+oscListen oscHandle addr oscType vars = opcsDep "OSClisten" [(Kr, Ir:Ir:Ir:repeat Xr)] (oscHandle : addr : oscType : fmap (inlineVar IfKr) vars)
 
 oscSend :: Monad m => [E] -> DepT m ()
 oscSend args = depT_ $ opcs "OSCsend" [(Xr, Kr:Ir:Ir:Ir:Ir:repeat Xr)] args

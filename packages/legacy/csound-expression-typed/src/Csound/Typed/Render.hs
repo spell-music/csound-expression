@@ -22,6 +22,7 @@ import Control.Monad.Trans.Class
 import System.Directory
 import System.FilePath
 import Text.Read (readMaybe)
+import Data.Text (Text)
 
 import Text.PrettyPrint.Leijen.Text (displayTStrict, renderPretty)
 
@@ -54,10 +55,10 @@ handleMissingKeyPannel = do
         else do
             return ()
 
-renderOut_ :: SE () -> IO String
+renderOut_ :: SE () -> IO Text
 renderOut_ = renderOutBy_ def
 
-renderOutBy_ :: Options -> SE () -> IO String
+renderOutBy_ :: Options -> SE () -> IO Text
 renderOutBy_ options sigs = do
   finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
   evalGE finalOptions $ fmap (renderCsd renderOpts) $ toCsd Nothing finalOptions (fmap (const unit) sigs)
@@ -65,20 +66,20 @@ renderOutBy_ options sigs = do
     renderOpts = fromMaybe def $ csdRender options
 
 
-renderOut :: Sigs a => SE a -> IO String
+renderOut :: Sigs a => SE a -> IO Text
 renderOut = renderOutBy def
 
-renderOutBy :: Sigs a => Options -> SE a -> IO String
+renderOutBy :: Sigs a => Options -> SE a -> IO Text
 renderOutBy options sigs = do
   finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
   evalGE finalOptions $ fmap (renderCsd renderOpts) $ toCsd Nothing finalOptions sigs
   where
     renderOpts = fromMaybe def $ csdRender options
 
-renderEff :: (Sigs a, Sigs b) => (a -> SE b) -> IO String
+renderEff :: (Sigs a, Sigs b) => (a -> SE b) -> IO Text
 renderEff = renderEffBy def
 
-renderEffBy :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO String
+renderEffBy :: (Sigs a, Sigs b) => Options -> (a -> SE b) -> IO Text
 renderEffBy options eff = do
   finalOptions <- fmap (maybe options (options `mappend` )) getUserOptions
   evalGE finalOptions $ fmap (renderCsd renderOpts) $ toCsd (Just (arityIns $ funArity eff)) finalOptions (eff =<< getIns)

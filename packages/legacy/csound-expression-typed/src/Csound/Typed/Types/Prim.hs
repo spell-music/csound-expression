@@ -324,27 +324,27 @@ instance IsString Str where
 
 -- | Querries a total duration of the note. It's equivallent to Csound's @p3@ field.
 idur :: D
-idur = fromE $ pn 3
+idur = fromE $ pn Ir 3
 
 getSampleRate :: D
-getSampleRate = fromE $ readOnlyVar (VarVerbatim Ir "sr")
+getSampleRate = fromE $ readOnlyVar IfIr (VarVerbatim Ir "sr")
 
 getControlRate :: D
-getControlRate = fromE $ readOnlyVar (VarVerbatim Ir "kr")
+getControlRate = fromE $ readOnlyVar IfIr (VarVerbatim Ir "kr")
 
 getBlockSize :: D
-getBlockSize = fromE $ readOnlyVar (VarVerbatim Ir "ksmps")
+getBlockSize = fromE $ readOnlyVar IfIr (VarVerbatim Ir "ksmps")
 
 getZeroDbfs :: D
-getZeroDbfs = fromE $ readOnlyVar (VarVerbatim Ir "0dbfs")
+getZeroDbfs = fromE $ readOnlyVar IfIr (VarVerbatim Ir "0dbfs")
 
 -- | Gets the global BPM value.
 getBpm :: Sig
-getBpm = fromE $ readOnlyVar bpmVar
+getBpm = fromE $ readOnlyVar IfKr bpmVar
 
 -- | Sets the global BPM value.
 setBpm :: Sig -> SE ()
-setBpm x = fromDep_ $ hideGEinDep $ fmap (writeVar bpmVar) (toGE x)
+setBpm x = fromDep_ $ hideGEinDep $ fmap (writeVar IfKr bpmVar) (toGE x)
 
 -------------------------------------------------------------------------------
 -- converters
@@ -661,11 +661,11 @@ instance OrdB D   where { (<*)  = op2 (<) (<*) ;    (>*)  = op2 (>) (>*);     (<
 
 -- | Constructs generic if-block statement with single then case
 -- We can choose constructors for: if, while, until statements
-ifBlockBy :: Val cond => (E -> DepT GE (CodeBlock E) -> DepT GE ()) -> cond -> SE () -> SE ()
+ifBlockBy :: Val cond => (E -> DepT GE () -> DepT GE ()) -> cond -> SE () -> SE ()
 ifBlockBy cons p body =
   fromDep_ $ do
     pE <- lift $ toGE p
-    cons pE (toBlock $ unSE body)
+    cons pE (unSE body)
 
 -- | Invokes the given procedure if the boolean signal is true.
 when1 :: BoolSig -> SE () -> SE ()
@@ -680,8 +680,8 @@ whens bodies el = case bodies of
     []   -> el
     _    -> fromDep_ $ join $ lift $ do
         checksE <- mapM (toGE . fst) bodies
-        let bodiesE = fmap (toBlock . unSE . snd) bodies
-            elE = toBlock $ unSE el
+        let bodiesE = fmap (unSE . snd) bodies
+            elE = unSE el
         pure $ D.whens IfKr (zip checksE bodiesE) elE
 
 -- | Invokes the given procedure if the boolean signal is true.
@@ -697,8 +697,8 @@ whenDs bodies el = case bodies of
     []   -> el
     _    -> fromDep_ $ join $ lift $ do
         checksE <- mapM (toGE . fst) bodies
-        let bodiesE = fmap (toBlock . unSE . snd) bodies
-            elE = toBlock $ unSE el
+        let bodiesE = fmap (unSE . snd) bodies
+            elE = unSE el
         pure $ D.whens IfIr (zip checksE bodiesE) elE
 
 untilDo :: BoolSig -> SE () -> SE ()

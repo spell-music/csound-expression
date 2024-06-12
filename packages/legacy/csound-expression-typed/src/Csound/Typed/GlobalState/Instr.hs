@@ -88,10 +88,10 @@ saveMidiInstr :: C.MidiType -> C.Channel -> Arity -> InsExp -> GE [E]
 saveMidiInstr midiType channel arity instr = do
     setDurationToInfinite
     vars <- onGlobals $ sequence $ replicate (arityOuts arity) (C.newClearableGlobalVar Ar 0)
-    let expr = (SE . zipWithM_ (appendVarBy (+)) vars) =<< instr
+    let expr = (SE . zipWithM_ (appendVarBy (+) IfKr) vars) =<< instr
     instrId <- saveInstr expr
     saveMidi $ MidiAssign midiType channel instrId
-    return $ fmap readOnlyVar vars
+    return $ fmap (readOnlyVar IfKr) vars
 
 saveMidiMap :: GE ()
 saveMidiMap = do
@@ -106,8 +106,8 @@ saveMidiInstr_ midiType channel instr = do
 saveIns0 :: Int -> [Rate] -> SE [E] -> GE [E]
 saveIns0 arity rates as = do
     vars <- onGlobals $ zipWithM C.newPersistentGlobalVar rates (replicate arity 0)
-    saveUserInstr0 $ unSE $ (SE . zipWithM_ writeVar vars) =<< as
-    return $ fmap readOnlyVar vars
+    saveUserInstr0 $ unSE $ (SE . zipWithM_ (writeVar IfIr) vars) =<< as
+    return $ fmap (readOnlyVar IfIr) vars
 
 terminatorInstr :: GE (SE ())
 terminatorInstr = do

@@ -15,8 +15,8 @@ import qualified Csound.Dynamic as D
 -------------------------------------------------------------------------
 -- Functional style traversals
 
-whileRefBegin :: SigOrD a => Ref a -> SE ()
-whileRefBegin (Ref vars) = fromDep_ $ D.whileRef $ head vars
+whileRefBegin :: SigOrD a => Ref a -> SE () -> SE ()
+whileRefBegin (Ref vars) = undefined -- TODO -- fromDep_ $ D.whileRef $ head vars
 
 -- | Traverses all elements of the array array and applies a procedure to each element.
 -- The procedure takes in a pair of index and the current value at the given index.
@@ -47,15 +47,12 @@ foreachArrBy getArrayLength array body = do
                 val <- readArr array ix
                 body (ix, val)
             (n, var, condVar) : rest -> do
-                whileRefBegin condVar
+                whileRefBegin condVar $ do
+                  recWhile vars rest
 
-                recWhile vars rest
-
-                modifyRef var (+ 1)
-                ix <- readRef var
-                writeRef condVar (ifB (ix `lessThan` getArrayLength n array) 1 0)
-
-                fromDep_ D.whileEnd
+                  modifyRef var (+ 1)
+                  ix <- readRef var
+                  writeRef condVar (ifB (ix `lessThan` getArrayLength n array) 1 0)
 
         arity = tupleArity (Proxy :: Proxy ix)
 
@@ -66,7 +63,7 @@ foreachArrBy getArrayLength array body = do
 forRowArr :: (Tuple a) => Sig -> Arr Sig2 a -> ((Sig, a) -> SE ()) -> SE ()
 forRowArr rowId array phi = whileRef 0 condition body
     where
-        condition ix = return $ ix `lessThan` lenarray array `withD` 2
+        condition ix = ix `lessThan` lenarray array `withD` 2
 
         body ix = do
             val <- readArr array (rowId, ix)
@@ -78,7 +75,7 @@ forRowArr rowId array phi = whileRef 0 condition body
 forColumnArr :: (Tuple a) => Sig -> Arr Sig2 a -> ((Sig, a) -> SE ()) -> SE ()
 forColumnArr colId array phi = whileRef 0 condition body
     where
-        condition ix = return $ ix `lessThan` lenarray array `withD` 1
+        condition ix = ix `lessThan` lenarray array `withD` 1
 
         body ix = do
             val <- readArr array (ix, colId)
@@ -89,7 +86,7 @@ forColumnArr colId array phi = whileRef 0 condition body
 forRowArrD :: Tuple a => D -> Arr D2 a -> ((D, a) -> SE ()) -> SE ()
 forRowArrD rowId array phi = whileRefD 0 condition body
     where
-        condition ix = return $ ix `lessThan` lenarray array `withD` 2
+        condition ix = ix `lessThan` lenarray array `withD` 2
 
         body ix = do
             val <- readArr array (rowId, ix)
@@ -100,7 +97,7 @@ forRowArrD rowId array phi = whileRefD 0 condition body
 forColumnArrD :: Tuple a => D -> Arr D2 a -> ((D, a) -> SE ()) -> SE ()
 forColumnArrD colId array phi = whileRefD 0 condition body
     where
-        condition ix = return $ ix `lessThan` lenarray array `withD` 1
+        condition ix = ix `lessThan` lenarray array `withD` 1
 
         body ix = do
             val <- readArr array (ix, colId)

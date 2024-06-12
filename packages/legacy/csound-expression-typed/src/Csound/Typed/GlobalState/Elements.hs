@@ -49,8 +49,6 @@ module Csound.Typed.GlobalState.Elements(
 ) where
 
 import Data.List
-import Data.ByteString (ByteString)
-
 import Control.Monad.Trans.State.Strict
 import Control.Monad(zipWithM_)
 import Data.Default
@@ -186,7 +184,7 @@ newSf :: SfSpec -> State SfMap Int
 newSf = saveId
 
 sfVar :: Int -> E
-sfVar n = readOnlyVar (VarVerbatim Ir $ sfEngineName n)
+sfVar n = readOnlyVar IfIr (VarVerbatim Ir $ sfEngineName n)
 
 sfEngineName :: Int -> Text
 sfEngineName n = "gi_Sf_engine_" <> Text.pack (show n)
@@ -221,7 +219,7 @@ data BandLimitedId = SimpleBandLimitedWave Int | UserBandLimitedWave Int
 bandLimitedIdToExpr :: BandLimitedId -> E
 bandLimitedIdToExpr x = case x of
     SimpleBandLimitedWave simpleId -> int simpleId
-    UserBandLimitedWave   userId   -> noRate $ ReadVar $ bandLimitedVar userId
+    UserBandLimitedWave   userId   -> noRate $ ReadVar IfIr $ bandLimitedVar userId
 
 bandLimitedVar :: Show a => a -> Var
 bandLimitedVar userId = Var GlobalVar Ir ("BandLim" <> Text.pack (show userId))
@@ -264,7 +262,7 @@ renderBandLimited genMap blMap =
         isEmptyBlMap m = (M.null $ simpleBandLimitedMap m) && (M.null $ idMapContent $ vcoInitMap m)
 
         render lastGenId gens vcos = do
-            writeVar freeVcoVar $ int (lastGenId + length gens + 100)
+            writeVar IfIr freeVcoVar $ int (lastGenId + length gens + 100)
             mapM_ (renderGen lastGenId) gens
             mapM_ renderVco vcos
 
@@ -277,20 +275,20 @@ renderBandLimited genMap blMap =
         freeVcoVar = Var GlobalVar Ir "free_vco"
         ftVar n = Var GlobalVar Ir $ "vco_table_" <> Text.pack (show n)
 
-        renderFtgen lastGenId (g, n) = writeVar (ftVar n) $ ftgen (int $ lastGenId + n) g
+        renderFtgen lastGenId (g, n) = writeVar IfIr (ftVar n) $ ftgen (int $ lastGenId + n) g
 
         renderVcoGen ftId  = do
-            ft   <- readVar (ftVar ftId)
-            free <- readVar freeVcoVar
-            writeVar freeVcoVar $ vco2init [-ft, free, 1.05, -1, -1, ft]
+            ft   <- readVar IfIr (ftVar ftId)
+            free <- readVar IfIr freeVcoVar
+            writeVar IfIr freeVcoVar $ vco2init [-ft, free, 1.05, -1, -1, ft]
 
-        renderVcoVarAssignment n = writeVar (bandLimitedVar n) =<< (fmap negate $ readVar (ftVar n))
+        renderVcoVarAssignment n = writeVar IfIr (bandLimitedVar n) =<< (fmap negate $ readVar IfIr (ftVar n))
 
         renderVco :: Monad m => (BandLimited, BandLimitedId) -> DepT m ()
         renderVco (_bandLimited, blId) = case blId of
             SimpleBandLimitedWave waveId -> do
-                free <- readVar freeVcoVar
-                writeVar freeVcoVar $ vco2init [int waveId, free]
+                free <- readVar IfIr freeVcoVar
+                writeVar IfIr freeVcoVar $ vco2init [int waveId, free]
             UserBandLimitedWave   _      -> return ()
 
 readBandLimited :: Maybe E -> BandLimitedId -> E -> E
@@ -385,7 +383,7 @@ renderGlobals a = (initAll, clear)
             AllocArrVar var sizes    -> initArr var sizes
 
         clearAlloc x = case x of
-            AllocVar _  var initProc -> writeVar var initProc
+            AllocVar _  var initProc -> writeVar IfKr var initProc
             AllocArrVar _ _          -> return ()
 
         isClearable x = case x of
@@ -396,7 +394,7 @@ renderGlobals a = (initAll, clear)
 -- instrs
 
 data Instrs = Instrs
-    { instrsCache   :: M.Map ByteString InstrId
+    { instrsCache   :: M.Map ExpHash InstrId
     , instrsNewId   :: Int
     , instrsContent :: [(InstrId, InstrBody)]
     }
@@ -439,15 +437,15 @@ saveNamedInstr name body = state $ \(NamedInstrs xs) -> ((), NamedInstrs $ (name
 getIn :: Monad m => Int -> DepT m [E]
 getIn arity
     | arity == 0    = return []
-    | otherwise     = ($ arity ) $ mdepT $ mopcs "inch" (replicate arity Ar, replicate arity Kr) (fmap int [1 .. arity])
+    | otherwise     = mopcsDep arity "inch" (replicate arity Ar, replicate arity Kr) (fmap int [1 .. arity])
 
 sendOut :: Monad m => Int -> [E] -> DepT m ()
 sendOut arity sigs
     | arity == 0    = return ()
     | otherwise     = do
         vars <- newLocalVars (replicate arity Ar) (return $ replicate arity 0)
-        zipWithM_ writeVar vars sigs
-        vals <- mapM readVar vars
+        zipWithM_ (writeVar IfKr) vars sigs
+        vals <- mapM (readVar IfKr) vars
         depT_ $ opcsNoInlineArgs name [(Xr, replicate arity Ar)] vals
     where
         name
@@ -463,7 +461,7 @@ sendOut arity sigs
 sendGlobal :: Monad m => Int -> [E] -> State Globals ([E], DepT m ())
 sendGlobal arityOuts sigs = do
     vars <- mapM (uncurry newClearableGlobalVar) $ replicate arityOuts (Ar, 0)
-    return (fmap readOnlyVar vars, zipWithM_ (appendVarBy (+)) vars sigs)
+    return (fmap (readOnlyVar IfKr) vars, zipWithM_ (appendVarBy (+) IfKr) vars sigs)
 
 sendChn :: Monad m => Int -> Int -> [E] -> DepT m ()
 sendChn arityIns arityOuts sigs = writeChn (chnRefFromParg (chnPargId arityIns) arityOuts) sigs

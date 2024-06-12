@@ -57,9 +57,9 @@ trigByNameMidi_ name instr = do
             args <- fromTuple (pch, vol, other)
             return $ do
                     D.when1 D.IfIr (noteFlagExpr ==* 1) $ do
-                        D.toBlock $ eventi (Event instrIdExpr 0 (-1) args)
+                        eventi (Event instrIdExpr 0 (-1) args)
                     D.when1 D.IfIr (noteFlagExpr ==* 0) $ do
-                        D.toBlock $ eventi (Event (negate instrIdExpr) 0 0 args)
+                        eventi (Event (negate instrIdExpr) 0 0 args)
                     turnoff
 
 -- | Creates an instrument that can be triggered by name with Csound API.

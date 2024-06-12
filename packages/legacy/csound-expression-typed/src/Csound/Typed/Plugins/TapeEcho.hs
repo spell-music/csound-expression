@@ -24,7 +24,7 @@ import qualified Csound.Typed.GlobalState.Elements as E(tapeEchoPlugin)
 --     the higher the worser the quality of the tape.
 -- opcode tapeRead, a, akk
 tapeRead :: Sig -> Sig -> Sig -> SE Sig
-tapeRead ain kdel kRandomSpread = fmap (Sig . return) $ SE $ (depT =<<) $ lift $ do
+tapeRead ain kdel kRandomSpread = fmap (Sig . return) $ SE $ lift $ do
   addUdoPlugin E.tapeEchoPlugin
   f <$> toGE ain <*> toGE kdel <*> toGE kRandomSpread
   where f ain' kdel' krand' = opcs "tapeRead" [(Ar, [Ar, Kr, Kr])] [ain', kdel', krand']

@@ -13,7 +13,7 @@ import Data.Proxy
 
 import Control.Monad
 import Control.Monad.Trans.Class
-import Csound.Dynamic hiding (when1, newLocalVars, writeArr, readArr, whileRef)
+import Csound.Dynamic hiding (when1, newLocalVars, writeArr, readArr, toCtrlRate)
 
 import Csound.Typed.Types.Prim
 import Csound.Typed.Types.Tuple
@@ -32,14 +32,14 @@ newtype Ref a = Ref [Var]
 writeRef :: Tuple a => Ref a -> a -> SE ()
 writeRef (Ref vars) a = fromDep_ $ hideGEinDep $ do
     vals <- fromTuple a
-    return $ zipWithM_ writeVar vars vals
+    return $ zipWithM_ (writeVar IfKr) vars vals
 
 --    (zipWithM_ writeVar vars) =<< lift (fromTuple a)
 --writeVar :: Var -> E -> Dep ()
 --[Var] (GE [E])
 
 readRef  :: Tuple a => Ref a -> SE a
-readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM readVar vars
+readRef (Ref vars) = SE $ fmap (toTuple . return) $ mapM (readVar IfKr) vars
 
 -- | Allocates a new local (it is visible within the instrument) mutable value and initializes it with value.
 -- A reference can contain a tuple of variables.
@@ -145,35 +145,36 @@ newGlobalTab size = do
 --
 -- csound doc: <http://www.csounds.com/manual/html/ftgentmp.html>
 ftgentmp ::  D -> D -> D -> D -> D -> [D] -> SE Tab
-ftgentmp b1 b2 b3 b4 b5 b6 = fmap ( Tab . return) $ SE $ (depT =<<) $ lift $ f <$> unD b1 <*> unD b2 <*> unD b3 <*> unD b4 <*> unD b5 <*> mapM unD b6
-    where f a1 a2 a3 a4 a5 a6 = opcs "ftgentmp" [(Ir,(repeat Ir))] ([a1,a2,a3,a4,a5] ++ a6)
+ftgentmp b1 b2 b3 b4 b5 b6 =
+  fmap ( Tab . return) $
+    SE $ join $ f <$> unD' b1 <*> unD' b2 <*> unD' b3 <*> unD' b4 <*> unD' b5 <*> mapM unD' b6
+    where
+      f a1 a2 a3 a4 a5 a6 = opcsDep "ftgentmp" [(Ir,(repeat Ir))] ([a1,a2,a3,a4,a5] ++ a6)
+      unD' = lift . unD
 
 --------------------------------------------------------------------
 
-whileRef :: forall st . Tuple st => st -> (st -> SE BoolSig) -> (st -> SE st) -> SE ()
+whileRef :: forall st . Tuple st => st -> (st -> BoolSig) -> (st -> SE st) -> SE ()
 whileRef initVal c body = do
     refSt   <- newCtrlRef initVal
-    refCond <- newRef =<< condSig =<< readRef refSt
-    whileRefBegin refCond
-    writeRef refSt   =<< body    =<< readRef refSt
-    writeRef refCond =<< condSig =<< readRef refSt
-    fromDep_ whileEnd
-    where
-        condSig :: st -> SE Sig
-        condSig   = fmap (\b -> ifB b 1 0) . c
+    whileRefBy IfKr c refSt $ do
+      writeRef refSt   =<< body    =<< readRef refSt
 
-
-whileRefD :: forall st . Tuple st => st -> (st -> SE BoolD) -> (st -> SE st) -> SE ()
+whileRefD :: forall st . Tuple st => st -> (st -> BoolD) -> (st -> SE st) -> SE ()
 whileRefD initVal c body = do
     refSt   <- newCtrlRef initVal
-    refCond <- newRef =<< condSig =<< readRef refSt
-    whileRefBegin refCond
-    writeRef refSt   =<< body    =<< readRef refSt
-    writeRef refCond =<< condSig =<< readRef refSt
-    fromDep_ whileEnd
-    where
-        condSig :: st -> SE D
-        condSig   = fmap (\b -> ifB b 1 0) . c
+    whileRefBy IfIr c refSt $ do
+      writeRef refSt   =<< body    =<< readRef refSt
 
-whileRefBegin :: SigOrD a => Ref a -> SE ()
-whileRefBegin (Ref vars) = fromDep_ $ D.whileRef $ head vars
+whileRefBy :: (Val bool, Tuple a) => IfRate -> (a -> bool) -> Ref a -> SE () -> SE ()
+whileRefBy ifRate check (Ref vars) = ifBlockBy (D.whileBlock ifRate) (check $ toTuple $ pure $ fmap (D.inlineVar ifRate) vars)
+
+-- | Constructs generic if-block statement with single then case
+-- We can choose constructors for: if, while, until statements
+ifBlockBy :: Val cond => (E -> DepT GE () -> DepT GE ()) -> cond -> SE () -> SE ()
+ifBlockBy cons p body =
+  fromDep_ $ do
+    pE <- lift $ toGE p
+    cons pE (unSE body)
+
+

@@ -6,6 +6,7 @@
         RankNTypes,
         ScopedTypeVariables,
         InstanceSigs,
+        AllowAmbiguousTypes,
         CPP #-}
 module Csound.Typed.Types.Tuple(
     -- ** Tuple
@@ -27,14 +28,13 @@ module Csound.Typed.Types.Tuple(
     ifArg, guardedArg, caseArg,
 
     -- ** Constructors
-    pureTuple, dirtyTuple
+    pureTuple
 ) where
 
 
 import Control.Arrow
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Trans.Class
 import Data.Default
 import Data.Boolean
 import Data.Proxy
@@ -146,7 +146,7 @@ instance (Tuple a, Tuple b, Tuple c, Tuple d, Tuple e, Tuple f, Tuple g, Tuple h
 
 multiOuts :: forall a . Tuple a => E -> a
 multiOuts expr =
-  toTuple $ return $ mo (tupleArity (Proxy :: Proxy a)) expr
+  toTuple $ return $ mo (tupleRates (Proxy :: Proxy a)) expr
 
 ar1 :: Sig -> Sig
 ar2 :: (Sig, Sig) -> (Sig, Sig)
@@ -196,23 +196,41 @@ outArity = const $ tupleArity (Proxy :: Proxy a)
 -- Arguments
 
 class (Tuple a) => Arg a where
+  getArgRates :: [Rate]
 
-instance Arg Unit
-instance Arg D
-instance Arg Str
-instance Arg Tab
-instance Arg TabList
+instance Arg Unit where
+  getArgRates = []
 
-instance (Arg a, Arg b) => Arg (a, b)
-instance (Arg a, Arg b, Arg c) => Arg (a, b, c)
-instance (Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d)
-instance (Arg a, Arg b, Arg c, Arg d, Arg e) => Arg (a, b, c, d, e)
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f)
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e, f, h)
-instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g)
+instance Arg D where
+  getArgRates = [Ir]
 
-arg :: Arg a => Int -> a
-arg n = toTuple $ return $ fmap pn [n ..]
+instance Arg Str where
+  getArgRates = [Sr]
+
+instance Arg Tab where
+  getArgRates = [Ir]
+
+instance Arg TabList where
+  getArgRates = [Ir]
+
+instance (Arg a, Arg b) => Arg (a, b) where
+  getArgRates = getArgRates @a <> getArgRates @b
+
+instance (Arg a, Arg b, Arg c) => Arg (a, b, c) where
+  getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c
+instance (Arg a, Arg b, Arg c, Arg d) => Arg (a, b, c, d) where
+  getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c <> getArgRates @d
+instance (Arg a, Arg b, Arg c, Arg d, Arg e) => Arg (a, b, c, d, e) where
+  getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c <> getArgRates @d <> getArgRates @e
+instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f) where
+  getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c <> getArgRates @d <> getArgRates @e <> getArgRates @f
+instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e, f, h) where
+  getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c <> getArgRates @d <> getArgRates @e <> getArgRates @f <> getArgRates @h
+instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g) where
+  getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c <> getArgRates @d <> getArgRates @e <> getArgRates @f <> getArgRates @h <> getArgRates @g
+
+arg :: forall a . Arg a => Int -> a
+arg n = toTuple $ return $ zipWith pn (getArgRates @a) [n ..]
 
 toArg :: Arg a => a
 toArg = arg 4
@@ -296,10 +314,3 @@ caseArg a bs other = fromBoolArg $ caseB a (fmap (second toBoolArg) bs) (toBoolA
 pureTuple :: forall a . Tuple a => GE (MultiOut [E]) -> a
 pureTuple a =
   toTuple $ fmap ($ tupleArity (Proxy :: Proxy a)) a
-
-
-dirtyTuple :: forall a . Tuple a => GE (MultiOut [E]) -> SE a
-dirtyTuple a =
-  fmap (toTuple . return) $ SE
-    $ mapM depT =<< (lift $ fmap ($ (tupleArity (Proxy :: Proxy a))) a)
-

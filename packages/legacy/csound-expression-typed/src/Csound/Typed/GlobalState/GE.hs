@@ -510,11 +510,11 @@ keyEventInstrBody keyMap = execDepT $ do
     let keys     = flKeyIn
         isChange = changed keys ==* 1
     when1 IfKr isChange $ do
-        toBlock $ whens IfKr (fmap (uncurry $ listenEvt keys) events) (toBlock doNothing)
+        whens IfKr (fmap (uncurry $ listenEvt keys) events) doNothing
     where
         doNothing = return ()
 
-        listenEvt keySig keyCode var = (keySig ==* int keyCode, toBlock $ writeVar var 1)
+        listenEvt keySig keyCode var = (keySig ==* int keyCode, writeVar IfKr var 1)
 
         events = IM.toList keyMap
 
@@ -535,7 +535,7 @@ getKeyEventListener = do
 -- osc port listen
 
 getOscPortHandle :: Int -> GE E
-getOscPortHandle port = onOscPorts (fmap inlineVar $ getOscPortVar port)
+getOscPortHandle port = onOscPorts (fmap (inlineVar IfIr) $ getOscPortVar port)
     where
         onOscPorts = onHistory (\h -> (oscListenPorts h, globals h)) (\(ports, gs) h -> h { oscListenPorts = ports, globals = gs })
 

@@ -365,19 +365,19 @@ button name = setLabelSource name $ source $ do
     instrId <- geToSe $ saveInstr $ instr flag
     geToSe $ (saveAlwaysOnInstr =<< ) $ saveInstr $ instrCh flag flagChanged
     (g, _) <- singleOut Nothing (Button instrId)
-    val <- fmap fromGE $ fromDep $ readVar flagChanged
+    val <- fmap fromGE $ fromDep $ readVar IfKr flagChanged
     return (g, sigToEvt val)
     where
         instr ref = SE $ do
-            val <- readVar ref
+            val <- readVar IfKr ref
             whens IfKr
-                [ (val ==* 0, toBlock $ writeVar ref 1)
-                ] (toBlock $ writeVar ref 0)
+                [ (val ==* 0, writeVar IfKr ref 1)
+                ] (writeVar IfKr ref 0)
             turnoff
 
         instrCh ref refCh = SE $ do
-            val <- readVar ref
-            writeVar refCh (C.changed val)
+            val <- readVar IfKr ref
+            writeVar IfKr refCh (C.changed val)
 
 -- | A FLTK widget opcode that creates a toggle button.
 --
@@ -464,15 +464,15 @@ setSlider name sp v0 = setLabelSnkSource name $ singleInOut setVal' (Just v0) $ 
 -- | The stream of keyboard press/release events.
 keyIn :: KeyEvt -> Evt Unit
 keyIn evt = boolToEvt $ asig ==* 1
-    where asig = Sig $ fmap readOnlyVar $ listenKeyEvt evt
+    where asig = Sig $ fmap (readOnlyVar IfKr) $ listenKeyEvt evt
 
 -- Outputs
 
 readD :: Var -> SE D
-readD v = fmap (D . return) $ SE $ readVar v
+readD v = fmap (D . return) $ SE $ readVar IfIr v
 
 readSig :: Var -> Sig
-readSig v = Sig $ return $ readOnlyVar v
+readSig v = Sig $ return $ readOnlyVar IfKr v
 
 
 refHandle :: GuiHandle -> SE D
