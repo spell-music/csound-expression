@@ -78,6 +78,7 @@ data InferenceResult = InferenceResult
       -- ^ does program has if-statemenrs
       -- we need it for the next optimization stage
   }
+  deriving (Show)
 
 -- option types
 

@@ -1,4 +1,9 @@
 -- | In this module we substitute temporary vars with graph vars
+--
+-- After this stage no TmpVars should left in the DAg.
+-- typical problems: TmpVar is not inlined by some reason in the next expression down the flow.
+--
+-- Assumption: every tmpVar is inlined in the next expression
 module Csound.Dynamic.Tfm.TmpVars
   ( removeTmpVars
   ) where
@@ -112,4 +117,3 @@ lookupRate var =
 
 lookupTmpRate :: TmpVar -> RemoveTmp (Maybe TmpVarRate)
 lookupTmpRate (TmpVar _ _ n) = gets (fst <=< (IntMap.lookup n . stRates))
-

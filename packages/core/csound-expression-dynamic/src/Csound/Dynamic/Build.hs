@@ -56,14 +56,19 @@ oprInfix name signature = Info name signature Infix
 toArgs :: [Rate] -> [E] -> [PrimOr E]
 toArgs = zipWith toPrimOrTfm
 
+toArgsNoInlineConst :: [Rate] -> [E] -> [PrimOr E]
+toArgsNoInlineConst = zipWith toPrimOrTfmNoConst
+
 tfm :: Info -> [E] -> E
 tfm info args = noRate $ Tfm info $ toArgs (getInfoRates info) args
 
 tfmArr :: Monad m => IsArrInit -> Var -> Info -> [E] -> DepT m ()
-tfmArr isArrInit var info args = depT_ $ noRate $ TfmArr isArrInit var info $ toArgs (getInfoRates info) args
+tfmArr isArrInit var info args =
+  depT_ $ noRate $ TfmArr isArrInit var info $ toArgs (getInfoRates info) args
 
 tfmNoInlineArgs :: Info -> [E] -> E
-tfmNoInlineArgs info args = noRate $ Tfm info $ fmap (PrimOr . Right) args
+tfmNoInlineArgs info args =
+  noRate $ Tfm info $ toArgsNoInlineConst (getInfoRates info) args
 
 inlineVar :: IfRate -> Var -> E
 inlineVar ifRate var = Fix $ RatedExp h Nothing Nothing $ ReadVar ifRate var

@@ -11,6 +11,7 @@ module Csound.Options(
     setMessageLevel, noMessages, setTrace,
     setCabbage,
     setJacko,
+    setDebugTrace,
 
     -- * Flags
     -- | Csound's command line flags. See original documentation for

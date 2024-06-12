@@ -11,7 +11,7 @@ module Csound.Dynamic.Types.Exp(
     E, RatedExp(..), isEmptyExp,
     ratedExp, noRate, withRate, setRate, toCtrlRate, toInitRate,
     toArrRate, removeArrRate,
-    Exp, toPrimOr, toPrimOrTfm, PrimOr(..), MainExp(..), Name,
+    Exp, toPrimOr, toPrimOrTfm, toPrimOrTfmNoConst, PrimOr(..), MainExp(..), Name,
     InstrId(..), intInstrId, ratioInstrId, stringInstrId, instrIdRate,
     VarType(..), Var(..), Info(..), OpcFixity(..), Rate(..),
     CodeBlock (..),
@@ -184,6 +184,19 @@ toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
 toPrimOrTfm :: Rate -> E -> PrimOr E
 toPrimOrTfm r a = PrimOr $ case ratedExpExp $ unFix a of
     ExpPrim (PString _) -> Right a
+    ExpPrim p | (r == Ir || r == Sr) -> Left p
+    ExpPrim (PrimTmpVar tmp) -> Left (PrimTmpVar tmp)
+    ReadVar _ v | noDeps -> Left (PrimVar (varRate v) v)
+    _         -> Right a
+    where
+      noDeps = isNothing $ ratedExpDepends $ unFix a
+
+-- | Constructs PrimOr values from the expressions. It does inlining in
+-- case of primitive values.
+toPrimOrTfmNoConst :: Rate -> E -> PrimOr E
+toPrimOrTfmNoConst r a = PrimOr $ case ratedExpExp $ unFix a of
+    ExpPrim (PString _) -> Right a
+    ExpPrim (PrimDouble _) -> Right a
     ExpPrim p | (r == Ir || r == Sr) -> Left p
     ExpPrim (PrimTmpVar tmp) -> Left (PrimTmpVar tmp)
     ReadVar _ v | noDeps -> Left (PrimVar (varRate v) v)

@@ -16,6 +16,7 @@ module Csound.Typed.GlobalState.Options (
     idRandHist, idRandPairs, idRandRanges, idPvocex, idTuning, idMultichannel,
     -- *** String identifiers
     idPadsynth, idTanh, idExp, idSone, idFarey, idWave,
+    setDebugTrace,
     -- * Jacko
     Jacko(..), JackoConnect, renderJacko,
     -- * Debug trace
@@ -32,6 +33,7 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 
 import Csound.Dynamic hiding (csdFlags)
+import Csound.Dynamic.Debug
 
 -- | Csound options. The default values are
 --
@@ -258,3 +260,10 @@ renderJacko spec = Text.unlines $ filter ( /= "")
 
 csdNeedTrace :: Options -> Bool
 csdNeedTrace opt = fromMaybe False $ csdTrace opt
+
+setDebugTrace :: Options
+setDebugTrace =
+  def { csdRender =
+    Just $ RenderOptions {
+      inferenceOptions = def { opcodeInferenceDebug = IsDebug True } } }
+

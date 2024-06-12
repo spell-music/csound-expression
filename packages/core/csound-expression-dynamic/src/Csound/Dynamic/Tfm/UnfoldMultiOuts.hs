@@ -12,7 +12,6 @@ import Data.Either (partitionEithers)
 import Csound.Dynamic.Tfm.InferTypes(Var(..), Stmt(..), InferenceResult(..))
 import Csound.Dynamic.Types.Exp hiding (Var (..))
 import Csound.Dynamic.Build(getRates, isMultiOutSignature)
-import Debug.Trace
 
 type ChildrenMap = IM.IntMap [Port]
 
@@ -49,7 +48,7 @@ unfoldMultiOuts InferenceResult{..} = runState st programLastFreshId
 unfoldStmt :: ChildrenMap -> SingleStmt -> State Int MultiStmt
 unfoldStmt childrenMap (Stmt lhs rhs) = case getParentTypes rhs of
     Nothing    -> return ([lhs], rhs)
-    Just types -> traceShow (lhs, rhs, childrenMap) $ fmap (,rhs) $ formLhs (lookupChildren childrenMap lhs) types
+    Just types -> fmap (,rhs) $ formLhs (lookupChildren childrenMap lhs) types
 
 formLhs :: [Port] -> [Rate] -> State Int [Var]
 formLhs ports types = fmap (zipWith Var types) (getPorts ports)
@@ -85,7 +84,7 @@ getParentTypes :: RatedExp Var -> Maybe [Rate]
 getParentTypes x =
   case ratedExpExp x of
     Tfm i _ -> fromInfo i
-    ExpPrim (PrimTmpVar v) -> (\rates -> traceShow rates rates) $ fromInfo =<< tmpVarInfo v
+    ExpPrim (PrimTmpVar v) -> fromInfo =<< tmpVarInfo v
     _ -> Nothing
   where
   fromInfo i =
