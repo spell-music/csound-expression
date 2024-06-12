@@ -1,4 +1,4 @@
-{-# Language ScopedTypeVariables, InstanceSigs, FlexibleInstances, UndecidableInstances, CPP #-}
+{-# Language ScopedTypeVariables, InstanceSigs, FlexibleInstances, UndecidableInstances, NumericUnderscores, CPP #-}
 -- | Rendering of Csound files and playing the music in real time.
 --
 -- How are we going to get the sound out of Haskell code?
@@ -12,7 +12,7 @@
 -- > csound -o music.wav music.csd
 --
 -- Or we can play it in real time with -odac flag. It sends the sound directly to
--- soundcard. It's usefull when we are using midi or tweek the parameters in real time
+-- soundcard. It's useful when we are using midi or tweek the parameters in real time
 -- with sliders or knobs.
 --
 -- > csound -odac music.csd
@@ -70,9 +70,9 @@ module Csound.IO (
 
 --import Control.Concurrent
 import Control.Monad
-
+import Control.Concurrent
 import Data.Text qualified as Text
-import System.Process
+import System.Process (callProcess, ProcessHandle, spawnProcess, terminateProcess, waitForProcess)
 import System.Directory
 import System.FilePath
 import qualified Control.Exception as E
@@ -192,12 +192,12 @@ writeSndBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
 writeSndBy opt file a = do
     fileCsd <- getTmpFile
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt (postSetup opt) $ unwords ["csound -o", file, fileCsd, logTrace opt]
+    runWithUserInterrupt (postSetup opt) "csound" $ ["-o", file, fileCsd] ++ logTrace opt
 
-logTrace :: Options -> String
+logTrace :: Options -> [String]
 logTrace opt
-  | csdNeedTrace opt = ""
-  | otherwise        = "--logfile=null"
+  | csdNeedTrace opt = []
+  | otherwise        = ["--logfile=null"]
 
 -- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
 --
@@ -213,7 +213,7 @@ playCsd = playCsdBy def
 playCsdBy :: (RenderCsd a) => Options -> (String -> IO ()) -> String -> a -> IO ()
 playCsdBy opt player file a = do
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt (postSetup opt) $ unwords ["csound -o", fileWav, fileCsd, logTrace opt]
+    runWithUserInterrupt (postSetup opt) "csound" $ ["-o", fileWav, fileCsd] ++ logTrace opt
     player fileWav
     return ()
     where fileCsd = file ++ ".csd"
@@ -221,8 +221,9 @@ playCsdBy opt player file a = do
 
 simplePlayCsdBy :: (RenderCsd a) => Options -> String -> String -> a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
-    where phi file = do
-            runWithUserInterrupt (pure ()) $ unwords [player, file]
+    where
+      phi file = do
+        runWithUserInterrupt (pure ()) player [file]
 
 -- | Renders csound code to file @tmp.csd@ with flags set to @-odac@, @-iadc@ and @-Ma@
 -- (sound output goes to soundcard in real time).
@@ -234,7 +235,8 @@ dacBy :: forall a. (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
     fileCsd <- getTmpFile
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt (postSetup opt') $ unwords ["csound", fileCsd, logTrace opt']
+    runWithUserInterrupt (postSetup opt') "csound" $ [fileCsd] ++ logTrace opt'
+
     where
       opt = mconcat [opt', withDac, withAdc]
 
@@ -269,22 +271,20 @@ csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
     fileCsd <- getTmpFile
     writeCsdBy (setSilent `mappend` options) fileCsd a
-    runWithUserInterrupt (postSetup options) $ unwords ["csound", fileCsd, logTrace options]
+    runWithUserInterrupt (postSetup options) "csound" $ [fileCsd] ++ logTrace options
 
 postSetup :: Options -> IO ()
 postSetup opt = jackConnect opt
 
 jackConnect :: Options -> IO ()
-jackConnect opt
-  | Just conns <- csdJackConnect opt = case conns of
-                                         [] -> pure ()
-                                         _  -> void $ runCommand $ Text.unpack $ jackCmd conns
-  | otherwise                        = pure ()
-  where
-    addSleep = ("sleep 0.1; " `mappend` )
-
-    jackCmd = addSleep . Text.intercalate ";" . fmap jackConn
-    jackConn (port1, port2) = Text.unwords ["jack_connect", port1, port2]
+jackConnect opt =
+    case csdJackConnect opt of
+       Just [] -> pure ()
+       Just conns -> void $ forkIO $ do
+          threadDelay 100_000 -- == sleep 0.1
+          forM_ conns $ \(port1, port2) -> do
+             callProcess "jack_connect" $ map Text.unpack [port1, port2]
+       Nothing -> pure ()
 
 hasJackConnections :: Options -> Bool
 hasJackConnections opt
@@ -313,9 +313,10 @@ totemBy opt = simplePlayCsdBy opt "totem" "tmp"
 ----------------------------------------------------------
 -- handle user interrupts
 
-runWithUserInterrupt :: IO () -> String -> IO ()
-runWithUserInterrupt setup cmd = do
-    pid <- runCommand cmd
+
+runWithUserInterrupt :: IO () -> String -> [String] -> IO ()
+runWithUserInterrupt setup cmd args = do
+    pid <- spawnProcess cmd args
     setup
     E.catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
     where
@@ -327,17 +328,17 @@ runWithUserInterrupt setup cmd = do
 ----------------------------------------------------------
 
 -- | Runs the csound files with cabbage engine.
--- It invokes the Cabbage command line utility and setts all default cabbage flags.
+-- It invokes the Cabbage command line utility and sets all default cabbage flags.
 runCabbage :: (RenderCsd a) => a -> IO ()
 runCabbage = runCabbageBy def
 
 -- | Runs the csound files with cabbage engine with user defined options.
--- It invokes the Cabbage command line utility and setts all default cabbage flags.
+-- It invokes the Cabbage command line utility and sets all default cabbage flags.
 runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
     fileCsd <- getTmpFile
     writeCsdBy opt fileCsd a
-    runWithUserInterrupt (pure ()) $ unwords ["Cabbage", fileCsd]
+    runWithUserInterrupt (pure ()) "Cabbage" [fileCsd]
     where opt = opt' `mappend` setCabbage
 
 ------------------------------
