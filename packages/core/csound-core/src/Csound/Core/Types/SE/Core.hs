@@ -133,7 +133,7 @@ readIns = SE $ toTuple . pure <$> getIn (tupleArity @a)
 readOnlyVar :: forall a . Val a => a -> a
 readOnlyVar expr = fromE $ do
   e <- toE expr
-  State.getReadOnlyVar IfIr (Dynamic.toInitRate $ valRate @a) e
+  State.getReadOnlyVar (Dynamic.toInitRate $ valRate @a) e
 
 ------------------------------------------------------------------------------------
 -- use csound opcodes

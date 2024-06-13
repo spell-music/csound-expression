@@ -5,8 +5,8 @@
 # stack sdist --tar-dir dist --ignore-check
 
 resolver:
-  lts-22.11 # ghc 9.6.4
-  # nightly-2024-02-18 # ghc 9.8
+  nightly-2024-06-13 # ghc 9.8
+  # lts-22.11 # ghc 9.6.4
 
 allow-newer: true
 
@@ -22,9 +22,7 @@ packages:
   - packages/batteries/csound-catalog
 
 extra-deps:
-  - data-fix-0.3.2@sha256:bdea17f6b17c1d327f53ae6806e1bc3ca7813b46742a93c6088c72837c8ae77c,1706
   - data-fix-cse-0.0.3@sha256:c29b23ed2d321e11314599d7a9b8a9d67d5f5dc1206d5665b3408a7d826a8bdc,1000
   - temporal-media-0.6.3@sha256:7a27d711a786c3dc9163433627e51efcc4b3fce3a947b71c29f3e388f37cae59,857
   - wl-pprint-1.2.1@sha256:aea676cff4a062d7d912149d270e33f5bb0c01b68a9db46ff13b438141ff4b7c,734
   - sharc-timbre-0.2@sha256:b6bc95680069e6962d683d1cc214045c5eea6277e7383cb99656c85bdcef822f,2725
-

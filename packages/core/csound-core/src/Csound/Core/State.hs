@@ -203,10 +203,10 @@ globalConstants opt = do
 
 -----------------------------------------------------------------------------
 
-getReadOnlyVar :: IfRate -> Rate -> E -> Run E
-getReadOnlyVar ifRate rate expr = Run $ do
+getReadOnlyVar :: Rate -> E -> Run E
+getReadOnlyVar rate expr = Run $ do
   ReadInit initMap <- gets (.readInit)
-  readOnlyVar ifRate <$> case HashMap.lookup hash initMap of
+  readOnlyVar IfIr <$> case HashMap.lookup hash initMap of
     Just var -> pure var
     Nothing  -> do
       var <- unRun $ initGlobalVar rate expr
