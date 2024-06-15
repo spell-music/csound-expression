@@ -8,6 +8,7 @@ module Csound.Core.Types.SE.Ref
   , newLocalRef
   , newLocalCtrlRef
   , newLocalInitRef
+  , sensorsSE
   ) where
 
 import Control.Monad
@@ -105,3 +106,10 @@ toInitRate x = case x of
     Dynamic.Ar -> Dynamic.Ir
     Dynamic.Kr -> Dynamic.Ir
     _  -> x
+
+-- | An alias for the function @newRef@. It returns not the reference
+-- to mutable value but a pair of reader and writer functions.
+sensorsSE :: Tuple a => a -> SE (SE a, a -> SE ())
+sensorsSE a = do
+    ref <- newCtrlRef a
+    pure $ (readRef ref, writeRef ref)

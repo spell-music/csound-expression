@@ -11,6 +11,7 @@ module Csound.Core.Base.Instr
   , stopInstr
   , stopInstr_i
   , schedule
+  , scheduleEvent
   ) where
 
 import Csound.Core.Types
@@ -80,3 +81,16 @@ stopSelf = turnoffSelf 0 0
 schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
 schedule instrId start dur args = play instrId [Note start dur args]
 
+-- | Schedules an event for the instrument.
+--
+-- > scheduleEvent instrRef delay duration args
+--
+-- The arguments for time values are set in seconds.
+scheduleEvent :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
+scheduleEvent instrRef start end args =
+  case getInstrRefId instrRef of
+    Left strId  -> liftOpcDep_ "event" strRates ("i" :: Str, strId, start, end, args)
+    Right intId -> liftOpcDep_ "event" intRates ("i" :: Str, intId, start, end, args)
+  where
+    intRates = [(Xr, Sr : repeat Kr)]
+    strRates = [(Xr, Sr : Sr : repeat Kr)]

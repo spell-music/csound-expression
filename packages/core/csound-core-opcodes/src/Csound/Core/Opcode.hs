@@ -29,6 +29,9 @@ module Csound.Core.Opcode
   , noise
   , randi
   , randh
+  , dust
+  , dust2
+  , gausstrig
 
   -- * Envelopes
   , linen, linenr
@@ -120,6 +123,14 @@ module Csound.Core.Opcode
   , compress, compress2, dam
 
   -- * Spectral Processing
+  , pvsanal
+  , pvsynth
+  , pvscale
+  , tradsyn
+  , pvshift
+  , pvsifd
+  , trcross
+  , partials
 
   -- * Convolution
   , pconvolve
@@ -154,7 +165,10 @@ module Csound.Core.Opcode
   , rms, balance, balance2
 
   -- * Math / Conversion
-  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider, expcurve, scale, cent
+  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider, expcurve, scale
+  , cent, semitone
+  , downsamp
+
 
   -- * Amplitude / Pitch Tracking
   , follow, follow2, ptrack
@@ -2173,3 +2187,175 @@ mvclpf3 b1 b2 b3 =
 mvclpf4 ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
 mvclpf4 b1 b2 b3 =
   liftMulti "mvclpf4" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) (b1,b2,b3)
+
+
+-- |
+-- Generate an fsig from a mono audio source ain, using phase vocoder overlap-add analysis.
+--
+-- > fsig  pvsanal  ain, ifftsize, ioverlap, iwinsize, iwintype [, iformat] [, iinit]
+--
+-- csound doc: <https://csound.com/docs/manual/pvsanal.html>
+pvsanal ::  Sig -> D -> D -> D -> D -> Spec
+pvsanal b1 b2 b3 b4 b5 =
+  liftOpc "pvsanal" [(Fr,[Ar,Ir,Ir,Ir,Ir,Ir,Ir])] (b1,b2,b3,b4,b5)
+
+
+-- |
+-- Resynthesise using a FFT overlap-add.
+--
+-- Resynthesise phase vocoder data (f-signal) using a FFT overlap-add.
+--
+-- > ares  pvsynth  fsrc, [iinit]
+--
+-- csound doc: <https://csound.com/docs/manual/pvsynth.html>
+pvsynth ::  Spec -> Sig
+pvsynth b1 = liftOpc "pvsynth" [(Ar,[Fr,Ir])] b1
+
+-- |
+-- Scale the frequency components of a pv stream.
+--
+-- Scale the frequency components of a pv stream, resulting
+--       in pitch shift. Output amplitudes can be optionally modified in order
+--       to attempt formant preservation.
+--
+-- > fsig  pvscale  fsigin, kscal[, kkeepform, kgain, kcoefs]
+--
+-- csound doc: <https://csound.com/docs/manual/pvscale.html>
+pvscale ::  Spec -> Sig -> Spec
+pvscale b1 b2 = liftOpc "pvscale" [(Fr,[Fr,Kr,Kr,Kr,Kr])] (b1,b2)
+
+-- |
+-- Shift the frequency components of a pv stream, stretching/compressing
+--       its spectrum.
+--
+-- > fsig  pvshift  fsigin, kshift, klowest[, kkeepform, igain, kcoefs]
+--
+-- csound doc: <https://csound.com/docs/manual/pvshift.html>
+pvshift ::  Spec -> Sig -> Sig -> Spec
+pvshift b1 b2 b3 = liftOpc "pvshift" [(Fr,[Fr,Kr,Kr,Kr,Ir,Kr])] (b1,b2,b3)
+
+-- |
+-- Streaming partial track additive synthesis
+--
+-- The tradsyn opcode takes an input containg a TRACKS pv streaming signal (as generated,
+--       for instance by partials),as described in Lazzarini et al, "Time-stretching using the Instantaneous Frequency Distribution and Partial
+--       Tracking", Proc.of ICMC05, Barcelona. It resynthesises the signal using linear amplitude and frequency
+--       interpolation to drive a bank of interpolating oscillators with amplitude and pitch scaling controls.
+--
+-- > asig  tradsyn  fin, kscal, kpitch, kmaxtracks, ifn
+--
+-- csound doc: <https://csound.com/docs/manual/tradsyn.html>
+tradsyn ::  Spec -> Sig -> Sig -> Sig -> Tab -> Sig
+tradsyn b1 b2 b3 b4 b5 =
+  liftOpc "tradsyn" [(Ar,[Fr,Kr,Kr,Kr,Ir])] (b1,b2,b3,b4,b5)
+
+-- |
+-- Instantaneous Frequency Distribution, magnitude and phase analysis.
+--
+-- The pvsifd opcode takes an input a-rate signal and performs an Instantaneous Frequency,
+--   magnitude and phase analysis, using the STFT and pvsifd (Instantaneous Frequency Distribution),
+--   as described in Lazzarini et al, "Time-stretching using the Instantaneous Frequency Distribution and Partial
+--   Tracking", Proc.of ICMC05, Barcelona. It generates two PV streaming signals, one containing the
+--   amplitudes and frequencies (a similar output to pvsanal) and another containing amplitudes and
+--   unwrapped phases.
+--
+-- > ffr,fphs  pvsifd  ain, ifftsize, ihopsize, iwintype[,iscal]
+--
+-- csound doc: <https://csound.com/docs/manual/pvsifd.html>
+pvsifd ::  Sig -> D -> D -> D -> (Spec,Spec)
+pvsifd b1 b2 b3 b4 =
+  liftMulti "pvsifd" ([Fr,Fr],[Ar,Ir,Ir,Ir,Ir]) (b1,b2,b3,b4)
+
+-- |
+-- Calculates a factor to raise/lower a frequency by a given amount of semitones.
+--
+-- >  semitone (x)
+--
+-- csound doc: <https://csound.com/docs/manual/semitone.html>
+semitone :: SigOrD a => a -> a
+semitone b1 = liftOpr1 "semitone" b1
+
+-- |
+-- Streaming partial track cross-synthesis.
+--
+-- The trcross opcode takes two inputs containg TRACKS pv streaming signals (as generated,
+--       for instance by partials) and cross-synthesises them into a single TRACKS stream. Two
+--       different modes of operation are used: mode 0, cross-synthesis by multiplication of
+--       the amplitudes of the two inputs and mode 1, cross-synthesis by the substititution of
+--       the amplitudes of input 1 by the input 2. Frequencies and phases of input 1 are preserved
+--       in the output. The cross-synthesis is done by matching tracks between the two inputs using
+--       a 'search interval'. The matching algorithm will look for tracks in the second input that
+--       are within the search interval around each track in the first input. This interval can be changed
+--       at the control rate. Wider search intervals will find more matches.
+--
+-- > fsig  trcross  fin1, fin2, ksearch, kdepth [, kmode]
+--
+-- csound doc: <https://csound.com/docs/manual/trcross.html>
+trcross ::  Spec -> Spec -> Sig -> Sig -> Spec
+trcross b1 b2 b3 b4 = liftOpc "trcross" [(Fr,[Fr,Fr,Kr,Kr,Kr])] (b1,b2,b3,b4)
+
+-- |
+-- Partial track spectral analysis.
+--
+-- The partials opcode takes two input PV streaming signals containg AMP_FREQ and AMP_PHASE signals (as generated
+--   for instance by pvsifd or in the first case, by pvsanal) and performs partial track analysis,
+--   as described in Lazzarini et al, "Time-stretching using the Instantaneous Frequency Distribution and Partial
+--   Tracking", Proc.of ICMC05, Barcelona. It generates a TRACKS PV streaming signal, containing amplitude, frequency,
+--   phase and track ID for each output track. This type of signal will contain a variable number of output tracks,
+--   up to the total number of analysis bins contained in the inputs (fftsize/2 + 1 bins). The second input (AMP_PHASE)
+--   is optional, as it can take the same signal as the first input. In this case, however, all phase information will
+--   be NULL and resynthesis using phase information cannot be performed.
+--
+-- > ftrks  partials  ffr, fphs, kthresh, kminpts, kmaxgap, imaxtracks
+--
+-- csound doc: <https://csound.com/docs/manual/partials.html>
+partials ::  Spec -> Spec -> Sig -> Sig -> Sig -> D -> Spec
+partials b1 b2 b3 b4 b5 b6 =
+  liftOpc "partials" [(Fr,[Fr,Fr,Kr,Kr,Kr,Ir])] (b1,b2,b3,b4,b5,b6)
+
+-- |
+-- Random impulses.
+--
+-- Generates random impulses from 0 to 1.
+--
+-- > ares  dust  kamp, kdensity
+-- > kres  dust  kamp, kdensity
+--
+-- csound doc: <https://csound.com/docs/manual/dust.html>
+dust ::  Sig -> Sig -> SE Sig
+dust b1 b2 = liftOpcDep "dust" [(Ar,[Kr,Kr]),(Kr,[Kr,Kr])] (b1,b2)
+
+-- |
+-- Random impulses.
+--
+-- Generates random impulses from -1 to 1.
+--
+-- > ares  dust2  kamp, kdensity
+-- > kres  dust2  kamp, kdensity
+--
+-- csound doc: <https://csound.com/docs/manual/dust2.html>
+dust2 ::  Sig -> Sig -> SE Sig
+dust2 b1 b2 = liftOpcDep "dust2" [(Ar,[Kr,Kr]),(Kr,[Kr,Kr])] (b1,b2)
+
+-- |
+-- Modify a signal by down-sampling.
+--
+-- > kres  downsamp  asig [, iwlen]
+--
+-- csound doc: <https://csound.com/docs/manual/downsamp.html>
+downsamp ::  Sig -> Sig
+downsamp b1 = liftOpc "downsamp" [(Kr,[Ar,Ir])] b1
+
+-- |
+-- Random impulses around a certain frequency.
+--
+-- Generates random impulses around a certain frequency.
+--
+-- > ares  gausstrig  kamp, kcps, kdev [, imode] [, ifrst1]
+-- > kres  gausstrig  kamp, kcps, kdev [, imode] [, ifrst1]
+--
+-- csound doc: <https://csound.com/docs/manual/gausstrig.html>
+gausstrig ::  Sig -> Sig -> Sig -> SE Sig
+gausstrig b1 b2 b3 =
+  liftOpcDep "gausstrig" [(Ar,[Kr,Kr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] (b1,b2,b3)
+

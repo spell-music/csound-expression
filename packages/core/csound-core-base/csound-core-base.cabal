@@ -23,14 +23,19 @@ Library
       base >= 4.10, base < 5
     , csound-core-types
     , csound-core-opcodes
+    , file-embed
+    , data-default
+    , Boolean
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
+    Csound.Core.Base.Evt
     Csound.Core.Base.Vco
     Csound.Core.Base.Osc
     Csound.Core.Base.Instr
     Csound.Core.Base.Filter
     Csound.Core.Base.Envelope
+    Csound.Core.Base.Spec
 
   Default-Language: GHC2021
   Default-extensions:
@@ -42,6 +47,7 @@ Library
     DerivingStrategies
     RecordWildCards
     TypeFamilies
+    TemplateHaskell
 
 Data-Files :
     data/opcodes/MultiFX/AnalogDelay.udo

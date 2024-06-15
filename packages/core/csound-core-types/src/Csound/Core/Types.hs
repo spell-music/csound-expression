@@ -9,6 +9,7 @@ module Csound.Core.Types
   , withTab
   , withTabs
   , mean
+  , atArg
   ) where
 
 import Csound.Core.Types.Gen       as X
@@ -86,3 +87,12 @@ genWithInits a vals = toTuple $ do
     as <- fromTuple a
     vs <- vals
     return $ fmap (\x -> Dynamic.withInits x vs) as
+
+-- | Gets an init-rate value from the list by index.
+atArg :: (Tuple a) => [a] -> Sig -> a
+atArg as ind = readPureArr arr ind
+  where
+    arr = newPureArr as
+-- guardedArg (zip (fmap (\x -> sig (int x) ==* ind) [0 .. ]) as) (head as)
+
+

@@ -6,12 +6,24 @@ module Csound.Core.Types.Tuple
   , Tuple (..)
   , Arg
   , Sigs
+  , guardedTuple
+  , BoolTuple
+  , guardedTuple
+  , ifTuple
+  , caseTuple
+  , BoolArg
+  , ifArg
+  , caseArg
+  , guardedArg
   ) where
 
+import Control.Applicative
+import Data.Bifunctor
 import Data.NumInstances.Tuple ()
 import Data.Boolean
 
-import Csound.Dynamic (E, Rate (..))
+import Csound.Dynamic (E, Rate (..), IfRate (..))
+import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Run)
 import Csound.Core.Types.Prim.Bool
 import Csound.Core.Types.Prim.Sig
@@ -212,3 +224,57 @@ instance (Num a, Num b, Num c, Num d, Num e, Num f, Num g, Num h) => Num (a,b,c,
   negate = lift8 negate negate negate negate negate negate negate negate
   abs    = lift8 abs abs abs abs abs abs abs abs
   signum = lift8 signum signum signum signum signum signum signum signum
+
+newtype BoolTuple = BoolTuple { unBoolTuple :: Run [E] }
+
+toBoolTuple :: Tuple a => a -> BoolTuple
+toBoolTuple   = BoolTuple . fromTuple
+
+fromBoolTuple :: Tuple a => BoolTuple -> a
+fromBoolTuple = toTuple . unBoolTuple
+
+type instance BooleanOf BoolTuple = BoolSig
+
+instance IfB BoolTuple where
+    ifB mp (BoolTuple mas) (BoolTuple mbs) = BoolTuple $
+        liftA3 (\p as bs -> zipWith (Dynamic.ifExp IfKr p) as bs) (toE mp) mas mbs
+
+-- | @ifB@ for tuples of csound values.
+ifTuple :: (Tuple a) => BoolSig -> a -> a -> a
+ifTuple p a b = fromBoolTuple $ ifB p (toBoolTuple a) (toBoolTuple b)
+
+-- | @guardedB@ for tuples of csound values.
+guardedTuple :: (Tuple b) => [(BoolSig, b)] -> b -> b
+guardedTuple bs b = fromBoolTuple $ guardedB undefined (fmap (second toBoolTuple) bs) (toBoolTuple b)
+
+-- | @caseB@ for tuples of csound values.
+caseTuple :: (Tuple b) => a -> [(a -> BoolSig, b)] -> b -> b
+caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (toBoolTuple other)
+
+-- arguments
+
+newtype BoolArg = BoolArg { unBoolArg :: Run [E] }
+
+toBoolArg :: (Tuple a) => a -> BoolArg
+toBoolArg   = BoolArg . fromTuple
+
+fromBoolArg :: (Tuple a) => BoolArg -> a
+fromBoolArg = toTuple . unBoolArg
+
+type instance BooleanOf BoolArg = BoolSig
+
+instance IfB BoolArg where
+    ifB mp (BoolArg mas) (BoolArg mbs) = BoolArg $
+        liftA3 (\p as bs -> zipWith (Dynamic.ifExp IfKr p) as bs) (toE mp) mas mbs
+
+-- | @ifB@ for constants.
+ifArg :: (Arg a, Tuple a) => BoolSig -> a -> a -> a
+ifArg p a b = fromBoolArg $ ifB p (toBoolArg a) (toBoolArg b)
+
+-- | @guardedB@ for constants.
+guardedArg :: (Tuple b) => [(BoolSig, b)] -> b -> b
+guardedArg bs b = fromBoolArg $ guardedB undefined (fmap (second toBoolArg) bs) (toBoolArg b)
+
+-- | @caseB@ for constants.
+caseArg :: (Tuple b, Arg b) => a -> [(a -> BoolSig, b)] -> b -> b
+caseArg a bs other = fromBoolArg $ caseB a (fmap (second toBoolArg) bs) (toBoolArg other)

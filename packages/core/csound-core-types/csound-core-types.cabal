@@ -33,12 +33,10 @@ Library
     hashable,
     text,
     unordered-containers,
-    process,
-    file-embed
+    process
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
-    Csound.Core.Opcode.Fx
     Csound.Core.Opcode.Vco
     Csound.Core.Types
     Csound.Core.Types.Gen
