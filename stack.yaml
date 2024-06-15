@@ -13,7 +13,9 @@ allow-newer: true
 packages:
   # - packages/utils/gen-csound-opcodes   # activate it only to generate package csound-expression-opcodes
   - packages/core/csound-expression-dynamic
-  - packages/core/csound-core
+  - packages/core/csound-core-types
+  - packages/core/csound-core-opcodes
+  - packages/core/csound-core-base
   - packages/core/csound-expression-opcodes
   - packages/legacy/csound-expression-typed
   - packages/legacy/csound-expression
@@ -24,5 +26,5 @@ packages:
 extra-deps:
   - data-fix-cse-0.0.3@sha256:c29b23ed2d321e11314599d7a9b8a9d67d5f5dc1206d5665b3408a7d826a8bdc,1000
   - temporal-media-0.6.3@sha256:7a27d711a786c3dc9163433627e51efcc4b3fce3a947b71c29f3e388f37cae59,857
-  - wl-pprint-1.2.1@sha256:aea676cff4a062d7d912149d270e33f5bb0c01b68a9db46ff13b438141ff4b7c,734
+  # - wl-pprint-1.2.1@sha256:aea676cff4a062d7d912149d270e33f5bb0c01b68a9db46ff13b438141ff4b7c,734
   - sharc-timbre-0.2@sha256:b6bc95680069e6962d683d1cc214045c5eea6277e7383cb99656c85bdcef822f,2725

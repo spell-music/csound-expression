@@ -37,8 +37,8 @@ data InstrRef a
   | InstrRef (InstrId a)
   | EffRef (EffId a)
 
-instance Arg a => Tuple (InstrRef a) where
-  tupleMethods = primTuple (instrRefFromNum (-1))
+instance Arg a => FromTuple (InstrRef a) where { fromTuple = fmap pure . toE }
+instance Arg a => Tuple (InstrRef a) where { toTuple = fromE . fmap head; tupleRates = [valRate @Sig]; tupleArity = 1; defTuple = instrRefFromNum (-1) }
 
 instance Arg a => Arg (InstrRef a) where
 
@@ -219,11 +219,14 @@ data Note a = Note
 
 instance Arg a => Arg (Note a)
 
+instance FromTuple a => FromTuple (Note a) where
+  fromTuple (Note start dur args) = fromTuple (start, dur, args)
+
 instance Tuple a => Tuple (Note a) where
-  tupleMethods =
-    makeTupleMethods
-      (\(start, dur, args) -> Note start dur args)
-      (\(Note start dur args) -> (start, dur, args))
+  tupleArity = tupleArity @(D, D, a)
+  tupleRates = tupleRates @(D, D, a)
+  defTuple = Note 0 0 defTuple
+  toTuple = (\(start, dur, args) -> Note start dur args) . toTuple
 
 play :: (Arg a) => InstrRef a -> [Note a] -> SE ()
 play = \case

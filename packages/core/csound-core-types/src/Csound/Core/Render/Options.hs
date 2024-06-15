@@ -16,6 +16,8 @@ module Csound.Core.Render.Options (
     idRandHist, idRandPairs, idRandRanges, idPvocex, idTuning, idMultichannel,
     -- *** String identifiers
     idPadsynth, idTanh, idExp, idSone, idFarey, idWave,
+    -- * UDOs
+    Udos (..), UdoDef (..), addUdo,
     -- * Jacko
     Jacko(..), JackoConnect, renderJacko,
     -- * Debug trace
@@ -43,8 +45,9 @@ import Control.Applicative
 import Data.Default
 import Data.Maybe
 
-import qualified Data.IntMap as IM
-import qualified Data.Map    as M
+import qualified Data.IntMap.Strict as IM
+import qualified Data.Map.Strict    as M
+import Data.Map.Strict (Map)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Text.Read
@@ -77,7 +80,26 @@ data Options = Options
     , csdTrace          :: Maybe Bool               -- ^ Do we need debug-trace, default is False
     , csdRender         :: Maybe RenderOptions
     , csdWriteFile      :: Maybe FilePath            -- ^ write Csound text to file
+    , csdUdos           :: Maybe Udos
     } deriving (Eq, Show, Read)
+
+-- | A map from UDO name to UDO definition.
+-- The definition is inlined verbatim into Csound code
+newtype Udos = Udos (Map Text UdoDef)
+  deriving newtype (Show, Read, Eq)
+
+data UdoDef = UdoBody Text | UdoFile FilePath
+  deriving (Show, Read, Eq)
+
+addUdo :: Text -> UdoDef -> Options
+addUdo name val =
+  def { csdUdos = Just (Udos $ M.singleton name val) }
+
+instance Monoid Udos where
+  mempty = Udos mempty
+
+instance Semigroup Udos where
+  Udos udosA <> Udos udosB = Udos $ M.union udosA udosB
 
 setVerbatimFlags :: Text -> Options
 setVerbatimFlags flags = def { csdFlags = def { flagsVerbatim = Just flags } }
@@ -92,7 +114,7 @@ setDebugTrace =
       inferenceOptions = def { opcodeInferenceDebug = IsDebug True } } }
 
 instance Default Options where
-    def = Options def def def def def def def def def def def def def
+    def = Options def def def def def def def def def def def def def def
 
 #if MIN_VERSION_base(4,11,0)
 instance Semigroup Options where
@@ -124,6 +146,7 @@ mappendOptions a b = Options
     , csdTrace          = csdTrace a <|> csdTrace b
     , csdRender         = csdRender a <|> csdRender b
     , csdWriteFile      = csdWriteFile a <|> csdWriteFile b
+    , csdUdos           = mappend (csdUdos a) (csdUdos b)
     }
 
 defScaleUI :: Options -> (Double, Double)

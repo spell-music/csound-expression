@@ -3,6 +3,7 @@ module Csound.Core.Types.Rate
   ( K (..)
   , setRate
   , ar, kr, ir
+  , Rate (..)
   ) where
 
 import Csound.Dynamic (toCtrlRate, Rate (..))
@@ -16,16 +17,13 @@ import Csound.Core.Types.Tuple
 --
 -- > ref <- newRef (0 :: K Sig)
 newtype K a = K { unK :: a }
-  deriving (IsPrim, Val, Num, Fractional, Floating)
+  deriving newtype (IsPrim, Val, Num, Fractional, Floating, FromTuple)
 
 instance Tuple a => Tuple (K a) where
-  tupleMethods = TupleMethods
-    { tupleRates_ = fmap toCtrlRate (tupleRates @a)
-    , defTuple_ = K (defTuple @a)
-    , fromTuple_ = fromTuple . unK
-    , toTuple_ = K . toTuple
-    , tupleArity_ = tupleArity @a
-    }
+  tupleArity = tupleArity @a
+  tupleRates = fmap toCtrlRate (tupleRates @a)
+  defTuple = K defTuple
+  toTuple = K . toTuple
 
 ar :: Val a => a -> a
 ar = setRate Ar

@@ -19,7 +19,7 @@ import Csound.Core.State qualified as State
 
 -- https://flossmanual.csound.com/csound-language/local-and-global-variables#the-chn-opcodes-for-global-variables
 newtype Port a = Port { unPort :: D }
-  deriving (IsPrim, Val, Tuple, Arg)
+  deriving newtype (IsPrim, Val, FromTuple, Tuple, Arg)
 
 newPort :: Tuple a => SE (Port a)
 newPort = Port . fromE . pure <$> SE State.getFreshPort

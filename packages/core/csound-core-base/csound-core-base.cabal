@@ -1,0 +1,65 @@
+Name:          csound-core-base
+Version:       0.2.7
+Cabal-Version: 1.12
+License:       BSD3
+Author:	       Anton Kholomiov
+Synopsis:      Standard core library for the library csound-expression
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+Build-Type:    Simple
+
+Description: core functions for standard library for csound-expression. Provides essential commonly used functions for sound design
+
+Homepage:        https://github.com/anton-k/csound-core
+Bug-Reports:     https://github.com/anton-k/csound-core/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression-typed
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+      base >= 4.10, base < 5
+    , csound-core-types
+    , csound-core-opcodes
+
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+    Csound.Core.Base.Vco
+    Csound.Core.Base.Osc
+    Csound.Core.Base.Instr
+    Csound.Core.Base.Filter
+    Csound.Core.Base.Envelope
+
+  Default-Language: GHC2021
+  Default-extensions:
+    OverloadedStrings
+    OverloadedRecordDot
+    DuplicateRecordFields
+    StrictData
+    LambdaCase
+    DerivingStrategies
+    RecordWildCards
+    TypeFamilies
+
+Data-Files :
+    data/opcodes/MultiFX/AnalogDelay.udo
+    data/opcodes/MultiFX/Distortion.udo
+    data/opcodes/MultiFX/EnvelopeFollower.udo
+    data/opcodes/MultiFX/Flanger.udo
+    data/opcodes/MultiFX/FreqShifter.udo
+    data/opcodes/MultiFX/LoFi.udo
+    data/opcodes/MultiFX/PanTrem.udo
+    data/opcodes/MultiFX/MonoTrem.udo
+    data/opcodes/MultiFX/Phaser.udo
+    data/opcodes/MultiFX/PitchShifter.udo
+    data/opcodes/MultiFX/Reverse.udo
+    data/opcodes/MultiFX/RingModulator.udo
+    data/opcodes/MultiFX/StChorus.udo
+    data/opcodes/MultiFX/StereoPingPongDelay.udo
+    data/opcodes/MultiFX/TapeEcho.udo
+    data/opcodes/Utility/Delay1k.udo
+
+
+

@@ -12,6 +12,7 @@ module Csound.Core.Types.SE.Ref
 
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
+import Data.Maybe
 
 import Csound.Dynamic (Var, E, Rate)
 import Csound.Dynamic qualified as Dynamic
@@ -22,6 +23,12 @@ import Csound.Core.Types.Tuple
 
 -- | It describes a reference to mutable values.
 newtype Ref a = Ref [Var]
+
+instance FromTuple a => FromTuple (Ref a) where
+  fromTuple (Ref vars) = do
+    ifRate <- fromMaybe Dynamic.IfKr <$> State.getCurrentRate
+    pure $ fmap (Dynamic.inlineVar ifRate) vars
+
 
 {-
 -- | It creates global variables if it is used from top level instrument

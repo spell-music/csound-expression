@@ -1,5 +1,5 @@
 -- | Instrument control
-module Csound.Core.Opcodes.Instr
+module Csound.Core.Base.Instr
   ( active
   , maxalloc
   , nstrnum
@@ -13,7 +13,6 @@ module Csound.Core.Opcodes.Instr
   , schedule
   ) where
 
-import Csound.Dynamic (Rate (..))
 import Csound.Core.Types
 
 -- | active — Returns the number of active instances of an instrument.
@@ -80,3 +79,4 @@ stopSelf = turnoffSelf 0 0
 
 schedule :: (Arg a) => InstrRef a -> D -> D -> a -> SE ()
 schedule instrId start dur args = play instrId [Note start dur args]
+

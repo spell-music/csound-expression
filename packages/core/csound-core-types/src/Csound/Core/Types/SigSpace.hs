@@ -6,7 +6,8 @@
         FlexibleContexts,
         CPP #-}
 module Csound.Core.Types.SigSpace(
-    SigSpace(..), BindSig(..), mul, mul', fromMono, toMono, on, uon, At(..), MixAt(..),
+    SigSpace(..), BindSig(..), mul, mul',
+    fromMono, toMono, on, uon, At(..), MixAt(..), bat,
     cfd, genCfds, cfd4, cfds,
 
     -- * Stereo sig-space
@@ -18,6 +19,7 @@ import Csound.Core.Types.Prim
 import Csound.Core.Types.SE
 import Data.Kind (Type)
 import Data.NumInstances.Tuple()
+import Csound.Dynamic (Rate (..))
 
 -- | A class for easy way to process the outputs of the instruments.
 class SigSpace a where
@@ -34,6 +36,22 @@ class SigSpace2 a where
 -- | A class for easy way to process the outputs of the instruments.
 class SigSpace2 a => BindSig2 a where
     bindSig2 :: (Sig2 -> SE Sig2) -> a -> SE a
+
+-- | It applies an effect and balances the processed signal by original one.
+bat :: At Sig a b => (Sig -> a) -> b -> AtOut Sig a b
+bat f = at (\x -> mapSig ( `balance` x) $ f x)
+
+-- |
+-- Adjust one audio signal according to the values of another.
+--
+-- The rms power of asig can be interrogated, set, or adjusted to match that of a comparator signal.
+--
+-- > ares  balance  asig, acomp [, ihp] [, iskip]
+--
+-- csound doc: <http://csound.com/docs/manual/balance.html>
+balance ::  Sig -> Sig -> Sig
+balance b1 b2 = liftOpc "balance" rates (b1, b2)
+  where rates = [(Ar,[Ar,Ar,Ir,Ir])]
 
 -- | Scaling the sound.
 mul :: SigSpace a => Sig -> a -> a

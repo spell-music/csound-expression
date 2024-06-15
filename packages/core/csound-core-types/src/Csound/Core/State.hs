@@ -19,8 +19,7 @@ module Csound.Core.State
   , getOptions
   , getFreshPort
   , getReadOnlyVar
-  , includeUdoFile
-  , includeUdo
+  , getReadOnlyVars
   -- * Vco
   , VcoInit (..)
   , VcoShape (..)
@@ -47,7 +46,7 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 
 import Csound.Dynamic
-import Csound.Core.Render.Options (Options)
+import Csound.Core.Render.Options (Options (csdUdos), Udos (..), UdoDef (..))
 import Csound.Core.Render.Options qualified as Options
 
 -- | Monad for dependency tracking augmented with internal state
@@ -61,7 +60,7 @@ newtype Run a = Run { unRun :: StateT St IO a }
 -- for rendering to text.
 exec :: Options -> Run () -> IO Csd
 exec opts act = do
-  st <- execStateT (unRun $ setupInstr0 opts >> act >> setupUdos ) initSt
+  st <- execStateT (unRun $ setupInstr0 >> act >> setupUdos ) initSt
   pure $ st.csd { csdFlags = Options.csdFlags st.options }
   where
     initSt = St
@@ -78,7 +77,6 @@ exec opts act = do
       , options = opts
       , readInit = ReadInit HashMap.empty
       , ftables = Ftables { ftableCache = FtableMap Map.empty, ftableFreshId = 1 }
-      , includeUdos = mempty
       }
 
     foreverTime = 100 * 604800.0
@@ -169,25 +167,31 @@ getOptions :: Run Options
 getOptions = Run $ gets (.options)
 
 -- | Preambule instrument which sets up global constants and utilities
-setupInstr0 :: Options -> Run ()
-setupInstr0 opt = insertGlobalExpr =<< execDepT instr0
+setupInstr0 :: Run ()
+setupInstr0 = do
+  opt <- getOptions
+  insertGlobalExpr =<< execDepT (instr0 opt)
   where
-    instr0 :: Dep ()
-    instr0 = do
+    instr0 :: Options -> Dep ()
+    instr0 opt = do
       globalConstants opt
       chnUpdateUdo
 
 setupUdos :: Run ()
-setupUdos = insertGlobalExpr =<< execDepT udos
+setupUdos = do
+  mUdos <- (.csdUdos) <$> getOptions
+  case mUdos of
+    Just (Udos udos) -> insertGlobalExpr =<< execDepT (mapM_ (insertUdo <=< readUdo) udos)
+    Nothing -> pure ()
   where
-    udos :: Dep ()
-    udos = do
-      mapM_ insertUdo =<<
-       (lift $ Run $ gets (.includeUdos))
-
     insertUdo :: Text -> Dep ()
     insertUdo udoContent = do
       verbatim $ udoContent <> "\n"
+
+    readUdo :: UdoDef -> Dep Text
+    readUdo = \case
+      UdoBody text -> pure text
+      UdoFile file -> lift $ fmap Text.pack $ readFileWithExistCheck file
 
 -- | Creates expression with global constants
 globalConstants :: Options -> Dep ()
@@ -207,13 +211,62 @@ getReadOnlyVar :: Rate -> E -> Run E
 getReadOnlyVar rate expr = Run $ do
   ReadInit initMap <- gets (.readInit)
   readOnlyVar IfIr <$> case HashMap.lookup hash initMap of
-    Just var -> pure var
+    Just vars -> pure $ head vars
     Nothing  -> do
       var <- unRun $ initGlobalVar rate expr
-      modify' $ \s -> s { readInit = ReadInit $ HashMap.insert hash var $ unReadInit s.readInit }
+      modify' $ \s -> s { readInit = ReadInit $ HashMap.insert hash [var] $ unReadInit s.readInit }
       pure var
   where
     hash = hashE expr
+
+getReadOnlyVars :: [Rate] -> [E] -> Dep [E] -> Run [E]
+getReadOnlyVars rates initVals runExpr = do
+  fmap (fmap (readOnlyVar IfIr)) $
+    case rates of
+      [] -> allocProc >> pure []
+      [rate] -> fmap pure $ allocSingle rate
+      _ -> allocMultiVars
+  where
+    allocProc :: Run ()
+    allocProc = do
+      ReadInit initMap <- Run $ gets (.readInit)
+      expr <- execDepT runExpr
+      let
+        hash = hashE expr
+      case HashMap.lookup hash initMap of
+        Just _ -> pure ()
+        Nothing -> do
+          insertGlobalExpr expr
+          insertReadInit hash []
+
+    allocSingle :: Rate -> Run Var
+    allocSingle rate = do
+      ReadInit initMap <- Run $ gets (.readInit)
+      expr <- execDepT runExpr
+      let
+        hash = hashE expr
+      var <- initGlobalVar rate expr
+      insertReadInit hash [var]
+      pure var
+
+    allocMultiVars :: Run [Var]
+    allocMultiVars = do
+      ReadInit initMap <- Run $ gets (.readInit)
+      expr <- execDepT runExpr
+      let
+        hash = hashE expr
+      case HashMap.lookup hash initMap of
+        Just vars -> pure vars
+        Nothing -> do
+          vars <- zipWithM initGlobalVar rates initVals
+          expr <- execDepT $ zipWithM_ (writeVar IfIr) vars =<< runExpr
+          insertGlobalExpr expr
+          insertReadInit hash vars
+          pure vars
+
+    insertReadInit :: ExpHash -> [Var] -> Run ()
+    insertReadInit hash vars =
+      Run $ modify' $ \s -> s { readInit = ReadInit $ HashMap.insert hash vars $ unReadInit s.readInit }
 
 -----------------------------------------------------------------------------
 
@@ -254,16 +307,15 @@ data St = St
   , freshId     :: FreshId           -- ^ fresh instrument ids
   , freshVar    :: Int               -- ^ fresh names for mutable variables
   , isGlobal    :: Bool              -- ^ do we render global or local instrument
-  , currentRate :: Maybe IfRate      -- ^ current rate of execution (Ir or Kr)
+  , currentRate :: Maybe IfRate      -- ^ current rate of execution (Ir or Kr) to distinguish the init phase from the performance phase
   , options     :: Options           -- ^ Csound flags and initial options / settings
   , readInit    :: ReadInit          -- ^ read only global inits that are initialized only once
   , ftables     :: Ftables
-  , includeUdos :: Map Text Text -- ^ include UDOs (map from name to UDO-content)
   }
 
 -- | Global vars that are initialized only once and are read-only
 -- and can be safely cached
-newtype ReadInit = ReadInit { unReadInit :: HashMap ExpHash Var }
+newtype ReadInit = ReadInit { unReadInit :: HashMap ExpHash [Var] }
 
 -- | Fresh ids for instruments
 data FreshId = FreshId
@@ -357,8 +409,6 @@ lookupFtable ft = Run $ do
             UserGen gen -> fmap negate $ Map.lookup (GenTable gen) ftMap
         else Nothing
 
-
-
 saveGen :: Gen -> Run E
 saveGen gen = do
   maybe insertGen pure =<< lookupFtable (GenTable gen)
@@ -429,19 +479,6 @@ vcoShapeId' = \case
 
 getFreshFtableId :: Run E
 getFreshFtableId = Run $ gets (ftableFreshId . (.ftables))
-
-includeUdoFile :: Text -> FilePath -> Run ()
-includeUdoFile udoName file = do
-  udos <- Run $ gets (.includeUdos)
-  when (not $ Map.member udoName udos) $ do
-    udoContent <- Text.pack <$> readFileWithExistCheck file
-    Run $ modify' $ \st -> st { includeUdos = Map.insert udoName udoContent st.includeUdos }
-
-includeUdo :: Text -> Text -> Run ()
-includeUdo udoName udoContent = do
-  udos <- Run $ gets (.includeUdos)
-  when (not $ Map.member udoName udos) $ do
-    Run $ modify' $ \st -> st { includeUdos = Map.insert udoName udoContent st.includeUdos }
 
 readFileWithExistCheck :: FilePath -> Run String
 readFileWithExistCheck file = liftIO $ do

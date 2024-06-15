@@ -1,10 +1,10 @@
 {-#  Language TypeFamilies, FlexibleInstances #-}
 -- | Envelopes
-module Csound.Air.Envelope (
+module Csound.Core.Base.Envelope (
     leg, xeg,
 
     -- ADSR with retrigger for mono-synths
-    adsr140, trigTab, trigTabEvt,
+    -- adsr140, trigTab, trigTabEvt,
     -- * Relative duration
     onIdur, lindur, expdur, linendur,
     onDur, lindurBy, expdurBy, linendurBy,
@@ -27,15 +27,17 @@ module Csound.Air.Envelope (
     adsrSeq, xadsrSeq, adsrSeq_, xadsrSeq_,
 
     -- ** Complex
+   {-
     Seq, toSeq, onBeat, onBeats,
 
     seqConst, seqLin, seqExp,
 
     seqPw, iseqPw, seqSqr, iseqSqr,
     seqSaw, iseqSaw, xseqSaw, ixseqSaw, seqRamp, iseqRamp, seqTri, seqTriRamp,
-    seqAdsr, xseqAdsr, seqAdsr_, xseqAdsr_,
+    seqAdsr, xseqAdsr, seqAdsr_, xseqAdsr_
 
     seqPat, seqAsc, seqDesc, seqHalf
+    -}
 ) where
 
 import Control.Monad
@@ -43,14 +45,14 @@ import Control.Applicative
 import Data.Kind(Type)
 import Data.List(intersperse)
 
-import Temporal.Media hiding (rest)
-import qualified Temporal.Media as T(Rest(..))
+-- import Temporal.Media hiding (rest)
+-- import qualified Temporal.Media as T(Rest(..))
 
-import Csound.Typed
-import Csound.Typed.Opcode hiding (lpshold, loopseg, loopxseg, release)
-import qualified Csound.Typed.Opcode as C(lpshold, loopseg, loopxseg)
-import Csound.Typed.Plugins(adsr140)
-import Csound.Control.Evt(evtToTrig)
+import Csound.Core.Types
+import Csound.Core.Opcode hiding (lpshold, loopseg, loopxseg, release)
+import qualified Csound.Core.Opcode as C(lpshold, loopseg, loopxseg)
+-- import Csound.Typed.Plugins(adsr140)
+-- import Csound.Control.Evt(evtToTrig)
 
 -- | Linear adsr envelope generator with release
 --
@@ -323,7 +325,7 @@ irampList a1 duty xs = case xs of
 
 genSeq :: ([Sig] -> Sig -> Sig) -> ([Sig] -> [Sig]) -> [Sig] -> Sig -> Sig
 genSeq mkSeq go as cps = mkSeq (go as) (cps / len)
-    where len = sig $ int $ length as
+    where len = toSig $ int $ length as
 
 intersperseEnd :: a -> [a] -> [a] -> [a]
 intersperseEnd val end xs = case xs of
@@ -482,7 +484,7 @@ expSeq = genSegSeq loopxseg
 genSegSeq :: ([Sig] -> Sig -> Sig) -> [Sig] -> [Sig] -> Sig -> Sig
 genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) weights) (cps / len)
     where
-        len = sig $ int $ length weights
+        len = toSig $ int $ length weights
         scaleVals xs k = case xs of
             [] -> []
             [a] -> [a * k]
@@ -492,6 +494,7 @@ genSegSeq mkSeg shape weights cps = mkSeg (groupSegs $ fmap (scaleVals shape) we
         groupSegs as = concat $ intersperse [0] as
 
 
+{-
 -- | The seq is a type for step sequencers.
 -- The step sequencer is a monophonic control signal.
 -- Most often step sequencer is a looping segment of
@@ -571,9 +574,10 @@ instance Num Seq where
 instance Fractional Seq where
     fromRational = toSeq . fromRational
     (/) = undefined
-
+-}
 -------------------------------------------------
 
+{-
 seqGen0 :: ([Sig] -> Sig -> Sig) -> (Sig -> Sig -> [Sig]) -> [Seq] -> Sig -> Sig
 seqGen0 loopFun segFun as = loopFun (renderSeq0 segFun $ mel as)
 
@@ -663,6 +667,7 @@ seqTri = seqTriRamp 0.5
 -- | The sequence of ramped triangular waves.
 seqTriRamp :: Sig -> [Seq] -> Sig -> Sig
 seqTriRamp k = seq1 $ \dt val -> [0, dt * k, val, dt * (1 - k)]
+-}
 
 -- adsr
 
@@ -672,6 +677,7 @@ adsr1 a d s r dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r), s * val, r
 adsr1_ :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> [Sig]
 adsr1_ a d s r restSig dt val = [0, a * dt, val, d * dt, s * val, (1 - a - r - restSig), s * val, r * dt, 0, restSig ]
 
+{-
 -- | The sequence of ADSR-envelopes.
 --
 -- > seqAdsr att dec sus rel
@@ -700,9 +706,10 @@ seqAdsr_ a d s r restSig = seq1 (adsr1_ a d s r restSig)
 -- | The sequence of exponential ADSR-envelopes with rest at the end.
 xseqAdsr_ :: Sig -> Sig -> Sig -> Sig -> Sig -> [Seq] -> Sig -> Sig
 xseqAdsr_ a d s r restSig = seqx (adsr1_ a d s r restSig)
-
+-}
 -------------------------------------------------
 
+{-
 renderSeq0 :: (Sig -> Sig -> [Sig]) -> Seq -> [Sig]
 renderSeq0 f (Seq as) = as >>= phi
     where
@@ -716,9 +723,10 @@ renderSeq1 f (Seq as) = as >>= phi
         phi x = case x of
             Seq1 dt val -> f dt val
             Rest dt     -> [0, dt, 0, 0]
-
+-}
 -------------------------------------------------
 
+{-
 genSeqPat :: (Int -> [Double]) -> [Int] -> Seq
 genSeqPat g ns = mel (ns >>= f)
     where f n
@@ -763,6 +771,7 @@ seqAsc = genSeqPat (\n -> let xs = rowDesc n in head xs : reverse (tail xs))
 -- > dac $ mul (seqSaw [seqHalf [3, 3, 2]] 1) white
 seqHalf :: [Int] -> Seq
 seqHalf = genSeqPat $ (\n -> 1 : take (n - 1) (repeat 0.5))
+-}
 
 -------------------------------------------------
 -- humanizers
@@ -800,8 +809,9 @@ rndVal :: Sig -> Sig -> Sig -> SE Sig
 rndVal cps dr val = fmap (+ val) $ randh dr cps
 
 rndValD :: Sig -> D -> SE D
-rndValD dr val = fmap (+ val) $ random (- (ir dr)) (ir dr)
+rndValD dr val = fmap (+ val) $ random (- (toD $ ir dr)) (toD $ ir dr)
 
+{-
 instance HumanizeValue ([Seq] -> Sig -> Sig) where
     type HumanizeValueOut ([Seq] -> Sig -> Sig) = [Seq] -> Sig -> SE Sig
     humanVal dr f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSeq cps) sq)
@@ -809,6 +819,7 @@ instance HumanizeValue ([Seq] -> Sig -> Sig) where
             humanSeq cps (Seq as) = fmap Seq $ forM as $ \x -> case x of
                 Rest _      -> return x
                 Seq1 dt val -> fmap (Seq1 dt) $ rndVal cps dr val
+-}
 
 instance HumanizeValue ([Sig] -> Sig -> Sig) where
     type HumanizeValueOut ([Sig] -> Sig -> Sig) = [Sig] -> Sig -> SE Sig
@@ -846,6 +857,7 @@ class HumanizeTime a where
     type HumanizeTimeOut a :: Type
     humanTime :: Sig -> a -> HumanizeTimeOut a
 
+{-
 instance HumanizeTime ([Seq] -> Sig -> Sig) where
     type HumanizeTimeOut ([Seq] -> Sig -> Sig) = [Seq] -> Sig -> SE Sig
     humanTime dr f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSeq cps) sq)
@@ -853,7 +865,7 @@ instance HumanizeTime ([Seq] -> Sig -> Sig) where
             humanSeq cps (Seq as) = fmap Seq $ forM as $ \x -> case x of
                 Rest dt     -> fmap Rest $ rndVal cps dr dt
                 Seq1 dt val -> fmap (flip Seq1 val) $ rndVal cps dr dt
-
+-}
 instance HumanizeTime ([D] -> Sig) where
     type HumanizeTimeOut ([D] -> Sig) = [D] -> SE Sig
     humanTime dr f = \xs -> fmap f $ mapM human1 $ zip [0 ..] xs
@@ -885,6 +897,7 @@ class HumanizeValueTime a where
     type HumanizeValueTimeOut a :: Type
     humanValTime :: Sig -> Sig -> a -> HumanizeValueTimeOut a
 
+{-
 instance HumanizeValueTime ([Seq] -> Sig -> Sig) where
     type HumanizeValueTimeOut ([Seq] -> Sig -> Sig) = [Seq] -> Sig -> SE Sig
     humanValTime drVal drTime f = \sq cps -> fmap (\x -> f x cps) (mapM (humanSeq cps) sq)
@@ -892,6 +905,7 @@ instance HumanizeValueTime ([Seq] -> Sig -> Sig) where
             humanSeq cps (Seq as) = fmap Seq $ forM as $ \x -> case x of
                 Rest dt     -> fmap Rest $ rndVal cps drTime dt
                 Seq1 dt val -> liftA2 Seq1 (rndVal cps drTime dt) (rndVal cps drVal val)
+-}
 
 instance HumanizeValueTime ([D] -> Sig) where
     type HumanizeValueTimeOut ([D] -> Sig) = [D] -> SE Sig
@@ -911,6 +925,8 @@ instance HumanizeValueTime ([D] -> D -> Sig) where
 -----------------------------------------------------
 -- Trigger envelopes
 
+{-
+
 -- | Triggers the table based envelope when the trigger signal equals to 1
 -- and plays for dur seconds:
 --
@@ -926,4 +942,5 @@ trigTab ifn kdur ktrig =
 -- > trigTabEvt table dur trigger
 trigTabEvt :: Tab -> Sig -> Evt a -> Sig
 trigTabEvt ifn kdur ktrig = trigTab ifn kdur (evtToTrig ktrig)
+-}
 

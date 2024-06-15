@@ -12,7 +12,7 @@ module Csound.Core
   , module Csound.Core.Types.Gen
 
     -- ** Tuples
-  , Tuple (..), Arg, Sigs, makeTupleMethods
+  , FromTuple (..), Tuple (..), Arg, Sigs
   , Sig2, Sig3, Sig4, Sig5, Sig6, Sig7, Sig8
   , D2, D3, D4, D5, D6
 

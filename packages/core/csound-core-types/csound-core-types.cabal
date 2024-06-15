@@ -1,17 +1,17 @@
-Name:          csound-core
+Name:          csound-core-types
 Version:       0.2.7
 Cabal-Version: 1.12
 License:       BSD3
 Author:	       Anton Kholomiov
-Synopsis:      typed core for the library csound-expression
+Synopsis:      defines main types and core functions for the library csound-expression
 Category:      Music, Sound
 Maintainer:    <anton.kholomiov@gmail.com>
 Build-Type:    Simple
 
 Description: typed core for library csound-expression. Provides typed core lang for csound
 
-Homepage:        https://github.com/anton-k/csound-core
-Bug-Reports:     https://github.com/anton-k/csound-core/issues
+Homepage:        https://github.com/spell-music/csound-expression
+Bug-Reports:     https://github.com/spell-music/csound-expression/issues
 
 Source-repository head
     Type: git
@@ -38,9 +38,8 @@ Library
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
-    Csound.Core
-    Csound.Core.Opcodes
-    Csound.Core.Opcodes.Fx
+    Csound.Core.Opcode.Fx
+    Csound.Core.Opcode.Vco
     Csound.Core.Types
     Csound.Core.Types.Gen
     Csound.Core.Types.Prim
@@ -63,16 +62,11 @@ Library
     Csound.Core.Types.Prim.Tab
     Csound.Core.Types.PureArray
     Csound.Core.Types.Rate
-    Csound.Core.Opcodes.Instr
-    Csound.Core.Opcodes.Osc
-    Csound.Core.Opcodes.Vco
     Csound.Core.Types.SE.Core
     Csound.Core.Types.SE.Instr
     Csound.Core.Types.SE.Logic
     Csound.Core.Types.SE.Ref
     Csound.Core.Types.SE.Port
-
-    Paths_csound_core
 
   Default-Language: GHC2021
   Default-extensions:

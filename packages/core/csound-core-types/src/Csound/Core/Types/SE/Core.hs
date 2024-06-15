@@ -3,6 +3,8 @@ module Csound.Core.Types.SE.Core
   , setTotalDur
   , renderSE
   , global
+  , withSetup
+  , withOption
   , setOption
   , setDefaultOption
   , IsRef (..)
@@ -18,19 +20,13 @@ module Csound.Core.Types.SE.Core
   , liftMultiDep
   , liftOpcDep
   , liftOpcDep_
+  , liftOpr1
+  , liftOpr1k
   , liftOpr1kDep
-  -- * UDOs
-  , liftUdo
-  , liftMultiUdo
-  , liftUdoDep
-  , liftUdoDep_
-  , liftMultiUdoDep
-  -- * Internal UDOs (defined within the package)
-  , liftInternalUdo
-  , liftInternalMultiUdo
   , readOnlyVar
   ) where
 
+import Control.Monad
 import Control.Monad.IO.Class
 import Data.Kind
 import Data.Text (Text)
@@ -41,7 +37,7 @@ import Control.Monad.Trans.Class (lift)
 import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Dep)
-import Csound.Core.Render.Options (Options (..))
+import Csound.Core.Render.Options (Options (..), addUdo, UdoDef (..))
 import Csound.Core.State qualified as State
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.Val
@@ -73,12 +69,29 @@ renderSE config (SE act) = do
     saveCsd result =
       mapM_ (\file -> Text.writeFile file result) config.csdWriteFile
 
--- | Adds expression to the global scope.
--- It is instrument 0 in csound terms.
-global :: SE () -> SE ()
-global (SE expr) = SE $ lift $ do
-  ge <- Dynamic.execDepT expr
-  State.insertGlobalExpr ge
+-- | It is executed inside intr 0 (setup instrument) so the If-rate is always Ir.
+global :: forall a . Tuple a => SE a -> SE a
+global (SE expr) = SE $ do
+  vars <- lift $ do
+    initVals <- fromTuple (defTuple @a)
+    vars <- zipWithM State.initGlobalVar (tupleRates @a) initVals
+    ge <- Dynamic.execDepT $ do
+      exprs <- lift . fromTuple =<< expr
+      zipWithM_ (Dynamic.writeVar IfIr) vars exprs
+    State.insertGlobalExpr ge
+    pure vars
+  pure $ toTuple $ pure $ fmap (Dynamic.readOnlyVar IfIr) vars
+
+withSetup :: forall a b . (Tuple a) => SE a -> (a -> b) -> b
+withSetup (SE setupExpr) cont = cont $ toTuple $ do
+  initVals <- fromTuple (defTuple @a)
+  State.getReadOnlyVars (tupleRates @a) initVals (lift . fromTuple =<< setupExpr)
+
+withOption :: forall a . Tuple a => Options -> a -> a
+withOption opt a = toTuple $ do
+  exprs <- fromTuple a
+  State.setOption opt
+  pure exprs
 
 -- | forces set of the option to new value
 setOption :: Options -> SE ()
@@ -138,67 +151,30 @@ readOnlyVar expr = fromE $ do
 ------------------------------------------------------------------------------------
 -- use csound opcodes
 
-liftOpc :: (Tuple a, Val b) => Name -> Spec1 -> a -> b
+liftOpc :: (FromTuple a, Val b) => Name -> Spec1 -> a -> b
 liftOpc name rates a = fromE $ Dynamic.opcs name rates <$> fromTuple a
 
-liftMulti :: forall a b . (Tuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> b
+liftMulti :: forall a b . (FromTuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> b
 liftMulti name rates a = pureTuple $ Dynamic.mopcs name rates <$> fromTuple a
   where
     pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs
 
-liftOpcDep :: (Tuple a, Val b) => Name -> Spec1 -> a -> SE b
+liftOpcDep :: (FromTuple a, Val b) => Name -> Spec1 -> a -> SE b
 liftOpcDep name rates a = SE $ fmap (fromE . pure) $ Dynamic.opcsDep name rates =<< lift (fromTuple a)
 
-liftOpcDep_ :: (Tuple a) => Name -> Spec1 -> a -> SE ()
+liftOpcDep_ :: (FromTuple a) => Name -> Spec1 -> a -> SE ()
 liftOpcDep_ name rates a = SE $ Dynamic.opcsDep_ name rates =<< lift (fromTuple a)
 
 -- | TODO: Multi+dep produces bug
-liftMultiDep :: forall a b . (Tuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> SE b
+liftMultiDep :: forall a b . (FromTuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> SE b
 liftMultiDep name rates a =
   SE $ fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
 
+liftOpr1 :: (Val a, Val b) => Name -> a -> b
+liftOpr1 name a = fromE $ Dynamic.opr1 name <$> toE a
+
+liftOpr1k :: (Val a, Val b) => Name -> a -> b
+liftOpr1k name a = fromE $ Dynamic.opr1k name <$> toE a
+
 liftOpr1kDep :: (Val a, Val b) => Name -> a -> SE b
 liftOpr1kDep name b1 = SE $ fmap (fromE . pure) $ Dynamic.opr1kDep name =<< lift (toE b1)
-
--- * UDOs
-
-liftUdo :: (Tuple a, Val b) => FilePath -> Name -> Spec1 -> a -> b
-liftUdo file name rates a = fromE $ do
-  State.includeUdoFile name file
-  Dynamic.opcs name rates <$> fromTuple a
-
-liftMultiUdo :: forall a b . (Tuple a, Tuple b) => FilePath -> Name -> ([Rate], [Rate]) -> a -> b
-liftMultiUdo file name rates a = pureTuple $ do
-  State.includeUdoFile name file
-  Dynamic.mopcs name rates <$> fromTuple a
-  where
-    pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs
-
-liftUdoDep :: (Tuple a, Val b) => FilePath -> Name -> Spec1 -> a -> SE b
-liftUdoDep file name rates a = SE $ fmap (fromE . pure) $ do
-  lift (State.includeUdoFile name file)
-  Dynamic.opcsDep name rates =<< lift (fromTuple a)
-
-liftUdoDep_ :: (Tuple a) => FilePath -> Name -> Spec1 -> a -> SE ()
-liftUdoDep_ file name rates a = SE $ do
-  lift (State.includeUdoFile name file)
-  Dynamic.opcsDep_ name rates =<< lift (fromTuple a)
-
-liftMultiUdoDep :: forall a b . (Tuple a, Tuple b) => FilePath -> Name -> ([Rate], [Rate]) -> a -> SE b
-liftMultiUdoDep file name rates a = SE $ do
-  lift (State.includeUdoFile name file)
-  fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
-
--- * Internal UDOs
-
-liftInternalUdo :: (Tuple a, Val b) => Text -> Name -> Spec1 -> a -> b
-liftInternalUdo udoContent name rates a = fromE $ do
-  State.includeUdo name udoContent
-  Dynamic.opcs name rates <$> fromTuple a
-
-liftInternalMultiUdo :: forall a b . (Tuple a, Tuple b) => Text -> Name -> ([Rate], [Rate]) -> a -> b
-liftInternalMultiUdo udoContent name rates a = pureTuple $ do
-  State.includeUdo name udoContent
-  Dynamic.mopcs name rates <$> fromTuple a
-  where
-    pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs

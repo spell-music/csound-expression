@@ -66,7 +66,7 @@ runDepT a = runStateT (unDepT $ a) def
 evalDepT :: (Functor m, Monad m) => DepT m a -> m a
 evalDepT a = evalStateT (unDepT $ a) def
 
-execDepT :: (Functor m, Monad m) => DepT m () -> m E
+execDepT :: (Functor m, Monad m) => DepT m a -> m E
 execDepT a = fmap expDependency $ execStateT (unDepT $ a) def
 
 -- dependency tracking

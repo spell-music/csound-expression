@@ -1,31 +1,48 @@
 {-# Language InstanceSigs #-}
 -- | Essential opcodes. Top 100 opcodes.
 -- See the package csound-expression-opcodes for full list of Csound opcodes
-module Csound.Core.Opcodes
+module Csound.Core.Opcode
   (
   -- * Oscillators / Phasors
     poscil, poscil3
   , oscil, oscil3
-  , vcoInit, VcoInit (..), VcoShape (..)
-  , oscilikt
-  , osc, sqr, tri, saw, vcoTab
+  , vco2
+  , foscili
+
+  -- , vcoInit, VcoInit (..), VcoShape (..)
+  -- , osc
+  -- , oscilikt, sqr, tri, saw, vcoTab
   , buzz, gbuzz
   , mpulse
   , phasor
+
+  -- * Modifiers
+  , integ, dcblock
 
   -- * Random generators
   , rand
   , rnd, birnd
   , random, randomi, randomh
   , seed
+  , gauss
+  , pinkish
+  , noise
+  , randi
+  , randh
 
   -- * Envelopes
   , linen, linenr
   , madsr, adsr
+  , mxadsr
 
   -- * Line generators
   , linseg, expseg
   , linsegr, expsegr
+  , rspline
+  , lpshold
+  , loopseg
+  , loopxseg
+  , lineto
 
   -- * Line Smooth
   , lag, lagud
@@ -33,7 +50,7 @@ module Csound.Core.Opcodes
   -- * Sound Files / Samples
   , diskin, diskin2
   , mp3in
-  , loscil, loscil3, loscilx, lphasor, losc, losc1, loopWav, loopWav1, oscWav, oscWav1, oscMp3
+  , loscil, loscil3, loscilx, lphasor
   , flooper, flooper2
   , filescal, mincer
   , filelen, filesr
@@ -60,6 +77,7 @@ module Csound.Core.Opcodes
   , changed, changed2
   , trigger
 
+{-
   -- * Instrument Control
   , schedule
   , active
@@ -72,14 +90,17 @@ module Csound.Core.Opcodes
   , stopSelf
   , stopInstr
   , stopInstr_i
+-}
 
   -- * Time
   , metro, metro2
   , timeinsts
 
+  {-
   -- * Channels
   , Chan, newChan, getChanName
   , chnmix, chnclear
+  -}
 
   -- * MIDI
   , massign
@@ -88,9 +109,6 @@ module Csound.Core.Opcodes
   , midictrl, ctrlinit, CtrlInit (..)
   , ctrl7, ctrl14
   , initc7, initc14
-
-  -- * OSC
-  , OscHandle, oscInit, oscListen, oscSend
 
   -- * Panning / Spatialization
   , pan2, vbap, vbaplsinit
@@ -116,13 +134,27 @@ module Csound.Core.Opcodes
   , distort, distort1, powershape
 
   -- * Filter
-  , tone, atone, reson, butlp, buthp, butbp, butbr, mode, zdfLadder, moogvcf2, k35_lpf, pareq
+  , tone, atone, reson, butlp, buthp, butbp, butbr, mode, zdfLadder, moogvcf, moogvcf2, k35_lpf, k35_hpf, pareq
+  , bqrez, diode_ladder, zdf_ladder, zdf_1pole, zdf_1pole_mode, zdf_2pole, zdf_2pole_mode
+  , statevar, svfilter
+  , tbvcf
+  , clfilt
+  , lowres , vlowres, rezzy, moogladder
+  , lpf18
+  , areson
+  , mvchpf
+  , mvclpf1
+  , mvclpf2
+  , mvclpf3
+  , mvclpf4
+
+  , portk
 
   -- * Level
   , rms, balance, balance2
 
   -- * Math / Conversion
-  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider, expcurve, scale
+  , ampdb, dbamp, ampdbfs, dbfsamp, dbfs, gainslider, expcurve, scale, cent
 
   -- * Amplitude / Pitch Tracking
   , follow, follow2, ptrack
@@ -134,15 +166,10 @@ module Csound.Core.Opcodes
   -- * Signal Type Conversion
   ) where
 
-import Control.Monad.Trans.Class (lift)
-
-import Csound.Dynamic qualified as Dynamic
-import Csound.Dynamic (Rate (..))
-
 import Csound.Core.Types
-import Csound.Core.Opcodes.Instr
-import Csound.Core.Opcodes.Osc
-import Csound.Core.Opcodes.Vco
+-- import Csound.Core.Opcodes.Instr
+-- import Csound.Core.Opcodes.Osc
+-- import Csound.Core.Opcodes.Vco
 import Csound.Core.Render.Options (setMa)
 
 
@@ -193,9 +220,10 @@ poscil3 b1 b2 b3 = liftOpc "poscil3" rates (b1, b2, b3)
       ,(Ir,[Kr,Kr,Ir,Ir])
       ,(Kr,[Kr,Kr,Ir,Ir])]
 
+{-
 osc :: Sig -> Sig
 osc cps = poscil3 1 cps (sines [1])
-
+-}
 
 -- |
 -- A simple oscillator.
@@ -337,6 +365,30 @@ randomi b1 b2 b3 = liftOpcDep "randomi" rates (b1, b2, b3)
   where rates = [(Ar,[Kr,Kr,Xr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])]
 
 -- |
+-- Gaussian distribution random number generator.
+--
+-- Gaussian distribution random number generator. This is an x-class noise generator.
+--
+-- > ares  gauss  krange
+-- > ires  gauss  irange
+-- > kres  gauss  krange
+-- > ares  gauss  kmean, ksdev
+-- > ires  gauss  imean, isdev
+-- > kres  gauss  kmean, ksdev
+--
+-- csound doc: <https://csound.com/docs/manual/gauss.html>
+gauss ::  Sig -> SE Sig
+gauss b1 =
+  liftOpcDep "gauss" rates b1
+  where
+    rates = [(Ar,[Kr])
+            ,(Ir,[Ir])
+            ,(Kr,[Kr])
+            ,(Ar,[Kr,Kr])
+            ,(Ir,[Ir,Ir])
+            ,(Kr,[Kr,Kr])]
+
+-- |
 -- Sets the global seed value.
 --
 -- Sets the global seed value for all x-class noise generators, as well as other opcodes that use a random call, such as grain.
@@ -410,8 +462,7 @@ adsr b1 b2 b3 b4 = liftOpc "adsr" rates (b1,b2,b3,b4)
 --
 -- csound doc: <http://csound.com/docs/manual/linseg.html>
 linseg ::  [D] -> Sig
-linseg b1 = Sig $ f <$> mapM unD b1
-    where f a1 = Dynamic.setRate Kr $ Dynamic.opcs "linseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+linseg bs = setRate Kr $ liftOpc "linseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (bs ++ [1, last bs])
 
 -- |
 -- Trace a series of exponential segments between specified points.
@@ -421,8 +472,7 @@ linseg b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/linseg.html>
 expseg ::  [D] -> Sig
-expseg b1 = Sig $ f <$> mapM unD b1
-    where f a1 = Dynamic.setRate Kr $ Dynamic.opcs "expseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1])
+expseg bs = setRate Kr $ liftOpc "expseg" [(Kr, repeat Ir), (Ar, repeat Ir)] (bs ++ [1, last bs])
 
 -- |
 -- Trace a series of line segments between specified points including a release segment.
@@ -432,8 +482,7 @@ expseg b1 = Sig $ f <$> mapM unD b1
 --
 -- csound doc: <http://csound.com/docs/manual/linsegr.html>
 linsegr ::  [D] -> D -> D -> Sig
-linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = Dynamic.setRate Kr $ Dynamic.opcs "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+linsegr b1 b2 b3 = setRate Kr $ liftOpc "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (b1 ++ [1, last b1], b2, b3)
 
 -- |
 -- Trace a series of exponential segments between specified points including a release segment.
@@ -443,8 +492,7 @@ linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
 --
 -- csound doc: <http://csound.com/docs/manual/expsegr.html>
 expsegr ::  [D] -> D -> D -> Sig
-expsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
-    where f a1 a2 a3 = Dynamic.setRate Kr $ Dynamic.opcs "expsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
+expsegr b1 b2 b3 = setRate Kr $ liftOpc "expsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (b1 ++ [1, last b1], b2, b3)
 
 ----------------------------------------------------------------------------------
 -- Line Smooth
@@ -513,40 +561,6 @@ loscil b1 b2 b3 = liftMulti "loscil" rates (b1,b2,b3)
 loscil3 :: Tuple a => Sig -> Sig -> Tab -> a
 loscil3 b1 b2 b3 = liftMulti "loscil3" rates (b1, b2, b3)
   where rates = ([Ar,Ar],[Xr,Kr,Ir,Ir,Ir,Ir,Ir,Ir,Ir,Ir])
-
--- | Loop over table stereo files. Uses loscil3 under the hood.
--- Watch out for sample rates! If file sample rate is different
--- from global project sample rate then playback will be distorted.
-losc :: Tab -> Sig -> Sig2
-losc tb cps = flooper @Sig2 1 cps 0 (tabDur tb) 0 tb
-
--- | Loop over table mono files. Uses loscil3 under the hood.
--- Watch out for sample rates! If file sample rate is different
--- from global project sample rate then playback will be distorted.
-losc1 :: Tab -> Sig -> Sig
-losc1 tb cps = flooper @Sig 1 cps 0 (tabDur tb) 0 tb
-
--- | Oscillate over stereo wav file (file read from disk)
-loopWav :: Str -> Sig -> Sig2
-loopWav file cps = diskin2 file `withInits` (cps, 0 :: D, 1 :: D)
-
--- | Oscilate over mono wav-file (file read from disk)
-loopWav1 :: Str -> Sig -> Sig
-loopWav1 file cps = diskin2 file `withInits` (cps, 0 :: D, 1 :: D)
-
--- | Oscillate over wav file (file read from memory)
-oscWav :: String -> Sig -> Sig2
-oscWav file cps = losc (wavAll file) cps
-
--- | Oscillate over wav file (file read from memory)
-oscWav1 :: String -> Sig -> Sig
-oscWav1 file cps = losc1 (wavLeft file) cps
-
--- | Oscillate over mp3 file (file read from memory)
-oscMp3 :: String -> Sig -> Sig2
-oscMp3 file cps = (go Mp3Left, go Mp3Right)
-  where
-    go chn = losc1 (mp3s file 0 chn) cps
 
 -- |
 -- Read multi-channel sampled sound from a table.
@@ -777,13 +791,11 @@ tablew b1 b2 b3 = liftOpcDep_ "tablew" rates (b1,b2,b3)
 --
 -- > ktrig changed kvar1 [, kvar2,..., kvarN]
 changed :: [Sig] -> Sig
-changed as = Sig $ f <$> mapM toE as
-  where f a1 = Dynamic.opcs "changed" [(Kr, repeat Kr), (Ar, repeat Ir)] a1
+changed as = liftOpc "changed" [(Kr, repeat Kr), (Ar, repeat Ir)] as
 
 -- | Like @changed@ but it does not trigger the first cycle if any of the input signals is non-zero.
 changed2 :: [Sig] -> Sig
-changed2 as = Sig $ f <$> mapM toE as
-  where f a1 = Dynamic.opcs "changed" [(Kr, repeat Kr), (Ar, repeat Ir)] a1
+changed2 as = liftOpc "changed" [(Kr, repeat Kr), (Ar, repeat Ir)] as
 
 -- |
 -- Informs when a krate signal crosses a threshold.
@@ -818,6 +830,7 @@ metro2 a b = liftOpc "metro2" [(Kr, [Kr,Kr,Ir,Ir])] (a, b)
 timeinsts :: SE Sig
 timeinsts = liftOpcDep "timeinsts" [(Kr,[])] ()
 
+{-
 -------------------------------------------------------------------------------------
 -- Channels
 
@@ -831,15 +844,15 @@ getChanName = unChan
 
 instance IsRef Chan where
   readRef :: forall a . Tuple a => Chan a -> SE a
-  readRef (Chan str) = SE $ fmap (toTuple . pure . pure) $ Dynamic.opcsDep "chnget" rates =<< lift (fromTuple str)
+  readRef (Chan str) = liftOpcDep "chnget" rates str
     where rates = [(head (tupleRates @a), [Sr])]
 
   writeRef :: forall a . Tuple a => Chan a -> a -> SE ()
   writeRef (Chan str) val = liftOpcDep_ "chnset" rates (val, str)
     where rates = [(Xr, [head (tupleRates @a), Sr])]
 
-  readInitRef :: forall a . (Tuple a, Tuple (InitType a)) => Chan a -> SE (InitType a)
-  readInitRef (Chan str) = SE $ fmap (toTuple . pure . pure) $ Dynamic.opcsDep "chnget" rates =<< lift (fromTuple str)
+  readInitRef :: forall a . (Tuple a, Val (InitType a)) => Chan a -> SE (InitType a)
+  readInitRef (Chan str) = liftOpcDep "chnget" rates str
     where rates = [(Ir, [Sr])]
 
   writeInitRef :: forall a . (Tuple a, Tuple (InitType a)) => Chan a -> InitType a -> SE ()
@@ -853,6 +866,7 @@ chnclear (Chan str) = liftOpcDep_ "chnclear" [(Xr, [Sr])] str
 chnmix :: Chan Sig -> Sig -> SE ()
 chnmix (Chan str) val = liftOpcDep_ "chnset" rates (val, str)
   where rates = [(Xr, [Ar, Sr])]
+-}
 
 -------------------------------------------------------------------------------------
 -- Space
@@ -877,7 +891,7 @@ vbap asig kazim = liftMulti "vbap" (repeat Ar, [Ar, Kr, Kr, Kr, Ir]) (asig, kazi
 --
 -- > vbaplsinit idim, ilsnum [, idir1] [, idir2] [...] [, idir32]
 vbaplsinit :: D -> D -> [D] -> SE ()
-vbaplsinit b1 b2 bs = SE $ Dynamic.opcsDep_ "vbaplsinit" rates =<< lift ((\a1 a2 as -> a1 : a2 : as) <$> toE b1 <*> toE b2 <*> mapM toE bs)
+vbaplsinit b1 b2 bs = liftOpcDep_ "vbaplsinit" rates (b1, b2, bs)
   where rates = [(Xr, repeat Ir)]
 
 -------------------------------------------------------------------------------------
@@ -1123,6 +1137,14 @@ k35_lpf asig xfco xres = liftOpc "K35_lpf" rates (asig, xfco, xres)
   where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])]
 
 -- |
+-- A digital emulation of Korg 35 filter
+--
+-- > ares k35_hpf asig, xcutoff, xresonance, [..]
+k35_hpf ::  Sig -> Sig -> Sig -> Sig
+k35_hpf asig xfco xres = liftOpc "K35_hpf" rates (asig, xfco, xres)
+  where rates = [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])]
+
+-- |
 -- Implementation of Zoelzer's parametric equalizer filters.
 --
 -- Implementation of Zoelzer's parametric equalizer filters, with some modifications by the author.
@@ -1270,7 +1292,7 @@ distort1 b1 b2 b3 b4 ain = liftOpc "distort1" rates (ain, b1,b2,b3,b4)
 --
 -- csound doc: <http://csound.com/docs/manual/print.html>
 printi ::  [D] -> SE ()
-printi ds = SE $ Dynamic.opcsDep_ "print" rates =<< lift (mapM toE ds)
+printi ds = liftOpcDep_ "print" rates ds
     where rates = [(Xr,(repeat Ir))]
 
 
@@ -1337,11 +1359,11 @@ fout b1 b2 b3 = liftOpcDep_ "fout" rates (b1, b2, b3)
   where rates = [(Xr,[Sr,Ir] ++ (repeat Ar))]
 
 ftsave :: Str -> D -> [Tab] -> SE ()
-ftsave file imode tabs = SE $ Dynamic.opcsDep_ "ftsave" rates =<< lift ((\a1 a2 as -> a1 : a2 : as) <$> toE file <*> toE imode <*> mapM toE tabs)
+ftsave file imode tabs = liftOpcDep_ "ftsave" rates (file, imode, tabs)
   where rates = [(Xr,Sr : Ir : (repeat Ir))]
 
 fprints :: Str -> Str -> [D] -> SE ()
-fprints file format vals = SE $ Dynamic.opcsDep_ "fprints" rates =<< lift ((\a1 a2 as -> a1 : a2 : as) <$> toE file <*> toE format <*> mapM toE vals)
+fprints file format vals = liftOpcDep_ "fprints" rates (file, format, vals)
   where rates = [(Xr, Sr : Sr : repeat Ir)]
 
 readf :: Str -> SE (Str, Sig)
@@ -1365,8 +1387,7 @@ readfi = liftMultiDep "readfi" ([Sr, Ir], [Sr])
 --
 -- csound doc: <http://csound.com/docs/manual/ampdb.html>
 ampdb :: SigOrD a => a -> a
-ampdb b1 = fromE $ f <$> toE b1
-    where f a1 = Dynamic.opr1 "ampdb" a1
+ampdb b1 = liftOpr1 "ampdb" b1
 
 -- |
 -- Returns the decibel equivalent of the raw amplitude x.
@@ -1375,8 +1396,7 @@ ampdb b1 = fromE $ f <$> toE b1
 --
 -- csound doc: <http://csound.com/docs/manual/dbamp.html>
 dbamp :: SigOrD a => a -> a
-dbamp b1 = fromE $ f <$> toE b1
-    where f a1 = Dynamic.opr1k "dbamp" a1
+dbamp b1 = liftOpr1k "dbamp" b1
 
 -- |
 -- Returns the amplitude equivalent (in 16-bit signed integer scale) of the full scale decibel (dB FS) value x.
@@ -1387,8 +1407,7 @@ dbamp b1 = fromE $ f <$> toE b1
 --
 -- csound doc: <http://csound.com/docs/manual/ampdbfs.html>
 ampdbfs :: SigOrD a => a -> a
-ampdbfs b1 = fromE $ f <$> toE b1
-    where f a1 = Dynamic.opr1 "ampdbfs" a1
+ampdbfs b1 = liftOpr1 "ampdbfs" b1
 
 -- |
 -- Returns the decibel equivalent of the raw amplitude x, relative to full scale amplitude.
@@ -1399,8 +1418,7 @@ ampdbfs b1 = fromE $ f <$> toE b1
 --
 -- csound doc: <http://csound.com/docs/manual/dbfsamp.html>
 dbfsamp :: SigOrD a => a -> a
-dbfsamp b1 = fromE $ f <$> toE b1
-    where f a1 = Dynamic.opr1k "dbfsamp" a1
+dbfsamp b1 = liftOpr1k "dbfsamp" b1
 
 
 
@@ -1482,12 +1500,18 @@ data CtrlInit = CtrlInit
   , ctrlInitValue :: D -- init value
   }
 
+instance FromTuple CtrlInit where
+  fromTuple (CtrlInit chan num val) = fromTuple (chan, num, val)
+
 instance Tuple CtrlInit where
-  tupleMethods = makeTupleMethods  (\(a,b,c) -> CtrlInit a b c) (\(CtrlInit a b c) -> (a, b, c))
+  tupleArity = 3
+  tupleRates = [Ir, Ir, Ir]
+  defTuple = CtrlInit defTuple defTuple defTuple
+  toTuple = (\(chan, num, val) -> CtrlInit chan num val) . toTuple
 
 -- | ctrlinit — Sets the initial values for a set of MIDI controllers.
 ctrlinit :: [CtrlInit] -> SE ()
-ctrlinit inits = SE $ Dynamic.opcsDep_ "ctrlinit" rates =<< lift (concat <$> mapM fromTuple inits)
+ctrlinit inits = liftOpcDep_ "ctrlinit" rates inits
   where rates = [(Xr, repeat Ir)]
 
 -- |
@@ -1647,3 +1671,505 @@ dam a1 a2 a3 a4 a5 a6 = liftOpc "dam" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir])] (a1,a2,a3,a4,a5
 compress ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
 compress a1 a2 a3 a4 a5 a6 a7 a8 a9 =
   liftOpc "compress" [(Ar,[Ar,Ar,Kr,Kr,Kr,Kr,Kr,Kr,Ir])] ((a1,a2,a3,a4),(a5,a6,a7,a8,a9))
+
+-- |
+-- Calculates a factor to raise/lower a frequency by a given amount of cents.
+--
+-- >  cent (x)
+--
+-- csound doc: <https://csound.com/docs/manual/cent.html>
+cent :: SigOrD a => a -> a
+cent b1 = liftOpr1 "cent" b1
+
+-- |
+-- Modify a signal by integration.
+--
+-- > ares  integ  asig [, iskip]
+-- > kres  integ  ksig [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/integ.html>
+integ ::  Sig -> Sig
+integ b1 = liftOpc "integ" rates b1
+  where
+    rates = [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])]
+
+-- |
+-- A DC blocking filter.
+--
+-- Implements the DC blocking filter
+--
+-- > ares  dcblock  ain [, igain]
+--
+-- csound doc: <https://csound.com/docs/manual/dcblock.html>
+dcblock ::  Sig -> Sig
+dcblock b1 = liftOpc "dcblock" [(Ar,[Ar,Ir])] b1
+
+-- |
+-- Generates random numbers and holds them for a period of time.
+--
+-- > ares  randh  xamp, xcps [, iseed] [, isize] [, ioffset]
+-- > kres  randh  kamp, kcps [, iseed] [, isize] [, ioffset]
+--
+-- csound doc: <https://csound.com/docs/manual/randh.html>
+randh ::  Sig -> Sig -> SE Sig
+randh b1 b2 = liftOpcDep "randh" rates (b1, b2)
+  where
+    rates = [(Ar,[Xr,Xr,Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir,Ir])]
+
+-- |
+-- Generates a controlled random number series with interpolation between each new number.
+--
+-- > ares  randi  xamp, xcps [, iseed] [, isize] [, ioffset]
+-- > kres  randi  kamp, kcps [, iseed] [, isize] [, ioffset]
+--
+-- csound doc: <https://csound.com/docs/manual/randi.html>
+randi ::  Sig -> Sig -> SE Sig
+randi b1 b2 = liftOpcDep "randi" rates (b1, b2)
+  where
+    rates = [(Ar,[Xr,Xr,Ir,Ir,Ir]),(Kr,[Kr,Kr,Ir,Ir,Ir])]
+
+-- |
+-- A white noise generator with an IIR lowpass filter.
+--
+-- > ares  noise  xamp, kbeta
+--
+-- csound doc: <https://csound.com/docs/manual/noise.html>
+noise ::  Sig -> Sig -> SE Sig
+noise b1 b2 = liftOpcDep "noise" rates (b1, b2)
+  where
+    rates = [(Ar,[Xr,Kr])]
+
+-- |
+-- Generates approximate pink noise.
+--
+-- Generates approximate pink noise (-3dB/oct response) by one of two different methods:
+--
+-- > ares  pinkish  xin [, imethod] [, inumbands] [, iseed] [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/pinkish.html>
+pinkish ::  Sig -> SE Sig
+pinkish b1 = liftOpcDep "pinkish" rates b1
+  where
+    rates = [(Ar,[Xr,Ir,Ir,Ir,Ir])]
+
+-- |
+-- Generate random spline curves.
+--
+-- > ares  rspline  xrangeMin, xrangeMax, kcpsMin, kcpsMax
+-- > kres  rspline  krangeMin, krangeMax, kcpsMin, kcpsMax
+--
+-- csound doc: <https://csound.com/docs/manual/rspline.html>
+rspline ::  Sig -> Sig -> Sig -> Sig -> SE Sig
+rspline b1 b2 b3 b4 = liftOpcDep "rspline" rates (b1,b2,b3,b4)
+  where
+    rates = [(Ar,[Xr,Xr,Kr,Kr]),(Kr,[Kr,Kr,Kr,Kr])]
+
+-- |
+-- Implementation of a band-limited oscillator using pre-calculated tables.
+--
+-- vco2 is similar to vco. But the implementation uses pre-calculated tables of band-limited waveforms (see also GEN30) rather than integrating impulses. This opcode can be faster than vco (especially if a low control-rate is used) and also allows better sound quality. Additionally, there are more waveforms and oscillator phase can be modulated at k-rate. The disadvantage is increased memory usage. For more details about vco2 tables, see also vco2init and vco2ft.
+--
+-- > ares  vco2  kamp, kcps [, imode] [, kpw] [, kphs] [, inyx]
+--
+-- csound doc: <https://csound.com/docs/manual/vco2.html>
+vco2 ::  Sig -> Sig -> Sig
+vco2 b1 b2 = liftOpc "vco2" rates (b1, b2)
+  where
+    rates = [(Ar,[Kr,Kr,Ir,Kr,Kr,Ir])]
+
+-- |
+-- Basic frequency modulated oscillator with linear interpolation.
+--
+-- > ares  foscili  xamp, kcps, xcar, xmod, kndx, ifn [, iphs]
+--
+-- csound doc: <https://csound.com/docs/manual/foscili.html>
+foscili ::  Sig -> Sig -> Sig -> Sig -> Sig -> Tab -> Sig
+foscili b1 b2 b3 b4 b5 b6 = liftOpc "foscili" rates (b1,b2,b3,b4,b5,b6)
+  where
+    rates = [(Ar,[Xr,Kr,Xr,Xr,Kr,Ir,Ir])]
+
+
+-- |
+-- Generate control signal consisting of exponential segments delimited by two or more specified points.
+--
+-- Generate control signal consisting of exponential segments delimited by two or more specified points. The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate.
+--
+-- > ksig  loopxseg  kfreq, ktrig, iphase, kvalue0, ktime0  [, kvalue1] [, ktime1] \
+-- >           [, kvalue2] [, ktime2] [...]
+--
+-- csound doc: <https://csound.com/docs/manual/loopxseg.html>
+loopxseg ::  Sig -> Sig -> D -> [Sig] -> Sig
+loopxseg b1 b2 b3 b4 =
+  liftOpc "loopxseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] (b1, b2, b3, b4, 0 :: Sig)
+
+
+-- |
+-- Generate control signal consisting of linear segments delimited by two or more specified points.
+--
+-- Generate control signal consisting of linear segments delimited by two or more specified points. The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate.
+--
+-- > ksig  loopseg  kfreq, ktrig, iphase, kvalue0, ktime0 [, kvalue1] [, ktime1] \
+-- >     [, kvalue2] [, ktime2][...]
+--
+-- csound doc: <https://csound.com/docs/manual/loopseg.html>
+loopseg ::  Sig -> Sig -> D -> [Sig] -> Sig
+loopseg b1 b2 b3 b4 =
+  liftOpc "loopseg" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] (b1,b2,b3,b4, 0 :: Sig)
+
+-- |
+-- Generate control signal consisting of held segments.
+--
+-- Generate control signal consisting of held segments delimited by two or more specified points. The entire envelope is looped at kfreq rate. Each parameter can be varied at k-rate.
+--
+-- > ksig  lpshold  kfreq, ktrig, iphase, kvalue0, ktime0  [, kvalue1] [, ktime1] [, kvalue2] [, ktime2] [...]
+--
+-- csound doc: <https://csound.com/docs/manual/lpshold.html>
+lpshold ::  Sig -> Sig -> D -> [Sig] -> Sig
+lpshold b1 b2 b3 b4 =
+  liftOpc "lpshold" [(Kr,[Kr,Kr,Ir] ++ (repeat Kr))] (b1,b2,b3,b4, 0 :: Sig)
+
+-- |
+-- Applies portamento to a step-valued control signal.
+--
+-- > kres  portk  ksig, khtim [, isig]
+--
+-- csound doc: <https://csound.com/docs/manual/portk.html>
+portk ::  Sig -> Sig -> Sig
+portk b1 b2 = liftOpc "portk" [(Kr,[Kr,Kr,Ir])] (b1, b2)
+
+-- |
+-- Calculates the classical ADSR envelope using the expsegr mechanism.
+--
+-- > ares  mxadsr  iatt, idec, islev, irel [, idel] [, ireltim]
+-- > kres  mxadsr  iatt, idec, islev, irel [, idel] [, ireltim]
+--
+-- csound doc: <https://csound.com/docs/manual/mxadsr.html>
+mxadsr ::  D -> D -> D -> D -> Sig
+mxadsr b1 b2 b3 b4 =
+  liftOpc "mxadsr"
+    [(Ar,[Ir,Ir,Ir,Ir,Ir,Ir]),(Kr,[Ir,Ir,Ir,Ir,Ir,Ir])]
+    (b1,b2,b3,b4)
+
+-- |
+-- A second-order multi-mode filter.
+--
+-- > ares  bqrez  asig, xfco, xres [, imode] [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/bqrez.html>
+bqrez ::  Sig -> Sig -> Sig -> Sig
+bqrez b1 b2 b3 = liftOpc "bqrez" [(Ar,[Ar,Xr,Xr,Ir,Ir])] (b1, b2, b3)
+
+-- |
+-- Zero-delay feedback implementation of 4 pole diode ladder filter.
+--
+-- Zero-delay feedback implementation of a 4 pole (24 dB/oct) diode low-pass filter. This filter design was originally used in the EMS VCS3 and was the resonant filter in the Roland TB-303.
+--
+-- > asig  diode_ladder  ain, xcf, xk [, inlp, isaturation, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/diode_ladder.html>
+diode_ladder ::  Sig -> Sig -> Sig -> Sig
+diode_ladder b1 b2 b3 =
+  liftOpc "diode_ladder" [(Ar,[Ar,Xr,Xr,Ir,Ir,Ir])] (b1,b2,b3)
+
+-- |
+-- Zero-delay feedback implementation of 4 pole ladder filter.
+--
+-- Zero-delay feedback implementation of a 4 pole (24 dB/oct) low-pass filter based on the Moog ladder filter.
+--
+-- > asig  zdf_ladder  ain, xcf, xQ [, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/zdf_ladder.html>
+zdf_ladder ::  Sig -> Sig -> Sig -> Sig
+zdf_ladder b1 b2 b3 =
+  liftOpc "zdf_ladder" [(Ar,[Ar,Xr,Xr,Ir])] (b1,b2,b3)
+
+-- |
+-- Zero-delay feedback implementation of 1 pole filter.
+--
+-- Zero-delay feedback implementation of a 1 pole (6 dB/oct) filter. Offers low-pass (default), high-pass, and allpass output modes.
+--
+-- > asig  zdf_1pole  ain, xcf [, kmode, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/zdf_1pole.html>
+zdf_1pole ::  Sig -> Sig -> Sig
+zdf_1pole b1 b2 =
+  liftOpc "zdf_1pole" [(Ar,[Ar,Xr,Kr,Ir])] (b1,b2)
+
+-- |
+-- Zero-delay feedback implementation of 1 pole filter with multimode output.
+--
+-- Zero-delay feedback implementation of a 1 pole (6 dB/oct) filter. Offers low-pass and high-pass output.
+--
+-- > alp, ahp  zdf_1pole_mode  ain, xcf [, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/zdf_1pole_mode.html>
+zdf_1pole_mode ::  Sig -> Sig -> (Sig,Sig)
+zdf_1pole_mode b1 b2 =
+  liftMulti "zdf_1pole_mode" ([Ar,Ar],[Ar,Xr,Ir]) (b1,b2)
+
+-- |
+-- Zero-delay feedback implementation of 2 pole filter.
+--
+-- Zero-delay feedback implementation of a 2 pole (12 dB/oct) filter. Offers low-pass (default), high-pass, and allpass output modes.
+--
+-- > asig  zdf_2pole  ain, xcf, xQ [, kmode, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/zdf_2pole.html>
+zdf_2pole ::  Sig -> Sig -> Sig -> Sig
+zdf_2pole b1 b2 b3 =
+ liftOpc "zdf_2pole" [(Ar,[Ar,Xr,Xr,Kr,Ir])] (b1,b2,b3)
+
+-- |
+-- Zero-delay feedback implementation of 2 pole filter with multimode output.
+--
+-- Zero-delay feedback implementation of a 2 pole (12 dB/oct) filter. Offers low-pass,
+--       band-pass, and high-pass output.
+--
+-- > alp, abp, ahp  zdf_2pole_mode  ain, xcf, Q [, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/zdf_2pole_mode.html>
+zdf_2pole_mode ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig)
+zdf_2pole_mode b1 b2 b3 =
+  liftMulti "zdf_2pole_mode" ([Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) (b1,b2,b3)
+
+-- |
+-- State-variable filter.
+--
+-- Statevar is a new digital implementation of the analogue state-variable filter.
+-- This filter has four simultaneous outputs: high-pass, low-pass,
+-- band-pass and band-reject. This filter uses oversampling for sharper
+-- resonance (default: 3 times oversampling). It includes a
+-- resonance limiter that prevents the filter from getting unstable.
+--
+-- > ahp,alp,abp,abr  statevar  ain, xcf, xq [, iosamps, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/statevar.html>
+statevar ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
+statevar b1 b2 b3 =
+  liftMulti "statevar" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir,Ir]) (b1,b2,b3)
+
+-- |
+-- A resonant second order filter, with simultaneous lowpass, highpass and bandpass outputs.
+--
+-- Implementation of a resonant second order filter, with simultaneous lowpass, highpass and bandpass outputs.
+--
+-- > alow, ahigh, aband  svfilter   asig, kcf, kq [, iscl] [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/svfilter.html>
+svfilter ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig)
+svfilter b1 b2 b3 =
+  liftMulti "svfilter" ([Ar,Ar,Ar],[Ar,Kr,Kr,Ir,Ir]) (b1,b2,b3)
+
+-- |
+-- Models some of the filter characteristics of a Roland TB303 voltage-controlled filter.
+--
+-- This opcode attempts to model some of the filter characteristics of a Roland TB303 voltage-controlled filter. Euler's method is used to approximate the system, rather than traditional filter methods. Cutoff frequency, Q, and distortion are all coupled. Empirical methods were used to try to unentwine,  but frequency is only approximate as a result. Future fixes for some problems with this opcode may break existing orchestras relying on this version of tbvcf.
+--
+-- > ares  tbvcf  asig, xfco, xres, kdist, kasym [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/tbvcf.html>
+tbvcf ::  Sig -> Sig -> Sig -> Sig -> Sig -> Sig
+tbvcf b1 b2 b3 b4 b5 =
+  liftOpc "tbvcf" [(Ar,[Ar,Xr,Xr,Kr,Kr,Ir])] (b1,b2,b3,b4,b5)
+
+-- |
+-- Implements low-pass and high-pass filters of different styles.
+--
+-- Implements the classical standard analog filter types: low-pass and high-pass. They are implemented with the four classical kinds of filters: Butterworth, Chebyshev Type I, Chebyshev Type II, and Elliptical.  The number of poles may be any even number from 2 to 80.
+--
+-- > ares  clfilt  asig, kfreq, itype, inpol [, ikind] [, ipbr] [, isba] [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/clfilt.html>
+clfilt ::  Sig -> Sig -> D -> D -> Sig
+clfilt b1 b2 b3 b4 =
+  liftOpc "clfilt" [(Ar,[Ar,Kr,Ir,Ir,Ir,Ir,Ir,Ir])] (b1,b2,b3,b4)
+
+-- |
+-- Another resonant lowpass filter.
+--
+-- lowres is a resonant lowpass filter.
+--
+-- > ares  lowres  asig, xcutoff, xresonance [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/lowres.html>
+lowres ::  Sig -> Sig -> Sig -> Sig
+lowres b1 b2 b3 =
+  liftOpc "lowres" [(Ar,[Ar,Xr,Xr,Ir])] (b1,b2,b3)
+
+-- |
+-- A bank of filters in which the cutoff frequency can be separated under user control.
+--
+-- A bank of filters in which the cutoff frequency can be separated under user control
+--
+-- > ares  vlowres  asig, kfco, kres, iord, ksep
+--
+-- csound doc: <https://csound.com/docs/manual/vlowres.html>
+vlowres ::  Sig -> Sig -> Sig -> D -> Sig -> Sig
+vlowres b1 b2 b3 b4 b5 =
+  liftOpc "vlowres" [(Ar,[Ar,Kr,Kr,Ir,Kr])] (b1,b2,b3,b4,b5)
+
+-- |
+-- A resonant low-pass filter.
+--
+-- > ares  rezzy  asig, xfco, xres [, imode, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/rezzy.html>
+rezzy ::  Sig -> Sig -> Sig -> Sig
+rezzy b1 b2 b3 = liftOpc "rezzy" [(Ar,[Ar,Xr,Xr,Ir,Ir])] (b1,b2,b3)
+
+-- |
+-- Moog ladder lowpass filter.
+--
+-- Moogladder is an new digital implementation of the Moog ladder filter based on
+-- the work of Antti Huovilainen, described in the paper "Non-Linear Digital
+-- Implementation of the Moog Ladder Filter" (Proceedings of DaFX04, Univ of Napoli).
+-- This implementation is probably a more accurate digital representation of
+-- the original analogue filter.
+--
+-- > asig  moogladder  ain, kcf, kres[, istor]
+-- > asig  moogladder  ain, acf, kres[, istor]
+-- > asig  moogladder  ain, kcf, ares[, istor]
+-- > asig  moogladder  ain, acf, ares[, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/moogladder.html>
+moogladder ::  Sig -> Sig -> Sig -> Sig
+moogladder b1 b2 b3 =
+  liftOpc "moogladder" [(Ar,[Ar,Kr,Kr,Ir])
+                      ,(Ar,[Ar,Ar,Kr,Ir])
+                      ,(Ar,[Ar,Kr,Ar,Ir])
+                      ,(Ar,[Ar,Ar,Ar,Ir])] (b1,b2,b3)
+
+-- |
+-- A digital emulation of the Moog diode ladder filter configuration.
+--
+-- > ares  moogvcf  asig, xfco, xres [,iscale, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/moogvcf.html>
+moogvcf ::  Sig -> Sig -> Sig -> Sig
+moogvcf b1 b2 b3 =
+  liftOpc "moogvcf" [(Ar,[Ar,Xr,Xr,Ir,Ir])] (b1,b2,b3)
+
+-- |
+-- Generate glissandos starting from a control signal.
+--
+-- > kres  lineto  ksig, ktime
+--
+-- csound doc: <https://csound.com/docs/manual/lineto.html>
+lineto ::  Sig -> Sig -> Sig
+lineto b1 b2 = liftOpc "lineto" [(Kr,[Kr,Kr])] (b1,b2)
+
+-- |
+-- A 3-pole sweepable resonant lowpass filter.
+--
+-- Implementation of a 3 pole sweepable resonant lowpass filter.
+--
+-- > ares  lpf18  asig, xfco, xres, xdist [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/lpf18.html>
+lpf18 ::  Sig -> Sig -> Sig -> Sig -> Sig
+lpf18 b1 b2 b3 b4 =
+  liftOpc "lpf18" [(Ar,[Ar,Xr,Xr,Xr,Ir])] (b1,b2,b3,b4)
+
+-- |
+-- A notch filter whose transfer functions are the complements of
+--       the reson opcode.
+--
+-- > ares  areson  asig, kcf, kbw [, iscl] [, iskip]
+-- > ares  areson  asig, acf, kbw [, iscl] [, iskip]
+-- > ares  areson  asig, kcf, abw [, iscl] [, iskip]
+-- > ares  areson  asig, acf, abw [, iscl] [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/areson.html>
+areson ::  Sig -> Sig -> Sig -> Sig
+areson b1 b2 b3 =
+  liftOpc "areson" [(Ar,[Ar,Kr,Kr,Ir,Ir])
+                  ,(Ar,[Ar,Ar,Kr,Ir,Ir])
+                  ,(Ar,[Ar,Kr,Ar,Ir,Ir])
+                  ,(Ar,[Ar,Ar,Ar,Ir,Ir])] (b1,b2,b3)
+
+
+-- |
+-- Moog voltage-controlled highpass filter emulation.
+--
+-- Mvchpf is an digital implementation of the 4th-order (24 dB/oct)  Moog
+-- high-pass filter, originally written by Fons Andriaensen. According to the author,
+-- mvchpf "...is based on the voltage controlled highpass filter by Robert Moog.
+-- again with some attention to the nonlinear effects."
+--
+-- > asig  mvchpf  ain, xcf[, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/mvchpf.html>
+mvchpf ::  Sig -> Sig -> Sig
+mvchpf b1 b2 = liftOpc "mvchpf" [(Ar,[Ar,Xr,Ir])] (b1,b2)
+
+-- |
+-- Moog voltage-controlled lowpass filter emulation.
+--
+-- Mvclpf1 is an digital implementation of the 4th-order (24 dB/oct)  Moog ladder filter
+-- originally written by Fons Andriaensen. According to the author,
+-- mvclpf1 "is a fairly simple design, and it does not even pretend to come
+-- close the 'real thing'. It uses a very crude approximation of the non-linear
+-- resistor in the first filter section only. [...] [I]t's [a] cheap (in
+-- terms of CPU usage) general purpose 24 dB/oct lowpass
+-- filter that could be useful".
+--
+-- > asig  mvclpf1  ain, xcf, xres[,istor]
+--
+-- csound doc: <https://csound.com/docs/manual/mvclpf1.html>
+mvclpf1 ::  Sig -> Sig -> Sig -> Sig
+mvclpf1 b1 b2 b3 =
+  liftOpc "mvclpf1" [(Ar,[Ar,Xr,Xr,Ir])] (b1,b2,b3)
+
+-- |
+-- Moog voltage-controlled lowpass filter emulation.
+--
+-- Mvclpf2 is an digital implementation of the 4th-order (24 dB/oct) Moog ladder filter
+-- originally written by Fons Andriaensen. According to the author,
+-- mvclpf2 "uses five non-linear elements, in the input and in all four filter
+-- sections. It works by using the derivative of the nonlinearity (for which
+-- 1 / (1 + x * x) is reasonable approximation). The main advantage of this is
+-- that only one evaluation of the non-linear function is required for each
+-- section".
+--
+-- > asig  mvclpf2  ain, xcf, xres[, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/mvclpf2.html>
+mvclpf2 ::  Sig -> Sig -> Sig -> Sig
+mvclpf2 b1 b2 b3 =
+  liftOpc "mvclpf2" [(Ar,[Ar,Xr,Xr,Ir])] (b1,b2,b3)
+
+-- |
+-- Moog voltage-controlled lowpass filter emulation.
+--
+-- Mvclpf3 is an digital implementation of the 4th-order (24 dB/oct) Moog ladder filter
+-- originally written by Fons Andriaensen. According to the author,
+-- mvclpf3 "is based on mvclpf2 , with two differences. It uses the
+-- the technique described by Stilson and Smith to extend the constant-Q
+-- range, and the internal sample frequency is doubled, giving a better
+-- approximation to the non-linear behaviour at high freqencies.
+-- This version has high Q over the entire frequency range and will
+-- oscillate up to above 10 kHz, while the two others show a decreasing
+-- Q at high frequencies. Mvclpf3  is reasonably well tuned, and can be
+-- 'played' as a VCO up to at least 5 kHz".
+--
+-- > asig  mvclpf3  ain, xcf, xres[, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/mvclpf3.html>
+mvclpf3 ::  Sig -> Sig -> Sig -> Sig
+mvclpf3 b1 b2 b3 =
+  liftOpc "mvclpf3" [(Ar,[Ar,Xr,Xr,Ir])] (b1,b2,b3)
+
+-- |
+-- Moog voltage-controlled lowpass filter emulation.
+--
+-- Mvclpf4 is an digital implementation of the 4th-order (24 dB/oct) Moog ladder filter
+-- originally written by Fons Andriaensen. It is a version of the
+-- mvclpf3 opcode with four outputs, for 6dB, 12dB, 18dB, and
+-- 24 dB/octave responses.
+--
+-- > asig1,asig2,asig3,asig4  mvclpf4  ain, xcf, xres[, istor]
+--
+-- csound doc: <https://csound.com/docs/manual/mvclpf4.html>
+mvclpf4 ::  Sig -> Sig -> Sig -> (Sig,Sig,Sig,Sig)
+mvclpf4 b1 b2 b3 =
+  liftMulti "mvclpf4" ([Ar,Ar,Ar,Ar],[Ar,Xr,Xr,Ir]) (b1,b2,b3)
