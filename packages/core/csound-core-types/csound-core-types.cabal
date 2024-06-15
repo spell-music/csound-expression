@@ -60,6 +60,7 @@ Library
     Csound.Core.Types.Prim.Tab
     Csound.Core.Types.PureArray
     Csound.Core.Types.Rate
+    Csound.Core.Types.SE.Type
     Csound.Core.Types.SE.Core
     Csound.Core.Types.SE.Instr
     Csound.Core.Types.SE.Logic

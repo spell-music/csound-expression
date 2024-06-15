@@ -29,6 +29,7 @@ Library
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
+    Csound.Core.Base
     Csound.Core.Base.Evt
     Csound.Core.Base.Vco
     Csound.Core.Base.Osc
@@ -36,6 +37,10 @@ Library
     Csound.Core.Base.Filter
     Csound.Core.Base.Envelope
     Csound.Core.Base.Spec
+    Csound.Core.Base.Midi
+
+  Other-Modules:
+    Csound.Core.Base.Midi.Internal
 
   Default-Language: GHC2021
   Default-extensions:

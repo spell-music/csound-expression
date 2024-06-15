@@ -7,5 +7,3 @@ import Csound.Core.Types.SE.Instr as X
 import Csound.Core.Types.SE.Logic as X
 import Csound.Core.Types.SE.Port as X
 import Csound.Core.Types.SE.Ref as X
-
-

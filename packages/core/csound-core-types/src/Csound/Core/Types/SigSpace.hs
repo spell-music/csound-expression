@@ -15,11 +15,13 @@ module Csound.Core.Types.SigSpace(
 ) where
 
 import Control.Monad
-import Csound.Core.Types.Prim
-import Csound.Core.Types.SE
+import Csound.Core.Types.Prim.Sig
+import Csound.Core.Types.Prim.Val
+import Csound.Core.Types.SE.Type
 import Data.Kind (Type)
-import Data.NumInstances.Tuple()
-import Csound.Dynamic (Rate (..))
+import Csound.Dynamic (Rate (..), Spec1, Name)
+import Csound.Dynamic qualified as Dynamic
+import Data.NumInstances.Tuple ()
 
 -- | A class for easy way to process the outputs of the instruments.
 class SigSpace a where
@@ -50,7 +52,8 @@ bat f = at (\x -> mapSig ( `balance` x) $ f x)
 --
 -- csound doc: <http://csound.com/docs/manual/balance.html>
 balance ::  Sig -> Sig -> Sig
-balance b1 b2 = liftOpc "balance" rates (b1, b2)
+balance b1 b2 =
+  fromE $ (\a b -> Dynamic.opcs "balance" rates [a, b]) <$> toE b1 <*> toE b2
   where rates = [(Ar,[Ar,Ar,Ir,Ir])]
 
 -- | Scaling the sound.

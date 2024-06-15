@@ -287,7 +287,6 @@ linsegr ::  [D] -> D -> D -> Sig
 linsegr b1 b2 b3 = Sig $ f <$> mapM unD b1 <*> unD b2 <*> unD b3
     where f a1 a2 a3 = Dynamic.setRate Kr $ Dynamic.opcs "linsegr" [(Kr, repeat Ir), (Ar, repeat Ir)] (a1 ++ [1, last a1, a2, a3])
 
-
 -- | Adds fractional part to the instrument reference. This trick is used in Csound to identify the notes (or specific instrument invokation).
 setFraction :: Arg a => D -> D -> InstrRef a -> InstrRef a
 setFraction maxSize value = \case

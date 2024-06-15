@@ -33,6 +33,7 @@ import Csound.Core.Types.Prim.Str
 import Csound.Core.Types.Prim.Spec
 import Csound.Core.Types.Prim.InstrId
 import Csound.Core.Types.Prim.Val
+import Csound.Core.Types.SigSpace
 
 class Tuple a => Arg a where
 
@@ -51,7 +52,7 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f)
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e, f, h)
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g)
 
-class (Num a, Tuple a) => Sigs a where
+class (Num a, Tuple a, SigSpace a, Num a) => Sigs a where
 
 instance Sigs Sig
 

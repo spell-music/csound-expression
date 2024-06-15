@@ -12,9 +12,15 @@ module Csound.Core.Base.Instr
   , stopInstr_i
   , schedule
   , scheduleEvent
+  , alwaysOn
   ) where
 
 import Csound.Core.Types
+
+alwaysOn :: SE () -> SE ()
+alwaysOn act = do
+  instrRef <- newProc (\() -> act)
+  play instrRef [Note 0 (-1) ()]
 
 -- | active — Returns the number of active instances of an instrument.
 active :: (Arg a, SigOrD b) => InstrRef a -> SE b

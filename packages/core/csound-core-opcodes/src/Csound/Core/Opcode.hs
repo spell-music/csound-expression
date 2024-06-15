@@ -17,7 +17,7 @@ module Csound.Core.Opcode
   , phasor
 
   -- * Modifiers
-  , integ, dcblock
+  , integ, dcblock, diff
 
   -- * Random generators
   , rand
@@ -80,20 +80,6 @@ module Csound.Core.Opcode
   , changed, changed2
   , trigger
 
-{-
-  -- * Instrument Control
-  , schedule
-  , active
-  , maxalloc
-  , nstrnum
-  , turnoff2
-  , turnoff2_i
-  , turnoffSelf
-  , turnoffSelf_i
-  , stopSelf
-  , stopInstr
-  , stopInstr_i
--}
 
   -- * Time
   , metro, metro2
@@ -107,8 +93,11 @@ module Csound.Core.Opcode
 
   -- * MIDI
   , massign
+  , pgmassign
   , midiin
   , notnum, veloc, release
+  , ampmidi
+  , cpsmidi
   , midictrl, ctrlinit, CtrlInit (..)
   , ctrl7, ctrl14
   , initc7, initc14
@@ -174,7 +163,7 @@ module Csound.Core.Opcode
   , follow, follow2, ptrack
 
   -- * Print
-  , printi, printk, prints, printks, printk2, fprint
+  , printi, printk, prints, printks, printk2, fprint, print'
   -- * File IO
   , fout, ftsave, fprints, readf, readfi
   -- * Signal Type Conversion
@@ -1481,6 +1470,25 @@ massign ichnl instrRef = do
     intRates = [(Xr, [Ir,Ir,Ir])]
 
 -- |
+-- Assigns an instrument number to a specified MIDI program.
+--
+-- Assigns an instrument number to a specified (or all) MIDI program(s).
+--
+-- >  pgmassign  ipgm, inst[, ichn]
+-- >  pgmassign  ipgm, "insname"[, ichn]
+--
+-- csound doc: <https://csound.com/docs/manual/pgmassign.html>
+pgmassign :: Arg a => D -> InstrRef a -> D -> SE ()
+pgmassign ipgm instrRef chn = do
+  setDefaultOption setMa
+  case getInstrRefId instrRef of
+    Left strId  -> liftOpcDep_ "pgmassign" strRates (ipgm, strId, chn)
+    Right intId -> liftOpcDep_ "pgmassign" intRates (ipgm, intId, chn)
+  where
+    strRates = [(Xr, [Ir,Sr,Ir])]
+    intRates = [(Xr, [Ir,Ir,Ir])]
+
+-- |
 -- Get a note number from a MIDI event.
 --
 -- > ival  notnum
@@ -1488,6 +1496,25 @@ massign ichnl instrRef = do
 -- csound doc: <http://csound.com/docs/manual/notnum.html>
 notnum ::  SE D
 notnum = liftOpcDep "notnum" [(Ir,[])] ()
+
+
+-- |
+-- Get the velocity of the current MIDI event.
+--
+-- > iamp  ampmidi  iscal [, ifn]
+--
+-- csound doc: <https://csound.com/docs/manual/ampmidi.html>
+ampmidi :: D -> D
+ampmidi b1 = liftOpc "ampmidi" [(Ir,[Ir,Ir])] b1
+
+-- |
+-- Get the note number of the current MIDI event, expressed in cycles-per-second.
+--
+-- > icps  cpsmidi
+--
+-- csound doc: <https://csound.com/docs/manual/cpsmidi.html>
+cpsmidi ::  D
+cpsmidi = liftOpc "cpsmidi" [(Ir,[])] ()
 
 -- | release — Indicates whether a note is in its “release” stage.
 release :: SE Sig
@@ -2358,4 +2385,27 @@ downsamp b1 = liftOpc "downsamp" [(Kr,[Ar,Ir])] b1
 gausstrig ::  Sig -> Sig -> Sig -> SE Sig
 gausstrig b1 b2 b3 =
   liftOpcDep "gausstrig" [(Ar,[Kr,Kr,Kr,Ir,Ir]),(Kr,[Kr,Kr,Kr,Ir,Ir])] (b1,b2,b3)
+
+-- |
+-- Displays the values init (i-rate) variables.
+--
+-- These units will print orchestra init-values.
+--
+-- >  print  iarg [, iarg1] [, iarg2] [...]
+--
+-- csound doc: <https://csound.com/docs/manual/print.html>
+print' ::  [D] -> SE ()
+print' b1 = liftOpcDep_ "print" [(Xr,(repeat Ir))] b1
+
+
+-- |
+-- Modify a signal by differentiation.
+--
+-- > ares  diff  asig [, iskip]
+-- > kres  diff  ksig [, iskip]
+--
+-- csound doc: <https://csound.com/docs/manual/diff.html>
+diff ::  Sig -> Sig
+diff b1 = liftOpc "diff" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] b1
+
 

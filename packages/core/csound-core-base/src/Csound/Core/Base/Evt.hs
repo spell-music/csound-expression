@@ -1,6 +1,6 @@
 {-#Language BangPatterns, CPP #-}
 module Csound.Core.Base.Evt(
-    Evt(..), Bam, sync,
+    Evt(..), Bam, sync, Tick,
     {- boolToEvt, evtToBool, -} sigToEvt, stepper,
     filterE, filterSE, accumSE, accumE, filterAccumE, filterAccumSE,
     Snap, snapshot, snaps, readSnap,
@@ -525,5 +525,3 @@ delEvt :: Arg a => D -> Evt a -> Evt a
 delEvt dt ev = Evt $ \bam -> do
   insId <- newProc bam
   runEvt ev $ \a -> scheduleEvent insId dt 0 a
-
-

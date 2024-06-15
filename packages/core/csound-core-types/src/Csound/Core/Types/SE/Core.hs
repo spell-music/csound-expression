@@ -41,15 +41,7 @@ import Csound.Core.Render.Options (Options (..), addUdo, UdoDef (..))
 import Csound.Core.State qualified as State
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.Val
-
-newtype SE a = SE { unSE :: Dep a }
-  deriving newtype (Functor, Applicative, Monad)
-
-instance MonadFail SE where
-  fail = error "no implementation for MonadFail"
-
-instance MonadIO SE where
-  liftIO = SE . lift . liftIO
+import Csound.Core.Types.SE.Type
 
 setTotalDur :: Double -> SE a -> SE a
 setTotalDur duration (SE act) = SE $ do

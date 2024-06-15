@@ -17,7 +17,6 @@ module Csound.Core.State
   , saveGen
   , saveTabs
   , getOptions
-  , getFreshPort
   , getReadOnlyVar
   , getReadOnlyVars
   -- * Vco
@@ -175,7 +174,6 @@ setupInstr0 = do
     instr0 :: Options -> Dep ()
     instr0 opt = do
       globalConstants opt
-      chnUpdateUdo
 
 setupUdos :: Run ()
 setupUdos = do
@@ -269,20 +267,6 @@ getReadOnlyVars rates initVals runExpr = do
       Run $ modify' $ \s -> s { readInit = ReadInit $ HashMap.insert hash vars $ unReadInit s.readInit }
 
 -----------------------------------------------------------------------------
-
-chnUpdateUdo :: Dep ()
-chnUpdateUdo = verbatim $ Text.unlines [
-    "giPort init 1",
-    "opcode " <> chnUpdateOpcodeName <> ", i, 0",
-    "xout giPort",
-    "giPort = giPort + 1",
-    "endop"]
-
-chnUpdateOpcodeName :: Text
-chnUpdateOpcodeName = "FreePort"
-
-getFreshPort :: Dep E
-getFreshPort = opcsDep chnUpdateOpcodeName [(Ir, [])] []
 
 getCurrentRate :: Run (Maybe IfRate)
 getCurrentRate = Run (gets (.currentRate))

@@ -7,6 +7,8 @@ module Csound.Core.Types.SE.Port
 
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
+import Data.Text (Text)
+import Data.Text qualified as Text
 
 import Csound.Dynamic (Rate (..), E)
 import Csound.Dynamic qualified as Dynamic
@@ -15,14 +17,29 @@ import Csound.Core.Types.SE.Core
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.D
 import Csound.Core.Types.Prim.Val
-import Csound.Core.State qualified as State
+import Csound.Core.Render.Options (addUdo, UdoDef (..))
 
 -- https://flossmanual.csound.com/csound-language/local-and-global-variables#the-chn-opcodes-for-global-variables
+
+-- | With ports we can send audio and control signals between running instruments
 newtype Port a = Port { unPort :: D }
   deriving newtype (IsPrim, Val, FromTuple, Tuple, Arg)
 
-newPort :: Tuple a => SE (Port a)
-newPort = Port . fromE . pure <$> SE State.getFreshPort
+chnUpdateUdo :: Text
+chnUpdateUdo = Text.unlines [
+    "giPort init 1",
+    "opcode " <> chnUpdateOpcodeName <> ", i, 0",
+    "xout giPort",
+    "giPort = giPort + 1",
+    "endop"]
+
+chnUpdateOpcodeName :: Text
+chnUpdateOpcodeName = "GetFreePort"
+
+newPort :: SE (Port a)
+newPort =
+  fmap (withOption $ addUdo chnUpdateOpcodeName (UdoBody chnUpdateUdo)) $
+    liftOpcDep chnUpdateOpcodeName [(Ir, [])] ()
 
 instance IsRef Port where
   readRef pid = fmap (toTuple . pure) $ SE $
@@ -77,4 +94,3 @@ chnclear name =  Dynamic.depT_ $ Dynamic.opcs "chnclear" [(Xr, [Sr])] [name]
 
 sprintf :: E -> [E] -> E
 sprintf a as = Dynamic.opcs "sprintf" [(Sr, Sr:repeat Ir)] (a:as)
-
