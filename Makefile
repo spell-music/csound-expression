@@ -1,7 +1,7 @@
 .PHONY: build bench run
 
 build:
-	stack build csound-core-base
+	stack build csound-core
 
 bench:
 	stack build csound-expression:bench:csound-expression-benchmark  # --profile

@@ -10,3 +10,4 @@ import Csound.Core.Base.Filter as X
 import Csound.Core.Base.Envelope as X
 import Csound.Core.Base.Spec as X
 import Csound.Core.Base.Midi as X
+import Csound.Core.Base.Fx as X

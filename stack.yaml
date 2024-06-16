@@ -16,6 +16,7 @@ packages:
   - packages/core/csound-core-types
   - packages/core/csound-core-opcodes
   - packages/core/csound-core-base
+  - packages/core/csound-core
   - packages/core/csound-expression-opcodes
   - packages/legacy/csound-expression-typed
   - packages/legacy/csound-expression

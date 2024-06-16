@@ -3,14 +3,13 @@
 -- use versions without "Internal". Because code for internal UDOs
 -- ships with the package but you have to provide the code for UDO on the disk (full path)
 -- to use liftUdo or liftMultiUdo and alike.
-module Csound.Core.Opcode.Fx
+module Csound.Core.Base.Fx
   ( analogDelay
   , pingPongDelay
   ) where
 
 import System.FilePath ((</>))
 import Csound.Core.Types
-import Csound.Dynamic (Rate (..))
 import Data.Text.Encoding qualified as Text
 import Data.FileEmbed (embedFileRelative)
 import Csound.Core.Render.Options

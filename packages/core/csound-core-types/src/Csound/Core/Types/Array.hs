@@ -189,7 +189,6 @@ newGlobalCtrlArrVar = newGlobalArrVar . toCtrlRate
 toCtrlRate :: Rate -> Rate
 toCtrlRate x = case x of
     Ar -> Kr
-    Kr -> Ir
     _  -> x
 
 -- | Reads data from the array.

@@ -26,6 +26,8 @@ Library
     , file-embed
     , data-default
     , Boolean
+    , text
+    , filepath
 
   Hs-Source-Dirs:      src/
   Exposed-Modules:
@@ -38,6 +40,7 @@ Library
     Csound.Core.Base.Envelope
     Csound.Core.Base.Spec
     Csound.Core.Base.Midi
+    Csound.Core.Base.Fx
 
   Other-Modules:
     Csound.Core.Base.Midi.Internal

@@ -12,7 +12,7 @@ module Csound.Core.Base.Evt(
     Snap, snapshot, readSnap, snaps, snaps2, sync, syncBpm,
 
     -- * Opcodes
-    metro, gaussTrig, dust, metroSig, dustSig, dustSig2, impulseE, changedE, triggerE, loadbang, impulse, metroE, delEvt,
+    metroE, gaussTrig, dust, metroSig, dustSig, dustSig2, impulseE, changedE, triggerE, loadbang, impulse, metroE, delEvt,
 
     -- * Higher-level event functions
     devt, {- eventList, -}
@@ -230,14 +230,9 @@ evtToTrig = (\b -> ifB b 1 0) . evtToBool
 devt :: D -> Evt a -> Evt D
 devt d = fmap (const d)
 
-{-# DEPRECATED metroE "Use metro instead" #-}
 -- | Behaves like 'Csound.Opcode.Basic.metro', but returns an event stream.
 metroE :: Sig -> Evt ()
 metroE = sigToEvt . O.metro
-
--- | Creates a stream of events that happen with the given frequency.
-metro :: Sig -> Evt ()
-metro = sigToEvt . O.metro
 
 -- | Csound's original metro function.
 metroSig :: Sig -> Sig
