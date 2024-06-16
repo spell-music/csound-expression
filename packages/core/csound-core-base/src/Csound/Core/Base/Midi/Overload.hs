@@ -1,6 +1,6 @@
 {-# Language TypeFamilies, FlexibleInstances, FlexibleContexts #-}
 module Csound.Core.Base.Midi.Overload (
-    MidiInstr(..) {-, MidiInstrTemp(..) -}
+    MidiInstr(..) , MidiInstrTemp(..)
 ) where
 
 import Data.Kind(Type)

@@ -35,6 +35,8 @@ import Csound.Core.Types.Prim.InstrId
 import Csound.Core.Types.Prim.Val
 import Csound.Core.Types.SigSpace
 
+-- | Clas of values that can be used as init arguments for the Csound-instrument.
+-- In csound they are read with pInt-expressions.
 class Tuple a => Arg a where
 
 instance Arg ()
@@ -52,6 +54,7 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f) => Arg (a, b, c, d, e, f)
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e, f, h)
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g)
 
+-- | Defines a class of audio and control signals
 class (Num a, Tuple a, SigSpace a, Num a) => Sigs a where
 
 instance Sigs Sig
@@ -64,9 +67,12 @@ instance (Sigs a1, Sigs a2, Sigs a3, Sigs a4, Sigs a5, Sigs a6) => Sigs (a1, a2,
 instance (Sigs a1, Sigs a2, Sigs a3, Sigs a4, Sigs a5, Sigs a6, Sigs a7) => Sigs (a1, a2, a3, a4, a5, a6, a7)
 instance (Sigs a1, Sigs a2, Sigs a3, Sigs a4, Sigs a5, Sigs a6, Sigs a7, Sigs a8) => Sigs (a1, a2, a3, a4, a5, a6, a7, a8)
 
+-- | A class of values that can be converted to low-level Csound expressions
 class FromTuple a where
   fromTuple :: a -> Run [E]
 
+-- | A class of values that can be converted to and from the low-level Csound expressions.
+-- It is a collection of values.
 class (FromTuple a) => Tuple a where
   toTuple :: Run [E] -> a
   tupleArity :: Int
@@ -229,6 +235,7 @@ instance (Num a, Num b, Num c, Num d, Num e, Num f, Num g, Num h) => Num (a,b,c,
   abs    = lift8 abs abs abs abs abs abs abs abs
   signum = lift8 signum signum signum signum signum signum signum signum
 
+-- | Tuple of control rate boolean values
 newtype BoolTuple = BoolTuple { unBoolTuple :: Run [E] }
 
 toBoolTuple :: Tuple a => a -> BoolTuple
@@ -257,6 +264,7 @@ caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (t
 
 -- arguments
 
+-- | Tuple of init rate boolean values
 newtype BoolArg = BoolArg { unBoolArg :: Run [E] }
 
 toBoolArg :: (Tuple a) => a -> BoolArg

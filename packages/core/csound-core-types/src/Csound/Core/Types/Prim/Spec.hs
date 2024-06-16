@@ -7,7 +7,7 @@ import Csound.Dynamic (E, Rate (..))
 import Csound.Core.State (Run)
 import Csound.Core.Types.Prim.Val
 
--- | Strings
+-- | Spectrum
 newtype Spec = Spec { unSpec :: Run E }
 
 instance Val Spec where

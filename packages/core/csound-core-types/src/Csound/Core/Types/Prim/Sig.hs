@@ -58,7 +58,9 @@ instance Floating Sig where
     ; asin = liftPrim asin asin; atan = liftPrim atan atan;  acos = liftPrim acos acos ; asinh = liftPrim asinh asinh; acosh = liftPrim acosh acosh; atanh = liftPrim atanh atanh }
 
 
+-- | Stereo signal
 type Sig2 = (Sig, Sig)
+
 type Sig3 = (Sig, Sig, Sig)
 type Sig4 = (Sig, Sig, Sig, Sig)
 type Sig5 = (Sig, Sig, Sig, Sig, Sig)

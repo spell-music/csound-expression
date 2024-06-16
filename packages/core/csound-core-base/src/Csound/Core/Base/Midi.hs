@@ -12,6 +12,7 @@ module Csound.Core.Base.Midi
   , ampCps
   , onMsg
   , MidiInstr (..)
+  , MidiInstrTemp (..)
   ) where
 
 import Csound.Core.Base.Midi.Internal

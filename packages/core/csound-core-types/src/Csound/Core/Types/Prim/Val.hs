@@ -18,6 +18,7 @@ import Csound.Dynamic (E, Rate, IfRate)
 import Csound.Core.State (Run)
 import Data.Kind (Type)
 
+-- | Class for primitive csound values
 class Val a where
   fromE   :: Run E -> a
   toE     :: a -> Run E
