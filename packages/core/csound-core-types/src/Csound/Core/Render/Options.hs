@@ -39,6 +39,7 @@ module Csound.Core.Render.Options (
     -- * Save user options
     saveUserOptions,
     getUserOptions,
+    module X,
 ) where
 
 import Control.Applicative
@@ -56,6 +57,7 @@ import Csound.Dynamic hiding (csdFlags)
 import Csound.Dynamic.Debug (IsDebug (..))
 import System.Directory
 import System.FilePath
+import Csound.Dynamic.Types.Flags as X
 
 -- | Csound options. The default values are
 --

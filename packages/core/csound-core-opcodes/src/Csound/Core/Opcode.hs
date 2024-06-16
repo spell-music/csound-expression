@@ -98,6 +98,7 @@ module Csound.Core.Opcode
   , notnum, veloc, release
   , ampmidi
   , cpsmidi
+  , cpstmid
   , midictrl, ctrlinit, CtrlInit (..)
   , ctrl7, ctrl14
   , initc7, initc14
@@ -2409,3 +2410,13 @@ diff ::  Sig -> Sig
 diff b1 = liftOpc "diff" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] b1
 
 
+-- |
+-- Get a MIDI note number (allows customized micro-tuning scales).
+--
+-- This unit is similar to cpsmidi, but allows fully customized micro-tuning scales.
+--
+-- > icps  cpstmid  ifn
+--
+-- csound doc: <https://csound.com/docs/manual/cpstmid.html>
+cpstmid ::  Tab -> D
+cpstmid b1 = liftOpc "cpstmid" [(Ir,[Ir])] b1

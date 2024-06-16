@@ -11,9 +11,11 @@ module Csound.Core.Base.Midi
   , MidiFun
   , ampCps
   , onMsg
+  , MidiInstr (..)
   ) where
 
 import Csound.Core.Base.Midi.Internal
+import Csound.Core.Base.Midi.Overload
 import Csound.Core.Types
 import Csound.Core.Opcode
 import Csound.Core.Base.Evt
@@ -28,9 +30,6 @@ data MidiChn = ChnAll | Chn Int | Pgm (Maybe Int) Int
 
 ampCps :: Msg -> (D, D)
 ampCps _msg = (ampmidi 1, cpsmidi)
-
-onMsg :: ((D, D) -> SE Sig2) -> Msg -> SE Sig2
-onMsg instr = instr . ampCps
 
 toMidiFun :: Sigs a => MidiChn -> MidiFun a
 toMidiFun x = case x of

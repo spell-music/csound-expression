@@ -96,6 +96,9 @@ instance Tuple D where { toTuple = fromE . fmap head; tupleRates = [valRate @D];
 instance FromTuple Tab where { fromTuple = fmap pure . toE }
 instance Tuple Tab where { toTuple = fromE . fmap head; tupleRates = [valRate @Tab]; tupleArity = 1; defTuple = fromE $ pure (-1) }
 
+instance FromTuple TabList where { fromTuple = fmap pure . toE }
+instance Tuple TabList where { toTuple = fromE . fmap head; tupleRates = [valRate @TabList]; tupleArity = 1; defTuple = fromE $ pure (-1) }
+
 instance FromTuple Str where { fromTuple = fmap pure . toE }
 instance Tuple Str where { toTuple = fromE . fmap head; tupleRates = [valRate @Str]; tupleArity = 1; defTuple = "" }
 

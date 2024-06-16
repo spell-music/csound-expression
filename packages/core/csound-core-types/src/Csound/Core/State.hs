@@ -175,7 +175,7 @@ isGlobalInstr = Run $ gets (.isGlobal)
 
 -- | TODO
 saveTabs :: [Gen] -> Run E
-saveTabs = undefined
+saveTabs = error "TODO: tab lists are not defined yet. undefined"
 
 getOptions :: Run Options
 getOptions = Run $ gets (.options)
