@@ -1,5 +1,5 @@
 name:                csound-sampler
-version:             0.0.10.2
+version:             0.0.11.0
 license:             BSD3
 license-file:        LICENSE
 author:              Anton Kholomiov
@@ -25,7 +25,11 @@ Source-repository head
 library
   Ghc-Options:    -Wall
   Hs-Source-Dirs:      src/
-  build-depends:       base >= 4.10, base < 5, transformers >= 0.3, csound-expression >= 5.4.3.1, text
+  build-depends:
+    base >= 4.10, base < 5,
+    transformers >= 0.3,
+    csound-expression >= 5.4.4.0,
+    text
   Default-language: Haskell2010
   default-extensions:
     OverloadedStrings
