@@ -1,0 +1,79 @@
+Name:          csound-core-types
+Version:       0.2.7
+Cabal-Version: 1.12
+License:       BSD3
+Author:	       Anton Kholomiov
+Synopsis:      defines main types and core functions for the library csound-expression
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+Build-Type:    Simple
+
+Description: typed core for library csound-expression. Provides typed core lang for csound
+
+Homepage:        https://github.com/spell-music/csound-expression
+Bug-Reports:     https://github.com/spell-music/csound-expression/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression-typed
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+    base >= 4.10, base < 5,
+    containers,
+    mtl,
+    transformers >= 0.3,
+    Boolean >= 0.1.0,
+    data-default,
+    NumInstances,
+    filepath,
+    directory,
+    csound-expression-dynamic >= 0.4.0.0,
+    hashable,
+    text,
+    unordered-containers,
+    process
+
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+    Csound.Core.Opcode.Vco
+    Csound.Core.Types
+    Csound.Core.Types.Gen
+    Csound.Core.Types.Prim
+    Csound.Core.Types.SigSpace
+    Csound.Core.Types.Array
+    Csound.Core.Types.SE
+    Csound.Core.Types.Tuple
+    Csound.Core.Render
+    Csound.Core.Render.Options
+
+  Other-Modules:
+    Csound.Core.State
+    Csound.Core.Types.Prim.Bool
+    Csound.Core.Types.Prim.InstrId
+    Csound.Core.Types.Prim.D
+    Csound.Core.Types.Prim.Sig
+    Csound.Core.Types.Prim.Val
+    Csound.Core.Types.Prim.Spec
+    Csound.Core.Types.Prim.Str
+    Csound.Core.Types.Prim.Tab
+    Csound.Core.Types.PureArray
+    Csound.Core.Types.Rate
+    Csound.Core.Types.SE.Type
+    Csound.Core.Types.SE.Core
+    Csound.Core.Types.SE.Instr
+    Csound.Core.Types.SE.Logic
+    Csound.Core.Types.SE.Ref
+    Csound.Core.Types.SE.Port
+
+  Default-Language: GHC2021
+  Default-extensions:
+    OverloadedStrings
+    OverloadedRecordDot
+    DuplicateRecordFields
+    StrictData
+    LambdaCase
+    DerivingStrategies
+    RecordWildCards
+    TypeFamilies

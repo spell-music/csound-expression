@@ -1,0 +1,170 @@
+Name:          csound-expression
+Version:       5.4.3.1
+cabal-version: 1.12
+License:       BSD3
+License-file:  LICENSE
+Author:	       Anton Kholomiov
+Synopsis:      library to make electronic music
+Stability:     Experimental
+Tested-With:   GHC==7.10
+Build-Type:    Simple
+Category:      Music, Sound
+Maintainer:    <anton.kholomiov@gmail.com>
+
+Description:
+    Welcome to the simplest textual synthesizer.
+    .
+    > dac $ osc 440
+    .
+    Csound-expression is a Haskell framework for computer music.
+    With the help of the library we can create our instruments on the fly.
+    A few lines in the interpreter is enough to get the cool sound going
+    out of your speakers. It can be used for simple daily sound-file processing
+    or for a full-blown live performances.
+    .
+    Got interested? Check out the guide: <https://github.com/anton-k/csound-expression/blob/master/tutorial/Index.md>
+    .
+    Acknowledgements (I'd like to mention those who supported me a lot with their music and ideas):
+    .
+    * music: entertainment for the braindead, three pandas and the moon, odno no, ann's'annat & alizbar, toe, iamthemorning, atoms for piece / radiohead, loscil, boards of canada,
+    Hozan Yamamoto, Tony Scott and Shinichi Yuize.
+    .
+    * ideas: Conal Elliott, Oleg Kiselyov, Paul Hudak, Gabriel Gonzalez, Rich Hickey and Csound's community.
+
+    * Thanks a lot to all who patiently answered my questions and provided skillful solutions, encouragement and ideas:
+    .
+    Iain McCurdy, Victor Lazzarini, Rory Walsh, Steven Yi, John Ffitch, Jon Downing, Joachim Heintz, Peter Burgess, Dr. Richard Boulanger, Michael Gogins, Oeyvind Brandtsegg,
+    Richard Dobson, Partev Barr Sarkissian, Dave Phillips, Guillermo Senna, Art Hunkins,
+    Ben McAllister, Michael Rhoades, Gleb Rogozinsky, Eugene Cherny, Brian Merchant, Wolf Peuker, Hlöðver Sigurðsson, Aaron Krister Johnson, Andy Fillebrown and friends :)
+
+Extra-Source-Files :
+    examples/README.txt
+
+    examples/Test.hs
+    examples/Heartbeat.hs
+
+    examples/Color.hs
+    examples/Gm.hs
+    examples/Tibetan.hs
+    examples/Wind.hs
+    examples/Live.hs
+
+    examples/Midi.hs
+    examples/Events.hs
+    examples/DubBass.hs
+
+    examples/Gui/Button.hs
+    examples/Gui/Harmonics.hs
+    examples/Gui/EnvelopeAndHarmonics.hs
+    examples/Gui/Key.hs
+    examples/Gui/Waves.hs
+
+    examples/Api/message.py
+    examples/Api/Message.hs
+    examples/Api/oscil.py
+    examples/Api/Oscil.hs
+    examples/Api/player.py
+    examples/Api/Player.hs
+
+
+Homepage:        https://github.com/anton-k/csound-expression
+Bug-Reports:     https://github.com/anton-k/csound-expression/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-expression
+
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+        base >= 4.10, base < 5,
+        process,
+        data-default,
+        directory,
+        Boolean >= 0.1.0,
+        colour >= 2.0,
+        filepath,
+        transformers >= 0.3,
+        containers,
+        csound-expression-typed >= 0.2.7,
+        csound-expression-dynamic >= 0.4.0.0,
+        temporal-media >= 0.6.3,
+        csound-expression-opcodes >= 0.0.5.1,
+        text
+  default-language: Haskell2010
+  default-extensions:
+    ImportQualifiedPost
+    OverloadedStrings
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+        Csound.Base
+
+        Csound.Air
+        Csound.Air.Wave
+        Csound.Air.Wave.Sync
+        Csound.Air.Granular
+        Csound.Air.Granular.Morpheus
+        Csound.Air.Envelope
+        Csound.Air.Filter
+        Csound.Air.ModArg
+        Csound.Air.Wav
+        Csound.Air.Spec
+        Csound.Air.Fx
+        Csound.Air.Fx.FxBox
+        Csound.Air.Live
+        Csound.Air.Seg
+        Csound.Air.Sampler
+        Csound.Air.Looper
+        Csound.Air.Patch
+        Csound.Air.Misc
+        Csound.Air.Hvs
+        Csound.Air.Fm
+        Csound.Air.Pan
+        Csound.Air.Padsynth
+        Csound.Air.Sco
+
+        Csound.Types
+        Csound.Tab
+        Csound.SigSpace
+        Csound.IO
+        Csound.Options
+        Csound.Tuning
+        Csound.Cabbage
+
+        Csound.Compat
+        Csound.Compat.Filter
+
+        Csound.Control
+        Csound.Control.Evt
+        Csound.Control.Instr
+        Csound.Control.SE
+
+        Csound.Control.Midi
+        Csound.Control.Sf
+        Csound.Control.Osc
+        Csound.Control.Channel
+
+        Csound.Control.Gui
+        Csound.Control.Gui.Widget
+        Csound.Control.Gui.Props
+        Csound.Control.Gui.Layout
+
+--        Csound.LowLevel
+  Other-Modules:
+        Csound.Control.Overload
+        Csound.Control.Overload.Outs
+        Csound.Control.Overload.MidiInstr
+        Csound.Control.Overload.SpecInstr
+
+
+
+benchmark csound-expression-benchmark
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      benchmark
+  main-is:             Main.hs
+  build-depends:       base
+                     , csound-expression
+                     , gauge
+  default-language:    Haskell2010
+
