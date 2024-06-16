@@ -198,22 +198,75 @@ trigNamedMono name = namedMonoMsg name
 
 namedAmpCpsSig:: Str -> SE (Sig, Sig, Sig)
 namedAmpCpsSig name = do
-  ref <- newGlobalCtrlRef ((0, 0) :: (Sig, Sig))
-  statusRef <- newGlobalCtrlRef (0 :: Sig)
+  ref <- newCtrlRef ((0, 0) :: (Sig, Sig))
+  statusRef <- newCtrlRef (0 :: Sig)
   status <- trigByNameMidi name (instr statusRef ref)
   writeRef statusRef status
   let resStatus = ifB (downsamp status ==* 0) 0 1
   (amp, cps) <- readRef ref
   return (downsamp amp, downsamp cps, resStatus)
   where
-    instr :: Ref Sig -> Ref (Sig, Sig) -> (D, D, Unit) -> SE Sig
+    instr :: Ref Sig -> Ref (Sig, Sig) -> (D, D, ()) -> SE Sig
     instr statusRef hNote (pitchKey, volKey, _) = do
       curId <- readRef statusRef
-      myIdRef <- newRef (ir curId)
+      myIdRef <- newLocalRef (toD $ ir curId)
       myId <- readRef myIdRef
-      when1 (curId ==* (sig $ myId + 1)) $ do
-        writeRef hNote (sig volKey, sig pitchKey)
+      when1 (curId ==* (toSig $ myId + 1)) $ do
+        writeRef hNote (toSig volKey, toSig pitchKey)
       return 1
+
+-- | Creates an instrument that can be triggered by name with Csound API.
+--
+-- It's intended to be used like a midi instrument. It simulates a simplified midi protocol.
+-- We can trigger notes:
+--
+-- > i "givenName" delay duration 1 pitchKey volumeKey auxParams     -- note on
+-- > i "givenName" delay duration 0 pitchKey volumeKey auxParams     -- note off
+--
+-- The arguments are
+--
+-- > trigByNameMidi name instrument
+--
+-- The instrument takes a triplet of @(pitchKey, volumeKey, auxilliaryTuple)@.
+-- The order does matter. Please don't pass the @volumeKey@ as the first argument.
+-- The instrument expects the pitch key to be a first argument.
+
+-- Under the hood
+-- it creates held notes that are indexed by pitch. If you know the Csound it creates
+-- the notes with indexes:
+--
+-- > i 18.pitchKey
+--
+-- Here the 18 is some generated integer index. And then on receiving a note a note off message for the specific key the
+-- Csound procedure invokes:
+--
+-- > turnoff 18.pitchKey
+trigByNameMidi  :: (Arg a, Sigs b) => Str -> ((D, D, a) -> SE b) -> SE b
+trigByNameMidi name instr = do
+    ref <- newClearableRef 0
+    trigByNameMidi_ name (go ref)
+    readRef ref
+    where go ref x = mixRef ref =<< instr x
+
+-- | It behaves just like the function @trigByNameMidi@. Only it doesn't produce an audio
+-- signal. It performs some procedure on note on and stops doing the precedure on note off.
+trigByNameMidi_ :: forall a . Arg a => Str -> ((D, D, a) -> SE ()) -> SE ()
+trigByNameMidi_ name instr = do
+  instrId <- newNamedProc name instr
+  trigByName_ name (go instrId)
+  where
+    go :: D.InstrId -> (D, D, D, a) -> SE ()
+    go instrId (noteFlag, pch, vol, other) = fromDep_ $ hideGEinDep $ do
+        pchExpr      <- toGE pch
+        let instrIdExpr = D.instrIdE instrId + pchExpr / 1000
+        noteFlagExpr <- toGE noteFlag
+        args <- fromTuple (pch, vol, other)
+        return $ do
+                D.when1 D.IfIr (noteFlagExpr ==* 1) $ do
+                    eventi (Event instrIdExpr 0 (-1) args)
+                D.when1 D.IfIr (noteFlagExpr ==* 0) $ do
+                    eventi (Event (negate instrIdExpr) 0 0 args)
+                turnoff
 -}
 
 --------------------------------------------------------------

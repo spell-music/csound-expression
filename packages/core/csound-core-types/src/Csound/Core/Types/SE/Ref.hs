@@ -5,6 +5,8 @@ module Csound.Core.Types.SE.Ref
   , newRef
   , newCtrlRef
   , newInitRef
+  , newClearableRef
+  , newClearableCtrlRef
   , newLocalRef
   , newLocalCtrlRef
   , newLocalInitRef
@@ -61,8 +63,22 @@ newCtrlRef = newRefBy toCtrlRate initGlobalVars
 newInitRef :: forall a . Tuple a => a -> SE (Ref a)
 newInitRef = newRefBy toInitRate initGlobalVars
 
+-- | Creates global mutable variable (reference). It can be shared between different
+-- instances ofthe instruments. The variable is reset to zero at the end of each control-cycle.
+newClearableRef :: forall a . Tuple a => a -> SE (Ref a)
+newClearableRef = newRefBy id initClearableGlobalVars
+
 initGlobalVars :: [Rate] -> Run [E] -> Dep [Var]
 initGlobalVars rates vals = lift $ zipWithM State.initGlobalVar rates =<< vals
+
+initClearableGlobalVars :: [Rate] -> Run [E] -> Dep [Var]
+initClearableGlobalVars rates vals = lift $ zipWithM State.initClearableGlobalVar rates =<< vals
+
+-- | Creates global mutable variable (reference). It can be shared between different
+-- instances ofthe instruments. If type is signal it creates K-rate signals
+-- The variable is reset to zero at the end of each control-cycle.
+newClearableCtrlRef :: forall a . Tuple a => a -> SE (Ref a)
+newClearableCtrlRef = newRefBy toCtrlRate initClearableGlobalVars
 
 -- | Creates local mutable variable (reference). It can not be shared between different local instruments
 newLocalRef :: forall a . Tuple a => a -> SE (Ref a)

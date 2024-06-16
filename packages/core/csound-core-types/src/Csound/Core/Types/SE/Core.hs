@@ -27,7 +27,6 @@ module Csound.Core.Types.SE.Core
   ) where
 
 import Control.Monad
-import Control.Monad.IO.Class
 import Data.Kind
 import Data.Text (Text)
 import Data.Text.IO qualified as Text
@@ -37,7 +36,7 @@ import Control.Monad.Trans.Class (lift)
 import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
 import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Dep)
-import Csound.Core.Render.Options (Options (..), addUdo, UdoDef (..))
+import Csound.Core.Render.Options (Options (..))
 import Csound.Core.State qualified as State
 import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.Val
@@ -51,7 +50,7 @@ setTotalDur duration (SE act) = SE $ do
 renderSE :: Options -> SE () -> IO Text
 renderSE config (SE act) = do
   result <- fmap (Dynamic.renderCsd def) $ State.exec config $ do
-    mainInstr <- Dynamic.execDepT act
+    mainInstr <- Dynamic.execDepT (act >> State.clearVarsAct)
     instrId <- State.insertInstr mainInstr
     State.insertNote instrId (0, -1, [])
   saveCsd result

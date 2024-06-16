@@ -10,6 +10,7 @@ module Csound.Core.State
   , setTotalDur
   , insertGlobalExpr
   , initGlobalVar
+  , initClearableGlobalVar
   , initGlobalArrVar
   , isGlobalInstr
   , withCurrentRate
@@ -19,6 +20,7 @@ module Csound.Core.State
   , getOptions
   , getReadOnlyVar
   , getReadOnlyVars
+  , clearVarsAct
   -- * Vco
   , VcoInit (..)
   , VcoShape (..)
@@ -71,6 +73,7 @@ exec opts act = do
           }
       , freshId = initFreshId
       , freshVar = 1
+      , clearVars = []
       , isGlobal = True
       , currentRate = Nothing
       , options = opts
@@ -87,6 +90,12 @@ readIsDebug :: Run IsDebug
 readIsDebug = Run $ do
   opts <- gets (.options)
   pure (fromMaybe def opts.csdRender).inferenceOptions.opcodeInferenceDebug
+
+
+clearVarsAct :: Dep ()
+clearVarsAct = do
+  vars <- lift $ Run $ gets (.clearVars)
+  mapM_ (\v -> writeVar IfKr v 0) vars
 
 -- | Inserts new instrument body.
 -- The instrument identifier is automatically allocated to fresh integer
@@ -146,6 +155,12 @@ initGlobalVar rate initVal = do
   pure v
   where
     initVarExpr v = noRate $ InitVar v (toPrimOr initVal)
+
+initClearableGlobalVar :: Rate -> E -> Run Var
+initClearableGlobalVar rate initVal = do
+  v <- initGlobalVar rate initVal
+  Run $ modify' $ \st -> st { clearVars = v : st.clearVars }
+  pure v
 
 initGlobalArrVar :: Rate -> [E] -> Run Var
 initGlobalArrVar rate sizes = do
@@ -290,6 +305,7 @@ data St = St
   { csd         :: Csd               -- ^ Dynamic Csound code
   , freshId     :: FreshId           -- ^ fresh instrument ids
   , freshVar    :: Int               -- ^ fresh names for mutable variables
+  , clearVars   :: [Var]             -- ^ variables to clear at th en of the control-cycle
   , isGlobal    :: Bool              -- ^ do we render global or local instrument
   , currentRate :: Maybe IfRate      -- ^ current rate of execution (Ir or Kr) to distinguish the init phase from the performance phase
   , options     :: Options           -- ^ Csound flags and initial options / settings
