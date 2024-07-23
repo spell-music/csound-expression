@@ -1,5 +1,5 @@
 Name:          csound-expression
-Version:       5.4.4.0
+Version:       5.4.4.1
 cabal-version: 1.12
 License:       BSD3
 License-file:  LICENSE
@@ -87,9 +87,9 @@ Library
         filepath,
         transformers >= 0.3,
         containers,
-        csound-expression-typed >= 0.2.8,
+        csound-expression-typed >= 0.2.9,
         csound-expression-dynamic >= 0.4.0.0,
-        temporal-media >= 0.6.4,
+        temporal-media >= 0.6.3,
         csound-expression-opcodes >= 0.0.5.4,
         text
   default-language: Haskell2010

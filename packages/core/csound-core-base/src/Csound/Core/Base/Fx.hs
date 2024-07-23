@@ -16,13 +16,13 @@ import Csound.Core.Render.Options
 
 -- | Analog delay
 --
--- opcode	AnalogDelay,a,aKKKK
--- ain,kmix,ktime,kfback,ktone	xin			;READ IN INPUT ARGUMENTS
-analogDelay :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-analogDelay ain kmix ktime kfback ktone =
-  liftOpc "AnalogDelay" rates (withUdo (ain,kmix,ktime,kfback,ktone))
+-- opcode	AnalogDelay,a,aKKKKi
+-- ain,kmix,ktime,kfback,ktone, iMaxDelayTime	xin			;READ IN INPUT ARGUMENTS
+analogDelay :: Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
+analogDelay ain kmix ktime kfback ktone iMaxDelayTime =
+  liftOpc "AnalogDelay" rates (withUdo (ain,kmix,ktime,kfback,ktone,iMaxDelayTime))
   where
-    rates = [(Ar, [Ar,Kr,Kr,Kr,Kr])]
+    rates = [(Ar, [Ar,Kr,Kr,Kr,Kr,Ir])]
 
     withUdo =
       withOption $

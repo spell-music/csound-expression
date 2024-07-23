@@ -166,8 +166,10 @@ module Csound.Core.Opcode
   -- * Print
   , printi, printk, prints, printks, printk2, fprint, print'
   -- * File IO
-  , fout, ftsave, fprints, readf, readfi
+  , fout, ftsave, fprints, readf, readfi,
   -- * Signal Type Conversion
+  -- * schedule instruments
+  eventD, eventStr
   ) where
 
 import Csound.Core.Types
@@ -2420,3 +2422,17 @@ diff b1 = liftOpc "diff" [(Ar,[Ar,Ir]),(Kr,[Kr,Ir])] b1
 -- csound doc: <https://csound.com/docs/manual/cpstmid.html>
 cpstmid ::  Tab -> D
 cpstmid b1 = liftOpc "cpstmid" [(Ir,[Ir])] b1
+
+
+eventD :: forall a . Tuple a => Str -> D -> Sig -> Sig -> a -> SE ()
+eventD eventType instrNum kdel kdur args =
+  liftOpcDep_ "event" rates (eventType, instrNum, kdel, kdur, args)
+  where
+    rates = [(Xr, [Sr, Kr, Kr, Kr] <> replicate (tupleArity @a) Kr)]
+
+eventStr :: forall a . Tuple a => Str -> Str -> Sig -> Sig -> a -> SE ()
+eventStr eventType instrNum kdel kdur args =
+  liftOpcDep_ "event" rates (eventType, instrNum, kdel, kdur, args)
+  where
+    rates = [(Xr, [Sr, Kr, Kr, Kr] <> replicate (tupleArity @a) Kr)]
+

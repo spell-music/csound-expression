@@ -18,7 +18,7 @@ Library
   Build-Depends:
     base >= 4.10, base < 5,
     transformers,
-    csound-expression-typed >= 0.2.5,
+    csound-expression-typed >= 0.2.9,
     csound-expression-dynamic >= 0.4.0.0
   Hs-Source-Dirs:      src/
   Default-language: Haskell2010

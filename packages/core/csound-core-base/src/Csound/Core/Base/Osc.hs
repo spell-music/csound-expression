@@ -9,13 +9,14 @@ module Csound.Core.Base.Osc
 
 import Csound.Core.Types
 import Data.String
+import Data.Boolean ((>*))
 
 newtype OscHandle = OscHandle D
   deriving newtype (Val, FromTuple, Tuple, Arg)
 
 -- | Returns OSC-handle.
-oscInit :: D -> SE OscHandle
-oscInit port = pure $ OscHandle $ readOnlyVar $ liftOpc "OSCinit" [(Ir, [Ir])] port
+oscInit :: D -> OscHandle
+oscInit port = OscHandle $ readOnlyVar $ liftOpc "OSCinit" [(Ir, [Ir])] port
 
 -- | Listens for the OSC-messages. The first argument is OSC-reference.
 -- We can create it with the function @initOsc@. The next two arguments are strings.
@@ -31,8 +32,16 @@ oscInit port = pure $ OscHandle $ readOnlyVar $ liftOpc "OSCinit" [(Ir, [Ir])] p
 -- The result is boolean signal that indicates when new message is received
 -- and reference to mutable variables from which we can read the values
 oscListen :: forall a . Tuple a => OscHandle -> Str -> Ref a -> SE BoolSig
-oscListen oscHandle addr vars = do
-  liftOpcDep "OSClisten" [(Kr, Ir:Sr:Sr: tupleRates @a)] (oscHandle, addr, getOscType @a, vars)
+oscListen oscHandle addr vars =
+  fmap hasMessages $ liftOpcDep "OSClisten" [(Kr, Ir:Sr:Sr: (fmap toCtrlRate $ tupleRates @a))] (oscHandle, addr, getOscType @a, vars)
+  where
+    hasMessages :: Sig -> BoolSig
+    hasMessages flag = flag >* 0
+
+toCtrlRate :: Rate -> Rate
+toCtrlRate = \case
+  Ar -> Kr
+  other -> other
 
 -- | OSCSend - send OSC message
 --
@@ -50,7 +59,7 @@ getOscType :: forall a . Tuple a => Str
 getOscType =
   fromString $ fmap toCodeChar oscRates
   where
-    oscRates = tupleRates @a
+    oscRates = fmap toCtrlRate $ tupleRates @a
 
     toCodeChar :: Rate -> Char
     toCodeChar = \case
