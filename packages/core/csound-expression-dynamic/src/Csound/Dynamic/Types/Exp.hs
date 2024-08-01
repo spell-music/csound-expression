@@ -193,7 +193,7 @@ setRate r a = rehashE $
     -- for other cases we insert rate conversion
     _ -> withRate r $ ConvertRate r Nothing (PrimOr $ Right a)
 
-{-| It's a primitive value or something else. It's used for inlining
+{- | It's a primitive value or something else. It's used for inlining
 of the constants (primitive values).
 -}
 newtype PrimOr a = PrimOr {unPrimOr :: Either Prim a}
@@ -215,7 +215,7 @@ toInitRate = \case
 
 instance (Cereal.Serialize a) => Cereal.Serialize (PrimOr a)
 
-{-| Constructs PrimOr values from the expressions. It does inlining in
+{- | Constructs PrimOr values from the expressions. It does inlining in
 case of primitive values.
 -}
 toPrimOr :: E -> PrimOr E
@@ -227,7 +227,7 @@ toPrimOr a = PrimOr $ case ratedExpExp $ unFix a of
   where
     noDeps = isNothing $ ratedExpDepends $ unFix a
 
-{-| Constructs PrimOr values from the expressions. It does inlining in
+{- | Constructs PrimOr values from the expressions. It does inlining in
 case of primitive values.
 -}
 toPrimOrTfm :: Rate -> E -> PrimOr E
@@ -240,7 +240,7 @@ toPrimOrTfm r a = PrimOr $ case ratedExpExp $ unFix a of
   where
     noDeps = isNothing $ ratedExpDepends $ unFix a
 
-{-| Constructs PrimOr values from the expressions. It does inlining in
+{- | Constructs PrimOr values from the expressions. It does inlining in
 case of primitive values.
 -}
 toPrimOrTfmNoConst :: Rate -> E -> PrimOr E
@@ -325,7 +325,7 @@ data MainExp a
   | ReadMacrosString !Text
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
-{-| Rate of if-then-else conditional.
+{- | Rate of if-then-else conditional.
 It can run at Ir or Kr
 -}
 data IfRate = IfIr | IfKr
