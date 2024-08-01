@@ -1,7 +1,9 @@
 .PHONY: build bench run
 
+GHC_OPTIONS="-Wall -Werror -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -Wunused-packages -Wstar-is-type"
+
 build:
-	stack build csound-core
+	stack build csound-expression-dynamic --ghc-options=${GHC_OPTIONS}
 
 bench:
 	stack build csound-expression:bench:csound-expression-benchmark  # --profile

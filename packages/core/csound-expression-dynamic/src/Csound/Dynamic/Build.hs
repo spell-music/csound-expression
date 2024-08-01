@@ -1,37 +1,81 @@
 module Csound.Dynamic.Build (
   -- * Expression tree
+
   -- | Working with expression tree
-  toExp, onExp,
+  toExp,
+  onExp,
 
   -- * Rates
+
   -- * Queries
-  getRates, isMultiOutSignature, getPrimUnsafe,
+  getRates,
+  isMultiOutSignature,
+  getPrimUnsafe,
 
   -- * Constructors
+
   -- | Basic constructors
-  emptyE, prim, opcPrefix, oprPrefix, oprInfix,
+  emptyE,
+  prim,
+  opcPrefix,
+  oprPrefix,
+  oprInfix,
   numExp1,
-  tfm, tfmNoInlineArgs, pn, withInits,
-  double, int, str, verbatim, instrIdE,
-  inlineVar, gInit, gInitDouble,
+  tfm,
+  tfmNoInlineArgs,
+  pn,
+  withInits,
+  double,
+  int,
+  str,
+  verbatim,
+  instrIdE,
+  inlineVar,
+  gInit,
+  gInitDouble,
 
   -- ** Opcodes constructors
-  Spec1, spec1, opcs, opcsDep, opcsDep_, opcsNoInlineArgs, opr1, opr1k, opr1kDep, infOpr, infOprDep, oprBy, oprByDep,
-  Specs, specs, MultiOut, mopcs, mopcsDep, mo,
+  Spec1,
+  spec1,
+  opcs,
+  opcsDep,
+  opcsDep_,
+  opcsNoInlineArgs,
+  opr1,
+  opr1k,
+  opr1kDep,
+  infOpr,
+  infOprDep,
+  oprBy,
+  oprByDep,
+  Specs,
+  specs,
+  MultiOut,
+  mopcs,
+  mopcsDep,
+  mo,
 
   -- * Global init statements
-  setSr, setKsmps, setNchnls, setNchnls_i, setKr, setZeroDbfs,
+  setSr,
+  setKsmps,
+  setNchnls,
+  setNchnls_i,
+  setKr,
+  setZeroDbfs,
 
   -- * Arrays
-  opcsArr, infOprArr, initPureArr, readPureArr
+  opcsArr,
+  infOprArr,
+  initPureArr,
+  readPureArr,
 ) where
 
-import qualified Data.Map as M(fromList)
+import Data.Fix (Fix (..))
+import Data.Map qualified as M (fromList)
 import Data.Serialize qualified as Cereal
-import Data.Fix(Fix(..))
 
-import Csound.Dynamic.Types.Exp
 import Csound.Dynamic.Types.Dep
+import Csound.Dynamic.Types.Exp
 import Data.Text (Text)
 import Data.Text qualified as Text
 
@@ -62,7 +106,7 @@ toArgsNoInlineConst = zipWith toPrimOrTfmNoConst
 tfm :: Info -> [E] -> E
 tfm info args = noRate $ Tfm info $ toArgs (getInfoRates info) args
 
-tfmArr :: Monad m => IsArrInit -> Var -> Info -> [E] -> DepT m ()
+tfmArr :: (Monad m) => IsArrInit -> Var -> Info -> [E] -> DepT m ()
 tfmArr isArrInit var info args =
   depT_ $ noRate $ TfmArr isArrInit var info $ toArgs (getInfoRates info) args
 
@@ -86,7 +130,7 @@ withInits a es = onExp phi a
       Tfm t xs -> Tfm t (xs ++ (fmap toPrimOr es))
       -- for opcodes with multiple outputs
       Select r n expr -> Select r n $ fmap (\t -> withInits t es) expr
-      x        -> x
+      x -> x
 
 -- | Converts Haskell's doubles to Csound's doubles
 double :: Double -> E
@@ -100,13 +144,13 @@ str = prim . PrimString . Text.pack
 int :: Int -> E
 int = prim . PrimInt
 
-verbatim :: Monad m => Text -> DepT m ()
+verbatim :: (Monad m) => Text -> DepT m ()
 verbatim = stmtOnlyT . Verbatim
 
 instrIdE :: InstrId -> E
 instrIdE x =
   case x of
-    InstrId Nothing  m -> int m
+    InstrId Nothing m -> int m
     InstrId (Just _) _ -> error "instrId undefined for fractional InstrIds"
     InstrLabel s -> prim (PrimString s)
 
@@ -124,10 +168,10 @@ spec1 = SingleRate . M.fromList
 opcs :: Name -> Spec1 -> [E] -> E
 opcs name signature = tfm (opcPrefix name $ spec1 signature)
 
-opcsDep :: Monad m => Name -> Spec1 -> [E] -> DepT m E
+opcsDep :: (Monad m) => Name -> Spec1 -> [E] -> DepT m E
 opcsDep name signature = tfmDep (opcPrefix name $ spec1 signature)
 
-opcsDep_ :: Monad m => Name -> Spec1 -> [E] -> DepT m ()
+opcsDep_ :: (Monad m) => Name -> Spec1 -> [E] -> DepT m ()
 opcsDep_ name signature args = depT_ (tfm (opcPrefix name $ spec1 signature) args)
 
 opcsNoInlineArgs :: Name -> Spec1 -> [E] -> E
@@ -139,28 +183,28 @@ opr1 name a = tfm (oprPrefix name $ spec1 [(Ar, [Ar]), (Kr, [Kr]), (Ir, [Ir])]) 
 oprBy :: Name -> Spec1 -> [E] -> E
 oprBy name signature = tfm (oprPrefix name $ spec1 signature)
 
-oprByDep :: Monad m => Name -> Spec1 -> [E] -> DepT m E
+oprByDep :: (Monad m) => Name -> Spec1 -> [E] -> DepT m E
 oprByDep name signature = tfmDep (oprPrefix name $ spec1 signature)
 
 opr1k :: Name -> E -> E
 opr1k name a = tfm (oprPrefix name $ spec1 [(Kr, [Kr]), (Ir, [Ir])]) [a]
 
-opr1kDep :: Monad m => Name -> E -> DepT m E
+opr1kDep :: (Monad m) => Name -> E -> DepT m E
 opr1kDep name a = tfmDep (oprPrefix name $ spec1 [(Kr, [Kr]), (Ir, [Ir])]) [a]
 
 infOpr :: Name -> E -> E -> E
 infOpr name a b = tfm (oprInfix name $ spec1 [(Ar, [Ar, Ar]), (Kr, [Kr, Kr]), (Ir, [Ir, Ir])]) [a, b]
 
-infOprDep :: Monad m => Name -> E -> E -> DepT m E
+infOprDep :: (Monad m) => Name -> E -> E -> DepT m E
 infOprDep name a b = tfmDep (oprInfix name $ spec1 [(Ar, [Ar, Ar]), (Kr, [Kr, Kr]), (Ir, [Ir, Ir])]) [a, b]
 
 numExp1 :: NumOp -> E -> E
 numExp1 op x = noRate $ ExpNum $ fmap toPrimOr $ PreInline op [x]
 
-opcsArr :: Monad m => IsArrInit -> Var -> Name -> Spec1 -> [E] -> DepT m ()
+opcsArr :: (Monad m) => IsArrInit -> Var -> Name -> Spec1 -> [E] -> DepT m ()
 opcsArr isArrInit out name signature = tfmArr isArrInit out (opcPrefix name $ spec1 signature)
 
-infOprArr :: Monad m => IsArrInit -> Var -> Name -> E -> E -> DepT m ()
+infOprArr :: (Monad m) => IsArrInit -> Var -> Name -> E -> E -> DepT m ()
 infOprArr isArrInit out name a b = tfmArr isArrInit out (oprInfix name $ spec1 [(Ar, [Ar, Ar]), (Kr, [Kr, Kr]), (Ir, [Ir, Ir])]) [a, b]
 
 initPureArr :: Rate -> IfRate -> [E] -> E
@@ -184,15 +228,16 @@ specs = uncurry MultiRate
 mopcs :: Name -> Specs -> [E] -> MultiOut [E]
 mopcs name signature as =
   \numOfOuts ->
-    mo (
-      take numOfOuts $ fst signature) $
-      tfm (opcPrefix name $ limitMultiRateSignature numOfOuts signature) as
+    mo
+      ( take numOfOuts $ fst signature
+      )
+      $ tfm (opcPrefix name $ limitMultiRateSignature numOfOuts signature) as
 
 limitMultiRateSignature :: Int -> Specs -> Signature
 limitMultiRateSignature size (outRates, inRates) =
   MultiRate (take size outRates) inRates
 
-mopcsDep :: Monad m => Int -> Name -> Specs -> [E] -> DepT m [E]
+mopcsDep :: (Monad m) => Int -> Name -> Specs -> [E] -> DepT m [E]
 mopcsDep numOfOuts name signature as =
   moDep rates <$> tfmDepVar (opcPrefix name (limitMultiRateSignature numOfOuts signature)) as
   where
@@ -201,22 +246,7 @@ mopcsDep numOfOuts name signature as =
 mo :: [Rate] -> E -> [E]
 mo outRates e = zipWith (\cellId r -> select cellId r e) [0 ..] outRates
   where
-    {-
-    e' = onExp setMultiRate e
-
-    setInfo info = info{ infoSignature = MultiRate outRates ins }
-      where
-        ins = case infoSignature info of
-            MultiRate _ a -> a
-            _ -> error "Tuple.hs: multiOutsSection -- should be multiOut expression"
-
-    setMultiRate  = \case
-      Tfm info xs -> Tfm (setInfo info) xs
-      ExpPrim (PrimTmpVar v) -> ExpPrim (PrimTmpVar $ v { tmpVarInfo = setInfo <$> tmpVarInfo v })
-      other -> other -- error "Tuple.hs: multiOutsSection -- argument should be Tfm-expression"
-    -}
     select cellId rate expr = withRate rate $ Select rate cellId (PrimOr $ Right expr)
-
 
 moDep :: [Rate] -> TmpVar -> [E]
 moDep outRates e = zipWith (\cellId r -> select cellId r e) [0 ..] outRates
@@ -224,7 +254,7 @@ moDep outRates e = zipWith (\cellId r -> select cellId r e) [0 ..] outRates
     select cellId rate tmpVar =
       withRate rate $ Select rate cellId (PrimOr $ Left (PrimTmpVar tmpVar))
 
-getRates :: Show a => MainExp a -> [Rate]
+getRates :: (Show a) => MainExp a -> [Rate]
 getRates = \case
   Tfm info _ -> fromInfo info
   ExpPrim (PrimTmpVar v) ->
@@ -238,7 +268,6 @@ getRates = \case
         MultiRate outs _ -> outs
         _ -> error "Build.hs:getRates - argument should be multiOut"
 
-
 isMultiOutSignature :: Signature -> Bool
 isMultiOutSignature x =
   case x of
@@ -247,8 +276,8 @@ isMultiOutSignature x =
 
 getPrimUnsafe :: E -> Prim
 getPrimUnsafe x = case toExp x of
-    ExpPrim a   -> a
-    _           -> error "Csound.Dynamic.Build.getPrimUnsafe:Expression is not a primitive"
+  ExpPrim a -> a
+  _ -> error "Csound.Dynamic.Build.getPrimUnsafe:Expression is not a primitive"
 
 -- expression tree
 
@@ -259,28 +288,24 @@ toExp = ratedExpExp . unFix
 onExp :: (Exp E -> Exp E) -> E -> E
 onExp f x = rehashE $
   case unFix x of
-    a -> Fix $ a{ ratedExpExp = f (ratedExpExp a) }
+    a -> Fix $ a{ratedExpExp = f (ratedExpExp a)}
 
 ----------------------------------------------------------------
 -- global inits
 
-setSr, setKsmps, setNchnls, setNchnls_i, setKr :: Monad m => Int -> DepT m ()
-
-setZeroDbfs :: Monad m => Double -> DepT m  ()
-
-setGlobal :: (Monad m, Show a) => Text -> a -> DepT m  ()
+setSr, setKsmps, setNchnls, setNchnls_i, setKr :: (Monad m) => Int -> DepT m ()
+setZeroDbfs :: (Monad m) => Double -> DepT m ()
+setGlobal :: (Monad m, Show a) => Text -> a -> DepT m ()
 setGlobal name val = verbatim $ Text.unwords [name, "=", Text.pack $ show val]
-
-setSr       = setGlobal "sr"
-setKr       = setGlobal "kr"
-setNchnls   = setGlobal "nchnls"
+setSr = setGlobal "sr"
+setKr = setGlobal "kr"
+setNchnls = setGlobal "nchnls"
 setNchnls_i = setGlobal "nchnls_i"
-setKsmps    = setGlobal "ksmps"
+setKsmps = setGlobal "ksmps"
 setZeroDbfs = setGlobal "0dbfs"
 
-gInit :: Monad m => Text -> Int -> DepT m ()
+gInit :: (Monad m) => Text -> Int -> DepT m ()
 gInit name val = writeVar IfIr (VarVerbatim Ir name) (int val)
 
-gInitDouble :: Monad m => Text -> Double -> DepT m ()
+gInitDouble :: (Monad m) => Text -> Double -> DepT m ()
 gInitDouble name val = writeVar IfIr (VarVerbatim Ir name) (double val)
-

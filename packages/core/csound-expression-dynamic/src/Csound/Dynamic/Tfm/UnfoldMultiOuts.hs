@@ -1,75 +1,93 @@
-{-# Language TupleSections #-}
-module Csound.Dynamic.Tfm.UnfoldMultiOuts(
-  unfoldMultiOuts, Selector(..)
+{-# LANGUAGE TupleSections #-}
+
+module Csound.Dynamic.Tfm.UnfoldMultiOuts (
+  unfoldMultiOuts,
+  Selector (..),
 ) where
 
-import Data.List(sortBy)
-import Data.Ord(comparing)
+import Control.Monad (join)
 import Control.Monad.Trans.State.Strict
-import qualified Data.IntMap.Strict as IM
+import Data.Bifunctor (first)
 import Data.Either (partitionEithers)
+import Data.Foldable (toList)
+import Data.IntMap.Strict qualified as IM
+import Data.Ord (comparing)
+import Data.Sequence (Seq)
+import Data.Sequence qualified as Seq
 
-import Csound.Dynamic.Tfm.InferTypes(Var(..), Stmt(..), InferenceResult(..))
+import Csound.Dynamic.Build (getRates, isMultiOutSignature)
+import Csound.Dynamic.Tfm.InferTypes (InferenceResult (..), Stmt (..), Var (..))
 import Csound.Dynamic.Types.Exp hiding (Var (..))
-import Csound.Dynamic.Build(getRates, isMultiOutSignature)
 
-type ChildrenMap = IM.IntMap [Port]
+type ChildrenMap = IM.IntMap (Seq Port)
 
-lookupChildren :: ChildrenMap -> Var -> [Port]
+lookupChildren :: ChildrenMap -> Var -> Seq Port
 lookupChildren m parentVar =
   case IM.lookup (varId parentVar) m of
     Just ports -> ports
     Nothing -> error $ "Invalid children map for id: " <> (show $ varId parentVar)
 
 mkChildrenMap :: [(Var, Selector)] -> ChildrenMap
-mkChildrenMap = IM.fromListWith (++) . fmap extract
-    where extract (var, sel) = (varId $ selectorParent sel,
-                                return $ Port (varId var) (selectorOrder sel))
+mkChildrenMap = IM.fromListWith (<>) . fmap extract
+  where
+    extract (var, sel) =
+      ( varId $ selectorParent sel
+      , return $ Port (varId var) (selectorOrder sel)
+      )
 
 data Port = Port
-    { portId    :: Int
-    , portOrder :: Int } deriving (Show)
+  { portId :: Int
+  , portOrder :: Int
+  }
+  deriving (Show)
 
 type SingleStmt = Stmt Var
-type MultiStmt  = ([Var], RatedExp Var)
+type MultiStmt = ([Var], RatedExp Var)
 
 data Selector = Selector
-    { selectorParent  :: Var
-    , selectorOrder   :: Int
-    }
+  { selectorParent :: Var
+  , selectorOrder :: Int
+  }
 
 unfoldMultiOuts :: InferenceResult -> ([MultiStmt], Int)
-unfoldMultiOuts InferenceResult{..} = runState st programLastFreshId
-    where
-      (noSelectorStmts, selectors) = partitionEithers $
-        fmap (\stmt@(Stmt lhs rhs) -> maybe (Left stmt) (Right . (lhs, )) $ getSelector rhs) typedProgram
-      st = mapM (unfoldStmt $ mkChildrenMap selectors) $ noSelectorStmts
+unfoldMultiOuts InferenceResult{..} = runState (fmap (fmap $ first toList) st) programLastFreshId
+  where
+    (noSelectorStmts, selectors) =
+      partitionEithers $
+        fmap (\stmt@(Stmt lhs rhs) -> maybe (Left stmt) (Right . (lhs,)) $ getSelector rhs) typedProgram
 
-unfoldStmt :: ChildrenMap -> SingleStmt -> State Int MultiStmt
-unfoldStmt childrenMap (Stmt lhs rhs) = case getParentTypes rhs of
-    Nothing    -> return ([lhs], rhs)
+    st = mapM (unfoldStmt $ mkChildrenMap selectors) $ noSelectorStmts
+
+unfoldStmt :: ChildrenMap -> SingleStmt -> State Int (Seq Var, RatedExp Var)
+unfoldStmt childrenMap (Stmt lhs rhs) =
+  case getParentTypes rhs of
+    Nothing -> return (Seq.singleton lhs, rhs)
     Just types -> fmap (,rhs) $ formLhs (lookupChildren childrenMap lhs) types
 
-formLhs :: [Port] -> [Rate] -> State Int [Var]
-formLhs ports types = fmap (zipWith Var types) (getPorts ports)
-    where getPorts ps = state $ \lastFreshId ->
-            let ps' = sortBy (comparing portOrder) ps
-                (ids, lastPortOrder) = runState (mapM (fillMissingPorts lastFreshId) ps') 0
-                freshIdForTail = 1 + lastFreshId + inUsePortsSize
-                tailIds = map (+ freshIdForTail) [0 .. outputArity - 1 - lastPortOrder]
-            in  (concat ids ++ tailIds, lastFreshId + outputArity - inUsePortsSize)
+formLhs :: Seq Port -> Seq Rate -> State Int (Seq Var)
+formLhs ports types = fmap (Seq.zipWith Var types) (getPorts ports)
+  where
+    getPorts ps = state $ \lastFreshId ->
+      let
+        ps' = Seq.sortBy (comparing portOrder) ps
+        (ids, lastPortOrder) = runState (mapM (fillMissingPorts lastFreshId) ps') 0
+        freshIdForTail = 1 + lastFreshId + inUsePortsSize
+        tailIds = fmap (+ freshIdForTail) $ Seq.fromList [0 .. outputArity - 1 - lastPortOrder]
+       in
+        (join ids <> tailIds, lastFreshId + outputArity - inUsePortsSize)
 
-          outputArity = length types
-          inUsePortsSize = length ports
+    outputArity = length types
+    inUsePortsSize = length ports
 
-          fillMissingPorts :: Int -> Port -> State Int [Int]
-          fillMissingPorts lastFreshId port = state $ \s ->
-                if s == order
-                then ([e], next)
-                else (fmap (+ lastFreshId) [s .. order - 1] ++ [e], next)
-            where e = portId port
-                  order = portOrder port
-                  next = order + 1
+    fillMissingPorts :: Int -> Port -> State Int (Seq Int)
+    fillMissingPorts lastFreshId port = state $ \s ->
+      if s == order
+        then (Seq.singleton e, next)
+        else (fmap (+ lastFreshId) (Seq.fromList [s .. order - 1]) Seq.|> e, next)
+      where
+        e = portId port
+        order = portOrder port
+        next = order + 1
 
 -----------------------------------------------------------------------
 -- unfolds multiple rates generic functions
@@ -80,14 +98,13 @@ getSelector x =
     Select _ order (PrimOr (Right parent)) -> Just $ Selector parent order
     _ -> Nothing
 
-getParentTypes :: RatedExp Var -> Maybe [Rate]
+getParentTypes :: RatedExp Var -> Maybe (Seq Rate)
 getParentTypes x =
   case ratedExpExp x of
     Tfm i _ -> fromInfo i
     ExpPrim (PrimTmpVar v) -> fromInfo =<< tmpVarInfo v
     _ -> Nothing
   where
-  fromInfo i =
-    if (isMultiOutSignature $ infoSignature i)
-                then Just (getRates $ ratedExpExp x)
-                else Nothing
+    fromInfo i
+      | isMultiOutSignature $ infoSignature i = Just (Seq.fromList $ getRates $ ratedExpExp x)
+      | otherwise = Nothing
