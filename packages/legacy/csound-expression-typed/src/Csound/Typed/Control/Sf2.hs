@@ -1,37 +1,41 @@
-{-# Language TypeFamilies #-}
-module Csound.Typed.Control.Sf2(
-    Sf(..), unSf
+{-# LANGUAGE TypeFamilies #-}
+
+module Csound.Typed.Control.Sf2 (
+  Sf (..),
+  unSf,
 ) where
 
 import Data.Boolean
 import Data.Default
 import Data.Text (Text)
 
-import qualified Csound.Dynamic as D
+import Csound.Dynamic qualified as D
 
-import Csound.Typed.Types
 import Csound.Typed.GlobalState
+import Csound.Typed.Types
 
--- | The sf2 sound font preset. It is defined with
--- file name, bank and program integers.
-data Sf = Sf
-    { sfName :: Text
-    , sfBank :: Int
-    , sfProg :: Int }
-    | SfId (GE E)
+{- | The sf2 sound font preset. It is defined with
+file name, bank and program integers.
+-}
+data Sf
+  = Sf
+      { sfName :: Text
+      , sfBank :: Int
+      , sfProg :: Int
+      }
+  | SfId (GE E)
 
 instance Val Sf where
-    fromGE = SfId
-    toGE   = unSf
+  fromGE = SfId
+  toGE = unSf
 
 unSf :: Sf -> GE E
 unSf x = case x of
-    SfId a -> a
-    Sf name bank prog -> fmap D.int $ saveSf (SfSpec name bank prog)
+  SfId a -> a
+  Sf name bank prog -> fmap D.int $ saveSf (SfSpec name bank prog)
 
 instance Default Sf where
-    def = fromE 0
+  def = fromE 0
 
-type instance BooleanOf Sf  = BoolD
+type instance BooleanOf Sf = BoolD
 instance IfB Sf where ifB = on3 (D.ifExp D.IfIr)
-

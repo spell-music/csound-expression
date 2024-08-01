@@ -86,7 +86,6 @@ import Data.Eq.Deriving
 import Data.Fix
 import Data.Hashable
 import Data.IntMap.Internal qualified as IM
-import Data.IntMap.Strict qualified as IM
 import Data.List qualified as L
 import Data.Map qualified as M (toList)
 import Data.Map.Strict (Map)
@@ -423,7 +422,6 @@ data OpcFixity = Prefix | Infix | Opcode
 
 -- | The Csound rates.
 data Rate -- rate:
-----------------------------
   = Xr -- audio or control (and I use it for opcodes that produce no output, ie procedures)
   | Ar -- audio
   | Kr -- control
@@ -521,19 +519,19 @@ type Note = [Prim]
 -- types for arithmetic and boolean expressions
 
 data Inline op arg = Inline
-  { inlineExp :: !(InlineExp op)
-  , inlineEnv :: !(IM.IntMap arg)
+  { inlineExp :: (InlineExp op)
+  , inlineEnv :: (IM.IntMap arg)
   }
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic1, Generic)
 
 -- Inlined expression.
 data InlineExp op
-  = InlinePrim !Int
-  | InlineExp !op ![InlineExp op]
+  = InlinePrim Int
+  | InlineExp op [InlineExp op]
   deriving (Show, Eq, Ord, Generic)
 
 -- Expression as a tree (to be inlined)
-data PreInline a b = PreInline !a ![b]
+data PreInline a b = PreInline a [b]
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic, Generic1)
 
 -- booleans

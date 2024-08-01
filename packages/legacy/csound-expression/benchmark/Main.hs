@@ -8,7 +8,7 @@ import Csound.Base
 main :: IO ()
 main =
   defaultMain
-    [ bgroup "drone tests" $ zipWith forDrone [1..] [testDrone, testDrone2, testDrone3]
+    [ bgroup "drone tests" $ zipWith forDrone [1 ..] [testDrone, testDrone2, testDrone3]
     ]
   where
     forDrone n fun = bench ("drone: " <> show n) $ nfAppIO (renderCsd . fun) 100

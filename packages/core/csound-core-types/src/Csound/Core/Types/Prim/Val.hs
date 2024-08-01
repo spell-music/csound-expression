@@ -1,27 +1,29 @@
-{-# Language AllowAmbiguousTypes #-}
--- | Class for conversion of newtype-wrapped values
--- to low level dynamic representation
-module Csound.Core.Types.Prim.Val
-  ( Val (..)
-  , IsPrim (..)
-  , liftE
-  , liftE2
-  , liftE3
-  , liftPrim
-  , liftPrim2
-  , liftPrim3
-  , BoolVal (..)
-  ) where
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
-import Data.Boolean
-import Csound.Dynamic (E, Rate, IfRate)
+{- | Class for conversion of newtype-wrapped values
+to low level dynamic representation
+-}
+module Csound.Core.Types.Prim.Val (
+  Val (..),
+  IsPrim (..),
+  liftE,
+  liftE2,
+  liftE3,
+  liftPrim,
+  liftPrim2,
+  liftPrim3,
+  BoolVal (..),
+) where
+
 import Csound.Core.State (Run)
+import Csound.Dynamic (E, IfRate, Rate)
+import Data.Boolean
 import Data.Kind (Type)
 
 -- | Class for primitive csound values
 class Val a where
-  fromE   :: Run E -> a
-  toE     :: a -> Run E
+  fromE :: Run E -> a
+  toE :: a -> Run E
   valRate :: Rate
 
 class (Boolean a, IsPrim a, Val a, PrimOf a ~ Bool) => BoolVal a where
@@ -37,9 +39,9 @@ liftE3 :: (Val a, Val b, Val c, Val d) => (E -> E -> E -> E) -> a -> b -> c -> d
 liftE3 f a b c = fromE $ f <$> toE a <*> toE b <*> toE c
 
 class IsPrim a where
-    type PrimOf a :: Type
-    getPrim :: a -> Maybe (PrimOf a)
-    fromPrim :: PrimOf a -> a
+  type PrimOf a :: Type
+  getPrim :: a -> Maybe (PrimOf a)
+  fromPrim :: PrimOf a -> a
 
 liftPrim :: (Val a, Val b, IsPrim a, IsPrim b) => (PrimOf a -> PrimOf b) -> (E -> E) -> (a -> b)
 liftPrim primFun exprFun x = maybe (liftE exprFun x) (fromPrim . primFun) (getPrim x)

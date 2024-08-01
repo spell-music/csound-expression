@@ -1,5 +1,9 @@
-module Csound.Typed.Gui.Cabbage.CabbageLang(
-  Lang, Line(..), Property(..), Arg(..), ppCabbage
+module Csound.Typed.Gui.Cabbage.CabbageLang (
+  Lang,
+  Line (..),
+  Property (..),
+  Arg (..),
+  ppCabbage,
 ) where
 
 import Data.Text (Text)
@@ -34,6 +38,6 @@ ppProp (Property name args) = textStrict name <> tupled (fmap ppArg args)
 ppArg :: Arg -> Doc
 ppArg x = case x of
   StringArg s -> dquotes (textStrict s)
-  FloatArg a  -> float a
-  IntArg a    -> int a
+  FloatArg a -> float a
+  IntArg a -> int a
   ColonArg a b -> float a <> colon <> float b

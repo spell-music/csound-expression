@@ -1,70 +1,171 @@
-{-# Language TypeFamilies, TypeSynonymInstances, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 -- | Argument modifiers. Functions to transform arguments of the function with flexibility.
-module Csound.Air.ModArg(
-    -- * Basic class
-    ModArg1(..), ModArg2(..), ModArg3(..), ModArg4(..),
-    -- ** Delayed
-    delModArg1, delModArg2, delModArg3, delModArg4,
+module Csound.Air.ModArg (
+  -- * Basic class
+  ModArg1 (..),
+  ModArg2 (..),
+  ModArg3 (..),
+  ModArg4 (..),
 
-    -- * Oscillators
-    oscArg1, oscArg2, oscArg3, oscArg4,
-    triArg1, triArg2, triArg3, triArg4,
-    sqrArg1, sqrArg2, sqrArg3, sqrArg4,
-    sawArg1, sawArg2, sawArg3, sawArg4,
+  -- ** Delayed
+  delModArg1,
+  delModArg2,
+  delModArg3,
+  delModArg4,
 
-    -- ** Random phase
-    rndOscArg1, rndOscArg2, rndOscArg3, rndOscArg4,
-    rndTriArg1, rndTriArg2, rndTriArg3, rndTriArg4,
-    rndSqrArg1, rndSqrArg2, rndSqrArg3, rndSqrArg4,
-    rndSawArg1, rndSawArg2, rndSawArg3, rndSawArg4,
+  -- * Oscillators
+  oscArg1,
+  oscArg2,
+  oscArg3,
+  oscArg4,
+  triArg1,
+  triArg2,
+  triArg3,
+  triArg4,
+  sqrArg1,
+  sqrArg2,
+  sqrArg3,
+  sqrArg4,
+  sawArg1,
+  sawArg2,
+  sawArg3,
+  sawArg4,
 
-    -- ** Delayed
-    delOscArg1, delOscArg2, delOscArg3, delOscArg4,
-    delTriArg1, delTriArg2, delTriArg3, delTriArg4,
-    delSqrArg1, delSqrArg2, delSqrArg3, delSqrArg4,
-    delSawArg1, delSawArg2, delSawArg3, delSawArg4,
+  -- ** Random phase
+  rndOscArg1,
+  rndOscArg2,
+  rndOscArg3,
+  rndOscArg4,
+  rndTriArg1,
+  rndTriArg2,
+  rndTriArg3,
+  rndTriArg4,
+  rndSqrArg1,
+  rndSqrArg2,
+  rndSqrArg3,
+  rndSqrArg4,
+  rndSawArg1,
+  rndSawArg2,
+  rndSawArg3,
+  rndSawArg4,
 
-    -- ** Delayed with Random phase
-    delRndOscArg1, delRndOscArg2, delRndOscArg3, delRndOscArg4,
-    delRndTriArg1, delRndTriArg2, delRndTriArg3, delRndTriArg4,
-    delRndSqrArg1, delRndSqrArg2, delRndSqrArg3, delRndSqrArg4,
-    delRndSawArg1, delRndSawArg2, delRndSawArg3, delRndSawArg4,
+  -- ** Delayed
+  delOscArg1,
+  delOscArg2,
+  delOscArg3,
+  delOscArg4,
+  delTriArg1,
+  delTriArg2,
+  delTriArg3,
+  delTriArg4,
+  delSqrArg1,
+  delSqrArg2,
+  delSqrArg3,
+  delSqrArg4,
+  delSawArg1,
+  delSawArg2,
+  delSawArg3,
+  delSawArg4,
 
-    -- * Noise
-    noiseArg1, noiseArg2, noiseArg3, noiseArg4,
-    pinkArg1, pinkArg2, pinkArg3, pinkArg4,
-    jitArg1, jitArg2, jitArg3, jitArg4,
-    gaussArg1, gaussArg2, gaussArg3, gaussArg4,
-    gaussiArg1, gaussiArg2, gaussiArg3, gaussiArg4,
+  -- ** Delayed with Random phase
+  delRndOscArg1,
+  delRndOscArg2,
+  delRndOscArg3,
+  delRndOscArg4,
+  delRndTriArg1,
+  delRndTriArg2,
+  delRndTriArg3,
+  delRndTriArg4,
+  delRndSqrArg1,
+  delRndSqrArg2,
+  delRndSqrArg3,
+  delRndSqrArg4,
+  delRndSawArg1,
+  delRndSawArg2,
+  delRndSawArg3,
+  delRndSawArg4,
 
-    -- ** Delayed
-    delNoiseArg1, delNoiseArg2, delNoiseArg3, delNoiseArg4,
-    delPinkArg1, delPinkArg2, delPinkArg3, delPinkArg4,
-    delJitArg1, delJitArg2, delJitArg3, delJitArg4,
-    delGaussArg1, delGaussArg2, delGaussArg3, delGaussArg4,
-    delGaussiArg1, delGaussiArg2, delGaussiArg3, delGaussiArg4,
+  -- * Noise
+  noiseArg1,
+  noiseArg2,
+  noiseArg3,
+  noiseArg4,
+  pinkArg1,
+  pinkArg2,
+  pinkArg3,
+  pinkArg4,
+  jitArg1,
+  jitArg2,
+  jitArg3,
+  jitArg4,
+  gaussArg1,
+  gaussArg2,
+  gaussArg3,
+  gaussArg4,
+  gaussiArg1,
+  gaussiArg2,
+  gaussiArg3,
+  gaussiArg4,
 
-    -- * Envelopes
-    adsrArg1, adsrArg2, adsrArg3, adsrArg4,
-    xadsrArg1, xadsrArg2, xadsrArg3, xadsrArg4,
+  -- ** Delayed
+  delNoiseArg1,
+  delNoiseArg2,
+  delNoiseArg3,
+  delNoiseArg4,
+  delPinkArg1,
+  delPinkArg2,
+  delPinkArg3,
+  delPinkArg4,
+  delJitArg1,
+  delJitArg2,
+  delJitArg3,
+  delJitArg4,
+  delGaussArg1,
+  delGaussArg2,
+  delGaussArg3,
+  delGaussArg4,
+  delGaussiArg1,
+  delGaussiArg2,
+  delGaussiArg3,
+  delGaussiArg4,
 
-    -- ** Delayed
-    delAdsrArg1, delAdsrArg2, delAdsrArg3, delAdsrArg4,
-    delXadsrArg1, delXadsrArg2, delXadsrArg3, delXadsrArg4
+  -- * Envelopes
+  adsrArg1,
+  adsrArg2,
+  adsrArg3,
+  adsrArg4,
+  xadsrArg1,
+  xadsrArg2,
+  xadsrArg3,
+  xadsrArg4,
 
+  -- ** Delayed
+  delAdsrArg1,
+  delAdsrArg2,
+  delAdsrArg3,
+  delAdsrArg4,
+  delXadsrArg1,
+  delXadsrArg2,
+  delXadsrArg3,
+  delXadsrArg4,
 ) where
 
 import Data.Kind (Type)
 
-import Csound.Typed
-import Csound.Typed.Opcode(gauss, gaussi, jitter, linseg, linsegr, expsegr)
-import Csound.Air.Wave
 import Csound.Air.Envelope
+import Csound.Air.Wave
+import Csound.Typed
+import Csound.Typed.Opcode (expsegr, gauss, gaussi, jitter, linseg, linsegr)
 
 -- trumpet:
 -- dac $ mul 1.3 $ mixAt 0.15 largeHall2 $ midi $ onMsg (\cps -> (mul (linsegr [0,0.01, 1, 3, 0.2] 0.2 0) . at (jitterArg1 (0.15 + 0.05 * uosc 0.2) 3 20  alp1 (mul (fades 0.2 0.2) $ 2700 + 0.6 * cps) 0.2) . gaussArg1 0.03 (\x -> return (saw x) + mul (0.12 * expseg [1, 2, 0.1]) (bat (alp1 cps 0.4) white))) cps)
 
-delEnv :: SigSpace a => D -> D -> a -> a
+delEnv :: (SigSpace a) => D -> D -> a -> a
 delEnv delTime riseTime asig = mul (linseg [0, delTime, 0, riseTime, 1]) asig
 
 delModArg1 :: (SigSpace a, ModArg1 a b) => D -> D -> Sig -> a -> b -> ModArgOut1 a b
@@ -421,7 +522,6 @@ delPinkArg3 delTime riseTime depth f = delModArg3 delTime riseTime depth pink f
 delPinkArg4 :: (ModArg4 (SE Sig) b) => D -> D -> Sig -> b -> ModArgOut4 (SE Sig) b
 delPinkArg4 delTime riseTime depth f = delModArg4 delTime riseTime depth pink f
 
-
 -- jitter noise
 
 jitArg1 :: (ModArg1 (SE Sig) b) => Sig -> Sig -> Sig -> b -> ModArgOut1 (SE Sig) b
@@ -511,445 +611,445 @@ delGaussiArg4 delTime riseTime depth rate f = delModArg4 delTime riseTime depth 
 -- modArg1
 
 class ModArg1 a b where
-    type ModArgOut1 a b :: Type
-    modArg1 :: Sig -> a -> b -> ModArgOut1 a b
+  type ModArgOut1 a b :: Type
+  modArg1 :: Sig -> a -> b -> ModArgOut1 a b
 
 --------------------------------------------
 -- pure in, pure mono out
 
 instance ModArg1 Sig (Sig -> Sig) where
-    type ModArgOut1 Sig (Sig -> Sig) = Sig -> Sig
-    modArg1 depth a f = \x -> f (x * (1 + depth * a))
+  type ModArgOut1 Sig (Sig -> Sig) = Sig -> Sig
+  modArg1 depth a f = \x -> f (x * (1 + depth * a))
 
 instance ModArg1 Sig (Sig -> a -> Sig) where
-    type ModArgOut1 Sig (Sig -> a -> Sig) = Sig -> a -> Sig
-    modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
+  type ModArgOut1 Sig (Sig -> a -> Sig) = Sig -> a -> Sig
+  modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
 
 instance ModArg1 Sig (Sig -> a -> b -> Sig) where
-    type ModArgOut1 Sig (Sig -> a -> b -> Sig) = Sig -> a -> b -> Sig
-    modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
+  type ModArgOut1 Sig (Sig -> a -> b -> Sig) = Sig -> a -> b -> Sig
+  modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
 
 instance ModArg1 Sig (Sig -> a -> b -> c -> Sig) where
-    type ModArgOut1 Sig (Sig -> a -> b -> c -> Sig) = Sig -> a -> b -> c -> Sig
-    modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
+  type ModArgOut1 Sig (Sig -> a -> b -> c -> Sig) = Sig -> a -> b -> c -> Sig
+  modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
 
 --------------------------------------------
 -- pure in, pure stereo out
 
 instance ModArg1 Sig (Sig -> Sig2) where
-    type ModArgOut1 Sig (Sig -> Sig2) = Sig -> Sig2
-    modArg1 depth a f = \x -> f (x * (1 + depth * a))
+  type ModArgOut1 Sig (Sig -> Sig2) = Sig -> Sig2
+  modArg1 depth a f = \x -> f (x * (1 + depth * a))
 
 instance ModArg1 Sig (Sig -> a -> Sig2) where
-    type ModArgOut1 Sig (Sig -> a -> Sig2) = Sig -> a -> Sig2
-    modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
+  type ModArgOut1 Sig (Sig -> a -> Sig2) = Sig -> a -> Sig2
+  modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
 
 instance ModArg1 Sig (Sig -> a -> b -> Sig2) where
-    type ModArgOut1 Sig (Sig -> a -> b -> Sig2) = Sig -> a -> b -> Sig2
-    modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
+  type ModArgOut1 Sig (Sig -> a -> b -> Sig2) = Sig -> a -> b -> Sig2
+  modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
 
 instance ModArg1 Sig (Sig -> a -> b -> c -> Sig2) where
-    type ModArgOut1 Sig (Sig -> a -> b -> c -> Sig2) = Sig -> a -> b -> c -> Sig2
-    modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
+  type ModArgOut1 Sig (Sig -> a -> b -> c -> Sig2) = Sig -> a -> b -> c -> Sig2
+  modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
 
 --------------------------------------------
 -- pure in, dirty mono out
 
 instance ModArg1 Sig (Sig -> SE Sig) where
-    type ModArgOut1 Sig (Sig -> SE Sig) = Sig -> SE Sig
-    modArg1 depth a f = \x -> f (x * (1 + depth * a))
+  type ModArgOut1 Sig (Sig -> SE Sig) = Sig -> SE Sig
+  modArg1 depth a f = \x -> f (x * (1 + depth * a))
 
 instance ModArg1 Sig (Sig -> a -> SE Sig) where
-    type ModArgOut1 Sig (Sig -> a -> SE Sig) = Sig -> a -> SE Sig
-    modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
+  type ModArgOut1 Sig (Sig -> a -> SE Sig) = Sig -> a -> SE Sig
+  modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
 
 instance ModArg1 Sig (Sig -> a -> b -> SE Sig) where
-    type ModArgOut1 Sig (Sig -> a -> b -> SE Sig) = Sig -> a -> b -> SE Sig
-    modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
+  type ModArgOut1 Sig (Sig -> a -> b -> SE Sig) = Sig -> a -> b -> SE Sig
+  modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
 
 instance ModArg1 Sig (Sig -> a -> b -> c -> SE Sig) where
-    type ModArgOut1 Sig (Sig -> a -> b -> c -> SE Sig) = Sig -> a -> b -> c -> SE Sig
-    modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
+  type ModArgOut1 Sig (Sig -> a -> b -> c -> SE Sig) = Sig -> a -> b -> c -> SE Sig
+  modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
 
 --------------------------------------------
 -- pure in, dirty stereo out
 
 instance ModArg1 Sig (Sig -> SE Sig2) where
-    type ModArgOut1 Sig (Sig -> SE Sig2) = Sig -> SE Sig2
-    modArg1 depth a f = \x -> f (x * (1 + depth * a))
+  type ModArgOut1 Sig (Sig -> SE Sig2) = Sig -> SE Sig2
+  modArg1 depth a f = \x -> f (x * (1 + depth * a))
 
 instance ModArg1 Sig (Sig -> a -> SE Sig2) where
-    type ModArgOut1 Sig (Sig -> a -> SE Sig2) = Sig -> a -> SE Sig2
-    modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
+  type ModArgOut1 Sig (Sig -> a -> SE Sig2) = Sig -> a -> SE Sig2
+  modArg1 depth a f = \x1 x2 -> f (x1 * (1 + depth * a)) x2
 
 instance ModArg1 Sig (Sig -> a -> b -> SE Sig2) where
-    type ModArgOut1 Sig (Sig -> a -> b -> SE Sig2) = Sig -> a -> b -> SE Sig2
-    modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
+  type ModArgOut1 Sig (Sig -> a -> b -> SE Sig2) = Sig -> a -> b -> SE Sig2
+  modArg1 depth a f = \x1 x2 x3 -> f (x1 * (1 + depth * a)) x2 x3
 
 instance ModArg1 Sig (Sig -> a -> b -> c -> SE Sig2) where
-    type ModArgOut1 Sig (Sig -> a -> b -> c -> SE Sig2) = Sig -> a -> b -> c -> SE Sig2
-    modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
+  type ModArgOut1 Sig (Sig -> a -> b -> c -> SE Sig2) = Sig -> a -> b -> c -> SE Sig2
+  modArg1 depth a f = \x1 x2 x3 x4 -> f (x1 * (1 + depth * a)) x2 x3 x4
 
 --------------------------------------------
 -- dirty in, pure mono out
 
 instance ModArg1 (SE Sig) (Sig -> Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> Sig) = Sig -> SE Sig
-    modArg1 depth ma f = \x -> fmap (\a -> f (x * (1 + depth * a))) ma
+  type ModArgOut1 (SE Sig) (Sig -> Sig) = Sig -> SE Sig
+  modArg1 depth ma f = \x -> fmap (\a -> f (x * (1 + depth * a))) ma
 
 instance ModArg1 (SE Sig) (Sig -> a -> Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> Sig) = Sig -> a -> SE Sig
-    modArg1 depth ma f = \x1 x2 -> fmap (\a -> f (x1 * (1 + depth * a)) x2) ma
+  type ModArgOut1 (SE Sig) (Sig -> a -> Sig) = Sig -> a -> SE Sig
+  modArg1 depth ma f = \x1 x2 -> fmap (\a -> f (x1 * (1 + depth * a)) x2) ma
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> Sig) = Sig -> a -> b -> SE Sig
-    modArg1 depth ma f = \x1 x2 x3 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3) ma
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> Sig) = Sig -> a -> b -> SE Sig
+  modArg1 depth ma f = \x1 x2 x3 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3) ma
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> c -> Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> Sig) = Sig -> a -> b -> c -> SE Sig
-    modArg1 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3 x4) ma
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> Sig) = Sig -> a -> b -> c -> SE Sig
+  modArg1 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3 x4) ma
 
 --------------------------------------------
 -- dirty in, pure stereo out
 
 instance ModArg1 (SE Sig) (Sig -> Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> Sig2) = Sig -> SE Sig2
-    modArg1 depth ma f = \x -> fmap (\a -> f (x * (1 + depth * a))) ma
+  type ModArgOut1 (SE Sig) (Sig -> Sig2) = Sig -> SE Sig2
+  modArg1 depth ma f = \x -> fmap (\a -> f (x * (1 + depth * a))) ma
 
 instance ModArg1 (SE Sig) (Sig -> a -> Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> Sig2) = Sig -> a -> SE Sig2
-    modArg1 depth ma f = \x1 x2 -> fmap (\a -> f (x1 * (1 + depth * a)) x2) ma
+  type ModArgOut1 (SE Sig) (Sig -> a -> Sig2) = Sig -> a -> SE Sig2
+  modArg1 depth ma f = \x1 x2 -> fmap (\a -> f (x1 * (1 + depth * a)) x2) ma
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> Sig2) = Sig -> a -> b -> SE Sig2
-    modArg1 depth ma f = \x1 x2 x3 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3) ma
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> Sig2) = Sig -> a -> b -> SE Sig2
+  modArg1 depth ma f = \x1 x2 x3 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3) ma
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> c -> Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> Sig2) = Sig -> a -> b -> c -> SE Sig2
-    modArg1 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3 x4) ma
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> Sig2) = Sig -> a -> b -> c -> SE Sig2
+  modArg1 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f (x1 * (1 + depth * a)) x2 x3 x4) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out
 
 instance ModArg1 (SE Sig) (Sig -> SE Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> SE Sig) = Sig -> SE Sig
-    modArg1 depth ma f = \x -> ma >>= (\a -> f (x * (1 + depth * a)))
+  type ModArgOut1 (SE Sig) (Sig -> SE Sig) = Sig -> SE Sig
+  modArg1 depth ma f = \x -> ma >>= (\a -> f (x * (1 + depth * a)))
 
 instance ModArg1 (SE Sig) (Sig -> a -> SE Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> SE Sig) = Sig -> a -> SE Sig
-    modArg1 depth ma f = \x1 x2 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2)
+  type ModArgOut1 (SE Sig) (Sig -> a -> SE Sig) = Sig -> a -> SE Sig
+  modArg1 depth ma f = \x1 x2 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2)
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> SE Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> SE Sig) = Sig -> a -> b -> SE Sig
-    modArg1 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3)
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> SE Sig) = Sig -> a -> b -> SE Sig
+  modArg1 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3)
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> c -> SE Sig) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> SE Sig) = Sig -> a -> b -> c -> SE Sig
-    modArg1 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3 x4)
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> SE Sig) = Sig -> a -> b -> c -> SE Sig
+  modArg1 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3 x4)
 
 --------------------------------------------
 -- dirty in, dirty stereo out
 
 instance ModArg1 (SE Sig) (Sig -> SE Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> SE Sig2) = Sig -> SE Sig2
-    modArg1 depth ma f = \x -> ma >>= (\a -> f (x * (1 + depth * a)))
+  type ModArgOut1 (SE Sig) (Sig -> SE Sig2) = Sig -> SE Sig2
+  modArg1 depth ma f = \x -> ma >>= (\a -> f (x * (1 + depth * a)))
 
 instance ModArg1 (SE Sig) (Sig -> a -> SE Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> SE Sig2) = Sig -> a -> SE Sig2
-    modArg1 depth ma f = \x1 x2 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2)
+  type ModArgOut1 (SE Sig) (Sig -> a -> SE Sig2) = Sig -> a -> SE Sig2
+  modArg1 depth ma f = \x1 x2 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2)
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> SE Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> SE Sig2) = Sig -> a -> b -> SE Sig2
-    modArg1 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3)
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> SE Sig2) = Sig -> a -> b -> SE Sig2
+  modArg1 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3)
 
 instance ModArg1 (SE Sig) (Sig -> a -> b -> c -> SE Sig2) where
-    type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> SE Sig2) = Sig -> a -> b -> c -> SE Sig2
-    modArg1 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3 x4)
+  type ModArgOut1 (SE Sig) (Sig -> a -> b -> c -> SE Sig2) = Sig -> a -> b -> c -> SE Sig2
+  modArg1 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f (x1 * (1 + depth * a)) x2 x3 x4)
 
 --------------------------------------------
 --------------------------------------------
 -- modArg2
 
 class ModArg2 a b where
-    type ModArgOut2 a b :: Type
-    modArg2 :: Sig -> a -> b -> ModArgOut2 a b
+  type ModArgOut2 a b :: Type
+  modArg2 :: Sig -> a -> b -> ModArgOut2 a b
 
 --------------------------------------------
 -- pure in, pure mono out
 
 instance ModArg2 Sig (a -> Sig -> Sig) where
-    type ModArgOut2 Sig (a -> Sig -> Sig) = a -> Sig -> Sig
-    modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
+  type ModArgOut2 Sig (a -> Sig -> Sig) = a -> Sig -> Sig
+  modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
 
 instance ModArg2 Sig (a -> Sig -> b -> Sig) where
-    type ModArgOut2 Sig (a -> Sig -> b -> Sig) = a -> Sig -> b -> Sig
-    modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
+  type ModArgOut2 Sig (a -> Sig -> b -> Sig) = a -> Sig -> b -> Sig
+  modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
 
 instance ModArg2 Sig (a -> Sig -> b -> c -> Sig) where
-    type ModArgOut2 Sig (a -> Sig -> b -> c -> Sig) = a -> Sig -> b -> c -> Sig
-    modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
+  type ModArgOut2 Sig (a -> Sig -> b -> c -> Sig) = a -> Sig -> b -> c -> Sig
+  modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
 
 --------------------------------------------
 -- pure in, pure stereo out
 
 instance ModArg2 Sig (a -> Sig -> Sig2) where
-    type ModArgOut2 Sig (a -> Sig -> Sig2) = a -> Sig -> Sig2
-    modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
+  type ModArgOut2 Sig (a -> Sig -> Sig2) = a -> Sig -> Sig2
+  modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
 
 instance ModArg2 Sig (a -> Sig -> b -> Sig2) where
-    type ModArgOut2 Sig (a -> Sig -> b -> Sig2) = a -> Sig -> b -> Sig2
-    modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
+  type ModArgOut2 Sig (a -> Sig -> b -> Sig2) = a -> Sig -> b -> Sig2
+  modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
 
 instance ModArg2 Sig (a -> Sig -> b -> c -> Sig2) where
-    type ModArgOut2 Sig (a -> Sig -> b -> c -> Sig2) = a -> Sig -> b -> c -> Sig2
-    modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
+  type ModArgOut2 Sig (a -> Sig -> b -> c -> Sig2) = a -> Sig -> b -> c -> Sig2
+  modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
 
 --------------------------------------------
 -- pure in, dirty mono out
 
 instance ModArg2 Sig (a -> Sig -> SE Sig) where
-    type ModArgOut2 Sig (a -> Sig -> SE Sig) = a -> Sig -> SE Sig
-    modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
+  type ModArgOut2 Sig (a -> Sig -> SE Sig) = a -> Sig -> SE Sig
+  modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
 
 instance ModArg2 Sig (a -> Sig -> b -> SE Sig) where
-    type ModArgOut2 Sig (a -> Sig -> b -> SE Sig) = a -> Sig -> b -> SE Sig
-    modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
+  type ModArgOut2 Sig (a -> Sig -> b -> SE Sig) = a -> Sig -> b -> SE Sig
+  modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
 
 instance ModArg2 Sig (a -> Sig -> b -> c -> SE Sig) where
-    type ModArgOut2 Sig (a -> Sig -> b -> c -> SE Sig) = a -> Sig -> b -> c -> SE Sig
-    modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
+  type ModArgOut2 Sig (a -> Sig -> b -> c -> SE Sig) = a -> Sig -> b -> c -> SE Sig
+  modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
 
 --------------------------------------------
 -- pure in, dirty stereo out
 
 instance ModArg2 Sig (a -> Sig -> SE Sig2) where
-    type ModArgOut2 Sig (a -> Sig -> SE Sig2) = a -> Sig -> SE Sig2
-    modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
+  type ModArgOut2 Sig (a -> Sig -> SE Sig2) = a -> Sig -> SE Sig2
+  modArg2 depth a f = \x1 x2 -> f x1 (x2 * (1 + depth * a))
 
 instance ModArg2 Sig (a -> Sig -> b -> SE Sig2) where
-    type ModArgOut2 Sig (a -> Sig -> b -> SE Sig2) = a -> Sig -> b -> SE Sig2
-    modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
+  type ModArgOut2 Sig (a -> Sig -> b -> SE Sig2) = a -> Sig -> b -> SE Sig2
+  modArg2 depth a f = \x1 x2 x3 -> f x1 (x2 * (1 + depth * a)) x3
 
 instance ModArg2 Sig (a -> Sig -> b -> c -> SE Sig2) where
-    type ModArgOut2 Sig (a -> Sig -> b -> c -> SE Sig2) = a -> Sig -> b -> c -> SE Sig2
-    modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
+  type ModArgOut2 Sig (a -> Sig -> b -> c -> SE Sig2) = a -> Sig -> b -> c -> SE Sig2
+  modArg2 depth a f = \x1 x2 x3 x4 -> f x1 (x2 * (1 + depth * a)) x3 x4
 
 --------------------------------------------
 -- dirty in, pure mono out
 
 instance ModArg2 (SE Sig) (a -> Sig -> Sig) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> Sig) = a -> Sig -> SE Sig
-    modArg2 depth ma f = \x1 x2 -> fmap (\a -> f x1 (x2 * (1 + depth * a))) ma
+  type ModArgOut2 (SE Sig) (a -> Sig -> Sig) = a -> Sig -> SE Sig
+  modArg2 depth ma f = \x1 x2 -> fmap (\a -> f x1 (x2 * (1 + depth * a))) ma
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> Sig) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> Sig) = a -> Sig -> b -> SE Sig
-    modArg2 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3) ma
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> Sig) = a -> Sig -> b -> SE Sig
+  modArg2 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3) ma
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> Sig) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> Sig) = a -> Sig -> b -> c -> SE Sig
-    modArg2 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3 x4) ma
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> Sig) = a -> Sig -> b -> c -> SE Sig
+  modArg2 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3 x4) ma
 
 --------------------------------------------
 -- dirty in, pure stereo out
 
 instance ModArg2 (SE Sig) (a -> Sig -> Sig2) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> Sig2) = a -> Sig -> SE Sig2
-    modArg2 depth ma f = \x1 x2 -> fmap (\a -> f x1 (x2 * (1 + depth * a))) ma
+  type ModArgOut2 (SE Sig) (a -> Sig -> Sig2) = a -> Sig -> SE Sig2
+  modArg2 depth ma f = \x1 x2 -> fmap (\a -> f x1 (x2 * (1 + depth * a))) ma
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> Sig2) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> Sig2) = a -> Sig -> b -> SE Sig2
-    modArg2 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3) ma
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> Sig2) = a -> Sig -> b -> SE Sig2
+  modArg2 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3) ma
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> Sig2) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> Sig2) = a -> Sig -> b -> c -> SE Sig2
-    modArg2 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3 x4) ma
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> Sig2) = a -> Sig -> b -> c -> SE Sig2
+  modArg2 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 (x2 * (1 + depth * a)) x3 x4) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out
 
 instance ModArg2 (SE Sig) (a -> Sig -> SE Sig) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> SE Sig) = a -> Sig -> SE Sig
-    modArg2 depth ma f = \x1 x2 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)))
+  type ModArgOut2 (SE Sig) (a -> Sig -> SE Sig) = a -> Sig -> SE Sig
+  modArg2 depth ma f = \x1 x2 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)))
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> SE Sig) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> SE Sig) = a -> Sig -> b -> SE Sig
-    modArg2 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3)
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> SE Sig) = a -> Sig -> b -> SE Sig
+  modArg2 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3)
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> SE Sig) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> SE Sig) = a -> Sig -> b -> c -> SE Sig
-    modArg2 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3 x4)
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> SE Sig) = a -> Sig -> b -> c -> SE Sig
+  modArg2 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3 x4)
 
 --------------------------------------------
 -- dirty in, dirty stereo out
 
 instance ModArg2 (SE Sig) (a -> Sig -> SE Sig2) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> SE Sig2) = a -> Sig -> SE Sig2
-    modArg2 depth ma f = \x1 x2 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)))
+  type ModArgOut2 (SE Sig) (a -> Sig -> SE Sig2) = a -> Sig -> SE Sig2
+  modArg2 depth ma f = \x1 x2 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)))
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> SE Sig2) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> SE Sig2) = a -> Sig -> b -> SE Sig2
-    modArg2 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3)
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> SE Sig2) = a -> Sig -> b -> SE Sig2
+  modArg2 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3)
 
 instance ModArg2 (SE Sig) (a -> Sig -> b -> c -> SE Sig2) where
-    type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> SE Sig2) = a -> Sig -> b -> c -> SE Sig2
-    modArg2 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3 x4)
+  type ModArgOut2 (SE Sig) (a -> Sig -> b -> c -> SE Sig2) = a -> Sig -> b -> c -> SE Sig2
+  modArg2 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 (x2 * (1 + depth * a)) x3 x4)
 
 --------------------------------------------
 --------------------------------------------
 -- modArg3
 
 class ModArg3 a b where
-    type ModArgOut3 a b :: Type
-    modArg3 :: Sig -> a -> b -> ModArgOut3 a b
+  type ModArgOut3 a b :: Type
+  modArg3 :: Sig -> a -> b -> ModArgOut3 a b
 
 --------------------------------------------
 -- pure in, pure mono out
 
 instance ModArg3 Sig (a -> b -> Sig -> Sig) where
-    type ModArgOut3 Sig (a -> b -> Sig -> Sig) = a -> b -> Sig -> Sig
-    modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
+  type ModArgOut3 Sig (a -> b -> Sig -> Sig) = a -> b -> Sig -> Sig
+  modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
 
 instance ModArg3 Sig (a -> b -> Sig -> c -> Sig) where
-    type ModArgOut3 Sig (a -> b -> Sig -> c -> Sig) = a -> b -> Sig -> c -> Sig
-    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
+  type ModArgOut3 Sig (a -> b -> Sig -> c -> Sig) = a -> b -> Sig -> c -> Sig
+  modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
 
 --------------------------------------------
 -- pure in, pure stereo out
 
 instance ModArg3 Sig (a -> b -> Sig -> Sig2) where
-    type ModArgOut3 Sig (a -> b -> Sig -> Sig2) = a -> b -> Sig -> Sig2
-    modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
+  type ModArgOut3 Sig (a -> b -> Sig -> Sig2) = a -> b -> Sig -> Sig2
+  modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
 
 instance ModArg3 Sig (a -> b -> Sig -> c -> Sig2) where
-    type ModArgOut3 Sig (a -> b -> Sig -> c -> Sig2) = a -> b -> Sig -> c -> Sig2
-    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
+  type ModArgOut3 Sig (a -> b -> Sig -> c -> Sig2) = a -> b -> Sig -> c -> Sig2
+  modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
 
 --------------------------------------------
 -- pure in, dirty mono out
 
 instance ModArg3 Sig (a -> b -> Sig -> SE Sig) where
-    type ModArgOut3 Sig (a -> b -> Sig -> SE Sig) = a -> b -> Sig -> SE Sig
-    modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
+  type ModArgOut3 Sig (a -> b -> Sig -> SE Sig) = a -> b -> Sig -> SE Sig
+  modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
 
 instance ModArg3 Sig (a -> b -> Sig -> c -> SE Sig) where
-    type ModArgOut3 Sig (a -> b -> Sig -> c -> SE Sig) = a -> b -> Sig -> c -> SE Sig
-    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
+  type ModArgOut3 Sig (a -> b -> Sig -> c -> SE Sig) = a -> b -> Sig -> c -> SE Sig
+  modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
 
 --------------------------------------------
 -- pure in, dirty stereo out
 
 instance ModArg3 Sig (a -> b -> Sig -> SE Sig2) where
-    type ModArgOut3 Sig (a -> b -> Sig -> SE Sig2) = a -> b -> Sig -> SE Sig2
-    modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
+  type ModArgOut3 Sig (a -> b -> Sig -> SE Sig2) = a -> b -> Sig -> SE Sig2
+  modArg3 depth a f = \x1 x2 x3 -> f x1 x2 (x3 * (1 + depth * a))
 
 instance ModArg3 Sig (a -> b -> Sig -> c -> SE Sig2) where
-    type ModArgOut3 Sig (a -> b -> Sig -> c -> SE Sig2) = a -> b -> Sig -> c -> SE Sig2
-    modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
+  type ModArgOut3 Sig (a -> b -> Sig -> c -> SE Sig2) = a -> b -> Sig -> c -> SE Sig2
+  modArg3 depth a f = \x1 x2 x3 x4 -> f x1 x2 (x3 * (1 + depth * a)) x4
 
 --------------------------------------------
 -- dirty in, pure mono out
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> Sig) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> Sig) = a -> b -> Sig -> SE Sig
-    modArg3 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a))) ma
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> Sig) = a -> b -> Sig -> SE Sig
+  modArg3 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a))) ma
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> Sig) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> Sig) = a -> b -> Sig -> c -> SE Sig
-    modArg3 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a)) x4) ma
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> Sig) = a -> b -> Sig -> c -> SE Sig
+  modArg3 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a)) x4) ma
 
 --------------------------------------------
 -- dirty in, pure stereo out
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> Sig2) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> Sig2) = a -> b -> Sig -> SE Sig2
-    modArg3 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a))) ma
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> Sig2) = a -> b -> Sig -> SE Sig2
+  modArg3 depth ma f = \x1 x2 x3 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a))) ma
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> Sig2) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> Sig2) = a -> b -> Sig -> c -> SE Sig2
-    modArg3 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a)) x4) ma
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> Sig2) = a -> b -> Sig -> c -> SE Sig2
+  modArg3 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 (x3 * (1 + depth * a)) x4) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> SE Sig) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> SE Sig) = a -> b -> Sig -> SE Sig
-    modArg3 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)))
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> SE Sig) = a -> b -> Sig -> SE Sig
+  modArg3 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)))
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> SE Sig) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> SE Sig) = a -> b -> Sig -> c -> SE Sig
-    modArg3 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)) x4)
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> SE Sig) = a -> b -> Sig -> c -> SE Sig
+  modArg3 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)) x4)
 
 --------------------------------------------
 -- dirty in, dirty stereo out
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> SE Sig2) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> SE Sig2) = a -> b -> Sig -> SE Sig2
-    modArg3 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)))
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> SE Sig2) = a -> b -> Sig -> SE Sig2
+  modArg3 depth ma f = \x1 x2 x3 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)))
 
 instance ModArg3 (SE Sig) (a -> b -> Sig -> c -> SE Sig2) where
-    type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> SE Sig2) = a -> b -> Sig -> c -> SE Sig2
-    modArg3 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)) x4)
+  type ModArgOut3 (SE Sig) (a -> b -> Sig -> c -> SE Sig2) = a -> b -> Sig -> c -> SE Sig2
+  modArg3 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 (x3 * (1 + depth * a)) x4)
 
 --------------------------------------------
 --------------------------------------------
 -- modArg4
 
 class ModArg4 a b where
-    type ModArgOut4 a b :: Type
-    modArg4 :: Sig -> a -> b -> ModArgOut4 a b
+  type ModArgOut4 a b :: Type
+  modArg4 :: Sig -> a -> b -> ModArgOut4 a b
 
 --------------------------------------------
 -- pure in, pure mono out
 
 instance ModArg4 Sig (a -> b -> c -> Sig -> Sig) where
-    type ModArgOut4 Sig (a -> b -> c -> Sig -> Sig) = a -> b -> c -> Sig -> Sig
-    modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
+  type ModArgOut4 Sig (a -> b -> c -> Sig -> Sig) = a -> b -> c -> Sig -> Sig
+  modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
 
 --------------------------------------------
 -- pure in, pure stereo out
 
 instance ModArg4 Sig (a -> b -> c -> Sig -> Sig2) where
-    type ModArgOut4 Sig (a -> b -> c -> Sig -> Sig2) = a -> b -> c -> Sig -> Sig2
-    modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
+  type ModArgOut4 Sig (a -> b -> c -> Sig -> Sig2) = a -> b -> c -> Sig -> Sig2
+  modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
 
 --------------------------------------------
 -- pure in, dirty mono out
 
 instance ModArg4 Sig (a -> b -> c -> Sig -> SE Sig) where
-    type ModArgOut4 Sig (a -> b -> c -> Sig -> SE Sig) = a -> b -> c -> Sig -> SE Sig
-    modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
+  type ModArgOut4 Sig (a -> b -> c -> Sig -> SE Sig) = a -> b -> c -> Sig -> SE Sig
+  modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
 
 --------------------------------------------
 -- pure in, dirty stereo out
 
 instance ModArg4 Sig (a -> b -> c -> Sig -> SE Sig2) where
-    type ModArgOut4 Sig (a -> b -> c -> Sig -> SE Sig2) = a -> b -> c -> Sig -> SE Sig2
-    modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
+  type ModArgOut4 Sig (a -> b -> c -> Sig -> SE Sig2) = a -> b -> c -> Sig -> SE Sig2
+  modArg4 depth a f = \x1 x2 x3 x4 -> f x1 x2 x3 (x4 * (1 + depth * a))
 
 --------------------------------------------
 -- dirty in, pure mono out
 
 instance ModArg4 (SE Sig) (a -> b -> c -> Sig -> Sig) where
-    type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> Sig) = a -> b -> c -> Sig -> SE Sig
-    modArg4 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 x3 (x4 * (1 + depth * a))) ma
+  type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> Sig) = a -> b -> c -> Sig -> SE Sig
+  modArg4 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 x3 (x4 * (1 + depth * a))) ma
 
 --------------------------------------------
 -- dirty in, pure stereo out
 
 instance ModArg4 (SE Sig) (a -> b -> c -> Sig -> Sig2) where
-    type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> Sig2) = a -> b -> c -> Sig -> SE Sig2
-    modArg4 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 x3 (x4 * (1 + depth * a))) ma
+  type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> Sig2) = a -> b -> c -> Sig -> SE Sig2
+  modArg4 depth ma f = \x1 x2 x3 x4 -> fmap (\a -> f x1 x2 x3 (x4 * (1 + depth * a))) ma
 
 --------------------------------------------
 -- dirty in, dirty mono out
 
 instance ModArg4 (SE Sig) (a -> b -> c -> Sig -> SE Sig) where
-    type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> SE Sig) = a -> b -> c -> Sig -> SE Sig
-    modArg4 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 x3 (x4 * (1 + depth * a)))
+  type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> SE Sig) = a -> b -> c -> Sig -> SE Sig
+  modArg4 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 x3 (x4 * (1 + depth * a)))
 
 --------------------------------------------
 -- dirty in, dirty stereo out
 
 instance ModArg4 (SE Sig) (a -> b -> c -> Sig -> SE Sig2) where
-    type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> SE Sig2) = a -> b -> c -> Sig -> SE Sig2
-    modArg4 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 x3 (x4 * (1 + depth * a)))
+  type ModArgOut4 (SE Sig) (a -> b -> c -> Sig -> SE Sig2) = a -> b -> c -> Sig -> SE Sig2
+  modArg4 depth ma f = \x1 x2 x3 x4 -> ma >>= (\a -> f x1 x2 x3 (x4 * (1 + depth * a)))

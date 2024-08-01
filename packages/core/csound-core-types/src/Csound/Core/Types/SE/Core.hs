@@ -1,46 +1,47 @@
-module Csound.Core.Types.SE.Core
-  ( SE (..)
-  , setTotalDur
-  , renderSE
-  , global
-  , withSetup
-  , withOption
-  , setOption
-  , setDefaultOption
-  , IsRef (..)
-  , InitType
-  , modifyRef
-  , modifyInitRef
-  , getCurrentRate
-  , writeOuts
-  , readIns
+module Csound.Core.Types.SE.Core (
+  SE (..),
+  setTotalDur,
+  renderSE,
+  global,
+  withSetup,
+  withOption,
+  setOption,
+  setDefaultOption,
+  IsRef (..),
+  InitType,
+  modifyRef,
+  modifyInitRef,
+  getCurrentRate,
+  writeOuts,
+  readIns,
+
   -- * Opcodes and operators
-  , liftOpc
-  , liftMulti
-  , liftMultiDep
-  , liftOpcDep
-  , liftOpcDep_
-  , liftOpr1
-  , liftOpr1k
-  , liftOpr1kDep
-  , readOnlyVar
-  ) where
+  liftOpc,
+  liftMulti,
+  liftMultiDep,
+  liftOpcDep,
+  liftOpcDep_,
+  liftOpr1,
+  liftOpr1k,
+  liftOpr1kDep,
+  readOnlyVar,
+) where
 
 import Control.Monad
+import Control.Monad.Trans.Class (lift)
+import Data.Default
 import Data.Kind
 import Data.Text (Text)
 import Data.Text.IO qualified as Text
-import Data.Default
-import Control.Monad.Trans.Class (lift)
 
-import Csound.Dynamic (IfRate (..), Rate (..), E, Name, Spec1)
-import Csound.Dynamic qualified as Dynamic
-import Csound.Core.State (Dep)
 import Csound.Core.Render.Options (Options (..))
+import Csound.Core.State (Dep)
 import Csound.Core.State qualified as State
-import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.Val
 import Csound.Core.Types.SE.Type
+import Csound.Core.Types.Tuple
+import Csound.Dynamic (E, IfRate (..), Name, Rate (..), Spec1)
+import Csound.Dynamic qualified as Dynamic
 
 -- | Sets total duration of the rendered csound audio
 setTotalDur :: Double -> SE a -> SE a
@@ -63,7 +64,7 @@ renderSE config (SE act) = do
       mapM_ (\file -> Text.writeFile file result) config.csdWriteFile
 
 -- | It executes procedure inside intr 0 (setup instrument).
-global :: forall a . Tuple a => SE a -> SE a
+global :: forall a. (Tuple a) => SE a -> SE a
 global (SE expr) = SE $ do
   vars <- lift $ do
     initVals <- fromTuple (defTuple @a)
@@ -75,17 +76,19 @@ global (SE expr) = SE $ do
     pure vars
   pure $ toTuple $ pure $ fmap (Dynamic.readOnlyVar IfIr) vars
 
--- | Adds setup value in the instrument 0. The epxression is added only once.
--- and result of the expression is read-only variable.
--- This allows us to percieve it as pure value.
-withSetup :: forall a b . (Tuple a) => SE a -> (a -> b) -> b
+{- | Adds setup value in the instrument 0. The epxression is added only once.
+and result of the expression is read-only variable.
+This allows us to percieve it as pure value.
+-}
+withSetup :: forall a b. (Tuple a) => SE a -> (a -> b) -> b
 withSetup (SE setupExpr) cont = cont $ toTuple $ do
   initVals <- fromTuple (defTuple @a)
   State.getReadOnlyVars (tupleRates @a) initVals (lift . fromTuple =<< setupExpr)
 
--- | Adds requirement of options for the given value to be valid. Can be useful
--- to setup Midi flags or add some UDOs.
-withOption :: forall a . Tuple a => Options -> a -> a
+{- | Adds requirement of options for the given value to be valid. Can be useful
+to setup Midi flags or add some UDOs.
+-}
+withOption :: forall a. (Tuple a) => Options -> a -> a
 withOption opt a = toTuple $ do
   exprs <- fromTuple a
   State.setOption opt
@@ -103,13 +106,13 @@ type family InitType a :: Type
 
 -- | Class for mutable references
 class IsRef ref where
-  readRef  :: Tuple a => ref a -> SE a
-  writeRef :: Tuple a => ref a -> a -> SE ()
+  readRef :: (Tuple a) => ref a -> SE a
+  writeRef :: (Tuple a) => ref a -> a -> SE ()
 
-  readInitRef  :: (Tuple a, Tuple (InitType a)) => ref a -> SE (InitType a)
+  readInitRef :: (Tuple a, Tuple (InitType a)) => ref a -> SE (InitType a)
   writeInitRef :: (Tuple a, Tuple (InitType a)) => ref a -> (InitType a) -> SE ()
 
-  mixRef   :: (Num a, Tuple a) => ref a -> a -> SE ()
+  mixRef :: (Num a, Tuple a) => ref a -> a -> SE ()
   clearRef :: (Num a, Tuple a) => ref a -> SE ()
 
   mixRef ref a = modifyRef ref (a +)
@@ -131,23 +134,24 @@ getCurrentRate = SE $ lift State.getCurrentRate
 -- writing and reading signals from audio card
 
 -- | Writes signals to the default sound card output.
-writeOuts :: forall a . Sigs a => a -> SE ()
+writeOuts :: forall a. (Sigs a) => a -> SE ()
 writeOuts outs = SE $ (Dynamic.depT_ =<<) $ lift $ f <$> fromTuple outs
-  where f as = Dynamic.opcs "out" [(Xr, replicate (tupleArity @a) Ar)] as
+  where
+    f as = Dynamic.opcs "out" [(Xr, replicate (tupleArity @a) Ar)] as
 
 -- | Reads signals from the default sound card input.
-readIns :: forall a . Sigs a => SE a
+readIns :: forall a. (Sigs a) => SE a
 readIns = SE $ toTuple . pure <$> getIn (tupleArity @a)
   where
     getIn :: Int -> Dep [E]
     getIn arity
-        | arity == 0    = pure []
-        | otherwise     = Dynamic.mopcsDep arity "inch" (replicate arity Ar, replicate arity Kr) (fmap Dynamic.int [1 .. arity])
+      | arity == 0 = pure []
+      | otherwise = Dynamic.mopcsDep arity "inch" (replicate arity Ar, replicate arity Kr) (fmap Dynamic.int [1 .. arity])
 
 ------------------------------------------------------------------------------------
 
 -- | Expression is written in global instrument and only once
-readOnlyVar :: forall a . Val a => a -> a
+readOnlyVar :: forall a. (Val a) => a -> a
 readOnlyVar expr = fromE $ do
   e <- toE expr
   State.getReadOnlyVar (Dynamic.toInitRate $ valRate @a) e
@@ -155,31 +159,36 @@ readOnlyVar expr = fromE $ do
 ------------------------------------------------------------------------------------
 -- use csound opcodes
 
--- | Define a pure csound opcode with single output.
--- See the package csound-core-opcodes as an example of the usage.
+{- | Define a pure csound opcode with single output.
+See the package csound-core-opcodes as an example of the usage.
+-}
 liftOpc :: (FromTuple a, Val b) => Name -> Spec1 -> a -> b
 liftOpc name rates a = fromE $ Dynamic.opcs name rates <$> fromTuple a
 
--- | Define a pure csound opcode with multiple outputs.
--- See the package csound-core-opcodes as an example of the usage.
-liftMulti :: forall a b . (FromTuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> b
+{- | Define a pure csound opcode with multiple outputs.
+See the package csound-core-opcodes as an example of the usage.
+-}
+liftMulti :: forall a b. (FromTuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> b
 liftMulti name rates a = pureTuple $ Dynamic.mopcs name rates <$> fromTuple a
   where
     pureTuple outs = toTuple $ fmap ($ tupleArity @b) outs
 
--- | Define an effectful csound opcode with single output.
--- See the package csound-core-opcodes as an example of the usage.
+{- | Define an effectful csound opcode with single output.
+See the package csound-core-opcodes as an example of the usage.
+-}
 liftOpcDep :: (FromTuple a, Val b) => Name -> Spec1 -> a -> SE b
 liftOpcDep name rates a = SE $ fmap (fromE . pure) $ Dynamic.opcsDep name rates =<< lift (fromTuple a)
 
--- | Define an effectful csound opcode with no outputs.
--- See the package csound-core-opcodes as an example of the usage.
+{- | Define an effectful csound opcode with no outputs.
+See the package csound-core-opcodes as an example of the usage.
+-}
 liftOpcDep_ :: (FromTuple a) => Name -> Spec1 -> a -> SE ()
 liftOpcDep_ name rates a = SE $ Dynamic.opcsDep_ name rates =<< lift (fromTuple a)
 
--- | Define an effectful csound opcode with multiple outputs.
--- See the package csound-core-opcodes as an example of the usage.
-liftMultiDep :: forall a b . (FromTuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> SE b
+{- | Define an effectful csound opcode with multiple outputs.
+See the package csound-core-opcodes as an example of the usage.
+-}
+liftMultiDep :: forall a b. (FromTuple a, Tuple b) => Name -> ([Rate], [Rate]) -> a -> SE b
 liftMultiDep name rates a =
   SE $ fmap (toTuple . pure) $ Dynamic.mopcsDep (tupleArity @b) name rates =<< lift (fromTuple a)
 

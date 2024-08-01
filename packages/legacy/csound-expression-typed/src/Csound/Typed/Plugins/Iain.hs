@@ -1,44 +1,72 @@
-module Csound.Typed.Plugins.Iain(
-    pitchShifterDelay,
-    fxAnalogDelay, fxDistortion, fxEnvelopeFollower, fxFlanger, fxFreqShifter, fxLoFi,
-    fxPanTrem, fxMonoTrem, fxPhaser, fxPitchShifter, fxReverse, fxRingModulator, fxChorus2, fxPingPong
+module Csound.Typed.Plugins.Iain (
+  pitchShifterDelay,
+  fxAnalogDelay,
+  fxDistortion,
+  fxEnvelopeFollower,
+  fxFlanger,
+  fxFreqShifter,
+  fxLoFi,
+  fxPanTrem,
+  fxMonoTrem,
+  fxPhaser,
+  fxPitchShifter,
+  fxReverse,
+  fxRingModulator,
+  fxChorus2,
+  fxPingPong,
 ) where
 
 import Csound.Dynamic
 
-import Csound.Typed.Types
 import Csound.Typed.GlobalState
-import qualified Csound.Typed.GlobalState.Elements as E(pitchShifterDelayPlugin,
-    analogDelayPlugin, distortionPlugin, envelopeFolollowerPlugin, flangerPlugin, freqShifterPlugin,
-    loFiPlugin, panTremPlugin, monoTremPlugin, phaserPlugin, pitchShifterPlugin, reversePlugin, ringModulatorPlugin, stChorusPlugin, stereoPingPongDelayPlugin)
+import Csound.Typed.GlobalState.Elements qualified as E (
+  analogDelayPlugin,
+  distortionPlugin,
+  envelopeFolollowerPlugin,
+  flangerPlugin,
+  freqShifterPlugin,
+  loFiPlugin,
+  monoTremPlugin,
+  panTremPlugin,
+  phaserPlugin,
+  pitchShifterDelayPlugin,
+  pitchShifterPlugin,
+  reversePlugin,
+  ringModulatorPlugin,
+  stChorusPlugin,
+  stereoPingPongDelayPlugin,
+ )
+import Csound.Typed.Types
 
 pitchShifterDelay :: D -> (Sig, Sig) -> Sig -> Sig -> Sig -> Sig
 pitchShifterDelay imaxdlt (fb1, fb2) kdel ktrans ain = csdPitchShifterDelay ain ktrans kdel fb1 fb2 imaxdlt
 
--- | PitchShifterDelay
--- ; ----------------
--- ; A pitch shifter effect that employs delay lines
--- ;
--- ; aout  PitchShifterDelay  ain,ktrans,kdlt,kFB1,kFB2,imaxdlt
---;
---; Initialisation
---; --------------
---; imaxdlt --  maximum delay time (kdlt should not exceed this value)
---;
---; Performance
---; -----------
---; ain     --  input audio to be pitch shifted
---; ktrans  --  pitch transposition (in semitones)
---; kdlt    --  delay time employed by the pitch shifter effect (should be within the range ksmps/sr and imaxdlt)
---; kFB1    --  feedback using method 1 (output from delay taps are fed back directly into their own buffers before enveloping and mixing)
---; kFB2    --  feedback using method 2 (enveloped and mixed output from both taps is fed back into both buffers)
---
--- opcode  PitchShifterDelay,a,akkkki
+{- | PitchShifterDelay
+; ----------------
+; A pitch shifter effect that employs delay lines
+;
+; aout  PitchShifterDelay  ain,ktrans,kdlt,kFB1,kFB2,imaxdlt
+;
+; Initialisation
+; --------------
+; imaxdlt --  maximum delay time (kdlt should not exceed this value)
+;
+; Performance
+; -----------
+; ain     --  input audio to be pitch shifted
+; ktrans  --  pitch transposition (in semitones)
+; kdlt    --  delay time employed by the pitch shifter effect (should be within the range ksmps/sr and imaxdlt)
+; kFB1    --  feedback using method 1 (output from delay taps are fed back directly into their own buffers before enveloping and mixing)
+; kFB2    --  feedback using method 2 (enveloped and mixed output from both taps is fed back into both buffers)
+
+opcode  PitchShifterDelay,a,akkkki
+-}
 csdPitchShifterDelay :: Sig -> Sig -> Sig -> Sig -> Sig -> D -> Sig
 csdPitchShifterDelay ain ktrans kdlt kFB1 kFB2 imaxdlt = fromGE $ do
-    addUdoPlugin E.pitchShifterDelayPlugin
-    f <$> toGE ain <*> toGE ktrans <*> toGE kdlt <*> toGE kFB1 <*> toGE kFB2 <*> toGE imaxdlt
-    where f ain' ktrans' kdlt' kFB1' kFB2' imaxdlt' = opcs "PitchShifterDelay" [(Ar, [Ar, Kr, Kr, Kr, Kr, Ir])] [ain', ktrans', kdlt', kFB1', kFB2', imaxdlt']
+  addUdoPlugin E.pitchShifterDelayPlugin
+  f <$> toGE ain <*> toGE ktrans <*> toGE kdlt <*> toGE kFB1 <*> toGE kFB2 <*> toGE imaxdlt
+  where
+    f ain' ktrans' kdlt' kFB1' kFB2' imaxdlt' = opcs "PitchShifterDelay" [(Ar, [Ar, Kr, Kr, Kr, Kr, Ir])] [ain', ktrans', kdlt', kFB1', kFB2', imaxdlt']
 
 --------------------------------------------------------
 -- multi fx
@@ -61,9 +89,10 @@ fxAnalogDelay kmix ktime kfback ktone ain = csdAnalogDelay ain kmix ktime kfback
 -- ; ktone  --  control of the amount of output signal fed back into the input of the effect (range 0 to 1)
 csdAnalogDelay :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 csdAnalogDelay ain kmix ktime kfback ktone = fromGE $ do
-    addUdoPlugin E.analogDelayPlugin
-    f <$> toGE ain <*> toGE kmix <*> toGE ktime <*> toGE kfback <*> toGE ktone
-    where f ain' kmix' ktime' kfback' ktone' = opcs "AnalogDelay" [(Ar,[Ar,Kr,Kr,Kr,Kr])] [ain', kmix', ktime', kfback', ktone']
+  addUdoPlugin E.analogDelayPlugin
+  f <$> toGE ain <*> toGE kmix <*> toGE ktime <*> toGE kfback <*> toGE ktone
+  where
+    f ain' kmix' ktime' kfback' ktone' = opcs "AnalogDelay" [(Ar, [Ar, Kr, Kr, Kr, Kr])] [ain', kmix', ktime', kfback', ktone']
 
 fxDistortion :: Sig -> Sig -> Sig -> Sig -> Sig
 fxDistortion klevel kdrive ktone ain = csdDistortion ain klevel kdrive ktone
@@ -82,10 +111,10 @@ fxDistortion klevel kdrive ktone ain = csdDistortion ain klevel kdrive ktone
 -- ; ktone  --  tone of a lowpass filter (range: 0 to 1)
 csdDistortion :: Sig -> Sig -> Sig -> Sig -> Sig
 csdDistortion ain klevel kdrive ktone = fromGE $ do
-    addUdoPlugin E.distortionPlugin
-    f <$> toGE ain <*> toGE klevel <*> toGE kdrive <*> toGE ktone
-    where f ain' klevel' kdrive' ktone' = opcs "Distortion" [(Ar,[Ar,Kr,Kr,Kr])] [ain', klevel', kdrive', ktone']
-
+  addUdoPlugin E.distortionPlugin
+  f <$> toGE ain <*> toGE klevel <*> toGE kdrive <*> toGE ktone
+  where
+    f ain' klevel' kdrive' ktone' = opcs "Distortion" [(Ar, [Ar, Kr, Kr, Kr])] [ain', klevel', kdrive', ktone']
 
 fxEnvelopeFollower :: Sig -> Sig -> Sig -> Sig -> Sig
 fxEnvelopeFollower ksens kfreq kres ain = csdEnvelopeFollower ain ksens kfreq kres
@@ -104,9 +133,10 @@ fxEnvelopeFollower ksens kfreq kres ain = csdEnvelopeFollower ain ksens kfreq kr
 -- ; kres   --  resonance of the lowpass filter (suggested range: 0 to 0.99)
 csdEnvelopeFollower :: Sig -> Sig -> Sig -> Sig -> Sig
 csdEnvelopeFollower ain ksens kfreq kres = fromGE $ do
-    addUdoPlugin E.envelopeFolollowerPlugin
-    f <$> toGE ain <*> toGE ksens <*> toGE kfreq <*> toGE kres
-    where f ain' ksens' kfreq' kres' = opcs "EnvelopeFollower" [(Ar,[Ar,Kr,Kr,Kr])] [ain', ksens', kfreq', kres']
+  addUdoPlugin E.envelopeFolollowerPlugin
+  f <$> toGE ain <*> toGE ksens <*> toGE kfreq <*> toGE kres
+  where
+    f ain' ksens' kfreq' kres' = opcs "EnvelopeFollower" [(Ar, [Ar, Kr, Kr, Kr])] [ain', ksens', kfreq', kres']
 
 -- ; Flanger
 -- ; ----------------
@@ -123,10 +153,10 @@ csdEnvelopeFollower ain ksens kfreq kres = fromGE $ do
 -- ; kfback --  feedback and therefore intensity of the effect (range 0 to 1)
 fxFlanger :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 fxFlanger krate kdepth kdelay kfback ain = fromGE $ do
-    addUdoPlugin E.flangerPlugin
-    f <$> toGE ain <*> toGE krate <*> toGE kdepth <*> toGE kdelay <*> toGE kfback
-    where f ain' krate' kdepth' kdelay' kfback' = opcs "Flanger" [(Ar,[Ar,Kr,Kr,Kr,Kr])] [ain', krate', kdepth', kdelay', kfback']
-
+  addUdoPlugin E.flangerPlugin
+  f <$> toGE ain <*> toGE krate <*> toGE kdepth <*> toGE kdelay <*> toGE kfback
+  where
+    f ain' krate' kdepth' kdelay' kfback' = opcs "Flanger" [(Ar, [Ar, Kr, Kr, Kr, Kr])] [ain', krate', kdepth', kdelay', kfback']
 
 -- ; FreqShifter
 -- ; ----------------
@@ -143,10 +173,10 @@ fxFlanger krate kdepth kdelay kfback ain = fromGE $ do
 -- ; kfback --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1)
 fxFreqShifter :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 fxFreqShifter kmix kfreq kmult kfback adry = fromGE $ do
-    addUdoPlugin E.freqShifterPlugin
-    f <$> toGE adry <*> toGE kmix <*> toGE kfreq <*> toGE kmult <*> toGE kfback
-    where f adry' kmix' kfreq' kmult' kfback' = opcs "FreqShifter" [(Ar,[Ar,Kr,Kr,Kr,Kr])] [adry', kmix', kfreq', kmult', kfback']
-
+  addUdoPlugin E.freqShifterPlugin
+  f <$> toGE adry <*> toGE kmix <*> toGE kfreq <*> toGE kmult <*> toGE kfback
+  where
+    f adry' kmix' kfreq' kmult' kfback' = opcs "FreqShifter" [(Ar, [Ar, Kr, Kr, Kr, Kr])] [adry', kmix', kfreq', kmult', kfback']
 
 -- ; LoFi
 -- ; ----------------
@@ -161,9 +191,10 @@ fxFreqShifter kmix kfreq kmult kfback adry = fromGE $ do
 -- ; kfold  --  amount of foldover (range 0 to 1)
 fxLoFi :: Sig -> Sig -> Sig -> Sig
 fxLoFi kbits kfold ain = fromGE $ do
-    addUdoPlugin E.loFiPlugin
-    f <$> toGE ain <*> toGE kbits <*> toGE kfold
-    where f ain' kbits' kfold' = opcs "LoFi" [(Ar,[Ar,Kr,Kr])] [ain', kbits', kfold']
+  addUdoPlugin E.loFiPlugin
+  f <$> toGE ain <*> toGE kbits <*> toGE kfold
+  where
+    f ain' kbits' kfold' = opcs "LoFi" [(Ar, [Ar, Kr, Kr])] [ain', kbits', kfold']
 
 -- ; PanTrem
 -- ; ----------------
@@ -181,9 +212,10 @@ fxLoFi kbits kfold ain = fromGE $ do
 -- ; kwave  --  waveform used by the lfo (0=sine 1=triangle 2=square)
 fxPanTrem :: Sig -> Sig -> Sig -> Sig -> Sig2 -> Sig2
 fxPanTrem krate kdepth kmode kwave (ainL, ainR) = toTuple $ do
-    addUdoPlugin E.panTremPlugin
-    f <$> toGE ainL <*> toGE ainR <*> toGE krate <*> toGE kdepth <*> toGE kmode <*> toGE kwave
-    where f ainL' ainR' krate' kdepth' kmode' kwave' = ($ 2) $ mopcs "PanTrem" ([Ar,Ar], [Ar,Ar, Kr,Kr,Kr,Kr]) [ainL', ainR', krate', kdepth', kmode', kwave']
+  addUdoPlugin E.panTremPlugin
+  f <$> toGE ainL <*> toGE ainR <*> toGE krate <*> toGE kdepth <*> toGE kmode <*> toGE kwave
+  where
+    f ainL' ainR' krate' kdepth' kmode' kwave' = ($ 2) $ mopcs "PanTrem" ([Ar, Ar], [Ar, Ar, Kr, Kr, Kr, Kr]) [ainL', ainR', krate', kdepth', kmode', kwave']
 
 -- ; Tremolo
 -- ; ----------------
@@ -199,9 +231,10 @@ fxPanTrem krate kdepth kmode kwave (ainL, ainR) = toTuple $ do
 -- ; kwave  --  waveform used by the lfo (0=sine 1=triangle 2=square)
 fxMonoTrem :: Sig -> Sig -> Sig -> Sig -> Sig
 fxMonoTrem krate kdepth kwave ain = fromGE $ do
-    addUdoPlugin E.monoTremPlugin
-    f <$> toGE ain <*> toGE krate <*> toGE kdepth <*> toGE kwave
-    where f ain' krate' kdepth' kwave' = opcs "MonoTrem" [(Ar, [Ar,Kr,Kr,Kr])] [ain', krate', kdepth', kwave']
+  addUdoPlugin E.monoTremPlugin
+  f <$> toGE ain <*> toGE krate <*> toGE kdepth <*> toGE kwave
+  where
+    f ain' krate' kdepth' kwave' = opcs "MonoTrem" [(Ar, [Ar, Kr, Kr, Kr])] [ain', krate', kdepth', kwave']
 
 -- ; Phaser
 -- ; ----------------
@@ -218,9 +251,10 @@ fxMonoTrem krate kdepth kwave ain = fromGE $ do
 -- ; kfback --  feedback and therefore intensity of the effect (range 0 to 1)
 fxPhaser :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 fxPhaser krate kdepth kfreq kfback ain = fromGE $ do
-    addUdoPlugin E.phaserPlugin
-    f <$> toGE ain <*> toGE krate <*> toGE kdepth <*> toGE kfreq <*> toGE kfback
-    where f ain' krate' kdepth' kfreq' kfback' = opcs "Phaser" [(Ar,[Ar,Kr,Kr,Kr,Kr])] [ain', krate', kdepth', kfreq', kfback']
+  addUdoPlugin E.phaserPlugin
+  f <$> toGE ain <*> toGE krate <*> toGE kdepth <*> toGE kfreq <*> toGE kfback
+  where
+    f ain' krate' kdepth' kfreq' kfback' = opcs "Phaser" [(Ar, [Ar, Kr, Kr, Kr, Kr])] [ain', krate', kdepth', kfreq', kfback']
 
 -- ; PitchShifter
 -- ; ------------
@@ -238,10 +272,10 @@ fxPhaser krate kdepth kfreq kfback ain = fromGE $ do
 -- ; kfback --  control of the amount of output signal fed back into the input of the effect (suggested range 0 to 1)
 fxPitchShifter :: D -> Sig -> Sig -> Sig -> Sig -> Sig
 fxPitchShifter ifftsize kmix kscal kfback ain = fromGE $ do
-    addUdoPlugin E.pitchShifterPlugin
-    f <$> toGE ain <*> toGE kmix <*> toGE kscal <*> toGE kfback <*> toGE ifftsize
-    where f ain' kmix' kscal' kfback' ifftsize' = opcs "PitchShifter" [(Ar,[Ar,Kr,Kr,Kr,Ir])] [ain', kmix', kscal', kfback', ifftsize']
-
+  addUdoPlugin E.pitchShifterPlugin
+  f <$> toGE ain <*> toGE kmix <*> toGE kscal <*> toGE kfback <*> toGE ifftsize
+  where
+    f ain' kmix' kscal' kfback' ifftsize' = opcs "PitchShifter" [(Ar, [Ar, Kr, Kr, Kr, Ir])] [ain', kmix', kscal', kfback', ifftsize']
 
 -- ; Reverse
 -- ; ----------------
@@ -255,9 +289,10 @@ fxPitchShifter ifftsize kmix kscal kfback ain = fromGE $ do
 -- ; ktime  --  time duration of each chunk (suggested range: 0.3 to 2)--
 fxReverse :: Sig -> Sig -> Sig
 fxReverse ktime ain = fromGE $ do
-    addUdoPlugin E.reversePlugin
-    f <$> toGE ain <*> toGE ktime
-    where f ain' ktime' = opcs "Reverse" [(Ar,[Ar,Kr])] [ain', ktime']
+  addUdoPlugin E.reversePlugin
+  f <$> toGE ain <*> toGE ktime
+  where
+    f ain' ktime' = opcs "Reverse" [(Ar, [Ar, Kr])] [ain', ktime']
 
 -- ; RingModulator
 -- ; ----------------
@@ -273,9 +308,10 @@ fxReverse ktime ain = fromGE $ do
 -- ; kenv   --  amount of dynamic envelope following modulation of frequency (range 0 to 1)
 fxRingModulator :: Sig -> Sig -> Sig -> Sig -> Sig
 fxRingModulator kmix kfreq kenv ain = fromGE $ do
-    addUdoPlugin E.ringModulatorPlugin
-    f <$> toGE ain <*> toGE kmix <*> toGE kfreq <*> toGE kenv
-    where f ain' kmix' kfreq' kenv' = opcs "RingModulator" [(Ar,[Ar,Kr,Kr,Kr])] [ain', kmix', kfreq', kenv']
+  addUdoPlugin E.ringModulatorPlugin
+  f <$> toGE ain <*> toGE kmix <*> toGE kfreq <*> toGE kenv
+  where
+    f ain' kmix' kfreq' kenv' = opcs "RingModulator" [(Ar, [Ar, Kr, Kr, Kr])] [ain', kmix', kfreq', kenv']
 
 -- ; StChorus
 -- ; ----------------
@@ -292,18 +328,20 @@ fxRingModulator kmix kfreq kenv ain = fromGE $ do
 -- ; kwidth --  width of stereo widening (range 0 to 1)
 fxChorus2 :: Sig -> Sig -> Sig -> Sig2 -> Sig2
 fxChorus2 krate kdepth kwidth (ainL, ainR) = toTuple $ do
-    addUdoPlugin E.stChorusPlugin
-    f <$> toGE ainL <*> toGE ainR <*> toGE krate <*> toGE kdepth <*> toGE kwidth
-    where f ainL' ainR' krate' kdepth' kwidth' = ($ 2) $ mopcs "StChorus" ([Ar,Ar], [Ar,Ar,Kr,Kr,Kr]) [ainL', ainR', krate', kdepth', kwidth']
+  addUdoPlugin E.stChorusPlugin
+  f <$> toGE ainL <*> toGE ainR <*> toGE krate <*> toGE kdepth <*> toGE kwidth
+  where
+    f ainL' ainR' krate' kdepth' kwidth' = ($ 2) $ mopcs "StChorus" ([Ar, Ar], [Ar, Ar, Kr, Kr, Kr]) [ainL', ainR', krate', kdepth', kwidth']
 
 -- aInL, aInR, kdelayTime, kFeedback, kMix, iMaxDelayTime xin
 
--- | Stereo ping-pong delay effect
---
--- > fxPingPong maxDelayTime kmix width tone time feedback (ainL, ainR)
+{- | Stereo ping-pong delay effect
+
+> fxPingPong maxDelayTime kmix width tone time feedback (ainL, ainR)
+-}
 fxPingPong :: D -> Sig -> Sig -> Sig -> Sig -> Sig -> Sig2 -> Sig2
 fxPingPong iMaxDelTime kmix kwidth ktone ktime kfeedback (ainL, ainR) = toTuple $ do
-    addUdoPlugin E.stereoPingPongDelayPlugin
-    f <$> toGE ainL <*> toGE ainR <*> toGE ktime <*> toGE kfeedback <*> toGE kmix <*> toGE kwidth <*> toGE ktone <*> toGE iMaxDelTime
-    where f ainL' ainR' ktime' kfeedback' kmix' kwidth' ktone' iMaxDelTime' = ($ 2) $ mopcs "StereoPingPongDelay" ([Ar,Ar], [Ar,Ar,Kr,Kr,Kr,Kr,Kr,Ir]) [ainL', ainR', ktime', kfeedback', kmix', kwidth', ktone', iMaxDelTime']
-
+  addUdoPlugin E.stereoPingPongDelayPlugin
+  f <$> toGE ainL <*> toGE ainR <*> toGE ktime <*> toGE kfeedback <*> toGE kmix <*> toGE kwidth <*> toGE ktone <*> toGE iMaxDelTime
+  where
+    f ainL' ainR' ktime' kfeedback' kmix' kwidth' ktone' iMaxDelTime' = ($ 2) $ mopcs "StereoPingPongDelay" ([Ar, Ar], [Ar, Ar, Kr, Kr, Kr, Kr, Kr, Ir]) [ainL', ainR', ktime', kfeedback', kmix', kwidth', ktone', iMaxDelTime']

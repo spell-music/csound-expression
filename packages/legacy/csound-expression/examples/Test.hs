@@ -1,5 +1,5 @@
 module Main where
- 
+
 -- imports everything
 import Csound.Base
 

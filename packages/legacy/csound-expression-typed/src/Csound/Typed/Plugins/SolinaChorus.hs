@@ -1,12 +1,13 @@
-module Csound.Typed.Plugins.SolinaChorus(
-    solinaChorus, testSolinaChorus
+module Csound.Typed.Plugins.SolinaChorus (
+  solinaChorus,
+  testSolinaChorus,
 ) where
 
 import Csound.Dynamic
 
-import Csound.Typed.Types
 import Csound.Typed.GlobalState
-import qualified Csound.Typed.GlobalState.Elements as E(solinaChorusPlugin)
+import Csound.Typed.GlobalState.Elements qualified as E (solinaChorusPlugin)
+import Csound.Typed.Types
 
 -- Solina Chorus, based on Solina String Ensemble Chorus Module
 --
@@ -52,6 +53,7 @@ testSolinaChorus x = solinaChorus (0.6, 0.18) (0.2, 6) x
 --  aLeft, klfo_freq1, klfo_amp1, klfo_freq2, klfo_amp2 xin
 solina_chorus :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 solina_chorus aLeft klfo_freq1 klfo_amp1 klfo_freq2 klfo_amp2 = fromGE $ do
-    addUdoPlugin E.solinaChorusPlugin
-    f <$> toGE aLeft <*> toGE klfo_freq1 <*> toGE klfo_amp1 <*> toGE klfo_freq2 <*> toGE klfo_amp2
-    where f aLeft' klfo_freq1' klfo_amp1' klfo_freq2' klfo_amp2' = opcs "solina_chorus" [(Ar, [Ar, Kr, Kr, Kr, Kr])] [aLeft', klfo_freq1', klfo_amp1', klfo_freq2', klfo_amp2']
+  addUdoPlugin E.solinaChorusPlugin
+  f <$> toGE aLeft <*> toGE klfo_freq1 <*> toGE klfo_amp1 <*> toGE klfo_freq2 <*> toGE klfo_amp2
+  where
+    f aLeft' klfo_freq1' klfo_amp1' klfo_freq2' klfo_amp2' = opcs "solina_chorus" [(Ar, [Ar, Kr, Kr, Kr, Kr])] [aLeft', klfo_freq1', klfo_amp1', klfo_freq2', klfo_amp2']

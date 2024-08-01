@@ -1,27 +1,27 @@
-module Csound.Core.Base.Midi
-  ( Msg
-  , MidiChannel
-  , midi
-  , midin
-  , pgmidi
-  , midi_
-  , midin_
-  , pgmidi_
-  , initMidiCtrl
-  , MidiFun
-  , ampCps
-  , onMsg
-  , MidiInstr (..)
-  , MidiInstrTemp (..)
-  ) where
+module Csound.Core.Base.Midi (
+  Msg,
+  MidiChannel,
+  midi,
+  midin,
+  pgmidi,
+  midi_,
+  midin_,
+  pgmidi_,
+  initMidiCtrl,
+  MidiFun,
+  ampCps,
+  onMsg,
+  MidiInstr (..),
+  MidiInstrTemp (..),
+) where
 
+import Csound.Core.Base.Evt
+import Csound.Core.Base.Instr (alwaysOn)
 import Csound.Core.Base.Midi.Internal
 import Csound.Core.Base.Midi.Overload
-import Csound.Core.Types
 import Csound.Core.Opcode
-import Csound.Core.Base.Evt
+import Csound.Core.Types
 import Data.Boolean
-import Csound.Core.Base.Instr (alwaysOn)
 
 type MidiFun a = (Msg -> SE a) -> SE a
 
@@ -32,16 +32,16 @@ data MidiChn = ChnAll | Chn Int | Pgm (Maybe Int) Int
 ampCps :: Msg -> (D, D)
 ampCps _msg = (ampmidi 1, cpsmidi)
 
-toMidiFun :: Sigs a => MidiChn -> MidiFun a
+toMidiFun :: (Sigs a) => MidiChn -> MidiFun a
 toMidiFun x = case x of
-  ChnAll  -> midi
-  Chn n   -> midin n
+  ChnAll -> midi
+  Chn n -> midin n
   Pgm a b -> pgmidi a b
 
 toMidiFun_ :: MidiChn -> MidiFun ()
 toMidiFun_ x = case x of
-  ChnAll  -> midi_
-  Chn n   -> midin_ n
+  ChnAll -> midi_
+  Chn n -> midin_ n
   Pgm a b -> pgmidi_ a b
 
 {-
@@ -91,7 +91,6 @@ smoothMonoMsg :: (Msg -> D) -> MidiChn -> D -> D -> SE (Sig, Sig)
 smoothMonoMsg key2cps chn portTime relTime = do
   (MonoArg amp cps status _) <- genAmpCpsSig key2cps (toMidiFun chn)
   return (port amp portTime * port status relTime,  port cps portTime)
-
 
 genFilteredMonoMsg :: MidiChn -> (D -> BoolD) -> SE MonoArg
 genFilteredMonoMsg chn condition = filteredGenAmpCpsSig cpsmidi (toMidiFun chn) condition
@@ -271,8 +270,9 @@ trigByNameMidi_ name instr = do
 
 --------------------------------------------------------------
 
--- | Listens to midi on event on the given key as event stream.
--- The event stream carries the level of volume (ranges from 0 to 1).
+{- | Listens to midi on event on the given key as event stream.
+The event stream carries the level of volume (ranges from 0 to 1).
+-}
 midiKeyOn :: MidiChn -> D -> SE (Evt D)
 midiKeyOn = midiKeyOnBy . toMidiFun
 
@@ -282,7 +282,7 @@ midiKeyOff = midiKeyOffBy . toMidiFun
 
 midiKeyOnBy :: MidiFun Sig -> D -> SE (Evt D)
 midiKeyOnBy midiFun key = do
-  chRef  <- newCtrlRef (0 :: Sig)
+  chRef <- newCtrlRef (0 :: Sig)
   evtRef <- newCtrlRef (0 :: Sig)
   writeRef chRef =<< midiFun instr
 
@@ -291,7 +291,7 @@ midiKeyOnBy midiFun key = do
     writeRef evtRef $ diff a
 
   evtSig <- readRef evtRef
-  return $ filterE (( >* 0) . toSig) $ snaps evtSig
+  return $ filterE ((>* 0) . toSig) $ snaps evtSig
   where
     instr msg = do
       note <- notnum
@@ -300,7 +300,7 @@ midiKeyOnBy midiFun key = do
 
 midiKeyOffBy :: MidiFun Sig -> D -> SE Tick
 midiKeyOffBy midiFun key = do
-  chRef  <- newCtrlRef (0 :: Sig)
+  chRef <- newCtrlRef (0 :: Sig)
   evtRef <- newCtrlRef (0 :: Sig)
   writeRef chRef =<< midiFun instr
 
@@ -309,7 +309,7 @@ midiKeyOffBy midiFun key = do
     writeRef evtRef $ diff a
 
   evtSig <- readRef evtRef
-  return $ fmap (const ()) $ filterE (( `less` 0) . toSig) $ snaps evtSig
+  return $ fmap (const ()) $ filterE ((`less` 0) . toSig) $ snaps evtSig
   where
     instr msg = do
       note <- notnum

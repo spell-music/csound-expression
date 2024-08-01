@@ -1,38 +1,52 @@
-module Csound.Typed.GlobalState.Cache(
-    Cache(..), HashKey,    
-    -- * Mix
-    -- ** Functions
-    CacheMix, MixKey(..),
-    saveMixKey, getMixKey,
-    -- ** Procedures
-    CacheMixProc, 
-    saveMixProcKey, getMixProcKey,
-    -- * Evt
-    -- ** Functions
-    CacheEvt, EvtKey(..),
-    saveEvtKey, getEvtKey,
-    -- ** Procedures
-    CacheEvtProc, 
-    saveEvtProcKey, getEvtProcKey
+module Csound.Typed.GlobalState.Cache (
+  Cache (..),
+  HashKey,
+
+  -- * Mix
+
+  -- ** Functions
+  CacheMix,
+  MixKey (..),
+  saveMixKey,
+  getMixKey,
+
+  -- ** Procedures
+  CacheMixProc,
+  saveMixProcKey,
+  getMixProcKey,
+
+  -- * Evt
+
+  -- ** Functions
+  CacheEvt,
+  EvtKey (..),
+  saveEvtKey,
+  getEvtKey,
+
+  -- ** Procedures
+  CacheEvtProc,
+  saveEvtProcKey,
+  getEvtProcKey,
 ) where
 
-import qualified Data.Map as M
 import Data.Default
+import Data.Map qualified as M
 
 import Csound.Dynamic
 
-data Cache m = Cache 
-    { cacheMix      :: CacheMix
-    , cacheMixProc  :: CacheMixProc m
-    , cacheEvt      :: CacheEvt
-    , cacheEvtProc  :: CacheEvtProc m }
+data Cache m = Cache
+  { cacheMix :: CacheMix
+  , cacheMixProc :: CacheMixProc m
+  , cacheEvt :: CacheEvt
+  , cacheEvtProc :: CacheEvtProc m
+  }
 
 instance Default (Cache m) where
-    def = Cache def def def def
+  def = Cache def def def def
 
 type HashKey = Int
 
-type GetKey  m a b = a -> Cache m -> Maybe b
+type GetKey m a b = a -> Cache m -> Maybe b
 type SaveKey m a b = a -> b -> Cache m -> Cache m
 
 getKeyMap :: (Ord key) => (Cache m -> M.Map key val) -> GetKey m key val
@@ -47,9 +61,9 @@ saveKeyMap getter setter key val cache = setter (M.insert key val $ getter cache
 -- Mix functions
 
 newtype MixKey = MixKey HashKey
-    deriving (Eq, Ord)
+  deriving (Eq, Ord)
 
-type    MixVal = InstrId
+type MixVal = InstrId
 
 type CacheMix = M.Map MixKey MixVal
 
@@ -57,7 +71,7 @@ getMixKey :: GetKey m MixKey MixVal
 getMixKey = getKeyMap cacheMix
 
 saveMixKey :: SaveKey m MixKey MixVal
-saveMixKey = saveKeyMap cacheMix (\a x -> x { cacheMix = a })
+saveMixKey = saveKeyMap cacheMix (\a x -> x{cacheMix = a})
 
 -- Mix procedures
 
@@ -67,7 +81,7 @@ getMixProcKey :: GetKey m MixKey (DepT m ())
 getMixProcKey = getKeyMap cacheMixProc
 
 saveMixProcKey :: SaveKey m MixKey (DepT m ())
-saveMixProcKey = saveKeyMap cacheMixProc (\a x -> x { cacheMixProc = a })
+saveMixProcKey = saveKeyMap cacheMixProc (\a x -> x{cacheMixProc = a})
 
 ----------------------------------------------------------
 -- Evt
@@ -75,9 +89,9 @@ saveMixProcKey = saveKeyMap cacheMixProc (\a x -> x { cacheMixProc = a })
 -- Evt functions
 
 data EvtKey = EvtKey HashKey HashKey
-    deriving (Eq, Ord)
+  deriving (Eq, Ord)
 
-type    EvtVal = InstrId
+type EvtVal = InstrId
 
 type CacheEvt = M.Map EvtKey EvtVal
 
@@ -85,7 +99,7 @@ getEvtKey :: GetKey m EvtKey EvtVal
 getEvtKey = getKeyMap cacheEvt
 
 saveEvtKey :: SaveKey m EvtKey EvtVal
-saveEvtKey = saveKeyMap cacheEvt (\a x -> x { cacheEvt = a })
+saveEvtKey = saveKeyMap cacheEvt (\a x -> x{cacheEvt = a})
 
 -- Evt procedures
 
@@ -95,5 +109,4 @@ getEvtProcKey :: GetKey m EvtKey (DepT m ())
 getEvtProcKey = getKeyMap cacheEvtProc
 
 saveEvtProcKey :: SaveKey m EvtKey (DepT m ())
-saveEvtProcKey = saveKeyMap cacheEvtProc (\a x -> x { cacheEvtProc = a })
-
+saveEvtProcKey = saveKeyMap cacheEvtProc (\a x -> x{cacheEvtProc = a})

@@ -1,91 +1,119 @@
-module Csound.Options(
-    Options(..),
+module Csound.Options (
+  Options (..),
 
-    -- * Shortcuts
-    setDur,
-    setRates, setBufs, setGain,
-    setJack, setJackConnect, setAlsa, setCoreAudio, setMme,
-    setOutput, setInput,
-    setDac, setAdc, setDacBy, setAdcBy, setThru,
-    setSilent, setMidiDevice, setMa,
-    setMessageLevel, noMessages, setTrace,
-    setCabbage,
-    setJacko,
-    setDebugTrace,
-    setVerbatimFlags,
+  -- * Shortcuts
+  setDur,
+  setRates,
+  setBufs,
+  setGain,
+  setJack,
+  setJackConnect,
+  setAlsa,
+  setCoreAudio,
+  setMme,
+  setOutput,
+  setInput,
+  setDac,
+  setAdc,
+  setDacBy,
+  setAdcBy,
+  setThru,
+  setSilent,
+  setMidiDevice,
+  setMa,
+  setMessageLevel,
+  noMessages,
+  setTrace,
+  setCabbage,
+  setJacko,
+  setDebugTrace,
+  setVerbatimFlags,
 
-    -- * Flags
-    -- | Csound's command line flags. See original documentation for
-    -- detailed overview: <http://www.csounds.com/manual/html/CommandFlagsCategory.html>
-    Flags(..),
+  -- * Flags
 
-    -- * Audio file output
-    AudioFileOutput(..),
-    FormatHeader(..), FormatSamples(..), FormatType(..),
-    Dither(..), IdTags(..),
+  -- | Csound's command line flags. See original documentation for
+  -- detailed overview: <http://www.csounds.com/manual/html/CommandFlagsCategory.html>
+  Flags (..),
 
-    -- * Realtime Audio Input/Output
-    Rtaudio(..), PulseAudio(..),
+  -- * Audio file output
+  AudioFileOutput (..),
+  FormatHeader (..),
+  FormatSamples (..),
+  FormatType (..),
+  Dither (..),
+  IdTags (..),
 
-    -- * MIDI File Input/Ouput
-    MidiIO(..),
+  -- * Realtime Audio Input/Output
+  Rtaudio (..),
+  PulseAudio (..),
 
-    -- * MIDI Realtime Input/Ouput
-    MidiRT(..), Rtmidi(..),
+  -- * MIDI File Input/Ouput
+  MidiIO (..),
 
-    -- * Display
-    Displays(..), DisplayMode(..),
+  -- * MIDI Realtime Input/Ouput
+  MidiRT (..),
+  Rtmidi (..),
 
-    -- * Performance Configuration and Control
-    Config(..)
+  -- * Display
+  Displays (..),
+  DisplayMode (..),
+
+  -- * Performance Configuration and Control
+  Config (..),
 ) where
 
+import Csound.Typed
 import Data.Default
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Csound.Typed
 
--- | Sets sample rate and block size
---
--- > setRates sampleRate blockSize
+{- | Sets sample rate and block size
+
+> setRates sampleRate blockSize
+-}
 setRates :: Int -> Int -> Options
-setRates sampleRate blockSize = def
+setRates sampleRate blockSize =
+  def
     { csdSampleRate = Just sampleRate
-    , csdBlockSize  = Just blockSize }
+    , csdBlockSize = Just blockSize
+    }
 
--- | Sets hardware and software buffers.
---
--- > setBufs hardwareBuf ioBuf
+{- | Sets hardware and software buffers.
+
+> setBufs hardwareBuf ioBuf
+-}
 setBufs :: Int -> Int -> Options
-setBufs hw io = def { csdFlags = def { config = def { hwBuf = Just hw, ioBuf = Just io } } }
+setBufs hw io = def{csdFlags = def{config = def{hwBuf = Just hw, ioBuf = Just io}}}
 
 -- | Sets the default gain for the output signal (should be in range 0 to 1).
 setGain :: Double -> Options
-setGain d = def { csdGain = Just d' }
-    where d' = max 0 $ min 1 $ d
+setGain d = def{csdGain = Just d'}
+  where
+    d' = max 0 $ min 1 $ d
 
 -- | Runs as JACK unit with given name (first argument).
 setJack :: Text -> Options
-setJack name = def { csdFlags = def { rtaudio = Just $ Jack name "input" "output" } }
+setJack name = def{csdFlags = def{rtaudio = Just $ Jack name "input" "output"}}
 
--- | Defines a header for a Jacko opcodes. The Jacko opcodes allow for greater flexibility
--- with definition of Jack-client. See the Csound docs for details and the datatype @Jacko@.
---
--- > csound doc: <http://csound.github.io/docs/manual/JackoOpcodes.html>
+{- | Defines a header for a Jacko opcodes. The Jacko opcodes allow for greater flexibility
+with definition of Jack-client. See the Csound docs for details and the datatype @Jacko@.
+
+> csound doc: <http://csound.github.io/docs/manual/JackoOpcodes.html>
+-}
 setJacko :: Jacko -> Options
-setJacko jackoSpec = def { csdJacko = Just jackoSpec }
+setJacko jackoSpec = def{csdJacko = Just jackoSpec}
 
 -- | Sets real-time driver to Core Audio (use on OSX).
 setCoreAudio :: Options
-setCoreAudio = def { csdFlags = def { rtaudio = Just $ CoreAudio } }
+setCoreAudio = def{csdFlags = def{rtaudio = Just $ CoreAudio}}
 
 -- | Sets real-time driver to Alsa (use on Linux).
 setAlsa :: Options
-setAlsa = def { csdFlags = def { rtaudio = Just $ Alsa } }
+setAlsa = def{csdFlags = def{rtaudio = Just $ Alsa}}
 
 -- | Sets real-time driver to Mme (use on Windows).
 setMme :: Options
-setMme = def { csdFlags = def { rtaudio = Just $ Mme } }
+setMme = def{csdFlags = def{rtaudio = Just $ Mme}}
 
 -- | Sends output to speakers.
 setDac :: Options
@@ -97,25 +125,27 @@ setAdc = setAdcBy ""
 
 -- | Set's the input name of the device or file.
 setInput :: Text -> Options
-setInput a = def { csdFlags = def { audioFileOutput = def { input = Just a } } }
+setInput a = def{csdFlags = def{audioFileOutput = def{input = Just a}}}
 
 -- | Set's the output name of the device or file.
 setOutput :: Text -> Options
-setOutput a = def { csdFlags = def { audioFileOutput = def { output = Just a } } }
+setOutput a = def{csdFlags = def{audioFileOutput = def{output = Just a}}}
 
 -- | Provides name identifier for dac.
 setDacBy :: Text -> Options
 setDacBy port = setOutput name
-    where name
-            | Text.null port = "dac"
-            | otherwise = "dac:" <> port
+  where
+    name
+      | Text.null port = "dac"
+      | otherwise = "dac:" <> port
 
 -- | Provides name identifier for adc.
 setAdcBy :: Text -> Options
 setAdcBy port = setInput name
-    where name
-            | Text.null port = "adc"
-            | otherwise = "adc:" <> port
+  where
+    name
+      | Text.null port = "adc"
+      | otherwise = "adc:" <> port
 
 -- | Sets both dac and adc.
 setThru :: Options
@@ -123,47 +153,51 @@ setThru = mappend setDac setAdc
 
 -- | Sets the output to nosound.
 setSilent :: Options
-setSilent = (def { csdFlags = def { audioFileOutput = def { nosound = True } } })
+setSilent = (def{csdFlags = def{audioFileOutput = def{nosound = True}}})
 
--- | Sets midi device. It's an string identifier of the device.
---
--- Read MIDI events from device DEVICE. If using ALSA MIDI (-+rtmidi=alsa),
--- devices are selected by name and not number. So, you need to use an option
--- like -M hw:CARD,DEVICE where CARD and DEVICE are the card and device numbers (e.g. -M hw:1,0).
--- In the case of PortMidi and MME, DEVICE should be a number, and if it is out of range,
--- an error occurs and the valid device numbers are printed. When using PortMidi,
--- you can use '-Ma' to enable all devices. This is also convenient when you
--- don't have devices as it will not generate an error.
+{- | Sets midi device. It's an string identifier of the device.
+
+Read MIDI events from device DEVICE. If using ALSA MIDI (-+rtmidi=alsa),
+devices are selected by name and not number. So, you need to use an option
+like -M hw:CARD,DEVICE where CARD and DEVICE are the card and device numbers (e.g. -M hw:1,0).
+In the case of PortMidi and MME, DEVICE should be a number, and if it is out of range,
+an error occurs and the valid device numbers are printed. When using PortMidi,
+you can use '-Ma' to enable all devices. This is also convenient when you
+don't have devices as it will not generate an error.
+-}
 setMidiDevice :: Text -> Options
-setMidiDevice a = def { csdFlags = def { midiRT = def { midiDevice = Just a } } }
+setMidiDevice a = def{csdFlags = def{midiRT = def{midiDevice = Just a}}}
 
 -- | Sets midi device to all.
 setMa :: Options
 setMa = setMidiDevice "a"
 
--- | Sets message level. For input integer value consult
--- the Csound docs
---
--- <http://csound.com/docs/manual/CommandFlagsCategory.html>
+{- | Sets message level. For input integer value consult
+the Csound docs
+
+<http://csound.com/docs/manual/CommandFlagsCategory.html>
+-}
 setMessageLevel :: Int -> Options
-setMessageLevel n = def { csdFlags = def { displays = def { messageLevel = Just n }}}
+setMessageLevel n = def{csdFlags = def{displays = def{messageLevel = Just n}}}
 
 -- | Sets the tracing or debug info of csound console to minimum.
 noMessages :: Options
 noMessages = setMessageLevel 0
 
 setTrace :: Options
-setTrace = def { csdTrace = Just True }
+setTrace = def{csdTrace = Just True}
 
 ---------------------------------------------
 
 -- | Provides options for Cabbage VST-engine.
 setCabbage :: Options
 setCabbage = mconcat [setRates 48000 64, setNoRtMidi, setMidiDevice "0"]
-    where setNoRtMidi = def { csdFlags = def { rtmidi = Just NoRtmidi, audioFileOutput = def { nosound = True } }}
+  where
+    setNoRtMidi = def{csdFlags = def{rtmidi = Just NoRtmidi, audioFileOutput = def{nosound = True}}}
 
--- | Defines what ports we should connect after application is launched
---
--- It invokes @jack_connect@ for every pair of port-names in the list.
+{- | Defines what ports we should connect after application is launched
+
+It invokes @jack_connect@ for every pair of port-names in the list.
+-}
 setJackConnect :: [(Text, Text)] -> Options
-setJackConnect connections = def { csdJackConnect = Just connections }
+setJackConnect connections = def{csdJackConnect = Just connections}

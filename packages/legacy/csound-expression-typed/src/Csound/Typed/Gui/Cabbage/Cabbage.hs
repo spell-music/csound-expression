@@ -1,25 +1,98 @@
-{-# Language GeneralizedNewtypeDeriving  #-}
-module Csound.Typed.Gui.Cabbage.Cabbage(
-    Cab, CabProp, Col(..), runCab,
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-    -- * Widgets
-    button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable,
-    hrange, vrange, form, groupbox, image, keyboard, label, hslider, vslider,
-    rslider, soundfiler, signaldisplay, textbox, texteditor, xypad,
+module Csound.Typed.Gui.Cabbage.Cabbage (
+  Cab,
+  CabProp,
+  Col (..),
+  runCab,
 
-    -- * Properties
-    bounds, channel, text1, text2, value, colour, colour0, colour1, backgroundcolour, textcolour, trackercolour, outlinecolour,
-    fontcolour, fontcolour0, fontcolour1, latched, identchannel, rotate, alpha, visible, caption, widgetarray, popuptext,
-    active, svgfile, populate, mode, file, shape, corners, channeltype, align, sliderincr, max, min, textbox', trackerthickness,
-    linethickness, range, range2, size, pluginid, guirefresh, plant, child, show, middlec, keywidth, scrollbars, fontstyle,
-    scrubberpos, zoom, displaytype, updaterate, wrap
+  -- * Widgets
+  button,
+  filebutton,
+  infobutton,
+  checkbox,
+  combobox,
+  csoundoutput,
+  encoder,
+  gentable,
+  hrange,
+  vrange,
+  form,
+  groupbox,
+  image,
+  keyboard,
+  label,
+  hslider,
+  vslider,
+  rslider,
+  soundfiler,
+  signaldisplay,
+  textbox,
+  texteditor,
+  xypad,
 
+  -- * Properties
+  bounds,
+  channel,
+  text1,
+  text2,
+  value,
+  colour,
+  colour0,
+  colour1,
+  backgroundcolour,
+  textcolour,
+  trackercolour,
+  outlinecolour,
+  fontcolour,
+  fontcolour0,
+  fontcolour1,
+  latched,
+  identchannel,
+  rotate,
+  alpha,
+  visible,
+  caption,
+  widgetarray,
+  popuptext,
+  active,
+  svgfile,
+  populate,
+  mode,
+  file,
+  shape,
+  corners,
+  channeltype,
+  align,
+  sliderincr,
+  max,
+  min,
+  textbox',
+  trackerthickness,
+  linethickness,
+  range,
+  range2,
+  size,
+  pluginid,
+  guirefresh,
+  plant,
+  child,
+  show,
+  middlec,
+  keywidth,
+  scrollbars,
+  fontstyle,
+  scrubberpos,
+  zoom,
+  displaytype,
+  updaterate,
+  wrap,
 ) where
 
-import Prelude hiding (show, min, max)
+import Prelude hiding (max, min, show)
 
-import Data.Maybe
 import Control.Monad.Trans.Writer.Strict
+import Data.Maybe
 import Data.Text (Text)
 
 import Csound.Typed.Gui.Cabbage.CabbageLang
@@ -27,16 +100,17 @@ import Csound.Typed.Gui.Cabbage.CabbageLang
 type Cab = Cab' ()
 type CabProp = CabProp' ()
 
--- | The Cab is a monad for Cabbage markup language.
--- The markup description can be constructed in the same way as blaze-html markup.
-newtype Cab' a = Cab' { unCab' :: Writer [Line] a }
+{- | The Cab is a monad for Cabbage markup language.
+The markup description can be constructed in the same way as blaze-html markup.
+-}
+newtype Cab' a = Cab' {unCab' :: Writer [Line] a}
   deriving (Functor, Applicative, Monad)
 
 runCab :: Cab -> [Line]
 runCab = snd . runWriter . unCab'
 
-newtype CabProp' a = CabProp' { unCabProp' :: Writer [Property] a }
-    deriving (Functor, Applicative, Monad)
+newtype CabProp' a = CabProp' {unCabProp' :: Writer [Property] a}
+  deriving (Functor, Applicative, Monad)
 
 runCabProp :: CabProp -> [Property]
 runCabProp = snd . runWriter . unCabProp'
@@ -49,33 +123,53 @@ widget name props = Cab' $ tell [Line name $ runCabProp props]
 
 ---------------------------------------
 
-button, filebutton, infobutton, checkbox, combobox, csoundoutput, encoder, gentable,
-    hrange, vrange, form, groupbox, image, keyboard, label, hslider, vslider,
-    rslider, soundfiler, signaldisplay, textbox, texteditor, xypad :: CabProp -> Cab
-
-button      = widget "button"
-filebutton    = widget "filebutton"
-infobutton    = widget "infobutton"
-checkbox    = widget "checkbox"
-combobox    = widget "combobox"
-csoundoutput  = widget "csoundoutput"
-encoder     = widget "encoder"
-gentable    = widget "gentable"
-hrange      = widget "hrange"
-vrange      = widget "vrange"
-form      = widget "form"
-groupbox    = widget "groupbox"
-image       = widget "image"
-keyboard    = widget "keyboard"
-label       = widget "label"
-hslider     = widget "hslider"
-vslider     = widget "vslider"
-rslider     = widget "rslider"
-soundfiler    = widget "soundfiler"
+button
+  , filebutton
+  , infobutton
+  , checkbox
+  , combobox
+  , csoundoutput
+  , encoder
+  , gentable
+  , hrange
+  , vrange
+  , form
+  , groupbox
+  , image
+  , keyboard
+  , label
+  , hslider
+  , vslider
+  , rslider
+  , soundfiler
+  , signaldisplay
+  , textbox
+  , texteditor
+  , xypad ::
+    CabProp -> Cab
+button = widget "button"
+filebutton = widget "filebutton"
+infobutton = widget "infobutton"
+checkbox = widget "checkbox"
+combobox = widget "combobox"
+csoundoutput = widget "csoundoutput"
+encoder = widget "encoder"
+gentable = widget "gentable"
+hrange = widget "hrange"
+vrange = widget "vrange"
+form = widget "form"
+groupbox = widget "groupbox"
+image = widget "image"
+keyboard = widget "keyboard"
+label = widget "label"
+hslider = widget "hslider"
+vslider = widget "vslider"
+rslider = widget "rslider"
+soundfiler = widget "soundfiler"
 signaldisplay = widget "signaldisplay"
-textbox     = widget "textbox"
-texteditor    = widget "texteditor"
-xypad       = widget "xypad"
+textbox = widget "textbox"
+texteditor = widget "texteditor"
+xypad = widget "xypad"
 
 ---------------------------------------
 -- properties

@@ -1,213 +1,275 @@
-{-# Language FlexibleInstances, ScopedTypeVariables #-}
-module Csound.Typed.Types.Array(
-    Arr(..),
-    newLocalArr, newGlobalArr, newLocalCtrlArr, newGlobalCtrlArr,
-    fillLocalArr, fillGlobalArr, fillLocalCtrlArr, fillGlobalCtrlArr,
-    readArr, writeArr, writeInitArr, modifyArr, mixArr,
-    -- * Misc functions to help the type inverence
-    Arr1, DArr1, Arr2, DArr2, Arr3, DArr3,
-    arr1, darr1, arr2, darr2, arr3, darr3,
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
-    -- * Array opcodes
-    maparrayNew, lenarray, copyf2array, copya2ftab, minarray, maxarray, sumarray,
-    scalearray, slicearrayNew,
+module Csound.Typed.Types.Array (
+  Arr (..),
+  newLocalArr,
+  newGlobalArr,
+  newLocalCtrlArr,
+  newGlobalCtrlArr,
+  fillLocalArr,
+  fillGlobalArr,
+  fillLocalCtrlArr,
+  fillGlobalCtrlArr,
+  readArr,
+  writeArr,
+  writeInitArr,
+  modifyArr,
+  mixArr,
 
-    maparrayCopy, slicearrayCopy,
-    divArrayCopy, subArrayCopy,
-    addArrayCopy, mulArrayCopy,
-    addArrayNew, mulArrayNew, divArrayNew, subArrayNew,
+  -- * Misc functions to help the type inverence
+  Arr1,
+  DArr1,
+  Arr2,
+  DArr2,
+  Arr3,
+  DArr3,
+  arr1,
+  darr1,
+  arr2,
+  darr2,
+  arr3,
+  darr3,
 
-    -- * Spectral opcodes
-    SpecArr,
+  -- * Array opcodes
+  maparrayNew,
+  lenarray,
+  copyf2array,
+  copya2ftab,
+  minarray,
+  maxarray,
+  sumarray,
+  scalearray,
+  slicearrayNew,
+  maparrayCopy,
+  slicearrayCopy,
+  divArrayCopy,
+  subArrayCopy,
+  addArrayCopy,
+  mulArrayCopy,
+  addArrayNew,
+  mulArrayNew,
+  divArrayNew,
+  subArrayNew,
 
-    fftNew, fftinvNew, rfftNew, rifftNew, pvs2tab, tab2pvs, cmplxprodNew,
-    rect2polNew, pol2rectNew, pol2rect2New, windowArrayNew,
-    r2cNew, c2rNew, magsArrayNew, phsArrayNew,
-
-    fftCopy, fftinvCopy, rfftCopy, rifftCopy, cmplxprodCopy,
-    rect2polCopy, pol2rectCopy, pol2rect2Copy, windowArrayCopy,
-    r2cCopy, c2rCopy, magsArrayCopy, phsArrayCopy
+  -- * Spectral opcodes
+  SpecArr,
+  fftNew,
+  fftinvNew,
+  rfftNew,
+  rifftNew,
+  pvs2tab,
+  tab2pvs,
+  cmplxprodNew,
+  rect2polNew,
+  pol2rectNew,
+  pol2rect2New,
+  windowArrayNew,
+  r2cNew,
+  c2rNew,
+  magsArrayNew,
+  phsArrayNew,
+  fftCopy,
+  fftinvCopy,
+  rfftCopy,
+  rifftCopy,
+  cmplxprodCopy,
+  rect2polCopy,
+  pol2rectCopy,
+  pol2rect2Copy,
+  windowArrayCopy,
+  r2cCopy,
+  c2rCopy,
+  magsArrayCopy,
+  phsArrayCopy,
 ) where
-
 
 import Control.Monad
 import Data.Proxy
 import Data.Text (Text)
 
-import Csound.Dynamic hiding (writeArr, writeInitArr, readArr, newLocalArrVar, newTmpArrVar, int, toCtrlRate)
-import qualified Csound.Dynamic as D
+import Csound.Dynamic hiding (int, newLocalArrVar, newTmpArrVar, readArr, toCtrlRate, writeArr, writeInitArr)
+import Csound.Dynamic qualified as D
 
+import Csound.Typed.GlobalState.GE
+import Csound.Typed.GlobalState.SE
 import Csound.Typed.Types.Prim
 import Csound.Typed.Types.Tuple
-import Csound.Typed.GlobalState.SE
-import Csound.Typed.GlobalState.GE
 
 -- | An array with single signal index.
-type Arr1 a  = Arr Sig a
+type Arr1 a = Arr Sig a
 
 -- | An array with single constant index.
-type DArr1 a = Arr D   a
-
+type DArr1 a = Arr D a
 
 -- | A matrix (2D array) with signal index.
-type Arr2 a  = Arr (Sig, Sig) a
+type Arr2 a = Arr (Sig, Sig) a
 
 -- | A matrix (2D array) with constant index.
 type DArr2 a = Arr (D, D) a
 
 -- | A 3D array with signal index.
-type Arr3 a  = Arr (Sig, Sig, Sig) a
+type Arr3 a = Arr (Sig, Sig, Sig) a
 
 -- | A 3D array with constant index.
 type DArr3 a = Arr (D, D, D) a
 
 -- | Function to help the type inference.
-arr1  :: SE (Arr Sig a) -> SE (Arr Sig a)
+arr1 :: SE (Arr Sig a) -> SE (Arr Sig a)
 arr1 = id
 
 -- | Function to help the type inference.
-darr1 :: SE (Arr D   a) -> SE (Arr D   a)
+darr1 :: SE (Arr D a) -> SE (Arr D a)
 darr1 = id
 
 -- | Function to help the type inference.
-arr2  :: SE (Arr (Sig,Sig) a) -> SE (Arr (Sig,Sig) a)
+arr2 :: SE (Arr (Sig, Sig) a) -> SE (Arr (Sig, Sig) a)
 arr2 = id
 
 -- | Function to help the type inference.
-darr2 :: SE (Arr (D,D)   a)   -> SE (Arr (D,D)     a)
+darr2 :: SE (Arr (D, D) a) -> SE (Arr (D, D) a)
 darr2 = id
 
 -- | Function to help the type inference.
-arr3  :: SE (Arr (Sig,Sig,Sig) a) -> SE (Arr (Sig,Sig,Sig) a)
+arr3 :: SE (Arr (Sig, Sig, Sig) a) -> SE (Arr (Sig, Sig, Sig) a)
 arr3 = id
 
 -- | Function to help the type inference.
-darr3 :: SE (Arr (D,D,D)   a)     -> SE (Arr (D,D,D)     a)
+darr3 :: SE (Arr (D, D, D) a) -> SE (Arr (D, D, D) a)
 darr3 = id
 
--- | Arrays. The array data type is parametrized with type of the index and the type of the value.
--- Note that the data tpyes for indices and values can be tuples.
-newtype Arr ix a = Arr { unArr :: [Var] }
+{- | Arrays. The array data type is parametrized with type of the index and the type of the value.
+Note that the data tpyes for indices and values can be tuples.
+-}
+newtype Arr ix a = Arr {unArr :: [Var]}
 
-newArrBy :: forall ix a . (Tuple a, Tuple ix) => (Rate -> GE [E] -> SE Var) -> [D] -> SE (Arr ix a)
+newArrBy :: forall ix a. (Tuple a, Tuple ix) => (Rate -> GE [E] -> SE Var) -> [D] -> SE (Arr ix a)
 newArrBy mkVar sizes =
-    fmap Arr $ mapM (\x -> mkVar x (mapM toGE sizes)) (tupleRates $ (Proxy :: Proxy a))
+  fmap Arr $ mapM (\x -> mkVar x (mapM toGE sizes)) (tupleRates $ (Proxy :: Proxy a))
 
-getIndices :: Tuple ix => [Int] -> [ix]
+getIndices :: (Tuple ix) => [Int] -> [ix]
 getIndices xs = fmap (toTuple . return . fmap D.int) $ getIntIndices xs
 
 getIntIndices :: [Int] -> [[Int]]
 getIntIndices = fmap reverse . foldl go []
-    where
-        go :: [[Int]] -> Int -> [[Int]]
-        go res n = case res of
-            [] -> fmap (\x -> [x]) ix
-            xs -> [ first : rest | first <- ix, rest <- xs ]
-            where ix = [0 .. n - 1]
+  where
+    go :: [[Int]] -> Int -> [[Int]]
+    go res n = case res of
+      [] -> fmap (\x -> [x]) ix
+      xs -> [first : rest | first <- ix, rest <- xs]
+      where
+        ix = [0 .. n - 1]
 
 fillArrBy :: (Tuple a, Tuple ix) => (Rate -> GE [E] -> SE Var) -> [Int] -> [a] -> SE (Arr ix a)
 fillArrBy mkVar sizes inits = do
-    arr <- newArrBy mkVar (fmap int sizes)
-    zipWithM_  (writeInitArr arr) (getIndices sizes) inits
-    return arr
+  arr <- newArrBy mkVar (fmap int sizes)
+  zipWithM_ (writeInitArr arr) (getIndices sizes) inits
+  return arr
 
--- | Creates an array that is local to the body of Csound instrument where it's defined.
--- The array contains audio signals.
---
--- > newLocalArr sizes
+{- | Creates an array that is local to the body of Csound instrument where it's defined.
+The array contains audio signals.
+
+> newLocalArr sizes
+-}
 newLocalArr :: (Tuple a, Tuple ix) => [D] -> SE (Arr ix a)
 newLocalArr = newArrBy newLocalArrVar
 
--- | Creates a global array. The array contains audio signals.
---
--- > newGlobalArr sizes
+{- | Creates a global array. The array contains audio signals.
+
+> newGlobalArr sizes
+-}
 newGlobalArr :: (Tuple a, Tuple ix) => [D] -> SE (Arr ix a)
 newGlobalArr = newArrBy newGlobalArrVar
 
--- | Creates an array that is local to the body of Csound instrument where it's defined.
--- The array contains control signals.
---
--- > newLocalCtrlArr sizes
+{- | Creates an array that is local to the body of Csound instrument where it's defined.
+The array contains control signals.
+
+> newLocalCtrlArr sizes
+-}
 newLocalCtrlArr :: (Tuple a, Tuple ix) => [D] -> SE (Arr ix a)
 newLocalCtrlArr = newArrBy newLocalCtrlArrVar
 
--- | Creates a global array. The array contains control signals.
---
--- > newGlobalCtrlArr sizes
+{- | Creates a global array. The array contains control signals.
+
+> newGlobalCtrlArr sizes
+-}
 newGlobalCtrlArr :: (Tuple a, Tuple ix) => [D] -> SE (Arr ix a)
 newGlobalCtrlArr = newArrBy newGlobalCtrlArrVar
 
--- | Creates an array that is local to the body of Csound instrument where it's defined.
--- The array contains audio signals. It fills the array from the list of values (the last argument).
---
--- > fillLocalArr sizes initValues = ...
+{- | Creates an array that is local to the body of Csound instrument where it's defined.
+The array contains audio signals. It fills the array from the list of values (the last argument).
+
+> fillLocalArr sizes initValues = ...
+-}
 fillLocalArr :: (Tuple a, Tuple ix) => [Int] -> [a] -> SE (Arr ix a)
 fillLocalArr = fillArrBy newLocalArrVar
 
--- | Creates a global array. The array contains audio signals. It fills the array from the list of values (the last argument).
---
--- > fillGlobalArr sizes initValues = ...
+{- | Creates a global array. The array contains audio signals. It fills the array from the list of values (the last argument).
+
+> fillGlobalArr sizes initValues = ...
+-}
 fillGlobalArr :: (Tuple a, Tuple ix) => [Int] -> [a] -> SE (Arr ix a)
 fillGlobalArr = fillArrBy newGlobalArrVar
 
--- | Creates an array that is local to the body of Csound instrument where it's defined.
--- The array contains control signals. It fills the array from the list of values (the last argument).
---
--- > fillLocalCtrlArr sizes initValues = ...
+{- | Creates an array that is local to the body of Csound instrument where it's defined.
+The array contains control signals. It fills the array from the list of values (the last argument).
+
+> fillLocalCtrlArr sizes initValues = ...
+-}
 fillLocalCtrlArr :: (Tuple a, Tuple ix) => [Int] -> [a] -> SE (Arr ix a)
 fillLocalCtrlArr = fillArrBy newLocalCtrlArrVar
 
--- | Creates a global array. The array contains control signals. It fills the array from the list of values (the last argument).
---
--- > fillGlobalCtrlArr sizes initValues = ...
+{- | Creates a global array. The array contains control signals. It fills the array from the list of values (the last argument).
+
+> fillGlobalCtrlArr sizes initValues = ...
+-}
 fillGlobalCtrlArr :: (Tuple a, Tuple ix) => [Int] -> [a] -> SE (Arr ix a)
 fillGlobalCtrlArr = fillArrBy newGlobalCtrlArrVar
 
 newLocalCtrlArrVar, newGlobalCtrlArrVar :: Rate -> GE [E] -> SE Var
-
-newLocalCtrlArrVar  = newLocalArrVar  . toCtrlRate
+newLocalCtrlArrVar = newLocalArrVar . toCtrlRate
 newGlobalCtrlArrVar = newGlobalArrVar . toCtrlRate
 
 toCtrlRate :: Rate -> Rate
 toCtrlRate x = case x of
-    Ar -> Kr
-    Kr -> Ir
-    _  -> x
+  Ar -> Kr
+  Kr -> Ir
+  _ -> x
 
 -- | Reads data from the array.
 readArr :: (Tuple a, Tuple ix) => Arr ix a -> ix -> SE a
 readArr (Arr vars) ixs = fmap (toTuple . return) $ SE $ hideGEinDep $ do
-    ixsExp <- fromTuple ixs
-    return $ mapM (\v -> read' v ixsExp) vars
-    where
-        read' ::  Var -> [E] -> Dep E
-        read' = D.readArr IfKr
+  ixsExp <- fromTuple ixs
+  return $ mapM (\v -> read' v ixsExp) vars
+  where
+    read' :: Var -> [E] -> Dep E
+    read' = D.readArr IfKr
 
 -- | Writes data to the array.
 writeArr :: (Tuple ix, Tuple a) => Arr ix a -> ix -> a -> SE ()
 writeArr (Arr vars) ixs b = SE $ hideGEinDep $ do
-    ixsExp <- fromTuple ixs
-    bsExp <- fromTuple b
-    return $ zipWithM_ (\var value -> write var ixsExp value) vars bsExp
-    where
-        write ::  Var -> [E] -> E -> Dep ()
-        write = D.writeArr IfKr
+  ixsExp <- fromTuple ixs
+  bsExp <- fromTuple b
+  return $ zipWithM_ (\var value -> write var ixsExp value) vars bsExp
+  where
+    write :: Var -> [E] -> E -> Dep ()
+    write = D.writeArr IfKr
 
 -- | Writes data to the array.
 writeInitArr :: (Tuple ix, Tuple a) => Arr ix a -> ix -> a -> SE ()
 writeInitArr (Arr vars) ixs b = SE $ hideGEinDep $ do
-    ixsExp <- fromTuple ixs
-    bsExp <- fromTuple b
-    return $ zipWithM_ (\var value -> write var ixsExp value) vars bsExp
-    where
-        write ::  Var -> [E] -> E -> Dep ()
-        write = D.writeInitArr IfKr
+  ixsExp <- fromTuple ixs
+  bsExp <- fromTuple b
+  return $ zipWithM_ (\var value -> write var ixsExp value) vars bsExp
+  where
+    write :: Var -> [E] -> E -> Dep ()
+    write = D.writeInitArr IfKr
 
 -- | Updates the value of the array with pure function.
 modifyArr :: (Tuple a, Tuple ix) => Arr ix a -> ix -> (a -> a) -> SE ()
 modifyArr ref ixs f = do
-    value <- readArr ref ixs
-    writeArr ref ixs (f value)
+  value <- readArr ref ixs
+  writeArr ref ixs (f value)
 
 mixArr :: (Tuple ix, Tuple a, Num a) => Arr ix a -> ix -> a -> SE ()
 mixArr ref ixs a = modifyArr ref ixs (+ a)
@@ -231,36 +293,38 @@ subArrayNew = binOp "-"
 divArrayNew :: (Tuple b, Num b) => Arr a b -> Arr a b -> SE (Arr a b)
 divArrayNew = binOp "/"
 
-lenarray :: SigOrD c => Arr a b -> c
+lenarray :: (SigOrD c) => Arr a b -> c
 lenarray (Arr vs) = fromGE $ return $ f (inlineVar IfKr $ head vs)
-    where f a = opcs "lenarray" [(Kr, [Xr, Ir]), (Ir, [Xr, Ir])] [a]
+  where
+    f a = opcs "lenarray" [(Kr, [Xr, Ir]), (Ir, [Xr, Ir])] [a]
 
 -- | Copies table to array.
 copyf2array :: Arr Sig Sig -> Tab -> SE ()
 copyf2array (Arr vs) t = SE $ hideGEinDep $ do
-    tabExp <- toGE t
-    return $ depT_ $ opcs "copyf2array" [(Xr, [varRate $ head vs, Ir])] [inlineVar IfKr $ head vs, tabExp]
+  tabExp <- toGE t
+  return $ depT_ $ opcs "copyf2array" [(Xr, [varRate $ head vs, Ir])] [inlineVar IfKr $ head vs, tabExp]
 
 -- | Copies array to table.
 copya2ftab :: Arr Sig Sig -> Tab -> SE ()
 copya2ftab (Arr vs) t = SE $ hideGEinDep $ do
-    tabExp <- toGE t
-    return $ depT_ $ opcs "copya2ftab" [(Xr, [varRate $ head vs, Ir])] [inlineVar IfKr $ head vs, tabExp]
+  tabExp <- toGE t
+  return $ depT_ $ opcs "copya2ftab" [(Xr, [varRate $ head vs, Ir])] [inlineVar IfKr $ head vs, tabExp]
 
--- | Mapps all values in the array with the function.
---
--- Csound docs: <http://csound.github.io/docs/manual/maparray.html>
+{- | Mapps all values in the array with the function.
+
+Csound docs: <http://csound.github.io/docs/manual/maparray.html>
+-}
 maparrayNew :: Arr a b -> Str -> SE (Arr a b)
 maparrayNew (Arr vs) s = SE $ fmap Arr $ hideGEinDep $ do
-    strExp <- toGE s
-    return $ mapM (\var -> go var strExp) vs
-    where
-        go var strExp = do
-            outVar <- unSE $ newTmpArrVar (varRate var)
-            opcsArr isArrayInit outVar "slicearray" idRate [inlineVar IfKr var, strExp]
-            return $ outVar
+  strExp <- toGE s
+  return $ mapM (\var -> go var strExp) vs
+  where
+    go var strExp = do
+      outVar <- unSE $ newTmpArrVar (varRate var)
+      opcsArr isArrayInit outVar "slicearray" idRate [inlineVar IfKr var, strExp]
+      return $ outVar
 
-        idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
+    idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
 
 -- | Finds a minimum value of the array.
 minarray :: (Tuple b, Num b) => Arr a b -> SE b
@@ -277,189 +341,205 @@ sumarray = extractArray "sumarray"
 -- | Scales all elements in the array.
 scalearray :: (Tuple b, Num b) => Arr a b -> (b, b) -> SE ()
 scalearray (Arr vs) (a, b) = SE $ hideGEinDep $ do
-    aExps <- fromTuple a
-    bExps <- fromTuple b
-    return $ zipWithM_ (\var (aExp, bExp) -> go var (aExp, bExp)) vs (zip aExps bExps)
-    where
-        go v (aExp, bExp) =
-            depT_ $ opcs "copyf2array" [(Xr, [varRate $ head vs, Ir])] [inlineVar IfKr v, aExp, bExp]
+  aExps <- fromTuple a
+  bExps <- fromTuple b
+  return $ zipWithM_ (\var (aExp, bExp) -> go var (aExp, bExp)) vs (zip aExps bExps)
+  where
+    go v (aExp, bExp) =
+      depT_ $ opcs "copyf2array" [(Xr, [varRate $ head vs, Ir])] [inlineVar IfKr v, aExp, bExp]
 
 -- | Creates a copy of some part of the given array
 slicearrayNew :: Arr D a -> (D, D) -> SE (Arr D a)
 slicearrayNew (Arr vs) (from, to) = SE $ fmap Arr $ hideGEinDep $ do
-    fromExpr <- toGE from
-    toExpr   <- toGE to
-    return $ mapM (\var -> go var (fromExpr, toExpr)) vs
-    where
-        go var (fromExpr, toExpr) = do
-            outVar <- unSE $ newTmpArrVar (varRate var)
-            opcsArr isArrayInit outVar "slicearray" idRate [inlineVar IfKr var, fromExpr, toExpr]
-            return $ outVar
+  fromExpr <- toGE from
+  toExpr <- toGE to
+  return $ mapM (\var -> go var (fromExpr, toExpr)) vs
+  where
+    go var (fromExpr, toExpr) = do
+      outVar <- unSE $ newTmpArrVar (varRate var)
+      opcsArr isArrayInit outVar "slicearray" idRate [inlineVar IfKr var, fromExpr, toExpr]
+      return $ outVar
 
-        idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
+    idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
 
 -- spectral opcodes
 
 -- | Spectral array.
 type SpecArr = Arr Sig Sig
 
--- |  Complex-to-complex Fast Fourier Transform.
---
--- csound docs: <http://csound.github.io/docs/manual/fft.html>
+{- |  Complex-to-complex Fast Fourier Transform.
+
+csound docs: <http://csound.github.io/docs/manual/fft.html>
+-}
 fftNew :: SpecArr -> SE SpecArr
 fftNew = convert "fft"
 
--- | Complex-to-complex Inverse Fast Fourier Transform.
---
--- csound docs: <http://csound.github.io/docs/manual/fftinv.html>
+{- | Complex-to-complex Inverse Fast Fourier Transform.
+
+csound docs: <http://csound.github.io/docs/manual/fftinv.html>
+-}
 fftinvNew :: SpecArr -> SE SpecArr
 fftinvNew = convert "fftinvi"
 
--- | Fast Fourier Transform of a real-value array.
---
--- csound docs: <http://csound.github.io/docs/manual/rfft.html>
+{- | Fast Fourier Transform of a real-value array.
+
+csound docs: <http://csound.github.io/docs/manual/rfft.html>
+-}
 rfftNew :: SpecArr -> SE SpecArr
 rfftNew = convert "rfft"
 
--- | Complex-to-real Inverse Fast Fourier Transform.
---
--- csound docs: <http://csound.github.io/docs/manual/rifft.html>
+{- | Complex-to-real Inverse Fast Fourier Transform.
+
+csound docs: <http://csound.github.io/docs/manual/rifft.html>
+-}
 rifftNew :: SpecArr -> SE SpecArr
 rifftNew = convert "rifft"
 
--- | Copies spectral data to k-rate arrays (or t-variables). Also known as pvs2array.
---
--- csound docs: <http://csound.github.io/docs/manual/pvs2tab.html>
+{- | Copies spectral data to k-rate arrays (or t-variables). Also known as pvs2array.
+
+csound docs: <http://csound.github.io/docs/manual/pvs2tab.html>
+-}
 pvs2tab :: SpecArr -> Spec -> SE Sig
 pvs2tab = extractWith "pvs2tab" (Kr, [Xr, Fr])
 
--- | Copies spectral data from k-rate arrays (or t-variables.). Also known as pvsfromarray.
---
--- csound docs: <http://csound.github.io/docs/manual/tab2pvs.html>
+{- | Copies spectral data from k-rate arrays (or t-variables.). Also known as pvsfromarray.
+
+csound docs: <http://csound.github.io/docs/manual/tab2pvs.html>
+-}
 tab2pvs :: SpecArr -> SE Spec
 tab2pvs = extract1 Fr "tab2pvs"
 
--- | Complex product of two arrays.
---
--- > kout[] cmplxprod kin1[], kin2[]
---
--- csound docs: <http://csound.github.io/docs/manual/cmplxprod.html>
+{- | Complex product of two arrays.
+
+> kout[] cmplxprod kin1[], kin2[]
+
+csound docs: <http://csound.github.io/docs/manual/cmplxprod.html>
+-}
 cmplxprodNew :: SpecArr -> SpecArr -> SE SpecArr
 cmplxprodNew = convert2 "cmplxprod"
 
--- |  Rectangular to polar format conversion.
---
--- > kout[] rect2pol kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/rect2pol.html>
+{- |  Rectangular to polar format conversion.
+
+> kout[] rect2pol kin[]
+
+csound docs: <http://csound.github.io/docs/manual/rect2pol.html>
+-}
 rect2polNew :: SpecArr -> SE SpecArr
 rect2polNew = convert "rect2pol"
 
--- | Polar to rectangular format conversion.
---
--- > kout[] pol2rect kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+{- | Polar to rectangular format conversion.
+
+> kout[] pol2rect kin[]
+
+csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+-}
 pol2rectNew :: SpecArr -> SE SpecArr
 pol2rectNew = convert "pol2rect"
 
+{- | Polar to rectangular format conversion.
 
--- | Polar to rectangular format conversion.
---
--- > kout[] pol2rect kmags[], kphs[]
---
--- csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+> kout[] pol2rect kmags[], kphs[]
+
+csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+-}
 pol2rect2New :: SpecArr -> SpecArr -> SE SpecArr
 pol2rect2New = convert2 "pol2rect"
 
--- | Applies a window to an array.
---
--- > kout[] window kin[][, koff, itype]
---
--- csound docs: <http://csound.github.io/docs/manual/window.html>
+{- | Applies a window to an array.
+
+> kout[] window kin[][, koff, itype]
+
+csound docs: <http://csound.github.io/docs/manual/window.html>
+-}
 windowArrayNew :: SpecArr -> SE SpecArr
 windowArrayNew = convert "window"
 
--- | Real to complex format conversion.
---
--- > kout[] r2c kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/r2c.html>
+{- | Real to complex format conversion.
+
+> kout[] r2c kin[]
+
+csound docs: <http://csound.github.io/docs/manual/r2c.html>
+-}
 r2cNew :: SpecArr -> SE SpecArr
 r2cNew = convert "r2c"
 
--- | Complex to real format conversion.
---
--- > kout[] c2r kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/c2r.html>
+{- | Complex to real format conversion.
+
+> kout[] c2r kin[]
+
+csound docs: <http://csound.github.io/docs/manual/c2r.html>
+-}
 c2rNew :: SpecArr -> SE SpecArr
 c2rNew = convert "c2r"
 
--- | Obtains the magnitudes of a complex-number array
---
--- > kout[] mags kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/mags.html>
+{- | Obtains the magnitudes of a complex-number array
+
+> kout[] mags kin[]
+
+csound docs: <http://csound.github.io/docs/manual/mags.html>
+-}
 magsArrayNew :: SpecArr -> SE SpecArr
 magsArrayNew = convert "mags"
 
--- | Obtains the phases of a complex-number array
---
--- kout[] phs kin[]
---
--- > csound docs: <http://csound.github.io/docs/manual/phs.html>
+{- | Obtains the phases of a complex-number array
+
+kout[] phs kin[]
+
+> csound docs: <http://csound.github.io/docs/manual/phs.html>
+-}
 phsArrayNew :: SpecArr -> SE SpecArr
 phsArrayNew = convert "phs"
 
 -----------------------------
 
 isArrayInit, noArrayInit :: Bool
-
 isArrayInit = True
 noArrayInit = False
 
 binOp :: Text -> Arr a b -> Arr a b -> SE (Arr a b)
 binOp name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
-    where
-        go x y = SE $ do
-            outVar <- unSE $ newTmpArrVar (varRate x)
-            infOprArr isArrayInit outVar name (inlineVar IfKr x) (inlineVar IfKr y)
-            return outVar
+  where
+    go x y = SE $ do
+      outVar <- unSE $ newTmpArrVar (varRate x)
+      infOprArr isArrayInit outVar name (inlineVar IfKr x) (inlineVar IfKr y)
+      return outVar
 
 convert :: Text -> Arr a b -> SE (Arr a b)
 convert name (Arr vars) = fmap Arr $ mapM go vars
-    where
-        go v = SE $ do
-            outVar <- unSE $ newTmpArrVar (varRate v)
-            opcsArr isArrayInit outVar name idRate1 [inlineVar IfKr v]
-            return outVar
+  where
+    go v = SE $ do
+      outVar <- unSE $ newTmpArrVar (varRate v)
+      opcsArr isArrayInit outVar name idRate1 [inlineVar IfKr v]
+      return outVar
 
-        idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
+    idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
 
 convert2 :: Text -> Arr a b -> Arr a b -> SE (Arr a b)
 convert2 name (Arr xs) (Arr ys) = fmap Arr $ zipWithM go xs ys
-    where
-        go x y = SE $ do
-            outVar <- unSE $ newTmpArrVar (varRate x)
-            opcsArr isArrayInit outVar name idRate2 [inlineVar IfKr x, inlineVar IfKr y]
-            return outVar
+  where
+    go x y = SE $ do
+      outVar <- unSE $ newTmpArrVar (varRate x)
+      opcsArr isArrayInit outVar name idRate2 [inlineVar IfKr x, inlineVar IfKr y]
+      return outVar
 
-        idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]
+    idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]
 
 extractArray :: (Tuple b) => Text -> Arr a b -> SE b
 extractArray name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . inlineVar IfKr) vs
-    where f a = opcsDep name [(Xr, [Xr])] [a]
+  where
+    f a = opcsDep name [(Xr, [Xr])] [a]
 
 extract1 :: (Tuple b, Tuple c) => Rate -> Text -> Arr a b -> SE c
 extract1 rate name (Arr vs) = SE $ fmap (toTuple . return) $ mapM (f . inlineVar IfKr) vs
-    where f a = opcsDep name [(rate, [Xr])] [a]
+  where
+    f a = opcsDep name [(rate, [Xr])] [a]
 
 extractWith :: (Tuple b, Tuple c, Tuple d) => Text -> (Rate, [Rate]) -> Arr a b -> c -> SE d
 extractWith name rates (Arr vs) argument = SE $ fmap (toTuple . return) $ hideGEinDep $ do
-        argExps <- fromTuple argument
-        return $ zipWithM (\var x -> f (inlineVar IfKr var) x) vs argExps
-    where f a b = opcsDep name [rates] [a, b]
+  argExps <- fromTuple argument
+  return $ zipWithM (\var x -> f (inlineVar IfKr var) x) vs argExps
+  where
+    f a b = opcsDep name [rates] [a, b]
 
 ---------------------------------------------------
 -- opcodes with copy
@@ -467,21 +547,21 @@ extractWith name rates (Arr vs) argument = SE $ fmap (toTuple . return) $ hideGE
 -- | Transforms the dta of the array and copies it to the second array.
 maparrayCopy :: Arr a b -> Str -> Arr a b -> SE ()
 maparrayCopy (Arr vs) s (Arr outs) = SE $ hideGEinDep $ do
-    strExp <- toGE s
-    return $ zipWithM_ (\var outVar -> go var strExp outVar) vs outs
-    where
-        go var strExp outVar = opcsArr noArrayInit outVar "slicearray" idRate [inlineVar IfKr var, strExp]
-        idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
+  strExp <- toGE s
+  return $ zipWithM_ (\var outVar -> go var strExp outVar) vs outs
+  where
+    go var strExp outVar = opcsArr noArrayInit outVar "slicearray" idRate [inlineVar IfKr var, strExp]
+    idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
 
 -- | Copies a part of array to another array.
 slicearrayCopy :: Arr D a -> (D, D) -> Arr D a -> SE ()
 slicearrayCopy (Arr vs) (from, to) (Arr outs) = SE $ hideGEinDep $ do
-    fromExpr <- toGE from
-    toExpr   <- toGE to
-    return $ zipWithM_ (\var outVar -> go var (fromExpr, toExpr) outVar) vs outs
-    where
-        go var (fromExpr, toExpr) outVar = opcsArr noArrayInit outVar "slicearray" idRate [inlineVar IfKr var, fromExpr, toExpr]
-        idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
+  fromExpr <- toGE from
+  toExpr <- toGE to
+  return $ zipWithM_ (\var outVar -> go var (fromExpr, toExpr) outVar) vs outs
+  where
+    go var (fromExpr, toExpr) outVar = opcsArr noArrayInit outVar "slicearray" idRate [inlineVar IfKr var, fromExpr, toExpr]
+    idRate = fmap (\rate -> (rate, [rate, Ir, Ir])) [Ir, Kr, Ar]
 
 -- | Multiplies two arrays and copies the result into third array.
 mulArrayCopy :: (Tuple b, Num b) => Arr a b -> Arr a b -> Arr a b -> SE ()
@@ -501,102 +581,112 @@ divArrayCopy = binOpCopy "/"
 
 -- spectral opcodes
 
+{- |  Complex-to-complex Fast Fourier Transform.
 
--- |  Complex-to-complex Fast Fourier Transform.
---
--- csound docs: <http://csound.github.io/docs/manual/fft.html>
+csound docs: <http://csound.github.io/docs/manual/fft.html>
+-}
 fftCopy :: SpecArr -> SpecArr -> SE ()
 fftCopy = convertCopy "fft"
 
--- | Complex-to-complex Inverse Fast Fourier Transform.
---
--- csound docs: <http://csound.github.io/docs/manual/fftinv.html>
+{- | Complex-to-complex Inverse Fast Fourier Transform.
+
+csound docs: <http://csound.github.io/docs/manual/fftinv.html>
+-}
 fftinvCopy :: SpecArr -> SpecArr -> SE ()
 fftinvCopy = convertCopy "fftinvi"
 
--- | Fast Fourier Transform of a real-value array.
---
--- csound docs: <http://csound.github.io/docs/manual/rfft.html>
+{- | Fast Fourier Transform of a real-value array.
+
+csound docs: <http://csound.github.io/docs/manual/rfft.html>
+-}
 rfftCopy :: SpecArr -> SpecArr -> SE ()
 rfftCopy = convertCopy "rfft"
 
--- | Complex-to-real Inverse Fast Fourier Transform.
---
--- csound docs: <http://csound.github.io/docs/manual/rifft.html>
+{- | Complex-to-real Inverse Fast Fourier Transform.
+
+csound docs: <http://csound.github.io/docs/manual/rifft.html>
+-}
 rifftCopy :: SpecArr -> SpecArr -> SE ()
 rifftCopy = convertCopy "rifft"
 
+{- | Complex product of two arrays.
 
--- | Complex product of two arrays.
---
--- > kout[] cmplxprod kin1[], kin2[]
---
--- csound docs: <http://csound.github.io/docs/manual/cmplxprod.html>
+> kout[] cmplxprod kin1[], kin2[]
+
+csound docs: <http://csound.github.io/docs/manual/cmplxprod.html>
+-}
 cmplxprodCopy :: SpecArr -> SpecArr -> SpecArr -> SE ()
 cmplxprodCopy = convert2Copy "cmplxprod"
 
--- |  Rectangular to polar format conversion.
---
--- > kout[] rect2pol kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/rect2pol.html>
+{- |  Rectangular to polar format conversion.
+
+> kout[] rect2pol kin[]
+
+csound docs: <http://csound.github.io/docs/manual/rect2pol.html>
+-}
 rect2polCopy :: SpecArr -> SpecArr -> SE ()
 rect2polCopy = convertCopy "rect2pol"
 
--- | Polar to rectangular format conversion.
---
--- > kout[] pol2rect kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+{- | Polar to rectangular format conversion.
+
+> kout[] pol2rect kin[]
+
+csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+-}
 pol2rectCopy :: SpecArr -> SpecArr -> SE ()
 pol2rectCopy = convertCopy "pol2rect"
 
--- | Polar to rectangular format conversion.
---
--- > kout[] pol2rect kmags[], kphs[]
---
--- csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+{- | Polar to rectangular format conversion.
+
+> kout[] pol2rect kmags[], kphs[]
+
+csound docs: <http://csound.github.io/docs/manual/pol2rect.html>
+-}
 pol2rect2Copy :: SpecArr -> SpecArr -> SpecArr -> SE ()
 pol2rect2Copy = convert2Copy "pol2rect2"
 
--- | Applies a window to an array.
---
--- > kout[] window kin[][, koff, itype]
---
--- csound docs: <http://csound.github.io/docs/manual/window.html>
+{- | Applies a window to an array.
+
+> kout[] window kin[][, koff, itype]
+
+csound docs: <http://csound.github.io/docs/manual/window.html>
+-}
 windowArrayCopy :: SpecArr -> SpecArr -> SE ()
 windowArrayCopy = convertCopy "window"
 
--- | Real to complex format conversion.
---
--- > kout[] r2c kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/r2c.html>
+{- | Real to complex format conversion.
+
+> kout[] r2c kin[]
+
+csound docs: <http://csound.github.io/docs/manual/r2c.html>
+-}
 r2cCopy :: SpecArr -> SpecArr -> SE ()
 r2cCopy = convertCopy "r2c"
 
--- | Complex to real format conversion.
---
--- > kout[] c2r kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/c2r.html>
+{- | Complex to real format conversion.
+
+> kout[] c2r kin[]
+
+csound docs: <http://csound.github.io/docs/manual/c2r.html>
+-}
 c2rCopy :: SpecArr -> SpecArr -> SE ()
 c2rCopy = convertCopy "c2r"
 
+{- | Obtains the magnitudes of a complex-number array
 
--- | Obtains the magnitudes of a complex-number array
---
--- > kout[] mags kin[]
---
--- csound docs: <http://csound.github.io/docs/manual/mags.html>
+> kout[] mags kin[]
+
+csound docs: <http://csound.github.io/docs/manual/mags.html>
+-}
 magsArrayCopy :: SpecArr -> SpecArr -> SE ()
 magsArrayCopy = convertCopy "mags"
 
--- | Obtains the phases of a complex-number array
---
--- kout[] phs kin[]
---
--- > csound docs: <http://csound.github.io/docs/manual/phs.html>
+{- | Obtains the phases of a complex-number array
+
+kout[] phs kin[]
+
+> csound docs: <http://csound.github.io/docs/manual/phs.html>
+-}
 phsArrayCopy :: SpecArr -> SpecArr -> SE ()
 phsArrayCopy = convertCopy "phs"
 
@@ -604,18 +694,17 @@ phsArrayCopy = convertCopy "phs"
 
 binOpCopy :: Text -> Arr a b -> Arr a b -> Arr a b -> SE ()
 binOpCopy name (Arr xs) (Arr ys) (Arr outs) = mapM_ go $ zip3 xs ys outs
-    where
-        go (x, y, outVar) = SE $ infOprArr noArrayInit outVar name (inlineVar IfKr x) (inlineVar IfKr y)
+  where
+    go (x, y, outVar) = SE $ infOprArr noArrayInit outVar name (inlineVar IfKr x) (inlineVar IfKr y)
 
 convertCopy :: Text -> Arr a b -> Arr a b -> SE ()
 convertCopy name (Arr vars) (Arr outs) = zipWithM_ go vars outs
-    where
-        go v outVar = SE $ opcsArr noArrayInit outVar name idRate1 [inlineVar IfKr v]
-        idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
+  where
+    go v outVar = SE $ opcsArr noArrayInit outVar name idRate1 [inlineVar IfKr v]
+    idRate1 = fmap (\r -> (r, [r])) [Kr, Ar, Ir, Sr, Fr]
 
 convert2Copy :: Text -> Arr a b -> Arr a b -> Arr a b -> SE ()
 convert2Copy name (Arr xs) (Arr ys) (Arr outs) = mapM_ go $ zip3 xs ys outs
-    where
-        go (x, y, outVar) = SE $ opcsArr noArrayInit outVar name idRate2 [inlineVar IfKr x, inlineVar IfKr y]
-        idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]
-
+  where
+    go (x, y, outVar) = SE $ opcsArr noArrayInit outVar name idRate2 [inlineVar IfKr x, inlineVar IfKr y]
+    idRate2 = fmap (\r -> (r, [r, r])) [Kr, Ar, Ir, Sr, Fr]

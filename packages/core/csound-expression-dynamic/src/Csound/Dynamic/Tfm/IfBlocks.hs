@@ -1,4 +1,4 @@
-{-| We collect all if-blocks under the if-then-else expressions and statements.
+{- | We collect all if-blocks under the if-then-else expressions and statements.
 
 For a given if-block of code the taks is to agregate all expressions
 that can be used inside that block and don't affect external expressions
@@ -292,7 +292,7 @@ data IfElseCons a = IfElseCons
 type LocalUsageCounts = IntMap Int
 type LocalVars = IntSet
 
-{-| We process statements in reverse order
+{- | We process statements in reverse order
 and then also accumulation happens in reverse
 so we don't need to reverse twice
 -}
@@ -567,7 +567,7 @@ getLocalUsage ifRate root =
 
 ---------------------------------------------------------------------------
 
-{-| Defines rule that if we are inside Kr if-block we can not bring inside
+{- | Defines rule that if we are inside Kr if-block we can not bring inside
 Ir-expressions
 -}
 isEnd :: IfRate -> Expr -> Collect s Bool

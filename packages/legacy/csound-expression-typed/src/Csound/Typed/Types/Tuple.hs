@@ -1,132 +1,160 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language
-        TypeFamilies,
-        FlexibleContexts,
-        FlexibleInstances,
-        RankNTypes,
-        ScopedTypeVariables,
-        InstanceSigs,
-        AllowAmbiguousTypes,
-        CPP #-}
-module Csound.Typed.Types.Tuple(
-    -- ** Tuple
-    Tuple(..), TupleMethods, makeTupleMethods,
-    fromTuple, toTuple, tupleArity, tupleRates, defTuple, mapTuple,
 
-    -- ** Outs
-    Sigs, outArity, Sig2s,
+module Csound.Typed.Types.Tuple (
+  -- ** Tuple
+  Tuple (..),
+  TupleMethods,
+  makeTupleMethods,
+  fromTuple,
+  toTuple,
+  tupleArity,
+  tupleRates,
+  defTuple,
+  mapTuple,
 
-    -- *** Multiple outs
-    multiOuts,
-    ar1, ar2, ar4, ar6, ar8,
+  -- ** Outs
+  Sigs,
+  outArity,
+  Sig2s,
 
-    -- ** Arguments
-    Arg, arg, toNote, argArity, toArg,
+  -- *** Multiple outs
+  multiOuts,
+  ar1,
+  ar2,
+  ar4,
+  ar6,
+  ar8,
 
-    -- ** Logic functions
-    ifTuple, guardedTuple, caseTuple,
-    ifArg, guardedArg, caseArg,
+  -- ** Arguments
+  Arg,
+  arg,
+  toNote,
+  argArity,
+  toArg,
 
-    -- ** Constructors
-    pureTuple
+  -- ** Logic functions
+  ifTuple,
+  guardedTuple,
+  caseTuple,
+  ifArg,
+  guardedArg,
+  caseArg,
+
+  -- ** Constructors
+  pureTuple,
 ) where
 
-
-import Control.Arrow
 import Control.Applicative
+import Control.Arrow
 import Control.Monad
-import Data.Default
 import Data.Boolean
+import Data.Default
 import Data.Proxy
 
 import Csound.Dynamic
-import Csound.Typed.Types.Prim
-import Csound.Typed.Types.SigSpace
 import Csound.Typed.GlobalState.GE
 import Csound.Typed.GlobalState.SE
+import Csound.Typed.Types.Prim
+import Csound.Typed.Types.SigSpace
 import Csound.Typed.Types.TupleHelpers
 
 -- | A tuple of Csound values.
 class Tuple a where
-    tupleMethods :: TupleMethods a
+  tupleMethods :: TupleMethods a
 
 data TupleMethods a = TupleMethods
-    { fromTuple_  :: a -> GE [E]
-    , toTuple_    :: GE [E] -> a
-    , tupleArity_ :: Proxy a -> Int
-    , tupleRates_ :: Proxy a -> [Rate]
-    , defTuple_   :: a }
+  { fromTuple_ :: a -> GE [E]
+  , toTuple_ :: GE [E] -> a
+  , tupleArity_ :: Proxy a -> Int
+  , tupleRates_ :: Proxy a -> [Rate]
+  , defTuple_ :: a
+  }
 
-fromTuple :: Tuple a => a -> GE [E]
+fromTuple :: (Tuple a) => a -> GE [E]
 fromTuple = fromTuple_ tupleMethods
 
-toTuple :: Tuple a => GE [E] -> a
+toTuple :: (Tuple a) => GE [E] -> a
 toTuple = toTuple_ tupleMethods
 
-tupleArity :: Tuple a => Proxy a -> Int
+tupleArity :: (Tuple a) => Proxy a -> Int
 tupleArity = tupleArity_ tupleMethods
 
-tupleRates :: Tuple a => Proxy a -> [Rate]
+tupleRates :: (Tuple a) => Proxy a -> [Rate]
 tupleRates = tupleRates_ tupleMethods
 
-defTuple :: Tuple a => a
+defTuple :: (Tuple a) => a
 defTuple = defTuple_ tupleMethods
 
-mapTuple :: Tuple a => (E -> E) -> a -> a
+mapTuple :: (Tuple a) => (E -> E) -> a -> a
 mapTuple f a = toTuple (fmap (fmap f) $ fromTuple a)
 
 -- | Defines instance of type class 'Tuple' for a new type in terms of an already defined one.
 makeTupleMethods :: (Tuple a) => (a -> b) -> (b -> a) -> TupleMethods b
-makeTupleMethods to from = TupleMethods
-    { fromTuple_  = fromTuple . from
-    , toTuple_    = to . toTuple
+makeTupleMethods to from =
+  TupleMethods
+    { fromTuple_ = fromTuple . from
+    , toTuple_ = to . toTuple
     , tupleArity_ = const $ tupleArity $ proxy to
     , tupleRates_ = const $ tupleRates $ proxy to
-    , defTuple_   = to defTuple }
-    where
-      proxy :: (a -> b) -> Proxy a
-      proxy = const Proxy
-
+    , defTuple_ = to defTuple
+    }
+  where
+    proxy :: (a -> b) -> Proxy a
+    proxy = const Proxy
 
 -- Tuple instances
 
 primTupleMethods :: (Val a, Default a) => Rate -> TupleMethods a
-primTupleMethods rate = TupleMethods
-        { fromTuple_ = fmap return . toGE
-        , toTuple_ = fromGE . fmap head
-        , tupleArity_ = const 1
-        , tupleRates_ = const [rate]
-        , defTuple_   = def }
+primTupleMethods rate =
+  TupleMethods
+    { fromTuple_ = fmap return . toGE
+    , toTuple_ = fromGE . fmap head
+    , tupleArity_ = const 1
+    , tupleRates_ = const [rate]
+    , defTuple_ = def
+    }
 
 instance Tuple Unit where
-    tupleMethods = TupleMethods
-        { fromTuple_  = \x -> unUnit x >> (return [])
-        , toTuple_    = \es -> Unit $ es >> return ()
-        , tupleArity_ = const 0
-        , tupleRates_ = const []
-        , defTuple_   = Unit $ return () }
+  tupleMethods =
+    TupleMethods
+      { fromTuple_ = \x -> unUnit x >> (return [])
+      , toTuple_ = \es -> Unit $ es >> return ()
+      , tupleArity_ = const 0
+      , tupleRates_ = const []
+      , defTuple_ = Unit $ return ()
+      }
 
-instance Tuple Sig   where tupleMethods = primTupleMethods Ar
-instance Tuple D     where tupleMethods = primTupleMethods Kr
-instance Tuple Tab   where tupleMethods = primTupleMethods Kr
-instance Tuple Str   where tupleMethods = primTupleMethods Sr
-instance Tuple Spec  where tupleMethods = primTupleMethods Fr
+instance Tuple Sig where tupleMethods = primTupleMethods Ar
+instance Tuple D where tupleMethods = primTupleMethods Kr
+instance Tuple Tab where tupleMethods = primTupleMethods Kr
+instance Tuple Str where tupleMethods = primTupleMethods Sr
+instance Tuple Spec where tupleMethods = primTupleMethods Fr
 
 instance Tuple TabList where tupleMethods = primTupleMethods Kr
 
 instance (Tuple a, Tuple b) => Tuple (a, b) where
-    tupleMethods = TupleMethods
-        { fromTuple_ = \(a, b) -> liftA2 (++) (fromTuple a) (fromTuple b)
-        , tupleArity_ = \x -> let (a, b) = splitProxy x in tupleArity a + tupleArity b
-        , toTuple_ = \xs ->
-                let a = toTuple $ fmap (take (tupleArity $ proxyAsType a)) xs
-                    xsb = fmap (drop (tupleArity $ proxyAsType a)) xs
-                    b = toTuple $ fmap (take (tupleArity $ proxyAsType b)) xsb
-                in (a, b)
-
-        , tupleRates_ = \x -> let (a, b) = splitProxy x in tupleRates a ++ tupleRates b
-        , defTuple_ = (defTuple, defTuple)
-        }
+  tupleMethods =
+    TupleMethods
+      { fromTuple_ = \(a, b) -> liftA2 (++) (fromTuple a) (fromTuple b)
+      , tupleArity_ = \x -> let (a, b) = splitProxy x in tupleArity a + tupleArity b
+      , toTuple_ = \xs ->
+          let
+            a = toTuple $ fmap (take (tupleArity $ proxyAsType a)) xs
+            xsb = fmap (drop (tupleArity $ proxyAsType a)) xs
+            b = toTuple $ fmap (take (tupleArity $ proxyAsType b)) xsb
+           in
+            (a, b)
+      , tupleRates_ = \x -> let (a, b) = splitProxy x in tupleRates a ++ tupleRates b
+      , defTuple_ = (defTuple, defTuple)
+      }
 
 proxyAsType :: a -> Proxy a
 proxyAsType = const Proxy
@@ -144,7 +172,7 @@ instance (Tuple a, Tuple b, Tuple c, Tuple d, Tuple e, Tuple f, Tuple g, Tuple h
 -------------------------------------------------------------------------------
 -- multiple outs
 
-multiOuts :: forall a . Tuple a => E -> a
+multiOuts :: forall a. (Tuple a) => E -> a
 multiOuts expr =
   toTuple $ return $ mo (tupleRates (Proxy :: Proxy a)) expr
 
@@ -153,15 +181,19 @@ ar2 :: (Sig, Sig) -> (Sig, Sig)
 ar4 :: (Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig)
 ar6 :: (Sig, Sig, Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig, Sig, Sig)
 ar8 :: (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig) -> (Sig, Sig, Sig, Sig, Sig, Sig, Sig, Sig)
-
-ar1 = id;   ar2 = id;   ar4 = id;   ar6 = id;   ar8 = id
+ar1 = id
+ar2 = id
+ar4 = id
+ar6 = id
+ar8 = id
 
 ---------------------------------------------------------------------------------
 -- out instances
 
 -- | The tuples of signals.
-class (Tuple a, Num a, Fractional a, SigSpace a, BindSig a) => Sigs a where
-class (Sigs a, SigSpace2 a, BindSig2 a) => Sig2s a where
+class (Tuple a, Num a, Fractional a, SigSpace a, BindSig a) => Sigs a
+
+class (Sigs a, SigSpace2 a, BindSig2 a) => Sig2s a
 
 instance Sigs Sig
 
@@ -189,7 +221,7 @@ instance Sig2s Sig4
 instance Sig2s Sig6
 instance Sig2s Sig8
 
-outArity :: forall a . Tuple a => SE a -> Int
+outArity :: forall a. (Tuple a) => SE a -> Int
 outArity = const $ tupleArity (Proxy :: Proxy a)
 
 ---------------------------------------------------------------------------
@@ -229,44 +261,45 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g) where
   getArgRates = getArgRates @a <> getArgRates @b <> getArgRates @c <> getArgRates @d <> getArgRates @e <> getArgRates @f <> getArgRates @h <> getArgRates @g
 
-arg :: forall a . Arg a => Int -> a
+arg :: forall a. (Arg a) => Int -> a
 arg n = toTuple $ return $ zipWith pn (getArgRates @a) [n ..]
 
-toArg :: Arg a => a
+toArg :: (Arg a) => a
 toArg = arg 4
 
-argArity :: forall a . Arg a => a -> Int
+argArity :: forall a. (Arg a) => a -> Int
 argArity = const (tupleArity (Proxy :: Proxy a))
 
-toNote :: forall a . Arg a => a -> GE [E]
+toNote :: forall a. (Arg a) => a -> GE [E]
 toNote a = zipWithM phi (tupleRates (Proxy :: Proxy a)) =<< fromTuple a
-    where
-        phi rate x = case rate of
-            Sr -> saveStr $ getStringUnsafe x
-            _  -> return x
+  where
+    phi rate x = case rate of
+      Sr -> saveStr $ getStringUnsafe x
+      _ -> return x
 
-        getStringUnsafe x = case getPrimUnsafe x of
-            PrimString y    -> y
-            _               -> error "Arg(Str):getStringUnsafe value is not a string"
+    getStringUnsafe x = case getPrimUnsafe x of
+      PrimString y -> y
+      _ -> error "Arg(Str):getStringUnsafe value is not a string"
 
 -------------------------------------------------------------------------
 -- logic functions
 
 -- tuples
 
-newtype BoolTuple = BoolTuple { unBoolTuple :: GE [E] }
+newtype BoolTuple = BoolTuple {unBoolTuple :: GE [E]}
 
-toBoolTuple :: Tuple a => a -> BoolTuple
-toBoolTuple   = BoolTuple . fromTuple
+toBoolTuple :: (Tuple a) => a -> BoolTuple
+toBoolTuple = BoolTuple . fromTuple
 
-fromBoolTuple :: Tuple a => BoolTuple -> a
+fromBoolTuple :: (Tuple a) => BoolTuple -> a
 fromBoolTuple = toTuple . unBoolTuple
 
 type instance BooleanOf BoolTuple = BoolSig
 
 instance IfB BoolTuple where
-    ifB mp (BoolTuple mas) (BoolTuple mbs) = BoolTuple $
-        liftA3 (\p as bs -> zipWith (ifExp IfKr p) as bs) (toGE mp) mas mbs
+  ifB mp (BoolTuple mas) (BoolTuple mbs) =
+    BoolTuple $
+      liftA3 (\p as bs -> zipWith (ifExp IfKr p) as bs) (toGE mp) mas mbs
 
 -- | @ifB@ for tuples of csound values.
 ifTuple :: (Tuple a) => BoolSig -> a -> a -> a
@@ -282,10 +315,10 @@ caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (t
 
 -- arguments
 
-newtype BoolArg = BoolArg { unBoolArg :: GE [E] }
+newtype BoolArg = BoolArg {unBoolArg :: GE [E]}
 
 toBoolArg :: (Tuple a) => a -> BoolArg
-toBoolArg   = BoolArg . fromTuple
+toBoolArg = BoolArg . fromTuple
 
 fromBoolArg :: (Tuple a) => BoolArg -> a
 fromBoolArg = toTuple . unBoolArg
@@ -293,8 +326,9 @@ fromBoolArg = toTuple . unBoolArg
 type instance BooleanOf BoolArg = BoolSig
 
 instance IfB BoolArg where
-    ifB mp (BoolArg mas) (BoolArg mbs) = BoolArg $
-        liftA3 (\p as bs -> zipWith (ifExp IfKr p) as bs) (toGE mp) mas mbs
+  ifB mp (BoolArg mas) (BoolArg mbs) =
+    BoolArg $
+      liftA3 (\p as bs -> zipWith (ifExp IfKr p) as bs) (toGE mp) mas mbs
 
 -- | @ifB@ for constants.
 ifArg :: (Arg a, Tuple a) => BoolSig -> a -> a -> a
@@ -311,6 +345,6 @@ caseArg a bs other = fromBoolArg $ caseB a (fmap (second toBoolArg) bs) (toBoolA
 -----------------------------------------------------------
 -- tuple constructors
 
-pureTuple :: forall a . Tuple a => GE (MultiOut [E]) -> a
+pureTuple :: forall a. (Tuple a) => GE (MultiOut [E]) -> a
 pureTuple a =
   toTuple $ fmap ($ tupleArity (Proxy :: Proxy a)) a

@@ -1,6 +1,6 @@
-module Csound.Core.Types.SE
-  ( module X
-  ) where
+module Csound.Core.Types.SE (
+  module X,
+) where
 
 import Csound.Core.Types.SE.Core as X
 import Csound.Core.Types.SE.Instr as X

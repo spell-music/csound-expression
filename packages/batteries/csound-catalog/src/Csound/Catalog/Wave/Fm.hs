@@ -1,5 +1,6 @@
-module Csound.Catalog.Wave.Fm(
-    fmBass1, fmBass2
+module Csound.Catalog.Wave.Fm (
+  fmBass1,
+  fmBass2,
 ) where
 
 import Csound.Base
@@ -9,9 +10,9 @@ fmBass1 env (amp, cps) = bhp 35 $ env 0.01 3 0.01 0.05 * (port amp 0.01) * (\x -
 
 fmBass2 :: MonoAdsr -> (Sig, Sig) -> Sig
 fmBass2 adsrEnv (amp, cps) = env1 * (port amp 0.01) * (\freq -> fosc 1 1 (1 + 3.4 * env2) freq) ((cps * (1 + 0.001 * osc (2 * env4) * env4)))
-    where
-        env1 = adsrEnv 0.015 (5.2 + rel) 0.001 0.5
-        env2 = adsrEnv 0.015 1.4 0.5 1.2
-        env4 = adsrEnv 3.2 0.1 0.85 5
+  where
+    env1 = adsrEnv 0.015 (5.2 + rel) 0.001 0.5
+    env2 = adsrEnv 0.015 1.4 0.5 1.2
+    env4 = adsrEnv 3.2 0.1 0.85 5
 
-        rel = 3 * (1 - (cps - 50) / 150)
+    rel = 3 * (1 - (cps - 50) / 150)

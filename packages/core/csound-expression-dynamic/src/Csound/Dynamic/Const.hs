@@ -1,8 +1,8 @@
 -- | Constants
-module Csound.Dynamic.Const
-  ( controlOpcodes
-  , audioOpcodes
-  ) where
+module Csound.Dynamic.Const (
+  controlOpcodes,
+  audioOpcodes,
+) where
 
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
@@ -48,4 +48,3 @@ audioOpcodes =
     , "tab"
     , "tabw"
     ]
-

@@ -1,18 +1,18 @@
-module Csound.Core.Base.Midi.Internal
-  ( Msg
-  , MidiChannel
-  , midi
-  , midin
-  , pgmidi
-  , midi_
-  , midin_
-  , pgmidi_
-  , initMidiCtrl
-  ) where
+module Csound.Core.Base.Midi.Internal (
+  Msg,
+  MidiChannel,
+  midi,
+  midin,
+  pgmidi,
+  midi_,
+  midin_,
+  pgmidi_,
+  initMidiCtrl,
+) where
 
 import Control.Monad
-import Csound.Core.Types
 import Csound.Core.Opcode
+import Csound.Core.Types
 import Data.Boolean
 import Data.Maybe
 
@@ -21,13 +21,14 @@ data Msg = Msg
 type MidiChannel = Int
 
 data MidiType = Massign | Pgmassign (Maybe Int)
-    deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord)
 
 data MidiKey = MidiKey MidiType MidiChannel
-    deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord)
 
--- | Triggers a midi-instrument (aka Csound's massign) for all channels.
--- It's useful to test a single instrument.
+{- | Triggers a midi-instrument (aka Csound's massign) for all channels.
+It's useful to test a single instrument.
+-}
 midi :: (Num a, Sigs a) => (Msg -> SE a) -> SE a
 midi = fromProcMidi midiWithInstrId_
 
@@ -41,11 +42,11 @@ pgmidi mchn n = fromProcMidi (pgmidiWithInstrId_ mchn n)
 
 fromProcMidi :: (Num a, Sigs a) => ((Msg -> SE ()) -> SE ()) -> (Msg -> SE a) -> SE a
 fromProcMidi procMidi f = do
-    ref <- newRef 0
-    procMidi (mixRef ref . scaleMidiVolumeFactor <=< f)
-    res <- readRef ref
-    writeRef ref 0
-    return res
+  ref <- newRef 0
+  procMidi (mixRef ref . scaleMidiVolumeFactor <=< f)
+  res <- readRef ref
+  writeRef ref 0
+  return res
 
 -----------------------------------------------------------------
 
@@ -92,16 +93,16 @@ initMidiCtrl chno ctrlno val =
 -----------------------------------------------------------------
 -- midi volume factor
 
-scaleMidiVolumeFactor :: Sigs a => a -> a
+scaleMidiVolumeFactor :: (Sigs a) => a -> a
 scaleMidiVolumeFactor = mul (toSig midiVolumeFactor)
 
 -- if we use the scaling at I-rate we don't need to use portamento.
 -- If we want to scale with signal the portamento is must
 midiVolumeFactor :: D
 midiVolumeFactor = ifB (n `less` 2) 1 (recip sqrtN)
-    where
-      sqrtN = sqrt n
-      n     = activeIr (getInstrRefIdNum $ iself @())
+  where
+    sqrtN = sqrt n
+    n = activeIr (getInstrRefIdNum $ iself @())
 
 activeIr :: D -> D
 activeIr instrId = liftOpc "active" [(Ir, [Ir])] instrId

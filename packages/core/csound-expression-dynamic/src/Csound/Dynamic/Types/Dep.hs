@@ -55,7 +55,7 @@ import Data.Text qualified as Text
 
 import Csound.Dynamic.Types.Exp
 
-{-| Csound's synonym for 'IO'-monad. 'Dep' means Side Effect.
+{- | Csound's synonym for 'IO'-monad. 'Dep' means Side Effect.
 You will bump into 'Dep' trying to read and write to delay lines,
 making random signals or trying to save your audio to file.
 Instrument is expected to return a value of @Dep [Sig]@.

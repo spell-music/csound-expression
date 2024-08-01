@@ -1,29 +1,34 @@
-    -- | Wonderful echoes from morpheus.
+-- | Wonderful echoes from morpheus.
 -- Granular synthesis for morphing between waveforms.
 -- It's a simplification of partikkel opcode for the case of morphing.
-module Csound.Air.Granular.Morpheus(
-  WaveAmp, WaveKey, MorphWave,
-  MorphSpec(..), GrainDensity(..), GrainEnv(..),
-
+module Csound.Air.Granular.Morpheus (
+  WaveAmp,
+  WaveKey,
+  MorphWave,
+  MorphSpec (..),
+  GrainDensity (..),
+  GrainEnv (..),
   morpheus,
 
   -- *  Sound files
-  morphSnd1, morphSnd,
+  morphSnd1,
+  morphSnd,
 
   -- * Amplitude modes
   pairToSquare,
 
   -- * Oscillators
-  morpheusOsc, morpheusOsc2
+  morpheusOsc,
+  morpheusOsc2,
 ) where
 
 import Data.Default
 
+import Csound.Tab
 import Csound.Typed
 import Csound.Typed.Opcode hiding (tablew)
-import Csound.Tab
 
-import Csound.Air.Granular(Pointer, csdPartikkel)
+import Csound.Air.Granular (Pointer, csdPartikkel)
 import Csound.Air.Wav
 import Csound.Air.Wave
 
@@ -32,204 +37,253 @@ type WaveKey = Sig
 
 type MorphWave = (Tab, WaveAmp, WaveKey, Pointer)
 
--- | Density of the grain stream.
---
--- * @rate@ is how many grains per second is generated
---
--- * @size@ is the size of each grain in milliseconds (it's good to set it relative to grain rate)
---
--- * @skip@ skip is a skip ratio (0 to 1). It's the probability of grain skip. Zero means no skip and 1 means every grain is left out.
---
--- see docs for Csound partikkel opcode for more detailed information <http://www.csounds.com/manual/html/partikkel.html>
+{- | Density of the grain stream.
+
+* @rate@ is how many grains per second is generated
+
+* @size@ is the size of each grain in milliseconds (it's good to set it relative to grain rate)
+
+* @skip@ skip is a skip ratio (0 to 1). It's the probability of grain skip. Zero means no skip and 1 means every grain is left out.
+
+see docs for Csound partikkel opcode for more detailed information <http://www.csounds.com/manual/html/partikkel.html>
+-}
 data GrainDensity = GrainDensity
   { grainRate :: Sig
   , grainSize :: Sig
-  , grainSkip :: Sig }
+  , grainSkip :: Sig
+  }
 
 instance Default GrainDensity where
-  def = GrainDensity
+  def =
+    GrainDensity
       { grainRate = kGrainRate
       , grainSize = kduration
-      , grainSkip = 0 }
+      , grainSkip = 0
+      }
     where
-      kGrainDur = 2.5             -- length of each grain relative to grain rate
-      kduration = (kGrainDur*1000)/kGrainRate -- grain dur in milliseconds, relative to grain rate
-      kGrainRate  = 12
+      kGrainDur = 2.5 -- length of each grain relative to grain rate
+      kduration = (kGrainDur * 1000) / kGrainRate -- grain dur in milliseconds, relative to grain rate
+      kGrainRate = 12
 
--- | Parameters for grain envelope.
---
--- * attShape -- table that contains shape of the attack.
---
--- * decShape -- table that contains shape of the decay
---
--- * sustRatio -- how big is sustain phase relative to attack and decay
---
--- * attack to decay ration -- relative amount of attack decay ration. 0.5 means attack equals decay.
---
--- see docs for Csound partikkel opcode for more detailed information <http://www.csounds.com/manual/html/partikkel.html>
+{- | Parameters for grain envelope.
+
+* attShape -- table that contains shape of the attack.
+
+* decShape -- table that contains shape of the decay
+
+* sustRatio -- how big is sustain phase relative to attack and decay
+
+* attack to decay ration -- relative amount of attack decay ration. 0.5 means attack equals decay.
+
+see docs for Csound partikkel opcode for more detailed information <http://www.csounds.com/manual/html/partikkel.html>
+-}
 data GrainEnv = GrainEnv
   { grainAttShape :: Tab
   , grainDecShape :: Tab
   , grainSustRatio :: Sig
-  , grainAttDecRatio :: Sig }
+  , grainAttDecRatio :: Sig
+  }
 
 instance Default GrainEnv where
-  def = GrainEnv
+  def =
+    GrainEnv
       { grainAttShape = sigmoidRise
       , grainDecShape = sigmoidFall
       , grainSustRatio = 0.25
-      , grainAttDecRatio = 0.5 }
+      , grainAttDecRatio = 0.5
+      }
 
 -- sigmoidRise = guardPoint $ sines4 [(0.5, 1, 270, 1)]
 -- sigmoidFall = guardPoint $ sines4 [(0.5, 1, 90, 1)]
 
--- | Specification of morphing synth. It has the default instance
--- and the values in its records has default instances too
+{- | Specification of morphing synth. It has the default instance
+and the values in its records has default instances too
+-}
 data MorphSpec = MorphSpec
   { morphGrainDensity :: GrainDensity
-  , morphGrainEnv     :: GrainEnv
+  , morphGrainEnv :: GrainEnv
   }
 
 instance Default MorphSpec where
-  def = MorphSpec
-    { morphGrainDensity = def
-    , morphGrainEnv     = def
-    }
+  def =
+    MorphSpec
+      { morphGrainDensity = def
+      , morphGrainEnv = def
+      }
 
--- | Synth that is based on partikkel. It allows easy morphing between unlimited number of waves.
--- While partikkel allows only 4 waves to be used. We can use as many as we like. Internally
--- the list is split on groups 4 elements or less in each and one partikkel is applied to each group.
--- Many parameters of partikel were simplified to get the good defaults for sound morphing behavior.
---
--- > morpheus spec waves frequencyScale
---
--- * spec -- contains many misc parameters
---
--- * waves list can contain up to four wave tables to read grains from.
---
--- * frequencyScale -- scaling factor for frequency. 1 means playing at the original frequency, 2 rises the pitch by octave.
---     We can use negative values to play the grains in reverse.
+{- | Synth that is based on partikkel. It allows easy morphing between unlimited number of waves.
+While partikkel allows only 4 waves to be used. We can use as many as we like. Internally
+the list is split on groups 4 elements or less in each and one partikkel is applied to each group.
+Many parameters of partikel were simplified to get the good defaults for sound morphing behavior.
+
+> morpheus spec waves frequencyScale
+
+* spec -- contains many misc parameters
+
+* waves list can contain up to four wave tables to read grains from.
+
+* frequencyScale -- scaling factor for frequency. 1 means playing at the original frequency, 2 rises the pitch by octave.
+    We can use negative values to play the grains in reverse.
+-}
 morpheus :: MorphSpec -> [MorphWave] -> Sig -> SE Sig2
 morpheus spec pwaves cps = sum $ fmap (\waves -> morpheus4 spec waves cps) (splitBy4 pwaves)
 
 splitBy4 :: [a] -> [[a]]
 splitBy4 xs = case xs of
-    a:b:c:d:rest -> [a,b,c,d] : splitBy4 rest
-    rest         -> [rest]
+  a : b : c : d : rest -> [a, b, c, d] : splitBy4 rest
+  rest -> [rest]
 
 morpheus4 :: MorphSpec -> [MorphWave] -> Sig -> SE Sig2
 morpheus4 spec pwaves cps = do
   iwaveamptab <- makeMorphTable amp1 amp2 amp3 amp4
-  return $ csdPartikkel agrainrate kdistribution idisttab async kenv2amt ienv2tab
-          ienv_attack ienv_decay ksustain_amount ka_d_ratio kduration kamp igainmasks
-                    kwavfreq ksweepshape iwavfreqstarttab iwavfreqendtab awavfm
-                    ifmamptab ifmenv icosine kTrainCps knumpartials
-                    kchroma ichannelmasks krandommask kwaveform1 kwaveform2 kwaveform3 kwaveform4
-                    iwaveamptab asamplepos1 asamplepos2 asamplepos3 asamplepos4
-                    kwavekey1 kwavekey2 kwavekey3 kwavekey4 imax_grains
-    where
-      wave1 : wave2 : wave3 : wave4 : _ = cycle pwaves
+  return $
+    csdPartikkel
+      agrainrate
+      kdistribution
+      idisttab
+      async
+      kenv2amt
+      ienv2tab
+      ienv_attack
+      ienv_decay
+      ksustain_amount
+      ka_d_ratio
+      kduration
+      kamp
+      igainmasks
+      kwavfreq
+      ksweepshape
+      iwavfreqstarttab
+      iwavfreqendtab
+      awavfm
+      ifmamptab
+      ifmenv
+      icosine
+      kTrainCps
+      knumpartials
+      kchroma
+      ichannelmasks
+      krandommask
+      kwaveform1
+      kwaveform2
+      kwaveform3
+      kwaveform4
+      iwaveamptab
+      asamplepos1
+      asamplepos2
+      asamplepos3
+      asamplepos4
+      kwavekey1
+      kwavekey2
+      kwavekey3
+      kwavekey4
+      imax_grains
+  where
+    wave1 : wave2 : wave3 : wave4 : _ = cycle pwaves
 
-      async = 0
-      kamp = 1
+    async = 0
+    kamp = 1
 
-      ichannelmasks = skipNorm $ doubles [0, 0,  0.5]
+    ichannelmasks = skipNorm $ doubles [0, 0, 0.5]
 
-      kdistribution = 1
-      idisttab = setSize 16 $ startEnds [1, 16, -10, 0]
+    kdistribution = 1
+    idisttab = setSize 16 $ startEnds [1, 16, -10, 0]
 
-      -- grain shape settings
-      grainEnv = morphGrainEnv spec
-      ienv_attack = grainAttShape grainEnv
-      ienv_decay  = grainDecShape grainEnv
-      ksustain_amount = grainSustRatio grainEnv
-      ka_d_ratio = grainAttDecRatio grainEnv
-      kenv2amt = 0
-      ienv2tab = eexps [1, 0.0001]
+    -- grain shape settings
+    grainEnv = morphGrainEnv spec
+    ienv_attack = grainAttShape grainEnv
+    ienv_decay = grainDecShape grainEnv
+    ksustain_amount = grainSustRatio grainEnv
+    ka_d_ratio = grainAttDecRatio grainEnv
+    kenv2amt = 0
+    ienv2tab = eexps [1, 0.0001]
 
-      -- grain density
-      grainDensity = morphGrainDensity spec
-      kGrainRate = grainRate grainDensity
-      kduration = grainSize grainDensity
+    -- grain density
+    grainDensity = morphGrainDensity spec
+    kGrainRate = grainRate grainDensity
+    kduration = grainSize grainDensity
 
-      kwavfreq = cps
+    kwavfreq = cps
 
-      krandommask = grainSkip grainDensity
+    krandommask = grainSkip grainDensity
 
-      -- waves
+    -- waves
 
-      kwavekey1 = getWaveKey wave1
-      kwavekey2 = getWaveKey wave2
-      kwavekey3 = getWaveKey wave3
-      kwavekey4 = getWaveKey wave4
+    kwavekey1 = getWaveKey wave1
+    kwavekey2 = getWaveKey wave2
+    kwavekey3 = getWaveKey wave3
+    kwavekey4 = getWaveKey wave4
 
-      asamplepos1 = getSamplePos wave1
-      asamplepos2 = getSamplePos wave2
-      asamplepos3 = getSamplePos wave3
-      asamplepos4 = getSamplePos wave4
+    asamplepos1 = getSamplePos wave1
+    asamplepos2 = getSamplePos wave2
+    asamplepos3 = getSamplePos wave3
+    asamplepos4 = getSamplePos wave4
 
-      kwaveform1 = getWaveForm wave1
-      kwaveform2 = getWaveForm wave2
-      kwaveform3 = getWaveForm wave3
-      kwaveform4 = getWaveForm wave4
+    kwaveform1 = getWaveForm wave1
+    kwaveform2 = getWaveForm wave2
+    kwaveform3 = getWaveForm wave3
+    kwaveform4 = getWaveForm wave4
 
-      amp1 = getAmp wave1
-      amp2 = getAmp wave2
-      amp3 = getAmp wave3
-      amp4 = getAmp wave4
+    amp1 = getAmp wave1
+    amp2 = getAmp wave2
+    amp3 = getAmp wave3
+    amp4 = getAmp wave4
 
-      imax_grains = 100
+    imax_grains = 100
 
-      getWaveKey (tab1, _, key1, _) = key1 / sig (getTabLen tab1)
+    getWaveKey (tab1, _, key1, _) = key1 / sig (getTabLen tab1)
 
-      getSamplePos (_, _, _, ptr) = ptr
-      getWaveForm (form, _, _, _) = form
-      getAmp (_, amp, _, _) = kr amp
+    getSamplePos (_, _, _, ptr) = ptr
+    getWaveForm (form, _, _, _) = form
+    getAmp (_, amp, _, _) = kr amp
 
-      -- no trainlets
-      icosine = cosine
-      kTrainCps = kGrainRate
-      knumpartials = 7
-      kchroma = 3
+    -- no trainlets
+    icosine = cosine
+    kTrainCps = kGrainRate
+    knumpartials = 7
+    kchroma = 3
 
-      -- no FM
-      kGrFmFreq = kGrainRate / 4
-      kGrFmIndex = 0
-      aGrFmSig = kGrFmIndex * osc kGrFmFreq
-      agrainrate = kGrainRate + aGrFmSig * kGrainRate
-      ifmenv = elins [0, 1, 0]
-      ifmamptab = skipNorm $ doubles [0, 0, 1]
-      awavfm = 0
+    -- no FM
+    kGrFmFreq = kGrainRate / 4
+    kGrFmIndex = 0
+    aGrFmSig = kGrFmIndex * osc kGrFmFreq
+    agrainrate = kGrainRate + aGrFmSig * kGrainRate
+    ifmenv = elins [0, 1, 0]
+    ifmamptab = skipNorm $ doubles [0, 0, 1]
+    awavfm = 0
 
-      -- other params
-      igainmasks = skipNorm $ doubles [0, 0,   1]
-      ksweepshape = 0.5
-      iwavfreqstarttab = skipNorm $ doubles [0, 0, 1]
-      iwavfreqendtab = skipNorm $ doubles [0, 0, 1]
+    -- other params
+    igainmasks = skipNorm $ doubles [0, 0, 1]
+    ksweepshape = 0.5
+    iwavfreqstarttab = skipNorm $ doubles [0, 0, 1]
+    iwavfreqendtab = skipNorm $ doubles [0, 0, 1]
 
-      makeMorphTable a1 a2 a3 a4 = do
-        t <- newTab 64
-        mapM_  (\(i, amp) -> tablew amp  (2 + sig (int i)) t ) (zip [0 .. ] [a1, a2, a3, a4])
-        return t
+    makeMorphTable a1 a2 a3 a4 = do
+      t <- newTab 64
+      mapM_ (\(i, amp) -> tablew amp (2 + sig (int i)) t) (zip [0 ..] [a1, a2, a3, a4])
+      return t
 
 getTabLen :: Tab -> D
 getTabLen t = ftlen t / getSampleRate
 
--- | Creates four control signals out two signals. The control signals are encoded by the position
--- of the point on XY-plane. The four resulting signals are derived from the proximity of the point
--- to four squares of the ((0, 1), (0, 1)) square. It can be useful to control the morpheus with XY-pad controller.
+{- | Creates four control signals out two signals. The control signals are encoded by the position
+of the point on XY-plane. The four resulting signals are derived from the proximity of the point
+to four squares of the ((0, 1), (0, 1)) square. It can be useful to control the morpheus with XY-pad controller.
+-}
 pairToSquare :: (Sig, Sig) -> (Sig, Sig, Sig, Sig)
-pairToSquare (x, y) = ((1 - x) * (1 - y), x * (1 - y) , x * y, (1 - x) * y)
+pairToSquare (x, y) = ((1 - x) * (1 - y), x * (1 - y), x * y, (1 - x) * y)
 
--- | Morpheus synth for mono-audio files. The first cell in each tripple is occupied by file name.
--- The rest arguments are the same as for @morpheus@.
+{- | Morpheus synth for mono-audio files. The first cell in each tripple is occupied by file name.
+The rest arguments are the same as for @morpheus@.
+-}
 morphSnd1 :: MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
 morphSnd1 spec waves cps = morpheus spec (fmap fromSnd waves) cps
   where
     fromSnd (file, amp, key) = (wavLeft file, amp, key, phasor (1 / sig (lengthSnd file)))
 
--- | Morpheus synth for stereo-audio files. The first cell in each tripple is occupied by file name.
--- The rest arguments are the same as for @morpheus@.
+{- | Morpheus synth for stereo-audio files. The first cell in each tripple is occupied by file name.
+The rest arguments are the same as for @morpheus@.
+-}
 morphSnd :: MorphSpec -> [(String, WaveAmp, WaveKey)] -> Sig -> SE Sig2
 morphSnd spec waves cps = morphSndByTab wavLeft spec waves cps + morphSndByTab wavRight spec waves cps
 
@@ -238,12 +292,13 @@ morphSndByTab getTab spec waves cps = morpheus spec (fmap fromSnd waves) cps
   where
     fromSnd (file, amp, key) = (getTab file, amp, key, phasor (1 / sig (lengthSnd file)))
 
--- | Morpheus oscillator.
---
--- > morpheusOsc spec (baseFrequency, table) cps
---
--- @baseFrequency@ is the frequency of the sample contained in the table. With oscillator
--- we can read the table on different frequencies.
+{- | Morpheus oscillator.
+
+> morpheusOsc spec (baseFrequency, table) cps
+
+@baseFrequency@ is the frequency of the sample contained in the table. With oscillator
+we can read the table on different frequencies.
+-}
 morpheusOsc :: MorphSpec -> (D, Tab) -> Sig -> SE Sig2
 morpheusOsc spec (baseFreq, t) cps = morpheus spec waves ratio
   where
@@ -254,16 +309,16 @@ morpheusOsc spec (baseFreq, t) cps = morpheus spec waves ratio
 cycleTab :: Tab -> Sig
 cycleTab t = phasor $ sig $ recip $ getTabLen t
 
--- | Morpheus oscillator. We control the four tables with pair of control signals (see the function @pairToSquare@).
---
--- > morpheusOsc2 spec baseFrequency waves (x, y) cps = ...
+{- | Morpheus oscillator. We control the four tables with pair of control signals (see the function @pairToSquare@).
+
+> morpheusOsc2 spec baseFrequency waves (x, y) cps = ...
+-}
 morpheusOsc2 :: MorphSpec -> D -> [(Sig, Tab)] -> (Sig, Sig) -> Sig -> SE Sig2
 morpheusOsc2 spec baseFreq ts (x, y) cps = morpheus spec waves ratio
   where
     (a1, a2, a3, a4) = pairToSquare (x, y)
     ratio = cps / sig baseFreq
     waves = zipWith (\amp (key, t) -> (t, amp, key, cycleTab t)) (cycle [a1, a2, a3, a4]) ts
-
 
 {- examples
 
@@ -287,7 +342,6 @@ main = dac $ lift1 (\p -> mixAt 0.25 largeHall2 $ mixAt 0.6 (pingPong 0.124 0.5 
       amp2 = linseg [0, 6, 0, 6, 1]
 
 -}
-
 
 {-
 -- todo

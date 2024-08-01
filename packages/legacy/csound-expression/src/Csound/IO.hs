@@ -1,116 +1,144 @@
-{-# Language ScopedTypeVariables, InstanceSigs, FlexibleInstances, UndecidableInstances, NumericUnderscores, CPP #-}
--- | Rendering of Csound files and playing the music in real time.
---
--- How are we going to get the sound out of Haskell code?
--- Instruments are ready and we have written all the scores for them.
--- Now, it's time to use the rendering functions. We can render haskell expressions
--- to Csound code. A rendering function takes a value that represents a sound (it's a tuple of signals)
--- and produces a string with Csound code. It can take a value that represents
--- the flags for the csound compiler and global settings ('Csound.Options').
--- Then we can save this string to file and convert it to sound with csound compiler
---
--- > csound -o music.wav music.csd
---
--- Or we can play it in real time with -odac flag. It sends the sound directly to
--- soundcard. It's useful when we are using midi or tweek the parameters in real time
--- with sliders or knobs.
---
--- > csound -odac music.csd
---
--- The main function of this module is 'Csound.IO.renderCsdBy'. Other function are nothing but
--- wrappers that produce the Csound code and make something useful with it (saving to file,
--- playing with specific player or in real time).
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+{- | Rendering of Csound files and playing the music in real time.
+
+How are we going to get the sound out of Haskell code?
+Instruments are ready and we have written all the scores for them.
+Now, it's time to use the rendering functions. We can render haskell expressions
+to Csound code. A rendering function takes a value that represents a sound (it's a tuple of signals)
+and produces a string with Csound code. It can take a value that represents
+the flags for the csound compiler and global settings ('Csound.Options').
+Then we can save this string to file and convert it to sound with csound compiler
+
+> csound -o music.wav music.csd
+
+Or we can play it in real time with -odac flag. It sends the sound directly to
+soundcard. It's useful when we are using midi or tweek the parameters in real time
+with sliders or knobs.
+
+> csound -odac music.csd
+
+The main function of this module is 'Csound.IO.renderCsdBy'. Other function are nothing but
+wrappers that produce the Csound code and make something useful with it (saving to file,
+playing with specific player or in real time).
+-}
 module Csound.IO (
-    -- * Rendering
-    RenderCsd(..),
-    CsdArity(..),
-    renderCsd,
-    writeCsd, writeCsdBy,
-    writeSnd, writeSndBy,
+  -- * Rendering
+  RenderCsd (..),
+  CsdArity (..),
+  renderCsd,
+  writeCsd,
+  writeCsdBy,
+  writeSnd,
+  writeSndBy,
 
-    -- * Playing the sound
-    playCsd, playCsdBy,
-    mplayer, mplayerBy, totem, totemBy,
+  -- * Playing the sound
+  playCsd,
+  playCsdBy,
+  mplayer,
+  mplayerBy,
+  totem,
+  totemBy,
 
-    -- * Live performance
-    dac, dacBy, vdac, vdacBy,
+  -- * Live performance
+  dac,
+  dacBy,
+  vdac,
+  vdacBy,
 
-    -- * Render and run
-    csd, csdBy,
+  -- * Render and run
+  csd,
+  csdBy,
 
-    -- * Save user options
-    saveUserOptions,
+  -- * Save user options
+  saveUserOptions,
 
-    -- * Render and run with cabbage
-    runCabbage, runCabbageBy,
+  -- * Render and run with cabbage
+  runCabbage,
+  runCabbageBy,
 
-    -- * Aliases for type inference
-    -- | Sometimes the type class @RenderCsd@ is too whide for us.
-    -- It cn be hard to use in the interpreter without explicit signatures.
-    -- There are functions to help the type inference.
-    -- ** For processing inputs
-    onCard1, onCard2, onCard4, onCard6, onCard8,
+  -- * Aliases for type inference
 
-    -- * Config with command line arguments
-    -- | With the functions we can add global config parameters to the rendered file.
-    -- We can supply different parameters with @--omacro@ flag.
-    --
-    -- An example:
-    --
-    -- > dac $ osc (sig $ readMacrosDouble "FREQ" 440)
-    --
-    -- Here we define frequency as a global parameter. It's available by name @"FREQ"@.
-    -- If we run the program with no flags it would play the default 440 Hz. But we can change that like this:
-    --
-    -- > csound tmp.csd --omacro:FREQ=330
-    --
-    -- We can update the macro-arguments with flag @--omacro:NAME=VALUE@.
-    readMacrosString, readMacrosDouble, readMacrosInt
+  -- | Sometimes the type class @RenderCsd@ is too whide for us.
+  -- It cn be hard to use in the interpreter without explicit signatures.
+  -- There are functions to help the type inference.
+  -- ** For processing inputs
+  onCard1,
+  onCard2,
+  onCard4,
+  onCard6,
+  onCard8,
+
+  -- * Config with command line arguments
+
+  -- | With the functions we can add global config parameters to the rendered file.
+  -- We can supply different parameters with @--omacro@ flag.
+  --
+  -- An example:
+  --
+  -- > dac $ osc (sig $ readMacrosDouble "FREQ" 440)
+  --
+  -- Here we define frequency as a global parameter. It's available by name @"FREQ"@.
+  -- If we run the program with no flags it would play the default 440 Hz. But we can change that like this:
+  --
+  -- > csound tmp.csd --omacro:FREQ=330
+  --
+  -- We can update the macro-arguments with flag @--omacro:NAME=VALUE@.
+  readMacrosString,
+  readMacrosDouble,
+  readMacrosInt,
 ) where
 
---import Control.Concurrent
-import Control.Monad
+-- import Control.Concurrent
+
 import Control.Concurrent
+import Control.Exception qualified as E
+import Control.Monad
 import Data.Text qualified as Text
-import System.Process (callProcess, ProcessHandle, spawnProcess, terminateProcess, waitForProcess)
 import System.Directory
 import System.FilePath
-import qualified Control.Exception as E
+import System.Process (ProcessHandle, callProcess, spawnProcess, terminateProcess, waitForProcess)
 
-import Data.Proxy
-import Data.Default
-import Csound.Typed
 import Csound.Control.Gui
+import Csound.Typed
+import Data.Default
+import Data.Proxy
 
-import Csound.Options(setSilent, setDac, setAdc, setDacBy, setAdcBy, setCabbage)
-import Temporal.Class(Harmony(..))
+import Csound.Options (setAdc, setAdcBy, setCabbage, setDac, setDacBy, setSilent)
 import Data.Text (Text)
 import Data.Text.IO qualified as Text
+import Temporal.Class (Harmony (..))
 
-render :: Sigs a => Options -> SE a -> IO Text
+render :: (Sigs a) => Options -> SE a -> IO Text
 render = renderOutBy
 
 render_ :: Options -> SE () -> IO Text
 render_ = renderOutBy_
 
 data CsdArity = CsdArity
-  { csdArity'inputs  :: Int
+  { csdArity'inputs :: Int
   , csdArity'outputs :: Int
-  } deriving (Show, Eq)
+  }
+  deriving (Show, Eq)
 
 class RenderCsd a where
-    renderCsdBy :: Options -> a -> IO Text
-    csdArity :: Proxy a -> CsdArity
+  renderCsdBy :: Options -> a -> IO Text
+  csdArity :: Proxy a -> CsdArity
 
-hasInputs :: RenderCsd a => Proxy a -> Bool
-hasInputs = ( > 0) . csdArity'inputs . csdArity
+hasInputs :: (RenderCsd a) => Proxy a -> Bool
+hasInputs = (> 0) . csdArity'inputs . csdArity
 
-hasOutputs :: RenderCsd a => Proxy a -> Bool
-hasOutputs = ( > 0) . csdArity'outputs . csdArity
+hasOutputs :: (RenderCsd a) => Proxy a -> Bool
+hasOutputs = (> 0) . csdArity'outputs . csdArity
 
 instance {-# OVERLAPPING #-} RenderCsd (SE ()) where
-    renderCsdBy = render_
-    csdArity _ = CsdArity 0 0
+  renderCsdBy = render_
+  csdArity _ = CsdArity 0 0
 
 #if __GLASGOW_HASKELL__ >= 710
 instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd a where
@@ -140,115 +168,117 @@ instance {-# OVERLAPPABLE #-} forall a. Sigs a => RenderCsd [Sco (Mix a)] where
 #endif
 
 instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> b) where
-    renderCsdBy opt f = renderEffBy opt (return . f)
-    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
+  renderCsdBy opt f = renderEffBy opt (return . f)
+  csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
 instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> SE b) where
-    renderCsdBy opt f = renderEffBy opt f
-    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
+  renderCsdBy opt f = renderEffBy opt f
+  csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
 instance {-# OVERLAPPABLE #-} forall a b. (Sigs a, Sigs b) => RenderCsd (a -> Source b) where
-    renderCsdBy opt f = renderEffBy opt (fromSource . f)
-    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
+  renderCsdBy opt f = renderEffBy opt (fromSource . f)
+  csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 instance forall a b. (Sigs a, Sigs b) => RenderCsd (a -> Source (SE b)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
+  renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+  csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))
 
 instance {-# OVERLAPPING #-} forall a. (Sigs a) => RenderCsd (a -> Source (SE Sig2)) where
-    renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
-    csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy Sig2))
+  renderCsdBy opt f = renderEffBy opt (fromSourceSE . f)
+  csdArity _ = CsdArity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy Sig2))
 
 instance {-# OVERLAPPING #-} RenderCsd (Source ()) where
-    renderCsdBy opt src = renderCsdBy opt $ do
-        (ui, _) <- src
-        panel ui
-    csdArity _ = CsdArity 0 0
+  renderCsdBy opt src = renderCsdBy opt $ do
+    (ui, _) <- src
+    panel ui
+  csdArity _ = CsdArity 0 0
 
 instance {-# OVERLAPPING #-} RenderCsd (Source (SE ())) where
-    renderCsdBy opt src = renderCsdBy opt (joinSource src)
-    csdArity _ = CsdArity 0 0
+  renderCsdBy opt src = renderCsdBy opt (joinSource src)
+  csdArity _ = CsdArity 0 0
 
 -- | Renders Csound file.
-renderCsd :: RenderCsd a => a -> IO Text
+renderCsd :: (RenderCsd a) => a -> IO Text
 renderCsd = renderCsdBy def
 
 getTmpFile :: IO FilePath
 getTmpFile = (</> "tmp.csd") <$> getTemporaryDirectory
 
 -- | Render Csound file and save it to the give file.
-writeCsd :: RenderCsd a => FilePath -> a -> IO ()
+writeCsd :: (RenderCsd a) => FilePath -> a -> IO ()
 writeCsd file a = Text.writeFile file =<< renderCsd a
 
 -- | Render Csound file with options and save it to the give file.
-writeCsdBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
+writeCsdBy :: (RenderCsd a) => Options -> FilePath -> a -> IO ()
 writeCsdBy opt file a = Text.writeFile file =<< renderCsdBy opt a
 
 -- | Render Csound file and save result sound to the wav-file.
-writeSnd :: RenderCsd a => FilePath -> a -> IO ()
+writeSnd :: (RenderCsd a) => FilePath -> a -> IO ()
 writeSnd = writeSndBy def
 
 -- | Render Csound file with options and save result sound to the wav-file.
-writeSndBy :: RenderCsd a => Options -> FilePath -> a -> IO ()
+writeSndBy :: (RenderCsd a) => Options -> FilePath -> a -> IO ()
 writeSndBy opt file a = do
-    fileCsd <- getTmpFile
-    writeCsdBy opt fileCsd a
-    runWithUserInterrupt (postSetup opt) "csound" $ ["-o", file, fileCsd] ++ logTrace opt
+  fileCsd <- getTmpFile
+  writeCsdBy opt fileCsd a
+  runWithUserInterrupt (postSetup opt) "csound" $ ["-o", file, fileCsd] ++ logTrace opt
 
 logTrace :: Options -> [String]
 logTrace opt
   | csdNeedTrace opt = []
-  | otherwise        = ["--logfile=null"]
+  | otherwise = ["--logfile=null"]
 
--- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
---
--- > playCsd program file csd
---
--- Produces files @file.csd@ (with 'Csound.Render.Mix.renderCsd') and @file.wav@ (with @csound@) and then invokes:
---
--- > program "file.wav"
+{- | Renders Csound file, saves it to the given file, renders with csound command and plays it with the given program.
+
+> playCsd program file csd
+
+Produces files @file.csd@ (with 'Csound.Render.Mix.renderCsd') and @file.wav@ (with @csound@) and then invokes:
+
+> program "file.wav"
+-}
 playCsd :: (RenderCsd a) => (String -> IO ()) -> String -> a -> IO ()
 playCsd = playCsdBy def
 
 -- | Works just like 'Csound.Render.Mix.playCsd' but you can supply csound options.
 playCsdBy :: (RenderCsd a) => Options -> (String -> IO ()) -> String -> a -> IO ()
 playCsdBy opt player file a = do
-    writeCsdBy opt fileCsd a
-    runWithUserInterrupt (postSetup opt) "csound" $ ["-o", fileWav, fileCsd] ++ logTrace opt
-    player fileWav
-    return ()
-    where fileCsd = file ++ ".csd"
-          fileWav = file ++ ".wav"
+  writeCsdBy opt fileCsd a
+  runWithUserInterrupt (postSetup opt) "csound" $ ["-o", fileWav, fileCsd] ++ logTrace opt
+  player fileWav
+  return ()
+  where
+    fileCsd = file ++ ".csd"
+    fileWav = file ++ ".wav"
 
 simplePlayCsdBy :: (RenderCsd a) => Options -> String -> String -> a -> IO ()
 simplePlayCsdBy opt player = playCsdBy opt phi
-    where
-      phi file = do
-        runWithUserInterrupt (pure ()) player [file]
+  where
+    phi file = do
+      runWithUserInterrupt (pure ()) player [file]
 
--- | Renders csound code to file @tmp.csd@ with flags set to @-odac@, @-iadc@ and @-Ma@
--- (sound output goes to soundcard in real time).
+{- | Renders csound code to file @tmp.csd@ with flags set to @-odac@, @-iadc@ and @-Ma@
+(sound output goes to soundcard in real time).
+-}
 dac :: (RenderCsd a) => a -> IO ()
 dac = dacBy def
 
 -- | 'Csound.Base.dac' with options.
 dacBy :: forall a. (RenderCsd a) => Options -> a -> IO ()
 dacBy opt' a = do
-    fileCsd <- getTmpFile
-    writeCsdBy opt fileCsd a
-    runWithUserInterrupt (postSetup opt') "csound" $ [fileCsd] ++ logTrace opt'
+  fileCsd <- getTmpFile
+  writeCsdBy opt fileCsd a
+  runWithUserInterrupt (postSetup opt') "csound" $ [fileCsd] ++ logTrace opt'
+  where
+    opt = mconcat [opt', withDac, withAdc]
 
-    where
-      opt = mconcat [opt', withDac, withAdc]
+    withDac
+      | hasJackConnections opt' = setDacBy "null"
+      | hasOutputs (Proxy :: Proxy a) = setDac
+      | otherwise = mempty
 
-      withDac
-        | hasJackConnections opt'       = setDacBy "null"
-        | hasOutputs (Proxy :: Proxy a) = setDac
-        | otherwise                     = mempty
-
-      withAdc
-        | hasJackConnections opt'      = setAdcBy "null"
-        | hasInputs (Proxy :: Proxy a) = setAdc
-        | otherwise                    = mempty
+    withAdc
+      | hasJackConnections opt' = setAdcBy "null"
+      | hasInputs (Proxy :: Proxy a) = setAdc
+      | otherwise = mempty
 
 -- | Output to dac with virtual midi keyboard.
 vdac :: (RenderCsd a) => a -> IO ()
@@ -259,8 +289,9 @@ vdacBy :: (RenderCsd a) => Options -> a -> IO ()
 vdacBy opt = dacBy (setVirtual opt)
 
 setVirtual :: Options -> Options
-setVirtual a = a { csdFlags = (csdFlags a) { rtmidi = Just VirtualMidi, midiRT = m { midiDevice = Just "0" } } }
-    where m = midiRT $ csdFlags a
+setVirtual a = a{csdFlags = (csdFlags a){rtmidi = Just VirtualMidi, midiRT = m{midiDevice = Just "0"}}}
+  where
+    m = midiRT $ csdFlags a
 
 -- | Renders to file @tmp.csd@ in temporary directory and invokes the csound on it.
 csd :: (RenderCsd a) => a -> IO ()
@@ -269,27 +300,27 @@ csd = csdBy setSilent
 -- | Renders to file @tmp.csd@ in temporary directory and invokes the csound on it.
 csdBy :: (RenderCsd a) => Options -> a -> IO ()
 csdBy options a = do
-    fileCsd <- getTmpFile
-    writeCsdBy (setSilent `mappend` options) fileCsd a
-    runWithUserInterrupt (postSetup options) "csound" $ [fileCsd] ++ logTrace options
+  fileCsd <- getTmpFile
+  writeCsdBy (setSilent `mappend` options) fileCsd a
+  runWithUserInterrupt (postSetup options) "csound" $ [fileCsd] ++ logTrace options
 
 postSetup :: Options -> IO ()
 postSetup opt = jackConnect opt
 
 jackConnect :: Options -> IO ()
 jackConnect opt =
-    case csdJackConnect opt of
-       Just [] -> pure ()
-       Just conns -> void $ forkIO $ do
-          threadDelay 100_000 -- == sleep 0.1
-          forM_ conns $ \(port1, port2) -> do
-             callProcess "jack_connect" $ map Text.unpack [port1, port2]
-       Nothing -> pure ()
+  case csdJackConnect opt of
+    Just [] -> pure ()
+    Just conns -> void $ forkIO $ do
+      threadDelay 100_000 -- == sleep 0.1
+      forM_ conns $ \(port1, port2) -> do
+        callProcess "jack_connect" $ map Text.unpack [port1, port2]
+    Nothing -> pure ()
 
 hasJackConnections :: Options -> Bool
 hasJackConnections opt
   | Just conns <- csdJackConnect opt = not $ null conns
-  | otherwise                        = False
+  | otherwise = False
 
 ----------------------------------------------------------
 -- players
@@ -313,56 +344,57 @@ totemBy opt = simplePlayCsdBy opt "totem" "tmp"
 ----------------------------------------------------------
 -- handle user interrupts
 
-
 runWithUserInterrupt :: IO () -> String -> [String] -> IO ()
 runWithUserInterrupt setup cmd args = do
-    pid <- spawnProcess cmd args
-    setup
-    E.catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
-    where
-        onUserInterrupt :: ProcessHandle -> E.AsyncException -> IO ()
-        onUserInterrupt pid x = case x of
-            E.UserInterrupt -> terminateProcess pid
-            e               -> E.throw e
+  pid <- spawnProcess cmd args
+  setup
+  E.catch (waitForProcess pid >> return ()) (onUserInterrupt pid)
+  where
+    onUserInterrupt :: ProcessHandle -> E.AsyncException -> IO ()
+    onUserInterrupt pid x = case x of
+      E.UserInterrupt -> terminateProcess pid
+      e -> E.throw e
 
 ----------------------------------------------------------
 
--- | Runs the csound files with cabbage engine.
--- It invokes the Cabbage command line utility and sets all default cabbage flags.
+{- | Runs the csound files with cabbage engine.
+It invokes the Cabbage command line utility and sets all default cabbage flags.
+-}
 runCabbage :: (RenderCsd a) => a -> IO ()
 runCabbage = runCabbageBy def
 
--- | Runs the csound files with cabbage engine with user defined options.
--- It invokes the Cabbage command line utility and sets all default cabbage flags.
+{- | Runs the csound files with cabbage engine with user defined options.
+It invokes the Cabbage command line utility and sets all default cabbage flags.
+-}
 runCabbageBy :: (RenderCsd a) => Options -> a -> IO ()
 runCabbageBy opt' a = do
-    fileCsd <- getTmpFile
-    writeCsdBy opt fileCsd a
-    runWithUserInterrupt (pure ()) "Cabbage" [fileCsd]
-    where opt = opt' `mappend` setCabbage
+  fileCsd <- getTmpFile
+  writeCsdBy opt fileCsd a
+  runWithUserInterrupt (pure ()) "Cabbage" [fileCsd]
+  where
+    opt = opt' `mappend` setCabbage
 
 ------------------------------
 
 -- | Alias to process inputs of single input audio-card.
 onCard1 :: (Sig -> a) -> (Sig -> a)
-onCard1= id
+onCard1 = id
 
 -- | Alias to process inputs of stereo input audio-card.
 onCard2 :: (Sig2 -> a) -> (Sig2 -> a)
-onCard2= id
+onCard2 = id
 
 -- | Alias to process inputs of audio-card with 4 inputs.
 onCard4 :: (Sig4 -> a) -> (Sig4 -> a)
-onCard4= id
+onCard4 = id
 
 -- | Alias to process inputs of audio-card with 6 inputs.
 onCard6 :: (Sig6 -> a) -> (Sig6 -> a)
-onCard6= id
+onCard6 = id
 
 -- | Alias to process inputs of audio-card with 8 inputs.
 onCard8 :: (Sig8 -> a) -> (Sig8 -> a)
-onCard8= id
-
+onCard8 = id
 
 #if __GLASGOW_HASKELL__ < 710
 

@@ -1,66 +1,171 @@
--- | Basic waveforms that are used most often.
--- A waveform function takes in a time varied frequency (in Hz).
+{- | Basic waveforms that are used most often.
+A waveform function takes in a time varied frequency (in Hz).
+-}
 module Csound.Air.Wave (
-    Wave,
+  Wave,
 
-   -- * Bipolar
-    osc, oscBy, saw, isaw, pulse, sqr, pw, tri, ramp, blosc,
+  -- * Bipolar
+  osc,
+  oscBy,
+  saw,
+  isaw,
+  pulse,
+  sqr,
+  pw,
+  tri,
+  ramp,
+  blosc,
 
-    -- ** With phase control
-    osc', oscBy', saw', isaw', pulse', sqr', pw', tri', ramp', blosc',
+  -- ** With phase control
+  osc',
+  oscBy',
+  saw',
+  isaw',
+  pulse',
+  sqr',
+  pw',
+  tri',
+  ramp',
+  blosc',
 
-    -- ** With random phase
-    rndOsc, rndOscBy, rndSaw, rndIsaw, rndPulse, rndSqr, rndPw, rndTri, rndRamp, rndBlosc,
-    rndPhs,
+  -- ** With random phase
+  rndOsc,
+  rndOscBy,
+  rndSaw,
+  rndIsaw,
+  rndPulse,
+  rndSqr,
+  rndPw,
+  rndTri,
+  rndRamp,
+  rndBlosc,
+  rndPhs,
 
-    -- ** Raw analog waves (no band limiting)
-    -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
-    rawTri, rawSaw, rawSqr, rawPw, rawTri', rawSaw', rawSqr', rawPw', rndRawTri, rndRawSaw, rndRawSqr, rndRawPw,
+  -- ** Raw analog waves (no band limiting)
 
-    -- * Unipolar
-    unipolar, bipolar, uosc, uoscBy, usaw, uisaw, upulse, usqr, upw, utri, uramp, ublosc,
+  -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
+  rawTri,
+  rawSaw,
+  rawSqr,
+  rawPw,
+  rawTri',
+  rawSaw',
+  rawSqr',
+  rawPw',
+  rndRawTri,
+  rndRawSaw,
+  rndRawSqr,
+  rndRawPw,
 
-    -- ** With phase control
-    uosc', uoscBy', usaw', uisaw', upulse', usqr', upw', utri', uramp', ublosc',
+  -- * Unipolar
+  unipolar,
+  bipolar,
+  uosc,
+  uoscBy,
+  usaw,
+  uisaw,
+  upulse,
+  usqr,
+  upw,
+  utri,
+  uramp,
+  ublosc,
 
-    -- ** With random phase
-    urndOsc, urndOscBy, urndSaw, urndIsaw, urndPulse, urndSqr, urndPw, urndTri, urndRamp, urndBlosc,
+  -- ** With phase control
+  uosc',
+  uoscBy',
+  usaw',
+  uisaw',
+  upulse',
+  usqr',
+  upw',
+  utri',
+  uramp',
+  ublosc',
 
-    -- ** Raw analog waves (no band limiting)
-    -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
-    urawTri, urawSaw, urawSqr, urawPw, urawTri', urawSaw', urawSqr', urawPw', urndRawTri, urndRawSaw, urndRawSqr, urndRawPw,
+  -- ** With random phase
+  urndOsc,
+  urndOscBy,
+  urndSaw,
+  urndIsaw,
+  urndPulse,
+  urndSqr,
+  urndPw,
+  urndTri,
+  urndRamp,
+  urndBlosc,
 
-    -- * Noise
-    rndh, urndh, rndi, urndi, white, pink, brown,
+  -- ** Raw analog waves (no band limiting)
 
-    -- * Frequency modulation
-    fosc,
+  -- | Analogue-like waves with no band-limiting. Can be useful for LFOs.
+  urawTri,
+  urawSaw,
+  urawSqr,
+  urawPw,
+  urawTri',
+  urawSaw',
+  urawSqr',
+  urawPw',
+  urndRawTri,
+  urndRawSaw,
+  urndRawSqr,
+  urndRawPw,
 
-    -- * Low frequency oscillators
-    Lfo, lfo,
+  -- * Noise
+  rndh,
+  urndh,
+  rndi,
+  urndi,
+  white,
+  pink,
+  brown,
 
-    -- * Detune
-    detune,
+  -- * Frequency modulation
+  fosc,
 
-    -- * Unision
-    multiHz, multiCent, multiRnd, multiGauss, multiRndSE, multiGaussSE,
+  -- * Low frequency oscillators
+  Lfo,
+  lfo,
 
-    -- * Random splines
-    urspline, birspline,
+  -- * Detune
+  detune,
 
-    -- * Buzzes
-    buz, gbuz, buz', gbuz',
+  -- * Unision
+  multiHz,
+  multiCent,
+  multiRnd,
+  multiGauss,
+  multiRndSE,
+  multiGaussSE,
 
-    -- * Loop over files in ram
-    losc, losc3, rosc, monoLosc, loscCfd, loscCfd',
+  -- * Random splines
+  urspline,
+  birspline,
 
-    -- * Loop over files from disk
-    ldisk, rdisk, ldisk1, rdisk1
+  -- * Buzzes
+  buz,
+  gbuz,
+  buz',
+  gbuz',
+
+  -- * Loop over files in ram
+  losc,
+  losc3,
+  rosc,
+  monoLosc,
+  loscCfd,
+  loscCfd',
+
+  -- * Loop over files from disk
+  ldisk,
+  rdisk,
+  ldisk1,
+  rdisk1,
 ) where
 
+import Csound.Tab (cosine, pwTab, sawTab, sine, sqrTab, tabDur, triTab)
 import Csound.Typed
 import Csound.Typed.Opcode hiding (lfo)
-import Csound.Tab(sine, cosine, triTab, pwTab, sawTab, sqrTab, tabDur)
 
 type Wave = Sig -> SE Sig
 
@@ -122,51 +227,58 @@ upulse = unipolar . pulse
 ublosc :: Tab -> Sig -> Sig
 ublosc tb = unipolar . blosc tb
 
--- | Unipolar random splines.
--- It generates the splines with unipolar output (ranges from 0 to 1).
--- Arguments affect the frequency for generation of new values.
---
--- > urspline cpsMin cpsMax
+{- | Unipolar random splines.
+It generates the splines with unipolar output (ranges from 0 to 1).
+Arguments affect the frequency for generation of new values.
+
+> urspline cpsMin cpsMax
+-}
 urspline :: Sig -> Sig -> SE Sig
 urspline cpsMin cpsMax = rspline 0 1 cpsMin cpsMax
 
--- | Bipolar random splines.
--- It generates the splines with bipolar output (ranges from -1 to 1).
--- Arguments affect the frequency for generation of new values.
---
--- > birspline cpsMin cpsMax
+{- | Bipolar random splines.
+It generates the splines with bipolar output (ranges from -1 to 1).
+Arguments affect the frequency for generation of new values.
+
+> birspline cpsMin cpsMax
+-}
 birspline :: Sig -> Sig -> SE Sig
 birspline cpsMin cpsMax = rspline (-1) 1 cpsMin cpsMax
 
 -----------------------
 
--- | Frequency modulation
---
--- > fosc carrierFreq modulatorFreq modIndex cps
+{- | Frequency modulation
+
+> fosc carrierFreq modulatorFreq modIndex cps
+-}
 fosc :: Sig -> Sig -> Sig -> Sig -> Sig
 fosc car modFreq ndx cps = foscili 1 cps car modFreq ndx sine
 
--- | Pulse width modulation (width range is 0 to 1)
---
--- > pw dutyCycle cps
+{- | Pulse width modulation (width range is 0 to 1)
+
+> pw dutyCycle cps
+-}
 pw :: Sig -> Sig -> Sig
 pw duty cps = vco2 1 cps `withD` 2 `withSig` duty
 
--- | Pulse width modulation (width range is 0 to 1)
---
--- > pw' dutyCycle phase cps
+{- | Pulse width modulation (width range is 0 to 1)
+
+> pw' dutyCycle phase cps
+-}
 pw' :: Sig -> D -> Sig -> Sig
 pw' duty phase cps = vco2 1 cps `withD` 2 `withSig` duty `withD` phase
 
--- | Triangle wave with ramp factor (factor's range is 0 to 1)
---
--- > ramp factor cps
+{- | Triangle wave with ramp factor (factor's range is 0 to 1)
+
+> ramp factor cps
+-}
 ramp :: Sig -> Sig -> Sig
 ramp duty cps = vco2 1 cps `withD` 4 `withSig` (uon 0.01 0.99 $ duty)
 
--- | Triangle wave with ramp factor (factor's range is 0 to 1)
---
--- > ramp' factor phase cps
+{- | Triangle wave with ramp factor (factor's range is 0 to 1)
+
+> ramp' factor phase cps
+-}
 ramp' :: Sig -> D -> Sig -> Sig
 ramp' duty phase cps = vco2 1 cps `withD` 4 `withSig` (uon 0.01 0.99 $ duty) `withD` phase
 
@@ -187,7 +299,6 @@ unipolar' f phs cps = unipolar $ f phs cps
 uosc', utri', usqr', usaw', upulse', uisaw' :: D -> Sig -> Sig
 uoscBy', ublosc' :: Tab -> D -> Sig -> Sig
 uramp', upw' :: Sig -> D -> Sig -> Sig
-
 uosc' = unipolar' osc'
 uoscBy' a = unipolar' (oscBy' a)
 usaw' = unipolar' saw'
@@ -209,7 +320,6 @@ rndPhs f cps = fmap (\x -> f x cps) $ rnd 1
 rndOsc, rndTri, rndSqr, rndSaw, rndIsaw, rndPulse :: Sig -> SE Sig
 rndOscBy, rndBlosc :: Tab -> Sig -> SE Sig
 rndRamp, rndPw :: Sig -> Sig -> SE Sig
-
 rndOsc = rndPhs osc'
 rndOscBy a = rndPhs (oscBy' a)
 rndSaw = rndPhs saw'
@@ -227,7 +337,6 @@ rndBlosc a = rndPhs (blosc' a)
 urndOsc, urndTri, urndSqr, urndSaw, urndIsaw, urndPulse :: Sig -> SE Sig
 urndOscBy, urndBlosc :: Tab -> Sig -> SE Sig
 urndRamp, urndPw :: Sig -> Sig -> SE Sig
-
 urndOsc = rndPhs uosc'
 urndOscBy a = rndPhs (uoscBy' a)
 urndSaw = rndPhs usaw'
@@ -239,19 +348,20 @@ urndTri = rndPhs utri'
 urndRamp a = rndPhs (uramp' a)
 urndBlosc a = rndPhs (ublosc' a)
 
-
 --------------------------------------------------------------------------
 -- noise
 
--- | Constant random signal. It updates random numbers with given frequency.
---
--- > constRnd freq
+{- | Constant random signal. It updates random numbers with given frequency.
+
+> constRnd freq
+-}
 rndh :: Sig -> SE Sig
 rndh = randh 1
 
--- | Linear random signal. It updates random numbers with given frequency.
---
--- > rndi freq
+{- | Linear random signal. It updates random numbers with given frequency.
+
+> rndi freq
+-}
 rndi :: Sig -> SE Sig
 rndi = randi 1
 
@@ -281,84 +391,95 @@ brown = fmap (dcblock . integ . (* 0.1)) white
 -- | Low frequency oscillator
 type Lfo = Sig
 
--- | Low frequency oscillator
---
--- > lfo shape depth rate
+{- | Low frequency oscillator
+
+> lfo shape depth rate
+-}
 lfo :: (Sig -> Sig) -> Sig -> Sig -> Sig
 lfo shape depth rate = depth * shape rate
 
 --------------------------------------------------------------------------
 
--- | Scales the oscillator by frequency.
--- That's how we can rise the pitch by 2 semitones and 15 cents:
---
--- > detune (semitone 2 * cent 15) osc
+{- | Scales the oscillator by frequency.
+That's how we can rise the pitch by 2 semitones and 15 cents:
+
+> detune (semitone 2 * cent 15) osc
+-}
 detune :: Sig -> (Sig -> a) -> (Sig -> a)
 detune k f cps = f (k * cps)
 
 --------------------------------------------------------------------------
 
-linRange :: Integral a => a -> Sig -> [Sig]
+linRange :: (Integral a) => a -> Sig -> [Sig]
 linRange n amount = fmap (\x -> amount * sig (2 * double x - 1)) [0, (1 / fromIntegral n) .. 1]
 
--- | Unision by Hertz. It creates n oscillators that are playing
--- the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in Hz.
---
--- > multiHz numberOfUnits amountHz wave
-multiHz :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a)
-multiHz n amount f cps = mean $ fmap (f . (cps + )) $ linRange n amount
+{- | Unision by Hertz. It creates n oscillators that are playing
+the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in Hz.
 
--- | Unision by Cents. It creates n oscillators that are playing
--- the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in cents.
---
--- > multiCent numberOfUnits amountCent wave
-multiCent :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> a)
-multiCent n amount f cps = mean $ fmap (f . (cps * ) . cent) $ linRange n amount
+> multiHz numberOfUnits amountHz wave
+-}
+multiHz :: (Fractional a) => Int -> Sig -> (Sig -> a) -> (Sig -> a)
+multiHz n amount f cps = mean $ fmap (f . (cps +)) $ linRange n amount
 
--- | Oscillators are detuned randomly in the given interval.
---
--- > multiRnd numberOfUnits amountCent wave
-multiRnd :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
+{- | Unision by Cents. It creates n oscillators that are playing
+the same pitch slightly detuned. The oscillatos's pitch is evenly distributed in cents.
+
+> multiCent numberOfUnits amountCent wave
+-}
+multiCent :: (Fractional a) => Int -> Sig -> (Sig -> a) -> (Sig -> a)
+multiCent n amount f cps = mean $ fmap (f . (cps *) . cent) $ linRange n amount
+
+{- | Oscillators are detuned randomly in the given interval.
+
+> multiRnd numberOfUnits amountCent wave
+-}
+multiRnd :: (Fractional a) => Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
 multiRnd = genMultiRnd (rnd 1)
 
--- | Oscillators are detuned randomly with Gauss distribution in the given interval.
---
--- > multiGauss numberOfUnits amountCent wave
-multiGauss :: Fractional a => Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
+{- | Oscillators are detuned randomly with Gauss distribution in the given interval.
+
+> multiGauss numberOfUnits amountCent wave
+-}
+multiGauss :: (Fractional a) => Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
 multiGauss = genMultiRnd (fmap ((+ 0.5) . ir) $ gauss 0.5)
 
-genMultiRnd :: Fractional a => (SE D) -> Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
+genMultiRnd :: (Fractional a) => (SE D) -> Int -> Sig -> (Sig -> a) -> (Sig -> SE a)
 genMultiRnd gen n amount f cps = fmap mean $ mapM (const go) $ replicate n ()
-    where go = fmap (\dx -> f $ cps + amount * (sig $ 2 * dx - 1)) gen
+  where
+    go = fmap (\dx -> f $ cps + amount * (sig $ 2 * dx - 1)) gen
 
--- | Oscillators are detuned randomly in the given interval.
--- Useful for waves that return a signals with Side Effects.
---
--- > multiRnd numberOfUnits amountCent wave
-multiRndSE :: Fractional a => Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
+{- | Oscillators are detuned randomly in the given interval.
+Useful for waves that return a signals with Side Effects.
+
+> multiRnd numberOfUnits amountCent wave
+-}
+multiRndSE :: (Fractional a) => Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
 multiRndSE = genMultiRndSE (rnd 1)
 
--- | Oscillators are detuned randomly with Gauss distribution in the given interval.
--- Useful for waves that return a signals with Side Effects.
---
--- > multiGauss numberOfUnits amountCent wave
-multiGaussSE :: Fractional a => Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
+{- | Oscillators are detuned randomly with Gauss distribution in the given interval.
+Useful for waves that return a signals with Side Effects.
+
+> multiGauss numberOfUnits amountCent wave
+-}
+multiGaussSE :: (Fractional a) => Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
 multiGaussSE = genMultiRndSE (fmap ((+ 0.5) . ir) $ gauss 0.5)
 
-genMultiRndSE :: Fractional a => (SE D) -> Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
+genMultiRndSE :: (Fractional a) => (SE D) -> Int -> Sig -> (Sig -> SE a) -> (Sig -> SE a)
 genMultiRndSE gen n amount f cps = fmap mean $ mapM (const go) $ replicate n ()
-    where go = (\dx -> f $ cps * cent (amount * (sig $ 2 * dx - 1))) =<< gen
+  where
+    go = (\dx -> f $ cps * cent (amount * (sig $ 2 * dx - 1))) =<< gen
 
 -- | Mean value.
-mean :: Fractional a => [a] -> a
+mean :: (Fractional a) => [a] -> a
 mean xs = sum xs / (fromIntegral $ length xs)
 
 ---------------------------------------------
 -- buzzes
 
--- |  Output is a set of harmonically related sine partials.
---
--- > buz numOfHarmonics frequency
+{- |  Output is a set of harmonically related sine partials.
+
+> buz numOfHarmonics frequency
+-}
 buz :: Sig -> Sig -> Sig
 buz kh x = buzz 1 x kh sine
 
@@ -366,9 +487,10 @@ buz kh x = buzz 1 x kh sine
 buz' :: D -> Sig -> Sig -> Sig
 buz' phs kh x = buz kh x `withD` phs
 
--- |  Output is a set of harmonically related cosine partials.
---
--- > gbuz (minHarm, maxHarm) ratio frequency
+{- |  Output is a set of harmonically related cosine partials.
+
+> gbuz (minHarm, maxHarm) ratio frequency
+-}
 gbuz :: (Sig, Sig) -> Sig -> Sig -> Sig
 gbuz (hmin, hmax) hratio x = gbuzz 1 x hmax hmin hratio cosine
 
@@ -457,8 +579,9 @@ urndRawPw duty = urndOscBy (pwTab duty)
 
 -----------------------------
 
--- | Loops with cross-fades at the ends.
--- We can specify loop segment (in seconds).
+{- | Loops with cross-fades at the ends.
+We can specify loop segment (in seconds).
+-}
 loscCfd' :: (D, D) -> D -> Tab -> Sig2
 loscCfd' (start, end) rel tb = ar2 $ flooper 1 1 start end rel tb
 
@@ -470,21 +593,24 @@ loscCfd rel tb = ar2 $ flooper 1 1 0 (tabDur tb - rel - 0.1) rel tb
 rosc :: Tab -> Sig2
 rosc tb = ar2 $ flooper 1 (-1) 0 (tabDur tb) 0 tb
 
--- | Loop over table stereo files. Uses loscil3 under the hood.
--- Watch out for sample rates! If file sample rate is different
--- from global project sample rate then playback will be distorted.
+{- | Loop over table stereo files. Uses loscil3 under the hood.
+Watch out for sample rates! If file sample rate is different
+from global project sample rate then playback will be distorted.
+-}
 losc :: Tab -> Sig2
 losc tb = loscil 1 1 tb `withDs` [1, 1]
 
--- | Loop over table stereo files with cubic interpolation. Uses loscil3 under the hood.
--- Watch out for sample rates! If file sample rate is different
--- from global project sample rate then playback will be distorted.
+{- | Loop over table stereo files with cubic interpolation. Uses loscil3 under the hood.
+Watch out for sample rates! If file sample rate is different
+from global project sample rate then playback will be distorted.
+-}
 losc3 :: Tab -> Sig2
 losc3 tb = loscil3 1 1 tb `withDs` [1, 1]
 
--- | Loop over table mono files. Uses loscil3 under the hood.
--- Watch out for sample rates! If file sample rate is different
--- from global project sample rate then playback will be distorted.
+{- | Loop over table mono files. Uses loscil3 under the hood.
+Watch out for sample rates! If file sample rate is different
+from global project sample rate then playback will be distorted.
+-}
 monoLosc :: Tab -> Sig
 monoLosc tb = loscil3 1 1 tb `withDs` [1, 1]
 
@@ -503,9 +629,3 @@ ldisk1 name = diskin2 name `withDs` [1, 0, 1]
 -- | Reversed loop from disk (mono files)
 rdisk1 :: Str -> Sig
 rdisk1 name = diskin2 name `withDs` [-1, 0, 1]
-
-
-
-
-
-

@@ -1,60 +1,62 @@
--- | Algorithm to infer csound rates. It's type inference for Csound.
---
--- It proceeds from epxression leaves to the top of the expression tree while assigning the rates.
--- The expression is DAG defined as list which is sorted by dependencies from bottom to top.
---
--- We traverse over the list and assign types to the terms.
--- Assumptions:
---
---  * type of primitive values is Ir or Sr
---  * type of numeric expression is minimal type of it's arguments
---
---  * type of opcode is determined by the choice of the most fit signature to the arguments
---     unless it's required by the user to be of specific type.
---     We try to find the signature that leads to lesser amount of destructive conversions overall.
---
---  * If-then-else type:
---      * for condition it is derived form ifRate in the argument of If-constructor
---      * the output is a minimum of types of the branches
---
---  * procedures' output is asssigned with Xr type
---
---  Note on type ordering they go in order of definition from amount of memory used:
---   Xr | Ar | Kr | Ir
---
---   So the Ar is the minimum
-module Csound.Dynamic.Tfm.InferTypes
-  ( inferTypes
-  , InferenceOptions (..)
-  , InferenceResult (..)
-  , OpcodeInferenceStrategy (..)
-  , Stmt(..)
-  , Var(..)
-  ) where
+{- | Algorithm to infer csound rates. It's type inference for Csound.
+
+It proceeds from epxression leaves to the top of the expression tree while assigning the rates.
+The expression is DAG defined as list which is sorted by dependencies from bottom to top.
+
+We traverse over the list and assign types to the terms.
+Assumptions:
+
+ * type of primitive values is Ir or Sr
+ * type of numeric expression is minimal type of it's arguments
+
+ * type of opcode is determined by the choice of the most fit signature to the arguments
+    unless it's required by the user to be of specific type.
+    We try to find the signature that leads to lesser amount of destructive conversions overall.
+
+ * If-then-else type:
+     * for condition it is derived form ifRate in the argument of If-constructor
+     * the output is a minimum of types of the branches
+
+ * procedures' output is asssigned with Xr type
+
+ Note on type ordering they go in order of definition from amount of memory used:
+  Xr | Ar | Kr | Ir
+
+  So the Ar is the minimum
+-}
+module Csound.Dynamic.Tfm.InferTypes (
+  inferTypes,
+  InferenceOptions (..),
+  InferenceResult (..),
+  OpcodeInferenceStrategy (..),
+  Stmt (..),
+  Var (..),
+) where
 
 import Control.Applicative ((<|>))
-import Safe
-import Control.Monad (zipWithM, foldM)
-import Data.Semigroup (Min(..))
-import Data.List qualified as List
+import Control.Monad (foldM, zipWithM)
+import Control.Monad.ST
 import Control.Monad.Trans.State.Strict
-import Data.Map.Strict (Map)
-import Data.Map.Strict qualified as Map
 import Data.Default
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
-import Data.Vector.Mutable (STVector)
-import Data.Vector.Mutable qualified as Vector
-import Control.Monad.ST
-import Data.Maybe (fromMaybe)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
+import Data.List qualified as List
+import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
+import Data.Maybe (fromMaybe)
+import Data.Semigroup (Min (..))
 import Data.Text qualified as Text
+import Data.Vector.Mutable (STVector)
+import Data.Vector.Mutable qualified as Vector
+import Safe
 
-import Csound.Dynamic.Debug
 import Csound.Dynamic.Const qualified as Const
+import Csound.Dynamic.Debug
 import Csound.Dynamic.Types.Exp hiding (Var, varType)
 import Csound.Dynamic.Types.Exp qualified as Exp
+
 -- import Debug.Trace (trace)
 
 -- core types
@@ -67,39 +69,40 @@ data Stmt a = Stmt
 
 data Var = Var
   { varType :: !Rate
-  , varId   :: !Int
+  , varId :: !Int
   }
   deriving (Show, Eq, Ord)
 
 data InferenceResult = InferenceResult
-  { typedProgram       :: ![Stmt Var]
+  { typedProgram :: ![Stmt Var]
   , programLastFreshId :: !Int
-  , programHasIfs      :: !Bool
-      -- ^ does program has if-statemenrs
-      -- we need it for the next optimization stage
+  , programHasIfs :: !Bool
+  -- ^ does program has if-statemenrs
+  -- we need it for the next optimization stage
   }
   deriving (Show)
 
 -- option types
 
 data InferenceOptions = InferenceOptions
-  { opcodeInferenceStrategy    :: !OpcodeInferenceStrategy
-  , opcodeInferencePreference  :: !OpcodeInferencePreference
-  , opcodeInferenceDebug       :: !IsDebug
+  { opcodeInferenceStrategy :: !OpcodeInferenceStrategy
+  , opcodeInferencePreference :: !OpcodeInferencePreference
+  , opcodeInferenceDebug :: !IsDebug
   }
   deriving (Eq, Ord, Show, Read)
 
 data OpcodeInferenceStrategy
-  = PreferControlRate  -- prefer Kr-outputs for opcodes
-  | PreferAudioRate    -- prefer Ar-outputs for opcodes
+  = PreferControlRate -- prefer Kr-outputs for opcodes
+  | PreferAudioRate -- prefer Ar-outputs for opcodes
   deriving (Eq, Ord, Show, Read)
 
 data OpcodeInferencePreference = OpcodeInferencePreference
-  { preferControlOpcodes :: HashSet Name  -- ^ set of opcode names to use Kr by default
-  , preferAudioOpcodes   :: HashSet Name  -- ^ set of opcode names to use Ar by default
+  { preferControlOpcodes :: HashSet Name
+  -- ^ set of opcode names to use Kr by default
+  , preferAudioOpcodes :: HashSet Name
+  -- ^ set of opcode names to use Ar by default
   }
   deriving (Eq, Ord, Show, Read)
-
 
 -- | Infer types/rates for a csound program
 inferTypes :: InferenceOptions -> [Stmt Int] -> InferenceResult
@@ -110,18 +113,19 @@ inferTypes opts exprs = runST $ do
     initEnv :: ST s (InferEnv s)
     initEnv = do
       typeMap <- Vector.replicate size Xr
-      pure InferEnv
-        { envTypeMap = typeMap
-        , envConversions = IntMap.empty
-        , envLastFreshId = size
-        , envResult = []
-        , envHasIfs = False
-        , envPrims = Map.empty
-        }
+      pure
+        InferEnv
+          { envTypeMap = typeMap
+          , envConversions = IntMap.empty
+          , envLastFreshId = size
+          , envResult = []
+          , envHasIfs = False
+          , envPrims = Map.empty
+          }
 
     toResult InferEnv{..} =
       InferenceResult
-        { typedProgram  = List.reverse envResult
+        { typedProgram = List.reverse envResult
         , programLastFreshId = envLastFreshId
         , programHasIfs = envHasIfs
         }
@@ -132,17 +136,17 @@ type Infer s a = StateT (InferEnv s) (ST s) a
 
 -- | Type-inference state
 data InferEnv s = InferEnv
-  { envTypeMap     :: !(STVector s Rate)
-      -- ^ types inferrred so far
+  { envTypeMap :: !(STVector s Rate)
+  -- ^ types inferrred so far
   , envConversions :: !(IntMap (Map Rate Var))
-     -- ^ conversions
+  -- ^ conversions
   , envLastFreshId :: !Int
-      -- ^ last fresh id (we use it to insert new variables for conversions)
-  , envResult      :: ![Stmt Var]
-      -- ^ typed program accumulated in reversed order
-  , envPrims       :: Map Prim Var
-      -- ^ sometimes we need to allocate new primitive value to convert it
-  , envHasIfs      :: !Bool
+  -- ^ last fresh id (we use it to insert new variables for conversions)
+  , envResult :: ![Stmt Var]
+  -- ^ typed program accumulated in reversed order
+  , envPrims :: Map Prim Var
+  -- ^ sometimes we need to allocate new primitive value to convert it
+  , envHasIfs :: !Bool
   }
 
 -------------------------------------------------------------------------------------
@@ -153,105 +157,92 @@ type OpcSignature = (Rate, [Rate])
 preferOpc :: InferenceOptions -> Name -> Map Rate [Rate] -> Either [OpcSignature] OpcSignature
 preferOpc (InferenceOptions strategy opcPrefs _isDebug) name signatureMap
   | Just sig <- getControl = Right sig
-  | Just sig <- getAudio   = Right sig
-  | otherwise              = Left $
+  | Just sig <- getAudio = Right sig
+  | otherwise = Left $
       case strategy of
         PreferControlRate -> List.reverse $ Map.toList signatureMap
-        PreferAudioRate   -> Map.toList signatureMap
+        PreferAudioRate -> Map.toList signatureMap
   where
     getControl = getBy Kr (preferControlOpcodes opcPrefs)
     getAudio = getBy Ar (preferAudioOpcodes opcPrefs)
 
     getBy rate s
-      | HashSet.member name s = (rate, ) <$> Map.lookup rate signatureMap
+      | HashSet.member name s = (rate,) <$> Map.lookup rate signatureMap
       | otherwise = Nothing
 
 instance Default InferenceOptions where
-  def = InferenceOptions
-    { opcodeInferenceStrategy   = PreferControlRate
-    , opcodeInferencePreference =
-        OpcodeInferencePreference
-          { preferControlOpcodes = Const.controlOpcodes
-          , preferAudioOpcodes   = Const.audioOpcodes
-          }
-    , opcodeInferenceDebug = def
-    }
+  def =
+    InferenceOptions
+      { opcodeInferenceStrategy = PreferControlRate
+      , opcodeInferencePreference =
+          OpcodeInferencePreference
+            { preferControlOpcodes = Const.controlOpcodes
+            , preferAudioOpcodes = Const.audioOpcodes
+            }
+      , opcodeInferenceDebug = def
+      }
 
 -------------------------------------------------------------------------------------
 -- inference
 
-inferIter :: forall s . InferenceOptions -> Stmt Int -> Infer s ()
+inferIter :: forall s. InferenceOptions -> Stmt Int -> Infer s ()
 inferIter opts (Stmt lhs rhs) =
   -- trace (unlines ["INFER RHS", show $ ratedExpExp rhs, show $ ratedExpRate rhs, "\n"]) $
   case ratedExpExp rhs of
     -- primitives
     ExpPrim p -> onPrim p
-
-    -- | Application of the opcode: we have opcode information (Info) and the arguments [a]
+    -- \| Application of the opcode: we have opcode information (Info) and the arguments [a]
     Tfm info args -> onTfm info args
-
     ConvertRate toRate fromRate a -> onConvertRate toRate fromRate a
     Select rate outId arg -> onSelect rate outId arg
-
-    -- | Numerical expressions (rendered in infix notation in the Csound)
+    -- \| Numerical expressions (rendered in infix notation in the Csound)
     ExpNum args -> onExpNum args
     ExpBool _ -> error "Bool Exp should be substituted"
-
-    -- | Reading/writing a named variable
+    -- \| Reading/writing a named variable
     InitVar v arg -> onInitVar v arg
     ReadVar ifRate v -> onReadVar ifRate (ratedExpRate rhs) v
     ReadVarTmp ifRate tmp v -> onReadVarTmp ifRate (ratedExpRate rhs) tmp v
     WriteVar ifRate v arg -> onWriteVar ifRate v arg
-
-    -- | Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
-    -- | if-then-else
+    -- \| Selects a cell from the tuple, here argument is always a tuple (result of opcode that returns several outputs)
+    -- \| if-then-else
     If ifRate cond th el -> onIf ifRate cond th el
-    -- | Imperative If-then-else
+    -- \| Imperative If-then-else
     IfBlock ifRate cond th -> onIfBlock ifRate cond th
     IfElseBlock ifRate cond th el -> onIfElseBlock ifRate cond th el
     IfBegin ifRate cond -> onIfBegin ifRate cond
     ElseBegin -> saveProcedure ElseBegin
     IfEnd -> saveProcedure IfEnd
-
-    -- | Verbatim stmt
+    -- \| Verbatim stmt
     Verbatim txt -> saveProcedure (Verbatim txt)
-
-    -- | Arrays
+    -- \| Arrays
     InitArr v arrSize -> onInitArr v arrSize
     ReadArr ifRate v index -> onReadArr ifRate v index
     ReadArrTmp ifRate tmp v index -> onReadArrTmp ifRate tmp v index
     WriteArr ifRate v index val -> onWriteArr ifRate v index val
     WriteInitArr ifRate v arrSize initVal -> onWriteInitArr ifRate v arrSize initVal
     TfmArr isArrInit v info args -> onTfmArr isArrInit v info args
-
-    -- | Pure arrays (read-only)
+    -- \| Pure arrays (read-only)
     InitPureArr outRate procRate initVals -> onInitPureArr outRate procRate initVals
     ReadPureArr outRate procRate inArr index -> onReadPureArr outRate procRate inArr index
-
-    -- | read macros arguments
+    -- \| read macros arguments
     InitMacrosInt name n -> saveProcedure (InitMacrosInt name n)
     InitMacrosDouble name dbl -> saveProcedure (InitMacrosDouble name dbl)
     InitMacrosString name txt -> saveProcedure (InitMacrosString name txt)
     ReadMacrosInt name -> save Ir (ReadMacrosInt name)
     ReadMacrosDouble name -> save Ir (ReadMacrosDouble name)
     ReadMacrosString name -> save Ir (ReadMacrosString name)
-
-    -- | looping constructions
+    -- \| looping constructions
     UntilBlock ifRate cond th -> onUntilBlock ifRate cond th
     WhileBlock ifRate cond th -> onWhileBlock ifRate cond th
-
     UntilBegin ifRate cond -> onUntilBegin ifRate cond
     UntilEnd -> saveProcedure UntilEnd
     WhileBegin ifRate cond -> onWhileBegin ifRate cond
     WhileEnd -> saveProcedure WhileEnd
-
-    EmptyExp  -> saveProcedure EmptyExp
-
-    -- | Dependency tracking
+    EmptyExp -> saveProcedure EmptyExp
+    -- \| Dependency tracking
     Starts -> saveProcedure Starts
     Seq a b -> saveProcedure (Seq (setXr a) (setXr b))
     Ends a -> saveProcedure (Ends (setXr a))
-
     TfmInit _ _ _ -> error "No inference for TfmInit"
   where
     onPrim p = save rate (ExpPrim p)
@@ -261,7 +252,7 @@ inferIter opts (Stmt lhs rhs) =
     onTfm info args =
       case infoSignature info of
         MultiRate outRates inRates -> onMultiRateTfm info outRates inRates args
-        SingleRate rateTab         -> onSingleRateTfm info rateTab args
+        SingleRate rateTab -> onSingleRateTfm info rateTab args
 
     onMultiRateTfm info _outRates inRates args = do
       typedExpr <- Tfm info <$> zipWithM applyArg inRates args
@@ -269,11 +260,11 @@ inferIter opts (Stmt lhs rhs) =
 
     onSingleRateTfm info rateTab args
       | Just userRates <- getUserDefinedRate = onFixedRateTfm info userRates args
-      | otherwise                            = onFreeTfm info rateTab args
+      | otherwise = onFreeTfm info rateTab args
       where
         getUserDefinedRate = do
           userRate <- ratedExpRate rhs
-          (userRate, ) <$> Map.lookup userRate rateTab
+          (userRate,) <$> Map.lookup userRate rateTab
 
     onFixedRateTfm info (outRate, inRates) args = do
       typedExpr <- Tfm info <$> zipWithM applyArg inRates args
@@ -305,10 +296,11 @@ inferIter opts (Stmt lhs rhs) =
         tryCandidate :: OpcSignature -> Infer s SignatureChoice
         tryCandidate candidate@(_outRate, inRates) = do
           conversions <- countDestructiveConversions inRates
-          pure $ SignatureChoice
-            { destructiveConversionsCount = conversions
-            , signatureCandidate = candidate
-            }
+          pure $
+            SignatureChoice
+              { destructiveConversionsCount = conversions
+              , signatureCandidate = candidate
+              }
 
         countDestructiveConversions :: [Rate] -> Infer s Int
         countDestructiveConversions rates = foldM countConversion 0 $ zip rates args
@@ -316,14 +308,16 @@ inferIter opts (Stmt lhs rhs) =
         countConversion :: Int -> (Rate, PrimOr Int) -> Infer s Int
         countConversion total (targetRate, arg) = do
           argVar <- mapM (getVar targetRate) arg
-          let opcodeArg =
-                OpcodeArg
-                  { opcodeTo = targetRate
-                  , opcodeFrom = varType <$> argVar
-                  }
-          pure $ if not (destructiveConversion opcodeArg) || unifies opcodeArg
-            then total
-            else total + 1
+          let
+            opcodeArg =
+              OpcodeArg
+                { opcodeTo = targetRate
+                , opcodeFrom = varType <$> argVar
+                }
+          pure $
+            if not (destructiveConversion opcodeArg) || unifies opcodeArg
+              then total
+              else total + 1
 
         isFit (SignatureChoice score _candidate) = score == 0
 
@@ -379,7 +373,8 @@ inferIter opts (Stmt lhs rhs) =
       setHasIfs
       thVar <- mapM (getVar condMaxRate) th
       elVar <- mapM (getVar condMaxRate) el
-      let rate = min (primOrRate thVar ) (primOrRate elVar)
+      let
+        rate = min (primOrRate thVar) (primOrRate elVar)
       condVar <- mapM (mapM $ getVar condMaxRate) cond
       condVarSafe <- insertBoolConverters condMaxRate condVar
       case ifRate of
@@ -400,7 +395,7 @@ inferIter opts (Stmt lhs rhs) =
               thVar1 <- convertIf Kr thVar
               elVar1 <- convertIf Kr elVar
               save Kr (If ifRate condVarSafe thVar1 elVar1)
-          | otherwise  = save rate (If ifRate condVarSafe thVar elVar)
+          | otherwise = save rate (If ifRate condVarSafe thVar elVar)
 
     onIfBlock = onIfBlockBy IfBlock
 
@@ -467,11 +462,11 @@ inferIter opts (Stmt lhs rhs) =
       typedInitVal <- mapM (getVar (Exp.varRate v)) initVal
       saveProcedure (WriteInitArr ifRate v typedArrSize typedInitVal)
 
-    getArrIndexRate v=
+    getArrIndexRate v =
       case Exp.varRate v of
         Ir -> Ir
         Sr -> Ir
-        _  -> Kr
+        _ -> Kr
 
     onTfmArr isArrInit vout info args = do
       typedArgs <- getTypedArrArgs args
@@ -512,10 +507,11 @@ inferIter opts (Stmt lhs rhs) =
 
     save :: Rate -> Exp Var -> Infer s ()
     save rate typedRhs =
-      saveStmt $ Stmt
-        { stmtLhs = Var rate lhs
-        , stmtRhs = rhs { ratedExpExp = typedRhs, ratedExpDepends = Nothing }
-        }
+      saveStmt $
+        Stmt
+          { stmtLhs = Var rate lhs
+          , stmtRhs = rhs{ratedExpExp = typedRhs, ratedExpDepends = Nothing}
+          }
 
     -- procedure does not save output rate to type map, as it's never going to
     -- be referenced from any right hand side of the expression
@@ -523,10 +519,11 @@ inferIter opts (Stmt lhs rhs) =
     -- Procedures always have Xr as output rate
     saveProcedure :: Exp Var -> Infer s ()
     saveProcedure typedRhs =
-      appendResult $ Stmt
-        { stmtLhs = Var Xr lhs
-        , stmtRhs = rhs { ratedExpExp = typedRhs, ratedExpDepends = Nothing }
-        }
+      appendResult $
+        Stmt
+          { stmtLhs = Var Xr lhs
+          , stmtRhs = rhs{ratedExpExp = typedRhs, ratedExpDepends = Nothing}
+          }
 
 -------------------------------------------------------------
 -- generic funs
@@ -537,15 +534,15 @@ setType (Var rate name) = do
   Vector.write typeMap name rate
 
 appendResult :: Stmt Var -> Infer s ()
-appendResult expr = modify' $ \s -> s { envResult = expr : envResult s }
+appendResult expr = modify' $ \s -> s{envResult = expr : envResult s}
 
 data SignatureChoice = SignatureChoice
   { destructiveConversionsCount :: !Int
-  , signatureCandidate          :: !OpcSignature
+  , signatureCandidate :: !OpcSignature
   }
 
 data OpcodeArg = OpcodeArg
-  { opcodeTo   :: !Rate
+  { opcodeTo :: !Rate
   , opcodeFrom :: !(PrimOr Rate)
   }
 
@@ -556,37 +553,39 @@ unifies (OpcodeArg to (PrimOr from)) =
     Ar -> is Ar
     Kr -> is Kr || is Ir || isPrim
     Ir -> is Ir
-    _  -> is to
+    _ -> is to
   where
     is r = either primRate id from == r
 
     isPrim = either (const True) (const False) from
 
--- | Checks if opcode conversion is destructive
--- Note that we rely on Haskell type-checker and don't consider
--- cases of type-mismatch lke comparing number with string.
---
--- There are two cases of destructive updates:
---
--- * Ar or Kr is converted to Ir
--- * Ar is converted to Kr
+{- | Checks if opcode conversion is destructive
+Note that we rely on Haskell type-checker and don't consider
+cases of type-mismatch lke comparing number with string.
+
+There are two cases of destructive updates:
+
+* Ar or Kr is converted to Ir
+* Ar is converted to Kr
+-}
 destructiveConversion :: OpcodeArg -> Bool
 destructiveConversion (OpcodeArg to (PrimOr from)) =
   case to of
     Ir -> fromRate /= Ir
     Kr -> fromRate == Ar
-    _  -> False
+    _ -> False
   where
     fromRate = either primRate id from
 
 applyArg :: Rate -> PrimOr Int -> Infer s (PrimOr Var)
 applyArg targetRate arg = do
   argVar <- mapM (getVar Ir) arg
-  let opcArg =
-        OpcodeArg
-          { opcodeTo = targetRate
-          , opcodeFrom = varType <$> argVar
-          }
+  let
+    opcArg =
+      OpcodeArg
+        { opcodeTo = targetRate
+        , opcodeFrom = varType <$> argVar
+        }
   if unifies opcArg
     then pure argVar
     else PrimOr . Right <$> convert (opcodeTo opcArg) argVar
@@ -603,14 +602,14 @@ getVar _defaultRate vid = do
 convert :: Rate -> PrimOr Var -> Infer s Var
 convert toRate (PrimOr fromVar) = do
   case fromVar of
-    Left p  -> convertPrim p
+    Left p -> convertPrim p
     Right v -> convertVar v
   where
     convertPrim :: Prim -> Infer s Var
     convertPrim prim = do
       primMap <- gets envPrims
       v <- case Map.lookup prim primMap of
-        Just v  -> pure v
+        Just v -> pure v
         Nothing -> allocatePrim prim
       convertVar v
 
@@ -619,8 +618,9 @@ convert toRate (PrimOr fromVar) = do
       mOutVar <- tryExistingConverters inVar
       case mOutVar of
         Just outVar -> pure outVar
-        Nothing     -> do
-          let rhs = newExp $ ConvertRate toRate (Just $ varType inVar) (PrimOr $ Right inVar)
+        Nothing -> do
+          let
+            rhs = newExp $ ConvertRate toRate (Just $ varType inVar) (PrimOr $ Right inVar)
           outVar <- defineVar toRate rhs
           saveConversion outVar inVar
           pure outVar
@@ -633,14 +633,14 @@ convert toRate (PrimOr fromVar) = do
     allocatePrim :: Prim -> Infer s Var
     allocatePrim prim = do
       var <- defineVar (primRate prim) (newExp $ ExpPrim prim)
-      modify' $ \s -> s { envPrims = Map.insert prim var $ envPrims s }
+      modify' $ \s -> s{envPrims = Map.insert prim var $ envPrims s}
       pure var
 
 -- | Checks if convertion is identity, then returns original
 convertIf :: Rate -> PrimOr Var -> Infer s (PrimOr Var)
 convertIf toRate var
   | toRate == primOrRate var = pure var
-  | otherwise                = PrimOr . Right <$> convert toRate var
+  | otherwise = PrimOr . Right <$> convert toRate var
 
 newExp :: Exp a -> RatedExp a
 newExp rhs =
@@ -670,7 +670,7 @@ freshVar rate = Var rate <$> freshId
 freshId :: Infer s Int
 freshId = do
   lastFreshId <- gets envLastFreshId
-  modify' $ \s -> s { envLastFreshId = lastFreshId + 1 }
+  modify' $ \s -> s{envLastFreshId = lastFreshId + 1}
   pure lastFreshId
 
 insertBoolConverters :: Rate -> CondInfo (PrimOr Var) -> Infer s (CondInfo (PrimOr Var))
@@ -679,7 +679,7 @@ insertBoolConverters ifRate = mapM (mapM go)
     go :: Var -> Infer s Var
     go v
       | ifRate >= varType v = pure v
-      | otherwise           = convert ifRate (PrimOr $ Right v)
+      | otherwise = convert ifRate (PrimOr $ Right v)
 
 saveStmt :: Stmt Var -> Infer s ()
 saveStmt expr = do
@@ -688,27 +688,28 @@ saveStmt expr = do
 
 saveConversion :: Var -> Var -> Infer s ()
 saveConversion outVar inVar =
-  modify' $ \s -> s { envConversions = update $ envConversions s }
+  modify' $ \s -> s{envConversions = update $ envConversions s}
   where
     update conversionMap = IntMap.alter go (varId inVar) conversionMap
 
-    go = Just . \case
-      Nothing -> Map.singleton (varType outVar) outVar
-      Just m  -> Map.insert (varType outVar) outVar m
+    go =
+      Just . \case
+        Nothing -> Map.singleton (varType outVar) outVar
+        Just m -> Map.insert (varType outVar) outVar m
 
 setHasIfs :: Infer s ()
-setHasIfs = modify' $ \s -> s { envHasIfs = True }
+setHasIfs = modify' $ \s -> s{envHasIfs = True}
 
 ----------------------------------------------------------------
 -- rate calculations
 
 primRate :: Prim -> Rate
 primRate = \case
-  PrimString _      -> Sr
-  PrimVar r _       -> r
-  P r _             -> r
+  PrimString _ -> Sr
+  PrimVar r _ -> r
+  P r _ -> r
   PrimInstrId instr -> instrIdRate instr
-  _                 -> Ir
+  _ -> Ir
 
 primOrRate :: PrimOr Var -> Rate
 primOrRate = either primRate varType . unPrimOr

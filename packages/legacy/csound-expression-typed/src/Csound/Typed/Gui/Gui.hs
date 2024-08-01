@@ -1,112 +1,165 @@
 module Csound.Typed.Gui.Gui (
-    Panel(..), Win(..), GuiNode(..), GuiHandle(..), Gui(..),
-    Elem(..), InitMe(..),
-    restoreTree, guiMap, mapGuiOnPanel, fromElem, fromGuiHandle,
-    panelIsKeybdSensitive, defText,
-    guiStmt,
+  Panel (..),
+  Win (..),
+  GuiNode (..),
+  GuiHandle (..),
+  Gui (..),
+  Elem (..),
+  InitMe (..),
+  restoreTree,
+  guiMap,
+  mapGuiOnPanel,
+  fromElem,
+  fromGuiHandle,
+  panelIsKeybdSensitive,
+  defText,
+  guiStmt,
 
-    -- * Layout
-    hor, ver, space, sca, horSca, verSca,
-    padding, margin, ScaleFactor, resizeGui,
-    -- * Props
-    props, forceProps,
-    Prop(..), BorderType(..), Color,
-    Rect(..), FontType(..), Emphasis(..),
-    Material(..), Orient(..), LabelType(..),
-    -- ** Setters
-    -- | Handy short-cuts for the function @props@.
-    setBorder, setLabel, setMaterial, setLabelType,
-    setColor1, setColor2, setColors, setTextColor,
-    setFontSize, setFontType, setEmphasis, setOrient,
+  -- * Layout
+  hor,
+  ver,
+  space,
+  sca,
+  horSca,
+  verSca,
+  padding,
+  margin,
+  ScaleFactor,
+  resizeGui,
 
-    -- * Widgets
-    ValDiap(..), ValStep, ValScaleType(..), ValSpan(..),
-    linSpan, expSpan, uspan, bspan, uspanExp,
-    KnobType(..), setKnobType,
-    SliderType(..), setSliderType,
-    TextType(..), setTextType,
-    BoxType(..), setBoxType,
-    ButtonType(..), setButtonType
+  -- * Props
+  props,
+  forceProps,
+  Prop (..),
+  BorderType (..),
+  Color,
+  Rect (..),
+  FontType (..),
+  Emphasis (..),
+  Material (..),
+  Orient (..),
+  LabelType (..),
+
+  -- ** Setters
+
+  -- | Handy short-cuts for the function @props@.
+  setBorder,
+  setLabel,
+  setMaterial,
+  setLabelType,
+  setColor1,
+  setColor2,
+  setColors,
+  setTextColor,
+  setFontSize,
+  setFontType,
+  setEmphasis,
+  setOrient,
+
+  -- * Widgets
+  ValDiap (..),
+  ValStep,
+  ValScaleType (..),
+  ValSpan (..),
+  linSpan,
+  expSpan,
+  uspan,
+  bspan,
+  uspanExp,
+  KnobType (..),
+  setKnobType,
+  SliderType (..),
+  setSliderType,
+  TextType (..),
+  setTextType,
+  BoxType (..),
+  setBoxType,
+  ButtonType (..),
+  setButtonType,
 ) where
 
-import Prelude hiding(elem, span)
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Prelude hiding (elem, span)
 
 import Data.Default
-import Data.Maybe(isNothing)
+import Data.Maybe (isNothing)
 import Data.Monoid
 
-import qualified Data.IntMap as IM
+import Data.IntMap qualified as IM
 import Text.PrettyPrint.Leijen.Text (Doc)
 
-import Csound.Dynamic(DepT, depT_, Var(..), VarType(..), Rate(..), noRate, MainExp(..), InstrId(..))
+import Csound.Dynamic (DepT, InstrId (..), MainExp (..), Rate (..), Var (..), VarType (..), depT_, noRate)
 
-import qualified Text.PrettyPrint.Leijen.Text as P(int, double, vcat, empty, textStrict)
-import qualified Csound.Typed.Gui.BoxModel as Box
-import Csound.Typed.Constants(infiniteDur)
+import Csound.Typed.Constants (infiniteDur)
+import Csound.Typed.Gui.BoxModel qualified as Box
+import Text.PrettyPrint.Leijen.Text qualified as P (double, empty, int, textStrict, vcat)
 
-import Csound.Typed.Gui.Types
 import Csound.Typed.Gui.Pretty
+import Csound.Typed.Gui.Types
 
-newtype GuiHandle = GuiHandle { unGuiHandle :: Int }
+newtype GuiHandle = GuiHandle {unGuiHandle :: Int}
 
 -- | A visual representation of the GUI-element.
-newtype Gui = Gui { unGui :: LowGui }
+newtype Gui = Gui {unGui :: LowGui}
 
 type LowGui = Box.Scene Props ElemWithOuts
 
 data Panel
-    = Single
-        { singleContent :: Win
-        , singleIsKeybdSensitive :: Bool }
-    | Tabs
-        { tabsTitle     :: Text
-        , tabsRect      :: Maybe Rect
-        , tabsContent   :: [Win]
-        , tabsIsKeybdSensitive :: Bool }
+  = Single
+      { singleContent :: Win
+      , singleIsKeybdSensitive :: Bool
+      }
+  | Tabs
+      { tabsTitle :: Text
+      , tabsRect :: Maybe Rect
+      , tabsContent :: [Win]
+      , tabsIsKeybdSensitive :: Bool
+      }
 
 panelIsKeybdSensitive :: Panel -> Bool
 panelIsKeybdSensitive x = case x of
-    Single _ res -> res
-    Tabs _ _ _ res -> res
+  Single _ res -> res
+  Tabs _ _ _ res -> res
 
 data Win = Win
-    { winTitle :: Text
-    , winRect  :: Maybe Rect
-    , winGui   :: Gui }
+  { winTitle :: Text
+  , winRect :: Maybe Rect
+  , winGui :: Gui
+  }
 
 data GuiNode = GuiNode
-    { guiNodeElem   :: Gui
-    , guiNodeHandle :: GuiHandle }
+  { guiNodeElem :: Gui
+  , guiNodeHandle :: GuiHandle
+  }
 
 data ElemWithOuts = ElemWithOuts
-    { elemOuts      :: [Var]
-    , elemInits     :: [InitMe]
-    , elemContent   :: Elem }
+  { elemOuts :: [Var]
+  , elemInits :: [InitMe]
+  , elemContent :: Elem
+  }
 
 data InitMe = InitMe
-    { initHandle :: Var
-    , initValue  :: Double }
+  { initHandle :: Var
+  , initValue :: Double
+  }
 
 data Elem
-    = GuiVar GuiHandle
-
-    -- valuators
-    | Count  ValDiap ValStep (Maybe ValStep)
-    | Joy    ValSpan ValSpan
-    | Knob   ValSpan
-    | Roller ValSpan ValStep
-    | Slider ValSpan
-    | Text   ValDiap ValStep
-
-    -- other widgets
-    | Box Text
-    | ButBank Int Int
-    | Button InstrId
-    | Toggle
-    | Value
-    | Vkeybd
+  = GuiVar GuiHandle
+  | -- valuators
+    Count ValDiap ValStep (Maybe ValStep)
+  | Joy ValSpan ValSpan
+  | Knob ValSpan
+  | Roller ValSpan ValStep
+  | Slider ValSpan
+  | Text ValDiap ValStep
+  | -- other widgets
+    Box Text
+  | ButBank Int Int
+  | Button InstrId
+  | Toggle
+  | Value
+  | Vkeybd
 
 type ElemOuts = [Var]
 
@@ -121,9 +174,10 @@ fromGuiHandle = Gui . Box.prim . ElemWithOuts [] [] . GuiVar
 
 mapGuiOnPanel :: (Gui -> Gui) -> Panel -> Panel
 mapGuiOnPanel f x = case x of
-    Single w isKey            -> Single (mapWin w) isKey
-    Tabs title rect ws  isKey -> Tabs title rect (fmap mapWin ws) isKey
-    where mapWin a = a{ winGui = f $ winGui a  }
+  Single w isKey -> Single (mapWin w) isKey
+  Tabs title rect ws isKey -> Tabs title rect (fmap mapWin ws) isKey
+  where
+    mapWin a = a{winGui = f $ winGui a}
 
 onLowGuis :: ([LowGui] -> LowGui) -> ([Gui] -> Gui)
 onLowGuis f = Gui . f . fmap unGui
@@ -131,15 +185,17 @@ onLowGuis f = Gui . f . fmap unGui
 onLowGui1 :: (LowGui -> LowGui) -> (Gui -> Gui)
 onLowGui1 f = Gui . f . unGui
 
--- | Horizontal groupping of the elements. All elements are
--- placed in the stright horizontal line and aligned by Y-coordinate
--- and height.
+{- | Horizontal groupping of the elements. All elements are
+placed in the stright horizontal line and aligned by Y-coordinate
+and height.
+-}
 hor :: [Gui] -> Gui
 hor = onLowGuis Box.hor
 
--- | Vertical groupping of the elements. All elements are
--- placed in the stright vertical line and aligned by X-coordinate
--- and width.
+{- | Vertical groupping of the elements. All elements are
+placed in the stright vertical line and aligned by X-coordinate
+and width.
+-}
 ver :: [Gui] -> Gui
 ver = onLowGuis Box.ver
 
@@ -147,70 +203,75 @@ ver = onLowGuis Box.ver
 space :: Gui
 space = Gui Box.space
 
--- | Scales an element within the group. It depends on the type
--- of the alignment (horizontal or vertical) which side of the bounding
--- box is scaled. If it's a horizontal group then the width is scaled
--- and height is scaled otherwise.
---
--- Every element in the group has a scaling factor. By
--- default it equals to one. During rendering all scaling factors are summed
--- and divided on the sum of all factors. So that factors become weights
--- or proportions. This process is called normalization.
--- Scaling one element affects not only this element but
--- all other elements in the group!
---
--- An example:
---
--- One element is twice as large as the other two:
---
--- > hor [a, b, sca 2 c]
---
--- Why is it so? Let's look at the hidden scaling factors:
---
--- > hor [sca 1 a, sca 1 b, sca 2 c]
---
--- During rendering we scale all the scaling fators so that
--- total sum equals to one:
---
--- > hor [sca 0.25 a, sca 0.25 b, sca 0.5 c]
+{- | Scales an element within the group. It depends on the type
+of the alignment (horizontal or vertical) which side of the bounding
+box is scaled. If it's a horizontal group then the width is scaled
+and height is scaled otherwise.
+
+Every element in the group has a scaling factor. By
+default it equals to one. During rendering all scaling factors are summed
+and divided on the sum of all factors. So that factors become weights
+or proportions. This process is called normalization.
+Scaling one element affects not only this element but
+all other elements in the group!
+
+An example:
+
+One element is twice as large as the other two:
+
+> hor [a, b, sca 2 c]
+
+Why is it so? Let's look at the hidden scaling factors:
+
+> hor [sca 1 a, sca 1 b, sca 2 c]
+
+During rendering we scale all the scaling fators so that
+total sum equals to one:
+
+> hor [sca 0.25 a, sca 0.25 b, sca 0.5 c]
+-}
 sca :: Double -> Gui -> Gui
 sca d = onLowGui1 (Box.sca d)
 
--- | Weighted horizontal grouping.
--- It takes a list of scaling factors and elements.
+{- | Weighted horizontal grouping.
+It takes a list of scaling factors and elements.
+-}
 horSca :: [(Double, Gui)] -> Gui
 horSca ps = hor $ fmap (uncurry sca) ps
 
--- | Weighted vertical grouping.
--- It takes a list of scaling factors and elements.
+{- | Weighted vertical grouping.
+It takes a list of scaling factors and elements.
+-}
 verSca :: [(Double, Gui)] -> Gui
 verSca ps = ver $ fmap (uncurry sca) ps
 
--- | Sets the padding of the element. How much empty space
--- to reserve outside the element.
+{- | Sets the padding of the element. How much empty space
+to reserve outside the element.
+-}
 padding :: Int -> Gui -> Gui
 padding n = onLowGui1 (Box.padding n)
 
--- | Sets the margin of the element. How much empty space
--- to reserve between the elements within the group. It affects
--- only compound elements.
+{- | Sets the margin of the element. How much empty space
+to reserve between the elements within the group. It affects
+only compound elements.
+-}
 margin :: Int -> Gui -> Gui
 margin n = onLowGui1 (Box.margin n)
 
 -- | Sets the properties for a GUI element.
 props :: [Prop] -> Gui -> Gui
-props ps = onLowGui1 (Box.appendContext $ def { otherProps = ps })
+props ps = onLowGui1 (Box.appendContext $ def{otherProps = ps})
 
 -- | Rescales the default sizes for the UI elements.
 resizeGui :: ScaleFactor -> Gui -> Gui
-resizeGui factorXY = onLowGui1 (Box.appendContext $ def { propsScaleFactor = Just factorXY })
+resizeGui factorXY = onLowGui1 (Box.appendContext $ def{propsScaleFactor = Just factorXY})
 
 -- | Sets the properties for a GUI element on all levels.
 forceProps :: [Prop] -> Gui -> Gui
 forceProps = error "forceProps: TODO"
 
 setBorder :: BorderType -> Gui -> Gui
-setBorder a = onLowGui1 (Box.appendContext $ def { propsBorder = Just a })
+setBorder a = onLowGui1 (Box.appendContext $ def{propsBorder = Just a})
 
 type GuiMap = IM.IntMap Gui
 
@@ -219,248 +280,302 @@ guiMap = IM.fromList . fmap (\(GuiNode elem (GuiHandle n)) -> (n, elem))
 
 restoreTree :: GuiMap -> Gui -> Gui
 restoreTree m x = Gui $ (unGui x) >>= rec
-    where rec elem = case elemContent elem of
-            GuiVar h -> unGui $ restoreTree m $ m IM.! unGuiHandle h
-            _        -> return elem
+  where
+    rec elem = case elemContent elem of
+      GuiVar h -> unGui $ restoreTree m $ m IM.! unGuiHandle h
+      _ -> return elem
 
-
-guiStmt :: Monad m => ScaleFactor -> [Panel] -> DepT m ()
+guiStmt :: (Monad m) => ScaleFactor -> [Panel] -> DepT m ()
 guiStmt defaultScaleUI panels = depT_ $ noRate (phi defaultScaleUI)
-    where phi scaleUI
-            | null panels = EmptyExp
-            | otherwise   = Verbatim $ Text.pack $ show $ P.vcat [P.vcat $ fmap (drawGui scaleUI) panels, P.textStrict "FLrun"]
+  where
+    phi scaleUI
+      | null panels = EmptyExp
+      | otherwise = Verbatim $ Text.pack $ show $ P.vcat [P.vcat $ fmap (drawGui scaleUI) panels, P.textStrict "FLrun"]
 
 drawGui :: ScaleFactor -> Panel -> Doc
 drawGui defaultScaleUI x = case x of
-    Single w    isKeybd -> panel isKeybd boundingRect $ drawWin (withWinMargin boundingRect) w
-    Tabs _ _ ws isKeybd -> panel isKeybd tabPanelRect $ case ws of
-        [] -> P.empty
-        _  -> onTabs mainTabRect $ P.vcat $ fmap (uncurry $ drawTab shift) tabsRs
-    where boundingRect = panelRect defaultScaleUI (fmap fst tabsRs) x
-          tabsRs = tabsRects defaultScaleUI x
-          (mainTabRect, shift) = mainTabRectAndShift boundingRect
+  Single w isKeybd -> panel isKeybd boundingRect $ drawWin (withWinMargin boundingRect) w
+  Tabs _ _ ws isKeybd -> panel isKeybd tabPanelRect $ case ws of
+    [] -> P.empty
+    _ -> onTabs mainTabRect $ P.vcat $ fmap (uncurry $ drawTab shift) tabsRs
+  where
+    boundingRect = panelRect defaultScaleUI (fmap fst tabsRs) x
+    tabsRs = tabsRects defaultScaleUI x
+    (mainTabRect, shift) = mainTabRectAndShift boundingRect
 
-          tabPanelRect = Rect
-            { px = 100
-            , py = 100
-            , width = width mainTabRect + 20
-            , height = height mainTabRect + 20
-            }
+    tabPanelRect =
+      Rect
+        { px = 100
+        , py = 100
+        , width = width mainTabRect + 20
+        , height = height mainTabRect + 20
+        }
 
-          panel = onPanel (panelTitle x)
+    panel = onPanel (panelTitle x)
 
-          onPanel title isKeybdSensitive rect body = P.vcat
-            -- panel with default position no border and capture of keyboard events
-            [ ppProc "FLpanel" [ P.textStrict title, P.int $ width rect, P.int $ height rect, P.int (-1), P.int (-1), P.int 0
-                               , P.int $ if isKeybdSensitive then 1 else 0 ]
-            , body
-            , ppProc "FLpanelEnd" []]
+    onPanel title isKeybdSensitive rect body =
+      P.vcat
+        -- panel with default position no border and capture of keyboard events
+        [ ppProc
+            "FLpanel"
+            [ P.textStrict title
+            , P.int $ width rect
+            , P.int $ height rect
+            , P.int (-1)
+            , P.int (-1)
+            , P.int 0
+            , P.int $ if isKeybdSensitive then 1 else 0
+            ]
+        , body
+        , ppProc "FLpanelEnd" []
+        ]
 
-          onTabs rect body = P.vcat
-            [ ppProc "FLtabs" $ rectToFrame rect
-            , body
-            , ppProc "FLtabsEnd" []]
-
+    onTabs rect body =
+      P.vcat
+        [ ppProc "FLtabs" $ rectToFrame rect
+        , body
+        , ppProc "FLtabsEnd" []
+        ]
 
 panelTitle :: Panel -> Text
 panelTitle x = case x of
-    Single w _       -> winTitle w
-    Tabs title _ _ _ -> title
+  Single w _ -> winTitle w
+  Tabs title _ _ _ -> title
 
 panelRect :: ScaleFactor -> [Rect] -> Panel -> Rect
 panelRect defaultScaleUI rs x = case x of
-    Single w _       -> winBoundingRect defaultScaleUI w
-    Tabs _ mrect _ _ -> case rs of
-        [] -> Box.zeroRect
-        _  -> maybe (foldr boundingRect (head rs) rs) id mrect
-    where boundingRect a b = Rect { px = x1, py = y1, width = x2 - x1, height = y2 - y1 }
-              where x1 = min (px a) (px b)
-                    y1 = min (py a) (py b)
-                    x2 = max (px a + width a) (px b + width b)
-                    y2 = max (py a + height a) (py b + height b)
+  Single w _ -> winBoundingRect defaultScaleUI w
+  Tabs _ mrect _ _ -> case rs of
+    [] -> Box.zeroRect
+    _ -> maybe (foldr boundingRect (head rs) rs) id mrect
+  where
+    boundingRect a b = Rect{px = x1, py = y1, width = x2 - x1, height = y2 - y1}
+      where
+        x1 = min (px a) (px b)
+        y1 = min (py a) (py b)
+        x2 = max (px a + width a) (px b + width b)
+        y2 = max (py a + height a) (py b + height b)
 
 mainTabRectAndShift :: Rect -> (Rect, (Int, Int))
 mainTabRectAndShift r = (res, (dx, dy))
-    where res = Rect
-            { px     = 5
-            , py     = 5
-            , width  = px r + width r + 10
-            , height = py r + height r + yBox 15 2 + 10
-            }
-          dx = 10
-          dy = yBox 15 2 + 10
-
-
+  where
+    res =
+      Rect
+        { px = 5
+        , py = 5
+        , width = px r + width r + 10
+        , height = py r + height r + yBox 15 2 + 10
+        }
+    dx = 10
+    dy = yBox 15 2 + 10
 
 tabsRects :: ScaleFactor -> Panel -> [(Rect, Win)]
 tabsRects defaultScaleUI x = case x of
-    Single _ _    -> []
-    Tabs _ _ ws _ -> zip (fmap (winBoundingRect defaultScaleUI) ws) ws
+  Single _ _ -> []
+  Tabs _ _ ws _ -> zip (fmap (winBoundingRect defaultScaleUI) ws) ws
 
 winBoundingRect :: ScaleFactor -> Win -> Rect
 winBoundingRect defaultScaleUI w = maybe (shiftBy 50 $ bestRect defaultScaleUI $ winGui w) id $ winRect w
-    where shiftBy n r = r { px = n + px r, py = n + py r }
+  where
+    shiftBy n r = r{px = n + px r, py = n + py r}
 
 drawTab :: (Int, Int) -> Rect -> Win -> Doc
 drawTab shift r w = group (winTitle w) r $ drawWin (withRelWinMargin $ shiftRect shift r) w
-    where group title rect body = P.vcat
-            [ ppProc "FLgroup" $ (P.textStrict $ Text.pack $ show title) : rectToFrame rect
-            , body
-            , ppProc "FLgroupEnd" []]
+  where
+    group title rect body =
+      P.vcat
+        [ ppProc "FLgroup" $ (P.textStrict $ Text.pack $ show title) : rectToFrame rect
+        , body
+        , ppProc "FLgroupEnd" []
+        ]
 
-          shiftRect (dx, dy) rect = rect
-            { px = dx + px rect
-            , py = dy + py rect }
+    shiftRect (dx, dy) rect =
+      rect
+        { px = dx + px rect
+        , py = dy + py rect
+        }
 
 rectToFrame :: Rect -> [Doc]
 rectToFrame rect = fmap P.int [width rect, height rect, px rect, py rect]
 
 drawWin :: Rect -> Win -> Doc
 drawWin rect w = renderAbsScene $ Box.draw rect $ unGui $ winGui w
-    where
-        renderAbsScene = Box.cascade drawPrim P.empty P.vcat onCtx setProps def
-            where
-                setProps ps = appEndo $ mconcat $ fmap (Endo . setPropCtx) (otherProps ps)
+  where
+    renderAbsScene = Box.cascade drawPrim P.empty P.vcat onCtx setProps def
+      where
+        setProps ps = appEndo $ mconcat $ fmap (Endo . setPropCtx) (otherProps ps)
 
-                onCtx r ps res = maybe res (\borderType -> drawBorder borderType r res) (propsBorder ps)
+        onCtx r ps res = maybe res (\borderType -> drawBorder borderType r res) (propsBorder ps)
 
 drawBorder :: BorderType -> Rect -> Doc -> Doc
-drawBorder borderType rect a = P.vcat
+drawBorder borderType rect a =
+  P.vcat
     [ ppProc "FLgroup" $ (P.empty : frame) ++ [borderAsInt borderType]
     , a
-    , ppProc "FLgroupEnd" []]
-    where borderAsInt = P.int . fromEnum
-          frame = rectToFrame rect
+    , ppProc "FLgroupEnd" []
+    ]
+  where
+    borderAsInt = P.int . fromEnum
+    frame = rectToFrame rect
 
 drawPrim :: PropCtx -> Rect -> ElemWithOuts -> Doc
-drawPrim ctx rect elem = P.vcat
+drawPrim ctx rect elem =
+  P.vcat
     [ drawElemDef ctx rect elem
     , drawAppearance ctx elem
-    , drawInitVal elem ]
+    , drawInitVal elem
+    ]
 
 drawAppearance :: PropCtx -> ElemWithOuts -> Doc
-drawAppearance ctx el = maybe P.empty (flip flSetAll ctx)
-    $ getPropHandle $ elemOuts el
+drawAppearance ctx el =
+  maybe P.empty (flip flSetAll ctx) $
+    getPropHandle $
+      elemOuts el
 
 drawInitVal :: ElemWithOuts -> Doc
 drawInitVal = P.vcat . fmap flSetVal_i . elemInits
 
 drawElemDef :: PropCtx -> Rect -> ElemWithOuts -> Doc
 drawElemDef ctx rectWithoutLabel el = case elemContent el of
+  -- valuators
+  Count diap step1 step2 -> drawCount diap step1 step2
+  Joy span1 span2 -> drawJoy span1 span2
+  Knob span -> drawKnob span
+  Roller span step -> drawRoller span step
+  Slider span -> drawSlider span
+  Text diap step -> drawText diap step
+  -- other widgets
+  Box label -> drawBox label
+  ButBank xn yn -> drawButBank xn yn
+  Button instrId -> drawButton instrId
+  Toggle -> drawToggle
+  Value -> drawValue
+  Vkeybd -> drawVkeybd
+  -- error
+  GuiVar guiHandle -> orphanGuiVar guiHandle
+  where
+    rect = clearSpaceForLabel $ rectWithoutLabel
+    clearSpaceForLabel a
+      | label == "" = a
+      | otherwise = a{height = max 20 $ height a - yLabelBox (getIntFontSize ctx)}
+      where
+        label = getLabel ctx
+
+    f = fWithLabel (getLabel ctx)
+
+    fWithLabel :: Text -> Text -> [Doc] -> Doc
+    fWithLabel label name args = ppMoOpc (fmap ppVar $ elemOuts el) name ((P.textStrict label) : args)
+    fNoLabel name args = ppMoOpc (fmap ppVar $ elemOuts el) name args
+    frame = frameBy rect
+    frameWithoutLabel = frameBy rectWithoutLabel
+    frameBy x = fmap P.int [width x, height x, px x, py x]
+    noDisp = P.int (-1)
+    noOpc = P.int (-1)
+    onOpc instrId xs = P.int 0 : P.int (instrIdCeil instrId) : fmap P.double xs
+    drawSpan (ValSpan diap scale) = [imin diap, imax diap, getScale scale]
+
+    imin = P.double . valDiapMin
+    imax = P.double . valDiapMax
+
+    -----------------------------------------------------------------------
     -- valuators
-    Count  diap step1 step2 -> drawCount diap step1 step2
-    Joy    span1 span2      -> drawJoy span1 span2
-    Knob   span             -> drawKnob span
-    Roller span step        -> drawRoller span step
-    Slider span             -> drawSlider span
-    Text   diap step        -> drawText diap step
 
+    -- FLcount
+    drawCount diap step1 mValStep2 =
+      f "FLcount" $
+        [ imin diap
+        , imax diap
+        , P.double step1
+        , P.double step2
+        , P.int itype
+        ]
+          ++ frame
+          ++ [noOpc]
+      where
+        (step2, itype) = case mValStep2 of
+          -- type 1 FLcount with 2 steps
+          Just n -> (n, 1)
+          -- type 2 FLcount with a single step
+          Nothing -> (step1, 2)
+
+    -- FLjoy
+    drawJoy (ValSpan dX sX) (ValSpan dY sY) =
+      f "FLjoy" $
+        [ imin dX
+        , imax dX
+        , imin dY
+        , imax dY
+        , getScale sX
+        , getScale sY
+        , noDisp
+        , noDisp
+        ]
+          ++ frame
+
+    -- FLknob
+    drawKnob span =
+      f "FLknob" $
+        drawSpan span
+          ++ [getKnobType ctx, noDisp]
+          ++ fmap P.int knobFrame
+          ++ getKnobCursorSize ctx
+      where
+        knobFrame
+          | w < h = [w, x, y + d]
+          | otherwise = [h, x + d, y]
+        h = height rect
+        w = width rect
+        x = px rect
+        y = py rect
+        d = div (abs $ h - w) 2
+
+    -- FLroller
+    drawRoller (ValSpan d s) step =
+      f "FLroller" $
+        [ imin d
+        , imax d
+        , P.double step
+        , getScale s
+        , getRollerType (getDefOrient rect) ctx
+        , noDisp
+        ]
+          ++ frame
+
+    -- FLslider
+    drawSlider span =
+      f "FLslider" $
+        drawSpan span
+          ++ [getSliderType (getDefOrient rect) ctx, noDisp]
+          ++ frame
+
+    -- FLtext
+    drawText diap step =
+      f "FLtext" $
+        [imin diap, imax diap, P.double step, getTextType ctx] ++ frame
+
+    -----------------------------------------------------------------------
     -- other widgets
-    Box label               -> drawBox label
-    ButBank xn yn           -> drawButBank xn yn
-    Button instrId          -> drawButton instrId
-    Toggle                  -> drawToggle
-    Value                   -> drawValue
-    Vkeybd                  -> drawVkeybd
 
-    -- error
-    GuiVar guiHandle        -> orphanGuiVar guiHandle
-    where
-        rect = clearSpaceForLabel $ rectWithoutLabel
-        clearSpaceForLabel a
-            | label == ""   = a
-            | otherwise     = a { height = max 20 $ height a - yLabelBox (getIntFontSize ctx) }
-            where label = getLabel ctx
+    -- FLbox
+    drawBox label =
+      fWithLabel label "FLbox" $
+        [getBoxType ctx, getFontType ctx, getFontSize ctx] ++ frameWithoutLabel
 
-        f = fWithLabel (getLabel ctx)
+    -- FLbutBank
+    drawButBank xn yn =
+      fNoLabel "FLbutBank" $
+        [getButtonBankType ctx, P.int xn, P.int yn] ++ frameWithoutLabel ++ [noOpc]
 
-        fWithLabel :: Text -> Text -> [Doc] -> Doc
-        fWithLabel label name args = ppMoOpc (fmap ppVar $ elemOuts el) name ((P.textStrict label) : args)
-        fNoLabel name args = ppMoOpc (fmap ppVar $ elemOuts el) name args
-        frame = frameBy rect
-        frameWithoutLabel = frameBy rectWithoutLabel
-        frameBy x = fmap P.int [width x, height x, px x, py x]
-        noDisp = P.int (-1)
-        noOpc  = P.int (-1)
-        onOpc instrId xs = P.int 0 : P.int (instrIdCeil instrId) : fmap P.double xs
-        drawSpan (ValSpan diap scale) = [imin diap, imax diap, getScale scale]
+    -- FLbutton's
+    drawButton instrId = f "FLbutton" $ [P.int 1, P.int 0, getButtonType ctx] ++ frameWithoutLabel ++ (onOpc instrId [0, infiniteDur])
 
-        imin = P.double . valDiapMin
-        imax = P.double . valDiapMax
+    drawToggle = f "FLbutton" $ [P.int 1, P.int 0, getToggleType ctx] ++ frameWithoutLabel ++ [noOpc]
 
-        -----------------------------------------------------------------------
-        -- valuators
+    -- FLvalue
+    drawValue = f "FLvalue" frame
 
-        -- FLcount
-        drawCount diap step1 mValStep2 = f "FLcount" $
-            [ imin diap, imax diap
-            , P.double step1, P.double step2
-            , P.int itype ]
-            ++ frame ++ [noOpc]
-            where (step2, itype) = case mValStep2 of
-                    -- type 1 FLcount with 2 steps
-                    Just n  -> (n, 1)
-                    -- type 2 FLcount with a single step
-                    Nothing -> (step1, 2)
-
-        -- FLjoy
-        drawJoy (ValSpan dX sX) (ValSpan dY sY) = f "FLjoy" $
-            [ imin dX, imax dX, imin dY, imax dY
-            , getScale sX, getScale sY
-            , noDisp, noDisp
-            ] ++ frame
-
-        -- FLknob
-        drawKnob span = f "FLknob" $
-            drawSpan span ++ [getKnobType ctx, noDisp]
-            ++ fmap P.int knobFrame ++ getKnobCursorSize ctx
-            where
-                knobFrame
-                    | w < h     = [w, x, y + d]
-                    | otherwise = [h, x + d, y]
-                h = height rect
-                w = width rect
-                x = px rect
-                y = py rect
-                d = div (abs $ h - w) 2
-
-        -- FLroller
-        drawRoller (ValSpan d s) step = f "FLroller" $
-            [ imin d, imax d, P.double step
-            , getScale s, getRollerType (getDefOrient rect) ctx, noDisp
-            ] ++ frame
-
-        -- FLslider
-        drawSlider span = f "FLslider" $
-            drawSpan span
-            ++ [getSliderType (getDefOrient rect) ctx, noDisp]
-            ++ frame
-
-        -- FLtext
-        drawText diap step = f "FLtext" $
-            [imin diap, imax diap, P.double step, getTextType ctx] ++ frame
-
-        -----------------------------------------------------------------------
-        -- other widgets
-
-        -- FLbox
-        drawBox label = fWithLabel label "FLbox" $
-            [ getBoxType ctx, getFontType ctx, getFontSize ctx ] ++ frameWithoutLabel
-
-        -- FLbutBank
-        drawButBank xn yn = fNoLabel "FLbutBank" $
-            [getButtonBankType ctx, P.int xn, P.int yn] ++ frameWithoutLabel ++ [noOpc]
-
-        -- FLbutton's
-        drawButton instrId = f "FLbutton" $ [P.int 1, P.int 0, getButtonType ctx] ++ frameWithoutLabel ++ (onOpc instrId [0, infiniteDur])
-
-        drawToggle = f "FLbutton" $ [P.int 1, P.int 0, getToggleType ctx] ++ frameWithoutLabel ++ [noOpc]
-
-        -- FLvalue
-        drawValue = f "FLvalue" frame
-
-        -- FLvkeybd
-        drawVkeybd = fWithLabel "" "FLvkeybd" frame
+    -- FLvkeybd
+    drawVkeybd = fWithLabel "" "FLvkeybd" frame
 
 -----------------------------------------------------------------
 -- handy shortcuts
@@ -524,88 +639,92 @@ winMargin :: Int
 winMargin = 10
 
 appendWinMargin :: Rect -> Rect
-appendWinMargin r = r
-    { width  = 2 * winMargin + width r
+appendWinMargin r =
+  r
+    { width = 2 * winMargin + width r
     , height = 2 * winMargin + height r
     }
 
 withWinMargin :: Rect -> Rect
-withWinMargin r = r
+withWinMargin r =
+  r
     { px = winMargin
     , py = winMargin
     , height = height r - 2 * winMargin
-    , width  = width  r - 2 * winMargin
+    , width = width r - 2 * winMargin
     }
 
 withRelWinMargin :: Rect -> Rect
-withRelWinMargin r = r
+withRelWinMargin r =
+  r
     { px = winMargin + px r
     , py = winMargin + py r
     , height = height r - 2 * winMargin
-    , width  = width  r - 2 * winMargin
+    , width = width r - 2 * winMargin
     }
 
 bestRect :: ScaleFactor -> Gui -> Rect
-bestRect defaultScaleUI
-    = appendWinMargin . Box.boundingRect
+bestRect defaultScaleUI =
+  appendWinMargin
+    . Box.boundingRect
     . mapWithOrientAndScale defaultScaleUI (\curOrient curScaleFactor x -> uncurry noShiftRect $ bestElemSizesRescaled curScaleFactor $ bestElemSizes curOrient $ elemContent x)
     . unGui
-    where noShiftRect w h = Rect { px = 0, py = 0, width = w, height = h }
+  where
+    noShiftRect w h = Rect{px = 0, py = 0, width = w, height = h}
 
 mapWithOrientAndScale :: ScaleFactor -> (Orient -> ScaleFactor -> a -> b) -> Box.Scene Props a -> Box.Scene Props b
 mapWithOrientAndScale defaultScaleUI f = iter Hor defaultScaleUI
-    where
-        iter curOrient curScale x = case x of
-            Box.Prim a          -> Box.Prim $ f curOrient curScale a
-            Box.Space           -> Box.Space
-            Box.Scale d a       -> Box.Scale d $ iter curOrient curScale a
-            Box.Hor offs as     -> Box.Hor offs $ fmap (iter Hor curScale) as
-            Box.Ver offs as     -> Box.Ver offs $ fmap (iter Ver curScale) as
-            Box.Context ctx a   -> case propsScaleFactor ctx of
-                    Nothing -> Box.Context ctx $ iter curOrient curScale a
-                    Just newScale -> Box.Context ctx $ iter curOrient (mulFactors curScale newScale) a
-            where
-                mulFactors (x1, y1) (x2, y2) = (x1 * x2, y1 * y2)
+  where
+    iter curOrient curScale x = case x of
+      Box.Prim a -> Box.Prim $ f curOrient curScale a
+      Box.Space -> Box.Space
+      Box.Scale d a -> Box.Scale d $ iter curOrient curScale a
+      Box.Hor offs as -> Box.Hor offs $ fmap (iter Hor curScale) as
+      Box.Ver offs as -> Box.Ver offs $ fmap (iter Ver curScale) as
+      Box.Context ctx a -> case propsScaleFactor ctx of
+        Nothing -> Box.Context ctx $ iter curOrient curScale a
+        Just newScale -> Box.Context ctx $ iter curOrient (mulFactors curScale newScale) a
+      where
+        mulFactors (x1, y1) (x2, y2) = (x1 * x2, y1 * y2)
 
 bestElemSizesRescaled :: ScaleFactor -> (Int, Int) -> (Int, Int)
 bestElemSizesRescaled (scaleX, scaleY) (sizeX, sizeY) = (mul scaleX sizeX, mul scaleY sizeY)
-    where mul d n = round $ d * fromIntegral n
+  where
+    mul d n = round $ d * fromIntegral n
 
 bestElemSizes :: Orient -> Elem -> (Int, Int)
 bestElemSizes orient x = case x of
-    -- valuators
-    Count   _ _ _   -> (120, 30)
-    Joy     _ _     -> (200, 200)
-    Knob    _       -> (80, 80)
-    Roller  _ _     -> inVer (150, 30)
-    Slider  _       -> inVer (150, 25)
-    Text    _ _     -> (100, 35)
-
-    -- other widgets
-    Box     label    ->
-        let symbolsPerLine = 60
-            numOfLines = succ $ div (Text.length label) symbolsPerLine
-        in  (xBox 15 symbolsPerLine, yBox 15 numOfLines)
-
-    ButBank xn yn   -> (xn * 70, yn * 35)
-    Button _        -> (75, 35)
-    Toggle          -> (75, 35)
-    Value           -> (80, 35)
-    Vkeybd          -> (1080, 240)
-
-    -- error
-    GuiVar h        -> orphanGuiVar h
-    where inVer (a, b) = case orient of
-            Ver -> (a, b)
-            Hor -> (b, a)
+  -- valuators
+  Count _ _ _ -> (120, 30)
+  Joy _ _ -> (200, 200)
+  Knob _ -> (80, 80)
+  Roller _ _ -> inVer (150, 30)
+  Slider _ -> inVer (150, 25)
+  Text _ _ -> (100, 35)
+  -- other widgets
+  Box label ->
+    let
+      symbolsPerLine = 60
+      numOfLines = succ $ div (Text.length label) symbolsPerLine
+     in
+      (xBox 15 symbolsPerLine, yBox 15 numOfLines)
+  ButBank xn yn -> (xn * 70, yn * 35)
+  Button _ -> (75, 35)
+  Toggle -> (75, 35)
+  Value -> (80, 35)
+  Vkeybd -> (1080, 240)
+  -- error
+  GuiVar h -> orphanGuiVar h
+  where
+    inVer (a, b) = case orient of
+      Ver -> (a, b)
+      Hor -> (b, a)
 
 ------------------------------------------------------------
 -- FLbox font coefficients
 
 xBox, yBox :: Int -> Int -> Int
-
 xBox fontSize xn = round $ fromIntegral fontSize * (0.6 :: Double) * fromIntegral (1 + xn)
-
 yBox fontSize yn = (fontSize + 12) * (1 + yn)
 
 yLabelBox :: Int -> Int
@@ -615,27 +734,41 @@ yLabelBox fontSize = fontSize - 5
 -- set properties
 
 flSetAll :: Var -> PropCtx -> Doc
-flSetAll handle ctx = P.vcat $ fmap (\f -> f handle ctx)
-    [ flSetColor, flSetColor2, flSetTextColor
-    , flSetTextSize, flSetTextType, flSetFont ]
+flSetAll handle ctx =
+  P.vcat $
+    fmap
+      (\f -> f handle ctx)
+      [ flSetColor
+      , flSetColor2
+      , flSetTextColor
+      , flSetTextSize
+      , flSetTextType
+      , flSetFont
+      ]
 
-flSetColor, flSetColor2, flSetTextColor, flSetTextSize, flSetTextType,
-    flSetFont :: Var -> PropCtx -> Doc
-
-flSetProp :: Text
-    -> (PropCtx -> Maybe a)
-    -> (PropCtx -> Doc)
-    -> Var -> PropCtx -> Doc
+flSetColor
+  , flSetColor2
+  , flSetTextColor
+  , flSetTextSize
+  , flSetTextType
+  , flSetFont ::
+    Var -> PropCtx -> Doc
+flSetProp ::
+  Text ->
+  (PropCtx -> Maybe a) ->
+  (PropCtx -> Doc) ->
+  Var ->
+  PropCtx ->
+  Doc
 flSetProp name isDef select handle ctx
-    | isNothing $ isDef ctx = P.empty
-    | otherwise             = ppProc name [select ctx, ppVar handle]
-
-flSetColor        = flSetProp "FLsetColor"        ctxColor1       getColor1
-flSetColor2       = flSetProp "FLsetColor2"       ctxColor2       getColor2
-flSetTextColor    = flSetProp "FLsetTextColor"    ctxTextColor    getTextColor
-flSetTextSize     = flSetProp "FLsetTextSize"     (const $ Just (15 :: Int)) getFontSize
-flSetTextType     = flSetProp "FLsetTextType"     ctxLabelType    getLabelType
-flSetFont         = flSetProp "FLsetFont"         ctxFontType     getFontType
+  | isNothing $ isDef ctx = P.empty
+  | otherwise = ppProc name [select ctx, ppVar handle]
+flSetColor = flSetProp "FLsetColor" ctxColor1 getColor1
+flSetColor2 = flSetProp "FLsetColor2" ctxColor2 getColor2
+flSetTextColor = flSetProp "FLsetTextColor" ctxTextColor getTextColor
+flSetTextSize = flSetProp "FLsetTextSize" (const $ Just (15 :: Int)) getFontSize
+flSetTextType = flSetProp "FLsetTextType" ctxLabelType getLabelType
+flSetFont = flSetProp "FLsetFont" ctxFontType getFontType
 
 flSetVal_i :: InitMe -> Doc
 flSetVal_i (InitMe handle v0) = ppProc "FLsetVal_i" [P.double v0, ppVar handle]
@@ -645,8 +778,8 @@ flSetVal_i (InitMe handle v0) = ppProc "FLsetVal_i" [P.double v0, ppVar handle]
 
 getPropHandle :: [Var] -> Maybe Var
 getPropHandle xs = case xs of
-    [] -> Nothing
-    _  -> Just (last xs)
+  [] -> Nothing
+  _ -> Just (last xs)
 
 ------------------------------------------------------------
 -- error messages

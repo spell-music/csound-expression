@@ -1,18 +1,27 @@
-{-# Language ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -- | Converts to low-level instruments
-module Csound.Typed.Control.Instr(
-    Arity(..), InsExp, EffExp,
-    funArity, constArity,
-    insExp, effExp, masterExp, midiExp, unitExp,
-    apInstr, apInstr0
+module Csound.Typed.Control.Instr (
+  Arity (..),
+  InsExp,
+  EffExp,
+  funArity,
+  constArity,
+  insExp,
+  effExp,
+  masterExp,
+  midiExp,
+  unitExp,
+  apInstr,
+  apInstr0,
 ) where
 
+import Csound.Dynamic (InstrId (..))
+import Csound.Typed.GlobalState.Elements qualified as C
 import Data.Proxy
-import Csound.Dynamic(InstrId(..))
-import qualified Csound.Typed.GlobalState.Elements as C
 
-import Csound.Typed.Types
 import Csound.Typed.GlobalState
+import Csound.Typed.Types
 
 funArity :: forall a b. (Tuple a, Tuple b) => (a -> SE b) -> Arity
 funArity _instr = Arity (tupleArity (Proxy :: Proxy a)) (tupleArity (Proxy :: Proxy b))

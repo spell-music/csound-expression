@@ -1,53 +1,55 @@
-module Csound.Typed.Opcode (module Csound.Typed.Opcode.SignalGenerators,
-    module Csound.Typed.Opcode.SignalIO,
-    module Csound.Typed.Opcode.SignalModifiers,
-    module Csound.Typed.Opcode.InstrumentControl,
-    module Csound.Typed.Opcode.JackoOpcodes,
-    module Csound.Typed.Opcode.SerialIO,
-    module Csound.Typed.Opcode.TableControl,
-    module Csound.Typed.Opcode.FLTK,
-    module Csound.Typed.Opcode.MathematicalOperations,
-    module Csound.Typed.Opcode.PitchConverters,
-    module Csound.Typed.Opcode.RealtimeMIDI,
-    module Csound.Typed.Opcode.SignalFlowGraphOpcodes,
-    module Csound.Typed.Opcode.SpectralProcessing,
-    module Csound.Typed.Opcode.Strings,
-    module Csound.Typed.Opcode.Vectorial,
-    module Csound.Typed.Opcode.ZakPatchSystem,
-    module Csound.Typed.Opcode.PluginHosting,
-    module Csound.Typed.Opcode.OSC,
-    module Csound.Typed.Opcode.FaustOpcodes,
-    module Csound.Typed.Opcode.Network,
-    module Csound.Typed.Opcode.RemoteOpcodes,
-    module Csound.Typed.Opcode.MixerOpcodes,
-    module Csound.Typed.Opcode.AbletonLinkOpcodes,
-    module Csound.Typed.Opcode.ImageProcessingOpcodes,
-    module Csound.Typed.Opcode.Deprecated,
-    module Csound.Typed.Opcode.Miscellaneous) where
+module Csound.Typed.Opcode (
+  module Csound.Typed.Opcode.SignalGenerators,
+  module Csound.Typed.Opcode.SignalIO,
+  module Csound.Typed.Opcode.SignalModifiers,
+  module Csound.Typed.Opcode.InstrumentControl,
+  module Csound.Typed.Opcode.JackoOpcodes,
+  module Csound.Typed.Opcode.SerialIO,
+  module Csound.Typed.Opcode.TableControl,
+  module Csound.Typed.Opcode.FLTK,
+  module Csound.Typed.Opcode.MathematicalOperations,
+  module Csound.Typed.Opcode.PitchConverters,
+  module Csound.Typed.Opcode.RealtimeMIDI,
+  module Csound.Typed.Opcode.SignalFlowGraphOpcodes,
+  module Csound.Typed.Opcode.SpectralProcessing,
+  module Csound.Typed.Opcode.Strings,
+  module Csound.Typed.Opcode.Vectorial,
+  module Csound.Typed.Opcode.ZakPatchSystem,
+  module Csound.Typed.Opcode.PluginHosting,
+  module Csound.Typed.Opcode.OSC,
+  module Csound.Typed.Opcode.FaustOpcodes,
+  module Csound.Typed.Opcode.Network,
+  module Csound.Typed.Opcode.RemoteOpcodes,
+  module Csound.Typed.Opcode.MixerOpcodes,
+  module Csound.Typed.Opcode.AbletonLinkOpcodes,
+  module Csound.Typed.Opcode.ImageProcessingOpcodes,
+  module Csound.Typed.Opcode.Deprecated,
+  module Csound.Typed.Opcode.Miscellaneous,
+) where
 
+import Csound.Typed.Opcode.AbletonLinkOpcodes
+import Csound.Typed.Opcode.Deprecated
+import Csound.Typed.Opcode.FLTK
+import Csound.Typed.Opcode.FaustOpcodes
+import Csound.Typed.Opcode.ImageProcessingOpcodes
+import Csound.Typed.Opcode.InstrumentControl
+import Csound.Typed.Opcode.JackoOpcodes
+import Csound.Typed.Opcode.MathematicalOperations
+import Csound.Typed.Opcode.Miscellaneous
+import Csound.Typed.Opcode.MixerOpcodes
+import Csound.Typed.Opcode.Network
+import Csound.Typed.Opcode.OSC
+import Csound.Typed.Opcode.PitchConverters
+import Csound.Typed.Opcode.PluginHosting
+import Csound.Typed.Opcode.RealtimeMIDI
+import Csound.Typed.Opcode.RemoteOpcodes
+import Csound.Typed.Opcode.SerialIO
+import Csound.Typed.Opcode.SignalFlowGraphOpcodes
 import Csound.Typed.Opcode.SignalGenerators
 import Csound.Typed.Opcode.SignalIO
 import Csound.Typed.Opcode.SignalModifiers
-import Csound.Typed.Opcode.InstrumentControl
-import Csound.Typed.Opcode.JackoOpcodes
-import Csound.Typed.Opcode.SerialIO
-import Csound.Typed.Opcode.TableControl
-import Csound.Typed.Opcode.FLTK
-import Csound.Typed.Opcode.MathematicalOperations
-import Csound.Typed.Opcode.PitchConverters
-import Csound.Typed.Opcode.RealtimeMIDI
-import Csound.Typed.Opcode.SignalFlowGraphOpcodes
 import Csound.Typed.Opcode.SpectralProcessing
 import Csound.Typed.Opcode.Strings
+import Csound.Typed.Opcode.TableControl
 import Csound.Typed.Opcode.Vectorial
 import Csound.Typed.Opcode.ZakPatchSystem
-import Csound.Typed.Opcode.PluginHosting
-import Csound.Typed.Opcode.OSC
-import Csound.Typed.Opcode.FaustOpcodes
-import Csound.Typed.Opcode.Network
-import Csound.Typed.Opcode.RemoteOpcodes
-import Csound.Typed.Opcode.MixerOpcodes
-import Csound.Typed.Opcode.AbletonLinkOpcodes
-import Csound.Typed.Opcode.ImageProcessingOpcodes
-import Csound.Typed.Opcode.Deprecated
-import Csound.Typed.Opcode.Miscellaneous

@@ -26,4 +26,3 @@ main = vdac $ midi $ onMsg pureTone
 -- we can try with hardware midi:
 
 -- main = dac $ midi $ onMsg pureTone
-

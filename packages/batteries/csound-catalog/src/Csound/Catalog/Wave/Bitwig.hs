@@ -1,10 +1,17 @@
-module Csound.Catalog.Wave.Bitwig(
-  pwPad, pwPadMidi, triPad, triPadFx, triPadBy, pwPadBy,
-  Accordeon(..), accordeon, accordeonFx
+module Csound.Catalog.Wave.Bitwig (
+  pwPad,
+  pwPadMidi,
+  triPad,
+  triPadFx,
+  triPadBy,
+  pwPadBy,
+  Accordeon (..),
+  accordeon,
+  accordeonFx,
 ) where
 
-import Prelude hiding (filter)
 import Csound.Base hiding (lfo)
+import Prelude hiding (filter)
 
 ---------------------------------------------------
 -- wind pads
@@ -25,7 +32,8 @@ pwPad = pwPadBy mlp
 
 pwPadBy :: ResonFilter -> Sig -> SE Sig
 pwPadBy filter x = mul (fades 0.3 0.95) $ at (filter (x * 5) 0.15) $ do
-  let lfo = uosc 4
+  let
+    lfo = uosc 4
   return $ mul 0.5 $ pw (0.2 + 0.4 * lfo) x + tri (x * cent 8)
 
 pwPadMidi :: SE Sig2

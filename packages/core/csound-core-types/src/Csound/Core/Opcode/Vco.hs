@@ -1,32 +1,31 @@
-module Csound.Core.Opcode.Vco
-  ( VcoTab (..)
-  , VcoShape (..)
-  , VcoInit (..)
-  , vcoInit
-  , vco2ft
-  , saw
-  , sqr
-  , tri
-  , pulse
-  , isaw
-  , blosc
-  , saw'
-  , sqr'
-  , tri'
-  , pulse'
-  , isaw'
-  , blosc'
-  , vcoTab
-  , oscilikt
-  ) where
+module Csound.Core.Opcode.Vco (
+  VcoTab (..),
+  VcoShape (..),
+  VcoInit (..),
+  vcoInit,
+  vco2ft,
+  saw,
+  sqr,
+  tri,
+  pulse,
+  isaw,
+  blosc,
+  saw',
+  sqr',
+  tri',
+  pulse',
+  isaw',
+  blosc',
+  vcoTab,
+  oscilikt,
+) where
 
-import Csound.Dynamic (E, Gen)
-import Csound.Dynamic (Rate (..))
-import Csound.Core.Types
 import Csound.Core.State (Run)
 import Csound.Core.State qualified as State
+import Csound.Core.Types
+import Csound.Dynamic (E, Gen, Rate (..))
 
-newtype VcoTab = VcoTab { unVcoTab :: Run E }
+newtype VcoTab = VcoTab {unVcoTab :: Run E}
 
 instance Val VcoTab where
   fromE = VcoTab
@@ -45,15 +44,15 @@ instance Tuple VcoTab where
 data VcoShape = Saw | Pulse | Square | Triangle | IntegratedSaw | UserGen Tab
 
 data VcoInit = VcoInit
-  { vcoShape   :: VcoShape
-  , vcoMul     :: Maybe Double
+  { vcoShape :: VcoShape
+  , vcoMul :: Maybe Double
   , vcoMinSize :: Maybe Int
   , vcoMaxSize :: Maybe Int
   }
 
 toInternalVcoShape :: VcoShape -> Run State.VcoShape
 toInternalVcoShape = \case
-  Saw   -> pure State.Saw
+  Saw -> pure State.Saw
   Pulse -> pure State.Pulse
   Square -> pure State.Square
   Triangle -> pure State.Triangle
@@ -125,5 +124,4 @@ vcoTab t cps = oscilikt 1 cps (vco2ft cps $ vcoInit (VcoInit (UserGen t) Nothing
 oscilikt :: Sig -> Sig -> Tab -> D -> Sig
 oscilikt amp cps fn mphase = liftOpc "oscilikt" rates (amp, cps, fn, mphase)
   where
-    rates = [ (Ar, [Xr, Xr, Kr, Ir, Ir]), (Kr, [Kr, Kr, Kr, Ir, Ir])]
-
+    rates = [(Ar, [Xr, Xr, Kr, Ir, Ir]), (Kr, [Kr, Kr, Kr, Ir, Ir])]

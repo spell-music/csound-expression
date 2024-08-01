@@ -1,31 +1,80 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-module Csound.Catalog.Wave.Sharc(
-    -- * Oscillators
-    sharcOsc, sigSharcOsc, rndSharcOsc, rndSigSharcOsc,
-    soloSharcOsc, orcSharcOsc, purePadSharcOsc, padSharcOsc,
 
-    -- * Padsynth
-    PadSharcSpec(..), padsynthSharcOsc, padsynthSharcOsc2,
-    padsynthSharcOsc', padsynthSharcOsc2',
+module Csound.Catalog.Wave.Sharc (
+  -- * Oscillators
+  sharcOsc,
+  sigSharcOsc,
+  rndSharcOsc,
+  rndSigSharcOsc,
+  soloSharcOsc,
+  orcSharcOsc,
+  purePadSharcOsc,
+  padSharcOsc,
 
-    -- * Padsynth and granular
-    morphsynthSharcOsc, morphsynthSharcOsc', quadMorphsynthSharcOsc, quadMorphsynthSharcOsc',
+  -- * Padsynth
+  PadSharcSpec (..),
+  padsynthSharcOsc,
+  padsynthSharcOsc2,
+  padsynthSharcOsc',
+  padsynthSharcOsc2',
 
-    -- * Instriments
-    SharcInstr(..),
-    shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
-    shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
-    shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
-    shCelloMuted, shCelloMarteleBowing, shContrabassPizzicato, shContrabassMuted, shContrabassMarteleBowing, shContrabass,
-    shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute,
+  -- * Padsynth and granular
+  morphsynthSharcOsc,
+  morphsynthSharcOsc',
+  quadMorphsynthSharcOsc,
+  quadMorphsynthSharcOsc',
 
-    -- * Low-level getters
-    getInstrTab, note2sig, note2tab
+  -- * Instriments
+  SharcInstr (..),
+  shViolin,
+  shViolinPizzicato,
+  shViolinMuted,
+  shViolinMarteleBowing,
+  shViolinsEnsemble,
+  shViola,
+  shViolaPizzicato,
+  shViolaMuted,
+  shViolaMarteleBowing,
+  shTuba,
+  shTromboneMuted,
+  shTrombone,
+  shPiccolo,
+  shOboe,
+  shFrenchHornMuted,
+  shFrenchHorn,
+  shFlute,
+  shEnglishHorn,
+  shClarinetEflat,
+  shTrumpetMutedC,
+  shTrumpetC,
+  shContrabassClarinet,
+  shContrabassoon,
+  shCello,
+  shCelloPizzicato,
+  shCelloMuted,
+  shCelloMarteleBowing,
+  shContrabassPizzicato,
+  shContrabassMuted,
+  shContrabassMarteleBowing,
+  shContrabass,
+  shClarinet,
+  shBassTrombone,
+  shBassClarinet,
+  shBassoon,
+  shBassFlute,
+  shTrumpetBach,
+  shAltoTrombone,
+  shAltoFlute,
+
+  -- * Low-level getters
+  getInstrTab,
+  note2sig,
+  note2tab,
 ) where
 
-import qualified Sharc.Types as Sh
-import qualified Sharc.Data as Sh
 import Csound.Base
+import qualified Sharc.Data as Sh
+import qualified Sharc.Types as Sh
 
 note2sig :: Sh.Note -> Sig
 note2sig n = oscBy (harmonics2tab $ Sh.noteHarmonics n) (sig $ double $ Sh.pitchFund $ Sh.notePitch n)
@@ -40,12 +89,12 @@ harmonics2tab harmonics = sines3 $ fmap (\h -> (fromIntegral $ Sh.harmonicId h, 
 -- | Get instrument wave table by midi pitch number.
 getInstrTab :: SharcInstr -> Int -> Tab
 getInstrTab (SharcInstr instr) n = note2tab $ Sh.instrNotes instr !! idx
-    where
-        ns = Sh.instrNotes instr
-        keys = fmap (Sh.pitchKeyNum . Sh.notePitch) ns
-        keyMin = minimum keys
-        keyMax = maximum keys
-        idx = (min (max keyMin n) keyMax - keyMin)
+  where
+    ns = Sh.instrNotes instr
+    keys = fmap (Sh.pitchKeyNum . Sh.notePitch) ns
+    keyMin = minimum keys
+    keyMax = maximum keys
+    idx = (min (max keyMin n) keyMax - keyMin)
 
 ---------------------------------------------------------------------------
 -- oscilliators
@@ -54,9 +103,10 @@ getInstrTab (SharcInstr instr) n = note2tab $ Sh.instrNotes instr !! idx
 sharcOsc :: SharcInstr -> D -> Sig
 sharcOsc instr cpsTab = sigSharcOsc instr cpsTab (sig cpsTab)
 
--- | Sharc oscillator with continuous pitch.
--- The second argument picks upth table by frequency
--- and the third supplies the frequency.
+{- | Sharc oscillator with continuous pitch.
+The second argument picks upth table by frequency
+and the third supplies the frequency.
+-}
 sigSharcOsc :: SharcInstr -> D -> Sig -> Sig
 sigSharcOsc = genSharcOsc' oscBy
 
@@ -70,17 +120,17 @@ rndSigSharcOsc = genSharcOsc' rndOscBy
 
 genSharcOsc' :: (Tab -> Sig -> a) -> SharcInstr -> D -> Sig -> a
 genSharcOsc' wave (SharcInstr instr) cps cpsSig = wave t cpsSig
-    where
-        t = fromTabListD tabs (cps2pitch cps - int keyMin)
+  where
+    t = fromTabListD tabs (cps2pitch cps - int keyMin)
 
-        tabs = tabList $ fmap note2tab ns
+    tabs = tabList $ fmap note2tab ns
 
-        ns = Sh.instrNotes instr
-        keys = fmap (Sh.pitchKeyNum . Sh.notePitch) ns
-        keyMin = minimum keys
+    ns = Sh.instrNotes instr
+    keys = fmap (Sh.pitchKeyNum . Sh.notePitch) ns
+    keyMin = minimum keys
 
-cps2pitch :: Floating a => a -> a
-cps2pitch x =  69 + 12 * logBase 2 (x / 440)
+cps2pitch :: (Floating a) => a -> a
+cps2pitch x = 69 + 12 * logBase 2 (x / 440)
 
 ---------------------------------------------------------------------------
 -- patches
@@ -106,13 +156,13 @@ padSharcOsc instr cps = mul (fades 0.65 0.75) $ uni (rndSigSharcOsc instr cps) (
 ---------------------------------------------------------------------------
 -- padsynth
 
-data PadSharcSpec = PadSharcSpec {
-        padSharcBandwidth :: Double,
-        padSharcSize      :: Int
-    }
+data PadSharcSpec = PadSharcSpec
+  { padSharcBandwidth :: Double
+  , padSharcSize :: Int
+  }
 
 instance Default PadSharcSpec where
-    def = PadSharcSpec 15 8
+  def = PadSharcSpec 15 8
 
 padsynthSharcOsc :: SharcInstr -> D -> SE Sig
 padsynthSharcOsc = padsynthSharcOsc' def
@@ -139,49 +189,47 @@ quadMorphsynthSharcOsc' :: PadSharcSpec -> MorphSpec -> [SharcInstr] -> (Sig, Si
 quadMorphsynthSharcOsc' spec morphSpec instr (x, y) freq = quadMorphsynthOscMultiCps morphSpec (fmap (getSpecIntervals spec) instr) (x, y) freq
 
 getSpecIntervals spec (SharcInstr instr) = zip borderFreqs specs
-    where
-        groups = splitTo (padSharcSize spec) (Sh.instrNotes instr)
-        medians = fmap getMedian groups
-        borders = fmap getBorder groups
+  where
+    groups = splitTo (padSharcSize spec) (Sh.instrNotes instr)
+    medians = fmap getMedian groups
+    borders = fmap getBorder groups
 
-        specs   = fmap (note2padsynth $ padSharcBandwidth spec) medians
-        borderFreqs = fmap (Sh.pitchFund . Sh.notePitch) borders
-
+    specs = fmap (note2padsynth $ padSharcBandwidth spec) medians
+    borderFreqs = fmap (Sh.pitchFund . Sh.notePitch) borders
 
 splitTo :: Int -> [a] -> [[a]]
 splitTo m as = go size as
-    where
-        size = max 1 (length as `div` m)
+  where
+    size = max 1 (length as `div` m)
 
-        go :: Int -> [a] -> [[a]]
-        go n bs
-            | null ys   = [xs]
-            | otherwise = xs : go n ys
-            where
-                (xs, ys) = splitAt n bs
+    go :: Int -> [a] -> [[a]]
+    go n bs
+      | null ys = [xs]
+      | otherwise = xs : go n ys
+      where
+        (xs, ys) = splitAt n bs
 
 getMedian :: [a] -> a
 getMedian as
-    | null as   = error "getMedian: Csound.Catalog.Wave.Sharc.hs empty list"
-    | otherwise = as !! (length as `div` 2)
+  | null as = error "getMedian: Csound.Catalog.Wave.Sharc.hs empty list"
+  | otherwise = as !! (length as `div` 2)
 
 getBorder :: [a] -> a
 getBorder as
-    | null as   = error "getMedian: Csound.Catalog.Wave.Sharc.hs empty list"
-    | otherwise = last as
+  | null as = error "getMedian: Csound.Catalog.Wave.Sharc.hs empty list"
+  | otherwise = last as
 
 note2padsynth :: Double -> Sh.Note -> PadsynthSpec
-note2padsynth bandwidth note = (defPadsynthSpec bandwidth normAmps) { padsynthFundamental = Sh.pitchFund (Sh.notePitch note) }
-    where
-        normAmps = fmap ( / maxAmp) amps
-        amps = fmap Sh.harmonicAmplitude $ Sh.noteHarmonics note
-        maxAmp = maximum amps
-
+note2padsynth bandwidth note = (defPadsynthSpec bandwidth normAmps){padsynthFundamental = Sh.pitchFund (Sh.notePitch note)}
+  where
+    normAmps = fmap (/ maxAmp) amps
+    amps = fmap Sh.harmonicAmplitude $ Sh.noteHarmonics note
+    maxAmp = maximum amps
 
 ---------------------------------------------------------------------------
 -- sharc instr
 
-newtype SharcInstr = SharcInstr { unSharcInstr :: Sh.Instr }
+newtype SharcInstr = SharcInstr {unSharcInstr :: Sh.Instr}
 
 shViolin :: SharcInstr
 shViolin = SharcInstr Sh.violin

@@ -1,56 +1,77 @@
--- | Basic types and functions.
---
--- This module re-exports everything.
---
--- WARNING (for Csound users): the maximum amplitude is 1.0. There is no way to alter it.
--- Don't define your amplitudes with 9000 or 11000. But the good news are: all signals
--- are clipped by 1 so that you can not damage your ears and your speakers by a little typo.
-module Csound.Base(
-    module Csound.Types,
-    module Csound.Control,
-    module Csound.IO,
-    module Csound.Air,
-    module Csound.Tab,
-    module Csound.Tuning,
-    module Csound.Options,
-    module Csound.SigSpace,
+{- | Basic types and functions.
 
-    -- * Standard classes
-    module Data.Boolean,
-    module Data.Default,
-    module Data.Monoid,
-    module Control.Applicative,
+This module re-exports everything.
 
-    module Temporal.Media,
-    module Temporal.Class,
+WARNING (for Csound users): the maximum amplitude is 1.0. There is no way to alter it.
+Don't define your amplitudes with 9000 or 11000. But the good news are: all signals
+are clipped by 1 so that you can not damage your ears and your speakers by a little typo.
+-}
+module Csound.Base (
+  module Csound.Types,
+  module Csound.Control,
+  module Csound.IO,
+  module Csound.Air,
+  module Csound.Tab,
+  module Csound.Tuning,
+  module Csound.Options,
+  module Csound.SigSpace,
 
-    -- * Opcodes
-    module Csound.Typed.Opcode
+  -- * Standard classes
+  module Data.Boolean,
+  module Data.Default,
+  module Data.Monoid,
+  module Control.Applicative,
+  module Temporal.Media,
+  module Temporal.Class,
+
+  -- * Opcodes
+  module Csound.Typed.Opcode,
 ) where
 
 import Csound.Air
+import Csound.Control
+import Csound.IO
+import Csound.Options
+import Csound.SigSpace
 import Csound.Tab
 import Csound.Tuning
 import Csound.Types
-import Csound.Control
-import Csound.IO
-import Csound.SigSpace
-import Csound.Options
 
-import Temporal.Media
 import Temporal.Class
+import Temporal.Media
 
+import Control.Applicative hiding ((<*))
 import Data.Boolean
 import Data.Default
 import Data.Monoid
-import Control.Applicative hiding ((<*))
-
 
 import Csound.Typed.Opcode hiding (
-    button, display, space, lfo, initc7, ctrl7,
-    oscInit, oscSend,
-    lpshold, loopseg, loopxseg,
-    partikkel, syncgrain, granule, sndwarp, sndwarpst, fof2,
-    line, delay,
-    metro, dust,
-    duserrnd, cuserrnd, urd, tablew, tablewa, fmod, count)
+  button,
+  count,
+  ctrl7,
+  cuserrnd,
+  delay,
+  display,
+  duserrnd,
+  dust,
+  fmod,
+  fof2,
+  granule,
+  initc7,
+  lfo,
+  line,
+  loopseg,
+  loopxseg,
+  lpshold,
+  metro,
+  oscInit,
+  oscSend,
+  partikkel,
+  sndwarp,
+  sndwarpst,
+  space,
+  syncgrain,
+  tablew,
+  tablewa,
+  urd,
+ )

@@ -1,37 +1,40 @@
-{-# Language InstanceSigs #-}
+{-# LANGUAGE InstanceSigs #-}
+
 -- | With ports we can communicate non-constant values between instruments
-module Csound.Core.Types.SE.Port
-  ( Port (..)
-  , newPort
-  ) where
+module Csound.Core.Types.SE.Port (
+  Port (..),
+  newPort,
+) where
 
 import Control.Monad
 import Control.Monad.Trans.Class (lift)
 import Data.Text (Text)
 import Data.Text qualified as Text
 
-import Csound.Dynamic (Rate (..), E)
-import Csound.Dynamic qualified as Dynamic
+import Csound.Core.Render.Options (UdoDef (..), addUdo)
 import Csound.Core.State (Dep)
-import Csound.Core.Types.SE.Core
-import Csound.Core.Types.Tuple
 import Csound.Core.Types.Prim.D
 import Csound.Core.Types.Prim.Val
-import Csound.Core.Render.Options (addUdo, UdoDef (..))
+import Csound.Core.Types.SE.Core
+import Csound.Core.Types.Tuple
+import Csound.Dynamic (E, Rate (..))
+import Csound.Dynamic qualified as Dynamic
 
 -- https://flossmanual.csound.com/csound-language/local-and-global-variables#the-chn-opcodes-for-global-variables
 
 -- | With ports we can send audio and control signals between running instruments
-newtype Port a = Port { unPort :: D }
+newtype Port a = Port {unPort :: D}
   deriving newtype (IsPrim, Val, FromTuple, Tuple, Arg)
 
 chnUpdateUdo :: Text
-chnUpdateUdo = Text.unlines [
-    "giPort init 1",
-    "opcode " <> chnUpdateOpcodeName <> ", i, 0",
-    "xout giPort",
-    "giPort = giPort + 1",
-    "endop"]
+chnUpdateUdo =
+  Text.unlines
+    [ "giPort init 1"
+    , "opcode " <> chnUpdateOpcodeName <> ", i, 0"
+    , "xout giPort"
+    , "giPort = giPort + 1"
+    , "endop"
+    ]
 
 chnUpdateOpcodeName :: Text
 chnUpdateOpcodeName = "GetFreePort"
@@ -42,8 +45,10 @@ newPort =
     liftOpcDep chnUpdateOpcodeName [(Ir, [])] ()
 
 instance IsRef Port where
-  readRef pid = fmap (toTuple . pure) $ SE $
-    zipWithM (\rate name -> chnget rate name) (getRates pid) =<< getNames pid
+  readRef pid =
+    fmap (toTuple . pure) $
+      SE $
+        zipWithM (\rate name -> chnget rate name) (getRates pid) =<< getNames pid
 
   writeRef = writeBy chnset id
 
@@ -54,7 +59,7 @@ instance IsRef Port where
 
   clearRef pid = SE $ mapM_ chnclear =<< getNames pid
 
-writeBy :: forall a . Tuple a => (Rate -> E -> E -> Dep ()) -> (Rate -> Rate) -> Port a -> a -> SE ()
+writeBy :: forall a. (Tuple a) => (Rate -> E -> E -> Dep ()) -> (Rate -> Rate) -> Port a -> a -> SE ()
 writeBy set toRate pid val = SE $ do
   valE <- lift (fromTuple val)
   names <- getNames pid
@@ -63,19 +68,19 @@ writeBy set toRate pid val = SE $ do
 --------------------------------------------------------------
 -- utils
 
-getNames :: forall a . Tuple a => Port a -> Dep [E]
+getNames :: forall a. (Tuple a) => Port a -> Dep [E]
 getNames pid = do
   pidE <- lift (toE pid)
   pure $ toPortName pidE <$> [1 .. tupleArity @a]
 
-getRates :: forall a . Tuple a => Port a -> [Rate]
+getRates :: forall a. (Tuple a) => Port a -> [Rate]
 getRates _ = tupleRates @a
 
 toPortName :: E -> Int -> E
 toPortName chnId name =
-    sprintf formatString [chnId]
-    where
-      formatString = Dynamic.str $ 'p' : show name ++ "_" ++ "%d"
+  sprintf formatString [chnId]
+  where
+    formatString = Dynamic.str $ 'p' : show name ++ "_" ++ "%d"
 
 --------------------------------------------------------------
 -- opcodes
@@ -90,7 +95,7 @@ chnget :: Rate -> E -> Dep E
 chnget rate name = Dynamic.opcsDep "chnget" [(rate, [Sr])] [name]
 
 chnclear :: E -> Dep ()
-chnclear name =  Dynamic.depT_ $ Dynamic.opcs "chnclear" [(Xr, [Sr])] [name]
+chnclear name = Dynamic.depT_ $ Dynamic.opcs "chnclear" [(Xr, [Sr])] [name]
 
 sprintf :: E -> [E] -> E
-sprintf a as = Dynamic.opcs "sprintf" [(Sr, Sr:repeat Ir)] (a:as)
+sprintf a as = Dynamic.opcs "sprintf" [(Sr, Sr : repeat Ir)] (a : as)

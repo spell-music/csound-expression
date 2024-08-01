@@ -1,50 +1,52 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language AllowAmbiguousTypes #-}
+
 -- | Tuples of values
-module Csound.Core.Types.Tuple
-  ( FromTuple (..)
-  , Tuple (..)
-  , Arg
-  , Sigs
-  , guardedTuple
-  , BoolTuple
-  , guardedTuple
-  , ifTuple
-  , caseTuple
-  , BoolArg
-  , ifArg
-  , caseArg
-  , guardedArg
-  ) where
+module Csound.Core.Types.Tuple (
+  FromTuple (..),
+  Tuple (..),
+  Arg,
+  Sigs,
+  guardedTuple,
+  BoolTuple,
+  guardedTuple,
+  ifTuple,
+  caseTuple,
+  BoolArg,
+  ifArg,
+  caseArg,
+  guardedArg,
+) where
 
 import Control.Applicative
 import Data.Bifunctor
-import Data.NumInstances.Tuple ()
 import Data.Boolean
+import Data.NumInstances.Tuple ()
 
-import Csound.Dynamic (E, Rate (..), IfRate (..))
-import Csound.Dynamic qualified as Dynamic
 import Csound.Core.State (Run)
 import Csound.Core.Types.Prim.Bool
-import Csound.Core.Types.Prim.Sig
 import Csound.Core.Types.Prim.D
-import Csound.Core.Types.Prim.Tab
-import Csound.Core.Types.Prim.Str
-import Csound.Core.Types.Prim.Spec
 import Csound.Core.Types.Prim.InstrId
+import Csound.Core.Types.Prim.Sig
+import Csound.Core.Types.Prim.Spec
+import Csound.Core.Types.Prim.Str
+import Csound.Core.Types.Prim.Tab
 import Csound.Core.Types.Prim.Val
 import Csound.Core.Types.SigSpace
+import Csound.Dynamic (E, IfRate (..), Rate (..))
+import Csound.Dynamic qualified as Dynamic
 
--- | Clas of values that can be used as init arguments for the Csound-instrument.
--- In csound they are read with pInt-expressions.
-class Tuple a => Arg a where
+{- | Clas of values that can be used as init arguments for the Csound-instrument.
+In csound they are read with pInt-expressions.
+-}
+class (Tuple a) => Arg a
 
 instance Arg ()
 instance Arg D
 instance Arg Str
 instance Arg Tab
-instance Arg a => Arg (ProcId D a)
-instance Arg a => Arg (ProcId Str a)
+instance (Arg a) => Arg (ProcId D a)
+instance (Arg a) => Arg (ProcId Str a)
 
 instance (Arg a, Arg b) => Arg (a, b)
 instance (Arg a, Arg b, Arg c) => Arg (a, b, c)
@@ -55,7 +57,7 @@ instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h) => Arg (a, b, c, d, e
 instance (Arg a, Arg b, Arg c, Arg d, Arg e, Arg f, Arg h, Arg g) => Arg (a, b, c, d, e, f, h, g)
 
 -- | Defines a class of audio and control signals
-class (Num a, Tuple a, SigSpace a, Num a) => Sigs a where
+class (Num a, Tuple a, SigSpace a, Num a) => Sigs a
 
 instance Sigs Sig
 
@@ -71,8 +73,9 @@ instance (Sigs a1, Sigs a2, Sigs a3, Sigs a4, Sigs a5, Sigs a6, Sigs a7, Sigs a8
 class FromTuple a where
   fromTuple :: a -> Run [E]
 
--- | A class of values that can be converted to and from the low-level Csound expressions.
--- It is a collection of values.
+{- | A class of values that can be converted to and from the low-level Csound expressions.
+It is a collection of values.
+-}
 class (FromTuple a) => Tuple a where
   toTuple :: Run [E] -> a
   tupleArity :: Int
@@ -88,37 +91,37 @@ instance Tuple () where
   tupleRates = []
   defTuple = ()
 
-instance FromTuple a => FromTuple [a] where
+instance (FromTuple a) => FromTuple [a] where
   fromTuple = fmap concat . mapM fromTuple
 
 -- TODO: FromTuple instance for (Tuple a => Ref a)
 
-instance FromTuple Sig where { fromTuple = fmap pure . toE }
-instance Tuple Sig where { toTuple = fromE . fmap head; tupleRates = [valRate @Sig]; tupleArity = 1; defTuple = 0 }
+instance FromTuple Sig where fromTuple = fmap pure . toE
+instance Tuple Sig where toTuple = fromE . fmap head; tupleRates = [valRate @Sig]; tupleArity = 1; defTuple = 0
 
-instance FromTuple D where { fromTuple = fmap pure . toE }
-instance Tuple D where { toTuple = fromE . fmap head; tupleRates = [valRate @D]; tupleArity = 1; defTuple = 0 }
+instance FromTuple D where fromTuple = fmap pure . toE
+instance Tuple D where toTuple = fromE . fmap head; tupleRates = [valRate @D]; tupleArity = 1; defTuple = 0
 
-instance FromTuple Tab where { fromTuple = fmap pure . toE }
-instance Tuple Tab where { toTuple = fromE . fmap head; tupleRates = [valRate @Tab]; tupleArity = 1; defTuple = fromE $ pure (-1) }
+instance FromTuple Tab where fromTuple = fmap pure . toE
+instance Tuple Tab where toTuple = fromE . fmap head; tupleRates = [valRate @Tab]; tupleArity = 1; defTuple = fromE $ pure (-1)
 
-instance FromTuple TabList where { fromTuple = fmap pure . toE }
-instance Tuple TabList where { toTuple = fromE . fmap head; tupleRates = [valRate @TabList]; tupleArity = 1; defTuple = fromE $ pure (-1) }
+instance FromTuple TabList where fromTuple = fmap pure . toE
+instance Tuple TabList where toTuple = fromE . fmap head; tupleRates = [valRate @TabList]; tupleArity = 1; defTuple = fromE $ pure (-1)
 
-instance FromTuple Str where { fromTuple = fmap pure . toE }
-instance Tuple Str where { toTuple = fromE . fmap head; tupleRates = [valRate @Str]; tupleArity = 1; defTuple = "" }
+instance FromTuple Str where fromTuple = fmap pure . toE
+instance Tuple Str where toTuple = fromE . fmap head; tupleRates = [valRate @Str]; tupleArity = 1; defTuple = ""
 
-instance FromTuple Spec where { fromTuple = fmap pure . toE }
-instance Tuple Spec where { toTuple = fromE . fmap head; tupleRates = [valRate @Spec]; tupleArity = 1; defTuple = fromE (pure 0) }
+instance FromTuple Spec where fromTuple = fmap pure . toE
+instance Tuple Spec where toTuple = fromE . fmap head; tupleRates = [valRate @Spec]; tupleArity = 1; defTuple = fromE (pure 0)
 
-instance FromTuple BoolSig where { fromTuple = fmap pure . toE }
-instance Tuple BoolSig where { toTuple = fromE . fmap head; tupleRates = [valRate @BoolSig]; tupleArity = 1; defTuple = true }
+instance FromTuple BoolSig where fromTuple = fmap pure . toE
+instance Tuple BoolSig where toTuple = fromE . fmap head; tupleRates = [valRate @BoolSig]; tupleArity = 1; defTuple = true
 
-instance FromTuple BoolD where { fromTuple = fmap pure . toE }
-instance Tuple BoolD where { toTuple = fromE . fmap head; tupleRates = [valRate @BoolD]; tupleArity = 1; defTuple = true }
+instance FromTuple BoolD where fromTuple = fmap pure . toE
+instance Tuple BoolD where toTuple = fromE . fmap head; tupleRates = [valRate @BoolD]; tupleArity = 1; defTuple = true
 
-instance (Val ty, Arg a) => FromTuple (ProcId ty a) where { fromTuple = fmap pure . toE }
-instance (Val ty, Arg a) => Tuple (ProcId ty a) where { toTuple = fromE . fmap head; tupleRates = [valRate @(ProcId ty a)]; tupleArity = 1; defTuple = fromE (pure 0) }
+instance (Val ty, Arg a) => FromTuple (ProcId ty a) where fromTuple = fmap pure . toE
+instance (Val ty, Arg a) => Tuple (ProcId ty a) where toTuple = fromE . fmap head; tupleRates = [valRate @(ProcId ty a)]; tupleArity = 1; defTuple = fromE (pure 0)
 
 instance (FromTuple a, FromTuple b) => FromTuple (a, b) where
   fromTuple (a, b) = liftA2 (++) (fromTuple a) (fromTuple b)
@@ -130,7 +133,7 @@ instance (Tuple a, Tuple b) => Tuple (a, b) where
   toTuple = \es ->
     let
       arity = tupleArity @a
-    in
+     in
       (toTuple $ take arity <$> es, toTuple $ drop arity <$> es)
 
 instance (FromTuple a, FromTuple b, FromTuple c) => FromTuple (a, b, c) where
@@ -196,7 +199,6 @@ cons5 :: (a, (b, c, d, e)) -> (a, b, c, d, e)
 cons6 :: (a, (b, c, d, e, f)) -> (a, b, c, d, e, f)
 cons7 :: (a, (b, c, d, e, f, g)) -> (a, b, c, d, e, f, g)
 cons8 :: (a, (b, c, d, e, f, g, h)) -> (a, b, c, d, e, f, g, h)
-
 cons3 (a, (b, c)) = (a, b, c)
 cons4 (a, (b, c, d)) = (a, b, c, d)
 cons5 (a, (b, c, d, e)) = (a, b, c, d, e)
@@ -210,7 +212,6 @@ split5 :: (a, b, c, d, e) -> (a, (b, c, d, e))
 split6 :: (a, b, c, d, e, f) -> (a, (b, c, d, e, f))
 split7 :: (a, b, c, d, e, f, g) -> (a, (b, c, d, e, f, g))
 split8 :: (a, b, c, d, e, f, g, h) -> (a, (b, c, d, e, f, g, h))
-
 split3 (a, b, c) = (a, (b, c))
 split4 (a, b, c, d) = (a, (b, c, d))
 split5 (a, b, c, d, e) = (a, (b, c, d, e))
@@ -221,34 +222,44 @@ split8 (a, b, c, d, e, f, g, h) = (a, (b, c, d, e, f, g, h))
 ------------------------------------------------------------------------------------------
 -- missing num instance
 
-lift8 :: (a->u) -> (b->v) -> (c->w) -> (d->x) -> (e->y) -> (f->t) -> (g->z) -> (h->z1)
-      -> (a,b,c,d,e,f,g,h) -> (u,v,w,x,y,t,z,z1)
-lift8 fa fb fc fd fe ff fg fh (a,b,c,d,e,f,g,h) =
+lift8 ::
+  (a -> u) ->
+  (b -> v) ->
+  (c -> w) ->
+  (d -> x) ->
+  (e -> y) ->
+  (f -> t) ->
+  (g -> z) ->
+  (h -> z1) ->
+  (a, b, c, d, e, f, g, h) ->
+  (u, v, w, x, y, t, z, z1)
+lift8 fa fb fc fd fe ff fg fh (a, b, c, d, e, f, g, h) =
   (fa a, fb b, fc c, fd d, fe e, ff f, fg g, fh h)
 
-instance (Num a, Num b, Num c, Num d, Num e, Num f, Num g, Num h) => Num (a,b,c,d,e,f,g,h) where
+instance (Num a, Num b, Num c, Num d, Num e, Num f, Num g, Num h) => Num (a, b, c, d, e, f, g, h) where
   fromInteger n = (fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n, fromInteger n)
-  (a,b,c,d,e,f,g,h) + (a',b',c',d',e',f',g',h') = (a+a',b+b',c+c',d+d',e+e',f+f',g+g',h+h')
-  (a,b,c,d,e,f,g,h) - (a',b',c',d',e',f',g',h') = (a-a',b-b',c-c',d-d',e-e',f-f',g-g',h-h')
-  (a,b,c,d,e,f,g,h) * (a',b',c',d',e',f',g',h') = (a*a',b*b',c*c',d*d',e*e',f*f',g*g', h*h')
+  (a, b, c, d, e, f, g, h) + (a', b', c', d', e', f', g', h') = (a + a', b + b', c + c', d + d', e + e', f + f', g + g', h + h')
+  (a, b, c, d, e, f, g, h) - (a', b', c', d', e', f', g', h') = (a - a', b - b', c - c', d - d', e - e', f - f', g - g', h - h')
+  (a, b, c, d, e, f, g, h) * (a', b', c', d', e', f', g', h') = (a * a', b * b', c * c', d * d', e * e', f * f', g * g', h * h')
   negate = lift8 negate negate negate negate negate negate negate negate
-  abs    = lift8 abs abs abs abs abs abs abs abs
+  abs = lift8 abs abs abs abs abs abs abs abs
   signum = lift8 signum signum signum signum signum signum signum signum
 
 -- | Tuple of control rate boolean values
-newtype BoolTuple = BoolTuple { unBoolTuple :: Run [E] }
+newtype BoolTuple = BoolTuple {unBoolTuple :: Run [E]}
 
-toBoolTuple :: Tuple a => a -> BoolTuple
-toBoolTuple   = BoolTuple . fromTuple
+toBoolTuple :: (Tuple a) => a -> BoolTuple
+toBoolTuple = BoolTuple . fromTuple
 
-fromBoolTuple :: Tuple a => BoolTuple -> a
+fromBoolTuple :: (Tuple a) => BoolTuple -> a
 fromBoolTuple = toTuple . unBoolTuple
 
 type instance BooleanOf BoolTuple = BoolSig
 
 instance IfB BoolTuple where
-    ifB mp (BoolTuple mas) (BoolTuple mbs) = BoolTuple $
-        liftA3 (\p as bs -> zipWith (Dynamic.ifExp IfKr p) as bs) (toE mp) mas mbs
+  ifB mp (BoolTuple mas) (BoolTuple mbs) =
+    BoolTuple $
+      liftA3 (\p as bs -> zipWith (Dynamic.ifExp IfKr p) as bs) (toE mp) mas mbs
 
 -- | @ifB@ for tuples of csound values.
 ifTuple :: (Tuple a) => BoolSig -> a -> a -> a
@@ -265,10 +276,10 @@ caseTuple a bs other = fromBoolTuple $ caseB a (fmap (second toBoolTuple) bs) (t
 -- arguments
 
 -- | Tuple of init rate boolean values
-newtype BoolArg = BoolArg { unBoolArg :: Run [E] }
+newtype BoolArg = BoolArg {unBoolArg :: Run [E]}
 
 toBoolArg :: (Tuple a) => a -> BoolArg
-toBoolArg   = BoolArg . fromTuple
+toBoolArg = BoolArg . fromTuple
 
 fromBoolArg :: (Tuple a) => BoolArg -> a
 fromBoolArg = toTuple . unBoolArg
@@ -276,8 +287,9 @@ fromBoolArg = toTuple . unBoolArg
 type instance BooleanOf BoolArg = BoolSig
 
 instance IfB BoolArg where
-    ifB mp (BoolArg mas) (BoolArg mbs) = BoolArg $
-        liftA3 (\p as bs -> zipWith (Dynamic.ifExp IfKr p) as bs) (toE mp) mas mbs
+  ifB mp (BoolArg mas) (BoolArg mbs) =
+    BoolArg $
+      liftA3 (\p as bs -> zipWith (Dynamic.ifExp IfKr p) as bs) (toE mp) mas mbs
 
 -- | @ifB@ for constants.
 ifArg :: (Arg a, Tuple a) => BoolSig -> a -> a -> a

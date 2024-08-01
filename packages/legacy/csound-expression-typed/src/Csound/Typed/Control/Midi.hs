@@ -1,23 +1,30 @@
-{-# Language FlexibleContexts #-}
-module Csound.Typed.Control.Midi(
-    Msg, Channel,
-    midi, midin, pgmidi,
-    midi_, midin_, pgmidi_,
-    initMidiCtrl
+{-# LANGUAGE FlexibleContexts #-}
+
+module Csound.Typed.Control.Midi (
+  Msg,
+  Channel,
+  midi,
+  midin,
+  pgmidi,
+  midi_,
+  midin_,
+  pgmidi_,
+  initMidiCtrl,
 ) where
 
 import Control.Monad
 
 import Csound.Dynamic
 
-import Csound.Typed.Types
-import Csound.Typed.GlobalState
 import Csound.Typed.Control.Ref
+import Csound.Typed.GlobalState
+import Csound.Typed.Types
 
-import qualified Csound.Typed.GlobalState.Opcodes as C(midiVolumeFactor)
+import Csound.Typed.GlobalState.Opcodes qualified as C (midiVolumeFactor)
 
--- | Triggers a midi-instrument (aka Csound's massign) for all channels.
--- It's useful to test a single instrument.
+{- | Triggers a midi-instrument (aka Csound's massign) for all channels.
+It's useful to test a single instrument.
+-}
 midi :: (Num a, Sigs a) => (Msg -> SE a) -> SE a
 midi = fromProcMidi midiWithInstrId_
 
@@ -31,11 +38,11 @@ pgmidi mchn n = fromProcMidi (pgmidiWithInstrId_ mchn n)
 
 fromProcMidi :: (Num a, Sigs a) => ((Msg -> SE ()) -> SE ()) -> (Msg -> SE a) -> SE a
 fromProcMidi procMidi f = do
-    ref <- newGlobalRef 0
-    procMidi (mixRef ref . scaleMidiVolumeFactor <=< f)
-    res <- readRef ref
-    writeRef ref 0
-    return res
+  ref <- newGlobalRef 0
+  procMidi (mixRef ref . scaleMidiVolumeFactor <=< f)
+  res <- readRef ref
+  writeRef ref 0
+  return res
 
 -----------------------------------------------------------------
 
@@ -72,11 +79,12 @@ genMidi_ midiType chn instr = geToSe $ saveToMidiInstr midiType chn (unSE $ inst
 -- midi ctrls
 
 initMidiCtrl :: D -> D -> D -> SE ()
-initMidiCtrl chno ctrlno val = geToSe $
+initMidiCtrl chno ctrlno val =
+  geToSe $
     saveMidiCtrl =<< (MidiCtrl <$> toGE chno <*> toGE ctrlno <*> toGE val)
 
 -----------------------------------------------------------------
 -- midi volume factor
 
-scaleMidiVolumeFactor :: Sigs a => a -> a
-scaleMidiVolumeFactor = mapTuple (setRate Ir (C.midiVolumeFactor (pn Ir 1)) * )
+scaleMidiVolumeFactor :: (Sigs a) => a -> a
+scaleMidiVolumeFactor = mapTuple (setRate Ir (C.midiVolumeFactor (pn Ir 1)) *)
