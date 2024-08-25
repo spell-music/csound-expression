@@ -168,6 +168,7 @@ module Csound.Core.Opcode (
 
   -- * Delay
   vdelayx,
+  delayk,
   comb,
   vcomb,
 
@@ -1187,6 +1188,21 @@ vdelayx :: Sig -> Sig -> D -> D -> Sig
 vdelayx b1 b2 b3 b4 = liftOpc "vdelayx" rates (b1, b2, b3, b4)
   where
     rates = [(Ar, [Ar, Ar, Ir, Ir, Ir])]
+
+{- |
+Delays an input signal by some time interval.
+
+k-rate delay opcodes
+
+> kr  delayk   ksig, idel[, imode]
+
+csound doc: <https://csound.com/docs/manual/delayk.html>
+-}
+delayk :: Sig -> D -> Sig
+delayk b1 b2 =
+  liftOpc "delayk" rates (b1, b2)
+  where
+    rates = [(Kr, [Kr, Ir, Ir])]
 
 {- |
 Reverberates an input signal with a âcoloredâ frequency response.

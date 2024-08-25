@@ -493,8 +493,8 @@ bo property extract a
   | extract a = Just $ textStrict property
   | otherwise = Nothing
 
-mp :: (Pretty b) => (Doc -> Doc) -> (a -> Maybe b) -> (a -> Maybe Doc)
-mp f a = fmap (f . pretty) . a
+mapPretty :: (Pretty b) => (Doc -> Doc) -> (a -> Maybe b) -> (a -> Maybe Doc)
+mapPretty f a = fmap (f . pretty) . a
 
 p1 :: Doc -> Doc -> Doc
 p1 pref x = hcat [char '-', pref, char ' ', x]
@@ -527,11 +527,11 @@ instance Pretty AudioFileOutput where
   pretty =
     fields
       [ pSamplesAndType . (\x -> (formatSamples x, formatType x))
-      , mp (p2 "output") output
-      , mp (p2 "input") input
+      , mapPretty (p2 "output") output
+      , mapPretty (p2 "input") input
       , bo "--nosound" nosound
       , bo "--nopeaks" nopeaks
-      , mp (p2 "d/Mither") $ fmap (firstToLower . Text.pack . show) . dither
+      , mapPretty (p2 "d/Mither") $ fmap (firstToLower . Text.pack . show) . dither
       ]
 
 pSamplesAndType :: (Maybe FormatSamples, Maybe FormatType) -> Maybe Doc
@@ -556,12 +556,12 @@ instance Pretty Dither where
 instance Pretty IdTags where
   pretty =
     fields
-      [ mp (p3 "id_artist") (subst idArtist)
-      , mp (p3 "id_comment") (subst idComment)
-      , mp (p3 "id_copyright") (subst idCopyright)
-      , mp (p3 "id_date") (subst idDate)
-      , mp (p3 "id_software") (subst idSoftware)
-      , mp (p3 "id_title") (subst idTitle)
+      [ mapPretty (p3 "id_artist") (subst idArtist)
+      , mapPretty (p3 "id_comment") (subst idComment)
+      , mapPretty (p3 "id_copyright") (subst idCopyright)
+      , mapPretty (p3 "id_date") (subst idDate)
+      , mapPretty (p3 "id_software") (subst idSoftware)
+      , mapPretty (p3 "id_title") (subst idTitle)
       ]
     where
       subst f = fmap (Text.map substSpaces) . f
@@ -599,9 +599,9 @@ instance Pretty PulseAudio where
 instance Pretty MidiIO where
   pretty =
     fields
-      [ mp (p2 "midifile") midiFile
-      , mp (p2 "midioutfile") midiOutFile
-      , mp (p3 "mute_tracks") muteTracks
+      [ mapPretty (p2 "midifile") midiFile
+      , mapPretty (p2 "midioutfile") midiOutFile
+      , mapPretty (p3 "mute_tracks") muteTracks
       , bo "-+raw_controller_mode" rawControllerMode
       , bo "--terminate-on-midi" terminateOnMidi
       ]
@@ -609,14 +609,14 @@ instance Pretty MidiIO where
 instance Pretty MidiRT where
   pretty =
     fields
-      [ mp (p2 "midi-device") midiDevice
-      , mp (p2 "midi-key") midiKey
-      , mp (p2 "midi-key-cps") midiKeyCps
-      , mp (p2 "midi-key-oct") midiKeyOct
-      , mp (p2 "midi-key-pch") midiKeyPch
-      , mp (p2 "midi-velocity") midiVelocity
-      , mp (p2 "midi-velocity-amp") midiVelocityAmp
-      , mp (p1 "Q") midiOutDevice
+      [ mapPretty (p2 "midi-device") midiDevice
+      , mapPretty (p2 "midi-key") midiKey
+      , mapPretty (p2 "midi-key-cps") midiKeyCps
+      , mapPretty (p2 "midi-key-oct") midiKeyOct
+      , mapPretty (p2 "midi-key-pch") midiKeyPch
+      , mapPretty (p2 "midi-velocity") midiVelocity
+      , mapPretty (p2 "midi-velocity-amp") midiVelocityAmp
+      , mapPretty (p1 "Q") midiOutDevice
       ]
 
 instance Pretty Rtmidi where
@@ -633,19 +633,19 @@ instance Pretty Rtmidi where
 instance Pretty Displays where
   pretty =
     fields
-      [ mp (p2 "csd-line-nums") csdLineNums
+      [ mapPretty (p2 "csd-line-nums") csdLineNums
       , p displayMode
-      , mp (p2 "heartbeat") displayHeartbeat
-      , mp (p2 "messagelevel") messageLevel
-      , mp (p2 "m-amps") mAmps
-      , mp (p2 "m-range") mRange
-      , mp (p2 "m-warnings") mWarnings
-      , mp (p2 "m-dB") mDb
-      , mp (p2 "m-colours") mColours
-      , mp (p2 "m-benchmarks") mBenchmarks
+      , mapPretty (p2 "heartbeat") displayHeartbeat
+      , mapPretty (p2 "messagelevel") messageLevel
+      , mapPretty (p2 "m-amps") mAmps
+      , mapPretty (p2 "m-range") mRange
+      , mapPretty (p2 "m-warnings") mWarnings
+      , mapPretty (p2 "m-dB") mDb
+      , mapPretty (p2 "m-colours") mColours
+      , mapPretty (p2 "m-benchmarks") mBenchmarks
       , bo "-+msg_color" msgColor
       , bo "--verbose" displayVerbose
-      , mp (p2 "list-opcodes") listOpcodes
+      , mapPretty (p2 "list-opcodes") listOpcodes
       ]
 
 instance Pretty DisplayMode where
@@ -657,18 +657,18 @@ instance Pretty DisplayMode where
 instance Pretty Config where
   pretty =
     fields
-      [ mp (p2 "hardwarebufsamps") hwBuf
-      , mp (p2 "iobufsamps") ioBuf
-      , mp (p2 "control-rate") newKr
-      , mp (p2 "sample-rate") newSr
-      , mp (p2 "score-in") scoreIn
+      [ mapPretty (p2 "hardwarebufsamps") hwBuf
+      , mapPretty (p2 "iobufsamps") ioBuf
+      , mapPretty (p2 "control-rate") newKr
+      , mapPretty (p2 "sample-rate") newSr
+      , mapPretty (p2 "score-in") scoreIn
       , macro "omacro" omacro
       , macro "smacro" smacro
       , bo "--sched" setSched
-      , mp (p2 "sched") schedNum
+      , mapPretty (p2 "sched") schedNum
       , strset strsetN
-      , mp (p3 "skip_seconds") skipSeconds
-      , mp (p2 "tempo") setTempo
+      , mapPretty (p3 "skip_seconds") skipSeconds
+      , mapPretty (p2 "tempo") setTempo
       ]
     where
       macro :: Doc -> (a -> Maybe (Text, Text)) -> a -> Maybe Doc

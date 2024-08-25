@@ -1,82 +1,79 @@
-Name:          csound-core-base
-Version:       0.2.7
-Cabal-Version: 1.12
-License:       BSD3
-Author:	       Anton Kholomiov
-Synopsis:      Standard core library for the library csound-expression
-Category:      Music, Sound
-Maintainer:    <anton.kholomiov@gmail.com>
-Build-Type:    Simple
+name:          csound-core-base
+version:       0.2.7
+cabal-version: 1.12
+license:       BSD3
+author:        Anton Kholomiov
+synopsis:      Standard core library for the library csound-expression
+category:      Music, Sound
+maintainer:    <anton.kholomiov@gmail.com>
+build-type:    Simple
+description:
+  core functions for standard library for csound-expression. Provides essential commonly used functions for sound design
 
-Description: core functions for standard library for csound-expression. Provides essential commonly used functions for sound design
+homepage:      https://github.com/anton-k/csound-core
+bug-reports:   https://github.com/anton-k/csound-core/issues
 
-Homepage:        https://github.com/anton-k/csound-core
-Bug-Reports:     https://github.com/anton-k/csound-core/issues
+source-repository head
+  type:     git
+  location: https://github.com/anton-k/csound-expression-typed
 
-Source-repository head
-    Type: git
-    Location: https://github.com/anton-k/csound-expression-typed
-
-Library
-  Ghc-Options:    -Wall
-  Build-Depends:
-      base >= 4.10, base < 5
-    , csound-core-types
-    , csound-core-opcodes
-    , file-embed
-    , data-default
+library
+  ghc-options:        -Wall
+  build-depends:
+      base >=4.10 && <5
     , Boolean
-    , text
+    , csound-core-opcodes
+    , csound-core-types
+    , data-default
+    , file-embed
     , filepath
     , temporal-media
+    , text
 
-  Hs-Source-Dirs:      src/
-  Exposed-Modules:
+  hs-source-dirs:     src/
+  exposed-modules:
     Csound.Core.Base
-    Csound.Core.Base.Evt
-    Csound.Core.Base.Vco
-    Csound.Core.Base.Osc
-    Csound.Core.Base.Instr
-    Csound.Core.Base.Filter
     Csound.Core.Base.Envelope
-    Csound.Core.Base.Spec
-    Csound.Core.Base.Midi
+    Csound.Core.Base.Evt
+    Csound.Core.Base.Filter
     Csound.Core.Base.Fx
+    Csound.Core.Base.Instr
+    Csound.Core.Base.Midi
+    Csound.Core.Base.Osc
+    Csound.Core.Base.Spec
     Csound.Core.Base.Tuning
+    Csound.Core.Base.Vco
 
-  Other-Modules:
+  other-modules:
     Csound.Core.Base.Midi.Internal
     Csound.Core.Base.Midi.Overload
 
-  Default-Language: GHC2021
-  Default-extensions:
-    OverloadedStrings
-    OverloadedRecordDot
-    DuplicateRecordFields
-    StrictData
-    LambdaCase
+  default-language:   GHC2021
+  default-extensions:
     DerivingStrategies
+    DuplicateRecordFields
+    LambdaCase
+    OverloadedRecordDot
+    OverloadedStrings
     RecordWildCards
-    TypeFamilies
+    StrictData
     TemplateHaskell
+    TypeFamilies
 
-Data-Files :
-    data/opcodes/MultiFX/AnalogDelay.udo
-    data/opcodes/MultiFX/Distortion.udo
-    data/opcodes/MultiFX/EnvelopeFollower.udo
-    data/opcodes/MultiFX/Flanger.udo
-    data/opcodes/MultiFX/FreqShifter.udo
-    data/opcodes/MultiFX/LoFi.udo
-    data/opcodes/MultiFX/PanTrem.udo
-    data/opcodes/MultiFX/MonoTrem.udo
-    data/opcodes/MultiFX/Phaser.udo
-    data/opcodes/MultiFX/PitchShifter.udo
-    data/opcodes/MultiFX/Reverse.udo
-    data/opcodes/MultiFX/RingModulator.udo
-    data/opcodes/MultiFX/StChorus.udo
-    data/opcodes/MultiFX/StereoPingPongDelay.udo
-    data/opcodes/MultiFX/TapeEcho.udo
-    data/opcodes/Utility/Delay1k.udo
-
-
-
+data-files:
+  data/opcodes/MultiFX/AnalogDelay.udo
+  data/opcodes/MultiFX/Distortion.udo
+  data/opcodes/MultiFX/EnvelopeFollower.udo
+  data/opcodes/MultiFX/Flanger.udo
+  data/opcodes/MultiFX/FreqShifter.udo
+  data/opcodes/MultiFX/LoFi.udo
+  data/opcodes/MultiFX/MonoTrem.udo
+  data/opcodes/MultiFX/PanTrem.udo
+  data/opcodes/MultiFX/Phaser.udo
+  data/opcodes/MultiFX/PitchShifter.udo
+  data/opcodes/MultiFX/Reverse.udo
+  data/opcodes/MultiFX/RingModulator.udo
+  data/opcodes/MultiFX/StChorus.udo
+  data/opcodes/MultiFX/StereoPingPongDelay.udo
+  data/opcodes/MultiFX/TapeEcho.udo
+  data/opcodes/Utility/Delay1k.udo

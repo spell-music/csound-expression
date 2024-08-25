@@ -129,11 +129,11 @@ condInfo p = go $ toPrimOr p
     go expr = (\(a, b) -> Inline a (IM.fromList b)) $ evalState (condInfo' expr) 0
 
     condInfo' :: PrimOr E -> State Int (InlineExp CondOp, [(Int, PrimOr E)])
-    condInfo' e = maybe (onLeaf e) (onExpr e) $ parseNode e
+    condInfo' e = maybe (onLeaf e) onExpr $ parseNode e
 
     onLeaf e = state $ \n -> ((InlinePrim n, [(n, e)]), n + 1)
 
-    onExpr _ (op, args) = fmap mkNode $ mapM condInfo' args
+    onExpr (op, args) = fmap mkNode $ mapM condInfo' args
       where
         mkNode as = (InlineExp op (map fst as), concat $ map snd as)
 
