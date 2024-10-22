@@ -4,13 +4,11 @@
 module Csound.Dynamic.Types.Dep (
   DepT (..),
   LocalHistory (..),
-  runDepT,
   execDepT,
   evalDepT,
 
   -- * Dependencies
   depT_,
-  stripDepT,
   stmtOnlyT,
   depends,
   tfmDep,
@@ -86,9 +84,6 @@ instance (Monad m) => Monad (DepT m) where
 instance MonadTrans DepT where
   lift ma = DepT $ lift ma
 
-runDepT :: DepT m a -> m (a, LocalHistory)
-runDepT a = runStateT (unDepT $ a) def
-
 evalDepT :: (Monad m) => DepT m a -> m a
 evalDepT a = evalStateT (unDepT $ a) def
 
@@ -139,9 +134,6 @@ depT_ a =
         { newLineNum = succ $ newLineNum s
         , expDependency = depends (expDependency s) a1
         }
-
-stripDepT :: (Monad m) => DepT m a -> m a
-stripDepT (DepT a) = evalStateT a def
 
 stmtOnlyT :: (Monad m) => Exp E -> DepT m ()
 stmtOnlyT stmt = depT_ $ noRate stmt

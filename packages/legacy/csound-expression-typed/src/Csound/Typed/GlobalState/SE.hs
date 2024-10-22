@@ -1,7 +1,6 @@
 module Csound.Typed.GlobalState.SE (
   SE (..),
   LocalHistory (..),
-  runSE,
   execSE,
   evalSE,
   execGEinSE,
@@ -41,9 +40,6 @@ instance Applicative SE where
 
 instance Monad SE where
   ma >>= mf = SE $ unSE ma >>= unSE . mf
-
-runSE :: SE a -> GE a
-runSE = fmap fst . runDepT . unSE
 
 execSE :: SE () -> GE InstrBody
 execSE a = execDepT $ unSE a
