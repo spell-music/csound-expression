@@ -1,0 +1,33 @@
+name:          csound-core
+version:       0.2.7
+cabal-version: 1.12
+license:       BSD3
+author:        Anton Kholomiov
+synopsis:      Standard core library for the library csound-expression
+category:      Music, Sound
+maintainer:    <anton.kholomiov@gmail.com>
+build-type:    Simple
+description:
+  core functions for standard library for csound-expression. Provides essential commonly used functions for sound design
+
+homepage:      https://github.com/anton-k/csound-core
+bug-reports:   https://github.com/anton-k/csound-core/issues
+
+source-repository head
+  type:     git
+  location: https://github.com/anton-k/csound-expression-typed
+
+library
+  ghc-options:        -Wall
+  build-depends:
+      base >=4.10 && <5
+    , Boolean
+    , csound-core-opcodes
+    , csound-core-types
+    , csound-core-base
+
+  hs-source-dirs:     src/
+  exposed-modules:
+    Csound.Core
+
+  default-language:   GHC2021
