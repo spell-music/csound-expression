@@ -61,19 +61,19 @@ library
     TypeFamilies
 
 data-files:
-  data/opcodes/MultiFX/AnalogDelay.udo
-  data/opcodes/MultiFX/Distortion.udo
-  data/opcodes/MultiFX/EnvelopeFollower.udo
-  data/opcodes/MultiFX/Flanger.udo
-  data/opcodes/MultiFX/FreqShifter.udo
-  data/opcodes/MultiFX/LoFi.udo
-  data/opcodes/MultiFX/MonoTrem.udo
-  data/opcodes/MultiFX/PanTrem.udo
-  data/opcodes/MultiFX/Phaser.udo
-  data/opcodes/MultiFX/PitchShifter.udo
-  data/opcodes/MultiFX/Reverse.udo
-  data/opcodes/MultiFX/RingModulator.udo
-  data/opcodes/MultiFX/StChorus.udo
-  data/opcodes/MultiFX/StereoPingPongDelay.udo
-  data/opcodes/MultiFX/TapeEcho.udo
-  data/opcodes/Utility/Delay1k.udo
+    "data/opcodes/MultiFX/AnalogDelay.udo"
+  , "data/opcodes/MultiFX/Distortion.udo"
+  , "data/opcodes/MultiFX/EnvelopeFollower.udo"
+  , "data/opcodes/MultiFX/Flanger.udo"
+  , "data/opcodes/MultiFX/FreqShifter.udo"
+  , "data/opcodes/MultiFX/LoFi.udo"
+  , "data/opcodes/MultiFX/MonoTrem.udo"
+  , "data/opcodes/MultiFX/PanTrem.udo"
+  , "data/opcodes/MultiFX/Phaser.udo"
+  , "data/opcodes/MultiFX/PitchShifter.udo"
+  , "data/opcodes/MultiFX/Reverse.udo"
+  , "data/opcodes/MultiFX/RingModulator.udo"
+  , "data/opcodes/MultiFX/StChorus.udo"
+  , "data/opcodes/MultiFX/StereoPingPongDelay.udo"
+  , "data/opcodes/MultiFX/TapeEcho.udo"
+  , "data/opcodes/Utility/Delay1k.udo"
