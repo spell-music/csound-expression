@@ -132,6 +132,7 @@ monoSco instr notes = wrapSco notes $ \events -> do
     effInstr :: (Sigs a) => (Sig, Sig, Sig) -> SE a
     effInstr (amp, cps, notnum) = instr (MonoArg amp cps gate (changed [amp, cps, gate]))
       where
+        kNotnum :: Sig
         kNotnum = fromGE (O.downsamp <$> toGE notnum)
         gate = ifB (kNotnum ==* 0) 0 1
 
