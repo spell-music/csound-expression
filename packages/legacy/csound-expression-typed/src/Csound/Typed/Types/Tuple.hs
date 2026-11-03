@@ -229,7 +229,7 @@ outArity = const $ tupleArity (Proxy :: Proxy a)
 
 class (Tuple a) => Arg a where
   getArgRates :: [Rate]
-  getArgRates = tupleRates (Proxy :: Proxy a)
+  getArgRates = replicate (tupleArity (Proxy :: Proxy a)) Ir
 
 instance Arg Unit where
   getArgRates = []
