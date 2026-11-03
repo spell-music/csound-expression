@@ -630,7 +630,6 @@ import qualified Csound.Base as C (br, filt)
 
 import qualified Csound.Catalog.Reson as C
 import qualified Csound.Catalog.Wave as C
-import Csound.Typed.Opcode (limit)
 
 import Csound.Catalog.Wave (
   femaleA,
