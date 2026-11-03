@@ -630,6 +630,7 @@ import qualified Csound.Base as C (br, filt)
 
 import qualified Csound.Catalog.Reson as C
 import qualified Csound.Catalog.Wave as C
+import Csound.Typed.Opcode (limit)
 
 import Csound.Catalog.Wave (
   femaleA,
@@ -694,7 +695,7 @@ import Csound.Catalog.Wave (
  )
 
 monoArgToNote :: MonoArg -> (Sig, Sig)
-monoArgToNote arg = (monoAmp arg * monoGate arg, maxB 20 $ monoCps arg)
+monoArgToNote arg = (monoAmp arg * monoGate arg, limit (monoCps arg) 20 100000)
 
 monoSig1 :: (SigSpace a) => (Sig -> a) -> (MonoArg -> a)
 monoSig1 f arg = mul env $ f cps
