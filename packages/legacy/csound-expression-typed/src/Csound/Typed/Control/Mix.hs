@@ -36,6 +36,7 @@ import Csound.Typed.GlobalState hiding (notes)
 import Csound.Typed.InnerOpcodes
 import Csound.Typed.Types
 import Csound.Typed.Types.MixSco
+import Csound.Typed.GlobalState.Opcodes qualified as O
 
 #if __GLASGOW_HASKELL__ < 710
 import Data.Traversable
