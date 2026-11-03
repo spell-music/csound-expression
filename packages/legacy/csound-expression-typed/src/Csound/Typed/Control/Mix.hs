@@ -133,7 +133,7 @@ monoSco instr notes = wrapSco notes $ \events -> do
     effInstr (amp, cps, notnum) = instr (MonoArg amp cps gate (changed [amp, cps, gate]))
       where
         kNotnum = fromGE (O.downsamp <$> toGE notnum)
-        gate = ifB (knotnum ==* 0) 0 1
+        gate = ifB (kNotnum ==* 0) 0 1
 
 -- | Renders a scores to the sound signals. we can use it inside the other instruments.
 mix :: (Sigs a) => Sco (Mix a) -> a
