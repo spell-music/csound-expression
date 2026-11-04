@@ -517,7 +517,7 @@ atSco :: forall a. (SigSpace a, Sigs a) => Patch a -> Sco (CsdNote D) -> Sco (Mi
 atSco = go Nothing
   where
     go skin x sc = case x of
-      MonoSynt _ instr -> monoSco (runSkin instr skin) sc
+      MonoSynt spec instr -> monoSco (runSkin instr skin . smoothMonoSpec spec) sc
       PolySynt _ instr -> sco (runSkin instr skin) sc
       SetSkin sk p -> newSkin sk p
       FxChain fxs p -> eff (getPatchFx skin fxs) $ rec p
