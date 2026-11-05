@@ -90,8 +90,8 @@ padsynthOsc2 spec freq = toStereoOsc (padsynthOsc spec) freq
 
 layeredPadsynthSpec :: D -> [(D, PadsynthSpec)] -> SE (D, Tab)
 layeredPadsynthSpec val specs = do
-  refTab <- newCtrlRef lastTab
-  refBaseFreq <- newCtrlRef lastBaseFreq
+  refTab <- newRef lastTab
+  refBaseFreq <- newRef lastBaseFreq
 
   compareWhenD val (fmap (second $ toCase refTab refBaseFreq) specs)
 
