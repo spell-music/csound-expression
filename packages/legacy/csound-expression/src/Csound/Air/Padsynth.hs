@@ -50,14 +50,15 @@ module Csound.Air.Padsynth (
   quadMorphsynthOscMultiCps,
 ) where
 
-import Control.Arrow (first, second)
+import Control.Arrow (first)
 import Data.List
 
 import Csound.Air.Wave
 import Csound.Tab
 import Csound.Typed
 import Csound.Typed.Opcode (poscil)
-import Csound.Types (compareWhenD)
+import Data.Boolean (ifB)
+import Csound.Types (lessThan)
 
 import Csound.Air.Granular.Morpheus
 
