@@ -89,23 +89,21 @@ padsynthOsc2 :: PadsynthSpec -> Sig -> SE Sig2
 padsynthOsc2 spec freq = toStereoOsc (padsynthOsc spec) freq
 
 layeredPadsynthSpec :: D -> [(D, PadsynthSpec)] -> SE (D, Tab)
-layeredPadsynthSpec val specs = do
-  refTab <- newRef lastTab
-  refBaseFreq <- newRef lastBaseFreq
-
-  compareWhenD val (fmap (second $ toCase refTab refBaseFreq) specs)
-
-  tab <- readRef refTab
-  baseFreq <- readRef refBaseFreq
-
-  return (baseFreq, tab)
+layeredPadsynthSpec val specs = return (baseFreq, tab)
   where
-    toCase refTab refBaseFreq spec = do
-      writeRef refTab (padsynth spec)
-      writeRef refBaseFreq (double $ padsynthFundamental spec)
+    tab :: Tab
+    tab =
+      foldr
+        (\(thr, spec) rest -> ifB (val `lessThan` thr) (padsynth spec) rest)
+        (padsynth $ snd $ last specs)
+        (init specs)
 
-    lastTab = padsynth $ snd $ last specs
-    lastBaseFreq = double $ padsynthFundamental $ snd $ last specs
+    baseFreq :: D
+    baseFreq =
+      foldr
+        (\(thr, spec) rest -> ifB (val `lessThan` thr) (double $ padsynthFundamental spec) rest)
+        (double $ padsynthFundamental $ snd $ last specs)
+        (init specs)
 
 {- | It uses several padsynth tables. Each table is responsible for specific interval of frequencies.
 The list of pairs specifies the threshhold value and padsynth specification.
