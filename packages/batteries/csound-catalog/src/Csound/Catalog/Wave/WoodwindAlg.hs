@@ -168,8 +168,16 @@ rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
     brightness :: (D, D, D) -> D -> Sig -> Sig
     brightness (iattack, isustain, idecay) level asig = balance (tone asig env) asig
       where
-        ifiltcut = tablei (9 * level) (skipNorm $ doubles [40, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 10240])
+        ifiltcut = interpTable (9 * level) [40, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 10240]
         env = linseg [0, iattack, ifiltcut, isustain, ifiltcut, idecay, 0]
+
+-- | Interpolation linéaire entre des valeurs régulièrement espacées,
+-- évaluée à l'init (équivalent d'un tablei i-rate, sans table).
+interpTable :: D -> [D] -> D
+interpTable x ys = sum $ zipWith (\i y -> hat i * y) (fmap fromIntegral [0 .. length ys - 1]) ys
+  where
+    hat i = relu (1 - abs (x - i))
+    relu t = (t + abs t) / 2
 
 ----------------------------------------------------------------
 -- Converting specification to signals
