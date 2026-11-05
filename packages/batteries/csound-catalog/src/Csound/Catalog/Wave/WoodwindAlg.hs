@@ -5,7 +5,7 @@ module Csound.Catalog.Wave.WoodwindAlg (
   AmpSpec (..),
   WaveSpec,
   fromSpec,
-  byFreq,
+  ByFreq (..),
   woodwind,
 ) where
 
@@ -182,8 +182,30 @@ fromSpec specs durs ifreq = (hs, inorm)
 
     freqs = fmap rangeFreq specs
 
-byFreq :: (Tuple a) => D -> [(D, a)] -> a
-byFreq ifreq as = guardedTuple (fmap (\(cps, val) -> (sig ifreq `lessThan` sig cps, val)) $ init as) (snd $ last as)
+class ByFreq a where
+  byFreq :: D -> [(D, a)] -> a
+
+-- les enveloppes se choisissent au taux de contrôle
+instance ByFreq Sig where
+  byFreq ifreq as =
+    guardedTuple
+      (fmap (\(cps, val) -> (sig ifreq `lessThan` sig cps, val)) $ init as)
+      (snd $ last as)
+
+-- les tables et les facteurs de normalisation doivent être connus à l'init
+instance ByFreq D where
+  byFreq ifreq as =
+    foldr (\(cps, val) rest -> ifB (ifreq `lessThan` cps) val rest) (snd $ last as) (init as)
+
+instance ByFreq Tab where
+  byFreq ifreq as =
+    foldr (\(cps, val) rest -> ifB (ifreq `lessThan` cps) val rest) (snd $ last as) (init as)
+
+instance (ByFreq a, ByFreq b) => ByFreq (a, b) where
+  byFreq ifreq as = (byFreq ifreq (fmap (fmap fst) as), byFreq ifreq (fmap (fmap snd) as))
+  
+-- byFreq :: (Tuple a) => D -> [(D, a)] -> a
+-- byFreq ifreq as = guardedTuple (fmap (\(cps, val) -> (sig ifreq `lessThan` sig cps, val)) $ init as) (snd $ last as)
 
 fromHarmSpec :: (D, D, D) -> HarmSpec -> (Sig, Tab)
 fromHarmSpec durs spec = (fromAmpSpec durs $ harmAmp spec, fromWaveSpec $ harmWave spec)
