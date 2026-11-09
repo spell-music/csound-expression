@@ -694,7 +694,7 @@ import Csound.Catalog.Wave (
  )
 
 monoArgToNote :: MonoArg -> (Sig, Sig)
-monoArgToNote arg = (monoAmp arg * monoGate arg, monoCps arg)
+monoArgToNote arg = (monoAmp arg * monoGate arg, limit (monoCps arg) 20 100000)
 
 monoSig1 :: (SigSpace a) => (Sig -> a) -> (MonoArg -> a)
 monoSig1 f arg = mul env $ f cps

@@ -806,7 +806,7 @@ shengRange (iattack, isustain, idecay) ifreq = ([(amp1, iwt1), (amp2, iwt2), (am
     f35 = skipNorm $ sines2 [(2, 0.58), (3, 0.83), (4, 0.83)]
     f36 = skipNorm $ sines2 [(5, 2.1), (6, 1.2), (7, 0.4)]
 
-    byRange :: (Tuple a) => [a] -> a
+    byRange :: (ByFreq a) => [a] -> a
     byRange = byFreq ifreq . zip freqs
     freqs = [538, 760, 1025, 22000]
 
@@ -848,7 +848,7 @@ hulusiRange (iattack, isustain, idecay) ifreq =
   , inorm
   )
   where
-    byRange :: (Tuple a) => [a] -> a
+    byRange :: (ByFreq a) => [a] -> a
     byRange = byFreq ifreq . zip [320, 427, 680, 22000]
 
     amp1 = byRange [amp1_0, amp1_1, amp1_2, amp1_3]
@@ -1318,7 +1318,7 @@ diziRange (iattack, isustain, idecay) ifreq =
   , inorm
   )
   where
-    byRange :: (Tuple a) => [a] -> a
+    byRange :: (ByFreq a) => [a] -> a
     byRange = byFreq ifreq . zip [320, 480, 680, 905, 1280, 1710, 22000]
 
     amp1 = byRange [amp1_1, amp1_2, amp1_3, amp1_4, amp1_5, amp1_6, amp1_7]

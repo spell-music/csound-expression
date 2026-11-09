@@ -36,6 +36,7 @@ import Csound.Typed.GlobalState hiding (notes)
 import Csound.Typed.InnerOpcodes
 import Csound.Typed.Types
 import Csound.Typed.Types.MixSco
+import Csound.Typed.GlobalState.Opcodes qualified as O
 
 #if __GLASGOW_HASKELL__ < 710
 import Data.Traversable
@@ -131,7 +132,9 @@ monoSco instr notes = wrapSco notes $ \events -> do
     effInstr :: (Sigs a) => (Sig, Sig, Sig) -> SE a
     effInstr (amp, cps, notnum) = instr (MonoArg amp cps gate (changed [amp, cps, gate]))
       where
-        gate = ifB (notnum ==* 0) 0 1
+        kNotnum :: Sig
+        kNotnum = fromGE (O.downsamp <$> toGE notnum)
+        gate = ifB (kNotnum ==* 0) 0 1
 
 -- | Renders a scores to the sound signals. we can use it inside the other instruments.
 mix :: (Sigs a) => Sco (Mix a) -> a
